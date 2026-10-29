@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from libretime_analyzer.pipeline.analyze_metadata import analyze_metadata
+from rastatime_analyzer.pipeline.analyze_metadata import analyze_metadata
 
 from ._synth import SECONDS, raw_adts, raw_adts_with_id3, requires_ffmpeg, sine
 

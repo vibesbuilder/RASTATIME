@@ -100,4 +100,4 @@ jobs:
         env:
           # Most of our packages bootstrap their own config; provide a
           # harmless default so import-time loaders do not crash.
-          LIBRETIME_CONFIG_FILEPATH: /tmp/libretime.conf
+          RASTATIME_CONFIG_FILEPATH: /tmp/rastatime.conf

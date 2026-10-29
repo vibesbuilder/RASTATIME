@@ -7,7 +7,7 @@ class AirtimeInstall
 {
     public const CONF_DIR_BINARIES = '/usr/lib/airtime';
     public const CONF_DIR_WWW = '/usr/share/airtime';
-    public const CONF_DIR_LOG = LIBRETIME_LOG_DIR;
+    public const CONF_DIR_LOG = RASTATIME_LOG_DIR;
     public static $databaseTablesCreated = false;
 
     public static function GetAirtimeSrcDir()
@@ -215,7 +215,7 @@ class AirtimeInstall
     {
         echo ' * Creating database tables' . PHP_EOL;
         $con = Propel::getConnection();
-        $sqlDir = dirname(ROOT_PATH) . '/api/libretime_api/legacy/migrations/sql/';
+        $sqlDir = dirname(ROOT_PATH) . '/api/rastatime_api/legacy/migrations/sql/';
         $files = ['schema.sql', 'data.sql'];
         foreach ($files as $file) {
             try {

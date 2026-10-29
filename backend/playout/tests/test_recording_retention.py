@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from libretime_playout.recording_retention import (
+from rastatime_playout.recording_retention import (
     RecordingRetentionThread,
     prune_old_recordings,
 )

@@ -2,7 +2,7 @@
 
 final class Application_Model_Locale
 {
-    private static $domains = ['libretime'];
+    private static $domains = ['rastatime'];
 
     // RASTATIME 2026-05-15 - Reduced from the upstream 22-language list to the
     // four languages we actually maintain.  Adding a language back requires:
@@ -82,7 +82,7 @@ final class Application_Model_Locale
             bind_textdomain_codeset($domain, $codeset);
         }
 
-        textdomain('libretime');
+        textdomain('rastatime');
     }
 
     /**

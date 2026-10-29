@@ -554,7 +554,7 @@ distant **absolu**, puis **Save**.
 
 Depuis le 16/09/2026, le dossier qui contient la médiathèque (titres
 importés, pochettes, images d'émission) est un réglage de cette page et
-non plus une ligne de `libretime.conf`. Le fichier de configuration ne
+non plus une ligne de `rastatime.conf`. Le fichier de configuration ne
 fournit que la valeur initiale ; dès que vous avez déplacé la
 médiathèque une fois, le réglage l'emporte.
 
@@ -587,7 +587,7 @@ Ce qui se passe pendant le déplacement :
   minutes).
 - La **copie précédente reste sur le disque**. Supprimez-la vous-même
   une fois satisfait - et seulement son contenu, pas le dossier nommé
-  dans `libretime.conf`, car l'application web vérifie au démarrage que
+  dans `rastatime.conf`, car l'application web vérifie au démarrage que
   ce dossier existe.
 
 Si le service RASTATIME-API redémarre pendant une copie, la section

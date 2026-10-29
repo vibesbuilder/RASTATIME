@@ -5,6 +5,7 @@
 # -----------------------------------------------------------------------------
 # Runtime configuration (contains passwords — never commit the real file)
 # -----------------------------------------------------------------------------
+config/rastatime.conf
 config/libretime.conf
 # RASTATIME 2026-10-08 - allow list mirror written by the web UI (System Status)
 config/allowlist.txt
@@ -128,7 +129,7 @@ backend/playout/config/cache/
 # ...and wherever else a local --check/run drops it (e.g. under the
 # package dir during tests): match the binary cache file by name.
 *.liq-cache
-backend/playout/libretime_playout/cache/
+backend/playout/rastatime_playout/cache/
 
 # -----------------------------------------------------------------------------
 # Per-show .mp3 recordings (output.file destination — operator-generated

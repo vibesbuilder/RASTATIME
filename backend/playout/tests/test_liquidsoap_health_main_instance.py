@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from libretime_playout import liquidsoap_health as lh
+from rastatime_playout import liquidsoap_health as lh
 
 MAIN = lh.ProcessInfo(14516, 125.0, 5313.0, "C:\\Tools\\liquidsoap\\rastatime.liq")
 STANDBY = lh.ProcessInfo(4348, 78.0, 12954.0, "C:\\Tools\\liquidsoap\\standby.liq")

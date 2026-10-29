@@ -1,6 +1,6 @@
 import pytest
 
-from libretime_analyzer.pipeline._ffmpeg import (
+from rastatime_analyzer.pipeline._ffmpeg import (
     _SILENCE_DETECT_RE,
     compute_replaygain,
     compute_silences,

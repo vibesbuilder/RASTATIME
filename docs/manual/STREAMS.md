@@ -311,7 +311,7 @@ within ~1 second.
 > the show on air right now, so a Show DJ cannot log in before
 > the show starts. Only while the playout itself is unreachable
 > does the engine fall back to the static harbor password from
-> `libretime.conf`. See ARCHITECTURE §23.27 (addendum 2026-09-10).
+> `rastatime.conf`. See ARCHITECTURE §23.27 (addendum 2026-09-10).
 
 ---
 

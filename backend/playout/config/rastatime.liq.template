@@ -3,13 +3,13 @@
 #
 # RASTATIME 2026-05-26 — Seamless-Bus-Mix Phase C3
 # (production-ready outline; placeholders rendered by
-#  libretime_playout.liquidsoap_config at Pypo start time).
+#  rastatime_playout.liquidsoap_config at Pypo start time).
 #
 # This script is the long-running Liquidsoap subprocess that owns local
 # playback, the Icecast outputs and the crossfades (it replaced the
 # former mpv + 3x FfmpegStreamer stack, deleted 2026-09-10).  It
 # is driven by the Python LiquidsoapPlayoutEngine over telnet (see
-# backend/playout/libretime_playout/engine/liquidsoap_telnet.py).
+# backend/playout/rastatime_playout/engine/liquidsoap_telnet.py).
 #
 # Placeholders rendered into the final .liq file
 # ----------------------------------------------
@@ -40,7 +40,7 @@
 #                                   for DJ Master + DJ Show sources.
 #                                   Rendered only when stream.harbor.
 #                                   {main,show}_password are set in
-#                                   libretime.conf.  Empty stub
+#                                   rastatime.conf.  Empty stub
 #                                   otherwise.
 #   {BUS_SOURCE_BLOCK}              Phase-C4: defines the `bus` source
 #                                   either as plain `scheduled`
@@ -521,7 +521,7 @@ ${WEBSTREAM_WATCHDOG_BLOCK}
 # ---------------------------------------------------------------------
 #
 # One output.icecast block per enabled stream_output_N row in cc_pref.
-# The Python renderer (libretime_playout.liquidsoap_config) substitutes
+# The Python renderer (rastatime_playout.liquidsoap_config) substitutes
 # the {ICECAST_OUTPUTS} placeholder with the rendered blocks, e.g.::
 #
 #   output.icecast(
@@ -630,7 +630,7 @@ ${HOURLY_RECORDING_BLOCK}
 
 # ---------------------------------------------------------------------
 # Local monitor — what the operator hears at the studio speakers.
-# Rendered by libretime_playout.liquidsoap_config based on the
+# Rendered by rastatime_playout.liquidsoap_config based on the
 # RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT env-var (default true; operator
 # can disable for headless server installs).
 # Uses output.portaudio (cross-platform) — the savonet Windows build

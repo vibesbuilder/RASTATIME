@@ -26,7 +26,7 @@ from typing import Dict, Iterator, Optional
 
 import pytest
 
-from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
 
 
 # ---- Fake server fixture ------------------------------------------------

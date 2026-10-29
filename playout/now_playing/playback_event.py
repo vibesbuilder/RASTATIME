@@ -13,7 +13,7 @@ Lifecycle
 ---------
 A ``PlaybackEvent`` is created from a :class:`~.HistoryEntry` (the
 in-memory ring-buffer record) via :meth:`PlaybackEvent.from_history_entry`.
-It is then passed to the persistence layer (``libretime_api.playback``)
+It is then passed to the persistence layer (``rastatime_api.playback``)
 which stores it in the ``rastatime_playback_event`` table.
 
 Source-type inference

@@ -59,7 +59,7 @@ segment that holds a validation error after **Save** opens by itself.
 | Field | Notes |
 |---|---|
 | **Default Language** | Interface language for new users and the login screen, and the language of all widgets (dates, weekdays, buttons; since 2026-10-25). Every user keeps their own language from My Profile. |
-| **Station Timezone** | Shown for information only.  The station time zone is set in `config/libretime.conf` (`general.timezone`); each user can choose a display time zone in My Profile. |
+| **Station Timezone** | Shown for information only.  The station time zone is set in `config/rastatime.conf` (`general.timezone`); each user can choose a display time zone in My Profile. |
 | **Week Starts On** | First day of the week in the calendar and in the widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* lets external widgets embedded in other websites read the schedule data. Required for the embeddable schedule widgets. |
 | **Display login button on your Radio Page?** | Shows a login button on the public radio page. |
@@ -148,7 +148,7 @@ administrators only.
 > `cc_pref` table (key / value).  Per-user values (language, time zone,
 > table layouts) are `cc_pref` rows bound to the user.  Service
 > configuration that cannot live in the database (database credentials,
-> paths, station time zone, API key) is in `config/libretime.conf`.
+> paths, station time zone, API key) is in `config/rastatime.conf`.
 
 ---
 
@@ -216,7 +216,7 @@ the operator documentation.  Logs are in `C:\RASTATIME\logs`.
 
 Settings → **Backup** saves the database (with every `cc_pref` row) and
 the configuration; see [Backup](./BACKUP.md) for restoring.
-`config/libretime.conf` carries passwords - never put it into version
+`config/rastatime.conf` carries passwords - never put it into version
 control as it is.
 
 ### "Which settings can a Program Manager open?"

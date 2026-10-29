@@ -1,6 +1,6 @@
 """
 Tests for the Main-Output → PortAudio device resolution
-(``libretime_playout.engine.portaudio_output``) and for the
+(``rastatime_playout.engine.portaudio_output``) and for the
 ``output.portaudio`` device argument in the rendered rastatime.liq.
 
 Background: Settings → Local Machine → **Main Output** used to have no
@@ -18,7 +18,7 @@ fake PortAudio so it cannot silently regress.
 
 import pytest
 
-from libretime_playout.engine.portaudio_output import (
+from rastatime_playout.engine.portaudio_output import (
     HOST_API_PREFERENCE,
     ResolvedOutput,
     _hardware_tokens,
@@ -28,7 +28,7 @@ from libretime_playout.engine.portaudio_output import (
     resolve_output_device,
     with_name_selection,
 )
-from libretime_playout.liquidsoap_config import _render_local_output_block
+from rastatime_playout.liquidsoap_config import _render_local_output_block
 
 
 # --------------------------------------------------------------------

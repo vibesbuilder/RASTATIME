@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from libretime_playout.cue_writer import CueWriter
+from rastatime_playout.cue_writer import CueWriter
 
 
 def _cw(tmp_path, now, *, enabled=True, fmt="mp3"):

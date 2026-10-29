@@ -6,15 +6,15 @@ with Windows-appropriate defaults across Python shared config and PHP
 frontend config files.
 
 Files audited (§4 of docs/architecture/LINUX_INVENTORY.md):
-  - backend/shared/libretime_shared/config/_base.py
-      DEFAULT_CONFIG_FILEPATH: /etc/libretime/config.yml → C:\\rastatime\\config\\libretime.conf
-  - backend/api/libretime_api/manage.py
-      LIBRETIME_CONFIG_FILEPATH default: same substitution
-  - backend/shared/libretime_shared/config/_models.py
+  - backend/shared/rastatime_shared/config/_base.py
+      DEFAULT_CONFIG_FILEPATH: /etc/libretime/config.yml → C:\\rastatime\\config\\rastatime.conf
+  - backend/api/rastatime_api/manage.py
+      RASTATIME_CONFIG_FILEPATH default: same substitution
+  - backend/shared/rastatime_shared/config/_models.py
       StorageConfig.path default: /srv/libretime → C:\\rastatime\\media
   - frontend/legacy/application/configs/constants.php
-      LIBRETIME_LOG_DIR fallback: /var/log/libretime → C:/rastatime/logs
-      LIBRETIME_CONFIG_DIR fallback: /etc/libretime → C:/rastatime/config
+      RASTATIME_LOG_DIR fallback: /var/log/libretime → C:/rastatime/logs
+      RASTATIME_CONFIG_DIR fallback: /etc/libretime → C:/rastatime/config
   - frontend/legacy/application/configs/conf.php
       storage.path default: /srv/libretime/ → C:/rastatime/media/
   - frontend/legacy/application/configs/airtime-conf.php
@@ -39,9 +39,9 @@ from pathlib import Path
 
 _REPO = Path(__file__).resolve().parents[2]
 
-_CONFIG_BASE  = _REPO / "backend" / "shared" / "libretime_shared" / "config" / "_base.py"
-_MANAGE       = _REPO / "backend" / "api" / "libretime_api" / "manage.py"
-_MODELS       = _REPO / "backend" / "shared" / "libretime_shared" / "config" / "_models.py"
+_CONFIG_BASE  = _REPO / "backend" / "shared" / "rastatime_shared" / "config" / "_base.py"
+_MANAGE       = _REPO / "backend" / "api" / "rastatime_api" / "manage.py"
+_MODELS       = _REPO / "backend" / "shared" / "rastatime_shared" / "config" / "_models.py"
 _CONSTANTS    = _REPO / "frontend" / "legacy" / "application" / "configs" / "constants.php"
 _CONF         = _REPO / "frontend" / "legacy" / "application" / "configs" / "conf.php"
 _AIRTIME_CONF = _REPO / "frontend" / "legacy" / "application" / "configs" / "airtime-conf.php"
@@ -70,7 +70,7 @@ def test_config_base_windows_path():
     _base.py must reference C:\\rastatime\\config as the Windows branch of
     DEFAULT_CONFIG_FILEPATH, replacing the upstream /etc/libretime/config.yml default.
     """
-    # Raw string r"C:\rastatime\config\libretime.conf" in the source file
+    # Raw string r"C:\rastatime\config\rastatime.conf" in the source file
     # contains literal backslashes; search for the Windows path substring.
     assert r"C:\rastatime\config" in _read(_CONFIG_BASE), (
         "_base.py must reference C:\\rastatime\\config as the Windows default config path"
@@ -78,23 +78,23 @@ def test_config_base_windows_path():
 
 
 # ---------------------------------------------------------------------------
-# 3–4  manage.py — LIBRETIME_CONFIG_FILEPATH setdefault
+# 3–4  manage.py — RASTATIME_CONFIG_FILEPATH setdefault
 # ---------------------------------------------------------------------------
 
 def test_manage_uses_platform_conditional():
     """
-    manage.py must use sys.platform so the LIBRETIME_CONFIG_FILEPATH default
+    manage.py must use sys.platform so the RASTATIME_CONFIG_FILEPATH default
     is Windows-appropriate when manage.py is invoked directly on Windows.
     """
     assert "sys.platform" in _read(_MANAGE), (
-        "manage.py must use sys.platform for a platform-conditional LIBRETIME_CONFIG_FILEPATH"
+        "manage.py must use sys.platform for a platform-conditional RASTATIME_CONFIG_FILEPATH"
     )
 
 
 def test_manage_windows_path():
     """
     manage.py must reference C:\\rastatime\\config as the Windows default for
-    LIBRETIME_CONFIG_FILEPATH, replacing /etc/libretime/config.yml.
+    RASTATIME_CONFIG_FILEPATH, replacing /etc/libretime/config.yml.
     """
     assert r"C:\rastatime\config" in _read(_MANAGE), (
         "manage.py must reference C:\\rastatime\\config as the Windows config path default"
@@ -132,7 +132,7 @@ def test_models_storage_windows_path():
 def test_constants_no_linux_log_dir():
     """
     constants.php must not fall back to /var/log/libretime.
-    The LIBRETIME_LOG_DIR fallback must be a Windows path (C:/rastatime/logs).
+    The RASTATIME_LOG_DIR fallback must be a Windows path (C:/rastatime/logs).
     """
     assert "/var/log/libretime" not in _read(_CONSTANTS), (
         "constants.php still falls back to /var/log/libretime — must use C:/rastatime/logs"
@@ -142,7 +142,7 @@ def test_constants_no_linux_log_dir():
 def test_constants_no_linux_config_dir():
     """
     constants.php must not fall back to /etc/libretime.
-    The LIBRETIME_CONFIG_DIR fallback must be a Windows path (C:/rastatime/config).
+    The RASTATIME_CONFIG_DIR fallback must be a Windows path (C:/rastatime/config).
     """
     assert "/etc/libretime" not in _read(_CONSTANTS), (
         "constants.php still falls back to /etc/libretime — must use C:/rastatime/config"

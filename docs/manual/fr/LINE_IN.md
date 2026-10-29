@@ -67,7 +67,7 @@ La barre d'outils :
 > l'API REST Django à `/api/v2/audio/linein[/<id>]`. Le
 > contrôleur applique seulement l'ACL (Admin + Super
 > Admin) ; le côté Python à
-> `backend/api/libretime_api/linein/` possède validation
+> `backend/api/rastatime_api/linein/` possède validation
 > et persistance dans `rastatime_linein`. Voir
 > ARCHITECTURE §14.
 

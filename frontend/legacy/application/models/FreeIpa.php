@@ -1,6 +1,6 @@
 <?php
 
-class LibreTime_Model_FreeIpa
+class Rastatime_Model_FreeIpa
 {
     /**
      * get userinfo in the format needed by the Auth Adaptor.

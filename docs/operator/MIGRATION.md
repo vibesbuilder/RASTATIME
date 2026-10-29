@@ -104,7 +104,7 @@ Remove-Item Env:\PGPASSWORD
 > restore (§4.3) expects:
 
 ```powershell
-Copy-Item C:\rastatime\config\libretime.conf C:\rastatime-migration\
+Copy-Item C:\rastatime\config\rastatime.conf C:\rastatime-migration\
 Copy-Item C:\rastatime\config\icecast.xml    C:\rastatime-migration\
 ```
 
@@ -157,10 +157,10 @@ robocopy "C:\Users\studio\Music\Import"               "$BUNDLE\Import"          
 
 # 6) Media library (the bulk — easily 10-100 GB)
 #    This is the slow part.  ~30 GB takes ~5 min on Gigabit LAN.
-#    The real storage path is C:\rastatime\media (libretime.conf
+#    The real storage path is C:\rastatime\media (rastatime.conf
 #    storage.path) — NOT C:\rastatime\stor (that path never existed;
 #    earlier drafts of this doc were wrong).  Verify with:
-#      (Get-Content C:\rastatime\config\libretime.conf | Select-String 'path:')
+#      (Get-Content C:\rastatime\config\rastatime.conf | Select-String 'path:')
 # ⚠️ Run this media copy from an ELEVATED shell (Administrator).  Verified
 #    2026-06-17: the podcast-feature downloads (imported/2/podcast_ep*.mp3,
 #    ~33 files in cc_files) carry a restrictive ACL with NO access for the
@@ -260,7 +260,7 @@ Follow [`INSTALL.md`](INSTALL.md) §4 step-by-step to install:
 - Python 3.13 + venv at `C:\rastatime\.venv`
 - RabbitMQ 4.x + Erlang OTP — the analyzer's message queue (the PHP
   frontend dispatches upload messages to it).  Create vhost `/rastatime`
-  + the user/password from `libretime.conf`'s `rabbitmq` section (port
+  + the user/password from `rastatime.conf`'s `rabbitmq` section (port
   5672).  Windows quirk: (re)install the service with an explicit
   `RABBITMQ_BASE` (e.g. `C:\ProgramData\RabbitMQ`) via
   `rabbitmq-service.bat remove` / `install`, otherwise the LocalSystem
@@ -279,7 +279,7 @@ Follow [`INSTALL.md`](INSTALL.md) §4 step-by-step to install:
 Phase C instead):
 - Database initialisation (Phase C restores instead)
 - cc_pref defaults (restored from old database)
-- libretime.conf creation (restored from backup)
+- rastatime.conf creation (restored from backup)
 
 ### 3.4 Liquidsoap install
 
@@ -302,7 +302,7 @@ Format SSD-B as NTFS, assign drive letter **D:**, mount point
 mkdir D:\stor
 ```
 
-Update `libretime.conf` to point the storage path at the new
+Update `rastatime.conf` to point the storage path at the new
 location (we'll do this in Phase C step 4.4).
 
 ---
@@ -355,10 +355,10 @@ robocopy C:\rastatime-migration\RASTATIME C:\RASTATIME /MIR
 ### 4.3 Configuration files
 
 ```powershell
-# libretime.conf (contains DB credentials, harbor passwords,
+# rastatime.conf (contains DB credentials, harbor passwords,
 # Icecast credentials, the lot).  Live location is C:\rastatime\config\
 # (NOT \etc\ — verified 2026-06-16).
-Copy-Item C:\rastatime-migration\libretime.conf C:\rastatime\config\ -Force
+Copy-Item C:\rastatime-migration\rastatime.conf C:\rastatime\config\ -Force
 
 # Icecast config — the RASTATIME-ICECAST service reads it from
 # C:\rastatime\config\ (nssm AppParameters:
@@ -380,14 +380,14 @@ Copy-Item C:\rastatime-migration\icecast.xml C:\rastatime\config\ -Force
 
 ```powershell
 # After 4.1 (database) and 4.3 (configuration) - the storage root of
-# libretime.conf must exist and hold the restored media\imported\<id>\...
-C:\rastatime\.venv\Scripts\python.exe -m libretime_api.manage storage_flatten          # dry run, prints the plan
-C:\rastatime\.venv\Scripts\python.exe -m libretime_api.manage storage_flatten --apply  # moves entries, rewrites rows
+# rastatime.conf must exist and hold the restored media\imported\<id>\...
+C:\rastatime\.venv\Scripts\python.exe -m rastatime_api.manage storage_flatten          # dry run, prints the plan
+C:\rastatime\.venv\Scripts\python.exe -m rastatime_api.manage storage_flatten --apply  # moves entries, rewrites rows
 ```
 
 Run it from `C:\rastatime\backend\api` with the API service environment
-(`DJANGO_SETTINGS_MODULE=libretime_api.settings.prod`,
-`LIBRETIME_CONFIG_FILEPATH`).  The dry run lists the entries to move and
+(`DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod`,
+`RASTATIME_CONFIG_FILEPATH`).  The dry run lists the entries to move and
 the rows to rewrite (`cc_files.filepath`, `cc_files.artwork`,
 `cc_show.image_path`, the auto-dj logo preference) and how many file
 paths resolve on disk before and after; `--apply` does both in one
@@ -399,7 +399,7 @@ never mistaken for an owner id and the command may be re-run.
 **New root (`D:\stor`):** move the library over the UI - Settings → Local
 Machine → **Media Library Location** (Check, Move library; see the manual
 chapter LOCAL_MACHINE §6).  The job copies, verifies and switches the
-setting; no `libretime.conf` edit, no service restart and no database
+setting; no `rastatime.conf` edit, no service restart and no database
 change is needed - every stored path is relative to the root.  The
 previous copy stays for the operator to delete.
 
@@ -449,8 +449,8 @@ block, so repeat the five script-set vars *and* add the three extras:
 
 ```powershell
 & "C:\Tools\nssm\nssm.exe" set RASTATIME-PLAYOUT AppEnvironmentExtra `
-    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-    "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf" `
+    "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
+    "RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf" `
     "RASTATIME_API_URL=http://127.0.0.1:8765" `
     "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime" `
     "PATH=C:\ffmpeg\bin;%PATH%" `
@@ -464,8 +464,8 @@ Verify the env-vars are complete (especially the Liquidsoap engine flag):
 ```powershell
 & "C:\Tools\nssm\nssm.exe" get RASTATIME-PLAYOUT AppEnvironmentExtra
 # Must contain, BESIDES the five install-script vars
-# (DJANGO_SETTINGS_MODULE=libretime_api.settings.prod,
-#  LIBRETIME_CONFIG_FILEPATH=..., RASTATIME_API_URL=http://127.0.0.1:8765,
+# (DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod,
+#  RASTATIME_CONFIG_FILEPATH=..., RASTATIME_API_URL=http://127.0.0.1:8765,
 #  PYTHONPATH=..., PATH=C:\ffmpeg\bin;%PATH%), the three engine extras:
 #   RASTATIME_MPV_LOG_LEVEL=warn
 #   RASTATIME_PLAYOUT_ENGINE=liquidsoap
@@ -480,7 +480,7 @@ Verify the env-vars are complete (especially the Liquidsoap engine flag):
 > the new machine is self-consistent.  (For a same-IP swap, skip this
 > section — that is the doc's default assumption elsewhere.)
 
-- **`libretime.conf` → `general.public_url`** — set to the new address
+- **`rastatime.conf` → `general.public_url`** — set to the new address
   (`http://<new-ip>` or `https://<new-host>`).  It is interpolated into
   RSS/podcast self-links, episode `download_url`, station-image URLs and
   UI-side absolute links — a wrong value breaks feeds + embeds.
@@ -504,11 +504,11 @@ one — verify in §5.4.
 The Liquidsoap production script `C:\Tools\liquidsoap\rastatime.liq` is
 **machine-generated**: rendered from the template plus the stream
 outputs stored in the restored DB (`cc_pref` keys `stream_output_N` —
-**not** `libretime.conf`).  Any copy that came over in the bundle still
+**not** `rastatime.conf`).  Any copy that came over in the bundle still
 embeds the old machine's values.
 
 **RASTATIME-PLAYOUT re-renders the script at every startup** — with the
-`stream.harbor` DJ passwords from `libretime.conf` and the crossfade
+`stream.harbor` DJ passwords from `rastatime.conf` and the crossfade
 setting from its service environment.  So in the §5.1 smoke test, after
 all services are up, restart Liquidsoap **once** so it loads the script
 the playout just rendered:
@@ -520,7 +520,7 @@ Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 8001,8002 }
 ```
 
 > **Do NOT use the manual CLI render**
-> (`python -m libretime_playout.liquidsoap_config render`) on a
+> (`python -m rastatime_playout.liquidsoap_config render`) on a
 > configured system: it does not read `stream.harbor` and strips the DJ
 > harbor inputs from the script (found the hard way on 2026-08-27 —
 > the DJ harbor on 8001 was dead until a Liquidsoap restart with the
@@ -566,7 +566,7 @@ curl.exe -i http://127.0.0.1:8765/health
 
 ### 5.3 Telnet sanity-check
 ```powershell
-& "C:\rastatime\.venv\Scripts\python.exe" -c "from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient; c=LiquidsoapTelnetClient(); print('uptime:', c.send_command('uptime')); print('engine OK')"
+& "C:\rastatime\.venv\Scripts\python.exe" -c "from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient; c=LiquidsoapTelnetClient(); print('uptime:', c.send_command('uptime')); print('engine OK')"
 ```
 
 ### 5.4 Listen on the new machine's stream (PRIVATE TEST URL)

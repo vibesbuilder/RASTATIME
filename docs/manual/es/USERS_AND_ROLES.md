@@ -198,7 +198,7 @@ puntos de montaje figuran en el capítulo [Streams](./STREAMS.md).
 **No hay claves API personales**.
 
 - **Los servicios** (playout, analyzer, scripts en la máquina de la
-  emisora) usan la clave API de la emisora de `config/libretime.conf`
+  emisora) usan la clave API de la emisora de `config/rastatime.conf`
   (`Authorization: Api-Key …`).  Trátela como una contraseña.
 - **Las personas** pueden usar la API REST v2 (`/api/v2/`) con su propio
   nombre de usuario y contraseña; obtienen los permisos de su rol.

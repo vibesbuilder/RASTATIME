@@ -264,7 +264,7 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendFile(Assets::url('js/wavesurfer/timeline.min.js'), 'text/javascript')
             ->appendFile(Assets::url('js/wavesurfer/regions.min.js'), 'text/javascript')
             ->appendFile(Assets::url('js/wavesurfer/cursor.min.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/wavesurfer/libretime.js'), 'text/javascript');
+            ->appendFile(Assets::url('js/wavesurfer/rastatime.js'), 'text/javascript');
 
         $user = Application_Model_User::getCurrentUser();
         if (!is_null($user)) {

@@ -23,7 +23,7 @@ per-slot call; the anchors below follow it.
 
 import re
 
-from libretime_playout.liquidsoap_config import (
+from rastatime_playout.liquidsoap_config import (
     DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
     DEFAULT_LINEIN_HTTP_POLL_DELAY_SECONDS,
     render_rastatime_liq,

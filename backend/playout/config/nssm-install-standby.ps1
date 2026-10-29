@@ -12,7 +12,7 @@
 # standby mount and back again instead of disconnecting them.
 #
 # The script standby.liq is rendered by RASTATIME-PLAYOUT at startup
-# (libretime_playout.liquidsoap_config.render_standby_liq); this
+# (rastatime_playout.liquidsoap_config.render_standby_liq); this
 # service only needs a restart when PLAYOUT logs that standby.liq
 # changed (i.e. when the stream outputs change).
 #

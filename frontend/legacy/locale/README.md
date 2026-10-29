@@ -5,7 +5,7 @@ binaries for the legacy (Zend Framework 1) frontend.  At runtime PHP's
 `gettext` extension reads `.mo` files; the `.po` files are the human-
 editable source.  Each `_()` call in PHP / `.phtml` and the JS i18n
 strings emitted by `LocaleController.php` are looked up against the
-currently-bound locale's `libretime.mo`.
+currently-bound locale's `rastatime.mo`.
 
 ## Active languages
 
@@ -29,7 +29,7 @@ When a translated string is missing or wrong:
 1. Open the language's `.po` file in a text editor or in
    [Poedit](https://poedit.net/) (a free GUI translation editor that
    keeps the file format clean — recommended for non-programmers).
-   - With a text editor: `frontend/legacy/locale/<LANG>/LC_MESSAGES/libretime.po`
+   - With a text editor: `frontend/legacy/locale/<LANG>/LC_MESSAGES/rastatime.po`
    - With Poedit: `File → Open` and pick the `.po`.
 
 2. Find the entry.  Each entry looks like:
@@ -87,8 +87,8 @@ or `nl_NL`.
    as a template (e.g. copy `es_ES` if adding Italian):
    ```
    mkdir frontend\legacy\locale\<LANG>\LC_MESSAGES
-   copy frontend\legacy\locale\es_ES\LC_MESSAGES\libretime.po ^
-        frontend\legacy\locale\<LANG>\LC_MESSAGES\libretime.po
+   copy frontend\legacy\locale\es_ES\LC_MESSAGES\rastatime.po ^
+        frontend\legacy\locale\<LANG>\LC_MESSAGES\rastatime.po
    ```
    Then open the new `.po` in Poedit, set `Language` to the new code
    in `Catalog → Properties`, and translate all msgstr (or empty them
@@ -150,7 +150,7 @@ Default Language.
 2. The directory bound via `bindtextdomain('libretime', <abs_path>)`
    — for RASTATIME this is `frontend/legacy/locale/` resolved by
    `realpath()` from `Locale.php`.
-3. The `libretime.mo` inside `<dir>/<LANG>/LC_MESSAGES/`.
+3. The `rastatime.mo` inside `<dir>/<LANG>/LC_MESSAGES/`.
 4. If the msgid is not found in the `.mo`, gettext returns the
    `msgid` itself.  English source strings therefore "fall back"
    to English automatically when a translation is missing.

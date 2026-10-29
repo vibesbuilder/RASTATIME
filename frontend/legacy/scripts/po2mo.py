@@ -5,8 +5,8 @@ infra/scripts/maintenance/build-locales.ps1), but the studio machine has no
 gettext install.  The legacy catalogs are simple - no plurals, no message
 contexts, no fuzzy entries - so this stand-in covers them completely:
 
-    python scripts/po2mo.py frontend/legacy/locale/de_DE/LC_MESSAGES/libretime.po
-    python scripts/po2mo.py --all            # every <lang>/LC_MESSAGES/libretime.po
+    python scripts/po2mo.py frontend/legacy/locale/de_DE/LC_MESSAGES/rastatime.po
+    python scripts/po2mo.py --all            # every <lang>/LC_MESSAGES/rastatime.po
 
 Format notes (GNU MO, little endian, revision 0): the string table MUST be
 sorted by msgid bytes - PHP's gettext binary-searches it.  No hash table is
@@ -124,7 +124,7 @@ def compile_one(po: Path) -> None:
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args == ["--all"]:
-        for po in sorted(LOCALE_DIR.glob("*/LC_MESSAGES/libretime.po")):
+        for po in sorted(LOCALE_DIR.glob("*/LC_MESSAGES/rastatime.po")):
             compile_one(po)
     elif args:
         for a in args:

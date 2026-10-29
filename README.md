@@ -60,7 +60,7 @@ RASTATIME/
 ├── infra/
 │   └── nssm/          # PowerShell scripts to install/remove Windows services
 ├── config/
-│   └── libretime.conf # Runtime configuration (created during setup)
+│   └── rastatime.conf # Runtime configuration (created during setup)
 ├── docs/
 │   └── upstream/      # LibreTime reference documentation
 └── tests/
@@ -109,7 +109,7 @@ New-Item -ItemType Directory -Force -Path C:\rastatime\config
 New-Item -ItemType Directory -Force -Path C:\rastatime\logs
 ```
 
-Copy `config\libretime.conf.example` to `C:\rastatime\config\libretime.conf` and edit the database, RabbitMQ, and API key values.
+Copy `config\rastatime.conf.example` to `C:\rastatime\config\rastatime.conf` and edit the database, RabbitMQ, and API key values.
 
 ### 5. Set up the database
 
@@ -121,11 +121,11 @@ psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE rastatime TO rastatime;"
 ```
 
 ```powershell
-$env:LIBRETIME_CONFIG_FILEPATH = "C:\rastatime\config\libretime.conf"
-$env:DJANGO_SETTINGS_MODULE    = "libretime_api.settings.prod"
+$env:RASTATIME_CONFIG_FILEPATH = "C:\rastatime\config\rastatime.conf"
+$env:DJANGO_SETTINGS_MODULE    = "rastatime_api.settings.prod"
 $env:PYTHONPATH = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
 cd backend\api
-python libretime_api\manage.py migrate
+python rastatime_api\manage.py migrate
 ```
 
 ### 6. Install Windows services
@@ -183,7 +183,7 @@ Django API tests (require a running PostgreSQL instance):
 
 ```powershell
 cd backend\api
-$env:DJANGO_SETTINGS_MODULE = "libretime_api.settings.testing"
+$env:DJANGO_SETTINGS_MODULE = "rastatime_api.settings.testing"
 python -m pytest tests\ -v
 ```
 
@@ -191,7 +191,7 @@ python -m pytest tests\ -v
 
 ## Configuration reference
 
-The runtime configuration file (`C:\rastatime\config\libretime.conf`) uses YAML:
+The runtime configuration file (`C:\rastatime\config\rastatime.conf`) uses YAML:
 
 ```yaml
 general:
@@ -218,7 +218,7 @@ rabbitmq:
   password: rastatime
 ```
 
-Environment variable overrides follow the `LIBRETIME_` prefix convention, e.g. `LIBRETIME_GENERAL_API_KEY`.
+Environment variable overrides follow the `RASTATIME_` prefix convention, e.g. `RASTATIME_GENERAL_API_KEY`.
 
 ---
 

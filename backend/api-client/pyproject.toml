@@ -1,7 +1,7 @@
 [tool.isort]
 profile = "black"
 combine_as_imports = true
-known_first_party = ["libretime_api_client"]
+known_first_party = ["rastatime_api_client"]
 
 [tool.pylint.messages_control]
 extension-pkg-whitelist = "pydantic"
@@ -16,7 +16,7 @@ log_cli = true
 log_cli_level = "DEBUG"
 
 [tool.coverage.run]
-source = ["libretime_api_client"]
+source = ["rastatime_api_client"]
 
 [build-system]
 requires = ["setuptools", "wheel"]

@@ -138,7 +138,7 @@ def check_devices_at_startup(
     ----------
     settings:
         Pure domain model (loaded from the DB via
-        :meth:`~libretime_api.soundcard.models.SoundcardSettings.to_domain`
+        :meth:`~rastatime_api.soundcard.models.SoundcardSettings.to_domain`
         or constructed directly in tests).
     manager:
         Live :class:`~.interface.AudioDeviceManager` whose

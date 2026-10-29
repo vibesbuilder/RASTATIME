@@ -658,7 +658,7 @@ class ApiController extends Zend_Controller_Action
                 // Sometimes end users may be looking at stale data - if an image is removed
                 // but has been cached in a client's browser this will throw an exception
                 Application_Common_FileIO::smartReadFile($path, filesize($path), $mime_type);
-            } catch (LibreTimeFileNotFoundException $e) {
+            } catch (RastatimeFileNotFoundException $e) {
                 // throw new ZendActionHttpException($this, 404, "ERROR: No image found at $path");
                 $this->_redirect('api/station-logo');
 
@@ -884,7 +884,7 @@ class ApiController extends Zend_Controller_Action
                     $file->setLastPlayedTime($now);
 
                     // RASTATIME 2026-09-28 - the TuneIn push moved to the
-                    // playout (libretime_playout/tunein.py): every track,
+                    // playout (rastatime_playout/tunein.py): every track,
                     // webstream and line-in start plus a keep-alive.  The
                     // push here double-URL-encoded the title and threw on an
                     // unreachable TuneIn in the middle of this notify.
@@ -1752,7 +1752,7 @@ class ApiController extends Zend_Controller_Action
     public function updateMetadataOnTuneinAction()
     {
         // RASTATIME 2026-09-28 - kept for older clients; the keep-alive is
-        // sent by the playout itself now (libretime_playout/tunein.py).
+        // sent by the playout itself now (rastatime_playout/tunein.py).
         $this->_helper->json->sendJson([1]);
     }
 

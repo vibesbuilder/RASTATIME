@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from libretime_playout import liquidsoap_config as lc
+from rastatime_playout import liquidsoap_config as lc
 
 
 # ---- Helpers ------------------------------------------------------------

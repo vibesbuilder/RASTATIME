@@ -10,7 +10,7 @@
     RASTATIME-ANALYZER is the file-import processor.  It listens on a
     RabbitMQ queue for messages dispatched by the PHP frontend whenever
     an operator uploads a media file.  For each message it runs the
-    libretime_analyzer pipeline:
+    rastatime_analyzer pipeline:
 
         1. Extract ID3 / metadata tags
         2. Compute duration and (optionally) cue points
@@ -26,7 +26,7 @@
 
     Service properties:
         NSSM name  : RASTATIME-ANALYZER
-        Executable : libretime-analyzer.exe (from the install-root venv)
+        Executable : rastatime-analyzer.exe (from the install-root venv)
         Port       : None (subscribes to RabbitMQ)
         Logs       : C:\rastatime\logs\analyzer-stdout.log
                      C:\rastatime\logs\analyzer-stderr.log
@@ -40,8 +40,8 @@
     Default: C:\rastatime
 
 .PARAMETER ConfigFile
-    Path to libretime.conf.
-    Default: <InstallRoot>\config\libretime.conf
+    Path to rastatime.conf.
+    Default: <InstallRoot>\config\rastatime.conf
 
 .PARAMETER NssmExe
     Path to nssm.exe.  If omitted the script searches PATH and then
@@ -56,10 +56,10 @@
 
 .NOTES
     Requires:
-      - RabbitMQ running on the host configured in libretime.conf
+      - RabbitMQ running on the host configured in rastatime.conf
         (PHP would already fail uploads if RabbitMQ were down).
       - FFmpeg on PATH (used by analyze_replaygain and analyze_cuepoint).
-      - The libretime-analyzer console script in the RASTATIME venv
+      - The rastatime-analyzer console script in the RASTATIME venv
         (installed by `pip install -e backend/analyzer`).
 #>
 
@@ -111,22 +111,22 @@ function Find-Nssm {
 }
 
 # ---------------------------------------------------------------------------
-# Locate libretime-analyzer.exe (entry point installed by pip)
+# Locate rastatime-analyzer.exe (entry point installed by pip)
 # ---------------------------------------------------------------------------
 function Find-Analyzer {
     $candidates = @(
-        "$InstallRoot\.venv\Scripts\libretime-analyzer.exe",
-        "$InstallRoot\.venv\bin\libretime-analyzer.exe"
+        "$InstallRoot\.venv\Scripts\rastatime-analyzer.exe",
+        "$InstallRoot\.venv\bin\rastatime-analyzer.exe"
     )
     foreach ($c in $candidates) {
         if (Test-Path $c) { return $c }
     }
-    $onPath = Get-Command libretime-analyzer -ErrorAction SilentlyContinue
+    $onPath = Get-Command rastatime-analyzer -ErrorAction SilentlyContinue
     if ($onPath) {
         Write-Warn "Analyzer not in venv; falling back to PATH: $($onPath.Source)"
         return $onPath.Source
     }
-    Write-Err "libretime-analyzer.exe not found.  Run:"
+    Write-Err "rastatime-analyzer.exe not found.  Run:"
     Write-Err "  pip install -e $InstallRoot\backend\analyzer"
     exit 1
 }
@@ -136,7 +136,7 @@ function Find-Analyzer {
 # ---------------------------------------------------------------------------
 function Resolve-ConfigFile {
     if ($ConfigFile -ne "") { return $ConfigFile }
-    return "$InstallRoot\config\libretime.conf"
+    return "$InstallRoot\config\rastatime.conf"
 }
 
 # ---------------------------------------------------------------------------
@@ -180,7 +180,7 @@ if ($existing) {
 }
 
 # Install — analyzer entry point takes --config and --log-level via env or flags.
-# We rely on LIBRETIME_CONFIG_FILEPATH for the config path so we do not have to
+# We rely on RASTATIME_CONFIG_FILEPATH for the config path so we do not have to
 # repeat -f arguments here, matching how RASTATIME-API and RASTATIME-PLAYOUT
 # discover their config.
 Write-Step "Installing '$ServiceName'..."
@@ -216,11 +216,11 @@ Write-Step "Setting restart policy (${RestartDelayMs} ms delay)..."
 # Auto-start at boot
 & $nssm set $ServiceName Start SERVICE_AUTO_START
 
-# Environment variables — analyzer reads libretime.conf from this path,
+# Environment variables — analyzer reads rastatime.conf from this path,
 # and PATH must include FFmpeg for the replaygain / cuepoint pipeline steps.
 Write-Step "Configuring environment variables (FFmpeg on PATH)..."
 & $nssm set $ServiceName AppEnvironmentExtra `
-    "LIBRETIME_CONFIG_FILEPATH=$cfgFile" `
+    "RASTATIME_CONFIG_FILEPATH=$cfgFile" `
     "PATH=C:\ffmpeg\bin;%PATH%"
 Write-OK "Environment variables set."
 

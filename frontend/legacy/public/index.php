@@ -3,8 +3,8 @@
 require_once dirname(__DIR__) . '/application/preload.php';
 
 // Early exit if a configuration file does not exists!
-if (!file_exists(LIBRETIME_CONFIG_FILEPATH)) {
-    exit("could not find a configuration file at '{$LIBRETIME_CONFIG_FILEPATH}', please make sure it is properly set!");
+if (!file_exists(RASTATIME_CONFIG_FILEPATH)) {
+    exit("could not find a configuration file at '{$RASTATIME_CONFIG_FILEPATH}', please make sure it is properly set!");
 }
 
 $configRun = false;

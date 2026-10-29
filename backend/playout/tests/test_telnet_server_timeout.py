@@ -8,7 +8,7 @@ switcher (measured 14 MB/h, 30 reconnects in 30 min).
 """
 from __future__ import annotations
 
-from libretime_playout import liquidsoap_config as lc
+from rastatime_playout import liquidsoap_config as lc
 
 LINE = "settings.server.timeout.set(-1.)"
 

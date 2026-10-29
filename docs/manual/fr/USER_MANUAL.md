@@ -57,7 +57,7 @@ Ce manuel est écrit pour deux lecteurs en parallèle :
 ### URL et chemins par défaut
 
 Sauf si votre installation les redéfinit dans
-`config/libretime.conf` :
+`config/rastatime.conf` :
 
 | Quoi | Par défaut |
 |---|---|
@@ -68,7 +68,7 @@ Sauf si votre installation les redéfinit dans
 | Répertoire de logs | `C:\rastatime\logs\` |
 | Bibliothèque média sur disque | `C:\rastatime\media\` |
 | Cache audio local de l'opérateur | `C:\rastatime\scheduler\` |
-| Fichier de configuration | `C:\rastatime\config\libretime.conf` |
+| Fichier de configuration | `C:\rastatime\config\rastatime.conf` |
 
 Si votre station utilise des chemins différents, substituez
 partout.

@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from libretime_analyzer.pipeline.analyze_playability import (
+from rastatime_analyzer.pipeline.analyze_playability import (
     UnplayableFileError,
     analyze_playability,
 )
@@ -34,7 +34,7 @@ def test_analyze_playability_missing_ffmpeg():
     semantic as the old Liquidsoap-on-RASTATIME branch had.
     """
     with patch(
-        "libretime_analyzer.pipeline.analyze_playability.FFMPEG",
+        "rastatime_analyzer.pipeline.analyze_playability.FFMPEG",
         "this-binary-does-not-exist-12345",
     ):
         # Should not raise; falls through with a logged warning.

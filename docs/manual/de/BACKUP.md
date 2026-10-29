@@ -40,7 +40,7 @@ ihrer Erstellzeit:
 ```
 rastatime-backup-2026-09-16T1830.zip
     db.dump          die vollständige Datenbank (pg_dump, Custom-Format)
-    config/…         jede Konfigurationsdatei (libretime.conf, …)
+    config/…         jede Konfigurationsdatei (rastatime.conf, …)
     manifest.json    was enthalten ist, erstellt wann, mit welchem pg_dump
 ```
 

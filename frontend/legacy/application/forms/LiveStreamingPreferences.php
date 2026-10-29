@@ -15,7 +15,7 @@ class Application_Form_LiveStreamingPreferences extends Zend_Form_SubForm
         // their only effect path was ApiController::updateSourceStatusAction
         // sending RabbitMQ messages to the Pypo/Liquidsoap playout —
         // both removed in ADR-002.  The SourceSwitcher in
-        // backend/playout/libretime_playout/source_switcher.py now
+        // backend/playout/rastatime_playout/source_switcher.py now
         // performs the equivalent transitions unconditionally
         // (Master > Show > Scheduled).  Re-introducing operator gates
         // requires real Use-Case input first; see CHANGELOG entry for

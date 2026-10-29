@@ -8,11 +8,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import playout_scheduler as ps
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.liquidsoap_service import NightlyRestartPolicy
-from libretime_playout.player.events import EventKind, WebStreamEvent
+from rastatime_playout import playout_scheduler as ps
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.liquidsoap_service import NightlyRestartPolicy
+from rastatime_playout.player.events import EventKind, WebStreamEvent
 
 
 def _webstream_event(start_in_seconds: float) -> WebStreamEvent:
@@ -164,7 +164,7 @@ def test_ensure_gives_up_after_the_timeout(monkeypatch):
 
 
 def test_ensure_is_none_when_the_engine_has_no_recording_stop():
-    from libretime_playout.engine.interface import PlayoutEngine
+    from rastatime_playout.engine.interface import PlayoutEngine
     engine = MagicMock(spec=PlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
     s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock())

@@ -15,9 +15,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.player.events import EventKind, FileEvent, WebStreamEvent
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.player.events import EventKind, FileEvent, WebStreamEvent
 
 
 def _file(start, row_id=777, file_id=1, cue_in=0.0, seconds=200.0):
@@ -55,7 +55,7 @@ def _webstream(start, row_id=888, stream_id=2):
 
 @pytest.fixture
 def sched(monkeypatch):
-    from libretime_playout import playout_scheduler as ps
+    from rastatime_playout import playout_scheduler as ps
 
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
@@ -73,7 +73,7 @@ def sched(monkeypatch):
 
 
 def _refresh(s, events):
-    with patch("libretime_playout.playout_scheduler.get_schedule", return_value=events):
+    with patch("rastatime_playout.playout_scheduler.get_schedule", return_value=events):
         s.refresh()
     timers = dict(s._timers)
     s._cancel_all_timers()
@@ -412,7 +412,7 @@ def test_catch_up_still_enters_a_row_nobody_is_starting(sched):
     now = datetime.utcnow()
     row = _file(now - timedelta(seconds=40), row_id=5, file_id=5)
     s._current_event, s._playing_key = None, None
-    with patch("libretime_playout.playout_scheduler.threading.Timer") as timer:
+    with patch("rastatime_playout.playout_scheduler.threading.Timer") as timer:
         s._arm_file_event("k", row, now)
     assert any(c.args[0] == 0 for c in timer.call_args_list)   # the catch-up Timer(0, ...)
 

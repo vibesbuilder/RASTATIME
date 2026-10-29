@@ -191,7 +191,7 @@ Program Managers and Admins only.  Ports and mount names are listed in
 There are **no personal API keys**.
 
 - **Services** (playout, analyzer, scripts on the station machine) use
-  the station's API key from `config/libretime.conf`
+  the station's API key from `config/rastatime.conf`
   (`Authorization: Api-Key …`).  Treat it like a password.
 - **People** can use the REST API v2 (`/api/v2/`) with their own user
   name and password; they get the permissions of their role.

@@ -68,7 +68,7 @@ _LOCAL_MACHINE_VIEW = _LEGACY / "application" / "views" / "scripts" / "preferenc
 _LINEIN_CTRL    = _LEGACY / "application" / "controllers" / "LineinController.php"
 _PREF_CTRL      = _LEGACY / "application" / "controllers" / "PreferenceController.php"
 _LOCALE_DIR = _LEGACY / "locale"
-_DE_DE_PO   = _LOCALE_DIR / "de_DE" / "LC_MESSAGES" / "libretime.po"
+_DE_DE_PO   = _LOCALE_DIR / "de_DE" / "LC_MESSAGES" / "rastatime.po"
 
 #: The maintained translations (frontend/legacy/locale/README.md).
 _MAINTAINED_LOCALES = ("de_DE", "fr_FR", "es_ES")
@@ -204,7 +204,7 @@ def test_local_machine_nav_label_translated_in_all_maintained_locales():
     (it did until 2026-10-03)."""
     missing = [
         loc for loc in _MAINTAINED_LOCALES
-        if not _po_has(_read(_LOCALE_DIR / loc / "LC_MESSAGES" / "libretime.po"), "Local Machine")
+        if not _po_has(_read(_LOCALE_DIR / loc / "LC_MESSAGES" / "rastatime.po"), "Local Machine")
     ]
     assert not missing, f"'Local Machine' nav label untranslated in: {missing}"
 
@@ -222,7 +222,7 @@ def test_local_machine_page_strings_translated_in_all_maintained_locales():
     assert len(strings) >= 90, f"expected the full page, found only {len(strings)} strings"
     report = {}
     for loc in _MAINTAINED_LOCALES:
-        catalog = _po_catalog(_read(_LOCALE_DIR / loc / "LC_MESSAGES" / "libretime.po"))
+        catalog = _po_catalog(_read(_LOCALE_DIR / loc / "LC_MESSAGES" / "rastatime.po"))
         missing = [s for s in strings if not catalog.get(s)]
         if missing:
             report[loc] = missing

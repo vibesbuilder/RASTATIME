@@ -52,18 +52,18 @@ nssm status RASTATIME-LIQUIDSOAP
 
 Im **normalen User-Terminal** (kein Admin).  **Wichtig: die
 Pypo-venv-Python-Executable verwenden, nicht das System-Python**
-— sonst kommt `No module named libretime_playout`:
+— sonst kommt `No module named rastatime_playout`:
 
 ```powershell
 $env:RASTATIME_PLAYOUT_ENGINE = "liquidsoap"
-C:\rastatime\.venv\Scripts\python.exe -m libretime_playout
+C:\rastatime\.venv\Scripts\python.exe -m rastatime_playout
 ```
 
 **Erwarteter Log-Output:**
 
 ```
 INFO  RASTATIME-PLAYOUT: starting (libVLC engine).
-INFO  Config loaded from C:\rastatime\config\libretime.conf
+INFO  Config loaded from C:\rastatime\config\rastatime.conf
 INFO  Found N enabled Icecast stream output(s) — …
 WARN  Rendered C:/Tools/liquidsoap/rastatime.liq (content changed).  RESTART the RASTATIME-LIQUIDSOAP NSSM service so it picks up the new .liq:   nssm restart RASTATIME-LIQUIDSOAP
 INFO  Local-playback engine: Liquidsoap (Phase-C2+C3+C6 fully wired). Telnet target 127.0.0.1:1234.

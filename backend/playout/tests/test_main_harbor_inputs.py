@@ -1,6 +1,6 @@
 """
 RASTATIME 2026-09-10 - the harbor ports and mounts come from
-stream.inputs.* in libretime.conf (what Settings -> Streams shows), with a
+stream.inputs.* in rastatime.conf (what Settings -> Streams shows), with a
 safety net against Icecast's ports; the legacy web URL for the DJ login
 check comes from general.public_url or RASTATIME_DJ_AUTH_WEB_URL.
 """
@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import pytest
 
-from libretime_playout import __main__ as main
+from rastatime_playout import __main__ as main
 
 
 def _conf(monkeypatch, tmp_path, text):
-    path = tmp_path / "libretime.conf"
+    path = tmp_path / "rastatime.conf"
     path.write_text(text, encoding="utf-8")
     monkeypatch.setattr(main, "_CONFIG_FILE", str(path))
     return path
@@ -36,7 +36,7 @@ def test_icecast_port_is_refused_with_a_warning(monkeypatch, tmp_path, caplog):
         "    main:\n      mount: main\n      port: 8000\n"
         "    show:\n      mount: show\n      port: 8002\n"
     ))
-    with caplog.at_level("WARNING", logger="libretime_playout.__main__"):
+    with caplog.at_level("WARNING", logger="rastatime_playout.__main__"):
         result = main._read_harbor_inputs([{"port": 8002}])
     assert result == (8001, "main", 8001, "show")
     assert sum("cannot bind" in r.getMessage() for r in caplog.records) == 2

@@ -19,11 +19,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import playout_scheduler as ps
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
-from libretime_playout.player.events import EventKind, FileEvent
+from rastatime_playout import playout_scheduler as ps
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+from rastatime_playout.player.events import EventKind, FileEvent
 
 
 # ---------------------------------------------------------------------------
@@ -453,7 +453,7 @@ def test_arm_queue_ahead_lead_is_buffer_plus_margin(sched, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_generate_file_events_carries_instance_and_exclusion():
-    from libretime_playout.player.schedule import StreamPreferences, generate_file_events
+    from rastatime_playout.player.schedule import StreamPreferences, generate_file_events
 
     events = {}
     schedule = {
@@ -475,7 +475,7 @@ def test_generate_file_events_inherits_the_types_no_fade_preset():
     """RASTATIME 2026-09-30 - track_type_no_fade (migration 0063): a track
     set to "As the track type" takes the preset; the track's own field
     wins, an excluded track has no overlap to keep its level in."""
-    from libretime_playout.player.schedule import StreamPreferences, generate_file_events
+    from rastatime_playout.player.schedule import StreamPreferences, generate_file_events
 
     schedule = {
         "id": 7, "instance": 33, "starts_at": datetime(2026, 9, 30, 12, 0),
@@ -501,7 +501,7 @@ def test_generate_file_events_inherits_the_types_no_fade_preset():
 
 
 def test_resolve_dj_fade_prefers_the_preference(monkeypatch):
-    from libretime_playout import __main__ as main
+    from rastatime_playout import __main__ as main
 
     monkeypatch.setattr(main, "_read_pref_seconds", lambda key: 2.0 if key == "default_transition_fade" else None)
     assert main._resolve_dj_fade_seconds() == 2.0
@@ -511,7 +511,7 @@ def test_resolve_dj_fade_prefers_the_preference(monkeypatch):
 
 
 def test_full_render_threads_the_dj_fade_into_the_bus():
-    from libretime_playout import liquidsoap_config as lc
+    from rastatime_playout import liquidsoap_config as lc
     out = lc.render_rastatime_liq(
         [{"type": "mp3", "host": "h", "port": 8000, "mount": "m", "pass": "x", "bitrate": 128}],
         harbor_main_password="a", harbor_show_password="b", dj_fade_seconds=1.5,
@@ -520,7 +520,7 @@ def test_full_render_threads_the_dj_fade_into_the_bus():
 
 
 def test_resolve_show_crossfade_prefers_the_preference(monkeypatch):
-    from libretime_playout import __main__ as main
+    from rastatime_playout import __main__ as main
 
     monkeypatch.setattr(main, "_read_pref_seconds", lambda key: 2.5 if key == "default_show_crossfade_duration" else None)
     assert main._resolve_show_crossfade_seconds() == 2.5

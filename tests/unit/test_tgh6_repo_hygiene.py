@@ -6,7 +6,7 @@ required content.  No server, database, or installed packages needed.
 
 Test inventory (10 tests):
   1.  .gitignore exists at the repository root.
-  2.  .gitignore excludes config/libretime.conf (the secret-bearing file).
+  2.  .gitignore excludes config/rastatime.conf (the secret-bearing file).
   3.  .gitignore excludes the .venv/ virtual-environment directory.
   4.  .gitignore excludes *.log files.
   5.  .gitignore excludes the runtime media/ directory.
@@ -37,10 +37,10 @@ def test_gitignore_exists():
 
 
 def test_gitignore_excludes_real_config():
-    """.gitignore must exclude config/libretime.conf (contains secrets)."""
+    """.gitignore must exclude config/rastatime.conf (contains secrets)."""
     text = _GITIGNORE.read_text(encoding="utf-8")
-    assert "config/libretime.conf" in text, (
-        ".gitignore does not exclude config/libretime.conf"
+    assert "config/rastatime.conf" in text, (
+        ".gitignore does not exclude config/rastatime.conf"
     )
 
 

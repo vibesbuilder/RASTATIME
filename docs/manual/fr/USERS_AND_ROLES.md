@@ -205,7 +205,7 @@ Il n'existe **pas de clés API personnelles**.
 
 - **Les services** (playout, analyzer, scripts sur la machine de la
   station) utilisent la clé API de la station dans
-  `config/libretime.conf` (`Authorization: Api-Key …`).  Traitez-la
+  `config/rastatime.conf` (`Authorization: Api-Key …`).  Traitez-la
   comme un mot de passe.
 - **Les personnes** peuvent utiliser l'API REST v2 (`/api/v2/`) avec
   leur propre nom d'utilisateur et mot de passe ; elles obtiennent les

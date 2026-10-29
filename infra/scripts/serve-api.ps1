@@ -14,7 +14,7 @@
 
     It configures environment variables, sets DJANGO_SETTINGS_MODULE to
     the production settings module, and invokes Waitress via
-    ``python -m libretime_api.waitress_serve``.
+    ``python -m rastatime_api.waitress_serve``.
 
     For development (DEBUG=True, SQLite DB, no config file required) use
     ``run-api.ps1`` instead.
@@ -32,9 +32,9 @@
     threads is typically sufficient.
 
 .PARAMETER ConfigFile
-    Path to the RASTATIME configuration file (libretime.conf).
-    Required by production settings (libretime_api.settings.prod).
-    Defaults to <repo_root>\config\libretime.conf if it exists.
+    Path to the RASTATIME configuration file (rastatime.conf).
+    Required by production settings (rastatime_api.settings.prod).
+    Defaults to <repo_root>\config\rastatime.conf if it exists.
 
 .EXAMPLE
     # From the repo root — serve on localhost with defaults:
@@ -44,23 +44,23 @@
     # Bind to all interfaces, 8 threads, explicit config:
     powershell -ExecutionPolicy Bypass -File infra\scripts\serve-api.ps1 `
         -Host 0.0.0.0 -Port 8000 -Threads 8 `
-        -ConfigFile C:\rastatime\config\libretime.conf
+        -ConfigFile C:\rastatime\config\rastatime.conf
 
 .NOTES
     Prerequisites:
         - Python 3.11+ with venv at <repo_root>\.venv (or on PATH)
         - waitress installed: pip install waitress
         - Django and all API dependencies installed
-        - A valid libretime.conf config file
+        - A valid rastatime.conf config file
 
     NSSM service registration example:
         nssm install rastatime-api `
             "C:\rastatime\.venv\Scripts\python.exe" `
-            "-m libretime_api.waitress_serve --host 127.0.0.1 --port 8000"
+            "-m rastatime_api.waitress_serve --host 127.0.0.1 --port 8000"
         nssm set rastatime-api AppDirectory "C:\rastatime\backend\api"
         nssm set rastatime-api AppEnvironmentExtra `
-            "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-            "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf"
+            "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
+            "RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf"
         nssm start rastatime-api
 
     See ADR-005 and ADR-006 for service architecture decisions.
@@ -114,7 +114,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "  [ok]    Waitress $WaitressCheck installed." -ForegroundColor DarkCyan
 
 # ---------------------------------------------------------------------------
-# PYTHONPATH — make libretime_api importable
+# PYTHONPATH — make rastatime_api importable
 # ---------------------------------------------------------------------------
 $ApiSrc    = Join-Path $RepoRoot 'backend\api'
 $SharedSrc = Join-Path $RepoRoot 'backend\shared'
@@ -124,22 +124,22 @@ $env:PYTHONPATH = "$ApiSrc;$SharedSrc;$RepoRoot;$ExistingPath"
 # ---------------------------------------------------------------------------
 # Django settings — production
 # ---------------------------------------------------------------------------
-$env:DJANGO_SETTINGS_MODULE = "libretime_api.settings.prod"
+$env:DJANGO_SETTINGS_MODULE = "rastatime_api.settings.prod"
 
 # ---------------------------------------------------------------------------
 # Config file
 # ---------------------------------------------------------------------------
 if ($ConfigFile -ne "") {
-    $env:LIBRETIME_CONFIG_FILEPATH = $ConfigFile
+    $env:RASTATIME_CONFIG_FILEPATH = $ConfigFile
     Write-Host "  [cfg]   Config: $ConfigFile" -ForegroundColor DarkCyan
 } else {
-    $DefaultCfg = Join-Path $RepoRoot 'config\libretime.conf'
+    $DefaultCfg = Join-Path $RepoRoot 'config\rastatime.conf'
     if (Test-Path $DefaultCfg) {
-        $env:LIBRETIME_CONFIG_FILEPATH = $DefaultCfg
+        $env:RASTATIME_CONFIG_FILEPATH = $DefaultCfg
         Write-Host "  [cfg]   Config: $DefaultCfg (default)" -ForegroundColor DarkCyan
     } else {
         Write-Host "  [warn]  No config file found. Set -ConfigFile or" -ForegroundColor DarkYellow
-        Write-Host "          create config\libretime.conf." -ForegroundColor DarkYellow
+        Write-Host "          create config\rastatime.conf." -ForegroundColor DarkYellow
         Write-Host "          Production settings require a valid config file." -ForegroundColor DarkYellow
     }
 }
@@ -155,7 +155,7 @@ Write-Host "======================================================" -ForegroundC
 Write-Host "  RASTATIME API  — Waitress production server  (T17.1)" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Settings  : libretime_api.settings.prod" -ForegroundColor Gray
+Write-Host "  Settings  : rastatime_api.settings.prod" -ForegroundColor Gray
 Write-Host "  Bind      : ${BindHost}:${Port}" -ForegroundColor White
 Write-Host "  Threads   : $Threads" -ForegroundColor Gray
 Write-Host "  Health    : $HealthUrl" -ForegroundColor Green
@@ -167,7 +167,7 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 # Launch Waitress
 # ---------------------------------------------------------------------------
-& $Python -m libretime_api.waitress_serve `
+& $Python -m rastatime_api.waitress_serve `
     --host $BindHost `
     --port $Port `
     --threads $Threads

@@ -49,15 +49,15 @@ dann 2 → 1, danach nach Bedarf**.
 
 | # | Punkt | Status | Sektion / Notiz |
 |---|-------|--------|-----------------|
-| 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.; Datei und Archiv-Einträge inzwischen weg, geprüft 24.10.) | ✅ 2026-10-24 11:53 (Rolle + libretime.conf, Dienste 11:58–12:03 neu gestartet); mit rotiert: api_key, internal_listener | „Datenbank-Passwort rotieren" |
-| 2 | Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen, dazu Icecast-Quellpasswort | ✅ 2026-10-24: Harbor main/show (Liquidsoap 12:02 mit neuen Harbors), Icecast source/relay/admin in `config/icecast.xml` + Settings → Streams, Mounts 12:23:04 wieder verbunden | „Statisches Harbor-Rückfall-Passwort" |
+| 1 | Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 04.10.; Datei und Archiv-Einträge inzwischen weg, geprüft 24.10.) | ✅ 2026-10-24 11:53 (Rolle + rastatime.conf, Dienste 11:58–12:03 neu gestartet); mit rotiert: api_key, internal_listener | „Datenbank-Passwort rotieren" |
+| 2 | Statisches Harbor-Rückfall-Passwort in rastatime.conf ersetzen, dazu Icecast-Quellpasswort | ✅ 2026-10-24: Harbor main/show (Liquidsoap 12:02 mit neuen Harbors), Icecast source/relay/admin in `config/icecast.xml` + Settings → Streams, Mounts 12:23:04 wieder verbunden | „Statisches Harbor-Rückfall-Passwort" |
 | 3 | Windows-Updates Oktober 2026 + Lenovo-Firmware | ✅ 2026-10-23 18:01 (Build 26200.9711, BIOS M5OKT41A); offen nur die TPM-Firmware 15.25 | „Windows-Updates Oktober 2026" |
 | 4 | Stereo Tool: Stream-Messung mit dem R128-Preset | ✅ 2026-10-23: Datei-Sendung −22,8 LUFS (5 min) / −24,1 LUFS (3 min), TP −11,5 dBTP; BBC-Webstream 19:01–19:06 −22,9 LUFS / TP −7,5 dBTP; Limiter-Decke (−1 dBTP) bleibt Offline-Nachweis vom 21.10. | „Ausgangs-Processing mit Stereo Tool" |
 | 5 | Line-In: Live-Abnahme des frischen `input.http` je Slot (685dc17, 2026-10-21) | ✅ 2026-10-23 aus Logs + 24/7-Aufnahme: Slot 1 (22.10. 19:07–22:00, `linein_http_in_1`) und Slot 2 (23.10. 08:15–09:45, `linein_http_in_2`) je binnen 1 s auf Sendung, Aufnahme 08:15–09:45 durchgehend −21…−25 LUFS, kein silence_fallback | Memory linein_abnahme_stand |
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | ✅ 2026-10-25: 6 echte Stunden (22:00–04:00 UTC), 104/104 Zeilen gespielt, keine Lücke in der doppelten Stunde, 05:00-Folge pünktlich (siehe Abschnitt „Zeitumstellungsnacht 24./25.10.2026") | – |
 
 **Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**
-Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B (Vorbedingung GitHub) ·
+Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ✅ gebaut 2026-10-29 (Brücke bis 2026-11-03) ·
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
@@ -403,7 +403,7 @@ Diese Regeln stehen seit 2026-10-03 in den Projektregeln; erster Rückfallpunkt
 Alternative für später: zweiter Rechner als Entwicklungsumgebung (Anschaffung).
 
 **17c · Produktions-Passwörter (zuletzt, direkt vor dem Live-Gang):** Admin-Konto,
-DB-Passwort (`config/libretime.conf` + Dienste neu starten), Icecast-Source-/Admin-
+DB-Passwort (`config/rastatime.conf` + Dienste neu starten), Icecast-Source-/Admin-
 Passwort (`C:\Tools\Icecast\icecast.xml` + Streams-Einstellungen), statisches
 DJ-Rückfallpasswort (Settings → Streams), RabbitMQ-Benutzer.  Operator setzt die
 Werte, ich liefere die Stellen-Liste und prüfe anschließend Stream, DJ-Login und
@@ -414,7 +414,7 @@ grün** — A1.1/1.3/1.4/1.5, A2.1 (Sendungsstarts +58…+169 ms), A2.3, A2.4 (0
 A2.5 (0 Abweichungen), A2.6, A2.8 (ALL OK), A3.2 (no-show nicht gezählt), A3.3 (5 ×
 falsch → 15 min, Entsperren per rt-blocks.ps1), A4.1–A4.7, A5.1 (11. Versuch 429),
 A5.2, A5.3 (Trockenlauf 24 h: 10 Scanner; 10-min-Fenster im Echtlauf bisher 0 →
-Fenster evtl. auf 60 min), A5.4 (Secrets custom; Passwörter in libretime.conf nur
+Fenster evtl. auf 60 min), A5.4 (Secrets custom; Passwörter in rastatime.conf nur
 teilweise in Anführungszeichen), A6.1/6.3/6.4.  Offen für den Operator: A1.2, A2.2,
 A2.7, A2.9, A3.1/3.4/3.5/3.6, A4.1 vom Mobilfunk, A6.2.
 **Live-Readiness abgeschlossen 2026-10-06:** 17a ✅, 17b ✅, DJ-Login ✅, Line-In ✅ (war
@@ -439,12 +439,25 @@ Internet-Erreichbarkeit (Punkt 16, Evaluierung offen), Testplan erstellen
 
 ---
 
-### 🟡 Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — DEFER (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
+### ✅ Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — GEBAUT 2026-10-29, Brücke bis 2026-11-03 (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
+
+**Stand 2026-10-29 (Operator-Go, GitHub-Phase 1):** Repo-Teil gebaut - fünf Pakete `rastatime_*` (git mv +
+Sweep über 328 Dateien), Distributionen/Kommandos `rastatime-*`, Präfix `RASTATIME_`, `config/rastatime.conf`,
+gettext-Domäne `rastatime`, PHP-Klassen `Rastatime_*`, Session-Namespace `rastatime`, `wavesurfer/rastatime.js`.
+**Brücke (Operator: fünf Tage, bis 2026-11-03):** Stub-Pakete `backend/shared/libretime_*` + Meta-Path-Finder
+`rastatime_shared.compat.legacy_names` (gleiche Modulobjekte, `-m libretime_*` und `DJANGO_SETTINGS_MODULE` alt
+laufen), Konfig-Loader/Click/PHP lesen `LIBRETIME_*` nach `RASTATIME_*`, `libretime.conf` gilt neben fehlender
+`rastatime.conf`, alte Konsolen-Kommandos als zweite Entry-Points.  Suiten grün (api 195, playout 845, unit 739,
+shared inkl. Brücken-Tests).  **Außerhalb des Repos (Umschalt-Skript `C:\Temp\optd\stufe_b_switch.ps1`, Operator,
+ruhiges Fenster):** Dienste stoppen, `rastatime-analyzer` neu installieren (EXE war gesperrt), vier Pfad-Junctions
+entfernen (überbrücken bis dahin die laufenden Prozesse), nssm-Parameter API/PLAYOUT/ANALYZER/WORKER,
+`libretime.conf` löschen (Kopie `rastatime.conf` liegt), Dienste starten.  **Phase 2 ab 2026-11-03:** Stubs,
+Finder, Legacy-Präfix, zweite Entry-Points, PHP-Fallbacks, `.gitignore`-Zeile `config/libretime.conf` entfernen.
 
 **Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
 GitHub, Releases, Update-Weg", Stufe 0) und erst dort angegangen; bis dahin Defer, nicht erneut vorschlagen.
 Begründung: der Nutzen ist nach innen gerichtet und für den Operator unsichtbar; real wird er erst, wenn fremde
-Entwickler Paketnamen, Kommandos und Konfigdatei sehen (`libretime_api` neben dem Produktnamen RASTATIME wirkt wie
+Entwickler Paketnamen, Kommandos und Konfigdatei sehen (`rastatime_api` neben dem Produktnamen RASTATIME wirkt wie
 eine halbe Umbenennung).  Zählung 2026-10-28 (ohne Vendor/Upstream): backend/api 354 Dateien / 971 Treffer,
 backend/playout 229 / 572, analyzer + shared 73 / 182, frontend/legacy 65 / 175, tests 56 / 181, infra + config +
 scripts 17 / 107, docs 81 / 494 - überwiegend Import-Pfade, Umgebungsvariablen und der Konfigdateiname.
@@ -467,18 +480,18 @@ Backend-`verbose_name`/Titel/Beschreibungen, produktbezogene Kommentare);
 Referenzkopien `docs/upstream` + `infra/upstream`, Lizenz/Attribution (AGPL-Fork),
 Upstream-URLs, Herkunfts-Erwähnungen in Doku/History.
 
-**Stufe B umfasst:** Paketnamen `libretime_api`, `libretime_playout`,
-`libretime_analyzer`, `libretime_shared`, `libretime_api_client` (Import-Pfade,
+**Stufe B umfasst:** Paketnamen `rastatime_api`, `rastatime_playout`,
+`rastatime_analyzer`, `rastatime_shared`, `rastatime_api_client` (Import-Pfade,
 `setup.py`-Namen + Entry-Points `libretime-*.exe`, `INSTALLED_APPS`, `ROOT_URLCONF`,
-`DJANGO_SETTINGS_MODULE`), 15 Umgebungsvariablen `LIBRETIME_*`
-(`LIBRETIME_CONFIG_FILEPATH` 79×, Präfix in `libretime_shared/config/_base.py`),
-Konfigdatei `config/libretime.conf` (+ `.example`), gettext-Domäne `libretime`
+`DJANGO_SETTINGS_MODULE`), 15 Umgebungsvariablen `RASTATIME_*`
+(`RASTATIME_CONFIG_FILEPATH` 79×, Präfix in `rastatime_shared/config/_base.py`),
+Konfigdatei `config/rastatime.conf` (+ `.example`), gettext-Domäne `libretime`
 (+ `.po/.mo`-Dateinamen, `Makefile`, `Locale.php`), PHP-Klassen
-`LibreTime_Auth_Adaptor_*`, `LibreTime_Model_FreeIpa`, `LibreTimeFileNotFoundException`,
+`Rastatime_Auth_Adaptor_*`, `Rastatime_Model_FreeIpa`, `RastatimeFileNotFoundException`,
 Session-Namespace `libretime` (`Auth.php`), systemd-Units (Linux-Reste),
 CI-Workflows, Linux-User `libretime`.  Außerhalb des Repos: vier nssm-Dienste
-(`-m libretime_playout`, `DJANGO_SETTINGS_MODULE`, `LIBRETIME_CONFIG_FILEPATH`,
-`libretime-analyzer.exe`), Editable-Installationen im `.venv` (5 Finder, 4 EXEs),
+(`-m rastatime_playout`, `DJANGO_SETTINGS_MODULE`, `RASTATIME_CONFIG_FILEPATH`,
+`rastatime-analyzer.exe`), Editable-Installationen im `.venv` (5 Finder, 4 EXEs),
 `rastatime.liq` / `standby.liq` (6 Treffer), Apache/Icecast nur Kommentare.
 Präzedenz: `rastatime_worker` (bereits umbenannt, `install-worker.ps1`).
 
@@ -1729,7 +1742,7 @@ Sendeplan zurück, nur Dashboard-Status und Scheduler-Reaktion hängen
 am `input.harbor` auf z. B. 10 s senken (Trade-off: ein DJ mit 10 s
 Netzstörung fliegt raus).  Operator-Entscheidung; kein Handlungsdruck.
 
-### ✅ Statisches Harbor-Rückfall-Passwort in libretime.conf ersetzen (Operator 2026-09-10) - DONE 2026-10-24
+### ✅ Statisches Harbor-Rückfall-Passwort in rastatime.conf ersetzen (Operator 2026-09-10) - DONE 2026-10-24
 **Stand 2026-10-24:** `stream.harbor.main_password` / `show_password` ersetzt (PLAYOUT rendert, Liquidsoap 12:02 mit neuen Harbors); Icecast source/relay/admin in `C:\RASTATIME\config\icecast.xml` (die Datei, mit der der Dienst läuft) und Settings → Streams (alle drei Ausgänge) neu gesetzt.  Lehren: die Kopie unter `C:\Tools\Icecast` ist tot; nach jeder Änderung der Datei Icecast neu starten; Settings-Werte per Kopieren einsetzen (ein Tippfehler an Position 7–9 kostete 12:16–12:23 den Stream).
 
 **Nachtrag 2026-09-13:** beim Rendern des Replikats fiel auf, dass auch das
@@ -1741,7 +1754,7 @@ Konfiguration + Settings → Streams + LIQUIDSOAP-Neustart).
 `stream.harbor.main_password`/`show_password` sind noch Installations-
 Platzhalter.  Seit den UI-Logins greifen sie nur, wenn PLAYOUT nicht
 erreichbar ist (Benutzer `source`), also gerade im Notfall.  To do:
-beide Werte in libretime.conf durch echte Passwörter ersetzen, dann
+beide Werte in rastatime.conf durch echte Passwörter ersetzen, dann
 PLAYOUT (rendert) und LIQUIDSOAP neu starten; Werte nie ins Log/Chat.
 
 ### ✅ DJ-Logins: die Oberfläche wird zur Wahrheit (Operator-Go Option 2, umgesetzt 2026-09-10, Host-Login live abgenommen 2026-10-03)
@@ -1754,7 +1767,7 @@ Abbruch → ECONNRESET → Resume +124,7 s.  Alle drei Login-Arten (Master, Cust
 sind damit live abgenommen.
 
 **Befund 2026-09-10:** BUTT-Login schlug fehl.  Die Harbors prüften nur
-`source` + statisches Passwort aus libretime.conf; Settings → Streams
+`source` + statisches Passwort aus rastatime.conf; Settings → Streams
 zeigte Port 8000 (Icecast-Ära), der Harbor hörte auf 8001; Master-Source-
 und per-Show-Logins aus der UI wurden nie benutzt.
 **Umgesetzt:** Harbor-`auth` → PLAYOUT `/dj-auth` → Legacy
@@ -2181,7 +2194,7 @@ Operator-Schalter — die Automatik bleibt, nur ihre Bedingung ist jetzt
 `main.py` gestartet — der aktive Entry-Point `__main__.py` kannte ihn
 nicht → `cc_listener_count` blieb leer, beide Analytics-Views
 korrekterweise ohne Daten.  Zusätzlich wäre die Output-Quelle
-(`libretime.conf outputs:`) seit dem Phase-D-Cutover leer gewesen.
+(`rastatime.conf outputs:`) seit dem Phase-D-Cutover leer gewesen.
 **Fix:** Collector-Start in `__main__.py` (120-s-Poll); Poll-Liste
 kommt jetzt via `outputs_from_stream_settings()` aus den live
 `cc_pref stream_output_N`-Settings (Admin-Creds inklusive; Einträge
@@ -2203,7 +2216,7 @@ draufschauen.
 **Status:** ERLEDIGT 2026-06-16 — isolierter Trockenlauf gefahren (Temp-DB +
 Temp-Pfade, Live-DB nur gelesen, danach aufgeräumt). **Ergebnis: bestanden** —
 DB-Round-Trip 47/47 Tabellen identisch (0 `pg_restore`-Fehler), Pfad-Rewrite
-307/307 + idempotent, 307/307 Medien-Dateien auf Disk vorhanden, `libretime.conf`
+307/307 + idempotent, 307/307 Medien-Dateien auf Disk vorhanden, `rastatime.conf`
 parst. **Dabei gefundene MIGRATION.md-Fehler korrigiert** (Commit `70bb994`):
 eine DB statt zwei (`libretime` = totes Leftover), Pfad-Rewrite auf
 `rastatime.cc_files` statt `libretime.cc_music_dirs` (Tabelle existiert nicht),
@@ -2316,15 +2329,15 @@ parallel zum vollen Stack), WINDOWS_DEV_STATUS.md nachgezogen.
 **Nebenpunkte:** INSTALL.md §9c `-VlcPluginPath` existiert im echten
 `install-playout.ps1` nicht mehr (libVLC-Reste); `RASTATIME_PLAYOUT_ENGINE=
 liquidsoap` wird von `install-playout.ps1` **nicht** gesetzt (muss separat als
-AppEnvironmentExtra ans PLAYOUT-Service, sonst Default-Engine); `libretime.conf.
-template` heißt real `libretime.conf.example`.
+AppEnvironmentExtra ans PLAYOUT-Service, sonst Default-Engine); `rastatime.conf.
+template` heißt real `rastatime.conf.example`.
 
 **Weitere Funde beim echten Install 2026-08-26:**
 - `psycopg2` wird von keinem backend-Paket als Dependency deklariert —
   venv-Aufbau nach INSTALL.md ergibt einen API-Stack ohne DB-Treiber
   (`pip install psycopg2-binary` manuell nötig). → in backend/api
   pyproject.toml deklarieren oder in INSTALL.md §4 aufnehmen.
-- INSTALL.md Step 7: `manage.py` liegt unter `backend\api\libretime_api\
+- INSTALL.md Step 7: `manage.py` liegt unter `backend\api\rastatime_api\
   manage.py` (nicht `backend\api\manage.py`); `collectstatic` ist mit den
   prod-Settings gar nicht lauffähig (kein `STATIC_ROOT` gesetzt) und im
   Deployment auch nicht nötig → Schritt streichen/korrigieren.
@@ -2453,7 +2466,7 @@ Backup-Ordner als Einstellung, Liste + Download, Job im API-Prozess nach
 dem MoveJob-Muster) **gebaut 2026-09-16** (`df53122`; Details im CHANGELOG
 „Added"; Settings → Backup, 5 API-Routen, PHP-Proxies, Handbuch-Kapitel
 BACKUP in 4 Sprachen, ARCHITECTURE §23.35).  DB-Zugangsdaten aus
-libretime.conf (Operator-Entscheidung).  Grundsatzfragen beantwortet:
+rastatime.conf (Operator-Entscheidung).  Grundsatzfragen beantwortet:
 Scheduler = Windows-Aufgabenplaner + Management-Command (Worker bleibt
 Stub); Speicherort = serverseitiger Zielordner + Liste; Restore =
 schlank (Browser + Anleitung, kein 1-Klick-Restore).  **Live abgenommen
@@ -2789,7 +2802,7 @@ LocalSystem).  Bibliothek `C:\rastatime\media`: 4,3 GB, 2.489 Dateien
 (344 Audio, 2.120 Cover unter `imported/2/artwork`, 1 Show-Bild, 1 Auto-DJ-
 Logo, 4 hängende Importe vom 2026-05-20 in `organize/`, deren cc_files-Zeilen
 599/616/627/631 leeren `filepath` und `import_status=2` haben).  Die
-Storage-Wurzel steht nur in `libretime.conf` (`storage.path`); PHP
+Storage-Wurzel steht nur in `rastatime.conf` (`storage.path`); PHP
 (`Config::getStoragePath`), API (`settings.CONFIG.storage.path`), PLAYOUT
 (`config.storage.path`, Direktzugriff auf die Bibliothek für den Cache) und
 Analyzer (Zielordner kommt je Import-Nachricht aus PHP) lesen sie von dort.
@@ -2797,7 +2810,7 @@ Kein Apache-Alias, keine Tabelle `cc_music_dirs`.
 
 *Abweichungen von MIGRATION.md §4.4/§4.5 (dort nicht erfasst):*
 - Die owner-id-Ebene wird an **vier** Stellen erzeugt, nicht nur in
-  `MediaService.php:35`: `backend/api/libretime_api/podcasts/download.py:169`
+  `MediaService.php:35`: `backend/api/rastatime_api/podcasts/download.py:169`
   (Podcast-Downloads, `imported/<owner>` bzw. `imported/podcast`),
   `PreferenceController.php:1055` (Auto-DJ-Logos) und
   `ShowImageController.php:168/292` (Show-Bilder).
@@ -2814,7 +2827,7 @@ Kein Apache-Alias, keine Tabelle `cc_music_dirs`.
   PHP joint per `OsPath::join`, API per `Path(...) / rel` — die Schreibweise
   der DB-Pfade darf bleiben.
 
-*Eingriff:* (1) `libretime.conf` `storage.path: D:/stor`; (2) vier
+*Eingriff:* (1) `rastatime.conf` `storage.path: D:/stor`; (2) vier
 Code-Stellen ohne owner-id-Segment (PHP live ohne OpCache, API/Worker
 Neustart); (3) eine DB-Transaktion: `cc_files.filepath`, `cc_files.artwork`
 (`^/?imported/[0-9]+/` → `imported/`), `cc_show.image_path` und
@@ -2874,13 +2887,13 @@ soll der Speicherort der Bibliothek wählbar sein, wie der Import Folder.
 Evaluierung 2026-09-15, Empfehlung Go in drei Stufen (wartet auf Go):
 
 - *Machbarkeit:* ja.  Jeder Leser der Wurzel kann die Einstellung statt
-  `libretime.conf` fragen: PHP (`Config::getStoragePath`, pro Request), API
+  `rastatime.conf` fragen: PHP (`Config::getStoragePath`, pro Request), API
   und Worker (`settings.CONFIG.storage.path` → Preference pro Aufruf), PLAYOUT
   (bei jedem Refresh wie die ICY-Werte), Analyzer (Zielordner kommt je Import
   aus PHP).  Vorbedingung: alle DB-Pfade relativ zur Wurzel (Stufe 1), sonst
   bricht jeder Wechsel Show-Bilder und Auto-DJ-Logo.
 - *Eingriff:* neuer cc_pref-Schlüssel `local_storage_folder` (leer =
-  `libretime.conf`); Feld + Knopf „Verschieben" auf der Local-Machine-Seite
+  `rastatime.conf`); Feld + Knopf „Verschieben" auf der Local-Machine-Seite
   mit Fortschritt; API-Endpunkt Prüfen/Starten/Status; Umzugs-Job (kopieren →
   zählen/prüfen → Wurzel umschalten → alte Kopie stehen lassen, Hinweis zum
   Löschen), Importe während des Jobs gesperrt; Prüfungen: Pfad
@@ -2892,7 +2905,7 @@ Evaluierung 2026-09-15, Empfehlung Go in drei Stufen (wartet auf Go):
   inkl. ruhigem Moment für die DB-Transaktion; Stufe 2 (Einstellung + Job)
   2–3 Tage; Stufe 3 = erster Umzug nach `D:\stor` über die UI als Abnahme.
 - *Sinn:* hoch für den Operator-Wunsch, keine Hand-Edits an
-  `libretime.conf` mehr, der Umzug wird wiederholbar (weitere Platte, Backup-
+  `rastatime.conf` mehr, der Umzug wird wiederholbar (weitere Platte, Backup-
   Rückspielung).  *Empfehlung:* Go; Stufe 1 ist auch für den reinen Umzug nötig
   und kann sofort beginnen.
 
@@ -2911,10 +2924,10 @@ Erinnerung ab ~2026-09-23).  Damit ist Arbeitsreihenfolge Punkt 7 erledigt.
 **Stufe 2 im Detail (Evaluierung 2026-09-16):**
 
 *Wahrheit und Leser:* neuer cc_pref-Schlüssel `local_storage_folder`
-(leer = `storage.path` aus `libretime.conf`, das damit nur noch Startwert
+(leer = `storage.path` aus `rastatime.conf`, das damit nur noch Startwert
 ist).  Ein Auflöser je Seite: PHP `Config::getStoragePath()` fragt zuerst die
 Einstellung (pro Request, wie `local_import_folder`); API/Worker
-`libretime_api.storage.root.get_storage_root()` (Einstellung → Config, 15 s
+`rastatime_api.storage.root.get_storage_root()` (Einstellung → Config, 15 s
 Cache) an den drei Stellen `storage/views/file.py` (2×),
 `podcasts/views/podcast.py` und als Standard von `storage_flatten`; PLAYOUT
 holt die Wurzel bei jedem Refresh von `GET /api/v2/storage/location` (fällt
@@ -2993,7 +3006,7 @@ nicht kosmetisch).
 
 **Zwei Wünsche, beide an der Storage-Struktur:**
 1. **Root-Folder weg vom Projektordner.**  Aktuell
-   `C:/rastatime/media` (= libretime.conf storage.path, im Repo-Baum).
+   `C:/rastatime/media` (= rastatime.conf storage.path, im Repo-Baum).
    Ziel: `D:\stor` auf SSD-B der neuen Maschine.
 2. **owner-id-Unterordner `imported/2/` wegsparen.**  Die `2` ist die
    User-ID des importierenden Operators (`MediaService.php` Z.35
@@ -3008,7 +3021,7 @@ Files eh alle verschoben → risikofrei + keine Doppelarbeit.
 
 **Vollständig dokumentiert in `docs/operator/MIGRATION.md` §4.4 + §4.5:**
 - Code-Patch MediaService.php (owner-id-Segment raus)
-- libretime.conf storage.path → D:/stor
+- rastatime.conf storage.path → D:/stor
 - DB-Transaktion: cc_music_dirs.directory + cc_pref + regexp_replace
   auf cc_files.filepath (`imported/<digits>/` → `imported/`)
 - robocopy-Flattening beim Restore
@@ -3059,10 +3072,10 @@ Phase F: Line-Input am 2026-05-29 spätabends).
   Lenovo M70s Gen 5/6 ohne Bottleneck.
 
 **Was zu löschen ist (~2800 LoC):**
-- `backend/playout/libretime_playout/engine/mpv_engine.py` (~450 LoC)
-- `backend/playout/libretime_playout/engine/ffmpeg_streamer.py` (~500 LoC)
-- `backend/playout/libretime_playout/engine/vlc_engine.py` (falls obsolet)
-- `backend/playout/libretime_playout/engine/ffmpeg_linein_capture.py`
+- `backend/playout/rastatime_playout/engine/mpv_engine.py` (~450 LoC)
+- `backend/playout/rastatime_playout/engine/ffmpeg_streamer.py` (~500 LoC)
+- `backend/playout/rastatime_playout/engine/vlc_engine.py` (falls obsolet)
+- `backend/playout/rastatime_playout/engine/ffmpeg_linein_capture.py`
   (~806 LoC) — **ABER VORHER** den reinen Helper
   `_stable_id_to_dshow_audio` (dshow-Spec aus Device-GUID) in ein
   neutrales Modul herauslösen (z.B. `engine/dshow_device.py`): der
@@ -3200,11 +3213,11 @@ Settings → Streams (vorher fest `admin`).  Befund Netz: PostgreSQL (pg_hba nur
 localhost), RabbitMQ und API lauschen auf 0.0.0.0; Firewall-Regeln 80/443/8001
 + obsolet 8002, Programmregeln „any port" für Erlang/epmd/liquidsoap (eine auf
 `C:\temp\liq245`).  **Block 1 (DB-Passwort + PostgreSQL auf localhost) erledigt 2026-10-04 16:40,
-verifiziert:** DB-Login mit dem Wert aus `libretime.conf` ok, 5432 nur 127.0.0.1/::1,
+verifiziert:** DB-Login mit dem Wert aus `rastatime.conf` ok, 5432 nur 127.0.0.1/::1,
 UI 200, API 200, Playout armed=8, kein Auth-Fehler mehr seit 16:38.  Lehre: ein
 Passwort mit führendem `!` ohne Anführungszeichen macht die YAML-Datei ungültig —
 alle Dienste standen ~10 min, der YAML-Parser schrieb den Wert in zwei Logs
-(maskiert); seither „Passwörter in libretime.conf immer in Anführungszeichen"
+(maskiert); seither „Passwörter in rastatime.conf immer in Anführungszeichen"
 im Runbook.  **Block 2 (RabbitMQ) erledigt 2026-10-04 16:58, verifiziert:** Benutzer nur noch
 `rastatime` (`guest` weg), Passwort custom, AMQP-Listener nur 127.0.0.1:5672
 (`rabbitmq.conf`), Analyzer „Listening for messages", Worker idle, Playout ohne
@@ -4268,7 +4281,7 @@ DELETE auf eine unbekannte ID antworten jetzt 404.  **Befund (Original):** beim 
 (`findPk` findet nichts); das ist ein PHP-`Error`, den das `catch (Exception)`
 in `MediaController::putAction` nicht fängt (legacy.log 2026-09-10 18:55:42).
 **Fix (~5 Zeilen):** in `updateFromArray` bei `!$file` eine
-`LibreTimeFileNotFoundException` werfen (bestehender 404-Pfad) und/oder in
+`RastatimeFileNotFoundException` werfen (bestehender 404-Pfad) und/oder in
 `putAction` `Throwable` fangen.
 
 ### ✅ „Recent Uploads"-Liste aktualisiert sich nicht automatisch nach Upload (DONE 2026-08-30, `8110b47`)
@@ -4758,11 +4771,11 @@ flot-Chart-JS und der API-Endpoint (`ApiController::pushStreamStatsAction`
 **0 Zeilen** → leeres JSON → leerer Graph.  Drei Brüche:
 
 1. **StatsCollectorThread läuft nicht.**  Wird nur in der verwaisten
-   `backend/playout/libretime_playout/main.py` gestartet; der aktive
-   Entry-Point `__main__.py` (`python -m libretime_playout`) kennt ihn
+   `backend/playout/rastatime_playout/main.py` gestartet; der aktive
+   Entry-Point `__main__.py` (`python -m rastatime_playout`) kennt ihn
    nicht (0 Referenzen).
 2. **Output-Quelle leer.**  `StatsCollector.collect()` liest
-   `config.stream.outputs.merged` aus libretime.conf, dort
+   `config.stream.outputs.merged` aus rastatime.conf, dort
    `outputs: icecast: []`.  Beim Liquidsoap-Cutover (Phase D) wanderte
    die Output-Config nach cc_pref + rastatime.liq.
 3. **Admin-Passwort fehlt.**  Der Collector pollt Icecast
@@ -4774,7 +4787,7 @@ flot-Chart-JS und der API-Endpoint (`ApiController::pushStreamStatsAction`
 - `StatsCollectorThread` in `__main__.py` starten (~3-5 Zeilen).
 - Output-Quelle umstellen: Icecast `/admin/stats.xml` direkt pollen
   mit Admin-Creds aus icecast.xml/config — unabhängig von der leeren
-  libretime.conf-Output-Liste.
+  rastatime.conf-Output-Liste.
 - Admin-Passwort-Config-Read.
 - Show Listener Stats: baut auf denselben cc_listener_count-Daten
   (JOIN cc_show_instances) — funktioniert fast automatisch sobald
@@ -5262,7 +5275,7 @@ C:\rastatime\.venv\Scripts\python.exe : INFO Soundcard manager registered ...
 ```
 
 **Root cause:**
-`libretime_api.soundcard.apps.SoundcardAppConfig.ready()` schreibt direkt
+`rastatime_api.soundcard.apps.SoundcardAppConfig.ready()` schreibt direkt
 auf **stderr** (per `print(..., file=sys.stderr)` oder ähnlichem
 Django-internen Mechanismus), **bevor** das Python-Logging-Framework
 voll aufgesetzt ist. PowerShell klassifiziert externes Stderr-Output
@@ -5275,11 +5288,11 @@ auch sauber vom Python-Logger ausgegeben (mit Timestamp + Logger-Name) —
 Operator kann statt `2>&1 | Tee-Object` einfach `*> file` benutzen,
 dann landet alles sauber in der Datei + im Terminal:
 ```powershell
-C:\rastatime\.venv\Scripts\python.exe -m libretime_playout *> C:\rastatime\logs\pypo.log
+C:\rastatime\.venv\Scripts\python.exe -m rastatime_playout *> C:\rastatime\logs\pypo.log
 ```
 
 **Echter Fix (für später):**
-In `backend/api/libretime_api/soundcard/apps.py` (oder wo das `print`
+In `backend/api/rastatime_api/soundcard/apps.py` (oder wo das `print`
 herkommt) den stderr-print auf `logger.info(...)` umstellen. Müsste
 die Audit-Aktion sein dass alle App-Init-Logs durch Python-Logging
 laufen. ~30 min.
@@ -5494,17 +5507,17 @@ akzeptabel, im Memory notiert, bei der Standby-Umstellung erneut messen.
 ### ✅ Statistik-Pushes: push-stream-stats 500 / admin/stats.xml 401 - historisch, geklaert 2026-10-10
 Der Stats-Thread des PLAYOUT bekommt alle 2 min HTTP 500 vom Legacy-Endpunkt /api/push-stream-stats und 401 von
 http://127.0.0.1:8000/admin/stats.xml (Icecast-Admin-Passwort?).  Nur Hoererstatistik betroffen, kein Sendebetrieb.
-Befund: beide Fehler traten NUR am 2026-10-04 auf (500 = Symfony-YAML-ParseException in libretime.conf, Passwort mit
+Befund: beide Fehler traten NUR am 2026-10-04 auf (500 = Symfony-YAML-ParseException in rastatime.conf, Passwort mit
 '!' unquotiert - seither gequotet; 401 = Icecast-Admin-Zugang, 17:08-17:12, danach nie wieder) und heute 11:52-12:32
 (Composer-Zwischenfall).  Seit 12:34 keine Fehler, Pushes laufen.  Hinweis: das Apache error_log vom 04.10. enthaelt
 das damalige Passwort im Klartext (Parse-Fehlermeldung) -> Operator sollte es rotieren und das error_log bereinigen.
 
 ### ✅ Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 2026-10-04) - DONE 2026-10-24 (Runbook `docs/operator/PASSWORD_ROTATION.md`)
-**Stand 2026-10-24:** Rolle per `\password` in psql, libretime.conf Zeile 26, Dienste API/PLAYOUT/LIQUIDSOAP/STANDBY/WORKER/ANALYZER neu gestartet; mit rotiert api_key und internal_listener (ungenutzt).  Die Log-Datei vom 04.10. existierte nicht mehr, auch nicht im Janitor-Archiv.
+**Stand 2026-10-24:** Rolle per `\password` in psql, rastatime.conf Zeile 26, Dienste API/PLAYOUT/LIQUIDSOAP/STANDBY/WORKER/ANALYZER neu gestartet; mit rotiert api_key und internal_listener (ungenutzt).  Die Log-Datei vom 04.10. existierte nicht mehr, auch nicht im Janitor-Archiv.
 Das aktive PostgreSQL-Passwort des Benutzers rastatime steht in 61 Zeilen von C:/Tools/Apache24/logs/error_log
 (Symfony-YAML-Parse-Fehler vom 04.10., unquotiertes '!').  Risiko begrenzt (PostgreSQL nur localhost, Log nur lokal).
 Ablauf im ruhigen Moment: neues Passwort ohne YAML-Sonderzeichen oder in Anfuehrungszeichen; psql ALTER ROLE rastatime
-WITH PASSWORD; libretime.conf database.password; Neustart API, PLAYOUT, ANALYZER, WORKER (Legacy-PHP liest die Datei je
+WITH PASSWORD; rastatime.conf database.password; Neustart API, PLAYOUT, ANALYZER, WORKER (Legacy-PHP liest die Datei je
 Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; danach Logins/UI/Stats-Push pruefen.
 
 ## Import-Formate normalisieren (Operator-Frage 2026-10-14)
@@ -6124,18 +6137,18 @@ seit 685dc17 (§23.68) oeffnet `linein_http_start()` je Slot ein frisches `input
 `pytest.importorskip("kombu")`, siehe naechster Punkt.
 (3) `run_tests.ps1` lud mit `-p no:logging` das Logging-Plugin aus und damit auch `caplog` (27 Fehler) -
 jetzt `-o log_cli=false` (gleicher Zweck: das `log_cli = true` der pyproject-Dateien stumm schalten);
-dazu gewinnt ein vorgesetztes `LIBRETIME_CONFIG_FILEPATH` (Worktrees) und `backend\playout` steht im Unit-PYTHONPATH.
+dazu gewinnt ein vorgesetztes `RASTATIME_CONFIG_FILEPATH` (Worktrees) und `backend\playout` steht im Unit-PYTHONPATH.
 (4) API-Suite: `FakeConverter.is_wma` fehlte seit 5179636, zwei Tests erwarteten noch den Stationsnamen
 „LibreTime" (seit ad12764 „RASTATIME").  Soll seit 2026-10-22: api 151, playout 819/3 uebersprungen, unit 739/38.
 
 ### ✅ Totes Upstream-Playout entfernt: `main.py` + `message_handler.py` (RabbitMQ/kombu) - erledigt 2026-10-22 (Go 2026-10-22)
-`libretime_playout/main.py` (pypo-Einstieg, Console-Script `libretime-playout` in `setup.py`) und
+`rastatime_playout/main.py` (pypo-Einstieg, Console-Script `rastatime-playout` in `setup.py`) und
 `message_handler.py` (kombu-Consumer der RabbitMQ-Exchange `playout`) werden in RASTATIME nicht mehr erreicht:
-der Dienst startet `python -m libretime_playout` (`__main__.py`), Sendeplan- und Quellen-Ereignisse kommen ueber
+der Dienst startet `python -m rastatime_playout` (`__main__.py`), Sendeplan- und Quellen-Ereignisse kommen ueber
 den HTTP-Listener (:8770, §23.70 / Option d).  `kombu` ist weder installiert noch in `setup.py`; `main.py` wuerde
 beim Import sofort scheitern.  Vorschlag: beide Module, den Console-Script-Eintrag und `message_handler_test.py`
 entfernen (~1 h, kein Dienst betroffen, kein Neustart).  Vorbedingung: Operator-Go (Loeschen von Modulen).
-Erledigt 2026-10-22: beide Module, Console-Script `libretime-playout` und `message_handler_test.py` entfernt,
+Erledigt 2026-10-22: beide Module, Console-Script `rastatime-playout` und `message_handler_test.py` entfernt,
 BASELINE_MODULES/LINUX_INVENTORY markiert.  `PypoFile` hat jetzt keinen Aufrufer mehr ausser seinem Test
 (bewusst stehen gelassen, eigener Punkt bei Bedarf).  Playout-Suite 819 / 2 uebersprungen.
 
@@ -6224,7 +6237,7 @@ bzw. nur lokal.
 
 ### ✅ Passwörter als ungesalzenes MD5 (Befund 2026-10-25) - bcrypt seit 2026-10-27 (Operator-Go, §23.73)
 **Erledigt 2026-10-27/28:** bcrypt (Kosten 12) auf beiden Seiten - PHP `Application_Model_Password` + Login-Adapter
-`LibreTime_Auth_Adaptor_Password` (ersetzt `MD5(?)` in SQL), `User::setPassword/verifyPassword` (DJ-Harbor), Passwort-Reset,
+`Rastatime_Auth_Adaptor_Password` (ersetzt `MD5(?)` in SQL), `User::setPassword/verifyPassword` (DJ-Harbor), Passwort-Reset,
 Django `core.User` mit Paket `bcrypt`; alter MD5-Hash wird einmal akzeptiert und beim Login ersetzt; Befehl
 `manage.py password_hashes`.  PHP-Probe 14/14 (Adapter, DJ-Pfad, $2b$/$2y$, Rehash), Django-Tests 185 grün, HTTPS-Login
 mit MD5-Wegwerfkonto → 302 + Hash $2y$12$.  API-Neustart 2026-10-28 08:33 + Basic-Auth-Probe (bcrypt 200, falsch 403,
@@ -6327,7 +6340,7 @@ Operator; (6) Worktrees geprüft und entfernt.  **Vorgabe:** der Betreiber ist d
 erscheint im Projekt (Commit-Identität `vibesbuilder <4569147+vibesbuilder@users.noreply.github.com>`, Historie wird
 in Phase 3 per Mailmap vereinheitlicht und von Trailer-Zeilen befreit).
 
-**Phasenplan:** 0 Aufräumen (Worktrees, Root, Standort-Reste) · 1 Marke Stufe B mit Brücken (+ ruhige Woche) ·
+**Phasenplan:** 0 Aufräumen (Worktrees, Root, Standort-Reste) · 1 Marke Stufe B mit Brücken (+ 5 Tage Brücke, Operator 2026-10-29) ·
 2 Brücken raus, INSTALL/UPGRADE/COMPONENTS aktualisieren, SECURITY.md, Issue-Vorlagen · 3 Historie im Klon unter
 C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator), Push, CI grün · 5 Install-Probe (Operator)
 · 6 Release v1.0.0.
@@ -6335,6 +6348,13 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   + `readme.txt` nach `docs/dev/history/`, Runbooks/BACKLOG ohne zweite Rolle, lokale Werkzeugpfade aus der `.gitignore`
   in `.git/info/exclude`, Commit-Identität gesetzt.  Standort-Reste gesichtet: Testwerte (192.168.1.64, D:/stor) und
   Go-Live-Runbooks sind bewusst standortbezogen und bleiben; offen nur die Betreiber-E-Mail in GO_LIVE_HTTPS.
+- ✅ **Phase 0 Nachträge 2026-10-29** (Operator-Antworten): Werkzeugnamen auch aus den historischen Planungsdateien und
+  dem Architektur-Draft entfernt; `AGENTS.md` in `CONTRIBUTING.md` aufgenommen und aus dem Repo genommen;
+  Betreiber-E-Mail im HTTPS-Runbook durch die GitHub-noreply-Adresse ersetzt; Phase 3 bereinigt zusätzlich
+  Dateiinhalte alter Versionen (`--replace-text`).
+- ✅ **Phase 1 gebaut 2026-10-29** (Marke Stufe B, eigener Abschnitt oben): Repo-Teil committet, Suiten grün;
+  Live-Umschaltung der vier Python-Dienste per `C:\Temp\optd\stufe_b_switch.ps1` durch den Operator; Brücke bis
+  **2026-11-03**, dann Phase 2.
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche
@@ -6368,7 +6388,7 @@ kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (40
 - 🟡 **Stufe 0 - Veröffentlichung:** filter-repo (Audio + icecast.xml), Root aufräumen, composer-Schritt + Versionen
   in INSTALL, SECURITY.md, Org/Repo anlegen (Operator), Push, CI grün bekommen.  ~2 Tage + Install-Probe auf
   frischer VM 1-2 Tage (VM stellt der Operator).  **Vorbedingung seit 2026-10-28:** Marke „libretime" → „rastatime"
-  Stufe B (Paketnamen, `LIBRETIME_*`, Konfigdatei, gettext-Domäne, PHP-Klassen; eigener Abschnitt mit Brücken-
+  Stufe B (Paketnamen, `RASTATIME_*`, Konfigdatei, gettext-Domäne, PHP-Klassen; eigener Abschnitt mit Brücken-
   Vorgehen, ≈ 1 Tag + Beobachtungswoche) vor dem ersten Push, damit fremde Entwickler keine halbe Umbenennung sehen.
 - 🟡 **Stufe 1 - Releases:** SemVer ab `v1.0.0`, Versionsnummer ins Produkt (Settings/About + `/api/version`),
   CHANGELOG-Abschnitt je Version (release.yml liest ihn), Tag pushen -> Release.  ~½ Tag.

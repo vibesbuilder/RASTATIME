@@ -338,7 +338,7 @@ def test_migration_module_imports_and_has_create_model():
     from django.db.migrations.operations.models import CreateModel
 
     mod = importlib.import_module(
-        "libretime_api.soundcard.migrations.0001_initial"
+        "rastatime_api.soundcard.migrations.0001_initial"
     )
     assert hasattr(mod, "Migration"), "Migration class missing"
     mig = mod.Migration

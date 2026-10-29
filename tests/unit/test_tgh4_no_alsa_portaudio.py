@@ -33,7 +33,7 @@ _SHARED = _REPO / "backend" / "shared"
 if str(_SHARED) not in sys.path:
     sys.path.insert(0, str(_SHARED))
 
-from libretime_shared.config._models import (  # noqa: E402
+from rastatime_shared.config._models import (  # noqa: E402
     StreamConfig,
     SystemOutput,
     WASAPISystemOutput,
@@ -84,7 +84,7 @@ def test_wasapi_system_output_class_exists():
 
 def test_alsa_system_output_class_gone():
     """ALSASystemOutput must not exist in _models."""
-    import libretime_shared.config._models as m
+    import rastatime_shared.config._models as m
     assert not hasattr(m, "ALSASystemOutput"), (
         "_models still defines ALSASystemOutput"
     )
@@ -92,7 +92,7 @@ def test_alsa_system_output_class_gone():
 
 def test_portaudio_system_output_class_gone():
     """PortAudioSystemOutput must not exist in _models."""
-    import libretime_shared.config._models as m
+    import rastatime_shared.config._models as m
     assert not hasattr(m, "PortAudioSystemOutput"), (
         "_models still defines PortAudioSystemOutput"
     )
@@ -100,7 +100,7 @@ def test_portaudio_system_output_class_gone():
 
 def test_pulseaudio_system_output_class_gone():
     """PulseAudioSystemOutput must not exist in _models."""
-    import libretime_shared.config._models as m
+    import rastatime_shared.config._models as m
     assert not hasattr(m, "PulseAudioSystemOutput"), (
         "_models still defines PulseAudioSystemOutput"
     )

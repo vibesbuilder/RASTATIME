@@ -129,7 +129,7 @@ $result = $r1 && $r2;
                         <td class="solution">
                             Make sure you aren't missing any of the Postgres dependencies in the table above.
                             If your dependencies check out, make sure your database configuration settings in
-                            <code><?php echo LIBRETIME_CONFIG_FILEPATH; ?></code> are correct and the Airtime database was installed correctly.
+                            <code><?php echo RASTATIME_CONFIG_FILEPATH; ?></code> are correct and the Airtime database was installed correctly.
                         </td>
                     <?php } ?>
                 </tr>
@@ -145,7 +145,7 @@ $result = $r1 && $r2;
                         <td class="solution check"></td>
                     <?php } else { ?>
                         <td class="solution">
-                            Make sure RabbitMQ is installed correctly, and that your settings in <?php echo LIBRETIME_CONFIG_FILEPATH; ?>
+                            Make sure RabbitMQ is installed correctly, and that your settings in <?php echo RASTATIME_CONFIG_FILEPATH; ?>
                             are correct. Try using <code>sudo rabbitmqctl list_users</code> and <code>sudo rabbitmqctl list_vhosts</code>
                             to see if the airtime user (or your custom RabbitMQ user) exists, then checking that
                             <code>sudo rabbitmqctl list_exchanges</code> contains entries for airtime-pypo and airtime-uploads.

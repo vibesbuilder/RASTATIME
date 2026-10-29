@@ -15,7 +15,7 @@ current environment.  From the repo root, tests/unit/conftest.py
 configures Django with the dev settings (no database): the 16 no-DB
 tests run there, the 6 ``django_db`` tests are skipped and run from
 backend/api, where pytest-django is configured with
-``DJANGO_SETTINGS_MODULE = "libretime_api.settings.testing"``.
+``DJANGO_SETTINGS_MODULE = "rastatime_api.settings.testing"``.
 
 Test inventory
 --------------
@@ -107,43 +107,43 @@ def client():
 
 @pytest.fixture()
 def health_view():
-    pytest.importorskip("libretime_api")
-    from libretime_api.health import health  # noqa: PLC0415
+    pytest.importorskip("rastatime_api")
+    from rastatime_api.health import health  # noqa: PLC0415
     return health
 
 
 @pytest.fixture()
 def now_playing_view():
-    pytest.importorskip("libretime_api")
-    from libretime_api.now_playing import now_playing  # noqa: PLC0415
+    pytest.importorskip("rastatime_api")
+    from rastatime_api.now_playing import now_playing  # noqa: PLC0415
     return now_playing
 
 
 @pytest.fixture()
 def audio_devices_view():
-    pytest.importorskip("libretime_api")
-    from libretime_api.audio_devices import audio_devices  # noqa: PLC0415
+    pytest.importorskip("rastatime_api")
+    from rastatime_api.audio_devices import audio_devices  # noqa: PLC0415
     return audio_devices
 
 
 @pytest.fixture()
 def streams_outputs_view():
-    pytest.importorskip("libretime_api")
-    from libretime_api.streams_status import stream_outputs  # noqa: PLC0415
+    pytest.importorskip("rastatime_api")
+    from rastatime_api.streams_status import stream_outputs  # noqa: PLC0415
     return stream_outputs
 
 
 @pytest.fixture()
 def soundcard_settings_view():
-    pytest.importorskip("libretime_api")
-    from libretime_api.soundcard_settings_api import soundcard_settings  # noqa: PLC0415
+    pytest.importorskip("rastatime_api")
+    from rastatime_api.soundcard_settings_api import soundcard_settings  # noqa: PLC0415
     return soundcard_settings
 
 
 @pytest.fixture()
 def linein_list_view():
-    pytest.importorskip("libretime_api")
-    from libretime_api.linein_api import linein_list_or_create  # noqa: PLC0415
+    pytest.importorskip("rastatime_api")
+    from rastatime_api.linein_api import linein_list_or_create  # noqa: PLC0415
     return linein_list_or_create
 
 

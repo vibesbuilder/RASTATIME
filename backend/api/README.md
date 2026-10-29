@@ -7,11 +7,11 @@ This API provides access to RASTATIME's database via a Django application.
 Deploying in a production environment is done in the [`install`](../install)
 script which installs LibreTime. This is how the API is installed in the Vagrant
 development images too. This method does not automatically reflect changes to
-this API. After any changes, the `libretime-api` systemd service needs
+this API. After any changes, the `rastatime-api` systemd service needs
 restarting:
 
 ```bash
-sudo systemctl restart libretime-api
+sudo systemctl restart rastatime-api
 ```
 
 Connections to the API are proxied through the Apache web server by default.
@@ -34,7 +34,7 @@ You should be able to lint or format the code or run api commands:
 make format
 make lint
 
-libretime-api help
+rastatime-api help
 ```
 
 In order to work with the database and message queue, you need to start the docker based
@@ -63,13 +63,13 @@ vagrant ssh bullseye
 cd /vagrant/api
 sudo pip3 install -e .
 
-sudo systemctl stop libretime-api
-sudo -u libretime LIBRETIME_DEBUG=True libretime-api runserver 0.0.0.0:8081
+sudo systemctl stop rastatime-api
+sudo -u libretime RASTATIME_DEBUG=True rastatime-api runserver 0.0.0.0:8081
 ```
 
 ## 3rd Party Licences
 
-`libretime_api/tests/resources/song.mp3`: Steps - Tears On The Dancefloor (Album
+`rastatime_api/tests/resources/song.mp3`: Steps - Tears On The Dancefloor (Album
 Teaser) by mceyedol. Downloaded from
 https://soundcloud.com/mceyedol/steps-tears-on-the-dancefloor-album-teaser
 released under a Creative Commons Licence

@@ -121,7 +121,7 @@ expandir **Grabación** → marcar → Guardar.
 > `cc_show.record = TRUE`. Al inicio del programa, el
 > constructor de planning del motor de playout emite un
 > evento `SHOW_RECORD_START`. El handler en
-> `backend/playout/libretime_playout/playout_scheduler.py`
+> `backend/playout/rastatime_playout/playout_scheduler.py`
 > envía un comando `recording.start` al telnet de
 > Liquidsoap, que abre el archivo .mp3 por-programa. Al
 > final del programa, el motor emite `SHOW_RECORD_END` y
@@ -146,7 +146,7 @@ Ejemplo:
 ```
 
 El directorio y la plantilla de nombre de archivo se
-configuran en `config\libretime.conf` bajo la sección
+configuran en `config\rastatime.conf` bajo la sección
 `[recording]`.
 
 Placeholders disponibles: `{show_id}`, `{show_name}`,

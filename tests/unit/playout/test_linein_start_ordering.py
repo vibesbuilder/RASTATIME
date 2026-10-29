@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.player.events import EventKind, LineinEvent
-from libretime_playout.playout_scheduler import PlayoutScheduler
+from rastatime_playout.player.events import EventKind, LineinEvent
+from rastatime_playout.playout_scheduler import PlayoutScheduler
 
 
 def _make_scheduler():

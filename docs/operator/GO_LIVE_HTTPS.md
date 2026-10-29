@@ -21,12 +21,12 @@ or a system setting is done by the operator; the verification afterwards is read
 | Secret | Where it lives | Found | Action |
 |---|---|---|---|
 | UI account `admin` (type A) | `cc_subjs` | **default password** | change in the UI (Settings → Users) or disable; `opuser` is the second admin |
-| Database `rastatime` | PostgreSQL role + `libretime.conf` `database.password` | **example default** | rotate (0.2) |
-| RabbitMQ user `rastatime` | broker + `libretime.conf` `rabbitmq.password` | **example default**; `guest` (administrator) still exists | rotate, delete `guest` (0.3) |
+| Database `rastatime` | PostgreSQL role + `rastatime.conf` `database.password` | **example default** | rotate (0.2) |
+| RabbitMQ user `rastatime` | broker + `rastatime.conf` `rabbitmq.password` | **example default**; `guest` (administrator) still exists | rotate, delete `guest` (0.3) |
 | Icecast source / relay / admin | `config/icecast.xml` + Settings → Streams outputs 1–3 (`pass`, `admin_pass`) + rendered `rastatime.liq` / `standby.liq` + Line-In capture | **5-character defaults** | rotate (0.4) |
-| Harbor fallback passwords | `libretime.conf` `stream.harbor.main_password` / `show_password` (only used while PLAYOUT is unreachable) | **8-character default** | rotate (0.4) |
-| `general.api_key`, `general.secret_key` | `libretime.conf` | custom (42 / 62 chars) | keep |
-| `stream.internal_listener` | `libretime.conf` | custom | keep |
+| Harbor fallback passwords | `rastatime.conf` `stream.harbor.main_password` / `show_password` (only used while PLAYOUT is unreachable) | **8-character default** | rotate (0.4) |
+| `general.api_key`, `general.secret_key` | `rastatime.conf` | custom (42 / 62 chars) | keep |
+| `stream.internal_listener` | `rastatime.conf` | custom | keep |
 | Master Source password (Settings → Streams) | `cc_pref live_stream_master_password` | custom | keep (username is short — fine) |
 
 Code change that belongs to this stage (`backend/playout`): the Line-In
@@ -42,7 +42,7 @@ Quiet window (the services lose the database for a few seconds).
 1. New password (long, random; letters and digits are enough — no `'`,
    `\`, and nothing that YAML reads as syntax at the start: `!`, `&`, `*`,
    `%`, `@`, `` ` ``, `#`, `{`, `[`).  **Always write the value in double
-   quotes in `libretime.conf`** (`password: "…"`); an unquoted `!…` broke
+   quotes in `rastatime.conf`** (`password: "…"`); an unquoted `!…` broke
    the whole file on 2026-10-04 (every service down, the value echoed into
    two log files by the YAML parser).
 2. As PostgreSQL superuser (pgAdmin or `psql -U postgres`):
@@ -51,8 +51,8 @@ Quiet window (the services lose the database for a few seconds).
    ```
    The role may change its own password — no superuser needed:
    `psql -h localhost -U rastatime -d rastatime -c "ALTER USER rastatime WITH PASSWORD '<new>';"`
-   (prompts for the current one from `libretime.conf`).
-3. `config/libretime.conf` → `database.password: "<new>"` — quoted (the
+   (prompts for the current one from `rastatime.conf`).
+3. `config/rastatime.conf` → `database.password: "<new>"` — quoted (the
    legacy PHP reads the file on every request — no Apache restart).  If a
    service ends up *Paused* after failed starts, use
    `nssm restart <service>` instead of `Restart-Service`.
@@ -75,7 +75,7 @@ cd "C:\Program Files\RabbitMQ Server\rabbitmq_server-*\sbin"
 .\rabbitmqctl.bat change_password rastatime "<new>"
 .\rabbitmqctl.bat delete_user guest
 ```
-Then `config/libretime.conf` → `rabbitmq.password: <new>` and restart
+Then `config/rastatime.conf` → `rabbitmq.password: <new>` and restart
 `RASTATIME-API`, `RASTATIME-PLAYOUT`, `RASTATIME-WORKER`,
 `RASTATIME-ANALYZER`.  Check: uploading a file still gets analysed
 (`logs/analyzer-stdout.log`), a schedule change reaches the playout
@@ -90,7 +90,7 @@ Off-air for ~30–60 s (Icecast and Liquidsoap restart) — quiet window.
    `<admin-password>`, `<master-password>`.
 3. UI → Settings → Streams → outputs 1–3: *Password* = new source
    password, *Admin password* = new admin password; Save.
-4. `config/libretime.conf` → `stream.harbor.main_password` /
+4. `config/rastatime.conf` → `stream.harbor.main_password` /
    `show_password`: new random values (these only count as fallback).
 5. Restart in this order (elevated), **not while an item is on air** —
    the playout defers the Liquidsoap restart to the next file-to-file
@@ -132,8 +132,8 @@ Off-air for ~30–60 s (Icecast and Liquidsoap restart) — quiet window.
   LAN needs the port directly.  Elevated:
   ```powershell
   $nssm = "C:\Tools\nssm\nssm.exe"   # adjust to the nssm.exe path
-  & $nssm set RASTATIME-API AppParameters "-m libretime_api.waitress_serve --host 127.0.0.1 --port 8765 --threads 8"
-  & $nssm set RASTATIME-API AppEnvironmentExtra "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf" "RASTATIME_API_HOST=127.0.0.1" "RASTATIME_API_PORT=8765" "RASTATIME_API_THREADS=8" "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
+  & $nssm set RASTATIME-API AppParameters "-m rastatime_api.waitress_serve --host 127.0.0.1 --port 8765 --threads 8"
+  & $nssm set RASTATIME-API AppEnvironmentExtra "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" "RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf" "RASTATIME_API_HOST=127.0.0.1" "RASTATIME_API_PORT=8765" "RASTATIME_API_THREADS=8" "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
   Restart-Service RASTATIME-API
   ```
   Verify: `netstat -an | findstr 8765` shows `127.0.0.1:8765` only; the
@@ -289,7 +289,7 @@ the certificate files.  `httpd.exe -t`, `Restart-Service RASTATIME-APACHE`.
      --store pemfiles --pemfilespath C:\RASTATIME\certs `
      --installation script --script "powershell.exe" `
      --scriptparameters "-NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\apache-cert-renewed.ps1" `
-     --accepttos --emailaddress technik@example.org
+     --accepttos --emailaddress 4569147+vibesbuilder@users.noreply.github.com
    ```
    Result: `C:\RASTATIME\certs\radio.example.org-chain.pem` and
    `-key.pem` (plus `-crt.pem`, `-chain-only.pem`), a scheduled task
@@ -307,7 +307,7 @@ the certificate files.  `httpd.exe -t`, `Restart-Service RASTATIME-APACHE`.
 ### 2.4 Switch the public URL (last)
 
 Only after 2.1 step 3 is settled (public name works from the LAN).
-`config/libretime.conf`:
+`config/rastatime.conf`:
 ```yaml
 general:
   public_url: https://radio.example.org

@@ -88,7 +88,7 @@ previous pin, restart, then investigate.
 - `pytest backend\api` on this machine needs `PYTHONUTF8=1`: the test
   database setup fails with a `UnicodeDecodeError` otherwise (German
   PostgreSQL messages in the console code page) - and
-  `LIBRETIME_CONFIG_FILEPATH=C:\RASTATIME\config\libretime.conf`, because
+  `RASTATIME_CONFIG_FILEPATH=C:\RASTATIME\config\rastatime.conf`, because
   the testing settings otherwise fall back to the upstream default
   credentials and every `django_db` test errors.  `scripts\run_tests.ps1`
   sets both (plus `PYTHONPATH` and `--basetemp`) for all three suites.

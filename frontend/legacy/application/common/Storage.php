@@ -8,7 +8,7 @@ class Application_Common_Storage
      * RASTATIME 2026-09-16 - the effective storage root WITH a trailing
      * slash (the shape the configuration accessor always had): the site
      * preference `local_storage_folder` when set (Settings -> Local Machine
-     * -> Media Library Location), else `storage.path` from libretime.conf.
+     * -> Media Library Location), else `storage.path` from rastatime.conf.
      * Cached per request.
      */
     public static function root()

@@ -41,7 +41,7 @@ class Application_Service_MediaService
         $importedStorageDirectory = rtrim(Application_Common_Storage::root(), '/\\') . '/imported';
 
         // Copy the temporary file over to the "organize" folder so that it's off our webserver
-        // and accessible by libretime-analyzer which could be running on a different machine.
+        // and accessible by rastatime-analyzer which could be running on a different machine.
         $newTempFilePath = Application_Model_StoredFile::moveFileToStor(
             $filePath,
             $fileId,
@@ -50,7 +50,7 @@ class Application_Service_MediaService
             $keepSourceOnFailure
         );
 
-        // Dispatch a message to libretime-analyzer through RabbitMQ,
+        // Dispatch a message to rastatime-analyzer through RabbitMQ,
         // notifying it that there's a new upload to process!
         Application_Model_RabbitMq::SendMessageToAnalyzer(
             $newTempFilePath,
@@ -68,13 +68,13 @@ class Application_Service_MediaService
      * @param mixed $fileId
      *
      * @throws Exception
-     * @throws LibreTimeFileNotFoundException
+     * @throws RastatimeFileNotFoundException
      */
     public static function streamFileDownload($fileId, $inline = false)
     {
         $media = Application_Model_StoredFile::RecallById($fileId);
         if ($media == null) {
-            throw new LibreTimeFileNotFoundException();
+            throw new RastatimeFileNotFoundException();
         }
         // Make sure we don't have some wrong result because of caching
         clearstatcache();
@@ -118,7 +118,7 @@ class Application_Service_MediaService
                     Application_Common_FileIO::smartReadFile($filePath, $size, $mimeType);
 
                     break; // Break out of the loop if we successfully read the file!
-                } catch (LibreTimeFileNotFoundException $e) {
+                } catch (RastatimeFileNotFoundException $e) {
                     // If we have no alternate filepaths left, then let the exception bubble up.
                     if (count($filePaths) == 0) {
                         throw $e;
@@ -130,7 +130,7 @@ class Application_Service_MediaService
             exit;
         }
 
-        throw new LibreTimeFileNotFoundException($filePath);
+        throw new RastatimeFileNotFoundException($filePath);
     }
 
     /**

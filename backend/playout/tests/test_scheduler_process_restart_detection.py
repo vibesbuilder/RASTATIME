@@ -11,11 +11,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import liquidsoap_health as lh
-from libretime_playout import playout_scheduler as ps
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.source_switcher import SourceSwitcher
+from rastatime_playout import liquidsoap_health as lh
+from rastatime_playout import playout_scheduler as ps
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.source_switcher import SourceSwitcher
 
 MAIN_SCRIPT = "C:\\Tools\\liquidsoap\\rastatime.liq"
 STANDBY_SCRIPT = "C:\\Tools\\liquidsoap\\standby.liq"

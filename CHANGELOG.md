@@ -371,6 +371,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Marke Stufe B: `libretime_*` → `rastatime_*` in Bezeichnern (2026-10-29,
+  Operator-Go, Vorbedingung der GitHub-Veröffentlichung)** — die fünf
+  Python-Pakete heißen `rastatime_api`, `rastatime_playout`,
+  `rastatime_analyzer`, `rastatime_shared`, `rastatime_api_client`
+  (Distributionen `rastatime-*`, Kommandos `rastatime-api`,
+  `rastatime-playout-notify`, `rastatime-analyzer`), der Präfix der
+  Umgebungsvariablen ist `RASTATIME_` (`RASTATIME_CONFIG_FILEPATH`), die
+  Konfigdatei `config/rastatime.conf` (+ `.example`), die gettext-Domäne
+  `rastatime` (`rastatime.po/.mo`), die PHP-Klassen `Rastatime_Auth_Adaptor_*`,
+  `Rastatime_Model_FreeIpa`, `RastatimeFileNotFoundException`, der
+  Session-Namespace `rastatime` (meldet alle Browser-Sitzungen einmal ab),
+  das Wavesurfer-Skript `rastatime.js`; Skripte, nssm-Installer, CI,
+  Tests und Doku folgen.  **Brücke bis 2026-11-03** (Operator: fünf Tage):
+  Stub-Pakete unter den alten Namen + Meta-Path-Finder
+  (`rastatime_shared.compat.legacy_names`) liefern dieselben Modulobjekte,
+  `-m libretime_*` und `DJANGO_SETTINGS_MODULE=libretime_api…` starten
+  weiter, Konfig-Loader/CLI/PHP lesen `LIBRETIME_*` nach `RASTATIME_*`,
+  `libretime.conf` gilt neben fehlender `rastatime.conf`, die alten
+  Konsolen-Kommandos bleiben als zweite Entry-Points.  Außerhalb des Repos:
+  pip-Neuinstallation der fünf Pakete, nssm-Parameter der vier
+  Python-Dienste, Konfigdatei umbenennen (Umschalt-Skript, Operator).
+  Nicht umbenannt: Upstream-Kopien (`docs/upstream`, `infra/upstream`),
+  Upstream-URL-Konstanten, Composer-Paket `libretime/propel1`, Historie
+  (CHANGELOG, `docs/dev/history`), Produktname LibreTime in Herkunfts-Prosa.
+  Architektur §23.77 (0.103).  Nebenbei: `tests/unit/api/test_migration_baseline.py`
+  auf Migration 0073 nachgezogen (drei Tests rot seit 2026-10-25).
+- **Veröffentlichung Phase 0, Nachträge (2026-10-29)** — `AGENTS.md` in
+  `CONTRIBUTING.md` aufgenommen (Projektziele, Nicht-Ziele, Quellen-Rangfolge,
+  Plattform- und Architekturregeln, Sprachregeln, Arbeitsweise; Spielregeln
+  auf den heutigen Stand: Liquidsoap als Engine, vier UI-Sprachen,
+  `scripts/run_tests.ps1`) und aus dem Repo entfernt; Werkzeugnamen aus
+  den historischen Planungsdateien und dem Architektur-Draft entfernt;
+  Betreiber-E-Mail im HTTPS-Runbook durch die GitHub-noreply-Adresse ersetzt.
 - **Repository-Aufräumen für die Veröffentlichung, Phase 0 (2026-10-28,
   Operator-Go GitHub-Thema)** — die vier Planungsdateien vom Projektstart
   (BLOCKERS_T0.1, IMPLEMENTATION_PLAN, POST_IMPLEMENTATION, CLEANUP_INVENTORY)

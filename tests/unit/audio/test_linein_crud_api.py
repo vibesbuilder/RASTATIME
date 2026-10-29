@@ -183,20 +183,20 @@ def rf():
 @pytest.fixture()
 def list_view():
     pytest.importorskip("django.test")
-    from libretime_api.linein_api import linein_list_or_create   # type: ignore[import]
+    from rastatime_api.linein_api import linein_list_or_create   # type: ignore[import]
     return linein_list_or_create
 
 
 @pytest.fixture()
 def detail_view():
     pytest.importorskip("django.test")
-    from libretime_api.linein_api import linein_detail            # type: ignore[import]
+    from rastatime_api.linein_api import linein_detail            # type: ignore[import]
     return linein_detail
 
 
 def _make_orm_entry(name="Test Mic", device_id="dev-x",
                     channel_mapping=None, priority=0):
-    from libretime_api.linein.models import LineIn as OrmLineIn   # type: ignore[import]
+    from rastatime_api.linein.models import LineIn as OrmLineIn   # type: ignore[import]
     from audio.linein.domain import LineIn as DomainLineIn
     domain = DomainLineIn.create(
         name=name,

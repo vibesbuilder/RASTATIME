@@ -1,6 +1,6 @@
 # Shared
 
-The `libretime_shared` package contains reusable functions and classes for the RASTATIME project.
+The `rastatime_shared` package contains reusable functions and classes for the RASTATIME project.
 
 ## Usage
 
@@ -11,14 +11,14 @@ This library assumes that:
 
 ### Configuration
 
-First define a schema for your configuration in order to validate it. A schema is a class that inherit from `pydantic.BaseModel`. Some existing schemas can be reused such as `libretime_shared.config.RabbitMQ` or `libretime_shared.config.Database`.
+First define a schema for your configuration in order to validate it. A schema is a class that inherit from `pydantic.BaseModel`. Some existing schemas can be reused such as `rastatime_shared.config.RabbitMQ` or `rastatime_shared.config.Database`.
 
-Load your configuration using a subclass of `libretime_shared.config.BaseConfig`.
+Load your configuration using a subclass of `rastatime_shared.config.BaseConfig`.
 
 ```py
 from pydantic import BaseModel
 
-from libretime_shared.config import RabbitMQConfig, BaseConfig
+from rastatime_shared.config import RabbitMQConfig, BaseConfig
 
 class AnalyzerConfig(BaseModel):
     bpm_enabled: bool = False
@@ -39,7 +39,7 @@ Decorate your CLI commands with the shared decorators to add extra flags.
 
 ```py
 import click
-from libretime_shared.cli import cli_logging_options, cli_config_options
+from rastatime_shared.cli import cli_logging_options, cli_config_options
 
 from .app import App
 

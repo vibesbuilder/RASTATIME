@@ -8,11 +8,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import playout_scheduler as ps
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.player.events import EventKind, FileEvent
-from libretime_playout.tunein import KEEPALIVE_SECONDS, TuneInConfig, TuneInPusher
+from rastatime_playout import playout_scheduler as ps
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.player.events import EventKind, FileEvent
+from rastatime_playout.tunein import KEEPALIVE_SECONDS, TuneInConfig, TuneInPusher
 
 OK_XML = "<RadioTime><head><status>200</status></head></RadioTime>"
 BAD_XML = "<RadioTime><head><status>403</status><fault>Invalid partner key</fault></head></RadioTime>"

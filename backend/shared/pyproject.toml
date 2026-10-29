@@ -1,7 +1,7 @@
 [tool.isort]
 profile = "black"
 combine_as_imports = true
-known_first_party = ["libretime_shared"]
+known_first_party = ["rastatime_shared"]
 
 [tool.pylint.messages_control]
 extension-pkg-whitelist = "pydantic"
@@ -22,7 +22,7 @@ log_cli = true
 log_cli_level = "DEBUG"
 
 [tool.coverage.run]
-source = ["libretime_shared"]
+source = ["rastatime_shared"]
 
 [build-system]
 requires = ["setuptools", "wheel"]

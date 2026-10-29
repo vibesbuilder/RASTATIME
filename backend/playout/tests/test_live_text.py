@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from libretime_playout import live_text as lt
-from libretime_playout.live_text import LiveTextConfig, LiveTextFtp, LiveTextWriter, parse_live_text_config
+from rastatime_playout import live_text as lt
+from rastatime_playout.live_text import LiveTextConfig, LiveTextFtp, LiveTextWriter, parse_live_text_config
 
 
 def test_parse_config_defaults_and_ftp_json():
@@ -99,7 +99,7 @@ def test_sftp_needs_a_curl_with_libssh2(monkeypatch, tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_icy_block_renders_label_for_and_live_text_hook():
-    from libretime_playout import liquidsoap_config as lc
+    from rastatime_playout import liquidsoap_config as lc
 
     block = lc._render_icy_metadata_block(0, "Back soon", "RASTATIME", live_text_url="http://127.0.0.1:8770/live-text")
     assert "def label_for(fmt, m) =" in block
@@ -115,7 +115,7 @@ def test_icy_block_renders_label_for_and_live_text_hook():
 
 
 def test_full_render_hooks_live_text_on_the_bus():
-    from libretime_playout import liquidsoap_config as lc
+    from rastatime_playout import liquidsoap_config as lc
 
     out = lc.render_rastatime_liq(
         [{"type": "mp3", "host": "h", "port": 8000, "mount": "m", "pass": "x", "bitrate": 128}],
@@ -125,7 +125,7 @@ def test_full_render_hooks_live_text_on_the_bus():
 
 
 def test_listener_endpoint_feeds_the_writer():
-    from libretime_playout import source_switcher as ss
+    from rastatime_playout import source_switcher as ss
 
     writer = MagicMock(spec=LiveTextWriter)
     ss._EventHandler.live_text = writer
@@ -144,9 +144,9 @@ def test_listener_endpoint_feeds_the_writer():
 
 
 def test_scheduler_pushes_live_text_settings_on_change(monkeypatch):
-    from libretime_playout import playout_scheduler as ps
-    from libretime_playout.engine.interface import PlayoutState
-    from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+    from rastatime_playout import playout_scheduler as ps
+    from rastatime_playout.engine.interface import PlayoutState
+    from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
@@ -168,7 +168,7 @@ def test_scheduler_pushes_live_text_settings_on_change(monkeypatch):
 def test_start_listener_wires_the_live_text_writer(monkeypatch):
     """Regression 2026-09-28: the attribute set before start_listener() was
     overwritten by its own default - /live-text answered 503 in production."""
-    from libretime_playout import source_switcher as ss
+    from rastatime_playout import source_switcher as ss
 
     started = {}
 

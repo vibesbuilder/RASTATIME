@@ -17,8 +17,8 @@ from urllib.parse import urlparse
 
 import pytest
 
-from libretime_playout import source_switcher as ss
-from libretime_playout.source_switcher import SourceState, SourceSwitcher
+from rastatime_playout import source_switcher as ss
+from rastatime_playout.source_switcher import SourceState, SourceSwitcher
 
 IDLE = "no source client connected"
 LIVE = "source client connected"
@@ -61,7 +61,7 @@ def telnet_factory(monkeypatch):
     """Replace the LiquidsoapTelnetClient the loop instantiates."""
     holder = {}
     monkeypatch.setattr(
-        "libretime_playout.engine.liquidsoap_telnet.LiquidsoapTelnetClient",
+        "rastatime_playout.engine.liquidsoap_telnet.LiquidsoapTelnetClient",
         lambda **kwargs: holder["client"],
     )
     return holder
@@ -224,7 +224,7 @@ def test_loop_polls_every_5s_while_an_old_render_is_loaded(telnet_factory, monke
     client = _client(events=NO_PROBE)
     telnet_factory["client"] = client
     timeouts = _record_waits(monkeypatch, sw)
-    with caplog.at_level(logging.WARNING, logger="libretime_playout.source_switcher"):
+    with caplog.at_level(logging.WARNING, logger="rastatime_playout.source_switcher"):
         ss._liquidsoap_state_poll_loop(sw, interval_s=60.0, settle_s=0.0, max_ticks=3)
     assert timeouts == [ss.LEGACY_POLL_INTERVAL_S, ss.LEGACY_POLL_INTERVAL_S]
     assert len(_probe_calls(client)) == 3           # re-probed every round

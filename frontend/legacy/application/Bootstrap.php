@@ -12,7 +12,7 @@ if (!isset($configRun) || !$configRun) {
     Propel::init(PROPEL_CONFIG_FILEPATH);
 }
 
-Logging::setLogPath(LIBRETIME_LOG_FILEPATH);
+Logging::setLogPath(RASTATIME_LOG_FILEPATH);
 
 if (APPLICATION_ENV != 'testing') {
     Zend_Session::setOptions([

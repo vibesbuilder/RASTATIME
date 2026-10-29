@@ -16,7 +16,7 @@ import re
 
 import pytest
 
-from libretime_playout.liquidsoap_config import (
+from rastatime_playout.liquidsoap_config import (
     _render_bus_source_block,
     render_rastatime_liq,
 )

@@ -867,7 +867,7 @@ class PreferenceController extends Zend_Controller_Action
      *
      * Settings -> Local Machine -> "24/7 Recording".  Stores the cc_pref
      * keys local_247_recording_{enabled,folder,format,bitrate,retention_days}
-     * that the playout render (libretime_playout) reads at startup and the
+     * that the playout render (rastatime_playout) reads at startup and the
      * retention task consults.  Changing these needs a RASTATIME-PLAYOUT
      * restart to re-render the .liq (same as a stream-output change).
      */

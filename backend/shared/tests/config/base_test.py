@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from pytest import mark, raises
 from typing_extensions import Annotated
 
-from libretime_shared.config import (
+from rastatime_shared.config import (
     AnyHttpUrlStr,
     BaseConfig,
     DatabaseConfig,
@@ -297,13 +297,13 @@ def test_base_config(tmp_path: Path):
     with mock.patch.dict(
         environ,
         {
-            "LIBRETIME_API": "invalid",
-            "LIBRETIME_DATABASE_PORT": "8888",
-            "LIBRETIME_DATABASE": "invalid",
-            "LIBRETIME_RABBITMQ": "invalid",
-            "LIBRETIME_RABBITMQ_HOST": "changed",
-            "LIBRETIME_OUTPUTS_0_ENABLED": "false",
-            "LIBRETIME_OUTPUTS_0_HOST": "changed",
+            "RASTATIME_API": "invalid",
+            "RASTATIME_DATABASE_PORT": "8888",
+            "RASTATIME_DATABASE": "invalid",
+            "RASTATIME_RABBITMQ": "invalid",
+            "RASTATIME_RABBITMQ_HOST": "changed",
+            "RASTATIME_OUTPUTS_0_ENABLED": "false",
+            "RASTATIME_OUTPUTS_0_HOST": "changed",
             "WRONGPREFIX_API_KEY": "invalid",
         },
     ):
@@ -334,8 +334,8 @@ def test_base_config(tmp_path: Path):
     with mock.patch.dict(
         environ,
         {
-            "LIBRETIME_RABBITMQ_HOST": "changed",
-            "LIBRETIME_ALLOWED_HOSTS": "example.com, changed.example.com",
+            "RASTATIME_RABBITMQ_HOST": "changed",
+            "RASTATIME_ALLOWED_HOSTS": "example.com, changed.example.com",
         },
     ):
         config = FixtureConfig(config_filepath)
@@ -372,13 +372,13 @@ def test_base_config_required_submodel(tmp_path: Path):
         assert config.required.with_default == "original"
 
     # With env variables
-    with mock.patch.dict(environ, {"LIBRETIME_REQUIRED_API_KEY": "test_key"}):
+    with mock.patch.dict(environ, {"RASTATIME_REQUIRED_API_KEY": "test_key"}):
         config = FixtureWithRequiredSubmodelConfig(None)
         assert config.required.api_key == "test_key"
         assert config.required.with_default == "original"
 
     # With env variables override
-    with mock.patch.dict(environ, {"LIBRETIME_REQUIRED_API_KEY": "changed"}):
+    with mock.patch.dict(environ, {"RASTATIME_REQUIRED_API_KEY": "changed"}):
         config = FixtureWithRequiredSubmodelConfig(config_filepath)
         assert config.required.api_key == "changed"
         assert config.required.with_default == "original"
@@ -387,8 +387,8 @@ def test_base_config_required_submodel(tmp_path: Path):
     with mock.patch.dict(
         environ,
         {
-            "LIBRETIME_REQUIRED_API_KEY": "changed",
-            "LIBRETIME_REQUIRED_WITH_DEFAULT": "changed",
+            "RASTATIME_REQUIRED_API_KEY": "changed",
+            "RASTATIME_REQUIRED_WITH_DEFAULT": "changed",
         },
     ):
         config = FixtureWithRequiredSubmodelConfig(config_filepath)
@@ -406,7 +406,7 @@ def test_base_config_from_init() -> None:
         found: str
         override: str
 
-    with mock.patch.dict(environ, {"LIBRETIME_OVERRIDE": "changed"}):
+    with mock.patch.dict(environ, {"RASTATIME_OVERRIDE": "changed"}):
         config = FromInitFixtureConfig(
             found="changed",
             override="invalid",
@@ -441,3 +441,22 @@ def test_load_config_error(tmp_path: Path, raw, exception):
     with raises(exception):
         with mock.patch.dict(environ, {}):
             FixtureConfig(config_filepath)
+
+
+def test_base_config_legacy_env_prefix(tmp_path: Path):
+    """Brand stage B bridge: LIBRETIME_* is still read, RASTATIME_* wins."""
+    with mock.patch.dict(environ, {"LIBRETIME_REQUIRED_API_KEY": "legacy"}):
+        config = FixtureWithRequiredSubmodelConfig(None)
+        assert config.required.api_key == "legacy"
+
+    with mock.patch.dict(
+        environ,
+        {
+            "LIBRETIME_REQUIRED_API_KEY": "legacy",
+            "RASTATIME_REQUIRED_API_KEY": "current",
+            "LIBRETIME_REQUIRED_WITH_DEFAULT": "legacy-default",
+        },
+    ):
+        config = FixtureWithRequiredSubmodelConfig(None)
+        assert config.required.api_key == "current"
+        assert config.required.with_default == "legacy-default"

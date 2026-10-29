@@ -12,7 +12,7 @@ import logging
 
 import pytest
 
-from libretime_playout import __main__ as main
+from rastatime_playout import __main__ as main
 
 
 def test_unset_means_liquidsoap(monkeypatch):

@@ -34,7 +34,7 @@ set_include_path(implode(PATH_SEPARATOR, [
     realpath(APPLICATION_PATH . '/../../install_minimal/include'),
 ]));
 
-Logging::setLogPath(LIBRETIME_LOG_FILEPATH);
+Logging::setLogPath(RASTATIME_LOG_FILEPATH);
 
 set_include_path(APPLICATION_PATH . '/common' . PATH_SEPARATOR . get_include_path());
 

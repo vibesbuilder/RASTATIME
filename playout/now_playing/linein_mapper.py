@@ -26,7 +26,7 @@ Typical production wiring
 ::
 
     from playout.now_playing.linein_mapper import LineInEventMapper
-    from libretime_api.playback.models import PlaybackEvent as OrmEvent
+    from rastatime_api.playback.models import PlaybackEvent as OrmEvent
 
     mapper = LineInEventMapper(write_fn=OrmEvent.create_from_domain)
     mapper.on_linein_started(

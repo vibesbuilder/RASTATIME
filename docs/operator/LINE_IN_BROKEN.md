@@ -193,8 +193,8 @@ nssm get RASTATIME-PLAYOUT AppEnvironmentExtra
 
 # 2. Re-set the FULL block (all lines from step 1) plus the override:
 nssm set RASTATIME-PLAYOUT AppEnvironmentExtra `
-    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-    "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf" `
+    "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
+    "RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf" `
     "RASTATIME_API_URL=http://127.0.0.1:8765" `
     "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime" `
     "PATH=C:\ffmpeg\bin;%PATH%" `

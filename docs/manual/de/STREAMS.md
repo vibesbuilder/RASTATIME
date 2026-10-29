@@ -329,7 +329,7 @@ Sobald verbunden, erscheint das Audio innerhalb von
 > gerade laufende Show; ein Show DJ kann sich also nicht vor dem
 > Showbeginn einwählen. Nur solange das Playout selbst nicht
 > erreichbar ist, greift die Engine auf das statische Harbor-
-> Passwort aus `libretime.conf` zurück. Siehe ARCHITECTURE §23.27
+> Passwort aus `rastatime.conf` zurück. Siehe ARCHITECTURE §23.27
 > (Addendum 2026-09-10).
 
 ---

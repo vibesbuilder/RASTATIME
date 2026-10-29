@@ -3,11 +3,11 @@ from typing import List
 from unittest.mock import Mock, call
 
 import pytest
-from libretime_shared.config import IcecastOutput, ShoutcastOutput
+from rastatime_shared.config import IcecastOutput, ShoutcastOutput
 from lxml.etree import XMLSyntaxError
 from requests.exceptions import HTTPError
 
-from libretime_playout.history.stats import AnyOutput, Stats, StatsCollector
+from rastatime_playout.history.stats import AnyOutput, Stats, StatsCollector
 
 from ..fixtures import icecast_stats, shoutcast_admin
 
@@ -159,7 +159,7 @@ def test_stats_collector_collect(
 
 
 def test_outputs_from_stream_settings_maps_fields():
-    from libretime_playout.history.stats import outputs_from_stream_settings
+    from rastatime_playout.history.stats import outputs_from_stream_settings
 
     outputs = outputs_from_stream_settings([
         {
@@ -181,7 +181,7 @@ def test_outputs_from_stream_settings_maps_fields():
 
 
 def test_outputs_from_stream_settings_skips_missing_admin_pass():
-    from libretime_playout.history.stats import outputs_from_stream_settings
+    from rastatime_playout.history.stats import outputs_from_stream_settings
 
     outputs = outputs_from_stream_settings([
         {"mount": "/no-admin", "host": "127.0.0.1", "port": "8000"},
@@ -192,7 +192,7 @@ def test_outputs_from_stream_settings_skips_missing_admin_pass():
 
 
 def test_outputs_from_stream_settings_skips_empty_mount_and_bad_port():
-    from libretime_playout.history.stats import outputs_from_stream_settings
+    from rastatime_playout.history.stats import outputs_from_stream_settings
 
     outputs = outputs_from_stream_settings([
         {"mount": "", "admin_pass": "pw"},
@@ -205,7 +205,7 @@ def test_outputs_from_stream_settings_skips_empty_mount_and_bad_port():
 
 def test_stats_collector_accepts_mounted_output(requests_mock):
     """The duck-typed cc_pref adapter drives a full collect() round."""
-    from libretime_playout.history.stats import (
+    from rastatime_playout.history.stats import (
         StatsCollector,
         outputs_from_stream_settings,
     )
@@ -239,7 +239,7 @@ def _status_calls(legacy_client):
 
 
 def _mounted(stream_id=None):
-    from libretime_playout.history.stats import outputs_from_stream_settings
+    from rastatime_playout.history.stats import outputs_from_stream_settings
 
     entry = {
         "host": "127.0.0.1", "port": "8000", "mount": "/main.ogg",

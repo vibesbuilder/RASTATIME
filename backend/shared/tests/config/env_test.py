@@ -6,8 +6,8 @@ from unittest import mock
 import pytest
 from pydantic import BaseModel
 
-from libretime_shared.config import BaseConfig
-from libretime_shared.config._env import EnvLoader
+from rastatime_shared.config import BaseConfig
+from rastatime_shared.config._env import EnvLoader
 
 ENV_SCHEMA_OBJ_WITH_STR = {
     "type": "object",

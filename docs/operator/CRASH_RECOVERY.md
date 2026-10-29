@@ -107,10 +107,10 @@ Get-Content C:\rastatime\logs\api-stderr.log -Tail 100
 
 | Log message | Cause | Fix |
 |---|---|---|
-| `could not connect to server` | PostgreSQL unreachable (port 5432) | Start PostgreSQL; check `libretime.conf` |
+| `could not connect to server` | PostgreSQL unreachable (port 5432) | Start PostgreSQL; check `rastatime.conf` |
 | `RASTATIME_PLAYOUT_ENGINE='mpv' is not supported` | The service environment still names the removed mpv engine (Liquidsoap is the only engine since 2026-09-10) | Set `RASTATIME_PLAYOUT_ENGINE=liquidsoap` (or remove the variable) in the playout `AppEnvironmentExtra`, then restart RASTATIME-PLAYOUT |
-| `No module named 'libretime_api'` | PYTHONPATH incorrect | Reinstall service with `install-api.ps1` |
-| `FileNotFoundError: libretime.conf` | Config file missing or wrong path | Copy from backup; check `LIBRETIME_CONFIG_FILEPATH` |
+| `No module named 'rastatime_api'` | PYTHONPATH incorrect | Reinstall service with `install-api.ps1` |
+| `FileNotFoundError: rastatime.conf` | Config file missing or wrong path | Copy from backup; check `RASTATIME_CONFIG_FILEPATH` |
 | `django.core.exceptions.ImproperlyConfigured` | Missing env var or bad settings | Check `DJANGO_SETTINGS_MODULE` in NSSM env |
 
 ### 4.2 Fix and restart
@@ -250,10 +250,10 @@ Remove-Item Env:\PGPASSWORD
 
 ```powershell
 cd C:\rastatime\backend\api
-$env:DJANGO_SETTINGS_MODULE    = "libretime_api.settings.prod"
-$env:LIBRETIME_CONFIG_FILEPATH = "C:\rastatime\config\libretime.conf"
+$env:DJANGO_SETTINGS_MODULE    = "rastatime_api.settings.prod"
+$env:RASTATIME_CONFIG_FILEPATH = "C:\rastatime\config\rastatime.conf"
 $env:PYTHONPATH                = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
-python libretime_api\manage.py migrate
+python rastatime_api\manage.py migrate
 ```
 
 ### 7.5 Restart and verify
@@ -302,10 +302,10 @@ git checkout v0.22.4    # match the version that produced the backup
 
 ```powershell
 New-Item -ItemType Directory -Path C:\rastatime\config -Force
-Copy-Item <backup-drive>\config\libretime.conf.* `
-          C:\rastatime\config\libretime.conf
+Copy-Item <backup-drive>\config\rastatime.conf.* `
+          C:\rastatime\config\rastatime.conf
 
-# Edit libretime.conf if the new machine has a different DB host/IP
+# Edit rastatime.conf if the new machine has a different DB host/IP
 ```
 
 ### 8.4 Restore the database

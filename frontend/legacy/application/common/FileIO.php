@@ -21,7 +21,7 @@ class Application_Common_FileIO
     {
         $fm = @fopen($filePath, 'rb');
         if (!$fm) {
-            throw new LibreTimeFileNotFoundException($filePath);
+            throw new RastatimeFileNotFoundException($filePath);
         }
 
         // Note that $size is allowed to be zero. If that's the case, it means we don't

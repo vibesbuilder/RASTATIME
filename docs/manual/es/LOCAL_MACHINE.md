@@ -544,7 +544,7 @@ pulse **Save**.
 
 Desde el 16/09/2026 la carpeta que contiene la biblioteca de medios
 (pistas importadas, carátulas, imágenes de programas) es un ajuste de
-esta página y ya no una línea de `libretime.conf`. El archivo de
+esta página y ya no una línea de `rastatime.conf`. El archivo de
 configuración solo aporta el valor inicial; en cuanto haya movido la
 biblioteca una vez, manda el ajuste.
 
@@ -577,7 +577,7 @@ Qué ocurre durante el traslado:
   menos de dos minutos).
 - La **copia anterior permanece en el disco**. Bórrela usted mismo
   cuando esté conforme, y solo su contenido, no la carpeta indicada en
-  `libretime.conf`, porque la aplicación web comprueba al arrancar que
+  `rastatime.conf`, porque la aplicación web comprueba al arrancar que
   esa carpeta existe.
 
 Si el servicio RASTATIME-API se reinicia durante una copia, la sección

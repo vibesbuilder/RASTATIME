@@ -11,8 +11,8 @@ from urllib.parse import urlparse
 
 import pytest
 
-from libretime_playout import source_switcher as ss
-from libretime_playout.dj_auth import CHECK_PATH, DjAuthenticator
+from rastatime_playout import source_switcher as ss
+from rastatime_playout.dj_auth import CHECK_PATH, DjAuthenticator
 
 
 def _session(status=200, header="1", exc=None):
@@ -74,7 +74,7 @@ def test_unknown_source_and_empty_credentials_are_denied_without_a_request():
 
 
 def test_password_never_appears_in_the_log(caplog):
-    with caplog.at_level(logging.DEBUG, logger="libretime_playout.dj_auth"):
+    with caplog.at_level(logging.DEBUG, logger="rastatime_playout.dj_auth"):
         DjAuthenticator("http://web", session=_session()).check("master", "chef", "s3cr3t", "1.2.3.4")
         DjAuthenticator("http://web", session=_session(401, None)).check("show", "host", "s3cr3t")
         DjAuthenticator("http://web", session=_session(exc=OSError("x"))).check("show", "host", "s3cr3t")

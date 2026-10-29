@@ -12,8 +12,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import liquidsoap_health as lh
-from libretime_playout.preflight import PreflightChecker
+from rastatime_playout import liquidsoap_health as lh
+from rastatime_playout.preflight import PreflightChecker
 
 TASCAM = "Tascam-Lautsprecher (US-16x08)"
 H = 3600.0
@@ -32,7 +32,7 @@ def checker(monkeypatch):
 def _scan(checker, monkeypatch, caplog, procs):
     monkeypatch.setattr(lh, "liquidsoap_process_info", lambda: procs)
     caplog.clear()
-    with caplog.at_level(logging.INFO, logger="libretime_playout.preflight"):
+    with caplog.at_level(logging.INFO, logger="rastatime_playout.preflight"):
         checker._scan_liquidsoap_health()
     return [r.getMessage() for r in caplog.records if "Liquidsoap memory:" in r.getMessage()]
 

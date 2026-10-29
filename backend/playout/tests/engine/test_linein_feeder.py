@@ -12,8 +12,8 @@ import array
 
 import pytest
 
-from libretime_playout.engine import ffmpeg_linein_capture as flc
-from libretime_playout.engine.linein_feeder import (
+from rastatime_playout.engine import ffmpeg_linein_capture as flc
+from rastatime_playout.engine.linein_feeder import (
     extract_frames,
     find_input_device,
     parse_mapping,
@@ -177,6 +177,6 @@ def test_build_feeder_cmd_carries_mapping_and_name(capture):
     capture._channel_mapping = (4, 5)
     capture._device_name = "Mikrofon (US-16x08)"
     cmd = capture._build_feeder_cmd()
-    assert "libretime_playout.engine.linein_feeder" in cmd
+    assert "rastatime_playout.engine.linein_feeder" in cmd
     assert cmd[cmd.index("--mapping") + 1] == "4,5"
     assert cmd[cmd.index("--device-name") + 1] == "Mikrofon (US-16x08)"

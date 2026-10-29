@@ -134,7 +134,7 @@ pas rétroactivement.
 > builder de planning du moteur de playout émet un
 > événement `SHOW_RECORD_START` avec id + nom + heure de
 > début de l'émission. Le handler dans
-> `backend/playout/libretime_playout/playout_scheduler.py`
+> `backend/playout/rastatime_playout/playout_scheduler.py`
 > envoie une commande `recording.start` au telnet
 > Liquidsoap, qui ouvre le fichier .mp3 par émission. À
 > la fin de l'émission, le moteur émet `SHOW_RECORD_END`
@@ -160,7 +160,7 @@ Exemple :
 ```
 
 Le répertoire et le modèle de nom de fichier sont
-configurés dans `config\libretime.conf` sous la section
+configurés dans `config\rastatime.conf` sous la section
 `[recording]`.
 
 Placeholders disponibles : `{show_id}`, `{show_name}`,

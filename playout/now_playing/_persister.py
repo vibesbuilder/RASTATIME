@@ -16,7 +16,7 @@ Typical production wiring
 
     from playout.now_playing import default_logger
     from playout.now_playing._persister import PlaybackEventPersister
-    from libretime_api.playback.models import PlaybackEvent as OrmEvent
+    from rastatime_api.playback.models import PlaybackEvent as OrmEvent
 
     persister = PlaybackEventPersister(write_fn=OrmEvent.create_from_domain)
     persister.attach(default_logger)

@@ -9,7 +9,7 @@
  */
 class InvalidMetadataException extends Exception {}
 
-class LibreTimeFileNotFoundException extends Exception {}
+class RastatimeFileNotFoundException extends Exception {}
 
 class OverDiskQuotaException extends Exception {}
 
@@ -55,7 +55,7 @@ class CcFiles extends BaseCcFiles
             return CcFiles::sanitizeResponse($file);
         }
 
-        throw new LibreTimeFileNotFoundException();
+        throw new RastatimeFileNotFoundException();
     }
 
     /** Used to create a CcFiles object from an array containing metadata and a file uploaded by POST.
@@ -252,7 +252,7 @@ class CcFiles extends BaseCcFiles
      * @return array a sanitized version of the file metadata array
      *
      * @throws Exception
-     * @throws LibreTimeFileNotFoundException
+     * @throws RastatimeFileNotFoundException
      * @throws PropelException
      */
     public static function updateFromArray($fileId, $fileArray)
@@ -273,12 +273,12 @@ class CcFiles extends BaseCcFiles
                 if (isset($fileArray['full_path'])) {
                     $fileSizeBytes = filesize($fileArray['full_path']);
                     if (!isset($fileSizeBytes) || $fileSizeBytes === false) {
-                        throw new LibreTimeFileNotFoundException("Invalid filesize for {$fileId}");
+                        throw new RastatimeFileNotFoundException("Invalid filesize for {$fileId}");
                     }
                     Application_Model_Preference::updateDiskUsage($fileSizeBytes);
 
                     // RASTATIME (Windows): the analyzer (Python) reports full_path with
-                    // OS-native separators (backslashes), but storage.path in libretime.conf
+                    // OS-native separators (backslashes), but storage.path in rastatime.conf
                     // is configured with forward slashes.  Normalise both to forward slashes
                     // before comparing — otherwise strpos returns false on Windows and the
                     // filepath column never gets populated.
@@ -307,7 +307,7 @@ class CcFiles extends BaseCcFiles
                     }
                 }
             } else {
-                throw new LibreTimeFileNotFoundException("File id {$fileId} not found");
+                throw new RastatimeFileNotFoundException("File id {$fileId} not found");
             }
 
             $now = new DateTime('now', new DateTimeZone('UTC'));
@@ -406,7 +406,7 @@ class CcFiles extends BaseCcFiles
                     );
                 }
             }
-        } catch (LibreTimeFileNotFoundException $e) {
+        } catch (RastatimeFileNotFoundException $e) {
             // RASTATIME 2026-09-10: only an EXISTING row can be marked as a
             // failed import.  With an unknown id $file is null, and the old
             // unguarded call was a PHP Error (not an Exception), which turned
@@ -429,7 +429,7 @@ class CcFiles extends BaseCcFiles
      * @throws DeleteScheduledFileException
      * @throws Exception
      * @throws FileNoPermissionException
-     * @throws LibreTimeFileNotFoundException
+     * @throws RastatimeFileNotFoundException
      * @throws PropelException
      */
     /**
@@ -480,7 +480,7 @@ class CcFiles extends BaseCcFiles
             $storedFile = Application_Model_StoredFile::RecallById($id, $con);
             $storedFile->delete();
         } else {
-            throw new LibreTimeFileNotFoundException();
+            throw new RastatimeFileNotFoundException();
         }
     }
 

@@ -37,7 +37,7 @@ backups**.  Each backup is one ZIP named after its creation time:
 ```
 rastatime-backup-2026-09-16T1830.zip
     db.dump          the full database (pg_dump custom format)
-    config/…         every configuration file (libretime.conf, …)
+    config/…         every configuration file (rastatime.conf, …)
     manifest.json    what is inside, created when, with which pg_dump
 ```
 

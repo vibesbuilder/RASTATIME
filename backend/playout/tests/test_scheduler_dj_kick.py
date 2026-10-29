@@ -11,14 +11,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutEngine, PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-import libretime_playout.playout_scheduler as ps
+from rastatime_playout.engine.interface import PlayoutEngine, PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+import rastatime_playout.playout_scheduler as ps
 
 
 def _scheduler(engine):
     engine.get_state.return_value = PlayoutState.STOPPED
-    with patch("libretime_playout.playout_scheduler.FfmpegLineinCapture"):
+    with patch("rastatime_playout.playout_scheduler.FfmpegLineinCapture"):
         return ps.PlayoutScheduler(engine=engine, api_client=MagicMock())
 
 

@@ -83,7 +83,7 @@ if (Test-Path $VenvPython) {
 }
 
 # ---------------------------------------------------------------------------
-# PYTHONPATH  - make libretime_api and libretime_shared importable without
+# PYTHONPATH  - make rastatime_api and rastatime_shared importable without
 # requiring an editable install.  An editable install is preferred because
 # it also registers package metadata (importlib.metadata.version); without
 # it VERSION falls back to "dev".
@@ -97,8 +97,8 @@ $env:PYTHONPATH = "$ApiSrc;$SharedSrc;$existingPythonPath"
 # ---------------------------------------------------------------------------
 # Django settings
 # ---------------------------------------------------------------------------
-$env:DJANGO_SETTINGS_MODULE = "libretime_api.settings.dev"
-$env:LIBRETIME_DEBUG         = "true"
+$env:DJANGO_SETTINGS_MODULE = "rastatime_api.settings.dev"
+$env:RASTATIME_DEBUG         = "true"
 
 # ---------------------------------------------------------------------------
 # Print startup banner
@@ -111,7 +111,7 @@ Write-Host "======================================================" -ForegroundC
 Write-Host "  RASTATIME API  - development server                  " -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Settings  : libretime_api.settings.dev" -ForegroundColor Gray
+Write-Host "  Settings  : rastatime_api.settings.dev" -ForegroundColor Gray
 Write-Host "  Health    : $HealthUrl" -ForegroundColor Green
 Write-Host "  Swagger   : $SwaggerUrl" -ForegroundColor Gray
 Write-Host ""
@@ -124,7 +124,7 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 # Launch Django dev server
 # ---------------------------------------------------------------------------
-$ManagePy = Join-Path $ApiSrc 'libretime_api\manage.py'
+$ManagePy = Join-Path $ApiSrc 'rastatime_api\manage.py'
 
 if (-not (Test-Path $ManagePy)) {
     Write-Host "[ERROR] manage.py not found at: $ManagePy" -ForegroundColor Red

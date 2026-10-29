@@ -19,9 +19,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.player.events import EventKind, WebStreamEvent
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.player.events import EventKind, WebStreamEvent
 
 
 # ---- Helpers -----------------------------------------------------------
@@ -62,7 +62,7 @@ def liquidsoap_scheduler():
     LiquidsoapPlayoutEngine (so engine.webstream_start / _stop exist on
     the mock per spec=).
     """
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
 
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
@@ -191,7 +191,7 @@ def test_on_stop_liquidsoap_file_event_unchanged(liquidsoap_scheduler):
     sched, engine = liquidsoap_scheduler
     # Manually set a non-webstream current event to simulate a file
     # currently playing.
-    from libretime_playout.player.events import EventKind, FileEvent
+    from rastatime_playout.player.events import EventKind, FileEvent
     file_event = FileEvent(
         type=EventKind.FILE,
         start=datetime(2026, 5, 29, 10, 0),

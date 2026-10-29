@@ -144,7 +144,7 @@ die Sendung beginnt).
 > Schedule-Builder der Playout-Engine ein
 > `SHOW_RECORD_START`-Event mit der id, dem Namen und der
 > Startzeit der Sendung. Der Handler in
-> `backend/playout/libretime_playout/playout_scheduler.py`
+> `backend/playout/rastatime_playout/playout_scheduler.py`
 > sendet einen `recording.start`-Befehl an das Liquidsoap-
 > Telnet, das die Pro-Sendung-.mp3-Datei öffnet. Beim
 > Sendungsende sendet die Engine `SHOW_RECORD_END`, und der
@@ -169,7 +169,7 @@ Beispiel:
 ```
 
 Das Verzeichnis und das Dateinamen-Muster sind in
-`config\libretime.conf` unter dem `[recording]`-Abschnitt
+`config\rastatime.conf` unter dem `[recording]`-Abschnitt
 konfiguriert:
 
 ```ini

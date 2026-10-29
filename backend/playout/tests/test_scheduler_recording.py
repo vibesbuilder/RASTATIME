@@ -31,8 +31,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.player.events import EventKind, ShowRecordEvent
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.player.events import EventKind, ShowRecordEvent
 
 
 # ---- Helpers -----------------------------------------------------------
@@ -71,7 +71,7 @@ def liquidsoap_scheduler(tmp_path):
     folder pointing at tmp_path so build_output_path produces a real
     Path under the test's tmp directory.
     """
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
 
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     api_client = MagicMock()
@@ -106,7 +106,7 @@ def test_constructor_liquidsoap_tolerates_engine_recording_stop_failure(tmp_path
     race); the constructor must NOT raise — sentinel-file silencing is
     best-effort.
     """
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
 
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.recording_stop.side_effect = ConnectionError("liquidsoap not up yet")
@@ -184,7 +184,7 @@ def test_liquidsoap_record_start_does_not_spawn_lifecycle_thread(liquidsoap_sche
     engine.recording_start.reset_mock()
 
     with patch(
-        "libretime_playout.playout_scheduler.threading.Thread"
+        "rastatime_playout.playout_scheduler.threading.Thread"
     ) as mock_thread:
         event = _make_show_record_event()
         sched._on_show_record_start("k", event)
@@ -292,7 +292,7 @@ def test_liquidsoap_record_end_does_not_spawn_post_roll_timer(liquidsoap_schedul
     engine.recording_stop.reset_mock()
 
     with patch(
-        "libretime_playout.playout_scheduler.threading.Timer"
+        "rastatime_playout.playout_scheduler.threading.Timer"
     ) as mock_timer:
         event = _make_show_record_event(type_=EventKind.SHOW_RECORD_END)
         sched._on_show_record_end("k", event)
@@ -335,7 +335,7 @@ def test_show_record_start_uses_rendered_extension(tmp_path):
     """The file name takes the extension of the encoder Liquidsoap runs with."""
     from datetime import datetime
 
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
 
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     api_client = MagicMock()
@@ -358,7 +358,7 @@ def test_show_record_start_uses_rendered_extension(tmp_path):
 
 
 def test_recording_extension_lookup_failure_falls_back_to_mp3(tmp_path):
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
 
     def boom():
         raise RuntimeError("no render yet")
@@ -376,7 +376,7 @@ def test_recording_extension_lookup_failure_falls_back_to_mp3(tmp_path):
 def test_build_output_path_has_seconds(tmp_path):
     from datetime import datetime, timezone
 
-    from libretime_playout.recording_path import build_output_path
+    from rastatime_playout.recording_path import build_output_path
 
     starts = datetime(2026, 10, 19, 10, 5, 7, tzinfo=timezone.utc)
     out = build_output_path(tmp_path, starts, "A & B / C", extension="opus")
@@ -391,7 +391,7 @@ def test_build_output_path_has_seconds(tmp_path):
 def _recording_scheduler(tmp_path, with_v1=True):
     """Scheduler with a mocked engine, a recording folder at tmp_path and
     (optionally) a legacy v1 client whose notify_recording_finished is a mock."""
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
 
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     api_client = MagicMock()
@@ -417,7 +417,7 @@ def _join_report_threads():
 
 def test_record_events_carry_the_instance_id():
     """generate_show_record_events puts cc_show_instances.id on both events."""
-    from libretime_playout.player.schedule import generate_show_record_events
+    from rastatime_playout.player.schedule import generate_show_record_events
 
     events = {}
     generate_show_record_events(

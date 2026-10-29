@@ -606,7 +606,7 @@ ein, dann **Save**.
 
 Seit dem 16.09.2026 ist der Ordner, in dem die Medienbibliothek liegt
 (importierte Titel, Cover, Show-Bilder), eine Einstellung auf dieser
-Seite und keine Zeile in `libretime.conf` mehr. Die Konfigurationsdatei
+Seite und keine Zeile in `rastatime.conf` mehr. Die Konfigurationsdatei
 liefert nur den Anfangswert; sobald Sie die Bibliothek einmal verschoben
 haben, gilt die Einstellung.
 
@@ -639,7 +639,7 @@ Was während des Verschiebens passiert:
   nächsten Aktualisieren des Sendeplans (innerhalb von zwei Minuten).
 - Die **bisherige Kopie bleibt auf der Platte**. Löschen Sie sie
   selbst, sobald Sie zufrieden sind - und nur ihren Inhalt, nicht den
-  in `libretime.conf` genannten Ordner, weil die Web-Anwendung beim
+  in `rastatime.conf` genannten Ordner, weil die Web-Anwendung beim
   Start prüft, dass dieser Ordner existiert.
 
 Startet der Dienst RASTATIME-API während einer laufenden Kopie neu,

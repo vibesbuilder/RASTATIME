@@ -22,7 +22,7 @@
     Service properties (see docs/architecture/SERVICE_TOPOLOGY.md §2.3):
         NSSM name  : RASTATIME-PLAYOUT
         Executable : python.exe  (from the install-root venv)
-        Arguments  : -m libretime_playout
+        Arguments  : -m rastatime_playout
         Port       : None (no external port; IPC via shared DB)
         Logs       : C:\rastatime\logs\playout-stdout.log
                      C:\rastatime\logs\playout-stderr.log
@@ -36,8 +36,8 @@
     Default: C:\rastatime
 
 .PARAMETER ConfigFile
-    Path to libretime.conf.
-    Default: <InstallRoot>\config\libretime.conf
+    Path to rastatime.conf.
+    Default: <InstallRoot>\config\rastatime.conf
 
 .PARAMETER NssmExe
     Path to nssm.exe.  If omitted the script searches PATH and then
@@ -181,7 +181,7 @@ function Find-Python {
 # ---------------------------------------------------------------------------
 function Resolve-ConfigFile {
     if ($ConfigFile -ne "") { return $ConfigFile }
-    return "$InstallRoot\config\libretime.conf"
+    return "$InstallRoot\config\rastatime.conf"
 }
 
 # ---------------------------------------------------------------------------
@@ -228,7 +228,7 @@ if ($existing) {
 
 # Install
 Write-Step "Installing '$ServiceName'..."
-& $nssm install $ServiceName $python "-m libretime_playout"
+& $nssm install $ServiceName $python "-m rastatime_playout"
 if ($LASTEXITCODE -ne 0) {
     Write-Err "nssm install failed (exit $LASTEXITCODE)."
     exit 1
@@ -263,8 +263,8 @@ Write-Step "Setting restart policy (${RestartDelayMs} ms delay)..."
 # Environment variables
 Write-Step "Configuring environment variables..."
 & $nssm set $ServiceName AppEnvironmentExtra `
-    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-    "LIBRETIME_CONFIG_FILEPATH=$cfgFile" `
+    "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
+    "RASTATIME_CONFIG_FILEPATH=$cfgFile" `
     "RASTATIME_API_URL=http://127.0.0.1:8765" `
     "PYTHONPATH=$pythonPath" `
     "PATH=C:\ffmpeg\bin;%PATH%"

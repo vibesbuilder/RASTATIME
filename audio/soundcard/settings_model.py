@@ -3,7 +3,7 @@ SoundcardSettings — pure domain model for soundcard device selection.
 
 This module is Django-free: it can be imported and tested without a database
 or a running application server.  The Django persistence layer lives in
-``backend/api/libretime_api/soundcard/models.py``, which converts between
+``backend/api/rastatime_api/soundcard/models.py``, which converts between
 this domain model and the ORM row via :meth:`to_domain` /
 :meth:`update_from_domain`.
 

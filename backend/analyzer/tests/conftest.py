@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from libretime_shared.logging import setup_logger
+from rastatime_shared.logging import setup_logger
 
 from .fixtures import fixtures_path
 
@@ -15,7 +15,7 @@ AUDIO_IMPORT_DEST = f"Test Artist/Test Album/{AUDIO_FILENAME}"
 
 
 # RASTATIME 2026-05-14 — ensure FFMPEG_PATH is set before any test
-# module imports libretime_analyzer.pipeline._ffmpeg.  Without this,
+# module imports rastatime_analyzer.pipeline._ffmpeg.  Without this,
 # ``shutil.which("ffmpeg")`` returns None on the dev box (the binary
 # lives at ``C:\ffmpeg\bin\ffmpeg.exe`` but is not on the test runner's
 # PATH), and the playability test would silently fail open and stop

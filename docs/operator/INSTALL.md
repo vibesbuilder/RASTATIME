@@ -15,7 +15,7 @@ on a fresh Windows machine.  By the end you will have:
 - All prerequisites installed and verified
 - The RASTATIME codebase deployed to `C:\rastatime`
 - A Python virtual environment with all dependencies
-- A `libretime.conf` configuration file pointing at your PostgreSQL database
+- A `rastatime.conf` configuration file pointing at your PostgreSQL database
 - All seven NSSM Windows services registered and running
 - A rendered Liquidsoap production script (`C:\Tools\liquidsoap\rastatime.liq`)
 - A healthy API confirmed by `status.ps1`
@@ -98,7 +98,7 @@ every uploaded media file.  Without RabbitMQ, uploads stay at
 
 1. Install Erlang OTP (64-bit), then RabbitMQ 4.x
 2. RASTATIME expects vhost `/rastatime` on port **5672** with the
-   user/password from the `rabbitmq:` section of `libretime.conf`
+   user/password from the `rabbitmq:` section of `rastatime.conf`
 3. Verify:
    ```powershell
    Get-Service RabbitMQ
@@ -213,14 +213,14 @@ RASTATIME uses `C:\rastatime` as its standard install root.
 ```
 C:\rastatime\
 ├── backend\
-│   ├── analyzer\          — Media import pipeline (libretime_analyzer)
-│   ├── api\               — Django REST API (libretime_api)
+│   ├── analyzer\          — Media import pipeline (rastatime_analyzer)
+│   ├── api\               — Django REST API (rastatime_api)
 │   ├── api-client\        — Shared API client library
-│   ├── playout\           — Playout scheduler (libretime_playout) + Liquidsoap config
+│   ├── playout\           — Playout scheduler (rastatime_playout) + Liquidsoap config
 │   ├── rastatime_worker\  — Background job runner (no pyproject; runs via PYTHONPATH)
 │   └── shared\            — Shared library modules
 ├── config\
-│   ├── libretime.conf   — Main RASTATIME configuration file
+│   ├── rastatime.conf   — Main RASTATIME configuration file
 │   └── icecast.xml      — Icecast config (optional)
 ├── logs\             — All service log files (created automatically)
 ├── playout\          — Playout working files
@@ -315,11 +315,11 @@ python -c "import psycopg2; print('psycopg2 OK')"
 Copy the example file and edit it for your environment:
 
 ```powershell
-Copy-Item C:\rastatime\config\libretime.conf.example `
-          C:\rastatime\config\libretime.conf
+Copy-Item C:\rastatime\config\rastatime.conf.example `
+          C:\rastatime\config\rastatime.conf
 ```
 
-Open `C:\rastatime\config\libretime.conf` in a text editor.  The file
+Open `C:\rastatime\config\rastatime.conf` in a text editor.  The file
 is **YAML**; set at minimum:
 
 ```yaml
@@ -358,7 +358,7 @@ rabbitmq:
 > services as an environment variable.
 
 > The configuration file path is injected into every **Python** service
-> (API, worker, playout, analyzer) via the `LIBRETIME_CONFIG_FILEPATH`
+> (API, worker, playout, analyzer) via the `RASTATIME_CONFIG_FILEPATH`
 > environment variable (set automatically by their install scripts).
 > Apache/PHP uses its built-in default path, Icecast gets the config as
 > a `-c` argument, and Liquidsoap gets its rendered script as argument.
@@ -370,15 +370,15 @@ install on a local LAN but **must** be replaced before the host is
 reachable from the public internet:
 
 > **Note:** the `stream:` section (`stream.internal_listener`,
-> `stream.harbor`) is not included in `libretime.conf.example` — add it
-> to your live `libretime.conf` by hand when configuring the relay
+> `stream.harbor`) is not included in `rastatime.conf.example` — add it
+> to your live `rastatime.conf` by hand when configuring the relay
 > listener and DJ harbor passwords.
 
 | Setting | Where | Why |
 |---|---|---|
-| `general.api_key` | `libretime.conf` | Authenticates inter-service API calls and the v1 legacy notify hook. |
-| `general.secret_key` | `libretime.conf` | Django session / CSRF signing key. Must be at least 50 random chars. |
-| `stream.internal_listener.password` | `libretime.conf` | Service-to-service password the playout uses to listen to `/main` and `/show` for relay. Default value is `change-me-internal-listener-secret`. Replace with a long random string (32+ chars). After changing, restart `RASTATIME-PLAYOUT` (it caches the value at startup); the PHP frontend re-reads the config on the next request — no Apache restart needed. |
+| `general.api_key` | `rastatime.conf` | Authenticates inter-service API calls and the v1 legacy notify hook. |
+| `general.secret_key` | `rastatime.conf` | Django session / CSRF signing key. Must be at least 50 random chars. |
+| `stream.internal_listener.password` | `rastatime.conf` | Service-to-service password the playout uses to listen to `/main` and `/show` for relay. Default value is `change-me-internal-listener-secret`. Replace with a long random string (32+ chars). After changing, restart `RASTATIME-PLAYOUT` (it caches the value at startup); the PHP frontend re-reads the config on the next request — no Apache restart needed. |
 | `<source-password>` | `C:\rastatime\config\icecast.xml` | Icecast admin / relay / source password. Default value is `admin`. Replace with a long random string. |
 | Master DJ password | `cc_pref` row `live_stream_master_password` (set via Settings → Streams in the frontend) | Authenticates the master-source DJ at `/main`. |
 
@@ -408,21 +408,21 @@ rabbitmqctl add_vhost /rastatime
 rabbitmqctl set_permissions -p /rastatime rastatime ".*" ".*" ".*"
 ```
 
-The values must match the `rabbitmq:` section of `libretime.conf`.
+The values must match the `rabbitmq:` section of `rastatime.conf`.
 
 ### Step 7 — Run database migrations
 
 ```powershell
 # With the venv active:
-cd C:\rastatime\backend\api\libretime_api
-$env:DJANGO_SETTINGS_MODULE = "libretime_api.settings.prod"
-$env:LIBRETIME_CONFIG_FILEPATH = "C:\rastatime\config\libretime.conf"
+cd C:\rastatime\backend\api\rastatime_api
+$env:DJANGO_SETTINGS_MODULE = "rastatime_api.settings.prod"
+$env:RASTATIME_CONFIG_FILEPATH = "C:\rastatime\config\rastatime.conf"
 $env:PYTHONPATH = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
 
 python manage.py migrate
 ```
 
-> `manage.py` lives at `backend\api\libretime_api\manage.py` (not at the
+> `manage.py` lives at `backend\api\rastatime_api\manage.py` (not at the
 > package root).  Against a database restored from a backup, `migrate`
 > correctly reports `No migrations to apply`.
 > There is no `collectstatic` step — the prod settings define no
@@ -448,7 +448,7 @@ Run the install scripts as **Administrator**, in dependency order:
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-api.ps1 `
     -InstallRoot C:\rastatime `
-    -ConfigFile C:\rastatime\config\libretime.conf `
+    -ConfigFile C:\rastatime\config\rastatime.conf `
     -StartService
 
 # Wait for the API health gate before continuing:
@@ -459,22 +459,22 @@ Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-worker.ps1 `
     -InstallRoot C:\rastatime `
-    -ConfigFile C:\rastatime\config\libretime.conf `
+    -ConfigFile C:\rastatime\config\rastatime.conf `
     -StartService
 
 # 9c — Playout (mandatory; do NOT start yet — engine env vars follow in 9d)
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-playout.ps1 `
     -InstallRoot C:\rastatime `
-    -ConfigFile C:\rastatime\config\libretime.conf
+    -ConfigFile C:\rastatime\config\rastatime.conf
 
 # 9d — Playout engine environment variables
 # install-playout.ps1 does NOT set the engine selection.  `nssm set`
 # REPLACES the whole environment block, so repeat the five variables the
 # script sets and append the three engine extras:
 nssm set RASTATIME-PLAYOUT AppEnvironmentExtra `
-    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-    "LIBRETIME_CONFIG_FILEPATH=C:\rastatime\config\libretime.conf" `
+    "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
+    "RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf" `
     "RASTATIME_API_URL=http://127.0.0.1:8765" `
     "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime" `
     "PATH=C:\ffmpeg\bin;%PATH%" `
@@ -487,7 +487,7 @@ nssm start RASTATIME-PLAYOUT
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-analyzer.ps1 `
     -InstallRoot C:\rastatime `
-    -ConfigFile C:\rastatime\config\libretime.conf `
+    -ConfigFile C:\rastatime\config\rastatime.conf `
     -StartService
 
 # 9f — Apache (frontend; httpd.conf per §2.6 / INSTALL_APACHE.md)
@@ -519,11 +519,11 @@ nssm start RASTATIME-LIQUIDSOAP
 
 > Stream outputs are rendered from the **database** (`cc_pref` rows
 > `stream_output_N`, maintained via Settings → Streams) — not from
-> `libretime.conf`.  After any stream-setting change:
+> `rastatime.conf`.  After any stream-setting change:
 > `nssm restart RASTATIME-PLAYOUT` (re-renders the `.liq` at startup,
 > incl. harbor credentials), then `nssm restart RASTATIME-LIQUIDSOAP`.
 > Avoid the manual CLI render
-> (`python -m libretime_playout.liquidsoap_config render`) on a
+> (`python -m rastatime_playout.liquidsoap_config render`) on a
 > configured system — it does not read `stream.harbor` and would strip
 > the DJ harbor inputs from the rendered script.
 
@@ -557,13 +557,13 @@ recovery procedures.
 
 ## 5. Troubleshooting
 
-### 5.1 API does not start — `libretime.conf` not found
+### 5.1 API does not start — `rastatime.conf` not found
 
 ```
-Error: LIBRETIME_CONFIG_FILEPATH is not set or the file does not exist.
+Error: RASTATIME_CONFIG_FILEPATH is not set or the file does not exist.
 ```
 
-**Fix:** Ensure `C:\rastatime\config\libretime.conf` exists and the path
+**Fix:** Ensure `C:\rastatime\config\rastatime.conf` exists and the path
 is correctly set in the NSSM service:
 ```powershell
 nssm get RASTATIME-API AppEnvironmentExtra
@@ -581,7 +581,7 @@ django.db.OperationalError: could not connect to server: Connection refused
 Get-Service postgresql*
 pg_isready -h 127.0.0.1 -p 5432
 ```
-Check the `[database]` section of `libretime.conf` for correct credentials.
+Check the `[database]` section of `rastatime.conf` for correct credentials.
 
 ### 5.3 Liquidsoap does not start — rastatime.liq missing
 
@@ -691,7 +691,7 @@ pip install -r requirements.txt
 # `pip install -e backend/<pkg>` only if a pyproject.toml changed.
 
 # 4. Run any new migrations (env vars as in §4 Step 7)
-cd C:\rastatime\backend\api\libretime_api
+cd C:\rastatime\backend\api\rastatime_api
 python manage.py migrate
 
 # 5. Restart services in dependency order
@@ -703,7 +703,7 @@ nssm start RASTATIME-ANALYZER
 nssm start RASTATIME-APACHE
 nssm start RASTATIME-ICECAST
 # If the playout/Liquidsoap templates changed, re-render first:
-#   python -m libretime_playout.liquidsoap_config render --out C:/Tools/liquidsoap/rastatime.liq
+#   python -m rastatime_playout.liquidsoap_config render --out C:/Tools/liquidsoap/rastatime.liq
 nssm start RASTATIME-LIQUIDSOAP
 
 # 6. Verify

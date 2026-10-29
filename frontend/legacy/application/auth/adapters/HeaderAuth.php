@@ -3,7 +3,7 @@
 /**
  * Auth adaptor for basic header authentication.
  */
-class LibreTime_Auth_Adaptor_Header implements Zend_Auth_Adapter_Interface
+class Rastatime_Auth_Adaptor_Header implements Zend_Auth_Adapter_Interface
 {
     /**
      * @throws Exception

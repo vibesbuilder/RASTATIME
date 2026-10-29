@@ -42,7 +42,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _REPO_ROOT   = pathlib.Path(__file__).resolve().parents[3]
-_BACKEND_API = _REPO_ROOT / "backend" / "api" / "libretime_api"
+_BACKEND_API = _REPO_ROOT / "backend" / "api" / "rastatime_api"
 
 #: Apps whose tables are fully owned by the LibreTime ``legacy`` migration
 #: chain.  These must never have a ``migrations/`` directory or any model

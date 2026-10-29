@@ -167,14 +167,14 @@ def rf():
 @pytest.fixture()
 def view():
     pytest.importorskip("django.test")
-    from libretime_api.linein_api import linein_list        # type: ignore[import]
+    from rastatime_api.linein_api import linein_list        # type: ignore[import]
     return linein_list
 
 
 def _make_orm_entry(name, device_id="dev-x", channels=None, priority=0,
                     enabled=True, description=""):
     """Create and persist one ORM LineIn row."""
-    from libretime_api.linein.models import LineIn as OrmLineIn   # type: ignore[import]
+    from rastatime_api.linein.models import LineIn as OrmLineIn   # type: ignore[import]
     from audio.linein.domain import LineIn as DomainLineIn
     domain = DomainLineIn.create(
         name=name,

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from libretime_shared.files import compute_md5
+from rastatime_shared.files import compute_md5
 
 
 def test_compute_md5(tmp_path: Path) -> None:

@@ -389,7 +389,7 @@ scenario).
 directly for the source connection without a separate Icecast instance.
 
 **Notes:**
-- The `HarborInput` config model from LibreTime's `libretime_shared` is the
+- The `HarborInput` config model from LibreTime's `rastatime_shared` is the
   reference shape; it is replaced by a new `ShowSourceConfig` in RASTATIME.
 - Icecast must be installed and running on the same machine or accessible over
   the network for this use case.

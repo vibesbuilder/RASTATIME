@@ -563,7 +563,7 @@ folder, then **Save**.
 
 Since 2026-09-16 the folder that holds the media library (imported
 tracks, covers, show images) is a setting on this page, not a line in
-`libretime.conf`. The configuration file only supplies the initial
+`rastatime.conf`. The configuration file only supplies the initial
 value; once you have moved the library, the setting wins.
 
 The section shows the **current location**, where that value comes
@@ -593,7 +593,7 @@ What happens during the move:
   playout at its next schedule refresh (within two minutes).
 - The **previous copy stays on disk**. Delete it yourself once you are
   satisfied - and delete only its contents, not the folder named in
-  `libretime.conf`, because the web application checks at start that
+  `rastatime.conf`, because the web application checks at start that
   this folder exists.
 
 If the RASTATIME-API service restarts while a copy is running, the

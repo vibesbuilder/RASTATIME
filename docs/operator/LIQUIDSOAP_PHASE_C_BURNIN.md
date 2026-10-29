@@ -64,7 +64,7 @@ $env:RASTATIME_PLAYOUT_ENGINE = "liquidsoap"
 $env:RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT = "true"
 $startTime = Get-Date -Format "yyyy-MM-dd_HH-mm"
 $logFile = "C:\rastatime\logs\burnin_${startTime}.log"
-C:\rastatime\.venv\Scripts\python.exe -m libretime_playout *> $logFile
+C:\rastatime\.venv\Scripts\python.exe -m rastatime_playout *> $logFile
 ```
 
 Pypo läuft jetzt im Vordergrund + schreibt alles nach `$logFile`.
@@ -223,7 +223,7 @@ Invoke-WebRequest http://localhost:8000/admin/stats.xml `
 
 # Was sagt Liquidsoap-Telnet?
 C:\rastatime\.venv\Scripts\python.exe -c @"
-from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
 c = LiquidsoapTelnetClient()
 print('queue:', c.send_command('scheduled.queue'))
 print('mount1 status:', c.send_command('output.icecast.status'))

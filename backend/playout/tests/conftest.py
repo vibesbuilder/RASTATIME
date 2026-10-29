@@ -1,6 +1,6 @@
 import pytest
 
-from libretime_playout.config import Config
+from rastatime_playout.config import Config
 
 
 @pytest.fixture()
@@ -37,4 +37,4 @@ def config():
         }
     )
 # T-GH-1: stream_preferences fixture removed — StreamPreferences was part of
-# the deleted libretime_playout.liquidsoap.models module.
+# the deleted rastatime_playout.liquidsoap.models module.

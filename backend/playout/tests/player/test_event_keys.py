@@ -5,13 +5,13 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from libretime_playout.player.events import (
+from rastatime_playout.player.events import (
     EVENT_KEY_SEPARATOR,
     datetime_to_event_key,
     event_key_to_datetime,
     make_event_key,
 )
-from libretime_playout.player.schedule import insert_event
+from rastatime_playout.player.schedule import insert_event
 
 
 def test_make_event_key_joins_timestamp_and_tag():

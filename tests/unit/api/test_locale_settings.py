@@ -40,10 +40,10 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _REPO = Path(__file__).resolve().parents[3]
-_INTERNAL_PY = _REPO / "backend/api/libretime_api/settings/_internal.py"
-_DEV_PY      = _REPO / "backend/api/libretime_api/settings/dev.py"
-_PROD_PY     = _REPO / "backend/api/libretime_api/settings/prod.py"
-_DATA_SQL    = _REPO / "backend/api/libretime_api/legacy/migrations/sql/data.sql"
+_INTERNAL_PY = _REPO / "backend/api/rastatime_api/settings/_internal.py"
+_DEV_PY      = _REPO / "backend/api/rastatime_api/settings/dev.py"
+_PROD_PY     = _REPO / "backend/api/rastatime_api/settings/prod.py"
+_DATA_SQL    = _REPO / "backend/api/rastatime_api/legacy/migrations/sql/data.sql"
 _PREF_PHP    = _REPO / "frontend/legacy/application/models/Preference.php"
 
 # ---------------------------------------------------------------------------

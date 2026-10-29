@@ -8,8 +8,8 @@ from queue import Queue
 
 import pytest
 
-from libretime_analyzer.pipeline import Pipeline, PipelineOptions
-from libretime_analyzer.pipeline import repair_container as rc
+from rastatime_analyzer.pipeline import Pipeline, PipelineOptions
+from rastatime_analyzer.pipeline import repair_container as rc
 
 from ._synth import ffmpeg, requires_ffmpeg, sine
 

@@ -134,7 +134,7 @@ begins).
 > `cc_show.record = TRUE`. At show start, the playout
 > engine's schedule builder emits a `SHOW_RECORD_START`
 > event with the show's id + name + start time. The
-> handler in `backend/playout/libretime_playout/playout_scheduler.py`
+> handler in `backend/playout/rastatime_playout/playout_scheduler.py`
 > sends a `recording.start` command to the Liquidsoap
 > telnet, which opens the per-show .mp3 file. At show end,
 > the engine emits `SHOW_RECORD_END` and the handler sends
@@ -159,7 +159,7 @@ Example:
 ```
 
 The directory and the filename pattern are configured in
-`config\libretime.conf` under the `[recording]` section:
+`config\rastatime.conf` under the `[recording]` section:
 
 ```ini
 [recording]

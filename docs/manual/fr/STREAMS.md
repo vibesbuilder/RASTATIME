@@ -276,7 +276,7 @@ configuré avec :
 > moment qui compte ; un Show DJ ne peut donc pas se connecter
 > avant le début de l'émission. Ce n'est que lorsque la diffusion
 > elle-même est injoignable que le moteur se rabat sur le mot de
-> passe harbor statique de `libretime.conf`. Voir ARCHITECTURE
+> passe harbor statique de `rastatime.conf`. Voir ARCHITECTURE
 > §23.27 (addendum 2026-09-10).
 
 ---

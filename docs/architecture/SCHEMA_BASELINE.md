@@ -13,7 +13,7 @@ RASTATIME inherits the full LibreTime relational schema and adds two new
 tables of its own.  All schema changes are managed through Django migrations.
 
 The LibreTime baseline is applied by `legacy.0001_initial`, which executes
-raw PostgreSQL DDL from `backend/api/libretime_api/legacy/migrations/sql/schema.sql`.
+raw PostgreSQL DDL from `backend/api/rastatime_api/legacy/migrations/sql/schema.sql`.
 Subsequent `legacy.000N_*` migrations apply schema evolution patches from
 upstream LibreTime.
 
@@ -161,7 +161,7 @@ To run migrations against PostgreSQL in the dev settings module:
 ```powershell
 $env:RASTATIME_USE_POSTGRES = "true"
 .venv\Scripts\python.exe -m django migrate `
-    --settings=libretime_api.settings.dev `
+    --settings=rastatime_api.settings.dev `
     --pythonpath=backend\api
 ```
 

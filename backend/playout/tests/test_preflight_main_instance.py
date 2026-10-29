@@ -10,8 +10,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import liquidsoap_health as lh
-from libretime_playout.preflight import PreflightChecker
+from rastatime_playout import liquidsoap_health as lh
+from rastatime_playout.preflight import PreflightChecker
 
 TASCAM = "Tascam-Lautsprecher (US-16x08)"
 MAIN = lh.ProcessInfo(14516, 3400.0, 5000.0, "C:\\Tools\\liquidsoap\\rastatime.liq")

@@ -26,7 +26,7 @@ import os
 
 import pytest
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "libretime_api.settings.dev")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rastatime_api.settings.dev")
 
 try:
     import django

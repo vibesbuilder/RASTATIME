@@ -24,7 +24,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.ffmpeg_linein_capture import FfmpegLineinCapture
+from rastatime_playout.engine.ffmpeg_linein_capture import FfmpegLineinCapture
 
 DEVICE_ID = "0fb30b0b-c875-432b-a48f-dbb5208995c9"
 
@@ -32,7 +32,7 @@ DEVICE_ID = "0fb30b0b-c875-432b-a48f-dbb5208995c9"
 @pytest.fixture(name="capture")
 def _capture():
     with patch(
-        "libretime_playout.engine.ffmpeg_linein_capture._find_ffmpeg",
+        "rastatime_playout.engine.ffmpeg_linein_capture._find_ffmpeg",
         return_value="ffmpeg.exe",
     ):
         cap = FfmpegLineinCapture()
@@ -53,7 +53,7 @@ def test_plain_stereo_uses_the_mme_feeder():
     """The regression that produced a silent show: (0, 1) must NOT go
     to dshow when a device name is available."""
     with patch(
-        "libretime_playout.engine.ffmpeg_linein_capture._find_ffmpeg",
+        "rastatime_playout.engine.ffmpeg_linein_capture._find_ffmpeg",
         return_value="ffmpeg.exe",
     ):
         cap = FfmpegLineinCapture()

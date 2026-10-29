@@ -237,7 +237,7 @@ function Test-RabbitMQ {
     <#
     Required check: the analyzer consumes a RabbitMQ queue and the PHP
     frontend dispatches upload messages to it (vhost /rastatime, port
-    5672, credentials in libretime.conf's rabbitmq section).
+    5672, credentials in rastatime.conf's rabbitmq section).
     Detects via Windows service 'RabbitMQ' or rabbitmq-server on PATH.
     #>
 
@@ -255,7 +255,7 @@ function Test-RabbitMQ {
 
     Write-Fail "RabbitMQ" "not found (Windows service or rabbitmq-server on PATH)"
     Write-Info "Install RabbitMQ 4.x + Erlang OTP; create vhost /rastatime on port 5672"
-    Write-Info "(credentials in libretime.conf's rabbitmq section).  If the service"
+    Write-Info "(credentials in rastatime.conf's rabbitmq section).  If the service"
     Write-Info "crashes at start, reinstall it with an explicit RABBITMQ_BASE"
     Write-Info "(e.g. C:\ProgramData\RabbitMQ) via rabbitmq-service.bat remove/install."
     return $false

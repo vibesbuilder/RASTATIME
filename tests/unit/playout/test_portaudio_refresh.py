@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 
-from libretime_playout.engine.portaudio_output import (
+from rastatime_playout.engine.portaudio_output import (
     refresh_device_list,
     resolve_output_device,
 )

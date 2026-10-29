@@ -11,7 +11,7 @@ Test inventory (10 tests, always run — no Django needed):
   4.  UPGRADE.md documents stopping services before the upgrade.
   5.  UPGRADE.md references database migration (manage.py migrate).
   6.  BACKUP.md documents pg_dump for database backup.
-  7.  BACKUP.md references libretime.conf (config file backup).
+  7.  BACKUP.md references rastatime.conf (config file backup).
   8.  CRASH_RECOVERY.md references status.ps1 for initial assessment.
   9.  CRASH_RECOVERY.md references RESTART_ORDER.md.
  10.  All three documents reference C:\\rastatime as the install directory.
@@ -98,16 +98,16 @@ def test_backup_documents_pg_dump():
 
 
 # ---------------------------------------------------------------------------
-# 7  BACKUP.md — libretime.conf backup
+# 7  BACKUP.md — rastatime.conf backup
 # ---------------------------------------------------------------------------
 
 def test_backup_references_config_file():
     """
-    BACKUP.md must include libretime.conf in the backup scope so the
+    BACKUP.md must include rastatime.conf in the backup scope so the
     entire RASTATIME configuration is preserved alongside the database.
     """
-    assert "libretime.conf" in _read(_BACKUP), (
-        "BACKUP.md must reference libretime.conf as a backup target"
+    assert "rastatime.conf" in _read(_BACKUP), (
+        "BACKUP.md must reference rastatime.conf as a backup target"
     )
 
 

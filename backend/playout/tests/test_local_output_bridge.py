@@ -22,8 +22,8 @@ from pathlib import Path
 
 import pytest
 
-from libretime_playout import __main__ as main
-from libretime_playout import liquidsoap_config as lc
+from rastatime_playout import __main__ as main
+from rastatime_playout import liquidsoap_config as lc
 
 LIQUIDSOAP_EXE = Path("C:/Tools/liquidsoap/liquidsoap.exe")
 TASCAM = "Tascam-Lautsprecher (US-16x08)"

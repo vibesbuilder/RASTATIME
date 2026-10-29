@@ -1,6 +1,6 @@
 """
 RASTATIME 2026-05-27 — Unit tests for the Phase-C4 Teil 2 Liquidsoap-
-telnet source-state reconciler in libretime_playout.source_switcher.
+telnet source-state reconciler in rastatime_playout.source_switcher.
 
 Strategy
 --------
@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.source_switcher import (
+from rastatime_playout.source_switcher import (
     SourceState,
     SourceSwitcher,
     _liquidsoap_state_poll_loop,
@@ -214,15 +214,15 @@ def test_start_listener_spawns_the_liquidsoap_reconciler():
     """
     sw, _ = _make_switcher_with_recorder()
     with patch(
-        "libretime_playout.source_switcher._liquidsoap_state_poll_loop"
+        "rastatime_playout.source_switcher._liquidsoap_state_poll_loop"
     ) as ls_mock, patch(
-        "libretime_playout.source_switcher.ThreadingHTTPServer"
+        "rastatime_playout.source_switcher.ThreadingHTTPServer"
     ) as srv_mock, patch(
-        "libretime_playout.source_switcher.threading.Thread"
+        "rastatime_playout.source_switcher.threading.Thread"
     ) as thread_mock:
         thread_mock.return_value.start = MagicMock()
         srv_mock.return_value = MagicMock()
-        from libretime_playout.source_switcher import start_listener
+        from rastatime_playout.source_switcher import start_listener
         start_listener(sw, reconcile_interval_s=123.0)
         reconcilers = [
             call for call in thread_mock.call_args_list
@@ -233,10 +233,10 @@ def test_start_listener_spawns_the_liquidsoap_reconciler():
 
 
 def test_start_listener_has_no_engine_kind_argument():
-    import libretime_playout.source_switcher as ss
+    import rastatime_playout.source_switcher as ss
     assert not hasattr(ss, "_icecast_state_poll_loop")
-    with patch("libretime_playout.source_switcher.ThreadingHTTPServer"), patch(
-        "libretime_playout.source_switcher.threading.Thread"
+    with patch("rastatime_playout.source_switcher.ThreadingHTTPServer"), patch(
+        "rastatime_playout.source_switcher.threading.Thread"
     ):
         with pytest.raises(TypeError):
             ss.start_listener(_make_switcher_with_recorder()[0], engine_kind="liquidsoap")

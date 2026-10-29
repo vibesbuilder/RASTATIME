@@ -1,7 +1,7 @@
 # RASTATIME locale build script.
 #
 # Compiles every legacy .po translation under
-#   frontend/legacy/locale/<LANG>/LC_MESSAGES/libretime.po
+#   frontend/legacy/locale/<LANG>/LC_MESSAGES/rastatime.po
 # into the corresponding binary .mo file that PHP gettext reads at runtime.
 #
 # Requires gettext's `msgfmt.exe` on PATH or at one of the fallback locations
@@ -75,8 +75,8 @@ $built = 0
 $skipped = 0
 $failed = 0
 foreach ($lang in $activeLanguages) {
-    $po = Join-Path $localeDir "$lang\LC_MESSAGES\libretime.po"
-    $mo = Join-Path $localeDir "$lang\LC_MESSAGES\libretime.mo"
+    $po = Join-Path $localeDir "$lang\LC_MESSAGES\rastatime.po"
+    $mo = Join-Path $localeDir "$lang\LC_MESSAGES\rastatime.mo"
     if (-not (Test-Path $po)) {
         Write-Host "  [SKIP]  $lang  (no .po file)" -ForegroundColor Yellow
         $skipped++

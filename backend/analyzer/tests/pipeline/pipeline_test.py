@@ -4,7 +4,7 @@ from queue import Queue
 
 import pytest
 
-from libretime_analyzer.pipeline import Pipeline, PipelineOptions
+from rastatime_analyzer.pipeline import Pipeline, PipelineOptions
 
 from ..conftest import AUDIO_FILENAME, AUDIO_IMPORT_DEST
 from ._synth import requires_ffmpeg
@@ -104,7 +104,7 @@ def test_failed_import_after_conversion_keeps_the_original(
     # RASTATIME 2026-10-14 - review: the original is deleted only once the
     # conversion is filed; a later failure (or an analyzer restart, after
     # which RabbitMQ redelivers the message) must still find it.
-    from libretime_analyzer.pipeline import pipeline as pipeline_module
+    from rastatime_analyzer.pipeline import pipeline as pipeline_module
 
     def broken_organise(*_args, **_kwargs):
         raise OSError("disk full")

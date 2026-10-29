@@ -39,7 +39,7 @@
 > mehreren Mount-Paths auf Port 8000). Show wird also auch auf
 > **Port 8001** mit Mount `/show` connectet.
 | **Username** | `source` (default) | `source` (default — egal, input.harbor ignoriert username) |
-| **Passwort** | aus `icecast.xml` `<source-password>` der jeweiligen Mount | aus `libretime.conf` `stream.harbor.{main,show}_password` |
+| **Passwort** | aus `icecast.xml` `<source-password>` der jeweiligen Mount | aus `rastatime.conf` `stream.harbor.{main,show}_password` |
 | **Format** | mp3 / aac / ogg / opus | gleich (Liquidsoap-Encoder akzeptiert was BUTT/Mixxx sendet) |
 | **Bitrate** | unverändert | unverändert |
 
@@ -51,12 +51,12 @@ Software-Konfiguration neu denken müssen.
 
 ## Schritt 1 — Server-seitige Vorbereitung (einmalig)
 
-### A. Passwörter in `libretime.conf` setzen
+### A. Passwörter in `rastatime.conf` setzen
 
 Im Editor (PowerShell-elevated):
 
 ```powershell
-notepad C:\rastatime\config\libretime.conf
+notepad C:\rastatime\config\rastatime.conf
 ```
 
 Die `stream:`-Sektion erweitern um:
@@ -99,7 +99,7 @@ nssm restart RASTATIME-PLAYOUT
 # Ctrl+C im Pypo-Fenster, dann:
 $env:RASTATIME_PLAYOUT_ENGINE = "liquidsoap"
 $env:RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT = "true"
-C:\rastatime\.venv\Scripts\python.exe -m libretime_playout *> C:\rastatime\logs\pypo.log
+C:\rastatime\.venv\Scripts\python.exe -m rastatime_playout *> C:\rastatime\logs\pypo.log
 ```
 
 Im Pypo-Log sollte zeigen:
@@ -146,7 +146,7 @@ Auf jeder Master-DJ-Workstation:
    - **Server port:** `8001` ← **wichtig, NICHT 8000!**
    - **Mount point:** `main` (ohne führenden `/`)
    - **Username:** `source` (Default — input.harbor ignoriert das eigentlich)
-   - **Password:** `<dein-main_password aus libretime.conf>`
+   - **Password:** `<dein-main_password aus rastatime.conf>`
    - **Bitrate:** wie bisher (z.B. 192 kbps)
    - **Format:** MP3 (oder was bisher)
 4. **Save**.
@@ -249,8 +249,8 @@ Liquidsoap stürzt ab, Mixxx weigert sich):
    (Port 8000, Icecast-Mounts).
 2. **Auf dem Server:**
    ```powershell
-   # libretime.conf: stream.harbor.*_password Werte LEER setzen oder Sektion löschen
-   notepad C:\rastatime\config\libretime.conf
+   # rastatime.conf: stream.harbor.*_password Werte LEER setzen oder Sektion löschen
+   notepad C:\rastatime\config\rastatime.conf
    # Pypo restart -> rendert .liq ohne input.harbor blocks
    nssm restart RASTATIME-PLAYOUT
    # NSSM Liquidsoap restart

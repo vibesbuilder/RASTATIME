@@ -18,11 +18,11 @@ ProtectProc=invisible
 ProtectSystem=full
 
 Environment=PYTHONOPTIMIZE=2
-Environment=LIBRETIME_CONFIG_FILEPATH=@@CONFIG_FILEPATH@@
-Environment=LIBRETIME_LOG_FILEPATH=@@LOG_DIR@@/analyzer.log
+Environment=RASTATIME_CONFIG_FILEPATH=@@CONFIG_FILEPATH@@
+Environment=RASTATIME_LOG_FILEPATH=@@LOG_DIR@@/analyzer.log
 WorkingDirectory=@@WORKING_DIR@@/analyzer
 
-ExecStart=/usr/local/bin/libretime-analyzer
+ExecStart=/usr/local/bin/rastatime-analyzer
 Restart=always
 
 User=libretime

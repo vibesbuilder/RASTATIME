@@ -1,9 +1,9 @@
 [Unit]
 Description=RASTATIME API Socket
-PartOf=libretime-api.service
+PartOf=rastatime-api.service
 
 [Socket]
-ListenStream=/run/libretime-api.sock
+ListenStream=/run/rastatime-api.sock
 SocketUser=@@DEFAULT_WEB_USER@@
 SocketMode=660
 

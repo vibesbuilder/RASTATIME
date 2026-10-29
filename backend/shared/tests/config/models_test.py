@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from libretime_shared.config._models import (
+from rastatime_shared.config._models import (
     AudioAAC,
     AudioMP3,
     AudioOGG,

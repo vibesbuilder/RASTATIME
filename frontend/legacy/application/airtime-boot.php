@@ -80,7 +80,7 @@ $application = new Zend_Application(
 );
 
 require_once APPLICATION_PATH . '/logging/Logging.php';
-Logging::setLogPath(LIBRETIME_LOG_FILEPATH);
+Logging::setLogPath(RASTATIME_LOG_FILEPATH);
 Logging::setupParseErrorLogging();
 
 // Create application, bootstrap, and run

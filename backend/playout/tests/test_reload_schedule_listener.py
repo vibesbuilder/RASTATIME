@@ -9,7 +9,7 @@ import urllib.request
 
 import pytest
 
-import libretime_playout.source_switcher as ss
+import rastatime_playout.source_switcher as ss
 
 
 def _wait_for(predicate, timeout=5.0):

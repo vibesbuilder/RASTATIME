@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from libretime_analyzer.pipeline.organise_file import organise_file, safe_component
+from rastatime_analyzer.pipeline.organise_file import organise_file, safe_component
 
 from ..conftest import AUDIO_FILENAME
 

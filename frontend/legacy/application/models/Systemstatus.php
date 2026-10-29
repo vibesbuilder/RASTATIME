@@ -155,7 +155,7 @@ class Application_Model_Systemstatus
 
         $docRoot = self::GetMonitStatus($ip);
 
-        return self::ExtractServiceInformation($docRoot, 'libretime-playout');
+        return self::ExtractServiceInformation($docRoot, 'rastatime-playout');
     }
 
     public static function GetLiquidsoapStatus()

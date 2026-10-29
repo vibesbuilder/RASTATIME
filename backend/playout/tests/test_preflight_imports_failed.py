@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout.preflight import PreflightChecker
+from rastatime_playout.preflight import PreflightChecker
 
 TYPE = PreflightChecker.WARNING_TYPE_IMPORTS_FAILED
 HOUR = 3600

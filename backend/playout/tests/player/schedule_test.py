@@ -2,18 +2,18 @@ import random
 from datetime import datetime
 
 import pytest
-from libretime_api_client.v2 import ApiClient
+from rastatime_api_client.v2 import ApiClient
 
 # T-GH-1: StreamPreferences removed with liquidsoap module.
 # Tests that depended on it are marked skip below.
-from libretime_playout.player.events import (
+from rastatime_playout.player.events import (
     ActionEvent,
     EventKind,
     FileEvent,
     WebStreamEvent,
     event_isoparse,
 )
-from libretime_playout.player.schedule import (
+from rastatime_playout.player.schedule import (
     generate_file_events,
     generate_live_events,
     generate_webstream_events,
@@ -718,7 +718,7 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
 def test_file_gain_db_by_mode():
     from types import SimpleNamespace
 
-    from libretime_playout.player.schedule import file_gain_db
+    from rastatime_playout.player.schedule import file_gain_db
 
     stream_preferences = SimpleNamespace(
         input_fade_transition=0.0, message_format=0, message_offline="",
@@ -759,7 +759,7 @@ def test_file_gain_db_by_mode():
 
 
 def test_file_gain_db_without_loudness_fields_follows_the_replaygain_switch():
-    from libretime_playout.player.schedule import file_gain_db
+    from rastatime_playout.player.schedule import file_gain_db
 
     class OldPrefs:      # a StreamPreferences from before the loudness fields
         replay_gain_enabled = True

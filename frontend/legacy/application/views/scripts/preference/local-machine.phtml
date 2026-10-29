@@ -504,7 +504,7 @@ $rtTip = function ($text) {
     <?php
     // RASTATIME 2026-09-16 - Media Library Location (stage 2 of the storage
     // location work).  The library root is a setting (cc_pref
-    // local_storage_folder, empty = storage.path from libretime.conf).  The
+    // local_storage_folder, empty = storage.path from rastatime.conf).  The
     // move job (copy -> verify -> switch) runs in the API; this section talks
     // to PreferenceController proxies (login + CSRF).  The previous copy is
     // left on disk for the operator to delete (decision 2026-09-16).
@@ -560,7 +560,7 @@ $rtTip = function ($text) {
 
         function renderStatus(d) {
             var src = d.source === "setting" ? "<?php echo addslashes(_('from the Local Machine setting')) ?>"
-                                              : "<?php echo addslashes(_('from libretime.conf')) ?>";
+                                              : "<?php echo addslashes(_('from rastatime.conf')) ?>";
             $("#storage_current").text(d.root || "?");
             var meta = src + " · " + (d.library_files || 0) + " <?php echo addslashes(_('files')) ?>, " + mb(d.library_bytes);
             if (d.exists === false) { meta += " · <?php echo addslashes(_('FOLDER MISSING')) ?>"; }

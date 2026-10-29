@@ -11,7 +11,7 @@
  * next login.  getResultRowObject() mirrors the DbTable adapter: the row's
  * columns as a stdClass, with the password left out.
  */
-class LibreTime_Auth_Adaptor_Password implements Zend_Auth_Adapter_Interface
+class Rastatime_Auth_Adaptor_Password implements Zend_Auth_Adapter_Interface
 {
     private ?string $identity = null;
     private ?string $credential = null;

@@ -47,7 +47,7 @@ Start-Sleep -Seconds 5
 Restart-Service RASTATIME-LIQUIDSOAP
 
 # 5) Smoke-test
-& "C:\rastatime\.venv\Scripts\python.exe" -c "from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient; c=LiquidsoapTelnetClient(); print('uptime:', c.send_command('uptime'))"
+& "C:\rastatime\.venv\Scripts\python.exe" -c "from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient; c=LiquidsoapTelnetClient(); print('uptime:', c.send_command('uptime'))"
 ```
 
 Read the rest if any step fails, or if this is a fresh install.
@@ -197,10 +197,10 @@ Expected (key lines, in order):
 
 ```
 INFO __main__: Local-playback engine: Liquidsoap (Phase-C2+C3+C6 fully wired). Telnet target 127.0.0.1:1234.
-INFO libretime_playout.playout_scheduler: PlayoutScheduler: streaming handled externally — FFmpeg streamers SKIPPED (N cc_pref output(s) delegated to the Liquidsoap subprocess).
-INFO libretime_playout.playout_scheduler: PlayoutScheduler: streaming handled externally — recording is owned by Liquidsoap output.file from the internal bus (FfmpegRecorder was deleted in C5).
-INFO libretime_playout.engine.liquidsoap_engine: Liquidsoap recording_stop: closed current recording
-INFO libretime_playout.playout_scheduler: PlayoutScheduler: initial recording.stop sent to Liquidsoap (silences sentinel-file write from boot until first scheduled show).
+INFO rastatime_playout.playout_scheduler: PlayoutScheduler: streaming handled externally — FFmpeg streamers SKIPPED (N cc_pref output(s) delegated to the Liquidsoap subprocess).
+INFO rastatime_playout.playout_scheduler: PlayoutScheduler: streaming handled externally — recording is owned by Liquidsoap output.file from the internal bus (FfmpegRecorder was deleted in C5).
+INFO rastatime_playout.engine.liquidsoap_engine: Liquidsoap recording_stop: closed current recording
+INFO rastatime_playout.playout_scheduler: PlayoutScheduler: initial recording.stop sent to Liquidsoap (silences sentinel-file write from boot until first scheduled show).
 ```
 
 **If you see `Local-playback engine: mpv (libmpv) [DEPRECATED]` instead**,
@@ -218,7 +218,7 @@ expected on the legacy engines — see the
 
 ```powershell
 & "C:\rastatime\.venv\Scripts\python.exe" -c @"
-from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
 c = LiquidsoapTelnetClient()
 print('uptime :', c.send_command('uptime'))
 print('status :', c.recording_status())
@@ -245,7 +245,7 @@ restarted after Pypo, so Pypo's init-stop hit the wrong instance.
 Solve by sending a manual stop:
 
 ```powershell
-& "C:\rastatime\.venv\Scripts\python.exe" -c "from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient; c=LiquidsoapTelnetClient(); print(c.recording_stop())"
+& "C:\rastatime\.venv\Scripts\python.exe" -c "from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient; c=LiquidsoapTelnetClient(); print(c.recording_stop())"
 ```
 
 ---

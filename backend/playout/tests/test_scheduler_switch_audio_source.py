@@ -17,8 +17,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutEngine
-from libretime_playout.source_switcher import SourceState
+from rastatime_playout.engine.interface import PlayoutEngine
+from rastatime_playout.source_switcher import SourceState
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def minimal_scheduler():
     schedule loop are stubbed out so we can call switch_audio_source in
     isolation.
     """
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
     engine = MagicMock(spec=PlayoutEngine)
     api_client = MagicMock()
     sched = PlayoutScheduler(
@@ -87,7 +87,7 @@ def test_state_transitions_dont_leak(minimal_scheduler):
 
 def test_legacy_streaming_flag_is_gone():
     """The mpv-era ``streaming_handled_externally`` kwarg no longer exists."""
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
     with pytest.raises(TypeError):
         PlayoutScheduler(
             engine=MagicMock(spec=PlayoutEngine), api_client=MagicMock(),

@@ -10,7 +10,7 @@ and device-index fixes.
 """
 from __future__ import annotations
 
-from libretime_playout import liquidsoap_config as lc
+from rastatime_playout import liquidsoap_config as lc
 
 
 def _stream():

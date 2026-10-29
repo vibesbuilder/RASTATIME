@@ -33,7 +33,7 @@ _REPO = Path(__file__).resolve().parents[2]
 # Deleted files
 # ---------------------------------------------------------------------------
 
-_GUNICORN        = _REPO / "backend" / "api" / "libretime_api" / "gunicorn.py"
+_GUNICORN        = _REPO / "backend" / "api" / "rastatime_api" / "gunicorn.py"
 _TEST_HOOK       = _REPO / "backend" / "analyzer" / "tools" / "test-hook-script.sh"
 _GENERATE        = _REPO / "backend" / "analyzer" / "tests" / "fixtures" / "generate.sh"
 _RUNTESTS        = _REPO / "frontend" / "legacy" / "tests" / "runtests.sh"
@@ -59,7 +59,7 @@ def _read(p: Path) -> str:
 # ---------------------------------------------------------------------------
 
 def test_gunicorn_py_deleted():
-    """backend/api/libretime_api/gunicorn.py must be deleted (replaced by Waitress)."""
+    """backend/api/rastatime_api/gunicorn.py must be deleted (replaced by Waitress)."""
     assert not _GUNICORN.exists(), (
         f"{_GUNICORN.name} still exists — dead Gunicorn/UvicornWorker config must be removed"
     )

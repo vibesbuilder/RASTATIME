@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from libretime_shared.config._models import GeneralConfig
+from rastatime_shared.config._models import GeneralConfig
 
 
 def _general(**kwargs) -> GeneralConfig:
@@ -46,9 +46,9 @@ def test_internal_url_must_be_http_url():
 
 
 def test_playout_dj_auth_url_falls_back_to_loopback(monkeypatch, tmp_path):
-    from libretime_playout import __main__ as main
+    from rastatime_playout import __main__ as main
 
-    path = tmp_path / "libretime.conf"
+    path = tmp_path / "rastatime.conf"
     path.write_text("general:\n  public_url: https://rastatime.example.org/radio\n", encoding="utf-8")
     monkeypatch.setattr(main, "_CONFIG_FILE", str(path))
     monkeypatch.delenv("RASTATIME_DJ_AUTH_WEB_URL", raising=False)

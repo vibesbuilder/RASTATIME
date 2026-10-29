@@ -26,7 +26,7 @@ from __future__ import annotations
 import os
 import time
 
-from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
 
 
 PATH_A_LIQ = "C:/rastatime/recordings/c5-mechB-v2-A.mp3"

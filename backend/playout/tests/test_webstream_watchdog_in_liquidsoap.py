@@ -13,12 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import __main__ as main
-from libretime_playout import playout_scheduler as ps
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
-from libretime_playout.liquidsoap_config import (
+from rastatime_playout import __main__ as main
+from rastatime_playout import playout_scheduler as ps
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+from rastatime_playout.liquidsoap_config import (
     DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES,
     DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS,
     _render_webstream_watchdog_block,

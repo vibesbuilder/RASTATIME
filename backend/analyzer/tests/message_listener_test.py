@@ -10,8 +10,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from libretime_analyzer import message_listener
-from libretime_analyzer.message_listener import HEARTBEAT_SECONDS, MessageListener
+from rastatime_analyzer import message_listener
+from rastatime_analyzer.message_listener import HEARTBEAT_SECONDS, MessageListener
 
 
 class FakeChannel:

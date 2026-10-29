@@ -14,7 +14,7 @@
     Service properties (see docs/architecture/SERVICE_TOPOLOGY.md §2.1):
         NSSM name  : RASTATIME-API
         Executable : python.exe  (from the install-root venv)
-        Arguments  : -m libretime_api.waitress_serve --host 0.0.0.0 --port 8765 --threads 8
+        Arguments  : -m rastatime_api.waitress_serve --host 0.0.0.0 --port 8765 --threads 8
         Port       : 8765  (HTTP, Waitress)
         Logs       : C:\rastatime\logs\api-stdout.log
                      C:\rastatime\logs\api-stderr.log
@@ -28,8 +28,8 @@
     Default: C:\rastatime
 
 .PARAMETER ConfigFile
-    Path to libretime.conf.
-    Default: <InstallRoot>\config\libretime.conf
+    Path to rastatime.conf.
+    Default: <InstallRoot>\config\rastatime.conf
 
 .PARAMETER ApiHost
     IP address for Waitress to bind on.
@@ -156,7 +156,7 @@ function Find-Python {
 # ---------------------------------------------------------------------------
 function Resolve-ConfigFile {
     if ($ConfigFile -ne "") { return $ConfigFile }
-    return "$InstallRoot\config\libretime.conf"
+    return "$InstallRoot\config\rastatime.conf"
 }
 
 # ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ if ($existing) {
 }
 
 # Compose Waitress arguments
-$svcArgs = "-m libretime_api.waitress_serve --host $ApiHost --port $ApiPort --threads $ApiThreads"
+$svcArgs = "-m rastatime_api.waitress_serve --host $ApiHost --port $ApiPort --threads $ApiThreads"
 
 # Install
 Write-Step "Installing '$ServiceName'..."
@@ -242,8 +242,8 @@ Write-Step "Setting restart policy (${RestartDelayMs} ms delay)..."
 # Environment variables
 Write-Step "Configuring environment variables..."
 & $nssm set $ServiceName AppEnvironmentExtra `
-    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-    "LIBRETIME_CONFIG_FILEPATH=$cfgFile" `
+    "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
+    "RASTATIME_CONFIG_FILEPATH=$cfgFile" `
     "RASTATIME_API_HOST=$ApiHost" `
     "RASTATIME_API_PORT=$ApiPort" `
     "RASTATIME_API_THREADS=$ApiThreads" `

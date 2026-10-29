@@ -15,7 +15,7 @@ Test inventory (10 tests):
   7.  README.md mentions NSSM (Windows service management).
   8.  README.md contains an installation / quick-start section.
   9.  README.md references the AGPL-3.0 license.
-  10. config/libretime.conf.example exists for safe version-control inclusion.
+  10. config/rastatime.conf.example exists for safe version-control inclusion.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from pathlib import Path
 
 _REPO   = Path(__file__).resolve().parents[2]
 _README = _REPO / "README.md"
-_EXAMPLE = _REPO / "config" / "libretime.conf.example"
+_EXAMPLE = _REPO / "config" / "rastatime.conf.example"
 
 
 def _text() -> str:
@@ -89,8 +89,8 @@ def test_readme_mentions_agpl_license():
 
 
 def test_config_example_file_exists():
-    """config/libretime.conf.example must exist for safe version-control inclusion."""
+    """config/rastatime.conf.example must exist for safe version-control inclusion."""
     assert _EXAMPLE.exists(), (
-        "config/libretime.conf.example not found — "
+        "config/rastatime.conf.example not found — "
         "safe example config missing from repository"
     )

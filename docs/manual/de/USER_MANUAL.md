@@ -53,7 +53,7 @@ Dieses Handbuch ist für zwei Leser parallel geschrieben:
 
 ### Standard-URLs und Pfade
 
-Sofern Ihre Installation in `config/libretime.conf` keine
+Sofern Ihre Installation in `config/rastatime.conf` keine
 abweichenden Werte gesetzt hat:
 
 | Was | Standard |
@@ -65,7 +65,7 @@ abweichenden Werte gesetzt hat:
 | Log-Verzeichnis | `C:\rastatime\logs\` |
 | Medienbibliothek auf der Festplatte | `C:\rastatime\media\` |
 | Operator-lokaler Audio-Cache | `C:\rastatime\scheduler\` |
-| Konfigurationsdatei | `C:\rastatime\config\libretime.conf` |
+| Konfigurationsdatei | `C:\rastatime\config\rastatime.conf` |
 
 Wenn Ihre Station andere Pfade verwendet, ersetzen Sie diese
 durchgängig.

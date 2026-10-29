@@ -61,7 +61,7 @@ section ; une section qui contient une erreur de validation après
 | Champ | Notes |
 |---|---|
 | **Langue par défaut** | Langue d'interface des nouveaux utilisateurs et de l'écran de connexion, et langue de tous les widgets (dates, jours de la semaine, boutons ; depuis le 25/10/2026). Chaque utilisateur garde sa propre langue de Mon profil. |
-| **Fuseau horaire de la station** | Affiché pour information seulement.  Le fuseau horaire de la station se règle dans `config/libretime.conf` (`general.timezone`) ; chaque utilisateur peut choisir un fuseau d'affichage dans Mon profil. |
+| **Fuseau horaire de la station** | Affiché pour information seulement.  Le fuseau horaire de la station se règle dans `config/rastatime.conf` (`general.timezone`) ; chaque utilisateur peut choisir un fuseau d'affichage dans Mon profil. |
 | **La semaine commence le** | Premier jour de la semaine dans le calendrier et dans les widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* permet aux widgets intégrés dans d'autres sites web de lire les données de programmation. Nécessaire pour les widgets de programme intégrables. |
 | **Afficher le bouton de connexion sur la page radio ?** | Affiche un bouton de connexion sur la page radio publique. |
@@ -152,7 +152,7 @@ réservés aux administrateurs.
 > mises en page des tableaux) sont des lignes `cc_pref` liées à
 > l'utilisateur.  La configuration de service qui ne peut pas résider
 > dans la base (accès à la base, chemins, fuseau horaire de la station,
-> clé API) se trouve dans `config/libretime.conf`.
+> clé API) se trouve dans `config/rastatime.conf`.
 
 ---
 
@@ -223,7 +223,7 @@ la documentation opérateur.  Les journaux se trouvent dans
 
 Paramètres → **Backup** sauvegarde la base de données (avec chaque ligne
 `cc_pref`) et la configuration ; pour la restauration voir
-[Backup](./BACKUP.md).  `config/libretime.conf` contient des mots de
+[Backup](./BACKUP.md).  `config/rastatime.conf` contient des mots de
 passe - ne le placez jamais tel quel dans un gestionnaire de versions.
 
 ### « Quels paramètres un Program Manager peut-il ouvrir ? »

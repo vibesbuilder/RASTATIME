@@ -3,26 +3,26 @@ from setuptools import find_packages, setup
 version = "4.5.0"  # x-release-please-version
 
 setup(
-    name="libretime-api",
+    name="rastatime-api",
     version=version,
     description="RASTATIME API",
-    author="LibreTime Contributors",
-    url="https://github.com/libretime/libretime",
+    author="RASTATIME Project",
+    url="https://github.com/vibesbuilder/RASTATIME",
     project_urls={
-        "Bug Tracker": "https://github.com/libretime/libretime/issues",
-        "Documentation": "https://libretime.org",
-        "Source Code": "https://github.com/libretime/libretime",
+        "Bug Tracker": "https://github.com/vibesbuilder/RASTATIME/issues",
+        "Source Code": "https://github.com/vibesbuilder/RASTATIME",
     },
     license="AGPLv3",
-    packages=find_packages(exclude=["*tests*", "*fixtures*"]),
+    packages=find_packages(exclude=["*tests*", "*fixtures*", "libretime_*"]),
     package_data={
-        "libretime_api": ["legacy/migrations/sql/*.sql"],
+        "rastatime_api": ["legacy/migrations/sql/*.sql"],
     },
     include_package_data=True,
     python_requires=">=3.8",
     entry_points={
         "console_scripts": [
-            "libretime-api=libretime_api.manage:main",
+            "rastatime-api=rastatime_api.manage:main",
+            "libretime-api=rastatime_api.manage:main",  # stage B bridge
         ]
     },
     install_requires=[

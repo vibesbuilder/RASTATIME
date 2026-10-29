@@ -20,11 +20,11 @@ ProtectProc=invisible
 ProtectSystem=full
 
 Environment=PYTHONOPTIMIZE=2
-Environment=LIBRETIME_CONFIG_FILEPATH=@@CONFIG_FILEPATH@@
-Environment=LIBRETIME_LOG_FILEPATH=@@LOG_DIR@@/playout.log
+Environment=RASTATIME_CONFIG_FILEPATH=@@CONFIG_FILEPATH@@
+Environment=RASTATIME_LOG_FILEPATH=@@LOG_DIR@@/playout.log
 WorkingDirectory=@@WORKING_DIR@@/playout
 
-ExecStart=/usr/local/bin/libretime-playout
+ExecStart=/usr/local/bin/rastatime-playout
 Restart=always
 
 User=libretime

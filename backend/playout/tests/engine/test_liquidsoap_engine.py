@@ -31,11 +31,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import (
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import (
     LiquidsoapPlayoutEngine,
 )
-from libretime_playout.engine.liquidsoap_telnet import (
+from rastatime_playout.engine.liquidsoap_telnet import (
     LiquidsoapTelnetClient,
 )
 
@@ -393,7 +393,7 @@ def test_stop_flushed_by_timer_after_window():
     eventually flushes the skip.
     """
     import time
-    from libretime_playout.engine.liquidsoap_engine import _DEFERRED_STOP_SECONDS
+    from rastatime_playout.engine.liquidsoap_engine import _DEFERRED_STOP_SECONDS
     eng, telnet = _make_engine_with_mock()
     eng.play("file:///x.mp3")
     telnet.request_queue_skip.reset_mock()
@@ -817,7 +817,7 @@ def test_linein_set_gain_tolerates_an_old_script_and_telnet_errors(caplog):
 
 
 def test_telnet_linein_set_gain_wire_form():
-    from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+    from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
     client = LiquidsoapTelnetClient(host="127.0.0.1", port=1)
     client.send_command = MagicMock(return_value="Variable linein.gain set.")
     client.linein_set_gain(0.5)

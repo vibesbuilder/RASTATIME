@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from libretime_analyzer.pipeline import _ffmpeg, convert_format as cf
-from libretime_analyzer.pipeline.analyze_metadata import analyze_metadata
-from libretime_analyzer.pipeline.convert_format import (
+from rastatime_analyzer.pipeline import _ffmpeg, convert_format as cf
+from rastatime_analyzer.pipeline.analyze_metadata import analyze_metadata
+from rastatime_analyzer.pipeline.convert_format import (
     AudioProbe,
     ConversionError,
     convert_format,

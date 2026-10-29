@@ -4,9 +4,9 @@ from subprocess import CompletedProcess
 
 import pytest
 
-from libretime_analyzer.pipeline import _ffmpeg
-from libretime_analyzer.pipeline.analyze_loudness import LOUDNESS_KEYS, analyze_loudness
-from libretime_analyzer.pipeline.pipeline import Pipeline
+from rastatime_analyzer.pipeline import _ffmpeg
+from rastatime_analyzer.pipeline.analyze_loudness import LOUDNESS_KEYS, analyze_loudness
+from rastatime_analyzer.pipeline.pipeline import Pipeline
 
 from ..fixtures import fixtures_path
 

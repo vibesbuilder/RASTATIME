@@ -16,8 +16,8 @@ every Milestone. Do not prettify — keep it accurate.
 |---|---|---|
 | Python 3.13.13 | **Working** | Minimum required: 3.11 |
 | Virtual env (`.venv`) | **Working** | `python -m venv .venv` |
-| `libretime-api` (editable) | **Working** | `pip install -e backend\api` |
-| `libretime-shared` (editable) | **Working** | `pip install -e backend\shared` |
+| `rastatime-api` (editable) | **Working** | `pip install -e backend\api` |
+| `rastatime-shared` (editable) | **Working** | `pip install -e backend\shared` |
 | `psycopg2-binary` | **Working** | Installed manually; not in requirements |
 | `pydantic` | **Working** | Constraint relaxed to `>=2.9` in `backend\shared\setup.py` — upstream had `<2.8` which has no Python 3.13 wheel |
 | `gunicorn` | **NOT INSTALLED** | Unix-only; listed in `backend\api\requirements.txt` but skipped — replaced by Django dev server for now |
@@ -54,7 +54,7 @@ every Milestone. Do not prettify — keep it accurate.
 | `GET /health` | **Working** | Returns `{"status":"ok","service":"rastatime-api","version":"4.5.0"}` |
 | `GET /api/v2/schema/swagger-ui` | **Not tested** | Requires DB (SQLite) with migrations applied |
 | All other API routes | **Blocked** | Require `python manage.py migrate` first |
-| Settings module | `libretime_api.settings.dev` | **Working** — no config file needed; SQLite by default |
+| Settings module | `rastatime_api.settings.dev` | **Working** — no config file needed; SQLite by default |
 
 ### 2.4 Worker stub
 
@@ -69,7 +69,7 @@ every Milestone. Do not prettify — keep it accurate.
 
 | Component | Upstream Role | Current Status | Planned Fix |
 |---|---|---|---|
-| **Liquidsoap** | Core playout, stream dispatch | **Not started** — all `backend/playout/libretime_playout/liquidsoap/` code still present but untouched | Replace with libVLC (Phase 4, T6.x) |
+| **Liquidsoap** | Core playout, stream dispatch | **Not started** — all `backend/playout/rastatime_playout/liquidsoap/` code still present but untouched | Replace with libVLC (Phase 4, T6.x) |
 | **Celery worker** | Background task execution | **Not started** — `backend/worker/libretime_worker/` uses Celery; not runnable on Windows without RabbitMQ + prefork | Replace with `rastatime_worker` (Phase 8, T16.x) |
 | **Gunicorn** | WSGI server | **Skipped in dev** — Django dev server used instead | Replace with Waitress (T17.1) |
 | **LibreTime playout** | `backend/playout/` | **Untouched** — Liquidsoap-dependent; not imported by dev server | Full replacement in Phase 4 |
@@ -96,7 +96,7 @@ every Milestone. Do not prettify — keep it accurate.
 
 ### B4 — Liquidsoap code not yet stubbed
 - **Impact:** Importing `backend/playout/` or `backend/analyzer/` raises errors (Liquidsoap is not installed on Windows).
-- **Workaround:** These modules are not imported by the dev API server (`libretime_api.settings.dev` does not load them).
+- **Workaround:** These modules are not imported by the dev API server (`rastatime_api.settings.dev` does not load them).
 - **Resolution:** T3.5 — add import guards / feature flags so these modules degrade gracefully.
 
 ### B5 — Celery worker not runnable
@@ -115,7 +115,7 @@ every Milestone. Do not prettify — keep it accurate.
 
 | Task | Description |
 |---|---|
-| **T3.5** | Stub Liquidsoap/Celery import paths so `import libretime_playout` does not crash |
+| **T3.5** | Stub Liquidsoap/Celery import paths so `import rastatime_playout` does not crash |
 | **T4.1** | Implement `MockPlayoutEngine` (satisfies `PlayoutEngine` ABC, no audio) |
 | **T4.2** | Config flag `PLAYOUT_ENGINE = "mock" \| "libvlc"` |
 | **T6.x** | Implement `VlcPlayoutEngine` using python-vlc |
@@ -142,9 +142,9 @@ pip install -e backend\api -e backend\shared
 pip install psycopg2-binary   # Windows workaround for B3
 
 # 5. Apply SQLite migrations (one-time)
-$env:DJANGO_SETTINGS_MODULE = "libretime_api.settings.dev"
+$env:DJANGO_SETTINGS_MODULE = "rastatime_api.settings.dev"
 $env:PYTHONPATH = "backend\api;backend\shared"
-python backend\api\libretime_api\manage.py migrate
+python backend\api\rastatime_api\manage.py migrate
 
 # 6. Start API server (separate terminal)
 .\infra\scripts\dev\run-api.ps1

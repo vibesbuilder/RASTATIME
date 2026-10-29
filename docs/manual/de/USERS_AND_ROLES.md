@@ -197,7 +197,7 @@ stehen im Kapitel [Streams](./STREAMS.md).
 Es gibt **keine persönlichen API-Schlüssel**.
 
 - **Dienste** (Playout, Analyzer, Skripte auf dem Stationsrechner)
-  verwenden den API-Schlüssel der Station aus `config/libretime.conf`
+  verwenden den API-Schlüssel der Station aus `config/rastatime.conf`
   (`Authorization: Api-Key …`).  Behandeln Sie ihn wie ein Passwort.
 - **Personen** können die REST-API v2 (`/api/v2/`) mit ihrem eigenen
   Benutzernamen und Passwort nutzen; sie erhalten die Rechte ihrer

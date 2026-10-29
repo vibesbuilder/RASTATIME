@@ -36,8 +36,8 @@
     Default: C:\rastatime
 
 .PARAMETER ConfigFile
-    Path to libretime.conf.
-    Default: <InstallRoot>\config\libretime.conf
+    Path to rastatime.conf.
+    Default: <InstallRoot>\config\rastatime.conf
 
 .PARAMETER NssmExe
     Path to nssm.exe.  If omitted the script searches PATH and then
@@ -181,7 +181,7 @@ function Find-Python {
 # ---------------------------------------------------------------------------
 function Resolve-ConfigFile {
     if ($ConfigFile -ne "") { return $ConfigFile }
-    return "$InstallRoot\config\libretime.conf"
+    return "$InstallRoot\config\rastatime.conf"
 }
 
 # ---------------------------------------------------------------------------
@@ -263,8 +263,8 @@ Write-Step "Setting restart policy (${RestartDelayMs} ms delay)..."
 # Environment variables
 Write-Step "Configuring environment variables..."
 & $nssm set $ServiceName AppEnvironmentExtra `
-    "DJANGO_SETTINGS_MODULE=libretime_api.settings.prod" `
-    "LIBRETIME_CONFIG_FILEPATH=$cfgFile" `
+    "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
+    "RASTATIME_CONFIG_FILEPATH=$cfgFile" `
     "PYTHONPATH=$pythonPath"
 Write-OK "Environment variables set."
 

@@ -13,10 +13,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from libretime_playout import playout_scheduler as ps
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.liquidsoap_service import NightlyRestartPolicy
+from rastatime_playout import playout_scheduler as ps
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.liquidsoap_service import NightlyRestartPolicy
 
 NOW = datetime(2026, 9, 16, 12, 0, 0)
 
@@ -125,15 +125,15 @@ def test_fingerprint_errors_and_none_are_ignored(sched):
 
 
 def test_main_fingerprint_hashes_the_rendered_settings(monkeypatch):
-    from libretime_playout import __main__ as main
+    from rastatime_playout import __main__ as main
 
     monkeypatch.setattr(main, "_resolve_crossfade_seconds", lambda: 1.0)
     monkeypatch.setattr(main, "_read_stream_outputs", lambda: [{"mount": "a"}])
     import sys
     fake_models = SimpleNamespace(SoundcardSettings=SimpleNamespace(
         get_settings=lambda: SimpleNamespace(main_output_id="id1", main_output_name="Tascam")))
-    monkeypatch.setitem(sys.modules, "libretime_api.soundcard.models", fake_models)
-    from libretime_playout import liquidsoap_config as lc
+    monkeypatch.setitem(sys.modules, "rastatime_api.soundcard.models", fake_models)
+    from rastatime_playout import liquidsoap_config as lc
     cfg = {"enabled": True, "folder": "X", "format": "mp3", "bitrate": 128}
     monkeypatch.setattr(lc, "read_hourly_recording_config_from_db", lambda: cfg)
     first = main._render_settings_fingerprint()
@@ -202,9 +202,9 @@ def test_startup_render_pending_without_fingerprint_still_restarts(monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_settle_falls_back_without_stereotool_when_the_instance_dies(sched, monkeypatch):
-    from libretime_playout import playout_scheduler as ps
-    from libretime_playout import liquidsoap_config as lc
-    from libretime_playout.__main__ import RenderOutcome
+    from rastatime_playout import playout_scheduler as ps
+    from rastatime_playout import liquidsoap_config as lc
+    from rastatime_playout.__main__ import RenderOutcome
     s = sched
     lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
     calls = {"render": 0, "restart": 0}
@@ -223,8 +223,8 @@ def test_settle_falls_back_without_stereotool_when_the_instance_dies(sched, monk
 
 
 def test_settle_without_stereotool_does_not_touch_the_lockout(sched):
-    from libretime_playout import liquidsoap_config as lc
-    from libretime_playout.__main__ import RenderOutcome
+    from rastatime_playout import liquidsoap_config as lc
+    from rastatime_playout.__main__ import RenderOutcome
     s = sched
     s._confirm_liquidsoap_stays_up = lambda *a, **k: False
     assert s._settle_after_restart(RenderOutcome(changed=True, main_output_mode="name")) is False

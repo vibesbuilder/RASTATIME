@@ -62,7 +62,7 @@ La barra de herramientas:
 > `application/controllers/LineinController.php` a la API
 > REST Django en `/api/v2/audio/linein[/<id>]`. El
 > controlador solo aplica ACL (Program Manager + Admin); el
-> lado Python en `backend/api/libretime_api/linein/` posee
+> lado Python en `backend/api/rastatime_api/linein/` posee
 > validación y persistencia en `rastatime_linein`. Vea
 > ARCHITECTURE §14.
 

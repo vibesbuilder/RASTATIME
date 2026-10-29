@@ -16,6 +16,32 @@
 > (services, controllers, forms and models are autoloaded by Zend and need
 > nothing). Missing step = `Class "Application_Common_..." not found`.
 
+> **Brand stage B (2026-10-29).** The Python packages, commands,
+> environment variables and the configuration file carry the product name
+> since 2026-10-29: `rastatime_api` / `rastatime_playout` /
+> `rastatime_analyzer` / `rastatime_shared` / `rastatime_api_client`,
+> `rastatime-analyzer.exe`, `RASTATIME_CONFIG_FILEPATH`,
+> `config\rastatime.conf`, gettext domain `rastatime`.  Upgrading an
+> installation from before that date:
+> 1. `pip uninstall -y libretime-api libretime-playout libretime-analyzer
+>    libretime-shared libretime-api-client` (stop `RASTATIME-ANALYZER` first,
+>    its EXE is locked while running), then the five editable installs from
+>    Step 3 - they now register as `rastatime-*`.
+> 2. Rename `config\libretime.conf` to `config\rastatime.conf`.
+> 3. nssm: `-m rastatime_api.waitress_serve`, `-m rastatime_playout`,
+>    `rastatime-analyzer.exe`, `DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod`,
+>    `RASTATIME_CONFIG_FILEPATH=...` for API, PLAYOUT, WORKER and ANALYZER
+>    (the install scripts under `infra\nssm\` write the new values).
+> 4. `php C:\Tools\composer\composer.phar dump-autoload` in `frontend\legacy`
+>    (renamed PHP classes); every browser session is logged out once (new
+>    session namespace).
+>
+> Until **2026-11-03** a bridge keeps the former names working: the
+> `libretime_*` import names, `-m libretime_*`, `libretime-analyzer.exe`,
+> `LIBRETIME_*` variables (the `RASTATIME_*` variable wins when both are
+> set) and a `libretime.conf` next to a missing `rastatime.conf`.  After
+> that date only the new names are read.
+
 > **Third-party components** (Apache, PHP, PostgreSQL, Python packages,
 > Liquidsoap, Icecast, ffmpeg ...) are not covered here: see
 > `docs\operator\COMPONENTS.md` for the inventory, the update classes and
@@ -46,7 +72,7 @@ Complete every item before touching the running system.
 - [ ] Read the release notes for the target version; note any breaking
       changes, migration warnings, or manual steps
 - [ ] Back up the PostgreSQL database (see `docs\operator\BACKUP.md` §3)
-- [ ] Back up `C:\rastatime\config\libretime.conf`
+- [ ] Back up `C:\rastatime\config\rastatime.conf`
 - [ ] Note the current version: check `CHANGELOG.md` or `git describe`
 - [ ] Confirm a maintenance window with on-air staff (upgrade stops audio)
 - [ ] Verify you have an elevated (Administrator) PowerShell prompt ready
@@ -136,22 +162,22 @@ python -c "import importlib.metadata as m; print('Waitress', m.version('waitress
 ```powershell
 cd C:\rastatime\backend\api
 
-$env:DJANGO_SETTINGS_MODULE     = "libretime_api.settings.prod"
-$env:LIBRETIME_CONFIG_FILEPATH  = "C:\rastatime\config\libretime.conf"
+$env:DJANGO_SETTINGS_MODULE     = "rastatime_api.settings.prod"
+$env:RASTATIME_CONFIG_FILEPATH  = "C:\rastatime\config\rastatime.conf"
 $env:PYTHONPATH                 = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
 
 # Show pending migrations before applying:
-python libretime_api\manage.py showmigrations --plan | Where-Object { $_ -match '\[ \]' }
+python rastatime_api\manage.py showmigrations --plan | Where-Object { $_ -match '\[ \]' }
 
 # Apply:
-python libretime_api\manage.py migrate
+python rastatime_api\manage.py migrate
 
 # Confirm no pending migrations remain:
-python libretime_api\manage.py migrate --check
+python rastatime_api\manage.py migrate --check
 # Expected: exit code 0, "No migrations to apply."
 ```
 
-> `manage.py` lives at `backend\api\libretime_api\manage.py` — the
+> `manage.py` lives at `backend\api\rastatime_api\manage.py` — the
 > commands above are run from `backend\api`.
 
 > **Warning:** If the migration output mentions locking a large table

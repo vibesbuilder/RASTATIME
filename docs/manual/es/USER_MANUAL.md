@@ -54,7 +54,7 @@ Este manual está escrito para dos lectores en paralelo:
 ### URL y rutas por defecto
 
 A menos que su instalación los redefina en
-`config/libretime.conf`:
+`config/rastatime.conf`:
 
 | Qué | Por defecto |
 |---|---|
@@ -65,7 +65,7 @@ A menos que su instalación los redefina en
 | Directorio de logs | `C:\rastatime\logs\` |
 | Biblioteca de medios en disco | `C:\rastatime\media\` |
 | Caché de audio local del operador | `C:\rastatime\scheduler\` |
-| Archivo de configuración | `C:\rastatime\config\libretime.conf` |
+| Archivo de configuración | `C:\rastatime\config\rastatime.conf` |
 
 Si su emisora usa rutas diferentes, sustituya en todo el
 documento.

@@ -16,13 +16,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout import icy_metadata as im
-from libretime_playout import liquidsoap_config as lc
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
-from libretime_playout.player.events import EventKind, FileEvent, WebStreamEvent
-import libretime_playout.playout_scheduler as ps
+from rastatime_playout import icy_metadata as im
+from rastatime_playout import liquidsoap_config as lc
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+from rastatime_playout.player.events import EventKind, FileEvent, WebStreamEvent
+import rastatime_playout.playout_scheduler as ps
 
 LIQUIDSOAP_EXE = Path("C:/Tools/liquidsoap/liquidsoap.exe")
 
@@ -236,13 +236,13 @@ def _scheduler(monkeypatch, read_prefs):
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
-    with patch("libretime_playout.playout_scheduler.FfmpegLineinCapture"):
+    with patch("rastatime_playout.playout_scheduler.FfmpegLineinCapture"):
         s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), read_icy_preferences=read_prefs)
     return s, engine
 
 
 def _refresh(sched, events):
-    with patch("libretime_playout.playout_scheduler.get_schedule", return_value=events):
+    with patch("rastatime_playout.playout_scheduler.get_schedule", return_value=events):
         sched.refresh()
     sched._cancel_all_timers()
 
@@ -297,11 +297,11 @@ def test_liquidsoap_restart_repushes_the_values(monkeypatch):
 
 
 def test_engine_without_icy_methods_is_skipped(monkeypatch):
-    from libretime_playout.engine.interface import PlayoutEngine
+    from rastatime_playout.engine.interface import PlayoutEngine
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     engine = MagicMock(spec=PlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
-    with patch("libretime_playout.playout_scheduler.FfmpegLineinCapture"):
+    with patch("rastatime_playout.playout_scheduler.FfmpegLineinCapture"):
         s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(),
                                 read_icy_preferences=lambda: im.IcyPreferences())
     _refresh(s, {})                              # no AttributeError

@@ -5,8 +5,8 @@ input gain from the line-in API record into the LineinEvent.
 
 from datetime import datetime, timedelta
 
-from libretime_playout.player.events import LineinEvent
-from libretime_playout.player.schedule import generate_linein_events
+from rastatime_playout.player.events import LineinEvent
+from rastatime_playout.player.schedule import generate_linein_events
 
 START = datetime(2026, 10, 2, 18, 0)
 

@@ -26,10 +26,10 @@ class Application_Model_AllowedAddresses
         return Application_Model_Preference::GetAllowedAddresses();
     }
 
-    /** @return string path of the mirror file next to libretime.conf */
+    /** @return string path of the mirror file next to rastatime.conf */
     public static function mirrorPath()
     {
-        return rtrim(dirname(LIBRETIME_CONFIG_FILEPATH), '/\\') . DIRECTORY_SEPARATOR . self::MIRROR_FILE;
+        return rtrim(dirname(RASTATIME_CONFIG_FILEPATH), '/\\') . DIRECTORY_SEPARATOR . self::MIRROR_FILE;
     }
 
     /**

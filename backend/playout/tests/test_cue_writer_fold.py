@@ -9,8 +9,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from libretime_playout import cue_writer as cw_mod
-from libretime_playout.cue_writer import CueWriter
+from rastatime_playout import cue_writer as cw_mod
+from rastatime_playout.cue_writer import CueWriter
 
 CEST = timezone(timedelta(hours=2))
 CET = timezone(timedelta(hours=1))

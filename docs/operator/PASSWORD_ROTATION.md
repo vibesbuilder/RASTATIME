@@ -17,7 +17,7 @@ show boundary.
       listener reconnect (Icecast restart); part B costs nothing audible.
 - [ ] Generate four passwords up front (password manager, 24+ characters).
       Avoid `"`, `\`, `#`, `!`, `:` and leading/trailing spaces - the
-      values go into YAML and XML.  Every value in `libretime.conf` is
+      values go into YAML and XML.  Every value in `rastatime.conf` is
       written **in double quotes**.
 
 | # | What | Used by |
@@ -43,7 +43,7 @@ the shipped defaults.  Rotating the live Icecast passwords is therefore
 optional (it costs one Icecast + Liquidsoap restart); the harbor fallback
 values are the part that matters.
 
-1. [ ] `C:\RASTATIME\config\libretime.conf`, block `stream.harbor` (around
+1. [ ] `C:\RASTATIME\config\rastatime.conf`, block `stream.harbor` (around
        line 80): set `main_password: "<P1>"` and `show_password: "<P2>"`.
 2. [ ] `C:\RASTATIME\config\icecast.xml` (git-ignored, the one the service
        loads), `<authentication>` block: `<source-password><P3></source-password>` (and
@@ -91,7 +91,7 @@ the janitor's monthly archive `logs\archive\logs-2026-10.zip` holds no
 error log of 2026-10-04 (checked 2026-10-24).  The exposure on disk is
 over - the rotation is hygiene, not an emergency.
 
-Who reads the password: every service through `libretime.conf`
+Who reads the password: every service through `rastatime.conf`
 (RASTATIME-API, -WORKER, -PLAYOUT, -ANALYZER), the legacy PHP on every
 request (no restart needed), the backup task on every run
 (`backup-auto.ps1` -> API), `infra\scripts\rt-blocks.ps1` on every run.
@@ -114,7 +114,7 @@ There is no `pgpass.conf` and no second copy.
 
    (A role may change its own password; the current password is asked
    once at connect.)
-2. [ ] `C:\RASTATIME\config\libretime.conf`, block `database` (line 26):
+2. [ ] `C:\RASTATIME\config\rastatime.conf`, block `database` (line 26):
        `password: "<P4>"`.  Keep the quotes.
 3. [ ] Elevated PowerShell, in the start-up order of `RESTART_ORDER.md`:
 
@@ -159,7 +159,7 @@ There is no `pgpass.conf` and no second copy.
 
 ## C. Rollback
 
-- Part A: put the old values back in `libretime.conf` / `config\icecast.xml` /
+- Part A: put the old values back in `rastatime.conf` / `config\icecast.xml` /
   Settings -> Streams and repeat step A4.
 - Part B: `\password rastatime` again with the old value, restore line 26,
   repeat step B3.  Nothing else holds the password.

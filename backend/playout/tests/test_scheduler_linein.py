@@ -26,9 +26,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.player.events import EventKind, LineinEvent
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.player.events import EventKind, LineinEvent
 
 
 # ---- Helpers -----------------------------------------------------------
@@ -68,7 +68,7 @@ def _patched_scheduler():
     Build a PlayoutScheduler with a mocked FfmpegLineinCapture so the
     test doesn't try to spawn an actual ffmpeg subprocess.
     """
-    from libretime_playout.playout_scheduler import PlayoutScheduler
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
 
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
@@ -78,7 +78,7 @@ def _patched_scheduler():
     # behaves like a working capture (start/stop succeed, is_running
     # reports the spawning state).
     with patch(
-        "libretime_playout.playout_scheduler.FfmpegLineinCapture"
+        "rastatime_playout.playout_scheduler.FfmpegLineinCapture"
     ) as mock_capture_cls:
         capture_instance = MagicMock()
         capture_instance.is_running = False
@@ -389,8 +389,8 @@ def test_linein_same_device_different_mapping_is_not_a_transition(
 import threading
 from datetime import timedelta
 
-from libretime_playout.player.events import FileEvent, WebStreamEvent
-from libretime_playout.playout_scheduler import LINEIN_FOLLOW_UP_WINDOW_SECONDS
+from rastatime_playout.player.events import FileEvent, WebStreamEvent
+from rastatime_playout.playout_scheduler import LINEIN_FOLLOW_UP_WINDOW_SECONDS
 
 
 def _arm_fake_timer(sched, key, event):
@@ -609,7 +609,7 @@ def test_file_start_after_a_file_touches_no_exclusive_source(liquidsoap_schedule
 # --- Option A: identity instead of keys --------------------------------
 
 def test_same_scheduled_item_identity():
-    from libretime_playout.playout_scheduler import PlayoutScheduler as S
+    from rastatime_playout.playout_scheduler import PlayoutScheduler as S
     now = datetime.utcnow()
     a = _make_linein_event(row_id=5)
     assert S._same_scheduled_item(a, a.model_copy())
@@ -632,7 +632,7 @@ def test_same_scheduled_item_identity():
 
 def _refresh_with(sched, events):
     """Run refresh() against a canned schedule; cancel the timers it arms."""
-    with patch("libretime_playout.playout_scheduler.get_schedule", return_value=events):
+    with patch("rastatime_playout.playout_scheduler.get_schedule", return_value=events):
         sched.refresh()
     sched._cancel_all_timers()
 
@@ -753,7 +753,7 @@ def test_re_arming_the_playing_key_itself_logs_no_rebinding(
 # RASTATIME 2026-09-04 - Paket 2: pre-warm + bus gates + drained stop
 # =====================================================================
 
-from libretime_playout.playout_scheduler import PREPARE_LEAD_SECONDS
+from rastatime_playout.playout_scheduler import PREPARE_LEAD_SECONDS
 
 
 class _FakeTimer:
@@ -785,7 +785,7 @@ class _FakeTimer:
 @pytest.fixture
 def fake_timer():
     _FakeTimer.instances = []
-    with patch("libretime_playout.playout_scheduler.threading.Timer", _FakeTimer):
+    with patch("rastatime_playout.playout_scheduler.threading.Timer", _FakeTimer):
         yield _FakeTimer
 
 
@@ -933,8 +933,8 @@ def test_drain_seconds_follow_the_show_crossfade():
     drain is that fade plus a margin (0 -> a 50 ms cut, drain 0.5 s)."""
     s1, _, _ = _patched_scheduler()
     assert s1._drain_seconds == 2.0 + 0.5      # default input_transition_seconds
-    from libretime_playout.playout_scheduler import PlayoutScheduler
-    with patch("libretime_playout.playout_scheduler.FfmpegLineinCapture"):
+    from rastatime_playout.playout_scheduler import PlayoutScheduler
+    with patch("rastatime_playout.playout_scheduler.FfmpegLineinCapture"):
         s2 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
                               input_transition_seconds=0.0)
         s3 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
@@ -994,7 +994,7 @@ def test_reset_gates_opens_both(liquidsoap_scheduler):
 
 # --- 2026-09-05 follow-ups after the 19:50-20:22 live run -----------------
 
-from libretime_playout.playout_scheduler import MIN_PREPARE_SECONDS
+from rastatime_playout.playout_scheduler import MIN_PREPARE_SECONDS
 
 
 def test_prepare_fires_at_once_when_the_refresh_lands_inside_the_lead_window(
@@ -1094,8 +1094,8 @@ def test_on_stop_keeps_the_stream_for_a_same_stream_back_to_back_follow_up(
 # (reverted to 10 s from the 2026-09-05 "Option 1" 20 s); it must use
 # the webstream constant, not accidentally hard-code the line-in one.
 def test_prepare_timer_for_a_webstream_uses_the_webstream_lead(liquidsoap_scheduler, fake_timer):
-    from libretime_playout.playout_scheduler import WEBSTREAM_PREPARE_LEAD_SECONDS
-    from libretime_playout.player.events import EventKind, WebStreamEvent
+    from rastatime_playout.playout_scheduler import WEBSTREAM_PREPARE_LEAD_SECONDS
+    from rastatime_playout.player.events import EventKind, WebStreamEvent
 
     sched, engine, capture = liquidsoap_scheduler
     now = datetime.utcnow()
@@ -1140,7 +1140,7 @@ def test_capture_restart_is_a_noop_without_a_playing_linein(liquidsoap_scheduler
 
 
 def test_capture_restart_is_a_noop_while_a_dj_is_live(liquidsoap_scheduler):
-    from libretime_playout.source_switcher import SourceState
+    from rastatime_playout.source_switcher import SourceState
 
     sched, engine, _capture = liquidsoap_scheduler
     sched._current_event = _make_linein_event()
@@ -1224,7 +1224,7 @@ def test_same_device_transition_still_applies_the_new_gain(liquidsoap_scheduler)
 def test_linein_start_while_a_dj_is_live_sets_the_gain_for_the_resume(
     liquidsoap_scheduler,
 ):
-    from libretime_playout.source_switcher import SourceState
+    from rastatime_playout.source_switcher import SourceState
 
     sched, engine, _capture = liquidsoap_scheduler
     switcher = MagicMock()

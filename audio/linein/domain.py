@@ -3,7 +3,7 @@ LineIn — pure domain model for a configured local line-in source.
 
 This module is Django-free: it can be imported and tested without a
 database or running application server.  The Django persistence layer
-lives in ``backend/api/libretime_api/linein/models.py``, which bridges
+lives in ``backend/api/rastatime_api/linein/models.py``, which bridges
 between this domain model and the ORM via :meth:`to_domain` /
 :meth:`update_from_domain`.
 

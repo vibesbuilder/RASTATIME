@@ -1,4 +1,5 @@
-from importlib.metadata import version as get_version
+"""Brand stage B bridge: ``libretime_shared`` is ``rastatime_shared`` (removal 2026-11-03)."""
 
-PACKAGE = __name__
-VERSION = get_version(__name__)
+from rastatime_shared.compat.legacy_names import alias_package
+
+alias_package(__name__)

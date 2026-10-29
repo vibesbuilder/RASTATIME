@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.102
-Date: 2026-10-28
+Draft version: 0.103
+Date: 2026-10-29
 
 > **Revision history**
+> - **0.103 (2026-10-29)** - **Brand stage B** (§23.77): the Python
+>   packages, commands, environment variables, config file, gettext
+>   domain and PHP classes carry the product name; a five-day bridge
+>   keeps the former names working until 2026-11-03.
 > - **0.102 (2026-10-28)** - **Undo after deleting a show** (§23.76): the
 >   calendar's delete waits ten seconds client-side with an Undo toast;
 >   server unchanged.
@@ -401,7 +405,7 @@ Date: 2026-10-28
 >   (`LiquidsoapPlayoutEngine.set_audio_device`), and
 >   `output.portaudio` rendered without a device argument, so the
 >   monitor always followed the Windows default endpoint.  New module
->   `libretime_playout/engine/portaudio_output.py` maps the Windows
+>   `rastatime_playout/engine/portaudio_output.py` maps the Windows
 >   endpoint to a PortAudio index which is rendered as `device_id=`
 >   into rastatime.liq at playout start.  The mapping **probes** host
 >   APIs rather than assuming one, using PortAudio's BLOCKING api (what
@@ -1085,9 +1089,9 @@ for the full rationale.
 ---
 
 ## 5. Detailed Implementation Sequence
-### Step-by-Step Conversion Plan for assistant
+### Step-by-Step Conversion Plan
 
-This section intentionally breaks the project into **small, low-risk, assistant-friendly tasks**.  
+This section intentionally breaks the project into **small, low-risk tasks**.  
 Each task should be implementable, reviewable, and testable in isolation.
 
 ### 5.1 General Rules for the Build Process
@@ -1656,7 +1660,7 @@ Test areas:
 
 ## 20. Recommended Milestone Order
 
-To keep assistant tasks small and coherent, use this milestone order:
+To keep tasks small and coherent, use this milestone order:
 
 1. **Fork baseline + ADRs**
 2. **Linux dependency inventory**
@@ -1773,7 +1777,7 @@ and ignores the POST body Icecast also sends.
 ### 23.3 Reconciliation Watchdog
 
 **Decision.**  The playout runs a 10 s polling watchdog inside
-`libretime_playout.source_switcher` that queries Icecast's
+`rastatime_playout.source_switcher` that queries Icecast's
 `/admin/listmounts` (admin Basic auth) and reconciles the in-memory
 `SourceSwitcher` state with whatever Icecast actually reports.
 
@@ -1817,7 +1821,7 @@ Implementation: `rastatime_linein.device_name` (migration `0004`),
 `rastatime_soundcard_settings.main_output_name` /
 `preview_output_name` (migration `0002`).  Resolver is generic and
 used by both linein capture (`PlayoutScheduler._resolve_linein_device`)
-and main-output restoration (`libretime_playout/__main__.py`).
+and main-output restoration (`rastatime_playout/__main__.py`).
 
 ### 23.5 Dashboard "On Air" Indicator — Live Source-State Read
 
@@ -1950,7 +1954,7 @@ Out of scope for this change (deferred to a follow-up):
 
 **Context.**  Upstream LibreTime relies on the GNU gettext toolchain on
 the deployment host to compile each `frontend/legacy/locale/<LANG>/
-LC_MESSAGES/libretime.po` into a binary `libretime.mo` at install time
+LC_MESSAGES/rastatime.po` into a binary `rastatime.mo` at install time
 (see the existing `frontend/legacy/locale/Makefile`).  Without the `.mo`
 the PHP `gettext` extension's lookup misses and returns the English
 source string — the language dropdown silently has no effect.
@@ -2757,7 +2761,7 @@ No lifecycle thread, no watchdog respawn, no retry-on-404, no
 post-roll Timer.
 
 **Filename construction unchanged.**  `build_output_path` was moved
-from `engine.ffmpeg_recorder` to the new `libretime_playout/
+from `engine.ffmpeg_recorder` to the new `rastatime_playout/
 recording_path.py` module; the format is still
 `<folder>/<YYYY-MM-DD>/<YYYY-MM-DD HH-MM-SS> - <show-name>.mp3` with
 the same Windows-illegal-character sanitization.
@@ -2882,7 +2886,7 @@ when this feature is scheduled.
 | Backend API (Django/Uvicorn) | `http://127.0.0.1:8765` | localhost only |
 | Playout HTTP listener | `http://127.0.0.1:8770` | localhost only |
 | Icecast | `http://localhost:8000/<mount>` | public streams + admin |
-| `libretime.conf` → `general.public_url` | `http://192.168.1.192` | interpolated into RSS feeds, episode download URLs, image URLs, etc. |
+| `rastatime.conf` → `general.public_url` | `http://192.168.1.192` | interpolated into RSS feeds, episode download URLs, image URLs, etc. |
 
 Everything is plain HTTP, no certificate management, no
 auth-hardening assumptions beyond "trusted LAN."
@@ -2952,10 +2956,10 @@ HTTPS-from-outside experience is broken in subtle ways:
 
 | Concern | Change | Effort |
 |---|---|---|
-| **`libretime.conf` → `public_url`** | Switch from `http://192.168.1.192` to `https://radio.example.com`.  Interpolated into RSS feed self-links, podcast-episode `download_url`, station-image URLs, and a handful of UI-side absolute links. | 5 min + full service restart |
+| **`rastatime.conf` → `public_url`** | Switch from `http://192.168.1.192` to `https://radio.example.com`.  Interpolated into RSS feed self-links, podcast-episode `download_url`, station-image URLs, and a handful of UI-side absolute links. | 5 min + full service restart |
 | **Mixed-Content for Icecast streams** | The HTTPS frontend cannot embed `http://localhost:8000/<mount>` audio — browsers block it.  Solve by either (a) Icecast 2.4 native TLS (fiddly on Windows), (b) Apache reverse-proxy `https://radio.example.com/stream/<mount>` → `http://localhost:8000/<mount>` (cleanest), or (c) let Cloudflare/Caddy proxy the streams. | 2-6 h — biggest single chunk |
 | **Cookie / session domain** | Currently IP-scoped; Zend usually handles this automatically once `public_url` changes, but verify. | 30 min |
-| **API-key + login hardening** | Replace the placeholder `rastatime-api-key-change-before-production` in `libretime.conf`; verify the `login_attempts` table's brute-force throttle is wired in; consider 2FA (not currently implemented). | 1-2 h |
+| **API-key + login hardening** | Replace the placeholder `rastatime-api-key-change-before-production` in `rastatime.conf`; verify the `login_attempts` table's brute-force throttle is wired in; consider 2FA (not currently implemented). | 1-2 h |
 | **BUTT / DJ source auth** | DJ passwords were chosen for LAN use; rotate to long random values before exposing. | configuration, no code |
 | **CORS / CSRF** | If streams end up on a different subdomain than the UI, CORS headers must be set in Apache (or Cloudflare/Caddy). | 1 h if needed |
 
@@ -2985,7 +2989,7 @@ threat surface considerably:
 * Icecast admin (port 8000 `/admin/`) MUST NOT be public.  Whatever
   proxy/tunnel layer is chosen has to expose only the chosen mount
   paths, never the admin URL.
-* The placeholder `api_key` in `libretime.conf` MUST be regenerated
+* The placeholder `api_key` in `rastatime.conf` MUST be regenerated
   before any external exposure.
 
 #### Recommendation
@@ -3128,7 +3132,7 @@ Explicitly **not** captured:
 
 | Layer     | Files                                                  |
 |-----------|--------------------------------------------------------|
-| Schema    | `backend/api/libretime_api/legacy/migrations/0053_add_show_template.py` |
+| Schema    | `backend/api/rastatime_api/legacy/migrations/0053_add_show_template.py` |
 | Service   | `frontend/legacy/application/services/ShowTemplateService.php` |
 | Controller | `ScheduleController` — 5 new JSON actions: list / get / save / rename / delete |
 | Settings UI | `PreferenceController::showTemplatesAction` + `views/scripts/preference/show-templates.phtml` |
@@ -3359,7 +3363,7 @@ every RASTATIME-added column to date.
 
 | Layer | File | What |
 |---|---|---|
-| Schema | `backend/api/libretime_api/legacy/migrations/0054_add_playlistcontents_linein_id.py` | ALTER TABLE ADD COLUMN |
+| Schema | `backend/api/rastatime_api/legacy/migrations/0054_add_playlistcontents_linein_id.py` | ALTER TABLE ADD COLUMN |
 | Model — write | `Application_Model_Playlist::buildEntry()` | new `linein` branch (raw SELECT from rastatime_linein, build $entry directly) |
 | Model — write | `Application_Model_Playlist::insertPlaylistElement()` | type=3 + raw UPDATE to set linein_id after Propel save |
 | Model — read | `Application_Model_Playlist::getContents()` | 4th UNION ALL arm joining rastatime_linein |
@@ -5087,7 +5091,7 @@ harbor buffer runs out (replica: 5.06 s).
 
 **Addendum 2026-09-10 — DJ logins: the UI is the source of truth.**
 Since Phase C4 the harbors accepted one static password per mount
-(user `source`, `stream.harbor.*_password` in libretime.conf) and
+(user `source`, `stream.harbor.*_password` in rastatime.conf) and
 listened on 8001, while Settings → Streams displayed `stream.inputs`
 (port 8000, an Icecast-era value) and the Master Source credentials
 nobody checked.  Now every login attempt runs through the harbor's
@@ -5159,7 +5163,7 @@ the scheduler no longer needs to know which engine it is talking to.
 Stream-output changes reach the air only through the re-render of
 rastatime.liq plus a LIQUIDSOAP restart (planned restart or operator)
 — the Pypo-side hot reload that rebuilt FfmpegStreamer subprocesses is
-gone with them.  `stream.internal_listener` in libretime.conf stays for
+gone with them.  `stream.internal_listener` in rastatime.conf stays for
 the PHP listener-auth endpoint; PLAYOUT no longer reads it.  An
 installed service environment that still says
 `RASTATIME_PLAYOUT_ENGINE=liquidsoap` keeps working unchanged;
@@ -5326,7 +5330,7 @@ PLAYOUT restart; LIQUIDSOAP untouched.
 
 **Context.**  The operator wants the library's location to be a setting
 under Settings → Local Machine (like the Import Folder) rather than a
-hand-edited `storage.path` in `libretime.conf`, with the move to the new
+hand-edited `storage.path` in `rastatime.conf`, with the move to the new
 `D:` disk as the first use.  A movable root needs one invariant: every
 path the database holds is relative to the root.  It was not: show images
 (`cc_show.image_path`, 29 rows) and the auto-dj logo preference held
@@ -5376,7 +5380,7 @@ first use.
 
 **Decision.**
 - *Truth:* site preference `local_storage_folder`; empty means
-  `storage.path` from `libretime.conf`, which is thereby the initial
+  `storage.path` from `rastatime.conf`, which is thereby the initial
   value only.  `conf.php` keeps checking at bootstrap that the configured
   folder exists, so the old root directory stays (empty) after a move.
 - *Resolvers:* PHP `Application_Common_Storage::root()` (per request,
@@ -5411,7 +5415,7 @@ first use.
 hand); network paths in v1; moving the recording and import folders
 along (separate settings, operator changes them by hand).
 
-**Consequences.**  A move needs no `libretime.conf` edit, no restart
+**Consequences.**  A move needs no `rastatime.conf` edit, no restart
 and no database change; the stream is unaffected, imports pause for
 the copy.  The first production move (C:\rastatime\media → D:\stor)
 is the acceptance test of this section.
@@ -5499,7 +5503,7 @@ library).  One run produces one self-contained
 
 - `db.dump` — `pg_dump --format=custom`, **streamed straight into the
   ZIP member** (no temp files).  Credentials come from Django's
-  database settings — production fills them from `libretime.conf`
+  database settings — production fills them from `rastatime.conf`
   (operator decision) — and the password travels only as `PGPASSWORD`
   in the child environment.  The binary is found on `PATH` or under
   `C:\Program Files\PostgreSQL\*\bin`.
@@ -5732,7 +5736,7 @@ fetcher (no longer running - TuneIn drops a display that stays quiet
 for five minutes), webstreams and line-ins were never announced, and an
 unreachable TuneIn threw inside the notify request.
 
-**Design.**  `libretime_playout/tunein.py` owns the push.  The scheduler
+**Design.**  `rastatime_playout/tunein.py` owns the push.  The scheduler
 calls `TuneInPusher.now_playing()` where it writes the cue marker for a
 new item (track: title + artist; webstream / line-in: the show name) and
 `keepalive()` from the schedule refresh (re-sends the last payload when
@@ -6527,7 +6531,7 @@ DJ login check `check-live-stream-auth`, analyzer import callback
 leave the machine, need hairpin NAT and TLS, and fail when the uplink is
 down.  New optional `general.internal_url` in all three schemas (shared
 pydantic `GeneralConfig`, legacy Symfony `conf.php` - the `general` node
-rejects unknown keys -, `libretime.conf.example`) and
+rejects unknown keys -, `rastatime.conf.example`) and
 `GeneralConfig.internal_base_url()`: `RASTATIME_INTERNAL_URL` >
 `internal_url` > `http://127.0.0.1` + the path of `public_url`.  The
 playout's `_dj_auth_web_url()` follows the same chain (its own YAML read,
@@ -6890,7 +6894,7 @@ the refused source (§23.12).
   MP3 or M4A in practice (BACKLOG).
 
 **Pipeline.**  One new step, `convert_format`
-(`libretime_analyzer/pipeline/convert_format.py`), between
+(`rastatime_analyzer/pipeline/convert_format.py`), between
 `analyze_metadata` and `analyze_duration`:
 
 ```
@@ -7075,7 +7079,7 @@ builds `PipelineOptions(**options)`, and pydantic's default (`extra`
 ignored) drops `convert_lossless` - checked against the live package - so
 an import in between is filed unconverted, not failed; stopping the
 analyzer first (messages wait in RabbitMQ) avoids even that.  Existing files:
-`python -m libretime_api.manage convert_lossless --ffmpeg-dir C:\ffmpeg\bin`
+`python -m rastatime_api.manage convert_lossless --ffmpeg-dir C:\ffmpeg\bin`
 from `backend\api` with the API service environment (dry run), then the
 same with `--ids 603 604 --yes`.  The `_failed` folder appears in the
 live import folder on the first failed hand-over.
@@ -7616,7 +7620,7 @@ overwrite edits made in the editor).
 
 **Endpoint.**  `POST /api/v2/files/reread-tags` `{"ids": [...]}` (Api-Key,
 `storage/views/reread_tags.py`).  Per file: the stored path under the
-storage root, `libretime_analyzer.pipeline.analyze_metadata` (the same
+storage root, `rastatime_analyzer.pipeline.analyze_metadata` (the same
 reader and mapping every import uses, mutagen with the ffprobe fallback),
 then a comparison against `TAG_FIELDS` (title, artist, album, genre,
 year, track number, comment, composer, copyright, label, ISRC, BPM,
@@ -7862,7 +7866,7 @@ transparent migration.
   `md5()`, an empty value never), `isLegacyMd5()`, `isBcrypt()` (prefixes
   `$2a$`/`$2b$`/`$2y$`), `needsRehash()` (anything that is not bcrypt at
   the current cost).
-* Web login: `LibreTime_Auth_Adaptor_Password` replaces the DbTable
+* Web login: `Rastatime_Auth_Adaptor_Password` replaces the DbTable
   adapter.  It fetches the row by login, verifies in PHP, re-hashes and
   saves when `needsRehash()` says so, and offers `getResultRowObject()`
   like the DbTable adapter (the row's columns as a stdClass without the
@@ -8079,3 +8083,82 @@ ten seconds exactly one POST (`/schedule/delete-show`, id 1) and one
 refetch; flushAll sends one beacon per pending job with
 `format=json&id=4&csrf_token=…` and removes the toast.  Live: the new
 script and stylesheet are served (200).
+
+### 23.77 Brand Stage B: Product Name in Identifiers, Five-Day Bridge (2026-10-29)
+
+**Decision.** Stage A (2026-10-03) renamed what the operator sees; stage B
+renames the identifiers with a runtime binding, because the GitHub
+publication (§ BACKLOG) makes them visible to other developers.  The
+operator chose a bridge over a cut: the former names keep working for five
+days (until 2026-11-03), then the bridge is removed (publication phase 2).
+
+**Renamed.**  Python packages `rastatime_api`, `rastatime_playout`,
+`rastatime_analyzer`, `rastatime_shared`, `rastatime_api_client`
+(distributions `rastatime-*`, console scripts `rastatime-api`,
+`rastatime-playout-notify`, `rastatime-analyzer`); environment prefix
+`RASTATIME_` (`DEFAULT_ENV_PREFIX`, `RASTATIME_CONFIG_FILEPATH`,
+`RASTATIME_LOG_*`); configuration file `config/rastatime.conf` and its
+`.example`; gettext domain `rastatime` (`locale/<lang>/LC_MESSAGES/rastatime.po/.mo`,
+`Locale.php`, `po2mo.py`); PHP classes `Rastatime_Auth_Adaptor_Password/Header/FreeIpa`,
+`Rastatime_Model_FreeIpa`, `RastatimeFileNotFoundException` (Composer
+classmap regenerated); Zend session namespace `rastatime` (every browser
+session is logged out once); `public/js/wavesurfer/rastatime.js`; nssm
+installers, `run_tests.ps1`, `backup-auto.ps1`, CI workflows, tests and the
+operator docs.  Django app labels are the short last components
+(`core`, `legacy`, ...), so the database (migrations, content types) is
+untouched.  Not renamed: the upstream reference copies (`docs/upstream`,
+`infra/upstream`), the upstream URL constants (`LIBRETIME_*_URL`,
+`LIBRETIME_VERSION` = baseline release), the Composer package
+`libretime/propel1`, history (CHANGELOG, `docs/dev/history`) and the
+product name LibreTime in attribution prose.
+
+**Bridge (until 2026-11-03).**
+- *Import names.*  Five stub packages `backend/shared/libretime_*`
+  (shipped by `rastatime-shared`) call
+  `rastatime_shared.compat.legacy_names.alias_package()`, which installs one
+  meta path finder in front of `sys.meta_path` and replaces the stub in
+  `sys.modules` with the real package.  The finder answers every
+  `libretime_x.y` import with the already-imported `rastatime_x.y` module
+  object (same object, so Django sees each model once), restores the real
+  `__spec__` after `module_from_spec()`, and implements `get_code()` so
+  `python -m libretime_playout` / `-m libretime_api.waitress_serve` still
+  start under runpy.  Pickles and `DJANGO_SETTINGS_MODULE=libretime_api.settings.prod`
+  load through the same path.
+- *Environment.*  `BaseConfig` loads `LIBRETIME_*` underneath `RASTATIME_*`
+  (`deep_merge_dict`, the current prefix wins); the click `--config` option
+  reads both variable names; `prod.py`, `manage.py`, the playout
+  `__main__`, `backup.py` and `dj_auth.py` fall back to the former name;
+  `constants.php` and `conf.php` do the same and accept a `libretime.conf`
+  when no `rastatime.conf` exists.
+- *Commands.*  `libretime-api`, `libretime-playout-notify`,
+  `libretime-analyzer` remain as second console-script entry points.
+- *Live checkout.*  Until the services restart, four directory junctions
+  (`backend/api/libretime_api` -> `rastatime_api`, ...) keep the former
+  package paths resolvable for the running processes' lazy imports; they are
+  local only (`.git/info/exclude`) and removed by the switch script.
+  `find_packages(exclude=["libretime_*"])` in the four `setup.py` files keeps
+  them out of the editable installs.
+
+**Switch (operator, quiet window).**  `C:\Temp\optd\stufe_b_switch.ps1`:
+back up the nssm parameters, stop PLAYOUT/WORKER/ANALYZER/API, reinstall
+`rastatime-analyzer` (its EXE was locked), remove the junctions, set
+`-m rastatime_api.waitress_serve`, `-m rastatime_playout`,
+`rastatime-analyzer.exe`, `DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod`
+and `RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf`, drop
+`libretime.conf` once identical to `rastatime.conf`, start API/ANALYZER/WORKER/PLAYOUT.
+Rollback = the old parameters from the backup file (the bridge keeps them
+valid).
+
+**Phase 2 (from 2026-11-03).**  Remove the stubs, the finder module, the
+legacy prefix and the fallbacks in Python and PHP, the second entry points,
+the `find_packages` exclusion and the `.gitignore` line for
+`config/libretime.conf`; the UPGRADE note then describes the hard cut.
+
+**Verification.**  Suites green after the rename (api 195, playout 845,
+unit 739 + the migration baseline moved to 0073, shared incl. four bridge
+tests: translation table, same module object, finder on legacy submodule,
+`-m` under both names).  Dry runs with the live nssm environment and the
+former names: `manage.py check` (both names), `-m libretime_api.waitress_serve --help`,
+`libretime-analyzer.exe --help`, `rastatime_worker` import; PHP login page
+200 after classmap regeneration, `.mo` catalogs rebuilt (de 1475, es 1440,
+fr 1439 entries).

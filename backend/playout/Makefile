@@ -7,9 +7,9 @@ PIP_INSTALL := \
 	--editable ../api-client \
 	--editable ../shared \
 	--editable .[dev,sentry]
-PYLINT_ARG := libretime_playout tests
-MYPY_ARG := libretime_playout tests || true
-BANDIT_ARG := libretime_playout || true
+PYLINT_ARG := rastatime_playout tests
+MYPY_ARG := rastatime_playout tests || true
+BANDIT_ARG := rastatime_playout || true
 
 format: .format
 lint: .format-check .pylint .mypy .bandit

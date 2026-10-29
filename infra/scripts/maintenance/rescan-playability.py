@@ -3,7 +3,7 @@ RASTATIME 2026-05-14 - one-shot playability re-scanner.
 
 Walks every row in ``cc_files``, builds the absolute on-disk path from
 ``storage.path`` + ``cc_files.filepath``, runs the same FFmpeg-based
-playability check that ``libretime_analyzer.pipeline.analyze_playability``
+playability check that ``rastatime_analyzer.pipeline.analyze_playability``
 uses at import time, and reports which existing files are broken or
 have soft warnings.
 
@@ -18,12 +18,12 @@ gate).
 
 Usage (PowerShell, no admin needed)::
 
-    $env:LIBRETIME_CONFIG_FILEPATH = "C:\\rastatime\\config\\libretime.conf"
+    $env:RASTATIME_CONFIG_FILEPATH = "C:\\rastatime\\config\\rastatime.conf"
     & "C:\\RASTATIME\\.venv\\Scripts\\python.exe" `
         "C:\\RASTATIME\\infra\\scripts\\maintenance\\rescan-playability.py"
 
 The script reads the storage root and DB credentials directly from
-``libretime.conf`` so it does not need Django's full settings stack.
+``rastatime.conf`` so it does not need Django's full settings stack.
 """
 
 from __future__ import annotations
@@ -79,8 +79,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument(
         "--config",
-        default=r"C:\rastatime\config\libretime.conf",
-        help="Path to libretime.conf (default: %(default)s)",
+        default=r"C:\rastatime\config\rastatime.conf",
+        help="Path to rastatime.conf (default: %(default)s)",
     )
     parser.add_argument(
         "--ffmpeg",

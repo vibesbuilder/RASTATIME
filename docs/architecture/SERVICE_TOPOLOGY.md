@@ -63,7 +63,7 @@ services, PostgreSQL and RabbitMQ).
 |---|---|
 | NSSM service name | `RASTATIME-API` |
 | Executable | `python.exe` |
-| Arguments | `-m libretime_api.waitress_serve --host 0.0.0.0 --port 8765 --threads 8` |
+| Arguments | `-m rastatime_api.waitress_serve --host 0.0.0.0 --port 8765 --threads 8` |
 | Working directory | `C:\rastatime\backend\api` |
 | Bind address | `0.0.0.0:8765` |
 | Log (stdout) | `C:\rastatime\logs\api-stdout.log` |
@@ -79,8 +79,8 @@ the API tier go through this process.
 **Key environment variables:**
 
 ```
-DJANGO_SETTINGS_MODULE = libretime_api.settings.prod
-LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
+DJANGO_SETTINGS_MODULE = rastatime_api.settings.prod
+RASTATIME_CONFIG_FILEPATH = C:\rastatime\config\rastatime.conf
 RASTATIME_API_HOST = 0.0.0.0
 RASTATIME_API_PORT = 8765
 RASTATIME_API_THREADS = 8
@@ -115,13 +115,13 @@ The worker itself needs no broker — its job state lives in PostgreSQL.
 RabbitMQ is nevertheless **required** in the stack: the PHP frontend
 publishes a message for every upload, and RASTATIME-ANALYZER (§2.5)
 consumes that queue (vhost `/rastatime`, port 5672, credentials in the
-`rabbitmq` section of `libretime.conf`).
+`rabbitmq` section of `rastatime.conf`).
 
 **Key environment variables:**
 
 ```
-DJANGO_SETTINGS_MODULE = libretime_api.settings.prod
-LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
+DJANGO_SETTINGS_MODULE = rastatime_api.settings.prod
+RASTATIME_CONFIG_FILEPATH = C:\rastatime\config\rastatime.conf
 ```
 
 ---
@@ -132,7 +132,7 @@ LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
 |---|---|
 | NSSM service name | `RASTATIME-PLAYOUT` |
 | Executable | `python.exe` |
-| Arguments | `-m libretime_playout` |
+| Arguments | `-m rastatime_playout` |
 | Working directory | `C:\rastatime` |
 | External port | None (IPC via shared DB; future: named pipe or local socket) |
 | Log (stdout) | `C:\rastatime\logs\playout-stdout.log` |
@@ -148,15 +148,15 @@ history events, and manages line-in routing.  Soundcard output device
 selection is read from `rastatime_soundcard_settings`.  The Liquidsoap
 production script `C:\Tools\liquidsoap\rastatime.liq` is rendered from a
 template plus the DB stream settings via
-`python -m libretime_playout.liquidsoap_config render`.
+`python -m rastatime_playout.liquidsoap_config render`.
 (The mpv/VLC legacy engine code was deleted on 2026-09-10; Liquidsoap is
 the only engine.)
 
 **Key environment variables:**
 
 ```
-DJANGO_SETTINGS_MODULE = libretime_api.settings.prod
-LIBRETIME_CONFIG_FILEPATH = C:\rastatime\config\libretime.conf
+DJANGO_SETTINGS_MODULE = rastatime_api.settings.prod
+RASTATIME_CONFIG_FILEPATH = C:\rastatime\config\rastatime.conf
 RASTATIME_API_URL = http://127.0.0.1:8765
 RASTATIME_PLAYOUT_ENGINE = liquidsoap
 RASTATIME_MPV_LOG_LEVEL = warn
@@ -214,7 +214,7 @@ RASTATIME-LIQUIDSOAP, not to Icecast.
 | Property | Value |
 |---|---|
 | NSSM service name | `RASTATIME-ANALYZER` |
-| Executable | `libretime-analyzer.exe` (venv console script) |
+| Executable | `rastatime-analyzer.exe` (venv console script) |
 | Working directory | `C:\rastatime\backend\analyzer` |
 | External port | None (consumes RabbitMQ) |
 | Logs | `analyzer-stdout.log` / `analyzer-stderr.log` |
@@ -352,7 +352,7 @@ accumulate — NSSM has no file-count cap.
 | Working directory | Always set explicitly in NSSM; never rely on `cwd` at startup |
 | Python path | `PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime` on the API/worker/playout services (worker additionally gets `C:\rastatime\backend`) |
 | Liquidsoap engine | `RASTATIME_PLAYOUT_ENGINE=liquidsoap` on the playout service; engine at `C:\Tools\liquidsoap` (own NSSM service) |
-| Config file | `LIBRETIME_CONFIG_FILEPATH` set for the API, worker, playout, and analyzer services |
+| Config file | `RASTATIME_CONFIG_FILEPATH` set for the API, worker, playout, and analyzer services |
 
 ---
 

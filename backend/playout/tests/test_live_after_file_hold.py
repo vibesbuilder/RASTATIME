@@ -19,18 +19,18 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from libretime_playout.engine.interface import PlayoutState
-from libretime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from libretime_playout.player.events import (
+from rastatime_playout.engine.interface import PlayoutState
+from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+from rastatime_playout.player.events import (
     EventKind,
     FileEvent,
     LineinEvent,
     WebStreamEvent,
 )
-from libretime_playout.player.schedule import generate_file_events
-from libretime_playout.source_switcher import SourceState
+from rastatime_playout.player.schedule import generate_file_events
+from rastatime_playout.source_switcher import SourceState
 
-SLEEP = "libretime_playout.playout_scheduler.time.sleep"
+SLEEP = "rastatime_playout.playout_scheduler.time.sleep"
 
 
 def _file(start_exact, seconds=6.9, crossfade=0.0, row_id=777, file_id=1, exclude=False):
@@ -91,14 +91,14 @@ def _linein(start_exact, row_id=999):
 
 @pytest.fixture
 def sched(monkeypatch):
-    from libretime_playout import playout_scheduler as ps
+    from rastatime_playout import playout_scheduler as ps
 
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     engine.get_state.return_value = PlayoutState.PLAYING
     engine.playing_remaining_seconds.return_value = None
     engine.liquidsoap_uptime_seconds.return_value = 1000.0
-    with patch("libretime_playout.playout_scheduler.FfmpegLineinCapture") as capture_cls:
+    with patch("rastatime_playout.playout_scheduler.FfmpegLineinCapture") as capture_cls:
         capture = MagicMock()
         capture.is_running = True
         capture.listen_url = "http://localhost:8000/linein-capture"

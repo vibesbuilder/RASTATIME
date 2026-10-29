@@ -5,7 +5,7 @@ Verify that docs/operator/INSTALL.md exists and contains all required
 content: prerequisite software with version requirements, the standard
 install directory, venv and dependency setup, database initialisation,
 service installation via the T22.1 scripts, first-run verification via
-status.ps1, and the libretime.conf configuration file reference.
+status.ps1, and the rastatime.conf configuration file reference.
 
 Test inventory (10 tests, always run — no Django needed):
   1.  INSTALL.md exists.
@@ -15,7 +15,7 @@ Test inventory (10 tests, always run — no Django needed):
   4.  PostgreSQL port 5432 is referenced.
   5.  VLC / libVLC is referenced (ADR-002 dependency).
   6.  The C:\\rastatime install directory is documented.
-  7.  libretime.conf is referenced as the required config file.
+  7.  rastatime.conf is referenced as the required config file.
   8.  The T22.1 install scripts (install-*.ps1) are referenced.
   9.  status.ps1 (T22.3) is referenced for post-install verification.
  10.  A virtual environment (venv) setup step is documented.
@@ -112,16 +112,16 @@ def test_install_directory_documented():
 
 
 # ---------------------------------------------------------------------------
-# 7  libretime.conf config file
+# 7  rastatime.conf config file
 # ---------------------------------------------------------------------------
 
 def test_libretime_conf_referenced():
     """
-    INSTALL.md must reference libretime.conf as the required
-    configuration file (set via LIBRETIME_CONFIG_FILEPATH).
+    INSTALL.md must reference rastatime.conf as the required
+    configuration file (set via RASTATIME_CONFIG_FILEPATH).
     """
-    assert "libretime.conf" in _doc(), (
-        "INSTALL.md must reference libretime.conf as the config file"
+    assert "rastatime.conf" in _doc(), (
+        "INSTALL.md must reference rastatime.conf as the config file"
     )
 
 

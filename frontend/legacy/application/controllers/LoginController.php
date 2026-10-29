@@ -79,7 +79,7 @@ class LoginController extends Zend_Controller_Action
         if ($loginBlocked) {
             // fresh form (new CSRF hash), no password check - fall through to
             // the common view setup below
-        } elseif ($authAdapter instanceof LibreTime_Auth_Adaptor_Header || ($request->isPost() && $form->isValid($request->getPost()))) {
+        } elseif ($authAdapter instanceof Rastatime_Auth_Adaptor_Header || ($request->isPost() && $form->isValid($request->getPost()))) {
             // get the username and password from the form
             $username = $form->getValue('username');
             $password = $form->getValue('password');

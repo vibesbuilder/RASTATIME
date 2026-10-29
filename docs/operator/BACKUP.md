@@ -13,7 +13,7 @@ A complete RASTATIME backup covers three categories:
 | Category | Contents | Criticality |
 |---|---|---|
 | **Database** | All schedule, media metadata, user, and history data | Critical |
-| **Configuration** | `libretime.conf`, `icecast.xml`, environment overrides | Critical |
+| **Configuration** | `rastatime.conf`, `icecast.xml`, environment overrides | Critical |
 | **Media library** | Audio files managed by RASTATIME | High (may be large) |
 
 Log files under `C:\rastatime\logs` are **not** backed up — they are
@@ -35,7 +35,7 @@ C:\rastatime-backups\
 │   ├── rastatime-2026-04-30T0200.sql
 │   └── rastatime-2026-04-29T0200.sql
 ├── config\
-│   ├── libretime.conf.2026-04-30
+│   ├── rastatime.conf.2026-04-30
 │   └── icecast.xml.2026-04-30
 └── media\           (optional; may be on a separate volume)
 ```
@@ -144,7 +144,7 @@ database so a restore produces a fully consistent system.
 
 | File | Location | Notes |
 |---|---|---|
-| `libretime.conf` | `C:\rastatime\config\libretime.conf` | DB credentials, API settings |
+| `rastatime.conf` | `C:\rastatime\config\rastatime.conf` | DB credentials, API settings |
 | `icecast.xml` | `C:\rastatime\config\icecast.xml` | Stream server config (optional) |
 | NSSM env overrides | export via `nssm get` (see below) | Supplement to install scripts |
 
@@ -155,7 +155,7 @@ $Date    = Get-Date -Format "yyyy-MM-dd"
 $CfgOut  = "C:\rastatime-backups\config"
 New-Item -ItemType Directory -Path $CfgOut -Force | Out-Null
 
-Copy-Item C:\rastatime\config\libretime.conf "$CfgOut\libretime.conf.$Date"
+Copy-Item C:\rastatime\config\rastatime.conf "$CfgOut\rastatime.conf.$Date"
 
 if (Test-Path C:\rastatime\config\icecast.xml) {
     Copy-Item C:\rastatime\config\icecast.xml "$CfgOut\icecast.xml.$Date"
@@ -227,7 +227,7 @@ Remove-Item Env:\PGPASSWORD
 # 2 — Config
 $CfgOut = "$Root\config"
 New-Item -ItemType Directory -Path $CfgOut -Force | Out-Null
-Copy-Item C:\rastatime\config\libretime.conf "$CfgOut\libretime.conf.$Date"
+Copy-Item C:\rastatime\config\rastatime.conf "$CfgOut\rastatime.conf.$Date"
 if (Test-Path C:\rastatime\config\icecast.xml) {
     Copy-Item C:\rastatime\config\icecast.xml "$CfgOut\icecast.xml.$Date"
 }
@@ -288,8 +288,8 @@ pg_restore --host=127.0.0.1 --port=5432 `
 ### 7.3 Restore configuration
 
 ```powershell
-Copy-Item C:\rastatime-backups\config\libretime.conf.2026-04-30 `
-          C:\rastatime\config\libretime.conf
+Copy-Item C:\rastatime-backups\config\rastatime.conf.2026-04-30 `
+          C:\rastatime\config\rastatime.conf
 
 # Restart API so it picks up the restored config:
 nssm restart RASTATIME-API
@@ -303,7 +303,7 @@ without stopping a service**: the dump goes into a scratch database next
 to `rastatime`.  The `rastatime` role may create databases, so no
 superuser password is needed.  `psql`/`pg_restore` ask for the
 `rastatime` password in their own prompt (it is the `database:` password
-in `config\libretime.conf`); never put it on the command line.
+in `config\rastatime.conf`); never put it on the command line.
 
 ```powershell
 $pg  = "C:\Program Files\PostgreSQL\17\bin"

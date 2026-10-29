@@ -13,8 +13,8 @@ Pure-Waitress tests (8) — no Django required; run in every environment:
   7.  Default thread count is ``4``.
   8.  Default Django settings module is the production settings string.
 
-libretime_api tests (8) — skipped when Django / libretime_api is absent:
-  9.  ``waitress_serve`` module is importable from ``libretime_api``.
+rastatime_api tests (8) — skipped when Django / rastatime_api is absent:
+  9.  ``waitress_serve`` module is importable from ``rastatime_api``.
  10.  ``_parse_args()`` returns defaults when called with empty argv.
  11.  ``--host`` CLI flag overrides the default host.
  12.  ``--port`` CLI flag overrides the default port.
@@ -69,7 +69,7 @@ def test_default_host_is_localhost():
     import pathlib  # noqa: PLC0415
     src = (
         pathlib.Path(__file__).parents[3]
-        / "backend" / "api" / "libretime_api" / "waitress_serve.py"
+        / "backend" / "api" / "rastatime_api" / "waitress_serve.py"
     )
     tree = ast.parse(src.read_text(encoding="utf-8"))
     defaults = {
@@ -87,7 +87,7 @@ def test_default_port_is_8000():
     import ast, pathlib  # noqa: PLC0415,E401
     src = (
         pathlib.Path(__file__).parents[3]
-        / "backend" / "api" / "libretime_api" / "waitress_serve.py"
+        / "backend" / "api" / "rastatime_api" / "waitress_serve.py"
     )
     tree = ast.parse(src.read_text(encoding="utf-8"))
     defaults = {
@@ -105,7 +105,7 @@ def test_default_threads_is_4():
     import ast, pathlib  # noqa: PLC0415,E401
     src = (
         pathlib.Path(__file__).parents[3]
-        / "backend" / "api" / "libretime_api" / "waitress_serve.py"
+        / "backend" / "api" / "rastatime_api" / "waitress_serve.py"
     )
     tree = ast.parse(src.read_text(encoding="utf-8"))
     defaults = {
@@ -123,7 +123,7 @@ def test_default_settings_module_is_prod():
     import ast, pathlib  # noqa: PLC0415,E401
     src = (
         pathlib.Path(__file__).parents[3]
-        / "backend" / "api" / "libretime_api" / "waitress_serve.py"
+        / "backend" / "api" / "rastatime_api" / "waitress_serve.py"
     )
     tree = ast.parse(src.read_text(encoding="utf-8"))
     defaults = {
@@ -134,7 +134,7 @@ def test_default_settings_module_is_prod():
         and isinstance(node.targets[0], ast.Name)
         and isinstance(node.value, ast.Constant)
     }
-    assert defaults.get("_DEFAULT_SETTINGS") == "libretime_api.settings.prod"
+    assert defaults.get("_DEFAULT_SETTINGS") == "rastatime_api.settings.prod"
 
 
 # ---------------------------------------------------------------------------
@@ -149,24 +149,24 @@ except ImportError:
 
 _skip_no_django = pytest.mark.skipif(
     not _HAS_DJANGO,
-    reason="Django not installed in this environment — skipping libretime_api tests",
+    reason="Django not installed in this environment — skipping rastatime_api tests",
 )
 
 
 # ---------------------------------------------------------------------------
-# 9–16  libretime_api tests — skipped when Django absent
+# 9–16  rastatime_api tests — skipped when Django absent
 # ---------------------------------------------------------------------------
 
 @_skip_no_django
 def test_waitress_serve_module_importable():
-    """The ``waitress_serve`` module must be importable from libretime_api."""
-    from libretime_api import waitress_serve  # noqa: PLC0415,F401
+    """The ``waitress_serve`` module must be importable from rastatime_api."""
+    from rastatime_api import waitress_serve  # noqa: PLC0415,F401
     assert waitress_serve is not None
 
 
 @_skip_no_django
 def test_parse_args_returns_defaults():
-    from libretime_api.waitress_serve import _parse_args, _DEFAULT_HOST, _DEFAULT_PORT, _DEFAULT_THREADS  # noqa: PLC0415
+    from rastatime_api.waitress_serve import _parse_args, _DEFAULT_HOST, _DEFAULT_PORT, _DEFAULT_THREADS  # noqa: PLC0415
     # Clear any env vars that could influence defaults.
     for var in ("RASTATIME_API_HOST", "RASTATIME_API_PORT", "RASTATIME_API_THREADS"):
         os.environ.pop(var, None)
@@ -179,28 +179,28 @@ def test_parse_args_returns_defaults():
 
 @_skip_no_django
 def test_parse_args_host_flag_overrides_default():
-    from libretime_api.waitress_serve import _parse_args  # noqa: PLC0415
+    from rastatime_api.waitress_serve import _parse_args  # noqa: PLC0415
     args = _parse_args(["--host", "0.0.0.0"])
     assert args.host == "0.0.0.0"
 
 
 @_skip_no_django
 def test_parse_args_port_flag_overrides_default():
-    from libretime_api.waitress_serve import _parse_args  # noqa: PLC0415
+    from rastatime_api.waitress_serve import _parse_args  # noqa: PLC0415
     args = _parse_args(["--port", "9000"])
     assert args.port == 9000
 
 
 @_skip_no_django
 def test_parse_args_threads_flag_overrides_default():
-    from libretime_api.waitress_serve import _parse_args  # noqa: PLC0415
+    from rastatime_api.waitress_serve import _parse_args  # noqa: PLC0415
     args = _parse_args(["--threads", "16"])
     assert args.threads == 16
 
 
 @_skip_no_django
 def test_parse_args_host_env_var(monkeypatch):
-    from libretime_api.waitress_serve import _parse_args  # noqa: PLC0415
+    from rastatime_api.waitress_serve import _parse_args  # noqa: PLC0415
     monkeypatch.setenv("RASTATIME_API_HOST", "192.168.1.10")
     args = _parse_args([])
     assert args.host == "192.168.1.10"
@@ -208,7 +208,7 @@ def test_parse_args_host_env_var(monkeypatch):
 
 @_skip_no_django
 def test_parse_args_port_env_var(monkeypatch):
-    from libretime_api.waitress_serve import _parse_args  # noqa: PLC0415
+    from rastatime_api.waitress_serve import _parse_args  # noqa: PLC0415
     monkeypatch.setenv("RASTATIME_API_PORT", "8080")
     args = _parse_args([])
     assert args.port == 8080
@@ -218,5 +218,5 @@ def test_parse_args_port_env_var(monkeypatch):
 def test_wsgi_application_is_callable():
     """The Django WSGI application must be a callable (PEP 3333)."""
     # Django is configured once for the whole tree in tests/unit/conftest.py.
-    from libretime_api.wsgi import application  # noqa: PLC0415
+    from rastatime_api.wsgi import application  # noqa: PLC0415
     assert callable(application)

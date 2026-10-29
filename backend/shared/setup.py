@@ -3,11 +3,11 @@ from setuptools import find_packages, setup
 version = "4.5.0"  # x-release-please-version
 
 setup(
-    name="libretime-shared",
+    name="rastatime-shared",
     version=version,
     description="RASTATIME Shared",
-    url="https://github.com/libretime/libretime",
-    author="LibreTime Contributors",
+    url="https://github.com/vibesbuilder/RASTATIME",
+    author="RASTATIME Project",
     license="AGPLv3",
     packages=find_packages(exclude=["*tests*", "*fixtures*"]),
     package_data={"": ["py.typed"]},

@@ -59,7 +59,7 @@ if (Test-Path $VenvPython) {
 }
 
 # ---------------------------------------------------------------------------
-# PYTHONPATH - make rastatime_worker and libretime_shared importable
+# PYTHONPATH - make rastatime_worker and rastatime_shared importable
 # ---------------------------------------------------------------------------
 $BackendSrc = Join-Path $RepoRoot 'backend'
 $SharedSrc  = Join-Path $RepoRoot 'backend\shared'

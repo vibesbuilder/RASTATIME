@@ -61,7 +61,7 @@ se abre sola.
 | Campo | Notas |
 |---|---|
 | **Idioma por defecto** | Idioma de la interfaz para usuarios nuevos y la pantalla de inicio de sesión, e idioma de todos los widgets (fechas, días de la semana, botones; desde el 25/10/2026). Cada usuario conserva su propio idioma de Mi Perfil. |
-| **Zona horaria de la emisora** | Solo se muestra como información.  La zona horaria de la emisora se fija en `config/libretime.conf` (`general.timezone`); cada usuario puede elegir una zona horaria de visualización en Mi Perfil. |
+| **Zona horaria de la emisora** | Solo se muestra como información.  La zona horaria de la emisora se fija en `config/rastatime.conf` (`general.timezone`); cada usuario puede elegir una zona horaria de visualización en Mi Perfil. |
 | **La semana comienza el** | Primer día de la semana en el calendario y en los widgets (Weekly Schedule, Multi-View Schedule). |
 | **Public RASTATIME API** | *Enabled* permite que widgets integrados en otros sitios web lean los datos de la parrilla. Necesario para los widgets de parrilla integrables. |
 | **¿Mostrar el botón de inicio de sesión en la página de radio?** | Muestra un botón de inicio de sesión en la página de radio pública. |
@@ -151,7 +151,7 @@ administradores.
 > diseños de tabla) son filas `cc_pref` ligadas al usuario.  La
 > configuración de servicio que no puede vivir en la base de datos
 > (acceso a la base, rutas, zona horaria de la emisora, clave API) está
-> en `config/libretime.conf`.
+> en `config/rastatime.conf`.
 
 ---
 
@@ -221,7 +221,7 @@ documentación del operador.  Los registros están en
 
 Ajustes → **Backup** guarda la base de datos (con cada fila `cc_pref`) y
 la configuración; para restaurar vea [Backup](./BACKUP.md).
-`config/libretime.conf` contiene contraseñas - nunca lo ponga tal cual
+`config/rastatime.conf` contiene contraseñas - nunca lo ponga tal cual
 en un control de versiones.
 
 ### «¿Qué configuraciones puede abrir un Program Manager?»

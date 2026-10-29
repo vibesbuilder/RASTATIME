@@ -3,21 +3,21 @@ from setuptools import find_packages, setup
 version = "4.5.0"  # x-release-please-version
 
 setup(
-    name="libretime-analyzer",
+    name="rastatime-analyzer",
     version=version,
     description="RASTATIME Analyzer",
-    author="LibreTime Contributors",
-    url="https://github.com/libretime/libretime",
+    author="RASTATIME Project",
+    url="https://github.com/vibesbuilder/RASTATIME",
     project_urls={
-        "Bug Tracker": "https://github.com/libretime/libretime/issues",
-        "Documentation": "https://libretime.org",
-        "Source Code": "https://github.com/libretime/libretime",
+        "Bug Tracker": "https://github.com/vibesbuilder/RASTATIME/issues",
+        "Source Code": "https://github.com/vibesbuilder/RASTATIME",
     },
     license="AGPLv3",
-    packages=find_packages(exclude=["*tests*", "*fixtures*"]),
+    packages=find_packages(exclude=["*tests*", "*fixtures*", "libretime_*"]),
     entry_points={
         "console_scripts": [
-            "libretime-analyzer=libretime_analyzer.main:cli",
+            "rastatime-analyzer=rastatime_analyzer.main:cli",
+            "libretime-analyzer=rastatime_analyzer.main:cli",  # stage B bridge
         ]
     },
     python_requires=">=3.8",

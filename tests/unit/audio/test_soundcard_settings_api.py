@@ -2,7 +2,7 @@
 T13.2 — soundcard_settings_api unit tests.
 
 Exercises the ORM-to-response serialization logic inline (no Django or
-libretime_api import required) and tests the full Django view through
+rastatime_api import required) and tests the full Django view through
 ``django.test.RequestFactory`` when Django is available in the environment.
 
 Test inventory
@@ -60,7 +60,7 @@ class _FakeOrm:
 
 # ---------------------------------------------------------------------------
 # The serialization logic under test — mirrors _orm_to_response exactly.
-# Tested inline so this file works without libretime_api on sys.path.
+# Tested inline so this file works without rastatime_api on sys.path.
 # ---------------------------------------------------------------------------
 
 def _orm_to_response(obj) -> dict:
@@ -133,7 +133,7 @@ def rf():
 @pytest.fixture()
 def view():
     pytest.importorskip("django.test")
-    from libretime_api.soundcard_settings_api import soundcard_settings   # type: ignore[import]
+    from rastatime_api.soundcard_settings_api import soundcard_settings   # type: ignore[import]
     return soundcard_settings
 
 
@@ -141,7 +141,7 @@ def view():
 def singleton(db):
     """Return the freshly initialised singleton ORM row."""
     pytest.importorskip("django.test")
-    from libretime_api.soundcard.models import SoundcardSettings          # type: ignore[import]
+    from rastatime_api.soundcard.models import SoundcardSettings          # type: ignore[import]
     return SoundcardSettings.get_settings()
 
 

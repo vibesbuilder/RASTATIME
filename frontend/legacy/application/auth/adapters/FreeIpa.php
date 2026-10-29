@@ -3,7 +3,7 @@
 /**
  * Auth adaptor for FreeIPA.
  */
-class LibreTime_Auth_Adaptor_FreeIpa implements Zend_Auth_Adapter_Interface
+class Rastatime_Auth_Adaptor_FreeIpa implements Zend_Auth_Adapter_Interface
 {
     /**
      * @var string
@@ -89,7 +89,7 @@ class LibreTime_Auth_Adaptor_FreeIpa implements Zend_Auth_Adapter_Interface
 
         // grab user info from LDAP
         $userParts = explode('@', $remoteUser);
-        $userInfo = LibreTime_Model_FreeIpa::GetUserInfo($userParts[0]);
+        $userInfo = Rastatime_Model_FreeIpa::GetUserInfo($userParts[0]);
 
         $user->setType($userInfo['type']);
         $user->setFirstName($userInfo['first_name']);

@@ -81,8 +81,8 @@ class Application_Model_Auth
 
         // RASTATIME 2026-10-27 - the password is checked in PHP (bcrypt,
         // legacy md5 accepted and re-hashed), no longer by "MD5(?)" in SQL;
-        // see LibreTime_Auth_Adaptor_Password / Application_Model_Password.
-        return new LibreTime_Auth_Adaptor_Password();
+        // see Rastatime_Auth_Adaptor_Password / Application_Model_Password.
+        return new Rastatime_Auth_Adaptor_Password();
     }
 
     /**
@@ -123,6 +123,6 @@ class Application_Model_Auth
      */
     public static function pinSessionToClient($auth)
     {
-        $auth->setStorage(new Zend_Auth_Storage_Session('libretime'));
+        $auth->setStorage(new Zend_Auth_Storage_Session('rastatime'));
     }
 }

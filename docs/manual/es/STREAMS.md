@@ -252,7 +252,7 @@ con:
 > mismo; un Show DJ no puede entrar antes de que empiece el
 > programa. Solo mientras la propia emisión no esté accesible el
 > motor recurre a la contraseña estática del harbor de
-> `libretime.conf`. Vea ARCHITECTURE §23.27 (addendum 2026-09-10).
+> `rastatime.conf`. Vea ARCHITECTURE §23.27 (addendum 2026-09-10).
 
 ---
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from libretime_playout import liquidsoap_config as lc
+from rastatime_playout import liquidsoap_config as lc
 
 LIQUIDSOAP_EXE = Path("C:/Tools/liquidsoap/liquidsoap.exe")
 

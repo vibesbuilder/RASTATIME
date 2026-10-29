@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from libretime_playout import liquidsoap_service as svc
+from rastatime_playout import liquidsoap_service as svc
 
 
 # --------------------------------------------------------------------

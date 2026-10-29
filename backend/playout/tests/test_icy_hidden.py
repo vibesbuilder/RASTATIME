@@ -1,6 +1,6 @@
 """RASTATIME 2026-10-14 - stream metadata per file / track type."""
 
-from libretime_playout.player.schedule import _effective_icy_hidden
+from rastatime_playout.player.schedule import _effective_icy_hidden
 
 
 def test_file_choice_wins_over_type():

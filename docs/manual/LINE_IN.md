@@ -76,7 +76,7 @@ The toolbar:
 > `application/controllers/LineinController.php` to the
 > Django REST API at `/api/v2/audio/linein[/<id>]`. The
 > controller only enforces ACL (Program Manager + Admin); the
-> Python side at `backend/api/libretime_api/linein/` owns
+> Python side at `backend/api/rastatime_api/linein/` owns
 > validation and persistence in `rastatime_linein`. See
 > ARCHITECTURE §14.
 

@@ -43,7 +43,7 @@ This manual is written for two readers in parallel:
 
 ### Default URLs and paths assumed throughout
 
-Unless your installation overrides them in `config/libretime.conf`:
+Unless your installation overrides them in `config/rastatime.conf`:
 
 | What | Default |
 |---|---|
@@ -54,7 +54,7 @@ Unless your installation overrides them in `config/libretime.conf`:
 | Log directory | `C:\rastatime\logs\` |
 | Media library on disk | `C:\rastatime\media\` |
 | Operator-local audio cache | `C:\rastatime\scheduler\` |
-| Configuration file | `C:\rastatime\config\libretime.conf` |
+| Configuration file | `C:\rastatime\config\rastatime.conf` |
 
 If your station uses different paths, substitute throughout.
 

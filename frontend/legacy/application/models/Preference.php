@@ -1615,7 +1615,7 @@ class Application_Model_Preference
         // state now comes from the playout's SourceSwitcher live state,
         // not from cc_pref (which is no longer written by anyone since
         // the direct-to-:8770 mount_add/remove refactor — see
-        // backend/playout/libretime_playout/source_switcher.py and the
+        // backend/playout/rastatime_playout/source_switcher.py and the
         // icecast.xml comment block above the <authentication> elements
         // for the full rationale).
         if ($sourcename == 'master_dj') {
@@ -1712,7 +1712,7 @@ class Application_Model_Preference
      * rows that were only consumed by ApiController::updateSourceStatusAction
      * which sent RabbitMQ messages to the Liquidsoap-based Pypo playout
      * — both removed in ADR-002.  The replacement SourceSwitcher in
-     * backend/playout/libretime_playout/source_switcher.py performs the
+     * backend/playout/rastatime_playout/source_switcher.py performs the
      * Master > Show > Scheduled priority transitions unconditionally.
      * The cc_pref rows themselves (keystr = 'auto_transition' /
      * 'auto_switch') are left in place for legacy data preservation;
@@ -2340,8 +2340,8 @@ class Application_Model_Preference
     }
 
     // RASTATIME 2026-09-16 - Media Library Location (Settings -> Local
-    // Machine).  Empty = storage.path from libretime.conf.  The move job
-    // state is JSON written by the API (libretime_api.storage.move).
+    // Machine).  Empty = storage.path from rastatime.conf.  The move job
+    // state is JSON written by the API (rastatime_api.storage.move).
     public static function getLocalStorageFolder()
     {
         return self::getValue('local_storage_folder');

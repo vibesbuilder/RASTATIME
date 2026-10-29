@@ -52,7 +52,7 @@ _EN_JSON        = _LOCALES / "en" / "common.json"
 _DE_JSON        = _LOCALES / "de" / "common.json"
 _DJANGO_PO      = _REPO / "backend" / "api" / "locale" / "de" / "LC_MESSAGES" / "django.po"
 _DJANGO_MO      = _REPO / "backend" / "api" / "locale" / "de" / "LC_MESSAGES" / "django.mo"
-_INTERNAL_PY    = _REPO / "backend" / "api" / "libretime_api" / "settings" / "_internal.py"
+_INTERNAL_PY    = _REPO / "backend" / "api" / "rastatime_api" / "settings" / "_internal.py"
 
 _EXPECTED_SECTIONS = {"nav", "status", "lineIn", "soundcard", "playbackHistory", "common"}
 

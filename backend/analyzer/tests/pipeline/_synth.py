@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from libretime_analyzer.pipeline import _ffmpeg
+from rastatime_analyzer.pipeline import _ffmpeg
 
 
 def _resolve(binary: str) -> str:

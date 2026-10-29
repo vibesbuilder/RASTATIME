@@ -168,7 +168,7 @@ class DeviceStartupCheckJob(Job):
             settings = self._settings
             if settings is None:
                 try:
-                    from libretime_api.soundcard.models import (  # noqa: PLC0415
+                    from rastatime_api.soundcard.models import (  # noqa: PLC0415
                         SoundcardSettings as _ORM,
                     )
                     settings = _ORM.get_settings().to_domain()

@@ -23,11 +23,11 @@ param(
     [string] $Unblock = ''
 )
 $ErrorActionPreference = 'Stop'
-$conf = 'C:\RASTATIME\config\libretime.conf'
+$conf = 'C:\RASTATIME\config\rastatime.conf'
 $psql = 'C:\Program Files\PostgreSQL\17\bin\psql.exe'
 
 function Get-DbPassword {
-    # database: block of libretime.conf; the value may be quoted
+    # database: block of rastatime.conf; the value may be quoted
     $inDb = $false
     foreach ($line in Get-Content $conf) {
         if ($line -match '^\s*database:\s*$') { $inDb = $true; continue }

@@ -67,7 +67,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | A4.4 | Icecast internals hidden | `https://.../stream/status-json.xsl`, `/stream/admin/...` | 403 |
 | A4.5 | Certificate | `openssl s_client` or the browser | Let's Encrypt, > 30 days left; renewal log `logs\cert-renewal.log` after 2026-11-29 |
 | A4.6 | Widgets | `https://.../embed/player`, `embed/weekly-program` | render, stream URLs carry the https name |
-| A4.7 | Sensitive paths | `/.git/config`, `/.env`, `/config/libretime.conf` over https | login redirect, never content |
+| A4.7 | Sensitive paths | `/.git/config`, `/.env`, `/config/rastatime.conf` over https | login redirect, never content |
 
 ### A5 Protection
 
@@ -77,7 +77,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | A5.2 | Unblock | System Status → Blocked addresses → Unblock, or `rt-blocks.ps1 -Unblock <ip>` | entry gone on every layer |
 | A5.5 | Allow list | System Status → Blocked addresses → **Allow** on a blocked address; then 11 wrong logins and 5 wrong DJ passwords from it; `rt-firewall-watch.ps1 -DryRun` | unblocked everywhere and listed under Allowed addresses; never braked, throttled or a watcher candidate (`skipped … allowed address` in the log); **Remove** puts it back under the brakes |
 | A5.3 | Firewall watcher | `rt-firewall-watch.ps1 -DryRun -WindowMinutes 1440` | lists the scanners of the day; real runs in `logs\firewall-watch.log` every 5 min |
-| A5.4 | Secrets | `libretime.conf`, `icecast.xml`, Streams outputs, UI admins | no default values (classification script: all "custom"); passwords in `libretime.conf` quoted |
+| A5.4 | Secrets | `rastatime.conf`, `icecast.xml`, Streams outputs, UI admins | no default values (classification script: all "custom"); passwords in `rastatime.conf` quoted |
 
 ### A6 Data safety
 
@@ -145,7 +145,7 @@ counts identical to live, scratch database dropped - passed.
 | `scripts\backup-auto.ps1` (repo) | registered task "RASTATIME-Backup" | nightly backup |
 | `frontend\legacy\scripts\po2mo.py` (repo) | `python po2mo.py --all` | compile the four catalogues after a string change (Apache restart to pick up) |
 | Unit tests | `.venv\Scripts\python.exe -m pytest tests/unit -q --basetemp=<scratch>` (PYTHONPATH `backend/api;backend/shared;backend/playout;.`) and `-m pytest backend/playout/tests -q -o log_cli=false` (add `backend/playout`) | 739 passed / 38 skipped and 819 passed / 2 skipped (2026-10-22); `--basetemp` is required on this machine |
-| `scripts\run_tests.ps1` (repo, since 2026-10-16) | `.\scripts\run_tests.ps1 -Suite api|playout|unit|all [-Path <tests>] [-- -k name]` | sets `LIBRETIME_CONFIG_FILEPATH` (a pre-set value wins, e.g. from a git worktree), `PYTHONUTF8=1`, `PYTHONPATH`, `--basetemp` and `-o log_cli=false` for you; the API suite needs the real `libretime.conf` because Django builds the test database with its credentials. Expected 2026-10-22: api 151 passed, playout 819 passed / 2 skipped, unit 739 passed / 38 skipped. Do not pass `-p ...` (ambiguous with the script's own parameters) |
+| `scripts\run_tests.ps1` (repo, since 2026-10-16) | `.\scripts\run_tests.ps1 -Suite api|playout|unit|all [-Path <tests>] [-- -k name]` | sets `RASTATIME_CONFIG_FILEPATH` (a pre-set value wins, e.g. from a git worktree), `PYTHONUTF8=1`, `PYTHONPATH`, `--basetemp` and `-o log_cli=false` for you; the API suite needs the real `rastatime.conf` because Django builds the test database with its credentials. Expected 2026-10-22: api 151 passed, playout 819 passed / 2 skipped, unit 739 passed / 38 skipped. Do not pass `-p ...` (ambiguous with the script's own parameters) |
 
 Secrets are never printed by any of these tools; the database password
-is read from `libretime.conf` into the environment for the call only.
+is read from `rastatime.conf` into the environment for the call only.

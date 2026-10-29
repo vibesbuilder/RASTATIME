@@ -23,18 +23,29 @@ defined('APPLICATION_ENV') || define('APPLICATION_ENV', getenv('APPLICATION_ENV'
 defined('VERBOSE_STACK_TRACE') || define('VERBOSE_STACK_TRACE', getenv('VERBOSE_STACK_TRACE') ?? true);
 
 // Project constants
-define('LIBRETIME_LOG_DIR', getenv('LIBRETIME_LOG_DIR') ?: 'C:/rastatime/logs');
-define('LIBRETIME_LOG_FILEPATH', getenv('LIBRETIME_LOG_FILEPATH') ?: LIBRETIME_LOG_DIR . '/legacy.log');
+// Brand stage B bridge (until 2026-11-03): the former LIBRETIME_* variable
+// names and the former file name libretime.conf are still honoured when the
+// current ones are absent.
+define('RASTATIME_LOG_DIR', getenv('RASTATIME_LOG_DIR') ?: (getenv('LIBRETIME_LOG_DIR') ?: 'C:/rastatime/logs'));
+define('RASTATIME_LOG_FILEPATH', getenv('RASTATIME_LOG_FILEPATH') ?: (getenv('LIBRETIME_LOG_FILEPATH') ?: RASTATIME_LOG_DIR . '/legacy.log'));
 
-define('LIBRETIME_CONFIG_DIR', getenv('LIBRETIME_CONFIG_DIR') ?: 'C:/rastatime/config');
-define('LIBRETIME_CONF_DIR', LIBRETIME_CONFIG_DIR); // Deprecated
-define('LIBRETIME_CONFIG_FILEPATH', getenv('LIBRETIME_CONFIG_FILEPATH') ?: LIBRETIME_CONFIG_DIR . '/libretime.conf');
+define('RASTATIME_CONFIG_DIR', getenv('RASTATIME_CONFIG_DIR') ?: (getenv('LIBRETIME_CONFIG_DIR') ?: 'C:/rastatime/config'));
+define('RASTATIME_CONF_DIR', RASTATIME_CONFIG_DIR); // Deprecated
+$rastatimeConfigFilepath = getenv('RASTATIME_CONFIG_FILEPATH') ?: getenv('LIBRETIME_CONFIG_FILEPATH');
+if (!$rastatimeConfigFilepath) {
+    $rastatimeConfigFilepath = RASTATIME_CONFIG_DIR . '/rastatime.conf';
+    if (!file_exists($rastatimeConfigFilepath) && file_exists(RASTATIME_CONFIG_DIR . '/libretime.conf')) {
+        $rastatimeConfigFilepath = RASTATIME_CONFIG_DIR . '/libretime.conf';
+    }
+}
+define('RASTATIME_CONFIG_FILEPATH', $rastatimeConfigFilepath);
+unset($rastatimeConfigFilepath);
 
 // Legacy constants
 // RASTATIME 2026-10-03 (brand stage A, operator): the product-facing name
 // is RASTATIME everywhere - login page, about page, "Powered by", e-mails,
 // JS PRODUCT_NAME.  Only VERSION keeps reporting the upstream LibreTime
-// release this fork is based on (upstream-sync tracking); the LIBRETIME_*
+// release this fork is based on (upstream-sync tracking); the RASTATIME_*
 // identifiers below are untouched (stage B, see BACKLOG).
 define('PRODUCT_NAME', 'RASTATIME');
 define('PRODUCT_SITE_URL', 'https://github.com/RASTATIME/rastatime');

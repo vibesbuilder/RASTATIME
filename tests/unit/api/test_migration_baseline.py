@@ -49,9 +49,9 @@ import pytest
 #   tests/unit/api/test_migration_baseline.py
 _REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
 _BACKEND_API = _REPO_ROOT / "backend" / "api"
-_LEGACY_MIGRATIONS = _BACKEND_API / "libretime_api" / "legacy" / "migrations"
-_LINEIN_MIGRATIONS = _BACKEND_API / "libretime_api" / "linein" / "migrations"
-_SOUNDCARD_MIGRATIONS = _BACKEND_API / "libretime_api" / "soundcard" / "migrations"
+_LEGACY_MIGRATIONS = _BACKEND_API / "rastatime_api" / "legacy" / "migrations"
+_LINEIN_MIGRATIONS = _BACKEND_API / "rastatime_api" / "linein" / "migrations"
+_SOUNDCARD_MIGRATIONS = _BACKEND_API / "rastatime_api" / "soundcard" / "migrations"
 
 
 # ---------------------------------------------------------------------------
@@ -82,7 +82,7 @@ _EXPECTED_LEAF_NODES: frozenset[tuple[str, str]] = frozenset(
     {
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("legacy", "0072_drop_track_type_repeat_copy"),
+        ("legacy", "0073_retire_super_admin"),
         ("linein", "0005_linein_input_gain_db"),
         ("playback", "0001_initial"),
         ("preflight", "0001_initial"),
@@ -96,10 +96,10 @@ _EXPECTED_LEAF_NODES: frozenset[tuple[str, str]] = frozenset(
 #: 71 legacy + 5 linein + 2 soundcard + playback, preflight and
 #: song_request (1 each) + Django's own auth (12), contenttypes (2) and
 #: sessions (1).
-_EXPECTED_NODE_COUNT = 96
+_EXPECTED_NODE_COUNT = 97
 
 #: Number of legacy migrations (0001 … 0072 without 0002, see below).
-_EXPECTED_LEGACY_COUNT = 71
+_EXPECTED_LEGACY_COUNT = 72
 
 
 # ---------------------------------------------------------------------------
@@ -313,7 +313,7 @@ def test_no_pending_migrations():
             "makemigrations",
             "--check",
             "--dry-run",
-            f"--settings=libretime_api.settings.dev",
+            f"--settings=rastatime_api.settings.dev",
             f"--pythonpath={_BACKEND_API}",
         ],
         capture_output=True,

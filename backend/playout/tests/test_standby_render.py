@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 
-from libretime_playout.liquidsoap_config import (
+from rastatime_playout.liquidsoap_config import (
     render_rastatime_liq,
     render_standby_liq,
     standby_mount,
@@ -60,7 +60,7 @@ def test_write_standby_is_idempotent(tmp_path):
 
 
 def test_icecast_fallback_check_reports_uncovered_mounts(tmp_path):
-    from libretime_playout.liquidsoap_config import icecast_mounts_without_fallback
+    from rastatime_playout.liquidsoap_config import icecast_mounts_without_fallback
 
     xml = tmp_path / "icecast.xml"
     xml.write_text(

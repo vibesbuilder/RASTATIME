@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from libretime_analyzer.pipeline.organise_file import TAGLESS_DIR, organise_file
+from rastatime_analyzer.pipeline.organise_file import TAGLESS_DIR, organise_file
 
 
 def _incoming(tmp_path: Path, name: str = "track.mp3") -> Path:

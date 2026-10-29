@@ -5,8 +5,8 @@
 .DESCRIPTION
     RASTATIME 2026-10-16.  The suites need a few environment variables that
     are easy to forget:
-      * LIBRETIME_CONFIG_FILEPATH - the API tests build their test database
-        from the real libretime.conf (user, password, host); without it the
+      * RASTATIME_CONFIG_FILEPATH - the API tests build their test database
+        from the real rastatime.conf (user, password, host); without it the
         testing settings fall back to the upstream defaults and every
         django_db test errors with "password authentication failed".
       * PYTHONUTF8=1 - the test-database setup otherwise dies with a
@@ -24,14 +24,14 @@
 
 .PARAMETER Path
     Optional test path or node id inside the suite, e.g.
-    libretime_api/storage/tests/management/commands/test_bulk_import.py
+    rastatime_api/storage/tests/management/commands/test_bulk_import.py
 
 .PARAMETER PytestArgs
     Extra arguments handed to pytest unchanged (e.g. -k name, -x).
 
 .EXAMPLE
     .\scripts\run_tests.ps1 -Suite api
-    .\scripts\run_tests.ps1 -Suite api -Path libretime_api/storage -PytestArgs -x
+    .\scripts\run_tests.ps1 -Suite api -Path rastatime_api/storage -PytestArgs -x
     .\scripts\run_tests.ps1            # all three suites
 #>
 param(
@@ -47,15 +47,15 @@ $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $python = Join-Path $root '.venv\Scripts\python.exe'
 if (-not (Test-Path $python)) { throw "venv python not found: $python" }
 
-# A pre-set LIBRETIME_CONFIG_FILEPATH wins (a git worktree has no config\
-# of its own); otherwise the checkout's libretime.conf.
-$config = if ($env:LIBRETIME_CONFIG_FILEPATH) { $env:LIBRETIME_CONFIG_FILEPATH } else { Join-Path $root 'config\libretime.conf' }
-if (-not (Test-Path $config)) { throw "libretime.conf not found: $config" }
+# A pre-set RASTATIME_CONFIG_FILEPATH wins (a git worktree has no config\
+# of its own); otherwise the checkout's rastatime.conf.
+$config = if ($env:RASTATIME_CONFIG_FILEPATH) { $env:RASTATIME_CONFIG_FILEPATH } else { Join-Path $root 'config\rastatime.conf' }
+if (-not (Test-Path $config)) { throw "rastatime.conf not found: $config" }
 
 $baseTemp = Join-Path $env:TEMP ('rastatime-pytest-' + [IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory -Force $baseTemp | Out-Null
 
-$env:LIBRETIME_CONFIG_FILEPATH = $config
+$env:RASTATIME_CONFIG_FILEPATH = $config
 $env:PYTHONUTF8 = '1'
 
 $failed = 0
@@ -79,7 +79,7 @@ function Invoke-Suite($name, $workDir, $pythonPath, $target) {
 
 $sep = [IO.Path]::PathSeparator
 if ($Suite -in @('api', 'all')) {
-    $target = if ($Path) { $Path } else { 'libretime_api' }
+    $target = if ($Path) { $Path } else { 'rastatime_api' }
     Invoke-Suite 'api' 'backend\api' '' $target
 }
 if ($Suite -in @('playout', 'all')) {
@@ -88,7 +88,7 @@ if ($Suite -in @('playout', 'all')) {
 }
 if ($Suite -in @('unit', 'all')) {
     $target = if ($Path) { $Path } else { 'tests\unit' }
-    # backend\playout as well: the root unit tests import libretime_playout,
+    # backend\playout as well: the root unit tests import rastatime_playout,
     # which must come from THIS checkout (a worktree), not from the editable
     # install that points at C:\RASTATIME.
     Invoke-Suite 'unit' '.' ((Join-Path $root 'backend\api') + $sep + (Join-Path $root 'backend\shared') + $sep + (Join-Path $root 'backend\playout') + $sep + $root) $target

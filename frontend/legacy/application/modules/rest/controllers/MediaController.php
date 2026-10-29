@@ -80,7 +80,7 @@ class Rest_MediaController extends Zend_Rest_Controller
                 $counterIncremented = true;
             }
             Application_Service_MediaService::streamFileDownload($id, $inline);
-        } catch (LibreTimeFileNotFoundException $e) {
+        } catch (RastatimeFileNotFoundException $e) {
             $this->fileNotFoundResponse();
             Logging::error($e->getMessage());
         } catch (Exception $e) {
@@ -103,7 +103,7 @@ class Rest_MediaController extends Zend_Rest_Controller
             $this->getResponse()
                 ->setHttpResponseCode(200)
                 ->appendBody(json_encode(CcFiles::getSanitizedFileById($id)));
-        } catch (LibreTimeFileNotFoundException $e) {
+        } catch (RastatimeFileNotFoundException $e) {
             $this->fileNotFoundResponse();
             Logging::error($e->getMessage());
         } catch (Exception $e) {
@@ -195,7 +195,7 @@ class Rest_MediaController extends Zend_Rest_Controller
         } catch (InvalidMetadataException $e) {
             $this->invalidDataResponse();
             Logging::error($e->getMessage());
-        } catch (LibreTimeFileNotFoundException $e) {
+        } catch (RastatimeFileNotFoundException $e) {
             $this->fileNotFoundResponse();
             Logging::error($e->getMessage());
         } catch (Exception $e) {
@@ -215,7 +215,7 @@ class Rest_MediaController extends Zend_Rest_Controller
             CcFiles::deleteById($id);
             $this->getResponse()
                 ->setHttpResponseCode(204);
-        } catch (LibreTimeFileNotFoundException $e) {
+        } catch (RastatimeFileNotFoundException $e) {
             $this->fileNotFoundResponse();
             Logging::error($e->getMessage());
         } catch (Exception $e) {

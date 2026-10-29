@@ -1,11 +1,11 @@
 [tool.isort]
 profile = "black"
 combine_as_imports = true
-known_first_party = ["libretime_api"]
+known_first_party = ["rastatime_api"]
 
 [tool.pylint.master]
 load-plugins = "pylint_django"
-django-settings-module = "libretime_api.settings.testing"
+django-settings-module = "rastatime_api.settings.testing"
 
 [tool.pylint.messages_control]
 extension-pkg-whitelist = "pydantic"
@@ -30,18 +30,18 @@ plugins = [
 ignore_missing_imports = true
 
 [tool.django-stubs]
-django_settings_module = "libretime_api.settings.testing"
+django_settings_module = "rastatime_api.settings.testing"
 
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "DEBUG"
 
-DJANGO_SETTINGS_MODULE = "libretime_api.settings.testing"
+DJANGO_SETTINGS_MODULE = "rastatime_api.settings.testing"
 django_find_project = false
 
 [tool.coverage.run]
 plugins = ["django_coverage_plugin"]
-source = ["libretime_api"]
+source = ["rastatime_api"]
 omit = [
   "*/migrations/*",
   "*/tests/*",
