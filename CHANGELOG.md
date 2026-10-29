@@ -377,7 +377,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Paketnamen einmal `legacy name used (stage B bridge)` mit Aufrufer-Datei und -Zeile, der Konfig-Loader
   meldet vorhandene `LIBRETIME_*`-Variablen (nur Namen), `constants.php` schreibt `stage B bridge`-Zeilen
   ins PHP-Fehlerlog.  Neue Namen bleiben still (vier neue Tests, shared 45).  Phase 2 (Brücken entfernen)
-  ab 2026-11-01/02 statt 2026-11-03.  Commit folgt.
+  ab 2026-11-01/02 statt 2026-11-03.  Commit `cfa99323`.
 
 - **Marke Stufe B: `libretime_*` → `rastatime_*` in Bezeichnern (2026-10-29,
   Operator-Go, Vorbedingung der GitHub-Veröffentlichung)** — die fünf
