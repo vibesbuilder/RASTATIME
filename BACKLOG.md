@@ -6352,7 +6352,7 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   dem Architektur-Draft entfernt; `AGENTS.md` in `CONTRIBUTING.md` aufgenommen und aus dem Repo genommen;
   Betreiber-E-Mail im HTTPS-Runbook durch die GitHub-noreply-Adresse ersetzt; Phase 3 bereinigt zusätzlich
   Dateiinhalte alter Versionen (`--replace-text`).
-- ✅ **Phase 1 gebaut 2026-10-29** (Marke Stufe B, eigener Abschnitt oben): Repo-Teil committet, Suiten grün;
+- ✅ **Phase 1 gebaut 2026-10-29** (Marke Stufe B, eigener Abschnitt oben): Repo-Teil committet (`d07b4890`, `20364f4f`), Suiten grün;
   Live-Umschaltung der vier Python-Dienste per `C:\Temp\optd\stufe_b_switch.ps1` durch den Operator; Brücke bis
   **2026-11-03**, dann Phase 2.
 

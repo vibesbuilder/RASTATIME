@@ -395,7 +395,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Nicht umbenannt: Upstream-Kopien (`docs/upstream`, `infra/upstream`),
   Upstream-URL-Konstanten, Composer-Paket `libretime/propel1`, Historie
   (CHANGELOG, `docs/dev/history`), Produktname LibreTime in Herkunfts-Prosa.
-  Architektur §23.77 (0.103).  Nebenbei: `tests/unit/api/test_migration_baseline.py`
+  Architektur §23.77 (0.103).  Commits `d07b4890` (CONTRIBUTING) + `20364f4f` (Stufe B).  Nebenbei: `tests/unit/api/test_migration_baseline.py`
   auf Migration 0073 nachgezogen (drei Tests rot seit 2026-10-25).
 - **Veröffentlichung Phase 0, Nachträge (2026-10-29)** — `AGENTS.md` in
   `CONTRIBUTING.md` aufgenommen (Projektziele, Nicht-Ziele, Quellen-Rangfolge,
