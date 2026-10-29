@@ -460,7 +460,7 @@ leer; 25 Probe-Werkzeuge in `C:\Temp\optd` auf neue Namen gezogen (Sicherung `_p
 Die Brücke meldet jetzt jede Nutzung: Python-Finder `legacy name used (stage B bridge)` mit Aufrufer
 (stderr/Dienstlog), Konfig-Loader `legacy environment used` (Variablennamen), PHP `stage B bridge` im
 Apache-Fehlerlog `logs/http-error-*.log`.  **Go für Phase 2 = null Treffer** nach einer Nacht (Backup 03:30,
-Janitor 03:50, 04:00-Fenster) und dem Wochenende: `grep -l "stage B bridge" logs/*.log` leer.  Phase 2 am
+Janitor 03:50, 04:00-Fenster) und dem Wochenende: PowerShell `Select-String -Path C:\RASTATIME\logs\*.log -Pattern "stage B bridge" -List` ohne Ausgabe (Git-Bash: `grep -l "stage B bridge" logs/*.log`).  Phase 2 am
 **2026-11-01 oder 2026-11-02** (Operator 2026-10-29); Rückfall danach nur `git revert` + Neustart.
 
 **Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
