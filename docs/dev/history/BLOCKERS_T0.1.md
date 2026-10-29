@@ -126,7 +126,7 @@ requirements, results in a clean single baseline commit.
 
 ---
 
-## 6. Exact Files assistant Plans to Create or Modify in the Next Step
+## 6. Exact Files to Create or Modify in the Next Step
 
 Once blockers are resolved, T0.1 will:
 
@@ -161,7 +161,7 @@ Once blockers are resolved, T0.1 will:
 
 ## 8. Next Step After Decisions Are Made
 
-Once D1–D3 are confirmed, assistant can execute T0.1 in one session:
+Once D1–D3 are confirmed, T0.1 can be executed in one session:
 1. `git init`
 2. Stage and commit project docs as initial commit.
 3. Clone LibreTime at the selected tag.

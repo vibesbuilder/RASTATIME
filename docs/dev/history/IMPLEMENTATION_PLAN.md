@@ -159,7 +159,7 @@ Notes:
 
 ## 4. Phase and Milestone Plan
 
-Milestone order follows the architecture draft §20. Tasks are atomic and assistant-sized. Each task includes: **O** objective, **F** affected files/modules, **P** prerequisites, **X** expected output, **R** risks/open questions, **V** validation.
+Milestone order follows the architecture draft §20. Tasks are atomic and small. Each task includes: **O** objective, **F** affected files/modules, **P** prerequisites, **X** expected output, **R** risks/open questions, **V** validation.
 
 ---
 
