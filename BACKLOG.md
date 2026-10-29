@@ -57,7 +57,7 @@ dann 2 → 1, danach nach Bedarf**.
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | ✅ 2026-10-25: 6 echte Stunden (22:00–04:00 UTC), 104/104 Zeilen gespielt, keine Lücke in der doppelten Stunde, 05:00-Folge pünktlich (siehe Abschnitt „Zeitumstellungsnacht 24./25.10.2026") | – |
 
 **Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**
-Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ✅ gebaut 2026-10-29 (Brücke bis 2026-11-03) ·
+Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ✅ LIVE 2026-10-29 (Brücke bis 2026-11-03) ·
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
@@ -439,7 +439,7 @@ Internet-Erreichbarkeit (Punkt 16, Evaluierung offen), Testplan erstellen
 
 ---
 
-### ✅ Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — GEBAUT 2026-10-29, Brücke bis 2026-11-03 (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
+### ✅ Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — LIVE 2026-10-29 14:16, Brücke bis 2026-11-03 (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
 
 **Stand 2026-10-29 (Operator-Go, GitHub-Phase 1):** Repo-Teil gebaut - fünf Pakete `rastatime_*` (git mv +
 Sweep über 328 Dateien), Distributionen/Kommandos `rastatime-*`, Präfix `RASTATIME_`, `config/rastatime.conf`,
@@ -453,6 +453,7 @@ ruhiges Fenster):** Dienste stoppen, `rastatime-analyzer` neu installieren (EXE 
 entfernen (überbrücken bis dahin die laufenden Prozesse), nssm-Parameter API/PLAYOUT/ANALYZER/WORKER,
 `libretime.conf` löschen (Kopie `rastatime.conf` liegt), Dienste starten.  **Phase 2 ab 2026-11-03:** Stubs,
 Finder, Legacy-Präfix, zweite Entry-Points, PHP-Fallbacks, `.gitignore`-Zeile `config/libretime.conf` entfernen.
+**Umgeschaltet 2026-10-29 14:12–14:16:** die vier Python-Dienste laufen mit `rastatime_*`-Modulen, `rastatime-analyzer.exe` und `RASTATIME_CONFIG_FILEPATH=…astatime.conf`; Junctions entfernt, `libretime.conf` gelöscht (hash-gleich).  Liquidsoap startete planmäßig am Titelende neu (gerendertes Skript änderte nur Kommentarzeilen, Aufhol-Seek +119,9 s); `standby.liq` ebenso nur Kommentare, STANDBY-Neustart nicht nötig.  Das Skript brach zweimal ab (TimeSpan-Literal `00:00:60`; natives stderr unter `2>&1` wird in PowerShell 5.1 zum Abbruchfehler), Schritte 2a–4 von Hand; Skript als Protokoll korrigiert.
 
 **Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
 GitHub, Releases, Update-Weg", Stufe 0) und erst dort angegangen; bis dahin Defer, nicht erneut vorschlagen.
