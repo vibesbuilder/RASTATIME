@@ -793,6 +793,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Upload über die UI scheiterte ab 128 MiB mit Apache 500** (2026-10-29, Befund des
+  Operators).  mod_fcgid begrenzte den Request-Body mit `FcgidMaxRequestLen 134217728`,
+  während PHP (`post_max_size`/`upload_max_filesize`) und damit die Upload-Seite 512 MB
+  versprachen; eine Datei knapp über 128 MiB bekam dreimal den 500er, bevor PHP lief.
+  Grenze in `httpd.conf` und `docs/operator/INSTALL_APACHE.md` auf 536870912 (512 MiB)
+  gesetzt, wirksam nach Apache-Neustart.  Stufe B war nicht beteiligt.
 - **Kalender: bearbeitete Instanz einer wiederkehrenden Sendung bot im
   Kontextmenü „Delete Instance and All Following" an (2026-10-28, Befund des
   Operators)** — der Lösch-Zweig in `CalendarService::makeContextMenu` prüfte

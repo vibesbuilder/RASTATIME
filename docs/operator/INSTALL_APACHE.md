@@ -106,7 +106,7 @@ LoadModule fcgid_module modules/mod_fcgid.so
     FcgidInitialEnv PHPRC "C:/Tools/PHP"
     FcgidWrapper "C:/Tools/PHP/php-cgi.exe" .php
     AddHandler fcgid-script .php
-    FcgidMaxRequestLen 134217728
+    FcgidMaxRequestLen 536870912  # 512 MiB = PHP post_max_size; the UI shows that limit
     FcgidConnectTimeout 20
     FcgidIOTimeout 120
     # RASTATIME: keep the fcgid pool small and short-lived so PHP
