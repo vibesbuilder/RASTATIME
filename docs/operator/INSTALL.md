@@ -67,10 +67,18 @@ RASTATIME uses PostgreSQL as its sole database (port **5432**).
 2. Run the installer; note the superuser password you set
 3. Ensure **"PostgreSQL Server"** is selected as a component
 4. Add `<PostgreSQL>\bin` to PATH so `psql` and `pg_isready` are available
-5. Verify:
+5. Bind to loopback only (TEST_PLAN A1.5): the installer writes
+   `listen_addresses = '*'`.  In `<PostgreSQL>\data\postgresql.conf` set
+   ```
+   listen_addresses = 'localhost'
+   ```
+   and `Restart-Service postgresql-x64-17` (elevated)
+6. Verify:
    ```
    pg_isready -h 127.0.0.1 -p 5432
    # Expected: 127.0.0.1:5432 - accepting connections
+   Get-NetTCPConnection -State Listen -LocalPort 5432
+   # Expected: 127.0.0.1 and ::1 only
    ```
 
 ### 2.3 Liquidsoap 2.4.6
@@ -118,17 +126,30 @@ every uploaded media file.  Without RabbitMQ, uploads stay at
    Copy-Item C:\Windows\System32\config\systemprofile\.erlang.cookie $env:USERPROFILE\.erlang.cookie -Force
    ```
    Every Windows account that runs `rabbitmqctl` needs this copy.
-5. Verify:
+5. Bind AMQP to loopback only (TEST_PLAN A1.5; the default listens on
+   every interface).  Create `rabbitmq.conf` next to the `advanced.config`
+   that `rabbitmqctl status` lists under "Config files" - the
+   `%APPDATA%\RabbitMQ` of the account that ran the installer, or
+   `C:\ProgramData\RabbitMQ` after the quirk fix below:
+   ```ini
+   # RASTATIME: AMQP only on loopback (TEST_PLAN A1.5)
+   listeners.tcp.default = 127.0.0.1:5672
+   ```
+   then `Restart-Service RabbitMQ` (elevated; a restart reads the new file,
+   no service re-registration needed)
+6. Verify:
    ```powershell
    Get-Service RabbitMQ
    # Expected: Running
    rabbitmqctl status
-   # Expected: exit 0, "Status of node rabbit@<host> ..."
+   # Expected: exit 0, "Status of node rabbit@<host> ...", rabbitmq.conf
+   # under "Config files", "Interface: 127.0.0.1, port: 5672"
    ```
 
-> Steps 3-4 found 2026-11-01 in the fresh-machine rehearsal
-> (INSTALL_PROBE.md): RabbitMQ 4.4.0 put nothing on PATH, and the cookies
-> of the CLI user and the service differed.
+> Steps 3-5 found 2026-11-01/02 in the fresh-machine rehearsal
+> (INSTALL_PROBE.md): RabbitMQ 4.4.0 put nothing on PATH, the cookies
+> of the CLI user and the service differed, and AMQP listened on
+> `0.0.0.0` / `::`.
 
 > **Windows service quirk:** if the installer ran as a normal user, the
 > LocalSystem service can crash on start.  Re-register the service with
@@ -517,16 +538,20 @@ Run the install scripts as **Administrator**, in dependency order:
 ```powershell
 # Open an elevated PowerShell prompt, then:
 
-# 9a — API (mandatory; start immediately)
+# 9a — API (mandatory; start immediately).  -ApiHost 127.0.0.1: the
+# script's default 0.0.0.0 would expose the API on the LAN (TEST_PLAN A1.5);
+# Apache reaches it through 127.0.0.1.
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-api.ps1 `
     -InstallRoot C:\rastatime `
     -ConfigFile C:\rastatime\config\rastatime.conf `
+    -ApiHost 127.0.0.1 `
     -StartService
 
 # Wait for the API health gate before continuing:
 Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 # Expected: StatusCode 200
+Get-NetTCPConnection -State Listen -LocalPort 8765   # 127.0.0.1 only
 
 # 9b — Worker (mandatory)
 powershell -ExecutionPolicy Bypass `

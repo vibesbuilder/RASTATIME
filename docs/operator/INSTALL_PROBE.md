@@ -145,7 +145,9 @@ and **Command Line Tools** (pgAdmin optional, skip Stack Builder), port
 5432, locale default.  Note the superuser password you set (throw-away on
 the VM).  Afterwards add `C:\Program Files\PostgreSQL\17\bin` to the
 **system** PATH (Settings → System → Advanced → Environment variables) and
-open a new PowerShell.  Check: `pg_isready -h 127.0.0.1 -p 5432`.
+open a new PowerShell.  Set `listen_addresses = 'localhost'` in
+`data\postgresql.conf` and restart the service (INSTALL §2.2 step 5).
+Check: `pg_isready -h 127.0.0.1 -p 5432`.
 
 **T5 Liquidsoap 2.4.6 (INSTALL §2.3).**  Zip
 `liquidsoap-2.4.6-win64.zip` from github.com/savonet/liquidsoap/releases.
@@ -159,8 +161,9 @@ The folder also receives the rendered `rastatime.liq` later.  Check:
 rabbitmq.com (Erlang first, the version the RabbitMQ page names), both at
 their default locations, defaults throughout; RabbitMQ registers its
 Windows service itself.  Then the RabbitMQ `sbin` folder onto the system
-PATH and the service's Erlang cookie into your profile (INSTALL §2.4
-steps 3-4, elevated).  Check: `Get-Service RabbitMQ` is Running and
+PATH, the service's Erlang cookie into your profile and a
+`rabbitmq.conf` with the loopback listener (INSTALL §2.4 steps 3-5,
+elevated).  Check: `Get-Service RabbitMQ` is Running and
 `rabbitmqctl status` exits 0.  If the
 service crashes at start, re-register it with `RABBITMQ_BASE` as in
 INSTALL §2.4.  The vhost and user come later (Step 6b).
@@ -246,7 +249,7 @@ had to be corrected) / `bug` (product problem) / `skip` (with reason).
 | 4 / 6b | RabbitMQ vhost + user | doc | 11 | (1) `rabbitmqctl add_user ...`: `Die Benennung "rabbitmqctl" wurde nicht ... erkannt` - the RabbitMQ 4.4.0 installer puts nothing on PATH; the tool is `C:\Program Files\RabbitMQ Server\rabbitmq_server-4.4.0\sbin\rabbitmqctl.bat` (§2.4's `rabbitmq-service.bat` sits there too). (2) Read-only probe with the full path, `rabbitmqctl status`: exit 69, `TCP connection succeeded but Erlang distribution failed`, `check if the Erlang cookie is identical` - the node runs (service LocalSystem, Running; 5672/4369/25672 listening), but the CLI uses `C:\Users\admin\.erlang.cookie`, the service the LocalSystem cookie in `C:\Windows\System32\config\systemprofile\` (unreadable without elevation). INSTALL §2.4 / Step 6b mention neither. Operator chose: §2.4 gets step 3 (`sbin` onto the system PATH) and step 4 (copy the LocalSystem cookie into the profile, elevated) and `rabbitmqctl status` in the check; the operator did both by hand. Then `rabbitmqctl status` exit 0 (4.4.0, OTP 28) and the three Step 6b commands exit 0 (password = placeholder `rastatime`), `list_permissions -p /rastatime`: `rastatime .* .* .*`. The minutes include the operator's PATH and cookie work. Watch item for A1.5: AMQP 5672 listens on `[::]` and `0.0.0.0`, INSTALL configures no loopback bind. |
 | 4 / 7 | migrate | ok | 1 | As written (venv activated per the corrected Step 3, three `$env:` lines): exit 0 in 29 s, 97 migrations `... OK` (auth, contenttypes, legacy, linein, playback, preflight, sessions, song_request, soundcard), no warning. |
 | 4 / 8 | log directory | ok | <1 | `C:\rastatime\logs` did not exist, created; git-ignored (`.gitignore:78`). |
-| 4 / 9a | API service + health 200 | | | |
+| 4 / 9a | API service + health 200 | ok | 1 | coding assistant restarted as administrator for Step 9 (operator; VM snapshot before it). `install-api.ps1` exit 0 in 10 s, `RASTATIME-API` Running / Automatic (NSSM prints its lines as UTF-16, cosmetic; one `Unexpected status SERVICE_START_PENDING`, then Running). `/health`: 200, `{"status": "ok", "service": "rastatime-api", "version": "4.5.0"}`; `api-stderr.log` empty. **A1.5 mismatch:** the script's default `-ApiHost 0.0.0.0` (Step 9a passes none) binds `0.0.0.0:8765`; PostgreSQL (`listen_addresses = '*'`, installer default) and RabbitMQ 5672 listen on `0.0.0.0` and `::` too - INSTALL sets no loopback bind for any of the three, TEST_PLAN A1.5 wants them on 127.0.0.1 only. Operator chose to fix it now (+4 min): §2.2 step 5 `listen_addresses = 'localhost'` + restart (5432 on 127.0.0.1 / ::1); §2.4 step 5 `rabbitmq.conf` with `listeners.tcp.default = 127.0.0.1:5672` beside `advanced.config` in `%APPDATA%\RabbitMQ` + restart (a restart reads the new file; 5672 on 127.0.0.1, `authenticate_user` ok); Step 9a passes `-ApiHost 127.0.0.1`, script re-run (idempotent), 8765 on 127.0.0.1, health 200. BACKLOG candidate: `install-api.ps1` defaults to `0.0.0.0`, and CRASH_RECOVERY.md / RESTART_ORDER.md re-install the API without `-ApiHost` - the default should be `127.0.0.1`. Not in A1.5, still on all interfaces: epmd 4369 and Erlang distribution 25672. |
 | 4 / 9b | Worker | | | |
 | 4 / 9c-d | Playout + engine variables | | | |
 | 4 / 9e | Analyzer | | | |
