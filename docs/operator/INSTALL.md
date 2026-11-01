@@ -281,10 +281,11 @@ Expected output: `All required dependencies found.`
 
 Fix any `[FAIL]` items before continuing.
 
-> **Note:** `bootstrap.ps1` checks Python 3.11+, PostgreSQL and RabbitMQ
-> as **required** (a missing one is a `[FAIL]` and exits 1) and reports
-> VLC only as an optional legacy-engine check — a missing VLC shows as
-> `[SKIP]` and is expected on a production machine.
+> **Note:** `bootstrap.ps1` (2026-11-01) checks every component of §2 as
+> **required** — Python 3.11+, PostgreSQL, Liquidsoap, RabbitMQ, NSSM,
+> Apache, PHP, Icecast, FFmpeg/FFprobe at the production paths of §3 (or on
+> PATH); a missing one is a `[FAIL]` and the script exits 1.  Composer and
+> Git are reported as optional (`[SKIP]` when absent).
 
 ### Step 3 — Create the Python virtual environment
 

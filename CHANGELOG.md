@@ -219,8 +219,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hand an), INSTALL 9d nennt die Variable und die drei Werte des geplanten Neustarts, der Erst-Login
   `admin`/`admin` mit Passwortwechsel steht in der Checkliste, der seit 2026-10-25 tote Schlüssel
   `stream.internal_listener` ist aus der Geheimnis-Tabelle und dem HTTPS-Runbook raus, das Konfig-Beispiel hat
-  einen kommentierten `playout:`-Block.  Bekannte Lücke: `bootstrap.ps1` prüft noch VLC statt ffmpeg/Liquidsoap/
-  Icecast (BACKLOG 💡).
+  einen kommentierten `playout:`-Block.
+- **`bootstrap.ps1` prüft die ganze Voraussetzungsliste** (2026-11-01, Operator-Go): der Checker aus INSTALL
+  Schritt 2 kannte Python, PostgreSQL, RabbitMQ und VLC; VLC ist raus, dafür sind Liquidsoap, NSSM, Apache, PHP,
+  Icecast, FFmpeg und FFprobe an den Produktionspfaden aus §3 (oder auf dem PATH) Pflicht mit Versionsausgabe,
+  Composer und Git optional.  Auf der Studio-Maschine alle Prüfungen grün, Exit 0.
 - **GitHub Phase 2b: Install-Doku auf den Live-Stand, SECURITY.md, Issue-Vorlagen** (2026-11-01, Operator-Go).
   INSTALL.md nennt Liquidsoap 2.4.6 und Icecast 2.5.0 (DJ-Prüfung läuft über den Harbor, nicht über
   Icecast-URL-Auth), bekommt Composer 2 als Voraussetzung, Schritt 4b `composer install --no-dev`,

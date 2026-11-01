@@ -73,7 +73,7 @@ had to be corrected) / `bug` (product problem) / `skip` (with reason).
 | 2.7 | Icecast 2.5.0 | | | |
 | 2.8 | FFmpeg | | | |
 | 4 / 1 | Clone or release archive | | | |
-| 4 / 2 | bootstrap.ps1 | | | checker still looks for VLC and not for ffmpeg / Liquidsoap / Icecast (known gap, BACKLOG) |
+| 4 / 2 | bootstrap.ps1 (all §2 components, exit 0) | | | |
 | 4 / 3 | venv | | | |
 | 4 / 4 | Python dependencies, editable installs | | | |
 | 4 / 4b | composer install (frontend) | | | |

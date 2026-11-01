@@ -6462,9 +6462,9 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   INSTALL gegen Live: NSSM-Installer ohne `PYTHONUTF8` (behoben), 9d ohne Neustart-Variablen (ergänzt), Erst-Login
   fehlte (ergänzt), `stream.internal_listener` tot seit 2026-10-25 (raus), `playout:`-Block im Beispiel.  Die Probe
   selbst macht der Operator auf der VM und füllt das Protokoll; Abweichungen = Doku-Fix oder BACKLOG.
-- 💡 **`bootstrap.ps1` modernisieren** (Befund 2026-11-01): der Bootstrap-Checker (INSTALL Schritt 2) prüft Python,
-  PostgreSQL, RabbitMQ und VLC; VLC ist seit 2026-09-10 bedeutungslos, dafür fehlen ffmpeg (`C:\ffmpeg\bin`),
-  Liquidsoap, Icecast, Apache/PHP/Composer unter `C:\Tools`.  Klein, vor oder nach der Probe.
+- ✅ **`bootstrap.ps1` modernisiert 2026-11-01** (Operator-Go vor der Probe): alle §2-Komponenten Pflicht mit
+  Versionsausgabe (generische `Test-Tool`-Prüfung: Produktionspfad, sonst PATH), Composer/Git optional, VLC raus;
+  INSTALL Schritt 2 und INSTALL_PROBE angepasst.  Studio-Maschine: 10/10 grün.
 - ✅ **Analyzer-Testsuite angepasst 2026-11-01** (`686ad377`, Operator-Go): von 47 roten Tests waren 42 ein echter
   Produktionsfehler - der silencedetect-Parser kannte das ffmpeg-Präfix `Parsed_silencedetect_N` nicht, Cue-Punkte
   blieben seit Mai bei 0/Länge (siehe 🟡 unten).  Die übrigen fünf: tagless-Ordner (gewollt seit 2026-10-24),
@@ -6477,7 +6477,8 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   155 künftige Zeilen, 65 Instanzen neu ausgelegt, 10 s; Nachprüfung: 4.882 Dateien bleiben bei 0/Länge (4.860 ohne
   Stille + 22 markiert), alle künftigen Zeilen = Dateiwerte, PLAYOUT las den Plan 15:58 neu.  Rückfall: `--restore`
   mit den CSV-Berichten (`logs/cue_redetect-*.csv`, Kopie `C:/Temp/optd/cue_reports/`) + Backup 02:30.
-- 💡 **22 markierte Titel einzeln entscheiden** (aus dem Lauf 2026-11-01, nicht übernommen): 3× Cue-In > 10 s
+- ✅ **22 markierte Titel vom Operator 2026-11-01 erledigt** (Cue-Punkte von Hand gesetzt oder Dateien gelöscht;
+  Liste `C:/Temp/optd/cue_reports/flagged_22.txt`).  Ursprünglich: 3× Cue-In > 10 s
   (ids 3081 „35 Minutes“ 30 s, 17253 „Swans Will Save“ 60 s, 22303 „Meine Abschiedssendung“ 11 s), 19× stiller Rest
   > 30 s, meist Hidden Tracks (ids 1125, 1650, 2653, 2779, 4643, 6678 „DMD KIU LIDT“ 367 s, 7567, 8929, 9235, 11793,
   16413, 16889, 17415, 17615, 18581, 18754, 19835, 20877, 24335).  Werkzeug: Library-Knopf „Cue Points“ (übernimmt
