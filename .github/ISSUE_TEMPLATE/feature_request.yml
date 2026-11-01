@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose a change to how RASTATIME works for operators or DJs
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        RASTATIME is Windows-only by design and reliability comes before novelty (see CONTRIBUTING.md, "Project identity and goals").  Features that fit that frame are the ones most likely to land.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What does the operator or DJ want to do today and where does it fail or cost time?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: How should it work?  Mention the screen or setting it belongs to.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you use now, or other ways to solve it.
+  - type: dropdown
+    id: live
+    attributes:
+      label: Effect on a running station
+      description: Does the change touch playout, stream outputs or the DJ path while on air?
+      options:
+        - No, interface or documentation only
+        - Yes, but only after a service restart in a quiet moment
+        - Yes, it changes what listeners hear
+    validations:
+      required: true

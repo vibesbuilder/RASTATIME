@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/vibesbuilder/RASTATIME/security/advisories/new
+    about: Report security problems privately through GitHub Security Advisories (see SECURITY.md), never as a public issue.
+  - name: Installation and operator documentation
+    url: https://github.com/vibesbuilder/RASTATIME/tree/master/docs/operator
+    about: INSTALL, UPGRADE, COMPONENTS, TEST_PLAN and the runbooks — check them before filing an install question.

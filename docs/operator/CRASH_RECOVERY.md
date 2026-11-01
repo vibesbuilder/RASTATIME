@@ -293,7 +293,7 @@ Install **all** prerequisites on the replacement hardware following
 
 ```powershell
 # Clone from version control (use the same git tag as the backed-up database):
-git clone https://github.com/your-org/rastatime.git C:\rastatime
+git clone https://github.com/vibesbuilder/RASTATIME.git C:\rastatime
 cd C:\rastatime
 git checkout v0.22.4    # match the version that produced the backup
 ```

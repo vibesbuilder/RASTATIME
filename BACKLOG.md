@@ -6415,8 +6415,12 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   selben Tag: alte Objekte weg, `.git` 23 MB statt 1,1 GB, Rückfall-Tag gelöscht.  Spiegel-Klon
   `C:\Temp\rt-clean-work\rt-clean2.git` (52 MB) bleibt bis zum Push als Referenz liegen.
   Alte→neue Hashes: `docs/dev/history/commit-map-2026-11-01.txt`.
-- 🟡 **Phase 2b (vor dem Push):** INSTALL.md auf Liquidsoap 2.4.6 / Icecast 2.5.0 + `composer install`-Schritt,
-  COMPONENTS.md abgleichen, `SECURITY.md`, Issue-Vorlagen.
+- ✅ **Phase 2b erledigt 2026-11-01:** INSTALL.md auf Liquidsoap 2.4.6 / Icecast 2.5.0 (Harbor-Auth statt URL-Auth),
+  Composer-Voraussetzung + Schritt 4b + Fehlerbild 5.8 + Update-Schritt 3b; README Schritt 3b + Security-Abschnitt;
+  Platzhalter-URLs → `vibesbuilder/RASTATIME` (README-Badges, INSTALL, CRASH_RECOVERY, CHANGELOG-Link, constants.php);
+  `icecast.xml.example` mit `<charset>UTF-8</charset>`; `SECURITY.md`; `.github/ISSUE_TEMPLATE` (bug/feature/config).
+  COMPONENTS.md war bereits aktuell.  **Nächste Phase 4:** Operator legt das private Repo an, Push ohne `live-*`-Tags,
+  CI grün.
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche

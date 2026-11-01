@@ -73,17 +73,21 @@ RASTATIME uses PostgreSQL as its sole database (port **5432**).
    # Expected: 127.0.0.1:5432 - accepting connections
    ```
 
-### 2.3 Liquidsoap 2.4.4
+### 2.3 Liquidsoap 2.4.6
 
 Liquidsoap has been the production playout engine since the 2026-05
 cutover and the only one since 2026-09-10.  **VLC/libVLC and mpv are
 not required** — their legacy code paths were deleted.
 
-1. Install Liquidsoap **2.4.4** (Windows build) to `C:\Tools\liquidsoap\`
+1. Download the official Windows build **2.4.6** (`liquidsoap-2.4.6-win64.zip`
+   from the savonet/liquidsoap GitHub releases; it ships ffmpeg, portaudio
+   and the Stereo Tool plugin) and unzip it to `C:\Tools\liquidsoap\`
+   so that `C:\Tools\liquidsoap\liquidsoap.exe` exists.  The rendered
+   scripts `rastatime.liq` / `standby.liq` live in the same folder.
 2. Verify:
    ```powershell
    & C:\Tools\liquidsoap\liquidsoap.exe --version
-   # Expected: Liquidsoap 2.4.4
+   # Expected: Liquidsoap 2.4.6
    ```
 
 > The production script `C:\Tools\liquidsoap\rastatime.liq` is rendered
@@ -148,6 +152,16 @@ Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`, PHP 8.5 NTS x64 at
 > Apache Lounge VS18 build and PHP 8.5 both depend on it — without it
 > `httpd.exe` / `php-cgi.exe` exit silently with no error message.
 
+**Composer 2** installs the frontend's PHP packages (§4 Step 4b).  Download
+`composer.phar` from https://getcomposer.org/download/ to
+`C:\Tools\composer\composer.phar` and verify:
+```powershell
+& C:\Tools\PHP\php.exe C:\Tools\composer\composer.phar --version
+# Expected: Composer version 2.x
+```
+> The release frontend zip (`rastatime-frontend-legacy-vX.Y.Z.zip`) already
+> contains `vendor\`; Composer is only needed for a checkout from git.
+
 Beyond the base setup in INSTALL_APACHE.md, `httpd.conf` needs:
 
 1. `LoadModule` lines for `rewrite_module`, `proxy_module`, and
@@ -174,16 +188,20 @@ Beyond the base setup in INSTALL_APACHE.md, `httpd.conf` needs:
    ProxyPassReverse /api-auth/ http://127.0.0.1:8765/api-auth/
    ```
 
-### 2.7 Icecast 2.4.4 (streaming)
+### 2.7 Icecast 2.5.0 (streaming)
 
-Production runs Icecast **2.4.4** deliberately: the live `icecast.xml`
-is built on Icecast 2.4 auth semantics (`<authentication type="url">`
-with the `stream_auth`, `mount_add` and `mount_remove` options).
-Icecast 2.5 replaced those with event bindings — upgrading to 2.5 is a
-separate future project (see BACKLOG.md).
+Production runs Icecast **2.5.0** (since 2026-10-24).  DJ passwords are
+not checked by Icecast at all: the Liquidsoap harbor asks PLAYOUT, which
+asks the web application (Settings → Streams).  `icecast.xml` only
+carries the source/relay/admin passwords, the output mounts with their
+`-standby` fallbacks and, optionally, 2.5 `<event-bindings>` that report
+source connects to PLAYOUT.  Start from `config\icecast.xml.example`;
+keep `<charset>UTF-8</charset>` on every output mount (the Windows build
+sends empty ICY titles without it).
 
-1. Run the Icecast 2.4.4 Windows installer
-2. Copy the installed tree to `C:\Tools\Icecast\` so that
+1. Download the Icecast 2.5.0 Windows build from icecast.org / xiph.org
+   and verify its SHA512 against `SHA512SUMS.txt` (the installer is unsigned)
+2. Install or copy the tree to `C:\Tools\Icecast\` so that
    `C:\Tools\Icecast\bin\icecast.exe` exists with its `web\` and
    `admin\` siblings under `C:\Tools\Icecast\`
 3. Register the service later (§4 Step 9) with
@@ -242,10 +260,12 @@ C:\rastatime\
 
 ```powershell
 # Option A: clone from version control
-git clone https://github.com/your-org/rastatime.git C:\rastatime
+git clone https://github.com/vibesbuilder/RASTATIME.git C:\rastatime
 
-# Option B: extract a release archive
-Expand-Archive rastatime-0.22.4.zip -DestinationPath C:\rastatime
+# Option B: a GitHub release (Releases page) ships one wheel per backend
+# package plus rastatime-frontend-legacy-vX.Y.Z.zip (frontend incl. vendor\);
+# unzip the frontend to C:\rastatime\frontend\legacy and pip-install the
+# wheels instead of the editable installs in Step 4.
 ```
 
 ### Step 2 — Run the bootstrap checker
@@ -309,6 +329,22 @@ python -c "import psycopg2; print('psycopg2 OK')"
 
 > `requirements.txt` still lists `python-vlc` (legacy fallback engine).
 > It installs fine without VLC — VLC itself is no longer required.
+
+### Step 4b — Install PHP dependencies (frontend)
+
+The legacy frontend needs its Composer packages (`frontend\legacy\vendor\`,
+ignored by git).  Skip this step when the frontend came from the release
+zip, which already contains `vendor\`.
+
+```powershell
+cd C:\rastatime\frontend\legacy
+& C:\Tools\PHP\php.exe C:\Tools\composer\composer.phar install --no-dev --no-interaction --prefer-dist
+Test-Path .\vendor\autoload.php   # must be True
+```
+
+> `composer.lock` pins the 99 packages; `composer install` reproduces them
+> exactly.  After pulling a change under `application\common\` run
+> `composer.phar dump-autoload` (classmap), see UPGRADE.md.
 
 ### Step 5 — Create the configuration file
 
@@ -645,6 +681,12 @@ and restart `RASTATIME-APACHE`.  Auto-ingest of new episodes is affected
 the same way (the feed is read by PHP, only the download runs in the
 analyzer).
 
+### 5.8 Frontend answers 500 or a blank page on every URL (`vendor\` missing)
+
+Apache serves `index.php` but PHP dies before any output because
+`frontend\legacy\vendor\autoload.php` does not exist (the PHP error log
+`logs\http-error-*.log` shows the failed `require`).  Run §4 Step 4b.
+
 ---
 
 ## 6. Post-Installation Checklist
@@ -689,6 +731,11 @@ git pull
 pip install -r requirements.txt
 # Editable installs pick up code changes automatically; re-run
 # `pip install -e backend/<pkg>` only if a pyproject.toml changed.
+
+# 3b. PHP dependencies (only if composer.lock changed; classmap always)
+cd C:\rastatime\frontend\legacy
+& C:\Tools\PHP\php.exe C:\Tools\composer\composer.phar install --no-dev --no-interaction --prefer-dist
+& C:\Tools\PHP\php.exe C:\Tools\composer\composer.phar dump-autoload
 
 # 4. Run any new migrations (env vars as in §4 Step 7)
 cd C:\rastatime\backend\api\rastatime_api

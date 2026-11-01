@@ -38,7 +38,7 @@ define('RASTATIME_CONFIG_FILEPATH', getenv('RASTATIME_CONFIG_FILEPATH') ?: RASTA
 // release this fork is based on (upstream-sync tracking); the RASTATIME_*
 // identifiers below are untouched (stage B, see BACKLOG).
 define('PRODUCT_NAME', 'RASTATIME');
-define('PRODUCT_SITE_URL', 'https://github.com/RASTATIME/rastatime');
+define('PRODUCT_SITE_URL', 'https://github.com/vibesbuilder/RASTATIME');
 
 /**
  * RASTATIME 2026-05-16 - Fork version, kept separate from VERSION (which
@@ -49,13 +49,13 @@ define('PRODUCT_SITE_URL', 'https://github.com/RASTATIME/rastatime');
 define('RASTATIME_VERSION', '0.5');
 
 define('SAAS_PRODUCT_BRANDING_NAME', 'RASTATIME');
-define('SAAS_LOGIN_REFERRER', 'https://github.com/RASTATIME/rastatime');
+define('SAAS_LOGIN_REFERRER', 'https://github.com/vibesbuilder/RASTATIME');
 
 define('COMPANY_NAME', 'RASTATIME Project');  // about page: "© 2026 RASTATIME Project · RASTATIME is distributed under …" (upstream read "LibreTime Community LibreTime …")
 define('COMPANY_SUFFIX', '');
-define('COMPANY_SITE', 'github.com/RASTATIME/rastatime');
-define('COMPANY_SITE_URL', 'https://github.com/RASTATIME/rastatime');
-define('SUPPORT_ADDRESS', 'https://github.com/RASTATIME/rastatime/issues');
+define('COMPANY_SITE', 'github.com/vibesbuilder/RASTATIME');
+define('COMPANY_SITE_URL', 'https://github.com/vibesbuilder/RASTATIME');
+define('SUPPORT_ADDRESS', 'https://github.com/vibesbuilder/RASTATIME/issues');
 
 define('HELP_URL', 'https://discourse.libretime.org/');
 define('WHOS_USING_URL', 'https://github.com/orgs/libretime/people');
@@ -78,8 +78,8 @@ define('RASTATIME_LOGIN_IP_BLOCK_MIN', 15);
 define('RASTATIME_LOGIN_USER_LIMIT', 20);
 define('RASTATIME_LOGIN_USER_WINDOW_MIN', 60);
 define('RASTATIME_LOGIN_USER_BLOCK_MIN', 5);
-define('RASTATIME_GITHUB_URL', 'https://github.com/RASTATIME/rastatime');
-define('RASTATIME_RELEASES_URL', 'https://github.com/RASTATIME/rastatime/releases');
+define('RASTATIME_GITHUB_URL', 'https://github.com/vibesbuilder/RASTATIME');
+define('RASTATIME_RELEASES_URL', 'https://github.com/vibesbuilder/RASTATIME/releases');
 define('TROUBLESHOOTING_URL', 'https://libretime.org/docs/admin-manual/troubleshooting/');
 define('ABOUT_AIRTIME_URL', 'https://libretime.org');
 define('LIBRETIME_CONTRIBUTE_URL', 'https://libretime.org/contribute');

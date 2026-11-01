@@ -1,7 +1,7 @@
 # RASTATIME
 
-[![python](https://github.com/RASTATIME/rastatime/actions/workflows/python.yml/badge.svg)](https://github.com/RASTATIME/rastatime/actions/workflows/python.yml)
-[![php](https://github.com/RASTATIME/rastatime/actions/workflows/php.yml/badge.svg)](https://github.com/RASTATIME/rastatime/actions/workflows/php.yml)
+[![python](https://github.com/vibesbuilder/RASTATIME/actions/workflows/python.yml/badge.svg)](https://github.com/vibesbuilder/RASTATIME/actions/workflows/python.yml)
+[![php](https://github.com/vibesbuilder/RASTATIME/actions/workflows/php.yml/badge.svg)](https://github.com/vibesbuilder/RASTATIME/actions/workflows/php.yml)
 
 **Windows-first radio automation — functional fork of [LibreTime](https://github.com/libretime/libretime) 4.5.0**
 
@@ -74,7 +74,7 @@ RASTATIME/
 ### 1. Clone
 
 ```powershell
-git clone https://github.com/<your-org>/rastatime.git C:\RASTATIME
+git clone https://github.com/vibesbuilder/RASTATIME.git C:\RASTATIME
 cd C:\RASTATIME
 ```
 
@@ -100,6 +100,17 @@ pip install -e "backend\analyzer"
 # (backend\rastatime_worker has no pyproject — it runs via
 #  `python -m rastatime_worker` with C:\rastatime\backend on PYTHONPATH.)
 ```
+
+### 3b. Install PHP dependencies (frontend)
+
+```powershell
+cd frontend\legacy
+php C:\Tools\composer\composer.phar install --no-dev --no-interaction --prefer-dist
+cd ..\..
+```
+
+Composer 2 (`composer.phar`) is a one-time download from getcomposer.org;
+the release frontend zip already contains `vendor\`.
 
 ### 4. Create directories and configuration
 
@@ -232,6 +243,13 @@ the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3
 RASTATIME inherits this license. See [`LICENSE`](LICENSE) for the full text.
 
 LibreTime upstream: <https://github.com/libretime/libretime>
+
+---
+
+## Security
+
+See [`SECURITY.md`](SECURITY.md) for the supported versions, how to report a
+vulnerability and the operator hardening guides.
 
 ---
 

@@ -187,34 +187,40 @@
          ==================================================================== -->
     <mount type="normal">
         <mount-name>/rastatime</mount-name>
+        <charset>UTF-8</charset>
         <fallback-mount>/rastatime-standby</fallback-mount>
         <fallback-override>1</fallback-override>
         <fallback-when-full>1</fallback-when-full>
     </mount>
     <mount type="normal">
         <mount-name>/rastatime-aac</mount-name>
+        <charset>UTF-8</charset>
         <fallback-mount>/rastatime-aac-standby</fallback-mount>
         <fallback-override>1</fallback-override>
         <fallback-when-full>1</fallback-when-full>
     </mount>
     <mount type="normal">
         <mount-name>/rastatime-ogg</mount-name>
+        <charset>UTF-8</charset>
         <fallback-mount>/rastatime-ogg-standby</fallback-mount>
         <fallback-override>1</fallback-override>
         <fallback-when-full>1</fallback-when-full>
     </mount>
     <mount type="normal">
         <mount-name>/rastatime-standby</mount-name>
+        <charset>UTF-8</charset>
         <hidden>1</hidden>
         <public>0</public>
     </mount>
     <mount type="normal">
         <mount-name>/rastatime-aac-standby</mount-name>
+        <charset>UTF-8</charset>
         <hidden>1</hidden>
         <public>0</public>
     </mount>
     <mount type="normal">
         <mount-name>/rastatime-ogg-standby</mount-name>
+        <charset>UTF-8</charset>
         <hidden>1</hidden>
         <public>0</public>
     </mount>
@@ -241,6 +247,7 @@
          streamers and the local mpv monitor. -->
     <mount type="normal">
         <mount-name>/linein-capture</mount-name>
+        <charset>UTF-8</charset>
         <hidden>1</hidden>
         <public>0</public>
         <burst-size>0</burst-size>
@@ -250,6 +257,7 @@
     <!--
     <mount type="normal">
         <mount-name>/example-complex.ogg</mount-name>
+        <charset>UTF-8</charset>
 
         <max-listeners>1</max-listeners>
         <dump-file>/tmp/dump-example1.ogg</dump-file>
@@ -281,6 +289,7 @@
     <!--
     <mount type="normal">
         <mount-name>/auth_example.ogg</mount-name>
+        <charset>UTF-8</charset>
         <authentication>
         </authentication>
         <event-bindings>
@@ -300,6 +309,7 @@
     <!--
     <mount type="normal">
         <mount-name>/relay_example.ogg</mount-name>
+        <charset>UTF-8</charset>
         <relay>
             <upstream type="normal">
                 <uri>http://master0.example.org:8000/example.ogg</uri>

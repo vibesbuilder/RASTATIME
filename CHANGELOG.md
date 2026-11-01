@@ -212,6 +212,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **GitHub Phase 2b: Install-Doku auf den Live-Stand, SECURITY.md, Issue-Vorlagen** (2026-11-01, Operator-Go).
+  INSTALL.md nennt Liquidsoap 2.4.6 und Icecast 2.5.0 (DJ-Prüfung läuft über den Harbor, nicht über
+  Icecast-URL-Auth), bekommt Composer 2 als Voraussetzung, Schritt 4b `composer install --no-dev`,
+  Fehlerbild 5.8 (vendor fehlt) und den Composer-Schritt im Update-Ablauf; README mit Schritt 3b und
+  Security-Abschnitt; `config/icecast.xml.example` mit `<charset>UTF-8</charset>` je Mount (Windows-Build
+  sendet sonst leere ICY-Titel).  Platzhalter-URLs (`RASTATIME/rastatime`, `your-org`) in README, INSTALL,
+  CRASH_RECOVERY, CHANGELOG-Vergleichslink und `constants.php` auf `vibesbuilder/RASTATIME`.  Neu:
+  `SECURITY.md` (Meldeweg über GitHub Security Advisories, Härtungs-Runbooks), `.github/ISSUE_TEMPLATE`
+  (Bug, Feature, config ohne Leer-Issues).
 - **Kalender: „Rückgängig" zehn Sekunden nach dem Löschen (2026-10-28,
   Operator-Go Variante A)** — die drei Löscheinträge des Kalendermenüs
   (Delete, Delete Instance, Delete Instance and All Following) schickten
@@ -10002,4 +10011,4 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/RASTATIME/rastatime/compare/v0.0.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v0.0.0...HEAD
