@@ -16,7 +16,8 @@ on a fresh Windows machine.  By the end you will have:
 - The RASTATIME codebase deployed to `C:\rastatime`
 - A Python virtual environment with all dependencies
 - A `rastatime.conf` configuration file pointing at your PostgreSQL database
-- All seven NSSM Windows services registered and running
+- All eight NSSM Windows services registered and running (the seven of
+  `status.ps1` plus the standby source RASTATIME-STANDBY)
 - A rendered Liquidsoap production script (`C:\Tools\liquidsoap\rastatime.liq`)
 - A healthy API confirmed by `status.ps1`
 
@@ -589,6 +590,13 @@ nssm set RASTATIME-PLAYOUT AppEnvironmentExtra `
     "RASTATIME_LIQUIDSOAP_RESTART_AT_MB=2560" `
     "RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB=2816"
 nssm start RASTATIME-PLAYOUT
+# nssm may answer "Unexpected status SERVICE_START_PENDING in response to
+# START control" (exit 1): the service reaches Running within ~15 s.
+# Check: Get-Service RASTATIME-PLAYOUT = Running, and playout-stdout.log
+# shows "Health gate: API healthy" and "Rendered ...\rastatime.liq".
+# Until 9h the log also shows telnet errors on 127.0.0.1:1234 and up to
+# three "nssm restart RASTATIME-LIQUIDSOAP exited 3: Can't open service!"
+# - expected, the Liquidsoap service does not exist yet.
 
 # 9e — Analyzer (mandatory — uploads stay at "Pending Import" without it)
 powershell -ExecutionPolicy Bypass `
@@ -622,6 +630,16 @@ Test-Path C:\Tools\liquidsoap\rastatime.liq   # must be True; if False,
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\backend\playout\config\nssm-install-liquidsoap.ps1
 nssm start RASTATIME-LIQUIDSOAP
+
+# 9i — Standby source for the Icecast fallback mounts (after 9g and 9h).
+# A second, tiny Liquidsoap streams silence to /<mount>-standby with the
+# encoders of rastatime.liq; icecast.xml moves the listeners there while
+# RASTATIME-LIQUIDSOAP restarts instead of disconnecting them.  Needs
+# C:\Tools\liquidsoap\standby.liq (rendered by RASTATIME-PLAYOUT in 9d),
+# depends on RASTATIME-ICECAST and starts the service itself.
+powershell -ExecutionPolicy Bypass `
+    -File C:\rastatime\backend\playout\config\nssm-install-standby.ps1
+Get-Service RASTATIME-STANDBY   # Running
 ```
 
 > Stream outputs are rendered from the **database** (`cc_pref` rows
@@ -655,6 +673,9 @@ Icecast):
   RASTATIME-LIQUIDSOAP  Running
   All mandatory services are Running.
 ```
+
+`status.ps1` does not list RASTATIME-STANDBY (9i) yet; check it on its
+own: `Get-Service RASTATIME-STANDBY` must be `Running`.
 
 If any mandatory service shows `Stopped` or `Not installed`, see §5
 (Troubleshooting) or `docs\operator\RESTART_ORDER.md` §5 for per-service
@@ -765,6 +786,7 @@ Apache serves `index.php` but PHP dies before any output because
 After completing §4, verify each item:
 
 - [ ] `status.ps1` shows all seven services `Running` (incl. the HTTP probes)
+- [ ] `Get-Service RASTATIME-STANDBY` shows `Running` (not in `status.ps1`)
 - [ ] `Get-Service RabbitMQ` shows `Running`
 - [ ] `http://127.0.0.1:8765/health` returns HTTP 200
 - [ ] `http://127.0.0.1:8765/api/v2/schema/swagger-ui` loads the API docs
