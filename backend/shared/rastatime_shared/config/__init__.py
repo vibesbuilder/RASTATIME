@@ -1,7 +1,6 @@
 from ._base import (
     DEFAULT_CONFIG_FILEPATH,
     DEFAULT_ENV_PREFIX,
-    LEGACY_ENV_PREFIX,
     BaseConfig,
     config_filepath_from_env,
 )

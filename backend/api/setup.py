@@ -13,7 +13,7 @@ setup(
         "Source Code": "https://github.com/vibesbuilder/RASTATIME",
     },
     license="AGPLv3",
-    packages=find_packages(exclude=["*tests*", "*fixtures*", "libretime_*"]),
+    packages=find_packages(exclude=["*tests*", "*fixtures*"]),
     package_data={
         "rastatime_api": ["legacy/migrations/sql/*.sql"],
     },
@@ -22,7 +22,6 @@ setup(
     entry_points={
         "console_scripts": [
             "rastatime-api=rastatime_api.manage:main",
-            "libretime-api=rastatime_api.manage:main",  # stage B bridge
         ]
     },
     install_requires=[

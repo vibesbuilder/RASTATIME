@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.104
-Date: 2026-10-29
+Draft version: 0.105
+Date: 2026-11-01
 
 > **Revision history**
+> - **0.105 (2026-11-01)** - **Brand stage B, phase 2** (§23.77): the
+>   bridge is removed after three nights without a hit; only the
+>   `rastatime_*` / `RASTATIME_*` names are read (hard cut).
 > - **0.104 (2026-10-29)** - **Bridge instrumentation** (§23.77): every
 >   use of a former name or variable is logged; phase 2 moved forward
 >   to 2026-11-01/02 (operator).
@@ -8116,7 +8119,7 @@ untouched.  Not renamed: the upstream reference copies (`docs/upstream`,
 `libretime/propel1`, history (CHANGELOG, `docs/dev/history`) and the
 product name LibreTime in attribution prose.
 
-**Bridge (until 2026-11-01/02).**
+**Bridge (2026-10-29 to 2026-11-01, removed in phase 2).**
 - *Import names.*  Five stub packages `backend/shared/libretime_*`
   (shipped by `rastatime-shared`) call
   `rastatime_shared.compat.legacy_names.alias_package()`, which installs one
@@ -8176,10 +8179,28 @@ the PHP error log (Apache `http-error-*.log`) when a former variable or
 `libretime.conf` is used.  Current names stay silent (tested).  Zero hits
 across the nightly cycle and a weekend are the go for phase 2.
 
-**Phase 2 (from 2026-11-01/02, operator 2026-10-29).**  Remove the stubs, the finder module, the
-legacy prefix and the fallbacks in Python and PHP, the second entry points,
-the `find_packages` exclusion and the `.gitignore` line for
-`config/libretime.conf`; the UPGRADE note then describes the hard cut.
+**Phase 2 (done 2026-11-01, operator go after the log check).**  The
+instrumented bridge logged no use between 2026-10-29 14:16 and
+2026-11-01 09:30 (three nights with backup, janitor and the weekend;
+`Select-String -Pattern "stage B bridge"` over `logs/*.log` empty, the
+four service logs free of errors).  Removed: the five stub packages
+`backend/shared/libretime_*`, `rastatime_shared.compat` (finder, loader,
+probe), `LEGACY_ENV_PREFIX` with `report_legacy_env()` and the second
+`EnvLoader` pass in `BaseConfig`, the click `--config` second envvar, the
+`LIBRETIME_CONFIG_FILEPATH` / `LIBRETIME_LOG_FILEPATH` fallbacks in
+`manage.py`, `settings/prod.py`, `storage/backup.py`, playout `__main__`
+and `dj_auth.py`, the PHP fallbacks and `rastatime_bridge_used()` in
+`constants.php` / `conf.php`, the `libretime-*` console entry points and
+the `find_packages` exclusion in three `setup.py`, the `.gitignore` line
+for `config/libretime.conf`, and the bridge tests (shared 45 -> 36).
+`config_filepath_from_env()` now reads `RASTATIME_CONFIG_FILEPATH` only.
+A process started under a former name fails at import time; a former
+variable is not read.  The editable installs were refreshed so the
+`libretime-*.exe` launchers are gone; `rastatime-analyzer.exe` was locked
+by the running service, so the analyzer dist is re-installed when the
+service is restarted (a path entry keeps the package importable until
+then).  Rollback: `git revert` of the phase 2 commit + restart of the
+four Python services (no migration, no nssm change).
 
 **Verification.**  Suites green after the rename (api 195, playout 845,
 unit 739 + the migration baseline moved to 0073, shared incl. four bridge

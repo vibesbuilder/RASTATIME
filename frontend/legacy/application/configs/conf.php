@@ -267,7 +267,7 @@ class Config
 
     private static function load()
     {
-        $filename = $_SERVER['RASTATIME_CONFIG_FILEPATH'] ?? $_SERVER['LIBRETIME_CONFIG_FILEPATH'] ?? RASTATIME_CONFIG_FILEPATH;
+        $filename = $_SERVER['RASTATIME_CONFIG_FILEPATH'] ?? RASTATIME_CONFIG_FILEPATH;
         $dirty = Yaml::parseFile($filename);
 
         $schema = new Schema();

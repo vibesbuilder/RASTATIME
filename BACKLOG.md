@@ -57,7 +57,7 @@ dann 2 → 1, danach nach Bedarf**.
 | – | Zeitumstellung Nacht 24./25.10.: Show 1242 Electronic Evening 00:00–05:00 beobachten | ✅ 2026-10-25: 6 echte Stunden (22:00–04:00 UTC), 104/104 Zeilen gespielt, keine Lücke in der doppelten Stunde, 05:00-Folge pünktlich (siehe Abschnitt „Zeitumstellungsnacht 24./25.10.2026") | – |
 
 **Defer mit Vorbedingungen (Operator-Entscheidung, nichts drängt):**
-Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ✅ LIVE 2026-10-29 (Brücke bis 2026-11-01/02) ·
+Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe B ✅ LIVE 2026-10-29, Brücke entfernt 2026-11-01 ·
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
@@ -439,7 +439,7 @@ Internet-Erreichbarkeit (Punkt 16, Evaluierung offen), Testplan erstellen
 
 ---
 
-### ✅ Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — LIVE 2026-10-29 14:16, Brücke bis 2026-11-01/02 (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
+### ✅ Marke: „libretime" → „rastatime" in Bezeichnern (Stufe B) — LIVE 2026-10-29 14:16, Phase 2 (Brücke entfernt) 2026-11-01 (evaluiert 2026-10-03, gekoppelt an GitHub 2026-10-28)
 
 **Stand 2026-10-29 (Operator-Go, GitHub-Phase 1):** Repo-Teil gebaut - fünf Pakete `rastatime_*` (git mv +
 Sweep über 328 Dateien), Distributionen/Kommandos `rastatime-*`, Präfix `RASTATIME_`, `config/rastatime.conf`,
@@ -462,6 +462,16 @@ Die Brücke meldet jetzt jede Nutzung: Python-Finder `legacy name used (stage B 
 Apache-Fehlerlog `logs/http-error-*.log`.  **Go für Phase 2 = null Treffer** nach einer Nacht (Backup 03:30,
 Janitor 03:50, 04:00-Fenster) und dem Wochenende: PowerShell `Select-String -Path C:\RASTATIME\logs\*.log -Pattern "stage B bridge" -List` ohne Ausgabe (Git-Bash: `grep -l "stage B bridge" logs/*.log`).  Phase 2 am
 **2026-11-01 oder 2026-11-02** (Operator 2026-10-29); Rückfall danach nur `git revert` + Neustart.
+**Phase 2 erledigt 2026-11-01 (Operator-Go nach dem Log-Check):** `Select-String` über alle Logs ohne Treffer
+(29.10. 14:16 bis 01.11. 09:30, drei Nächte, Backup/Janitor/Wochenende), Dienst-Logs fehlerfrei.  Entfernt:
+Stubs, `rastatime_shared.compat`, `LEGACY_ENV_PREFIX` + `report_legacy_env()`, zweite Click-Variable,
+`LIBRETIME_*`-Rückfälle in Python und PHP, `libretime-*`-Entry-Points + `find_packages`-Ausschluss,
+`.gitignore`-Zeile, Brücken-Tests; UPGRADE.md beschreibt den harten Schnitt.  Suiten grün (api 195,
+playout 845, unit 739, shared 36); Login 200 (PHP sofort live).  **Offen (Operator):** Neustart der vier
+Python-Dienste; ANALYZER dabei stoppen → `pip install -e backend/analyzer` → starten (die EXE war im
+Lauf gesperrt, ein Pfad-Eintrag hält das Paket bis dahin importierbar); zugleich `PYTHONUTF8=1` für
+PLAYOUT/ANALYZER/WORKER (Nebenbefund: PLAYOUT-stderr cp1252, 103 Logging-Fehler bei Sonderzeichen-Pfaden).
+Rückfall: `git revert` + Neustart.  Tag `live-2026-11-01`.
 
 **Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
 GitHub, Releases, Update-Weg", Stufe 0) und erst dort angegangen; bis dahin Defer, nicht erneut vorschlagen.
@@ -6382,7 +6392,7 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   Dateiinhalte alter Versionen (`--replace-text`).
 - ✅ **Phase 1 gebaut 2026-10-29** (Marke Stufe B, eigener Abschnitt oben): Repo-Teil committet (`d07b4890`, `20364f4f`), Suiten grün;
   Live-Umschaltung der vier Python-Dienste 2026-10-29 14:16 (Skript brach zweimal ab, Schritte 2a–4 von Hand);
-  Brücke instrumentiert, Phase 2 am **2026-11-01/02** (vorgezogen, Operator 2026-10-29).
+  Brücke instrumentiert, **Phase 2 (Brücke entfernt) 2026-11-01** nach drei Nächten ohne Treffer.
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche

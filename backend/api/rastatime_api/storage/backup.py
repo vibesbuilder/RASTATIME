@@ -204,9 +204,7 @@ def media_mirror_dir(folder: Optional[str] = None) -> Optional[str]:
 
 def config_dir() -> str:
     """The folder holding rastatime.conf (and icecast.xml etc.)."""
-    filepath = os.environ.get("RASTATIME_CONFIG_FILEPATH") or os.environ.get(
-        "LIBRETIME_CONFIG_FILEPATH"  # stage B bridge
-    )
+    filepath = os.environ.get("RASTATIME_CONFIG_FILEPATH")
     if filepath:
         return str(Path(filepath).parent)
     return "C:/RASTATIME/config"

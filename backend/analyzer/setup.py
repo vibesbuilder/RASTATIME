@@ -13,11 +13,10 @@ setup(
         "Source Code": "https://github.com/vibesbuilder/RASTATIME",
     },
     license="AGPLv3",
-    packages=find_packages(exclude=["*tests*", "*fixtures*", "libretime_*"]),
+    packages=find_packages(exclude=["*tests*", "*fixtures*"]),
     entry_points={
         "console_scripts": [
             "rastatime-analyzer=rastatime_analyzer.main:cli",
-            "libretime-analyzer=rastatime_analyzer.main:cli",  # stage B bridge
         ]
     },
     python_requires=">=3.8",

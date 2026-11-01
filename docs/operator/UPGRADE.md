@@ -36,11 +36,12 @@
 >    (renamed PHP classes); every browser session is logged out once (new
 >    session namespace).
 >
-> Until **2026-11-01/02** (moved forward from 11-03 on 2026-10-29) a bridge keeps the former names working: the
+> **Hard cut since 2026-11-01:** only the new names are read.  The former
 > `libretime_*` import names, `-m libretime_*`, `libretime-analyzer.exe`,
-> `LIBRETIME_*` variables (the `RASTATIME_*` variable wins when both are
-> set) and a `libretime.conf` next to a missing `rastatime.conf`.  After
-> that date only the new names are read.
+> `LIBRETIME_*` variables and a `libretime.conf` are ignored (a bridge kept
+> them working from 2026-10-29 to 2026-11-01; its logs recorded no use).
+> A service still started with a former name fails at import time, a
+> `LIBRETIME_*` variable is simply not read: finish steps 1-4 above first.
 
 > **Third-party components** (Apache, PHP, PostgreSQL, Python packages,
 > Liquidsoap, Icecast, ffmpeg ...) are not covered here: see

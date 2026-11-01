@@ -13,12 +13,11 @@ setup(
         "Source Code": "https://github.com/vibesbuilder/RASTATIME",
     },
     license="AGPLv3",
-    packages=find_packages(exclude=["*tests*", "*fixtures*", "libretime_*"]),
+    packages=find_packages(exclude=["*tests*", "*fixtures*"]),
     package_data={"": ["**/*.liq", "**/*.liq.j2", "*.types"]},
     entry_points={
         "console_scripts": [
             "rastatime-playout-notify=rastatime_playout.notify.main:cli",
-            "libretime-playout-notify=rastatime_playout.notify.main:cli",  # stage B bridge
         ]
     },
     python_requires=">=3.8",

@@ -137,7 +137,6 @@ class AllowList:
     def default_path() -> Path:
         config = (
             os.environ.get("RASTATIME_CONFIG_FILEPATH")
-            or os.environ.get("LIBRETIME_CONFIG_FILEPATH")  # stage B bridge
             or "/etc/libretime/config.yml"
         )
         return Path(config).parent / "allowlist.txt"

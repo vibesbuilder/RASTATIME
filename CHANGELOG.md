@@ -1260,6 +1260,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **Marke Stufe B, Phase 2: Brücke entfernt** (2026-11-01, Operator-Go nach dem Log-Check).  Drei Nächte
+  nach der Umschaltung meldete die instrumentierte Brücke keine einzige Nutzung (`stage B bridge` in
+  keinem Log).  Entfernt: Stub-Pakete `backend/shared/libretime_*`, `rastatime_shared.compat` (Finder,
+  Loader, Probe), `LEGACY_ENV_PREFIX` samt `report_legacy_env()` und zweitem Umgebungs-Durchlauf im
+  Konfig-Loader, zweite Click-Variable, `LIBRETIME_*`-Rückfälle in manage.py / prod.py / backup.py /
+  playout `__main__` / dj_auth.py / constants.php / conf.php, `libretime-*`-Konsolenkommandos und
+  `find_packages`-Ausschluss in drei setup.py, `.gitignore`-Zeile `config/libretime.conf`, Brücken-Tests
+  (shared 45 → 36).  Harter Schnitt: alte Importnamen scheitern, alte Variablen werden nicht gelesen
+  (`docs/operator/UPGRADE.md`).  Suiten grün (api 195, playout 845, unit 739, shared 36).  Wirksam für die
+  Dienste nach dem Neustart durch den Operator.  Commit folgt.
 - **Totes Upstream-Playout entfernt: `main.py`, `message_handler.py`
   (2026-10-22, Operator-Go 22.10.)** — Der pypo-Einstieg `main.py` (Console-
   Script `libretime-playout`) und sein RabbitMQ-Consumer `message_handler.py`

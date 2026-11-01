@@ -9,9 +9,7 @@ def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rastatime_api.settings.prod")
     os.environ.setdefault(
         "RASTATIME_CONFIG_FILEPATH",
-        # Stage B bridge: a former LIBRETIME_CONFIG_FILEPATH still counts.
-        os.environ.get("LIBRETIME_CONFIG_FILEPATH")
-        or (r"C:\rastatime\config\rastatime.conf" if sys.platform == "win32" else "/etc/libretime/config.yml"),
+        r"C:\rastatime\config\rastatime.conf" if sys.platform == "win32" else "/etc/libretime/config.yml",
     )
     try:
         # pylint: disable=import-outside-toplevel

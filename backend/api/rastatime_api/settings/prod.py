@@ -28,7 +28,7 @@ from rastatime_shared.config import config_filepath_from_env
 
 from ._schema import Config
 
-RASTATIME_LOG_FILEPATH = getenv("RASTATIME_LOG_FILEPATH") or getenv("LIBRETIME_LOG_FILEPATH")
+RASTATIME_LOG_FILEPATH = getenv("RASTATIME_LOG_FILEPATH")
 RASTATIME_CONFIG_FILEPATH = config_filepath_from_env()
 
 CONFIG = Config(RASTATIME_CONFIG_FILEPATH)  # type: ignore[arg-type, misc]

@@ -6,7 +6,6 @@
 # Runtime configuration (contains passwords — never commit the real file)
 # -----------------------------------------------------------------------------
 config/rastatime.conf
-config/libretime.conf
 # RASTATIME 2026-10-08 - allow list mirror written by the web UI (System Status)
 config/allowlist.txt
 

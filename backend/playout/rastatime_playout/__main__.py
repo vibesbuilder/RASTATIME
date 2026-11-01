@@ -78,8 +78,6 @@ _HEALTH_TIMEOUT = int(os.environ.get("RASTATIME_API_HEALTH_TIMEOUT", "120"))
 _POLL_INTERVAL = int(os.environ.get("RASTATIME_SCHEDULE_POLL", "120"))
 _CONFIG_FILE = (
     os.environ.get("RASTATIME_CONFIG_FILEPATH")
-    # Stage B bridge: the former variable name is still read.
-    or os.environ.get("LIBRETIME_CONFIG_FILEPATH")
     or r"C:\rastatime\config\rastatime.conf"
 )
 

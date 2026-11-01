@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional
 
 import click
 
-from .config import DEFAULT_ENV_PREFIX, LEGACY_ENV_PREFIX
+from .config import DEFAULT_ENV_PREFIX
 
 
 def cli_logging_options() -> Callable:
@@ -56,11 +56,7 @@ def cli_config_options(
             help="Path to the config file.",
             required=required,
             default=default,
-            # Stage B bridge: the former variable name is still read.
-            envvar=[
-                f"{DEFAULT_ENV_PREFIX}_CONFIG_FILEPATH",
-                f"{LEGACY_ENV_PREFIX}_CONFIG_FILEPATH",
-            ],
+            envvar=f"{DEFAULT_ENV_PREFIX}_CONFIG_FILEPATH",
         )(func)
 
         return func
