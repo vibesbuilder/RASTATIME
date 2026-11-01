@@ -100,6 +100,10 @@ jobs:
           pip install -e ".[dev]"
           pip install pytest pytest-cov
 
+      - name: Generate the audio fixtures (analyzer; derived files are git-ignored)
+        working-directory: backend/${{ matrix.package }}
+        run: if [ -f tests/fixtures/generate.sh ]; then bash tests/fixtures/generate.sh; fi
+
       - name: Run tests
         working-directory: backend/${{ matrix.package }}
         run: pytest -ra --tb=short
