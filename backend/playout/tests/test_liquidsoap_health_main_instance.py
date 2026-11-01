@@ -20,7 +20,10 @@ def _runner(stdout):
     return run
 
 
-def test_query_parses_the_script_column_including_paths_with_spaces():
+def test_query_parses_the_script_column_including_paths_with_spaces(monkeypatch):
+    # the query is Windows-only by design; the parser is exercised with an
+    # injected runner, so the platform guard is lifted for the test (CI on Linux)
+    monkeypatch.setattr(lh.sys, "platform", "win32")
     infos = lh.liquidsoap_process_info(runner=_runner(
         "4348 78 12954 C:\\Tools\\liquidsoap\\standby.liq\n"
         "14516 125 5313 C:\\Tools\\liquidsoap\\rastatime.liq\n"
@@ -33,7 +36,8 @@ def test_query_parses_the_script_column_including_paths_with_spaces():
     ]
 
 
-def test_three_column_lines_still_parse_without_script():
+def test_three_column_lines_still_parse_without_script(monkeypatch):
+    monkeypatch.setattr(lh.sys, "platform", "win32")
     infos = lh.liquidsoap_process_info(runner=_runner("9064 200 5000\n"))
     assert infos == [lh.ProcessInfo(9064, 200.0, 5000.0)]
     assert infos[0].script == ""

@@ -87,6 +87,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
+      - name: Install ffmpeg (the analyzer pipeline shells out to ffmpeg/ffprobe)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
       - name: Install package with dev extras
         working-directory: backend/${{ matrix.package }}
         run: |
