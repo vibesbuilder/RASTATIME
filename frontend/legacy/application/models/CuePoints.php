@@ -99,20 +99,36 @@ class Application_Model_CuePoints
             self::SILENCE_NOISE_DB,
             rtrim(rtrim(number_format(self::SILENCE_MIN_SECONDS, 2, '.', ''), '0'), '.')
         );
-        $cmd = escapeshellarg(self::ffmpegBinary())
-            . ' -hide_banner -nostats -i ' . escapeshellarg($absolutePath)
-            . ' -vn -filter ' . escapeshellarg($filter) . ' -f null ' . escapeshellarg(PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null')
-            . ' 2>&1';
-        $output = [];
-        $code = 0;
-        @exec($cmd, $output, $code);
+        // RASTATIME 2026-11-01 - no shell: escapeshellarg() replaces "!" and
+        // "%" with spaces on Windows, so every path with one of them failed
+        // (383 of 24,857 library files in the first full dry run).  The
+        // array form of proc_open quotes the arguments itself.
+        $command = [
+            self::ffmpegBinary(), '-hide_banner', '-nostats', '-i', $absolutePath,
+            '-vn', '-filter', $filter, '-f', 'null', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null',
+        ];
+        // silencedetect reports on stderr; stdout goes to the null device so a
+        // single blocking read cannot deadlock against a full second pipe.
+        $null = PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null';
+        $descriptors = [0 => ['file', $null, 'r'], 1 => ['file', $null, 'w'], 2 => ['pipe', 'w']];
+        $pipes = [];
+        $process = @proc_open($command, $descriptors, $pipes);
+        if (!is_resource($process)) {
+            Logging::warn('CuePoints::detect: could not start ffmpeg for ' . $absolutePath);
+
+            return null;
+        }
+        $stdout = '';
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $code = proc_close($process);
         if ($code !== 0) {
             Logging::warn('CuePoints::detect: ffmpeg exited ' . $code . ' for ' . $absolutePath);
 
             return null;
         }
 
-        return self::cuesFromSilences(self::parseSilences(implode("\n", $output)), (float) $lengthSeconds);
+        return self::cuesFromSilences(self::parseSilences($stderr . "\n" . $stdout), (float) $lengthSeconds);
     }
 
     /**
