@@ -1,11 +1,10 @@
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
 from dateutil.parser import isoparse
 from pydantic import BaseModel, BeforeValidator, Field, parse_obj_as
-from typing_extensions import Annotated
 
 from ..config import CACHE_DIR
 from ..utils import mime_guess_extension
@@ -228,7 +227,7 @@ class LineinEvent(BaseEvent):
     behaves as before (no fallback, preflight warns).
     """
 
-    channel_mapping: List[int] = [0, 1]
+    channel_mapping: list[int] = [0, 1]
     """
     RASTATIME 2026-08-31 — BACKLOG "Line-In: Kanal-Auswahl auf
     Multi-Input-Devices".
@@ -316,5 +315,5 @@ def parse_any_event(value: dict) -> AnyEvent:
     return parse_obj_as(AnyEvent, value)  # type: ignore
 
 
-FileEvents = Dict[str, FileEvent]
-Events = Dict[str, AnyEvent]
+FileEvents = dict[str, FileEvent]
+Events = dict[str, AnyEvent]

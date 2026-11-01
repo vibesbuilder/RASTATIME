@@ -3,6 +3,7 @@ RASTATIME 2026-09-09 - standby.liq: the Icecast fallback source rendered from
 the same stream outputs as rastatime.liq (same encoders, mounts + "-standby",
 no telnet, silence or a configured loop).
 """
+
 from __future__ import annotations
 
 import re
@@ -15,15 +16,37 @@ from rastatime_playout.liquidsoap_config import (
 )
 
 STREAMS = [
-    {"type": "mp3", "host": "127.0.0.1", "port": 8000, "mount": "/rastatime", "pass": "x", "bitrate": 320, "name": "Rastatime"},
-    {"type": "aac", "host": "127.0.0.1", "port": 8000, "mount": "rastatime-aac", "pass": "x", "bitrate": 320},
-    {"type": "ogg", "host": "127.0.0.1", "port": 8000, "mount": "/rastatime-ogg", "pass": "x", "bitrate": 128},
+    {
+        "type": "mp3",
+        "host": "127.0.0.1",
+        "port": 8000,
+        "mount": "/rastatime",
+        "pass": "x",
+        "bitrate": 320,
+        "name": "Rastatime",
+    },
+    {
+        "type": "aac",
+        "host": "127.0.0.1",
+        "port": 8000,
+        "mount": "rastatime-aac",
+        "pass": "x",
+        "bitrate": 320,
+    },
+    {
+        "type": "ogg",
+        "host": "127.0.0.1",
+        "port": 8000,
+        "mount": "/rastatime-ogg",
+        "pass": "x",
+        "bitrate": 128,
+    },
 ]
 
 
 def _encoders(liq: str) -> list:
     # active lines only - the template carries a commented %ffmpeg example
-    return [l.strip() for l in liq.splitlines() if l.strip().startswith("%ffmpeg(format=")]
+    return [ln.strip() for ln in liq.splitlines() if ln.strip().startswith("%ffmpeg(format=")]
 
 
 def test_standby_mount_suffix():
@@ -38,10 +61,12 @@ def test_standby_uses_the_main_encoders_on_standby_mounts():
     # (the fourth is the recording output.file) - same codec / rate / bitrate
     assert _encoders(standby) == _encoders(main)[:3]
     assert re.findall(r'mount="([^"]+)"', standby) == [
-        "/rastatime-standby", "/rastatime-aac-standby", "/rastatime-ogg-standby",
+        "/rastatime-standby",
+        "/rastatime-aac-standby",
+        "/rastatime-ogg-standby",
     ]
     assert 'name="Rastatime (standby)"' in standby
-    assert "settings.server.telnet.set(false)" in standby   # nothing that leaks
+    assert "settings.server.telnet.set(false)" in standby  # nothing that leaks
     assert 'bus = blank(id="standby_silence")' in standby
     assert "input.http" not in standby and "server.register" not in standby
 
@@ -64,16 +89,16 @@ def test_icecast_fallback_check_reports_uncovered_mounts(tmp_path):
 
     xml = tmp_path / "icecast.xml"
     xml.write_text(
-        "<icecast><mount type=\"normal\"><mount-name>/rastatime</mount-name>"
+        '<icecast><mount type="normal"><mount-name>/rastatime</mount-name>'
         "<fallback-mount>/rastatime-standby</fallback-mount></mount>"
-        "<mount type=\"normal\"><mount-name>/rastatime-aac</mount-name>"
+        '<mount type="normal"><mount-name>/rastatime-aac</mount-name>'
         "<fallback-mount>/wrong</fallback-mount></mount>"
-        "<mount type=\"normal\"><mount-name>/main</mount-name><hidden>1</hidden></mount></icecast>",
+        '<mount type="normal"><mount-name>/main</mount-name><hidden>1</hidden></mount></icecast>',
         encoding="utf-8",
     )
     # /rastatime covered, /rastatime-aac points elsewhere, /rastatime-ogg has no block
     assert icecast_mounts_without_fallback(xml, STREAMS) == ["/rastatime-aac", "/rastatime-ogg"]
     assert icecast_mounts_without_fallback(xml, STREAMS[:1]) == []
     assert icecast_mounts_without_fallback(tmp_path / "missing.xml", STREAMS) is None
-    xml.write_text("<icecast><mount>", encoding="utf-8")                # broken file
+    xml.write_text("<icecast><mount>", encoding="utf-8")  # broken file
     assert icecast_mounts_without_fallback(xml, STREAMS) is None

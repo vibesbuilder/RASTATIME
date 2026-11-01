@@ -14,19 +14,18 @@ the SourceSwitcher state transitions correctly.
 We monkey-patch ``LiquidsoapTelnetClient`` with a MagicMock so the
 test never touches the network — same pattern as the C2 engine tests.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rastatime_playout.source_switcher import (
     SourceState,
     SourceSwitcher,
     _liquidsoap_state_poll_loop,
     _reconcile_liquidsoap_once,
 )
-
 
 # ---- Helpers ------------------------------------------------------------
 
@@ -57,7 +56,7 @@ def test_idle_response_means_disconnected():
     client = MagicMock()
     client.send_command.side_effect = lambda cmd: {
         "master_dj.status": "no source client connected",
-        "show_dj.status":   "no source client connected",
+        "show_dj.status": "no source client connected",
     }[cmd]
     _run_one_poll_tick(client, sw)
     assert sw.is_master_connected() is False
@@ -71,7 +70,7 @@ def test_non_idle_response_means_connected():
     client = MagicMock()
     client.send_command.side_effect = lambda cmd: {
         "master_dj.status": "source client connected from 192.168.1.5",
-        "show_dj.status":   "source client connected from 192.168.1.6",
+        "show_dj.status": "source client connected from 192.168.1.6",
     }[cmd]
     _run_one_poll_tick(client, sw)
     assert sw.is_master_connected() is True
@@ -87,8 +86,8 @@ def test_error_response_means_disconnected_not_connected():
     sw, _ = _make_switcher_with_recorder()
     client = MagicMock()
     client.send_command.side_effect = lambda cmd: {
-        "master_dj.status": "ERROR: unknown command, type \"help\" ...",
-        "show_dj.status":   "no source client connected",
+        "master_dj.status": 'ERROR: unknown command, type "help" ...',
+        "show_dj.status": "no source client connected",
     }[cmd]
     _run_one_poll_tick(client, sw)
     assert sw.is_master_connected() is False
@@ -101,7 +100,7 @@ def test_whitespace_around_idle_reply_still_parses():
     client = MagicMock()
     client.send_command.side_effect = lambda cmd: {
         "master_dj.status": "   no source client connected   ",
-        "show_dj.status":   "\nno source client connected\n",
+        "show_dj.status": "\nno source client connected\n",
     }[cmd]
     _run_one_poll_tick(client, sw)
     assert sw.is_master_connected() is False
@@ -118,11 +117,10 @@ def test_master_connect_transition_fires_callback():
     # Tick 1: both idle
     client.send_command.side_effect = lambda cmd: "no source client connected"
     _run_one_poll_tick(client, sw)
-    assert states == []   # no transition, no callback
+    assert states == []  # no transition, no callback
     # Tick 2: master now connected
     client.send_command.side_effect = lambda cmd: (
-        "source client connected" if cmd == "master_dj.status"
-        else "no source client connected"
+        "source client connected" if cmd == "master_dj.status" else "no source client connected"
     )
     _run_one_poll_tick(client, sw)
     assert sw.current_state == SourceState.MASTER
@@ -134,8 +132,7 @@ def test_show_connect_transition_fires_callback():
     sw, states = _make_switcher_with_recorder()
     client = MagicMock()
     client.send_command.side_effect = lambda cmd: (
-        "source client connected" if cmd == "show_dj.status"
-        else "no source client connected"
+        "source client connected" if cmd == "show_dj.status" else "no source client connected"
     )
     _run_one_poll_tick(client, sw)
     assert sw.current_state == SourceState.SHOW
@@ -148,8 +145,7 @@ def test_master_overrides_show_priority():
     client = MagicMock()
     # Tick 1: show only
     client.send_command.side_effect = lambda cmd: (
-        "source client connected" if cmd == "show_dj.status"
-        else "no source client connected"
+        "source client connected" if cmd == "show_dj.status" else "no source client connected"
     )
     _run_one_poll_tick(client, sw)
     assert sw.current_state == SourceState.SHOW
@@ -170,8 +166,7 @@ def test_master_disconnect_falls_back_to_show_if_still_connected():
     assert sw.current_state == SourceState.MASTER
     # Tick 2: Master leaves, Show stays
     client.send_command.side_effect = lambda cmd: (
-        "source client connected" if cmd == "show_dj.status"
-        else "no source client connected"
+        "source client connected" if cmd == "show_dj.status" else "no source client connected"
     )
     _run_one_poll_tick(client, sw)
     assert sw.current_state == SourceState.SHOW
@@ -213,20 +208,18 @@ def test_start_listener_spawns_the_liquidsoap_reconciler():
     the HTTP server so no socket is bound.
     """
     sw, _ = _make_switcher_with_recorder()
-    with patch(
-        "rastatime_playout.source_switcher._liquidsoap_state_poll_loop"
-    ) as ls_mock, patch(
-        "rastatime_playout.source_switcher.ThreadingHTTPServer"
-    ) as srv_mock, patch(
-        "rastatime_playout.source_switcher.threading.Thread"
-    ) as thread_mock:
+    with (
+        patch("rastatime_playout.source_switcher._liquidsoap_state_poll_loop") as ls_mock,
+        patch("rastatime_playout.source_switcher.ThreadingHTTPServer") as srv_mock,
+        patch("rastatime_playout.source_switcher.threading.Thread") as thread_mock,
+    ):
         thread_mock.return_value.start = MagicMock()
         srv_mock.return_value = MagicMock()
         from rastatime_playout.source_switcher import start_listener
+
         start_listener(sw, reconcile_interval_s=123.0)
         reconcilers = [
-            call for call in thread_mock.call_args_list
-            if call.kwargs.get("target") is ls_mock
+            call for call in thread_mock.call_args_list if call.kwargs.get("target") is ls_mock
         ]
         assert len(reconcilers) == 1, "liquidsoap reconciler thread not scheduled"
         assert reconcilers[0].kwargs["kwargs"] == {"interval_s": 123.0}
@@ -234,9 +227,11 @@ def test_start_listener_spawns_the_liquidsoap_reconciler():
 
 def test_start_listener_has_no_engine_kind_argument():
     import rastatime_playout.source_switcher as ss
+
     assert not hasattr(ss, "_icecast_state_poll_loop")
-    with patch("rastatime_playout.source_switcher.ThreadingHTTPServer"), patch(
-        "rastatime_playout.source_switcher.threading.Thread"
+    with (
+        patch("rastatime_playout.source_switcher.ThreadingHTTPServer"),
+        patch("rastatime_playout.source_switcher.threading.Thread"),
     ):
         with pytest.raises(TypeError):
             ss.start_listener(_make_switcher_with_recorder()[0], engine_kind="liquidsoap")

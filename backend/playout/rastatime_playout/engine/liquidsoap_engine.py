@@ -59,13 +59,14 @@ What this phase does NOT cover (deferred to later C-phases):
   * Recording: Phase C5 via ``output.file`` in the .liq script
     (no Python-side hook — entirely server-side).
 """
+
 from __future__ import annotations
 
 import logging
 import os
 import re
 import threading
-from typing import Dict, List, Optional
+from typing import Optional
 
 from .interface import PlayoutEngine, PlayoutState
 from .liquidsoap_telnet import LiquidsoapTelnetClient
@@ -168,15 +169,14 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             self._telnet = telnet_client
         else:
             self._telnet = LiquidsoapTelnetClient(
-                host=host
-                or os.environ.get("RASTATIME_LIQUIDSOAP_HOST", "127.0.0.1"),
-                port=port
-                or int(os.environ.get("RASTATIME_LIQUIDSOAP_PORT", "1234")),
+                host=host or os.environ.get("RASTATIME_LIQUIDSOAP_HOST", "127.0.0.1"),
+                port=port or int(os.environ.get("RASTATIME_LIQUIDSOAP_PORT", "1234")),
             )
 
         logger.info(
             "LiquidsoapPlayoutEngine initialised (telnet target %s:%d)",
-            self._telnet._host, self._telnet._port,
+            self._telnet._host,
+            self._telnet._port,
         )
 
     # ------------------------------------------------------------------
@@ -189,9 +189,9 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         *,
         cue_in: float = 0.0,
         cue_out: Optional[float] = None,
-        media_options: Optional[List[str]] = None,
+        media_options: Optional[list[str]] = None,
         gain_db: Optional[float] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: Optional[dict[str, str]] = None,
         transition: Optional[str] = None,
         skip_current: bool = True,
     ) -> None:
@@ -227,8 +227,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         from.
         """
         meta_summary = (
-            ",".join(f"{k}={v!r}" for k, v in (metadata or {}).items())
-            if metadata else "none"
+            ",".join(f"{k}={v!r}" for k, v in (metadata or {}).items()) if metadata else "none"
         )
 
         # Deferred-stop idempotency (Phase-C8 follow-up).  Pypo's
@@ -294,7 +293,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             if response.startswith("ERROR"):
                 logger.error(
                     "Liquidsoap rejected push for %s: %s",
-                    self._redact(uri), response.strip(),
+                    self._redact(uri),
+                    response.strip(),
                 )
                 self._state = PlayoutState.ERROR
                 return
@@ -302,7 +302,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             self._state = PlayoutState.PLAYING
             logger.debug(
                 "Liquidsoap accepted request_id=%s for %s",
-                self._current_request_id, self._redact(uri),
+                self._current_request_id,
+                self._redact(uri),
             )
             if skip_current:
                 # the pushed track is ready (synchronous queue): cut the
@@ -315,7 +316,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             # decide whether the next event should still try.
             logger.error(
                 "Liquidsoap play failed for %s: %s",
-                self._redact(uri), exc,
+                self._redact(uri),
+                exc,
             )
             self._state = PlayoutState.ERROR
 
@@ -326,7 +328,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         cue_in: float = 0.0,
         cue_out: Optional[float] = None,
         gain_db: Optional[float] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: Optional[dict[str, str]] = None,
         transition: Optional[str] = None,
     ) -> bool:
         """
@@ -339,7 +341,11 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         place when the natural transition fires.
         """
         wrapped = self._build_annotate_uri(
-            uri, cue_in=cue_in, cue_out=cue_out, gain_db=gain_db, metadata=metadata,
+            uri,
+            cue_in=cue_in,
+            cue_out=cue_out,
+            gain_db=gain_db,
+            metadata=metadata,
         )
         try:
             if transition:
@@ -351,16 +357,19 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         if response.startswith("ERROR"):
             logger.warning(
                 "Liquidsoap rejected the queued-ahead push for %s: %s",
-                self._redact(uri), response.strip(),
+                self._redact(uri),
+                response.strip(),
             )
             return False
         self._queued_uri = uri
         self._queued_request_id = self._extract_request_id(response)
         logger.info(
             "Liquidsoap queued ahead: uri=%s cue_in=%.2fs cue_out=%s shape=%s rid=%s",
-            self._redact(uri), cue_in,
+            self._redact(uri),
+            cue_in,
             f"{cue_out:.2f}s" if cue_out is not None else "natural",
-            transition or "-", self._queued_request_id,
+            transition or "-",
+            self._queued_request_id,
         )
         return True
 
@@ -426,10 +435,16 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             except ValueError:
                 continue
             rid = parts[0] if len(parts) > 1 else None
-            if rid is not None and self._queued_request_id is not None and rid == self._queued_request_id:
+            if (
+                rid is not None
+                and self._queued_request_id is not None
+                and rid == self._queued_request_id
+            ):
                 logger.info(
                     "Liquidsoap is already on the queued track (rid %s, %.1f s left) - "
-                    "the hand-over has happened.", rid, value,
+                    "the hand-over has happened.",
+                    rid,
+                    value,
                 )
                 return 0.0
             return value if value >= 0 else None
@@ -494,7 +509,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             if self._stop_timer is not None:
                 self._stop_timer.cancel()
             self._stop_timer = threading.Timer(
-                _DEFERRED_STOP_SECONDS, self._flush_pending_stop,
+                _DEFERRED_STOP_SECONDS,
+                self._flush_pending_stop,
             )
             self._stop_timer.daemon = True
             self._stop_timer.start()
@@ -515,7 +531,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             logger.debug("Liquidsoap deferred-stop flushed.")
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
-                "Liquidsoap deferred-stop telnet error: %s", exc,
+                "Liquidsoap deferred-stop telnet error: %s",
+                exc,
             )
         # Clear playback state only after the actual skip — keeping
         # _current_uri intact during the deferral window is what lets
@@ -560,7 +577,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
                 self._telnet.request_queue_skip()
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.warning(
-                    "Liquidsoap close: flushing pending stop failed: %s", exc,
+                    "Liquidsoap close: flushing pending stop failed: %s",
+                    exc,
                 )
         try:
             self._telnet.close()
@@ -649,7 +667,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         except (OSError, ConnectionError) as exc:
             logger.warning(
                 "Liquidsoap recording_start: prior-stop telnet failed "
-                "(%s); continuing with set_path + start anyway.", exc,
+                "(%s); continuing with set_path + start anyway.",
+                exc,
             )
         self._telnet.recording_set_path(path)
         self._telnet.recording_start()
@@ -702,7 +721,10 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
     # set_url / start / stop methods via the source-id namespace.
 
     def webstream_start(
-        self, url: str, *, gain_db: Optional[float] = None,
+        self,
+        url: str,
+        *,
+        gain_db: Optional[float] = None,
     ) -> None:
         """
         Start a scheduled webstream by setting the URL + optional gain
@@ -735,13 +757,12 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         next webstream would inherit the previous show's gain.
         """
         gain_for_log = (
-            f"{gain_db:+.2f}dB"
-            if gain_db is not None and abs(gain_db) > 0.001
-            else "unity"
+            f"{gain_db:+.2f}dB" if gain_db is not None and abs(gain_db) > 0.001 else "unity"
         )
         logger.info(
             "Liquidsoap webstream_start: url=%s gain=%s",
-            self._redact(url), gain_for_log,
+            self._redact(url),
+            gain_for_log,
         )
 
         try:
@@ -758,7 +779,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Liquidsoap webstream_start failed for %s: %s",
-                self._redact(url), exc,
+                self._redact(url),
+                exc,
             )
             # Don't raise — same fail-soft pattern as play() so the
             # Pypo scheduler can carry on with the next event.
@@ -778,7 +800,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             logger.info("Liquidsoap webstream_stop: closed")
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
-                "Liquidsoap webstream_stop telnet error: %s", exc,
+                "Liquidsoap webstream_stop telnet error: %s",
+                exc,
             )
 
     def liquidsoap_uptime_seconds(self) -> Optional[float]:
@@ -797,7 +820,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             logger.debug("Liquidsoap uptime telnet error: %s", exc)
             return None
         match = re.search(
-            r"(\d+)\s*d\s+(\d+)\s*h\s+(\d+)\s*m\s+(\d+)\s*s", reply or "",
+            r"(\d+)\s*d\s+(\d+)\s*h\s+(\d+)\s*m\s+(\d+)\s*s",
+            reply or "",
         )
         if not match:
             return None
@@ -893,7 +917,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             self._telnet.linein_start()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error(
-                "Liquidsoap linein_start failed: %s", exc,
+                "Liquidsoap linein_start failed: %s",
+                exc,
             )
 
     def linein_start_http(self) -> None:
@@ -916,7 +941,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             self._telnet.linein_http_start()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error(
-                "Liquidsoap linein_start_http failed: %s", exc,
+                "Liquidsoap linein_start_http failed: %s",
+                exc,
             )
 
     def linein_set_gain(self, gain_db: Optional[float]) -> None:
@@ -994,7 +1020,8 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             logger.info("Liquidsoap linein_stop: closed")
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
-                "Liquidsoap linein_stop telnet error: %s", exc,
+                "Liquidsoap linein_stop telnet error: %s",
+                exc,
             )
 
     def linein_status(self) -> str:
@@ -1051,7 +1078,9 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             self._telnet.var_set_string("station_name", station_name)
             logger.info(
                 "Liquidsoap ICY settings: format=%d offair=%r station=%r",
-                int(label_format), offair_text, station_name,
+                int(label_format),
+                offair_text,
+                station_name,
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("Liquidsoap ICY settings telnet error: %s", exc)
@@ -1093,7 +1122,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         cue_in: float,
         cue_out: Optional[float],
         gain_db: Optional[float],
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: Optional[dict[str, str]] = None,
     ) -> str:
         """
         Wrap ``uri`` in a Liquidsoap ``annotate:`` envelope encoding
@@ -1132,9 +1161,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             # Liquidsoap's amplify(override="replaygain_track_gain", …)
             # parses the value as a "<float> dB" string — sign is
             # carried in the float, "dB" suffix is required.
-            annotations.append(
-                f'replaygain_track_gain="{gain_db:+.2f} dB"'
-            )
+            annotations.append(f'replaygain_track_gain="{gain_db:+.2f} dB"')
 
         # RASTATIME 2026-05-28 — Phase-D Stück-B: short-track crossfade-
         # override REVERTED.  Initial attempt was to set
@@ -1159,9 +1186,7 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             for key, value in metadata.items():
                 if value is None or value == "":
                     continue
-                annotations.append(
-                    f'{key}="{cls._escape_annotate_value(str(value))}"'
-                )
+                annotations.append(f'{key}="{cls._escape_annotate_value(str(value))}"')
 
         if not annotations:
             return normalised

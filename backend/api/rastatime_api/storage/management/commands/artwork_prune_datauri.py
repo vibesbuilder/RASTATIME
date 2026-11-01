@@ -46,7 +46,9 @@ def classify(folder: Path):
 
 
 class Command(BaseCommand):
-    help = "Delete the Data-URI text copies of covers that have their JPG set (dry run without --yes)."
+    help = (
+        "Delete the Data-URI text copies of covers that have their JPG set (dry run without --yes)."
+    )
 
     def add_arguments(self, parser: CommandParser):
         parser.add_argument("--yes", action="store_true", help="Delete (default: dry run).")
@@ -61,7 +63,9 @@ class Command(BaseCommand):
             return
         delete, kept = classify(folder)
         total_bytes = sum(p.stat().st_size for p in delete)
-        out(f"{folder}: {len(delete)} Data-URI text file(s) with a JPG set ({total_bytes / 1e6:.0f} MB), {kept} file(s) kept")
+        out(
+            f"{folder}: {len(delete)} Data-URI text file(s) with a JPG set ({total_bytes / 1e6:.0f} MB), {kept} file(s) kept"
+        )
         if not options["yes"]:
             out("dry run - add --yes to delete")
             return

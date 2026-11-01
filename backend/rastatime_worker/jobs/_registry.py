@@ -37,10 +37,10 @@ from typing import Optional
 
 from ._base import Job, JobTrigger
 
-
 # ---------------------------------------------------------------------------
 # JobRegistry
 # ---------------------------------------------------------------------------
+
 
 class JobRegistry:
     """

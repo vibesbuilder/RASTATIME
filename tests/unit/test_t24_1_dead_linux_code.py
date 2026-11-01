@@ -13,7 +13,8 @@ Dead-code categories addressed:
 Test inventory (10 tests, always run — no Django needed):
   1.  gunicorn.py (dead Gunicorn/UvicornWorker config) does not exist.
   2.  test-hook-script.sh does not exist.
-  3.  generate.sh does not exist.
+  3.  generate.sh exists again (2026-11-01: the analyzer fixture generator,
+      run by the Makefile and the CI).
   4.  runtests.sh does not exist.
   5.  ftp-upload-hook.sh does not exist.
   6.  AirtimeInstall.php does not call chown().
@@ -72,11 +73,17 @@ def test_test_hook_script_sh_deleted():
     )
 
 
-def test_generate_sh_deleted():
-    """backend/analyzer/tests/fixtures/generate.sh must be deleted."""
-    assert not _GENERATE.exists(), (
-        "generate.sh still exists — bash/ffmpeg fixture generator must be removed"
-    )
+def test_generate_sh_reinstated():
+    """backend/analyzer/tests/fixtures/generate.sh is back on purpose.
+
+    RASTATIME 2026-11-01: the analyzer tests need the 59 derived audio
+    fixtures (git-ignored); the script derives them with ffmpeg and runs
+    in the Windows runner's bash as well as in Git Bash locally.  The
+    Makefile's `fixtures` target points at it.
+    """
+    assert _GENERATE.exists(), "generate.sh missing - the analyzer fixtures cannot be derived"
+    makefile = (_REPO / "backend" / "analyzer" / "Makefile").read_text(encoding="utf-8")
+    assert "tests/fixtures/generate.sh" in makefile
 
 
 def test_runtests_sh_deleted():

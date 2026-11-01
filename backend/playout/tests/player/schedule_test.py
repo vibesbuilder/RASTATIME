@@ -455,15 +455,11 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
     result = get_schedule(api_client)
     # RASTATIME 2026-09-29 - the events also carry the rows' exact times
     # (microseconds), next to the whole seconds of start / end.
-    assert result["2022-09-05-11-00-00#file-1"].end_exact == datetime(
-        2022, 9, 5, 11, 5, 2, 144200
-    )
+    assert result["2022-09-05-11-00-00#file-1"].end_exact == datetime(2022, 9, 5, 11, 5, 2, 144200)
     assert result["2022-09-05-11-05-02#file-2"].start_exact == datetime(
         2022, 9, 5, 11, 5, 2, 144200
     )
-    assert result["2022-09-05-12-10-00#ws-play-5"].start_exact == datetime(
-        2022, 9, 5, 12, 10
-    )
+    assert result["2022-09-05-12-10-00#ws-play-5"].start_exact == datetime(2022, 9, 5, 12, 10)
     for event in result.values():
         event.start_exact = None
         event.end_exact = None
@@ -715,15 +711,21 @@ def test_get_schedule(schedule, requests_mock, api_client: ApiClient):
 # RASTATIME 2026-09-28 - Loudness Normalization (EBU R128 stage 1)
 # ---------------------------------------------------------------------------
 
+
 def test_file_gain_db_by_mode():
     from types import SimpleNamespace
 
     from rastatime_playout.player.schedule import file_gain_db
 
     stream_preferences = SimpleNamespace(
-        input_fade_transition=0.0, message_format=0, message_offline="",
-        replay_gain_enabled=True, replay_gain_offset=0.0, loudness_mode=None,
-        loudness_target_lufs=-23.0, loudness_true_peak_dbtp=-1.0,
+        input_fade_transition=0.0,
+        message_format=0,
+        message_offline="",
+        replay_gain_enabled=True,
+        replay_gain_offset=0.0,
+        loudness_mode=None,
+        loudness_target_lufs=-23.0,
+        loudness_true_peak_dbtp=-1.0,
     )
     measured = {"replay_gain": "4.52", "loudness_lufs": "-14.2", "true_peak_dbtp": "-0.4"}
     stream_preferences.replay_gain_enabled = True
@@ -737,10 +739,12 @@ def test_file_gain_db_by_mode():
     stream_preferences.loudness_mode = "r128"
     stream_preferences.loudness_target_lufs = -23.0
     stream_preferences.loudness_true_peak_dbtp = -1.0
-    assert file_gain_db(measured, stream_preferences) == pytest.approx(-8.8)   # -23 - (-14.2)
+    assert file_gain_db(measured, stream_preferences) == pytest.approx(-8.8)  # -23 - (-14.2)
     # a quiet file is boosted, but never past the true-peak ceiling
     quiet = {"replay_gain": "0", "loudness_lufs": "-30.0", "true_peak_dbtp": "-3.0"}
-    assert file_gain_db(quiet, stream_preferences) == pytest.approx(2.0)       # 7 dB wanted, 2 dB allowed
+    assert file_gain_db(quiet, stream_preferences) == pytest.approx(
+        2.0
+    )  # 7 dB wanted, 2 dB allowed
     quiet_soft = {"replay_gain": "0", "loudness_lufs": "-30.0", "true_peak_dbtp": "-12.0"}
     assert file_gain_db(quiet_soft, stream_preferences) == pytest.approx(7.0)
     # a quiet file whose peak is already over the ceiling is not boosted at all
@@ -761,7 +765,7 @@ def test_file_gain_db_by_mode():
 def test_file_gain_db_without_loudness_fields_follows_the_replaygain_switch():
     from rastatime_playout.player.schedule import file_gain_db
 
-    class OldPrefs:      # a StreamPreferences from before the loudness fields
+    class OldPrefs:  # a StreamPreferences from before the loudness fields
         replay_gain_enabled = True
         replay_gain_offset = 1.0
 

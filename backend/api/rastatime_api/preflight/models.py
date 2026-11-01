@@ -32,7 +32,7 @@ schedule).
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from django.db import models, transaction
 
@@ -44,8 +44,8 @@ class PreflightWarning(models.Model):
     """
 
     class Severity(models.TextChoices):
-        WARNING = "warning", "Warning"   # operator should look, show may still run
-        ERROR = "error", "Error"         # show will definitely fail / be silent
+        WARNING = "warning", "Warning"  # operator should look, show may still run
+        ERROR = "error", "Error"  # show will definitely fail / be silent
 
     created_at = models.DateTimeField(
         auto_now_add=True,

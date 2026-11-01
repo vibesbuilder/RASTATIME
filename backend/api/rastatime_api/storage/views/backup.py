@@ -15,6 +15,7 @@ All of them use the API's default permission (API key or logged-in user);
 the Backup page reaches them through PHP actions behind the operator
 login and a CSRF token.  Restores stay CLI/offline (BACKUP.md section 7).
 """
+
 from __future__ import annotations
 
 import os
@@ -80,7 +81,7 @@ class BackupRunView(APIView):
             )
         except storage_backup.InvalidFolder as exc:
             return Response({"errors": exc.errors}, status=status.HTTP_400_BAD_REQUEST)
-        except RuntimeError as exc:                  # pg_dump missing
+        except RuntimeError as exc:  # pg_dump missing
             return Response({"errors": [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"job": job}, status=status.HTTP_202_ACCEPTED)
 
@@ -95,8 +96,9 @@ class BackupAutoView(APIView):
                 "retention_days": max(0, int(data.get("retention_days", 0))),
             }
         except (TypeError, ValueError):
-            return Response({"errors": ["Days must be whole numbers."]},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"errors": ["Days must be whole numbers."]}, status=status.HTTP_400_BAD_REQUEST
+            )
         storage_backup.set_auto_config(cfg)
         return Response(_payload())
 

@@ -25,13 +25,13 @@ def _request(peer="127.0.0.1", forwarded=None, **extra):
 @pytest.mark.parametrize(
     "peer,forwarded,extra,expected",
     [
-        ("127.0.0.1", None, {}, True),            # legacy PHP on 127.0.0.1:8765
+        ("127.0.0.1", None, {}, True),  # legacy PHP on 127.0.0.1:8765
         ("::1", None, {}, True),
         ("::ffff:127.0.0.1", None, {}, True),
         ("127.0.0.1", "203.0.113.7", {}, False),  # proxied by Apache, no key
-        ("127.0.0.1", "192.168.1.20", {}, False),     # LAN browser through Apache
+        ("127.0.0.1", "192.168.1.20", {}, False),  # LAN browser through Apache
         ("127.0.0.1", "203.0.113.7", KEY, True),  # proxied with the Api-Key (playout)
-        ("192.168.1.20", None, {}, False),            # not loopback
+        ("192.168.1.20", None, {}, False),  # not loopback
         ("127.0.0.1", "203.0.113.7", {"HTTP_AUTHORIZATION": "Api-Key wrong"}, False),
     ],
 )
@@ -53,11 +53,15 @@ def test_internal_only_decorator():
 @pytest.mark.parametrize(
     "forwarded,expected_peer,internal",
     [
-        (None, "127.0.0.1", True),                         # legacy PHP direct on :8765
-        ("127.0.0.1", "127.0.0.1", False),                 # through Apache from this machine: needs the key
-        ("192.168.1.20", "192.168.1.20", False),                 # browser in the LAN
-        ("203.0.113.7", "203.0.113.7", False),             # internet
-        ("127.0.0.1, 203.0.113.7", "203.0.113.7", False),  # spoofed first hop, Apache appended the real one
+        (None, "127.0.0.1", True),  # legacy PHP direct on :8765
+        ("127.0.0.1", "127.0.0.1", False),  # through Apache from this machine: needs the key
+        ("192.168.1.20", "192.168.1.20", False),  # browser in the LAN
+        ("203.0.113.7", "203.0.113.7", False),  # internet
+        (
+            "127.0.0.1, 203.0.113.7",
+            "203.0.113.7",
+            False,
+        ),  # spoofed first hop, Apache appended the real one
     ],
 )
 def test_waitress_proxy_options_give_the_real_client(forwarded, expected_peer, internal):
@@ -80,8 +84,14 @@ def test_waitress_proxy_options_give_the_real_client(forwarded, expected_peer, i
         trusted_proxy_headers=PROXY_OPTIONS["trusted_proxy_headers"],
         clear_untrusted=PROXY_OPTIONS["clear_untrusted_proxy_headers"],
     )
-    environ = {"REMOTE_ADDR": "127.0.0.1", "REQUEST_METHOD": "GET", "PATH_INFO": "/api/v2/audio/linein",
-               "wsgi.url_scheme": "http", "SERVER_NAME": "127.0.0.1", "SERVER_PORT": "8765"}
+    environ = {
+        "REMOTE_ADDR": "127.0.0.1",
+        "REQUEST_METHOD": "GET",
+        "PATH_INFO": "/api/v2/audio/linein",
+        "wsgi.url_scheme": "http",
+        "SERVER_NAME": "127.0.0.1",
+        "SERVER_PORT": "8765",
+    }
     if forwarded is not None:
         environ["HTTP_X_FORWARDED_FOR"] = forwarded
     wrapped(environ, lambda *a, **k: None)
@@ -96,7 +106,9 @@ def test_song_request_ip_hash_ignores_forged_forwarded_for():
     from ..song_request_api import _hash_ip
 
     plain = RequestFactory().get("/", REMOTE_ADDR="203.0.113.7")
-    forged = RequestFactory().get("/", REMOTE_ADDR="203.0.113.7", HTTP_X_FORWARDED_FOR="198.51.100.1, 203.0.113.7")
+    forged = RequestFactory().get(
+        "/", REMOTE_ADDR="203.0.113.7", HTTP_X_FORWARDED_FOR="198.51.100.1, 203.0.113.7"
+    )
     other = RequestFactory().get("/", REMOTE_ADDR="203.0.113.8")
     assert _hash_ip(plain) == _hash_ip(forged)
     assert _hash_ip(plain) != _hash_ip(other)
@@ -130,4 +142,3 @@ def test_malformed_api_key_header_is_a_refusal_not_an_error(header):
 
     request = APIRequestFactory().get("/api/v2/", HTTP_AUTHORIZATION=header)
     assert check_authorization_header(request) is False
-

@@ -24,14 +24,15 @@ unreachable) makes the harbor fall back to the static password from
 rastatime.conf, so a DJ can still go on air while the web application
 is down.
 """
+
 from __future__ import annotations
 
 import ipaddress
 import logging
 import os
-from pathlib import Path
 import time
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Optional
 
 import requests
 
@@ -48,14 +49,15 @@ class RejectThrottle:
     application.  In-memory, per playout process; a restart forgets it,
     which is fine for a brake.  Operator thresholds: 5 / 10 min / 15 min."""
 
-    def __init__(self, limit: int = 5, window: float = 600.0, block: float = 900.0,
-                 clock=None) -> None:
+    def __init__(
+        self, limit: int = 5, window: float = 600.0, block: float = 900.0, clock=None
+    ) -> None:
         self.limit = limit
         self.window = window
         self.block = block
         self._clock = clock or time.monotonic
-        self._rejections: Dict[str, List[float]] = {}
-        self._blocked_until: Dict[str, float] = {}
+        self._rejections: dict[str, list[float]] = {}
+        self._blocked_until: dict[str, float] = {}
 
     def blocked_for(self, address: str) -> float:
         """Seconds the address still has to wait, 0 when it may try."""
@@ -94,27 +96,33 @@ class RejectThrottle:
         self._blocked_until.pop(key, None)
         return had
 
-    def snapshot(self) -> List[Dict[str, object]]:
+    def snapshot(self) -> list[dict[str, object]]:
         """Blocked addresses and addresses with recent rejections, for the
         operator's list: address, seconds left (0 = counting only),
         rejections inside the window."""
         now = self._clock()
-        rows: List[Dict[str, object]] = []
+        rows: list[dict[str, object]] = []
         for key in sorted(set(self._blocked_until) | set(self._rejections)):
-            left = max(0.0, self._blocked_until.get(key, 0.0) - now) if key in self._blocked_until else 0.0
+            left = (
+                max(0.0, self._blocked_until.get(key, 0.0) - now)
+                if key in self._blocked_until
+                else 0.0
+            )
             if key in self._blocked_until and left <= 0:
                 self._blocked_until.pop(key, None)
             recent = [t for t in self._rejections.get(key, []) if now - t <= self.window]
             if left <= 0 and not recent:
                 continue
-            rows.append({
-                "address": key,
-                "blocked_seconds_left": int(round(left)),
-                "rejections_in_window": len(recent),
-                "limit": self.limit,
-                "window_seconds": int(self.window),
-                "block_seconds": int(self.block),
-            })
+            rows.append(
+                {
+                    "address": key,
+                    "blocked_seconds_left": int(round(left)),
+                    "rejections_in_window": len(recent),
+                    "limit": self.limit,
+                    "window_seconds": int(self.window),
+                    "block_seconds": int(self.block),
+                }
+            )
         return rows
 
 
@@ -135,10 +143,7 @@ class AllowList:
 
     @staticmethod
     def default_path() -> Path:
-        config = (
-            os.environ.get("RASTATIME_CONFIG_FILEPATH")
-            or "/etc/libretime/config.yml"
-        )
+        config = os.environ.get("RASTATIME_CONFIG_FILEPATH") or "/etc/libretime/config.yml"
         return Path(config).parent / "allowlist.txt"
 
     def _reload_if_changed(self) -> None:
@@ -158,7 +163,9 @@ class AllowList:
                 try:
                     networks.append(ipaddress.ip_network(line, strict=False))
                 except ValueError:
-                    logger.warning("dj-auth: allow list entry %r is not an address or network - ignored", line)
+                    logger.warning(
+                        "dj-auth: allow list entry %r is not an address or network - ignored", line
+                    )
         except OSError as exc:
             logger.warning("dj-auth: cannot read the allow list %s: %s", self.path, exc)
             networks = []
@@ -213,8 +220,11 @@ class DjAuthenticator:
         allowed = self._allow_list.allows(address)
         left = 0.0 if allowed else self._throttle.blocked_for(address)
         if left > 0:
-            logger.warning("dj-auth: %s refused - address blocked for another %.0f s "
-                           "(brute-force brake)", who, left)
+            logger.warning(
+                "dj-auth: %s refused - address blocked for another %.0f s (brute-force brake)",
+                who,
+                left,
+            )
             return "denied"
         try:
             resp = self._session.post(
@@ -225,7 +235,10 @@ class DjAuthenticator:
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
                 "dj-auth: web application unreachable at %s (%s) - %s falls back "
-                "to the static harbor password", self.check_url, exc, who,
+                "to the static harbor password",
+                self.check_url,
+                exc,
+                who,
             )
             return "error"
         accepted = resp.status_code == 200 and resp.headers.get("icecast-auth-user") == "1"
@@ -235,8 +248,10 @@ class DjAuthenticator:
             return "ok"
         if resp.status_code not in (200, 401):
             logger.warning(
-                "dj-auth: unexpected HTTP %s from %s - %s falls back to the static "
-                "harbor password", resp.status_code, self.check_url, who,
+                "dj-auth: unexpected HTTP %s from %s - %s falls back to the static harbor password",
+                resp.status_code,
+                self.check_url,
+                who,
             )
             return "error"
         # RASTATIME 2026-10-06 - the legacy check names the reason; only a
@@ -251,9 +266,13 @@ class DjAuthenticator:
         if allowed:
             logger.info("dj-auth: %s rejected (bad password; allowed address, not counted)", who)
         elif self._throttle.rejected(address):
-            logger.warning("dj-auth: %s rejected (bad password) - address blocked for "
-                           "%.0f min after %d rejections (brute-force brake)", who,
-                           self._throttle.block / 60, self._throttle.limit)
+            logger.warning(
+                "dj-auth: %s rejected (bad password) - address blocked for "
+                "%.0f min after %d rejections (brute-force brake)",
+                who,
+                self._throttle.block / 60,
+                self._throttle.limit,
+            )
         else:
             logger.info("dj-auth: %s rejected (bad password)", who)
         return "denied"

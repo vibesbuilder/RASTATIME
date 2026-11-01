@@ -1,13 +1,13 @@
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
+from pydantic import BaseModel, model_validator
 from rastatime_shared.config import (
     BaseConfig,
     GeneralConfig,
     RabbitMQConfig,
     StreamConfig,
 )
-from pydantic import BaseModel, model_validator
 
 CACHE_DIR = Path.cwd() / "scheduler"
 RECORD_DIR = Path.cwd() / "recorder"
@@ -31,7 +31,7 @@ class LiquidsoapConfig(BaseModel):
     server_listen_address: str = "127.0.0.1"
     server_listen_port: int = 1234
 
-    harbor_listen_address: List[str] = ["0.0.0.0"]
+    harbor_listen_address: list[str] = ["0.0.0.0"]
 
     harbor_ssl_certificate: Optional[str] = None
     harbor_ssl_private_key: Optional[str] = None
@@ -39,16 +39,10 @@ class LiquidsoapConfig(BaseModel):
 
     @model_validator(mode="after")
     def _validate_harbor_ssl(self):
-        if (
-            self.harbor_ssl_certificate is not None
-            and self.harbor_ssl_private_key is None
-        ):
+        if self.harbor_ssl_certificate is not None and self.harbor_ssl_private_key is None:
             raise ValueError("missing 'harbor_ssl_private_key' value")
 
-        if (
-            self.harbor_ssl_certificate is None
-            and self.harbor_ssl_private_key is not None
-        ):
+        if self.harbor_ssl_certificate is None and self.harbor_ssl_private_key is not None:
             raise ValueError("missing 'harbor_ssl_certificate' value")
 
         return self

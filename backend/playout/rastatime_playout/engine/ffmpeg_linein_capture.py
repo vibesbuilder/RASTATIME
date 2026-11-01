@@ -59,8 +59,9 @@ import shutil
 import subprocess
 import threading
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import IO, Callable, Optional
+from typing import IO, Optional
 
 # FFmpeg writes a status line of the form ``size=… time=HH:MM:SS.ss
 # bitrate=… speed=… elapsed=…`` to its stderr roughly every 0.5 s.  The
@@ -111,10 +112,7 @@ def _stable_id_to_dshow_audio(stable_id: str) -> str:
     'audio=@device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\\\\wave_{0FB30B0B-C875-432B-A48F-DBB5208995C9}'
     """
     guid = stable_id.strip("{}").upper()
-    return (
-        f"audio=@device_cm_{{{_DSHOW_AUDIO_INPUT_CLSID}}}"
-        f"\\wave_{{{guid}}}"
-    )
+    return f"audio=@device_cm_{{{_DSHOW_AUDIO_INPUT_CLSID}}}\\wave_{{{guid}}}"
 
 
 class FfmpegLineinCapture:
@@ -239,9 +237,7 @@ class FfmpegLineinCapture:
         self._watchdog_stop = threading.Event()
         self._on_restart_callback = on_restart_callback
 
-        log_dir = Path(
-            os.environ.get("RASTATIME_LOG_DIR", r"C:\rastatime\logs")
-        )
+        log_dir = Path(os.environ.get("RASTATIME_LOG_DIR", r"C:\rastatime\logs"))
         try:
             log_dir.mkdir(parents=True, exist_ok=True)
         except OSError:
@@ -251,8 +247,12 @@ class FfmpegLineinCapture:
         logger.info(
             "FfmpegLineinCapture ready: codec=%s bitrate=%s samplerate=%dHz "
             "-> %s:%d/%s (stderr log: %s)",
-            self._codec, self._bitrate, self._samplerate,
-            icecast_host, icecast_port, self._icecast_mount,
+            self._codec,
+            self._bitrate,
+            self._samplerate,
+            icecast_host,
+            icecast_port,
+            self._icecast_mount,
             self._stderr_log_path,
         )
 
@@ -343,7 +343,9 @@ class FfmpegLineinCapture:
                 logger.info(
                     "FfmpegLineinCapture.start: device %s already capturing "
                     "(PID=%d, channels=%s) — keeping subprocess alive, no bounce.",
-                    device_id, self._process.pid, mapping,
+                    device_id,
+                    self._process.pid,
+                    mapping,
                 )
                 return
 
@@ -360,37 +362,36 @@ class FfmpegLineinCapture:
             # value sticks around for watchdog-driven restarts.
             feeder_rates = [self._samplerate, 44100, 44100]
             for attempt in range(1, self._IMMEDIATE_RETRY_MAX_ATTEMPTS + 1):
-                self._feeder_rate = int(
-                    feeder_rates[min(attempt, len(feeder_rates)) - 1]
-                )
+                self._feeder_rate = int(feeder_rates[min(attempt, len(feeder_rates)) - 1])
                 self._start_locked(device_id)
                 if self._process is not None and self._process.poll() is None:
                     # Success: subprocess survived the startup warmup
                     # health-check inside _start_locked.
                     if attempt > 1:
                         logger.info(
-                            "FfmpegLineinCapture.start: succeeded on "
-                            "attempt %d (device %s)",
-                            attempt, device_id,
+                            "FfmpegLineinCapture.start: succeeded on attempt %d (device %s)",
+                            attempt,
+                            device_id,
                         )
                     return
                 if attempt < self._IMMEDIATE_RETRY_MAX_ATTEMPTS:
                     logger.warning(
                         "FfmpegLineinCapture.start: attempt %d failed "
                         "(device %s); retrying in %.1f s",
-                        attempt, device_id, self._IMMEDIATE_RETRY_BACKOFF_S,
+                        attempt,
+                        device_id,
+                        self._IMMEDIATE_RETRY_BACKOFF_S,
                     )
                     time.sleep(self._IMMEDIATE_RETRY_BACKOFF_S)
 
             logger.error(
                 "FfmpegLineinCapture.start: gave up after %d attempts for "
                 "device %s — capture will not run; Line-In show will be silent",
-                self._IMMEDIATE_RETRY_MAX_ATTEMPTS, device_id,
+                self._IMMEDIATE_RETRY_MAX_ATTEMPTS,
+                device_id,
             )
 
-    def set_on_restart_callback(
-        self, callback: Optional[Callable[[], None]]
-    ) -> None:
+    def set_on_restart_callback(self, callback: Optional[Callable[[], None]]) -> None:
         """
         Install/replace the callback fired by the watchdog after every
         successful auto-restart.
@@ -404,9 +405,7 @@ class FfmpegLineinCapture:
 
     def _start_locked(self, device_id: str) -> None:
         if not device_id:
-            logger.error(
-                "FfmpegLineinCapture.start: empty device_id — refusing to start."
-            )
+            logger.error("FfmpegLineinCapture.start: empty device_id — refusing to start.")
             return
 
         # Remember the device for watchdog-driven restart attempts.
@@ -462,9 +461,12 @@ class FfmpegLineinCapture:
             _sys.executable,
             "-m",
             "rastatime_playout.engine.linein_feeder",
-            "--device-name", self._device_name,
-            "--mapping", ",".join(str(c) for c in self._channel_mapping),
-            "--rate", str(self._feeder_rate),
+            "--device-name",
+            self._device_name,
+            "--mapping",
+            ",".join(str(c) for c in self._channel_mapping),
+            "--rate",
+            str(self._feeder_rate),
         ]
 
     def _build_ffmpeg_cmd(self, device_id: str, use_feeder: bool) -> list:
@@ -484,15 +486,22 @@ class FfmpegLineinCapture:
                 # The feeder delivers a live s16le stereo stream at the
                 # configured rate on stdin.  Same low-latency knobs as
                 # the dshow path where they apply.
-                "-fflags", "+nobuffer",
-                "-flags", "+low_delay",
-                "-f", "s16le",
+                "-fflags",
+                "+nobuffer",
+                "-flags",
+                "+low_delay",
+                "-f",
+                "s16le",
                 # Input rate = the feeder's actual capture rate for this
                 # attempt; ffmpeg resamples to the output -ar below.
-                "-ar", str(self._feeder_rate),
-                "-ac", "2",
-                "-thread_queue_size", "4096",
-                "-i", "pipe:0",
+                "-ar",
+                str(self._feeder_rate),
+                "-ac",
+                "2",
+                "-thread_queue_size",
+                "4096",
+                "-i",
+                "pipe:0",
             ]
         else:
             dshow_input = _stable_id_to_dshow_audio(device_id)
@@ -517,20 +526,26 @@ class FfmpegLineinCapture:
                 # leaving the public mounts (/rastatime192 et al.)
                 # unaffected.
                 # --------------------------------------------------------
-                "-fflags", "+nobuffer",
-                "-flags", "+low_delay",
+                "-fflags",
+                "+nobuffer",
+                "-flags",
+                "+low_delay",
                 # dshow capture options must precede ``-i``.
-                "-f", "dshow",
+                "-f",
+                "dshow",
                 # ``rtbufsize`` raises the Windows DirectShow callback
                 # ring buffer.  Default is small and tends to drop
                 # samples on busy systems; ~200 MB is overkill but
                 # harmless.
-                "-rtbufsize", "200M",
+                "-rtbufsize",
+                "200M",
                 # Bigger thread_queue_size between dshow demuxer and the
                 # encoder — generous headroom for a live input to avoid
                 # drops.
-                "-thread_queue_size", "4096",
-                "-i", dshow_input,
+                "-thread_queue_size",
+                "4096",
+                "-i",
+                dshow_input,
             ]
 
         return [
@@ -538,16 +553,26 @@ class FfmpegLineinCapture:
             # RASTATIME 2026-10-21 - errors and the progress line only: the
             # info banner printed the Icecast source URL with its password
             # into logs/ffmpeg-linein-capture.log
-            "-hide_banner", "-loglevel", "error", "-stats",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-stats",
             *input_args,
             "-vn",
-            "-c:a", self._codec,
-            "-b:a", self._bitrate,
-            "-ac", str(self._channels),
-            "-ar", str(self._samplerate),
-            "-f", "mp3",
-            "-content_type", "audio/mpeg",
-            "-flush_packets", "1",
+            "-c:a",
+            self._codec,
+            "-b:a",
+            self._bitrate,
+            "-ac",
+            str(self._channels),
+            "-ar",
+            str(self._samplerate),
+            "-f",
+            "mp3",
+            "-content_type",
+            "audio/mpeg",
+            "-flush_packets",
+            "1",
             icecast_url,
         ]
 
@@ -564,9 +589,12 @@ class FfmpegLineinCapture:
         """
         logger.info(
             "FfmpegLineinCapture start: device_id=%s channels=%s%s -> %s:%d/%s",
-            device_id, self._channel_mapping,
+            device_id,
+            self._channel_mapping,
             " (MME feeder)" if feeder_cmd else "",
-            self._icecast_host, self._icecast_port, self._icecast_mount,
+            self._icecast_host,
+            self._icecast_port,
+            self._icecast_mount,
         )
         logger.debug("FfmpegLineinCapture cmd: %s (feeder: %s)", cmd, feeder_cmd)
 
@@ -583,7 +611,8 @@ class FfmpegLineinCapture:
         except OSError as exc:
             logger.warning(
                 "Could not open capture stderr log %s: %s",
-                self._stderr_log_path, exc,
+                self._stderr_log_path,
+                exc,
             )
             self._stderr_fh = None
 
@@ -597,8 +626,8 @@ class FfmpegLineinCapture:
                 self._feeder_process = subprocess.Popen(
                     feeder_cmd,
                     stdin=subprocess.DEVNULL,
-                    stdout=subprocess.PIPE,        # → ffmpeg stdin
-                    stderr=stderr_target,          # shared capture log
+                    stdout=subprocess.PIPE,  # → ffmpeg stdin
+                    stderr=stderr_target,  # shared capture log
                     creationflags=no_window,
                 )
             except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -646,17 +675,15 @@ class FfmpegLineinCapture:
         # _STARTUP_HEALTH_CHECK_S (2026-09-04: 1.5 -> 0.75 s, see there).
         time.sleep(self._STARTUP_HEALTH_CHECK_S)
         rc = self._process.poll()
-        feeder_rc = (
-            self._feeder_process.poll()
-            if self._feeder_process is not None
-            else None
-        )
+        feeder_rc = self._feeder_process.poll() if self._feeder_process is not None else None
         if rc is not None or feeder_rc is not None:
             tail = self._read_stderr_tail(2000)
             logger.error(
                 "FfmpegLineinCapture pipeline exited immediately "
                 "(ffmpeg rc=%s, feeder rc=%s).  Last stderr:\n%s",
-                rc, feeder_rc, tail,
+                rc,
+                feeder_rc,
+                tail,
             )
             self._kill_feeder_locked()
             if self._process is not None and self._process.poll() is None:
@@ -670,10 +697,10 @@ class FfmpegLineinCapture:
 
         logger.info(
             "FfmpegLineinCapture streaming PID=%d: device=%s channels=%s%s",
-            self._process.pid, device_id, self._channel_mapping,
-            f" (feeder PID={self._feeder_process.pid})"
-            if self._feeder_process is not None
-            else "",
+            self._process.pid,
+            device_id,
+            self._channel_mapping,
+            f" (feeder PID={self._feeder_process.pid})" if self._feeder_process is not None else "",
         )
 
         # Hand this specific subprocess to a watchdog.  The watchdog
@@ -780,14 +807,17 @@ class FfmpegLineinCapture:
                     "device %s is alive but stalled (encoder time= frozen "
                     "at %s for %.1fs — likely USB device unplugged).  "
                     "Forcing terminate() to trigger restart.",
-                    owned_proc.pid, self._device_id,
-                    last_time_str.decode(errors="replace"), stalled_for,
+                    owned_proc.pid,
+                    self._device_id,
+                    last_time_str.decode(errors="replace"),
+                    stalled_for,
                 )
                 try:
                     owned_proc.terminate()
                 except Exception as exc:  # pylint: disable=broad-exception-caught
                     logger.debug(
-                        "terminate() raised %s — trying kill()", exc,
+                        "terminate() raised %s — trying kill()",
+                        exc,
                     )
                     try:
                         owned_proc.kill()
@@ -815,7 +845,9 @@ class FfmpegLineinCapture:
             logger.warning(
                 "FfmpegLineinCapture watchdog: subprocess for device %s "
                 "died unexpectedly (rc=%d).  Last stderr:\n%s",
-                self._device_id, rc, tail,
+                self._device_id,
+                rc,
+                tail,
             )
 
             attempts += 1
@@ -824,7 +856,8 @@ class FfmpegLineinCapture:
                     "FfmpegLineinCapture watchdog: %d restart attempts "
                     "failed for device %s — giving up; the line-in mount "
                     "stays offline for the rest of this slot.",
-                    self.MAX_AUTO_RESTART_ATTEMPTS, self._device_id,
+                    self.MAX_AUTO_RESTART_ATTEMPTS,
+                    self._device_id,
                 )
                 return
 
@@ -843,9 +876,11 @@ class FfmpegLineinCapture:
                 logger.info(
                     "FfmpegLineinCapture watchdog: attempt %d/%d — "
                     "restarting capture for device %s",
-                    attempts, self.MAX_AUTO_RESTART_ATTEMPTS, self._device_id,
+                    attempts,
+                    self.MAX_AUTO_RESTART_ATTEMPTS,
+                    self._device_id,
                 )
-                self._stop_locked()                # clears dead handles
+                self._stop_locked()  # clears dead handles
                 # _start_locked spawns a *new* watchdog at its tail.
                 self._start_locked(self._device_id)
 
@@ -863,7 +898,8 @@ class FfmpegLineinCapture:
                     logger.warning(
                         "FfmpegLineinCapture watchdog: on_restart_callback "
                         "raised %s — ignoring (consumers will re-attach on "
-                        "next schedule poll).", exc,
+                        "next schedule poll).",
+                        exc,
                     )
 
             # Hand off to the freshly spawned watchdog and exit ours.
@@ -927,7 +963,8 @@ class FfmpegLineinCapture:
             logger.info(
                 "FfmpegLineinCapture stop (PID=%d) — %s",
                 proc.pid,
-                "terminating feeder for EOF shutdown" if via_feeder
+                "terminating feeder for EOF shutdown"
+                if via_feeder
                 else "sending 'q' for clean exit",
             )
             try:
@@ -945,15 +982,16 @@ class FfmpegLineinCapture:
                     logger.warning(
                         "FfmpegLineinCapture PID=%d did not exit on %s "
                         "within 3 s; falling back to terminate()",
-                        proc.pid, "EOF" if via_feeder else "'q'",
+                        proc.pid,
+                        "EOF" if via_feeder else "'q'",
                     )
                     try:
                         proc.terminate()
                         proc.wait(timeout=5)
                     except subprocess.TimeoutExpired:
                         logger.warning(
-                            "FfmpegLineinCapture PID=%d did not exit on "
-                            "terminate(); kill()", proc.pid,
+                            "FfmpegLineinCapture PID=%d did not exit on terminate(); kill()",
+                            proc.pid,
                         )
                         proc.kill()
                         proc.wait(timeout=3)
@@ -965,7 +1003,8 @@ class FfmpegLineinCapture:
             tail = self._read_stderr_tail(1000)
             logger.warning(
                 "FfmpegLineinCapture exited with code %d.  Last stderr:\n%s",
-                rc, tail,
+                rc,
+                tail,
             )
 
         # ffmpeg may have died on its own while the feeder lives on —
@@ -985,9 +1024,9 @@ class FfmpegLineinCapture:
                 proc.stdin.close()
         except (BrokenPipeError, OSError) as exc:
             logger.debug(
-                "FfmpegLineinCapture PID=%d stdin write failed "
-                "(already exiting?): %s",
-                proc.pid, exc,
+                "FfmpegLineinCapture PID=%d stdin write failed (already exiting?): %s",
+                proc.pid,
+                exc,
             )
 
     @property

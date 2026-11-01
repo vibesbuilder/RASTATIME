@@ -1,13 +1,14 @@
 """
 RASTATIME 2026-09-05 — PlayoutScheduler nightly quiet-window restart.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, time as dtime, timedelta
+from datetime import datetime, timedelta
+from datetime import time as dtime
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
@@ -18,9 +19,14 @@ from rastatime_playout.player.events import EventKind, WebStreamEvent
 def _webstream_event(start_in_seconds: float) -> WebStreamEvent:
     start = datetime.utcnow() + timedelta(seconds=start_in_seconds)
     return WebStreamEvent(
-        type=EventKind.WEB_STREAM_OUTPUT_START, start=start,
-        end=start + timedelta(minutes=5), row_id=1, id=1,
-        uri="http://example/stream", show_name="x", input_gain_db=None,
+        type=EventKind.WEB_STREAM_OUTPUT_START,
+        start=start,
+        end=start + timedelta(minutes=5),
+        row_id=1,
+        id=1,
+        uri="http://example/stream",
+        show_name="x",
+        input_gain_db=None,
     )
 
 
@@ -36,7 +42,8 @@ def sched(monkeypatch):
     # the real process - no process here keeps the daily-window semantics
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
         render_liquidsoap=render,
         nightly_restart=NightlyRestartPolicy(start=dtime(4, 0), quiet_margin_seconds=300),
     )
@@ -69,7 +76,7 @@ def test_postponed_while_something_is_on_air(sched):
     sched._playing_key = "2026-09-06-04-00-00_0"
     assert not sched._maybe_nightly_restart(now_local=IN_WINDOW)
     sched._test["restart"].assert_not_called()
-    assert sched._nightly_restart_done is None      # still due later in the window
+    assert sched._nightly_restart_done is None  # still due later in the window
 
 
 def test_postponed_while_pre_warmed(sched):
@@ -128,9 +135,10 @@ def test_after_restart_gives_up_after_attempts(sched):
 
 # RASTATIME 2026-09-06 - initial state with retries (startup race)
 
+
 def test_constructor_success_makes_ensure_a_noop(sched):
     engine = sched._test["engine"]
-    assert sched._initial_state_ok is True          # MagicMock recording_stop succeeded
+    assert sched._initial_state_ok is True  # MagicMock recording_stop succeeded
     calls = engine.recording_stop.call_count
     assert sched.ensure_liquidsoap_initial_state(background=False) is True
     assert engine.recording_stop.call_count == calls
@@ -165,6 +173,7 @@ def test_ensure_gives_up_after_the_timeout(monkeypatch):
 
 def test_ensure_is_none_when_the_engine_has_no_recording_stop():
     from rastatime_playout.engine.interface import PlayoutEngine
+
     engine = MagicMock(spec=PlayoutEngine)
     engine.get_state.return_value = PlayoutState.STOPPED
     s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock())
@@ -177,7 +186,8 @@ def test_disabled_policy_is_a_noop(monkeypatch):
     restart = MagicMock(return_value=True)
     monkeypatch.setattr(ps, "restart_liquidsoap_service", restart)
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
         nightly_restart=NightlyRestartPolicy(start=None),
     )
     assert not s._maybe_nightly_restart(now_local=IN_WINDOW)

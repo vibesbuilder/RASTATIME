@@ -2,7 +2,7 @@ import logging
 import os
 from enum import Enum
 from queue import Queue
-from typing import Any, Dict, Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseModel
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class Step(Protocol):
     @staticmethod
-    def __call__(filename: str, metadata: Dict[str, Any]): ...
+    def __call__(filename: str, metadata: dict[str, Any]): ...
 
 
 class PipelineStatus(int, Enum):
@@ -97,7 +97,9 @@ class Pipeline:
             # converted file's source.
             source_path = audio_file_path
             audio_file_path, original_filename, metadata = repair_container(
-                audio_file_path, original_filename, metadata,
+                audio_file_path,
+                original_filename,
+                metadata,
             )
             repaired_path = audio_file_path if audio_file_path != source_path else None
             metadata = analyze_metadata(audio_file_path, metadata)
@@ -140,7 +142,9 @@ class Pipeline:
                 # kept - deleted only now that its conversion is filed.
                 remove_original(source_path)
                 if repaired_path and repaired_path != audio_file_path:
-                    discard_converted(repaired_path)  # the intermediate of a repaired + converted file
+                    discard_converted(
+                        repaired_path
+                    )  # the intermediate of a repaired + converted file
 
             metadata["import_status"] = PipelineStatus.SUCCEED
 
@@ -175,10 +179,14 @@ class Pipeline:
             tail = " ".join(str(err or "").strip().splitlines()[-2:])
             return f"{tool} could not read the file: {tail}".strip()
         text = str(exception).strip() or exception.__class__.__name__
-        return f"{exception.__class__.__name__}: {text}" if not text.startswith(exception.__class__.__name__) else text
+        return (
+            f"{exception.__class__.__name__}: {text}"
+            if not text.startswith(exception.__class__.__name__)
+            else text
+        )
 
     @staticmethod
-    def failure(reason: str) -> Dict[str, Any]:
+    def failure(reason: str) -> dict[str, Any]:
         reason = " ".join(str(reason).split())[: Pipeline.REASON_MAX]
         return {"import_status": PipelineStatus.FAILED, "comments": reason}
 
@@ -190,7 +198,7 @@ class Pipeline:
         The result carries just the three loudness keys, so the callback
         PUT touches nothing else in cc_files.
         """
-        metadata: Dict[str, Any] = {}
+        metadata: dict[str, Any] = {}
         try:
             metadata = analyze_loudness(audio_file_path, metadata)
             queue.put(metadata)

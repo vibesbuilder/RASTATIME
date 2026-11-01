@@ -60,7 +60,8 @@ import argparse
 import array
 import logging
 import sys
-from typing import List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +76,7 @@ HOST_API_SUBSTRING = "MME"
 DEFAULT_BLOCKSIZE = 4800
 
 
-def extract_frames(
-    raw: bytes, n_channels: int, mapping: Sequence[int]
-) -> bytes:
+def extract_frames(raw: bytes, n_channels: int, mapping: Sequence[int]) -> bytes:
     """
     Extract ``mapping`` from interleaved s16le frames, return s16le stereo.
 
@@ -94,9 +93,7 @@ def extract_frames(
         raise ValueError(f"mapping must have 1 or 2 entries, got {mapping!r}")
     for ch in mapping:
         if not 0 <= ch < n_channels:
-            raise ValueError(
-                f"mapping channel {ch} out of range for {n_channels}-channel input"
-            )
+            raise ValueError(f"mapping channel {ch} out of range for {n_channels}-channel input")
 
     samples = array.array("h")
     samples.frombytes(raw[: len(raw) - (len(raw) % (2 * n_channels))])
@@ -113,9 +110,7 @@ def extract_frames(
     return out.tobytes()
 
 
-def find_input_device(
-    device_name: str, min_channels: int, sd
-) -> Optional[Tuple[int, int, str]]:
+def find_input_device(device_name: str, min_channels: int, sd) -> Optional[tuple[int, int, str]]:
     """
     Locate the MME input device for ``device_name``.
 
@@ -131,7 +126,7 @@ def find_input_device(
     ``None``.
     """
     apis = sd.query_hostapis()
-    rows: List[Tuple[int, int, str]] = []
+    rows: list[tuple[int, int, str]] = []
     for idx, dev in enumerate(sd.query_devices()):
         if HOST_API_SUBSTRING not in apis[dev["hostapi"]]["name"]:
             continue
@@ -159,7 +154,7 @@ def find_input_device(
     return None
 
 
-def parse_mapping(text: str) -> Tuple[int, ...]:
+def parse_mapping(text: str) -> tuple[int, ...]:
     """Parse ``"4,5"`` into ``(4, 5)``; raises ValueError on junk."""
     try:
         mapping = tuple(int(tok.strip()) for tok in text.split(",") if tok.strip())
@@ -236,9 +231,7 @@ def run(
     stream = None
     n_channels = 0
     tried = []
-    for (dev_idx, dev_channels), label in _open_candidates(
-        device_name, mapping, rate, sd
-    ):
+    for (dev_idx, dev_channels), label in _open_candidates(device_name, mapping, rate, sd):
         try:
             stream = sd.RawInputStream(
                 samplerate=rate,
@@ -268,8 +261,7 @@ def run(
             )
             return 3
         print(
-            "linein_feeder: cannot open capture; tried -> "
-            + " | ".join(tried),
+            "linein_feeder: cannot open capture; tried -> " + " | ".join(tried),
             file=sys.stderr,
         )
         return 4

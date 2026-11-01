@@ -2,7 +2,7 @@ import logging
 from datetime import timedelta
 from math import isclose
 from subprocess import CalledProcessError
-from typing import Any, Dict
+from typing import Any
 
 from ._ffmpeg import compute_silences, probe_duration
 
@@ -18,7 +18,7 @@ class UnreadableFileError(RuntimeError):
     """
 
 
-def analyze_duration(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_duration(filepath: str, metadata: dict[str, Any]) -> dict[str, Any]:
     """
     Extracts the file duration using ffmpeg.
     """
@@ -62,7 +62,7 @@ def analyze_duration(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     return metadata
 
 
-def analyze_cuepoint(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_cuepoint(filepath: str, metadata: dict[str, Any]) -> dict[str, Any]:
     """
     Extracts the cuein and cueout times using ffmpeg.
 
@@ -82,9 +82,7 @@ def analyze_cuepoint(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         for silence in silences:
             # Sanity check
             if silence[0] >= silence[1]:
-                raise ValueError(
-                    f"silence starts ({silence[0]}) after ending ({silence[1]})"
-                )
+                raise ValueError(f"silence starts ({silence[0]}) after ending ({silence[1]})")
 
             # Is this really the first silence ?
             if isclose(

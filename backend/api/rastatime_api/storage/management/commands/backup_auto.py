@@ -11,6 +11,7 @@ is on - and afterwards prunes ZIPs older than the configured retention
 
 Exit codes: 0 = backed up or nothing due, 1 = the backup failed.
 """
+
 from __future__ import annotations
 
 import time
@@ -25,11 +26,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--force", action="store_true",
+            "--force",
+            action="store_true",
             help="Run even when not due (still requires enabled + folder).",
         )
         parser.add_argument(
-            "--timeout", type=int, default=7200,
+            "--timeout",
+            type=int,
+            default=7200,
             help="Seconds to wait for the job (default 7200; the first media mirror copies everything).",
         )
 
@@ -60,8 +64,10 @@ class Command(BaseCommand):
             raise SystemExit(1)
         line = f"backup done: {state.get('file')} ({state.get('bytes')} bytes)"
         if state.get("media_synced_at"):
-            line += (f", media mirror synced ({state.get('media_done_files')} files, "
-                     f"{state.get('media_done_bytes')} bytes)")
+            line += (
+                f", media mirror synced ({state.get('media_done_files')} files, "
+                f"{state.get('media_done_bytes')} bytes)"
+            )
         self.stdout.write(line)
         deleted = storage_backup.prune_old_backups()
         if deleted:

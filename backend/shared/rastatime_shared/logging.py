@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ def setup_logger(
     filepath: Optional[Path] = None,
     serialize: bool = False,  # pylint: disable=unused-argument
     rotate: bool = True,
-) -> Tuple[str, Optional[Path]]:
+) -> tuple[str, Optional[Path]]:
     """
     Configure the logger and return the log level and log filepath.
     """
@@ -23,7 +23,7 @@ def setup_logger(
     formatter = logging.Formatter(
         "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)s - %(message)s"
     )
-    handlers: List[logging.Handler] = [logging.StreamHandler()]
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
 
     if filepath is not None:
         if rotate:

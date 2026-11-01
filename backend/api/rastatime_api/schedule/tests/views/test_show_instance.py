@@ -3,7 +3,7 @@ RASTATIME 2026-10-28 - /api/v2/show-instances filters: the playout's
 preflight scan lists the instances of the next 48 h (autoplaylist_missing).
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from django.conf import settings
 from model_bakery import baker
@@ -20,7 +20,7 @@ class TestShowInstanceFilters(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Api-Key {self.token}")
 
     def test_starts_range_and_modified_flag(self):
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         inside = baker.make(
             "schedule.ShowInstance",
             starts_at=now + timedelta(hours=2),
@@ -55,7 +55,7 @@ class TestShowInstanceFilters(APITestCase):
         self.assertEqual([row["id"] for row in response.json()], [inside.id])
 
     def test_without_filters_lists_everything(self):
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         for days in (-1, 1, 5):
             baker.make(
                 "schedule.ShowInstance",

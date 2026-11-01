@@ -8,7 +8,6 @@ import time
 import urllib.request
 
 import pytest
-
 import rastatime_playout.source_switcher as ss
 
 
@@ -111,7 +110,7 @@ def test_handler_answers_200_before_the_refresh_finishes(handler, monkeypatch):
     h._handle_reload_schedule()
     assert sent == [(200, "ok")]
     assert fn.entered.wait(5.0)
-    assert fn.runs == 1          # still running, the reply is already out
+    assert fn.runs == 1  # still running, the reply is already out
     fn.gate.set()
     _wait_for(lambda: not runner._running)
 
@@ -135,14 +134,18 @@ def test_listener_end_to_end_fast_reply_and_coalesced_refreshes(monkeypatch):
 
     server = ss.start_listener(
         ss.SourceSwitcher(switch_callback=lambda _s: None),
-        scheduler=Sched(), host="127.0.0.1", port=0,
+        scheduler=Sched(),
+        host="127.0.0.1",
+        port=0,
     )
     port = server.server_address[1]
     try:
         for _ in range(3):
             t0 = time.monotonic()
             req = urllib.request.Request(
-                f"http://127.0.0.1:{port}/reload-schedule", data=b"", method="POST",
+                f"http://127.0.0.1:{port}/reload-schedule",
+                data=b"",
+                method="POST",
             )
             with urllib.request.urlopen(req, timeout=5) as resp:
                 assert resp.status == 200

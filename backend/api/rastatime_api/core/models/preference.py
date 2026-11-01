@@ -87,9 +87,7 @@ class Preference(models.Model):
         entries = dict(cls.site.values_list("key", "value"))
         return StreamPreferences(
             input_fade_transition=float(entries.get("default_transition_fade") or 0.0),
-            message_format=MessageFormatKind(
-                int(entries.get("stream_label_format") or 0)
-            ),
+            message_format=MessageFormatKind(int(entries.get("stream_label_format") or 0)),
             message_offline=entries.get("off_air_meta") or "Offline",
             replay_gain_enabled=entries.get("enable_replay_gain") == "1",
             replay_gain_offset=float(entries.get("replay_gain_modifier") or 0.0),

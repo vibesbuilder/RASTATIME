@@ -3,12 +3,12 @@ RASTATIME 2026-09-07 - detect a LIQUIDSOAP restart under a running
 PLAYOUT (uptime drop) and re-apply the initial state so the fresh
 instance does not keep recording the _uninitialized.mp3 sentinel.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
@@ -32,17 +32,17 @@ def sched(monkeypatch):
 
 def test_uptime_drop_triggers_reinit(sched):
     s, engine = sched
-    assert s._last_liquidsoap_uptime == 1000.0        # seeded by the constructor
-    engine.liquidsoap_uptime_seconds.return_value = 12.0   # fresh instance
+    assert s._last_liquidsoap_uptime == 1000.0  # seeded by the constructor
+    engine.liquidsoap_uptime_seconds.return_value = 12.0  # fresh instance
     s._maybe_reinit_after_liquidsoap_restart()
     engine.recording_stop.assert_called_once()
     assert s.reset_gates.call_count == 1
-    assert s._last_liquidsoap_uptime == 12.0          # re-seeded to the new instance
+    assert s._last_liquidsoap_uptime == 12.0  # re-seeded to the new instance
 
 
 def test_monotonic_uptime_is_a_noop(sched):
     s, engine = sched
-    engine.liquidsoap_uptime_seconds.return_value = 1120.0   # 120 s later, same instance
+    engine.liquidsoap_uptime_seconds.return_value = 1120.0  # 120 s later, same instance
     s._maybe_reinit_after_liquidsoap_restart()
     engine.recording_stop.assert_not_called()
     assert s._last_liquidsoap_uptime == 1120.0
@@ -50,7 +50,7 @@ def test_monotonic_uptime_is_a_noop(sched):
 
 def test_small_jitter_within_margin_is_not_a_restart(sched):
     s, engine = sched
-    engine.liquidsoap_uptime_seconds.return_value = 997.0    # 3 s < 5 s margin
+    engine.liquidsoap_uptime_seconds.return_value = 997.0  # 3 s < 5 s margin
     s._maybe_reinit_after_liquidsoap_restart()
     engine.recording_stop.assert_not_called()
 
@@ -60,7 +60,7 @@ def test_unreachable_uptime_is_a_noop(sched):
     engine.liquidsoap_uptime_seconds.return_value = None
     s._maybe_reinit_after_liquidsoap_restart()
     engine.recording_stop.assert_not_called()
-    assert s._last_liquidsoap_uptime == 1000.0        # baseline unchanged
+    assert s._last_liquidsoap_uptime == 1000.0  # baseline unchanged
 
 
 def test_failed_reinit_keeps_old_baseline_for_retry(sched):

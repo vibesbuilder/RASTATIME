@@ -29,7 +29,6 @@ from __future__ import annotations
 import logging
 import subprocess
 from pathlib import Path
-from typing import Dict, Tuple
 
 from rastatime_shared.files import compute_md5
 
@@ -47,13 +46,15 @@ def _riff_offset(head: bytes) -> int:
         return -1
     pos = head.find(b"RIFF", 3)
     while pos >= 0:
-        if head[pos + 8:pos + 12] == RIFF_WAVE:
+        if head[pos + 8 : pos + 12] == RIFF_WAVE:
             return pos
         pos = head.find(b"RIFF", pos + 4)
     return -1
 
 
-def repair_container(audio_file_path: str, original_filename: str, metadata: Dict) -> Tuple[str, str, Dict]:
+def repair_container(
+    audio_file_path: str, original_filename: str, metadata: dict
+) -> tuple[str, str, dict]:
     """
     Pipeline step.  Returns (audio_file_path, original_filename, metadata):
     unchanged inputs when there is nothing to repair, else the repaired
@@ -82,7 +83,9 @@ def repair_container(audio_file_path: str, original_filename: str, metadata: Dic
                 out.write(chunk)
         probe = ffprobe_json(stripped, timeout=60.0)
     except (OSError, subprocess.SubprocessError, ValueError) as exception:
-        logger.warning("repair_container: stripped copy of %s is not readable either: %s", src.name, exception)
+        logger.warning(
+            "repair_container: stripped copy of %s is not readable either: %s", src.name, exception
+        )
         stripped.unlink(missing_ok=True)
         return audio_file_path, original_filename, metadata
 
@@ -91,11 +94,37 @@ def repair_container(audio_file_path: str, original_filename: str, metadata: Dic
     stem = Path(original_filename).stem
     if codec == "mp3":
         target = src.with_name(src.stem + ".repaired.mp3")
-        cmd = [FFMPEG, "-hide_banner", "-nostats", "-loglevel", "error", "-y", "-i", str(stripped), "-vn", "-c:a", "copy", "-f", "mp3", str(target)]
-        completed = subprocess.run(cmd, check=False, capture_output=True, stdin=subprocess.DEVNULL, timeout=600.0, creationflags=low_priority_creationflags())
+        cmd = [
+            FFMPEG,
+            "-hide_banner",
+            "-nostats",
+            "-loglevel",
+            "error",
+            "-y",
+            "-i",
+            str(stripped),
+            "-vn",
+            "-c:a",
+            "copy",
+            "-f",
+            "mp3",
+            str(target),
+        ]
+        completed = subprocess.run(
+            cmd,
+            check=False,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            timeout=600.0,
+            creationflags=low_priority_creationflags(),
+        )
         stripped.unlink(missing_ok=True)
         if completed.returncode != 0 or not target.is_file():
-            logger.warning("repair_container: MP3 extraction of %s failed: %s", src.name, completed.stderr.decode("utf-8", "replace")[-200:])
+            logger.warning(
+                "repair_container: MP3 extraction of %s failed: %s",
+                src.name,
+                completed.stderr.decode("utf-8", "replace")[-200:],
+            )
             target.unlink(missing_ok=True)
             return audio_file_path, original_filename, metadata
         new_name = stem + ".mp3"
@@ -106,6 +135,9 @@ def repair_container(audio_file_path: str, original_filename: str, metadata: Dic
     metadata.setdefault("source_md5", compute_md5(src))
     logger.info(
         "repair_container: %s had an ID3 block in front of its RIFF header (%d bytes, payload %s) - importing the repaired copy %s",
-        original_filename, offset, codec or "?", target.name,
+        original_filename,
+        offset,
+        codec or "?",
+        target.name,
     )
     return str(target), new_name, metadata

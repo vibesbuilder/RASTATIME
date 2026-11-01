@@ -4,6 +4,7 @@ the process probe reports each instance's script and callers judge only
 the main instance (rastatime.liq) instead of "the oldest process" (which
 had silently become the standby).
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -17,6 +18,7 @@ STANDBY = lh.ProcessInfo(4348, 78.0, 12954.0, "C:\\Tools\\liquidsoap\\standby.li
 def _runner(stdout):
     def run(argv, **kwargs):
         return SimpleNamespace(returncode=0, stderr="", stdout=stdout)
+
     return run
 
 
@@ -24,14 +26,17 @@ def test_query_parses_the_script_column_including_paths_with_spaces(monkeypatch)
     # the query is Windows-only by design; the parser is exercised with an
     # injected runner, so the platform guard is lifted for the test (CI on Linux)
     monkeypatch.setattr(lh.sys, "platform", "win32")
-    infos = lh.liquidsoap_process_info(runner=_runner(
-        "4348 78 12954 C:\\Tools\\liquidsoap\\standby.liq\n"
-        "14516 125 5313 C:\\Tools\\liquidsoap\\rastatime.liq\n"
-        "777 50 10 C:\\Program Files\\x\\replica.liq\n"
-        "garbage line\n"
-    ))
+    infos = lh.liquidsoap_process_info(
+        runner=_runner(
+            "4348 78 12954 C:\\Tools\\liquidsoap\\standby.liq\n"
+            "14516 125 5313 C:\\Tools\\liquidsoap\\rastatime.liq\n"
+            "777 50 10 C:\\Program Files\\x\\replica.liq\n"
+            "garbage line\n"
+        )
+    )
     assert infos == [
-        STANDBY, MAIN,
+        STANDBY,
+        MAIN,
         lh.ProcessInfo(777, 50.0, 10.0, "C:\\Program Files\\x\\replica.liq"),
     ]
 

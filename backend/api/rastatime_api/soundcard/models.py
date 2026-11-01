@@ -47,10 +47,7 @@ class SoundcardSettings(models.Model):
         max_length=64,
         blank=True,
         default="",
-        help_text=(
-            "Stable ID of the primary audio output device. "
-            "Empty means 'use OS default'."
-        ),
+        help_text=("Stable ID of the primary audio output device. Empty means 'use OS default'."),
     )
     # RASTATIME 2026-05-14 — B.4 #4 (output side): friendly-name
     # fallback for when ``main_output_id`` no longer resolves after a
@@ -110,7 +107,7 @@ class SoundcardSettings(models.Model):
     # ------------------------------------------------------------------
 
     @classmethod
-    def get_settings(cls) -> "SoundcardSettings":
+    def get_settings(cls) -> SoundcardSettings:
         """
         Return the single settings row, creating it with defaults if absent.
 
@@ -135,9 +132,10 @@ class SoundcardSettings(models.Model):
             ``None``; the ``line_in_device_ids`` JSON list becomes a
             ``tuple``.
         """
-        from audio.soundcard.settings_model import (   # lazy — audio on sys.path
+        from audio.soundcard.settings_model import (  # lazy — audio on sys.path
             SoundcardSettings as DomainSettings,
         )
+
         return DomainSettings(
             main_output_id=self.main_output_id or None,
             preview_output_id=self.preview_output_id or None,
@@ -158,8 +156,8 @@ class SoundcardSettings(models.Model):
             :class:`~audio.soundcard.settings_model.SoundcardSettings`
             instance whose values to apply.
         """
-        self.main_output_id      = settings.main_output_id    or ""
-        self.preview_output_id   = settings.preview_output_id or ""
-        self.main_output_name    = settings.main_output_name    or ""
+        self.main_output_id = settings.main_output_id or ""
+        self.preview_output_id = settings.preview_output_id or ""
+        self.main_output_name = settings.main_output_name or ""
         self.preview_output_name = settings.preview_output_name or ""
-        self.line_in_device_ids  = list(settings.line_in_device_ids)
+        self.line_in_device_ids = list(settings.line_in_device_ids)

@@ -107,8 +107,7 @@ class LineIn(models.Model):
         blank=True,
         null=True,
         help_text=(
-            "Default duration when this line-in is added to a show. "
-            "NULL falls back to 30 minutes."
+            "Default duration when this line-in is added to a show. NULL falls back to 30 minutes."
         ),
     )
     # RASTATIME 2026-10-02 - per-line-in static input gain (dB), the
@@ -116,10 +115,7 @@ class LineIn(models.Model):
     # on air as a linear amplify factor (var.set linein.gain).
     input_gain_db = models.FloatField(
         default=0.0,
-        help_text=(
-            "Static input gain in dB applied on air (-20 to +20, "
-            "0 = unchanged)."
-        ),
+        help_text=("Static input gain in dB applied on air (-20 to +20, 0 = unchanged)."),
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -154,13 +150,12 @@ class LineIn(models.Model):
         audio.linein.domain.LineIn
             Immutable domain snapshot.
         """
-        from audio.linein.domain import LineIn as DomainLineIn   # lazy
+        from audio.linein.domain import LineIn as DomainLineIn  # lazy
+
         # ``length`` is a ``DurationField`` (timedelta); the domain
         # model carries an integer seconds value so the dict-serialised
         # form is JSON-clean.  NULL in DB → None in domain.
-        length_seconds = (
-            int(self.length.total_seconds()) if self.length is not None else None
-        )
+        length_seconds = int(self.length.total_seconds()) if self.length is not None else None
         return DomainLineIn(
             id=self.linein_id,
             name=self.name,
@@ -187,22 +182,22 @@ class LineIn(models.Model):
             to apply.
         """
         from datetime import timedelta  # lazy — keep module import surface small
-        self.linein_id      = linein.id
-        self.name           = linein.name
-        self.device_id      = linein.device_id
-        self.device_name    = linein.device_name
+
+        self.linein_id = linein.id
+        self.name = linein.name
+        self.device_id = linein.device_id
+        self.device_name = linein.device_name
         self.channel_mapping = list(linein.channel_mapping)
-        self.enabled        = linein.enabled
-        self.description    = linein.description
-        self.priority       = linein.priority
-        self.length         = (
-            timedelta(seconds=linein.length_seconds)
-            if linein.length_seconds is not None else None
+        self.enabled = linein.enabled
+        self.description = linein.description
+        self.priority = linein.priority
+        self.length = (
+            timedelta(seconds=linein.length_seconds) if linein.length_seconds is not None else None
         )
-        self.input_gain_db  = linein.input_gain_db
+        self.input_gain_db = linein.input_gain_db
 
     @classmethod
-    def create_from_domain(cls, linein) -> "LineIn":
+    def create_from_domain(cls, linein) -> LineIn:
         """
         Create and save a new ORM row from a domain :class:`~audio.linein.domain.LineIn`.
 

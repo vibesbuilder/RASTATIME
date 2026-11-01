@@ -25,9 +25,8 @@ from rastatime_api.podcasts.download import download_episode
 # that look at the hook replace the stub with their own recorder.
 @pytest.fixture(autouse=True)
 def _stub_loudness_queue(monkeypatch):
-    monkeypatch.setattr(
-        download_mod, "queue_loudness_measurement", lambda file_id, path: True
-    )
+    monkeypatch.setattr(download_mod, "queue_loudness_measurement", lambda file_id, path: True)
+
 
 AUDIO_BYTES = b"ID3" + b"\x00" * 64 + b"fake-mp3-payload" * 32
 
@@ -66,12 +65,8 @@ def _spy_tempfile(monkeypatch):
     return calls
 
 
-def test_download_writes_temp_file_inside_import_dir(
-    db, monkeypatch, tmp_path, spy_tempfile
-):
-    monkeypatch.setattr(
-        download_mod.requests, "get", lambda *a, **kw: FakeResponse()
-    )
+def test_download_writes_temp_file_inside_import_dir(db, monkeypatch, tmp_path, spy_tempfile):
+    monkeypatch.setattr(download_mod.requests, "get", lambda *a, **kw: FakeResponse())
 
     result = download_episode(
         episode_id=99,
@@ -146,9 +141,7 @@ def test_podcast_folder_is_windows_safe():
 # RASTATIME 2026-10-24 - the download queues the analyzer's loudness-only
 # measurement for the new file; a broker failure never fails the download.
 def test_download_queues_loudness_measurement(db, monkeypatch, tmp_path):
-    monkeypatch.setattr(
-        download_mod.requests, "get", lambda *a, **kw: FakeResponse()
-    )
+    monkeypatch.setattr(download_mod.requests, "get", lambda *a, **kw: FakeResponse())
     calls = []
     monkeypatch.setattr(
         download_mod,
@@ -177,12 +170,8 @@ def test_download_queues_loudness_measurement(db, monkeypatch, tmp_path):
 
 
 def test_download_survives_queue_failure(db, monkeypatch, tmp_path):
-    monkeypatch.setattr(
-        download_mod.requests, "get", lambda *a, **kw: FakeResponse()
-    )
-    monkeypatch.setattr(
-        download_mod, "queue_loudness_measurement", lambda file_id, path: False
-    )
+    monkeypatch.setattr(download_mod.requests, "get", lambda *a, **kw: FakeResponse())
+    monkeypatch.setattr(download_mod, "queue_loudness_measurement", lambda file_id, path: False)
 
     result = download_episode(
         episode_id=101,
@@ -240,8 +229,9 @@ def test_queue_loudness_measurement_publishes_the_analyzer_message(monkeypatch):
 
 
 def test_queue_loudness_measurement_reports_broker_failure(monkeypatch):
-    from rastatime_api.podcasts import loudness_queue
     import pika
+
+    from rastatime_api.podcasts import loudness_queue
 
     def boom(params):
         raise ConnectionError("no broker")

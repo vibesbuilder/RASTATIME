@@ -17,7 +17,7 @@ from datetime import timedelta
 from email.message import EmailMessage
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from urllib.parse import urlsplit
 
 import mutagen
@@ -87,9 +87,7 @@ def _podcast_folder(podcast_name: str) -> str:
     spaces are stripped (NTFS refuses them), length capped.  An empty
     or unusable name falls back to "Podcast".
     """
-    cleaned = "".join(
-        " " if (c in r'\/:*?"<>|' or ord(c) < 32) else c for c in podcast_name or ""
-    )
+    cleaned = "".join(" " if (c in r'\/:*?"<>|' or ord(c) < 32) else c for c in podcast_name or "")
     cleaned = " ".join(cleaned.split())[:80].rstrip(". ")
     return cleaned or "Podcast"
 
@@ -120,7 +118,7 @@ def download_episode(
     auto_expiry_enabled: bool = False,
     auto_expiry_days: Optional[int] = None,
     default_track_type_id: Optional[int] = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Download a podcast episode and import it into the media library.
 
@@ -167,9 +165,10 @@ def download_episode(
     # (e.g. in standalone tests).  The import is resolved at call-time once
     # Django is ready.
     from django.utils import timezone as dj_timezone
+
     from rastatime_api.storage.models import File  # maps to cc_files
 
-    result: Dict[str, Any] = {"episodeid": episode_id}
+    result: dict[str, Any] = {"episodeid": episode_id}
     tmp_path: Optional[Path] = None
 
     try:
@@ -205,9 +204,7 @@ def download_episode(
                         fp.write(chunk)
                     tmp_path = Path(fp.name)
         except RequestException as exc:
-            raise PodcastDownloadError(
-                f"download failed for episode {episode_id}: {exc}"
-            ) from exc
+            raise PodcastDownloadError(f"download failed for episode {episode_id}: {exc}") from exc
 
         # ------------------------------------------------------------------
         # Step 2: Write metadata tags (failures are non-fatal — the file
@@ -293,15 +290,13 @@ def download_episode(
         # compute the expiry timestamp here.  This overrides any ID3
         # 'Expiry' tag the publisher embedded (precedence decision B).
         expires_at = None
-        if (
-            auto_expiry_enabled
-            and auto_expiry_days is not None
-            and auto_expiry_days > 0
-        ):
+        if auto_expiry_enabled and auto_expiry_days is not None and auto_expiry_days > 0:
             expires_at = now + timedelta(days=int(auto_expiry_days))
             logger.info(
                 "podcast episode %d: auto-expiry %d days -> %s",
-                episode_id, auto_expiry_days, expires_at.isoformat(),
+                episode_id,
+                auto_expiry_days,
+                expires_at.isoformat(),
             )
 
         # RASTATIME 2026-05-17 — Library DataTable computes a track's
@@ -363,9 +358,7 @@ def download_episode(
         # RASTATIME 2026-10-24 - the analyzer never saw this file: queue its
         # EBU R128 measurement so the playout's per-track gain is real, not
         # the ReplayGain-shifted fallback (109 of 134 episodes had none).
-        result["loudness_queued"] = queue_loudness_measurement(
-            db_file.id, str(dest_path)
-        )
+        result["loudness_queued"] = queue_loudness_measurement(db_file.id, str(dest_path))
         logger.info(
             "podcast episode %d imported successfully: file_id=%d path=%s",
             episode_id,

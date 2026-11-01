@@ -95,13 +95,11 @@ class BackgroundRunner:
     """
 
     def __init__(self, registry: Optional[JobRegistry] = None) -> None:
-        self._registry: JobRegistry = (
-            registry if registry is not None else default_registry
-        )
-        self._stop_event  = threading.Event()
-        self._lock        = threading.Lock()
+        self._registry: JobRegistry = registry if registry is not None else default_registry
+        self._stop_event = threading.Event()
+        self._lock = threading.Lock()
         self._timers: dict[str, threading.Timer] = {}
-        self._running     = False
+        self._running = False
 
     # ------------------------------------------------------------------
     # Public API
@@ -125,8 +123,7 @@ class BackgroundRunner:
         """
         if self._running:
             raise RuntimeError(
-                "BackgroundRunner.start() called on an already-running instance. "
-                "Call stop() first."
+                "BackgroundRunner.start() called on an already-running instance. Call stop() first."
             )
 
         self._stop_event.clear()
@@ -149,7 +146,8 @@ class BackgroundRunner:
             self._schedule_interval(job)
             logger.debug(
                 "INTERVAL job '%s' scheduled (every %.1fs).",
-                job.name, job.interval_seconds,
+                job.name,
+                job.interval_seconds,
             )
 
         logger.info(
@@ -211,9 +209,7 @@ class BackgroundRunner:
             result = job.run()
             self._log_result(result)
         except Exception:  # noqa: BLE001
-            logger.exception(
-                "Unhandled exception in STARTUP job '%s' — job skipped.", job.name
-            )
+            logger.exception("Unhandled exception in STARTUP job '%s' — job skipped.", job.name)
 
     # ------------------------------------------------------------------
     # Internal — INTERVAL scheduling
@@ -232,7 +228,8 @@ class BackgroundRunner:
         if interval is None or interval <= 0:
             logger.error(
                 "INTERVAL job '%s' has invalid interval_seconds=%r — not scheduled.",
-                job.name, interval,
+                job.name,
+                interval,
             )
             return
 
@@ -242,7 +239,7 @@ class BackgroundRunner:
             args=(job,),
         )
         timer.daemon = True
-        timer.name   = f"rastatime-worker-interval-{job.name}"
+        timer.name = f"rastatime-worker-interval-{job.name}"
 
         with self._lock:
             self._timers[job.name] = timer
@@ -287,7 +284,8 @@ class BackgroundRunner:
         if result.success:
             logger.info(
                 "Job '%s' succeeded (%.3fs).",
-                result.job_name, result.duration_seconds,
+                result.job_name,
+                result.duration_seconds,
             )
         else:
             logger.warning(

@@ -13,7 +13,6 @@ class ReadScheduleSerializer(serializers.ModelSerializer):
 
 
 class WriteScheduleSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Schedule
         fields = "__all__"

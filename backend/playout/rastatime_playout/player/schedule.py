@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 from operator import itemgetter
-from typing import Dict, Optional
+from typing import Optional
 
 from rastatime_api_client.v2 import ApiClient
 from rastatime_shared.datetime import time_in_milliseconds, time_in_seconds
@@ -17,6 +17,7 @@ except ImportError:
     @dataclass
     class StreamPreferences:  # type: ignore[no-redef]
         """Minimal StreamPreferences stub for VLC-only (Liquidsoap-free) mode."""
+
         input_fade_transition: float = 0.0
         message_format: int = 0
         message_offline: str = "Offline"
@@ -25,6 +26,7 @@ except ImportError:
         loudness_mode: Optional[str] = None
         loudness_target_lufs: float = -23.0
         loudness_true_peak_dbtp: float = -1.0
+
 
 from .events import (
     ActionEvent,
@@ -35,10 +37,9 @@ from .events import (
     LineinEvent,
     ShowRecordEvent,
     WebStreamEvent,
-    datetime_to_event_key,
-    make_event_key,
     event_isoparse,
     event_isoparse_exact,
+    make_event_key,
 )
 
 
@@ -79,14 +80,14 @@ def get_schedule(api_client: ApiClient) -> Events:
         }
     ).json()
 
-    events: Dict[str, AnyEvent] = {}
+    events: dict[str, AnyEvent] = {}
     # RASTATIME 2026-10-22 - one request per distinct show instance / show
     # per fetch.  Every row asked for its instance and show again: 30 rows of
     # 5 instances made 60 such requests (~40 ms each, ~2.3 s of a 3.6 s
     # fetch).  Each row gets its own shallow copy because live shows rewrite
     # starts_at / ends_at of the instance below.
-    show_instances: Dict[int, dict] = {}
-    shows: Dict[int, dict] = {}
+    show_instances: dict[int, dict] = {}
+    shows: dict[int, dict] = {}
     for item in sorted(schedule, key=itemgetter("starts_at")):
         # 2026-09-29: keep the exact row times next to the whole seconds
         item["starts_at_exact"] = event_isoparse_exact(item["starts_at"])
@@ -539,8 +540,7 @@ def generate_linein_events(
         # RASTATIME 2026-10-02 - static input gain (dB); missing on an API
         # that predates the column -> None = unity.
         input_gain_db=(
-            float(linein["input_gain_db"])
-            if linein.get("input_gain_db") is not None else None
+            float(linein["input_gain_db"]) if linein.get("input_gain_db") is not None else None
         ),
     )
     insert_event(events, linein_key, linein_start_event)

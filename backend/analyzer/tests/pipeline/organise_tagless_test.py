@@ -6,7 +6,6 @@ imported/tagless/ (no fixtures needed: organise_file only moves files).
 from pathlib import Path
 
 import pytest
-
 from rastatime_analyzer.pipeline.organise_file import TAGLESS_DIR, organise_file
 
 
@@ -38,7 +37,12 @@ def test_no_artist_goes_to_tagless(tmp_path: Path, metadata):
 def test_artist_and_album_folders_as_before(tmp_path: Path):
     src = _incoming(tmp_path)
     dest_root = tmp_path / "stor" / "imported"
-    result = organise_file(str(src), str(dest_root), "track.mp3", {"artist_name": "Caribou", "album_title": "Up in Flames"})
+    result = organise_file(
+        str(src),
+        str(dest_root),
+        "track.mp3",
+        {"artist_name": "Caribou", "album_title": "Up in Flames"},
+    )
     assert Path(result["full_path"]) == dest_root / "Caribou" / "Up in Flames" / "track.mp3"
 
 

@@ -1,5 +1,4 @@
 import pytest
-
 from rastatime_playout.config import Config
 
 
@@ -36,5 +35,7 @@ def config():
             },
         }
     )
+
+
 # T-GH-1: stream_preferences fixture removed — StreamPreferences was part of
 # the deleted rastatime_playout.liquidsoap.models module.

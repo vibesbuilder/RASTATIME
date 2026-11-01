@@ -19,17 +19,16 @@ These tests verify:
   * ``_on_stop`` — linein-specific teardown via linein_stop()
   * ``_on_linein_capture_restart`` — the watchdog re-arms input.http
 """
+
 from __future__ import annotations
 
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from rastatime_playout.player.events import EventKind, LineinEvent
-
 
 # ---- Helpers -----------------------------------------------------------
 
@@ -47,6 +46,7 @@ def _make_linein_event(
 ) -> LineinEvent:
     """Build a LineinEvent without going through the API."""
     from datetime import timedelta
+
     start = datetime(2026, 5, 29, 10, 0)
     end = start + timedelta(seconds=duration_seconds)
     return LineinEvent(
@@ -77,9 +77,7 @@ def _patched_scheduler():
     # Patch FfmpegLineinCapture constructor to return a mock that
     # behaves like a working capture (start/stop succeed, is_running
     # reports the spawning state).
-    with patch(
-        "rastatime_playout.playout_scheduler.FfmpegLineinCapture"
-    ) as mock_capture_cls:
+    with patch("rastatime_playout.playout_scheduler.FfmpegLineinCapture") as mock_capture_cls:
         capture_instance = MagicMock()
         capture_instance.is_running = False
         capture_instance.listen_url = "http://localhost:8000/linein-capture"
@@ -121,7 +119,9 @@ def test_linein_start_liquidsoap_plain_stereo_uses_feeder_and_http(
     sched._on_linein_start("key1", event)
 
     capture.start.assert_called_once_with(
-        event.device_id, channel_mapping=(0, 1), device_name=event.device_name,
+        event.device_id,
+        channel_mapping=(0, 1),
+        device_name=event.device_name,
     )
     engine.linein_start_http.assert_called_once()
     # The by-GUID dshow source must NOT be used for a row with a name.
@@ -190,7 +190,7 @@ def test_on_stop_liquidsoap_linein_calls_linein_stop_and_capture_stop(
     sched._on_stop("key1")
 
     engine.linein_gate.assert_called_once_with(False)
-    capture.stop.assert_not_called()        # the tail is still draining
+    capture.stop.assert_not_called()  # the tail is still draining
     engine.linein_stop.assert_not_called()
     engine.stop.assert_not_called()
     assert sched._playing_key is None
@@ -218,10 +218,14 @@ def test_on_stop_linein_device_switch_does_not_kill_new_source(
     """
     sched, engine, capture = liquidsoap_scheduler
     event_a = _make_linein_event(
-        device_id="0fb30b0b-c875-432b-a48f-dbb5208995c9", id_=1, row_id=111,
+        device_id="0fb30b0b-c875-432b-a48f-dbb5208995c9",
+        id_=1,
+        row_id=111,
     )
     event_b = _make_linein_event(
-        device_id="eae46b8b-2949-46ee-a1ca-c8ab319f1eee", id_=2, row_id=222,
+        device_id="eae46b8b-2949-46ee-a1ca-c8ab319f1eee",
+        id_=2,
+        row_id=222,
     )
 
     # Show A starts, then show B (different device) takes over.
@@ -264,6 +268,7 @@ def test_on_stop_linein_skips_stop_when_generation_bumped_mid_teardown(
 
     def _bump(*_args, **_kwargs):
         sched._linein_generation += 1
+
     sched._cue_item_end = _bump
 
     sched._on_stop("key1")
@@ -285,9 +290,7 @@ def test_linein_start_liquidsoap_multichannel_uses_feeder_and_http(
     linein_http companion source — NOT the direct dshow source.
     """
     sched, engine, capture = liquidsoap_scheduler
-    event = _make_linein_event(
-        device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5]
-    )
+    event = _make_linein_event(device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5])
     # start() is mocked, so simulate the capture coming up — the
     # scheduler checks is_running before arming linein_http
     # (RASTATIME 2026-09-01 guard).
@@ -318,9 +321,7 @@ def test_linein_start_liquidsoap_feeder_gave_up_stops_prearmed_http(
     stopped again", not "never armed".
     """
     sched, engine, capture = liquidsoap_scheduler
-    event = _make_linein_event(
-        device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5]
-    )
+    event = _make_linein_event(device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5])
     capture.is_running = False  # start() ran but nothing came up
 
     sched._on_linein_start("key1", event)
@@ -359,15 +360,11 @@ def test_linein_same_device_different_mapping_is_not_a_transition(
     capture with its own mapping.
     """
     sched, engine, capture = liquidsoap_scheduler
-    first = _make_linein_event(
-        device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5]
-    )
+    first = _make_linein_event(device_name="Mikrofon (US-16x08)", channel_mapping=[4, 5])
     sched._current_event = first
     capture.is_running = True
 
-    second = _make_linein_event(
-        device_name="Mikrofon (US-16x08)", channel_mapping=[6, 7]
-    )
+    second = _make_linein_event(device_name="Mikrofon (US-16x08)", channel_mapping=[6, 7])
     sched._on_linein_start("key2", second)
 
     # No shortcut: the http companion is (re)armed for the new pair.
@@ -447,6 +444,7 @@ def _webstream_event(start, row_id=888):
 
 # --- Fix 1: follow-up rule needs a TRUE back-to-back successor ---------
 
+
 def test_on_stop_tears_down_linein_when_same_device_follow_up_is_minutes_away(
     liquidsoap_scheduler,
 ):
@@ -456,10 +454,12 @@ def test_on_stop_tears_down_linein_when_same_device_follow_up_is_minutes_away(
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     _playing_linein(sched, capture, key="A")
-    later = _make_linein_event(row_id=99999).model_copy(update={
-        "start": datetime.utcnow() + timedelta(minutes=7),
-        "end": datetime.utcnow() + timedelta(minutes=12),
-    })
+    later = _make_linein_event(row_id=99999).model_copy(
+        update={
+            "start": datetime.utcnow() + timedelta(minutes=7),
+            "end": datetime.utcnow() + timedelta(minutes=12),
+        }
+    )
     t = _arm_fake_timer(sched, "B", later)
     try:
         sched._on_stop("A")
@@ -482,10 +482,12 @@ def test_on_stop_keeps_linein_alive_for_a_back_to_back_same_device_follow_up(
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     _playing_linein(sched, capture, key="A")
-    nxt = _make_linein_event(row_id=99999).model_copy(update={
-        "start": datetime.utcnow() + timedelta(seconds=0.5),
-        "end": datetime.utcnow() + timedelta(minutes=5),
-    })
+    nxt = _make_linein_event(row_id=99999).model_copy(
+        update={
+            "start": datetime.utcnow() + timedelta(seconds=0.5),
+            "end": datetime.utcnow() + timedelta(minutes=5),
+        }
+    )
     assert 0.5 < LINEIN_FOLLOW_UP_WINDOW_SECONDS
     t = _arm_fake_timer(sched, "B", nxt)
     try:
@@ -500,6 +502,7 @@ def test_on_stop_keeps_linein_alive_for_a_back_to_back_same_device_follow_up(
 
 
 # --- Fix 4: ownership re-check + successor closes the predecessor -----
+
 
 def test_on_stop_bails_when_superseded_mid_teardown(liquidsoap_scheduler):
     """STOP(A) passed its top check, then PLAY(B) took the spotlight
@@ -608,8 +611,10 @@ def test_file_start_after_a_file_touches_no_exclusive_source(liquidsoap_schedule
 
 # --- Option A: identity instead of keys --------------------------------
 
+
 def test_same_scheduled_item_identity():
     from rastatime_playout.playout_scheduler import PlayoutScheduler as S
+
     now = datetime.utcnow()
     a = _make_linein_event(row_id=5)
     assert S._same_scheduled_item(a, a.model_copy())
@@ -645,9 +650,12 @@ def test_refresh_rebinds_the_playing_linein_when_its_key_shifts(
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     now = datetime.utcnow()
-    running = _make_linein_event().model_copy(update={
-        "start": now - timedelta(seconds=78), "end": now + timedelta(minutes=4),
-    })
+    running = _make_linein_event().model_copy(
+        update={
+            "start": now - timedelta(seconds=78),
+            "end": now + timedelta(minutes=4),
+        }
+    )
     sched._playing_key = "2026-09-04-09-07-00_0"
     sched._current_event = running
     sched._current_audio_path = capture.listen_url
@@ -665,9 +673,12 @@ def test_refresh_still_tears_down_a_really_removed_item(liquidsoap_scheduler):
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     now = datetime.utcnow()
-    running = _make_linein_event().model_copy(update={
-        "start": now - timedelta(seconds=78), "end": now + timedelta(minutes=4),
-    })
+    running = _make_linein_event().model_copy(
+        update={
+            "start": now - timedelta(seconds=78),
+            "end": now + timedelta(minutes=4),
+        }
+    )
     sched._playing_key = "K"
     sched._current_event = running
     sched._current_audio_path = capture.listen_url
@@ -675,9 +686,12 @@ def test_refresh_still_tears_down_a_really_removed_item(liquidsoap_scheduler):
     # a DIFFERENT item now sits under our old key; ours is gone.  It
     # starts in the future so it is merely armed (an in-progress one
     # would legitimately trigger a catch-up on top of the teardown).
-    other = _make_linein_event(row_id=4242).model_copy(update={
-        "start": now + timedelta(minutes=2), "end": now + timedelta(minutes=6),
-    })
+    other = _make_linein_event(row_id=4242).model_copy(
+        update={
+            "start": now + timedelta(minutes=2),
+            "end": now + timedelta(minutes=6),
+        }
+    )
 
     _refresh_with(sched, {"K": other})
 
@@ -719,13 +733,12 @@ def test_webstream_catch_up_rebinds_instead_of_reconnecting(liquidsoap_scheduler
     assert sched._playing_key == "W"
 
 
-def test_re_arming_the_playing_key_itself_logs_no_rebinding(
-    liquidsoap_scheduler, caplog
-):
+def test_re_arming_the_playing_key_itself_logs_no_rebinding(liquidsoap_scheduler, caplog):
     """First live run of ff567ce (2026-09-04 15:12:52): the identity
     branch fired for the playing key itself and logged a no-op
     'Catch-up skipped (X -> X); rebinding' on every refresh."""
     import logging
+
     sched, engine, capture = liquidsoap_scheduler
     now = datetime.utcnow()
     playing = _webstream_event(now - timedelta(seconds=30))
@@ -758,6 +771,7 @@ from rastatime_playout.playout_scheduler import PREPARE_LEAD_SECONDS
 
 class _FakeTimer:
     """Records what would be scheduled; .fire() runs it synchronously."""
+
     instances = []
 
     def __init__(self, interval, function, args=()):
@@ -791,10 +805,12 @@ def fake_timer():
 
 def _future_linein(seconds_ahead, **kw):
     now = datetime.utcnow()
-    return _make_linein_event(**kw).model_copy(update={
-        "start": now + timedelta(seconds=seconds_ahead),
-        "end": now + timedelta(seconds=seconds_ahead + 300),
-    })
+    return _make_linein_event(**kw).model_copy(
+        update={
+            "start": now + timedelta(seconds=seconds_ahead),
+            "end": now + timedelta(seconds=seconds_ahead + 300),
+        }
+    )
 
 
 def test_prepare_timer_is_armed_ten_seconds_before_the_slot(liquidsoap_scheduler, fake_timer):
@@ -868,7 +884,7 @@ def test_prepared_linein_start_only_opens_the_gate(liquidsoap_scheduler):
     engine.linein_gate.assert_called_with(True)
     engine.linein_start_http.assert_not_called()
     capture.start.assert_not_called()
-    engine.stop.assert_called_once()   # queue cleared as usual
+    engine.stop.assert_called_once()  # queue cleared as usual
     assert sched._prepared is None
     assert sched._playing_key == "K"
 
@@ -890,7 +906,7 @@ def test_slot_end_closes_the_gate_and_stops_after_the_drain(liquidsoap_scheduler
     sched._on_stop("A")
 
     engine.linein_gate.assert_called_once_with(False)
-    engine.linein_stop.assert_not_called()      # not yet - the tail is draining
+    engine.linein_stop.assert_not_called()  # not yet - the tail is draining
     capture.stop.assert_not_called()
     drain = [t for t in fake_timer.instances if t.function == sched._drained_linein_stop]
     assert len(drain) == 1
@@ -906,7 +922,7 @@ def test_drained_stop_is_skipped_when_a_newer_line_in_took_over(liquidsoap_sched
     _playing_linein(sched, capture, key="A")
     sched._on_stop("A")
     drain = [t for t in fake_timer.instances if t.function == sched._drained_linein_stop][0]
-    sched._linein_generation += 1   # e.g. the next line-in's prepare/start
+    sched._linein_generation += 1  # e.g. the next line-in's prepare/start
     drain.fire()
     engine.linein_stop.assert_not_called()
     capture.stop.assert_not_called()
@@ -932,16 +948,22 @@ def test_drain_seconds_follow_the_show_crossfade():
     """2026-09-27: input_transition_seconds is the SHOW crossfade; the
     drain is that fade plus a margin (0 -> a 50 ms cut, drain 0.5 s)."""
     s1, _, _ = _patched_scheduler()
-    assert s1._drain_seconds == 2.0 + 0.5      # default input_transition_seconds
+    assert s1._drain_seconds == 2.0 + 0.5  # default input_transition_seconds
     from rastatime_playout.playout_scheduler import PlayoutScheduler
+
     with patch("rastatime_playout.playout_scheduler.FfmpegLineinCapture"):
-        s2 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
-                              input_transition_seconds=0.0)
-        s3 = PlayoutScheduler(engine=MagicMock(), api_client=MagicMock(),
-                              input_transition_seconds=1.0, track_crossfade_seconds=2.5)
+        s2 = PlayoutScheduler(
+            engine=MagicMock(), api_client=MagicMock(), input_transition_seconds=0.0
+        )
+        s3 = PlayoutScheduler(
+            engine=MagicMock(),
+            api_client=MagicMock(),
+            input_transition_seconds=1.0,
+            track_crossfade_seconds=2.5,
+        )
     assert s2._drain_seconds == 0.5
     assert s3._drain_seconds == 1.5
-    assert s3._cross_buffer_seconds == 2.5     # max(track, show, floor)
+    assert s3._cross_buffer_seconds == 2.5  # max(track, show, floor)
 
 
 def test_webstream_prepare_start_and_release(liquidsoap_scheduler, fake_timer):
@@ -957,7 +979,7 @@ def test_webstream_prepare_start_and_release(liquidsoap_scheduler, fake_timer):
     assert sched._prepared[0] == "W"
 
     sched._on_webstream_start("W", event.model_copy())
-    engine.webstream_start.assert_called_once()          # no reconnect
+    engine.webstream_start.assert_called_once()  # no reconnect
     engine.webstream_gate.assert_called_with(True)
     assert sched._prepared is None
 
@@ -977,7 +999,7 @@ def test_refresh_undoes_a_pre_warm_whose_item_vanished(liquidsoap_scheduler):
     event = _future_linein(8)
     sched._prepared = ("K", event)
 
-    _refresh_with(sched, {})   # empty schedule
+    _refresh_with(sched, {})  # empty schedule
 
     engine.linein_stop.assert_called_once()
     capture.stop.assert_called_once()
@@ -1021,7 +1043,7 @@ def test_linein_prepare_is_idempotent_for_the_same_item(liquidsoap_scheduler):
     capture.is_running = True
     event = _future_linein(10)
     sched._on_linein_prepare("K", event)
-    sched._on_linein_prepare("K2", event.model_copy())   # same item, shifted key
+    sched._on_linein_prepare("K2", event.model_copy())  # same item, shifted key
     engine.linein_start_http.assert_called_once()
     capture.start.assert_called_once()
 
@@ -1036,7 +1058,7 @@ def test_same_webstream_next_show_is_a_bookkeeping_hand_over(liquidsoap_schedule
     prev = _webstream_event(now - timedelta(minutes=5), row_id=1)
     sched._playing_key = "A"
     sched._current_event = prev
-    nxt = _webstream_event(now, row_id=2)          # same uri, same gain
+    nxt = _webstream_event(now, row_id=2)  # same uri, same gain
 
     sched._on_webstream_start("B", nxt)
 
@@ -1071,9 +1093,7 @@ def test_different_webstream_next_show_hard_stops_the_old_one(liquidsoap_schedul
     engine.webstream_gate.assert_called_with(True)
 
 
-def test_on_stop_keeps_the_stream_for_a_same_stream_back_to_back_follow_up(
-    liquidsoap_scheduler
-):
+def test_on_stop_keeps_the_stream_for_a_same_stream_back_to_back_follow_up(liquidsoap_scheduler):
     sched, engine, capture = liquidsoap_scheduler
     sched._switcher = None
     now = datetime.utcnow()
@@ -1087,22 +1107,27 @@ def test_on_stop_keeps_the_stream_for_a_same_stream_back_to_back_follow_up(
         t.cancel()
     engine.webstream_gate.assert_not_called()
     engine.webstream_stop.assert_not_called()
-    assert sched._playing_key == "A"      # bookkeeping left for B's hand-over
+    assert sched._playing_key == "A"  # bookkeeping left for B's hand-over
 
 
 # RASTATIME 2026-09-06 - webstreams pre-warm via WEBSTREAM_PREPARE_LEAD
 # (reverted to 10 s from the 2026-09-05 "Option 1" 20 s); it must use
 # the webstream constant, not accidentally hard-code the line-in one.
 def test_prepare_timer_for_a_webstream_uses_the_webstream_lead(liquidsoap_scheduler, fake_timer):
-    from rastatime_playout.playout_scheduler import WEBSTREAM_PREPARE_LEAD_SECONDS
     from rastatime_playout.player.events import EventKind, WebStreamEvent
+    from rastatime_playout.playout_scheduler import WEBSTREAM_PREPARE_LEAD_SECONDS
 
     sched, engine, capture = liquidsoap_scheduler
     now = datetime.utcnow()
     event = WebStreamEvent(
-        type=EventKind.WEB_STREAM_OUTPUT_START, start=now + timedelta(seconds=60),
-        end=now + timedelta(seconds=360), row_id=7, id=7,
-        uri="http://cloud.example/", show_name="cloud", input_gain_db=None,
+        type=EventKind.WEB_STREAM_OUTPUT_START,
+        start=now + timedelta(seconds=60),
+        end=now + timedelta(seconds=360),
+        row_id=7,
+        id=7,
+        uri="http://cloud.example/",
+        show_name="cloud",
+        input_gain_db=None,
     )
     sched._arm_webstream_event("W", event, now)
     prep = [t for t in fake_timer.instances if t.function == sched._on_webstream_prepare]
@@ -1121,7 +1146,7 @@ def test_prepare_timer_for_a_webstream_uses_the_webstream_lead(liquidsoap_schedu
 def test_capture_restart_rearms_the_http_companion(liquidsoap_scheduler):
     sched, engine, _capture = liquidsoap_scheduler
     sched._playing_key = "key1"
-    sched._current_event = _make_linein_event()      # stored device name -> feeder
+    sched._current_event = _make_linein_event()  # stored device name -> feeder
 
     sched._on_linein_capture_restart()
 
@@ -1217,7 +1242,7 @@ def test_same_device_transition_still_applies_the_new_gain(liquidsoap_scheduler)
     sched._on_linein_start("key2", second)
 
     engine.linein_set_gain.assert_called_once_with(-3.0)
-    capture.start.assert_not_called()          # shortcut taken
+    capture.start.assert_not_called()  # shortcut taken
     engine.linein_start_http.assert_not_called()
 
 
@@ -1232,7 +1257,8 @@ def test_linein_start_while_a_dj_is_live_sets_the_gain_for_the_resume(
     sched.set_source_switcher(switcher)
 
     sched._on_linein_start(
-        "key1", _make_linein_event().model_copy(update={"input_gain_db": 4.5}),
+        "key1",
+        _make_linein_event().model_copy(update={"input_gain_db": 4.5}),
     )
 
     engine.linein_set_gain.assert_called_once_with(4.5)

@@ -2,6 +2,7 @@
 RASTATIME 2026-06-05 — Unit tests for cue_writer (Record-per-Hour stage 5):
 the per-hour cue sidecars next to the 24/7 archive recordings.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,9 +18,7 @@ def _cw(tmp_path, now, *, enabled=True, fmt="mp3"):
 
 
 def _read(tmp_path, base="2026-06-05 14-00", day="2026-06-05"):
-    return json.loads(
-        (tmp_path / day / f"{base}.cues.json").read_text(encoding="utf-8")
-    )
+    return json.loads((tmp_path / day / f"{base}.cues.json").read_text(encoding="utf-8"))
 
 
 def test_item_start_writes_sidecar(tmp_path):
@@ -39,9 +38,7 @@ def test_item_start_writes_sidecar(tmp_path):
 
 
 def test_first_item_emits_derived_show_start(tmp_path):
-    _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 0)).item_start(
-        "track", show="Morning", title="t"
-    )
+    _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 0)).item_start("track", show="Morning", title="t")
     marks = _read(tmp_path)["marks"]
     assert {"t": 0.0, "kind": "show", "event": "start", "name": "Morning"} in marks
 
@@ -60,10 +57,7 @@ def test_same_show_no_duplicate_show_start(tmp_path):
     cw = _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 0))
     cw.item_start("track", show="ShowA", title="t1")
     cw.item_start("track", show="ShowA", title="t2")
-    starts = [
-        m for m in _read(tmp_path)["marks"]
-        if m["kind"] == "show" and m["event"] == "start"
-    ]
+    starts = [m for m in _read(tmp_path)["marks"] if m["kind"] == "show" and m["event"] == "start"]
     assert len(starts) == 1
 
 
@@ -99,9 +93,7 @@ def test_no_folder_writes_nothing(tmp_path):
 
 
 def test_format_ext_and_no_tmp_leftover(tmp_path):
-    _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 0), fmt="opus").item_start(
-        "track", show="A"
-    )
+    _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 0), fmt="opus").item_start("track", show="A")
     assert _read(tmp_path)["recording"] == "2026-06-05 14-00.opus"
     assert not list((tmp_path / "2026-06-05").glob("*.tmp"))
 
@@ -145,14 +137,16 @@ def test_item_end_without_meta_is_unchanged(tmp_path):
 
 # ---- audio_start (RASTATIME 2026-09-16) --------------------------------------
 
+
 def test_audio_start_is_taken_from_the_audio_file(tmp_path):
     import os
+
     day = tmp_path / "2026-06-05"
     day.mkdir()
     audio = day / "2026-06-05 14-00.mp3"
     audio.write_bytes(b"x")
     created = datetime(2026, 6, 5, 14, 7, 30).timestamp()
-    os.utime(audio, (created, created))          # mtime; birthtime is "now" on Windows
+    os.utime(audio, (created, created))  # mtime; birthtime is "now" on Windows
     _cw(tmp_path, datetime(2026, 6, 5, 14, 10, 0)).item_start("track", show="A", title="t")
     data = _read(tmp_path)
     assert "audio_start" in data and "audio_start_offset" in data
@@ -165,12 +159,12 @@ def test_audio_start_is_added_on_a_later_mark_when_the_file_appears(tmp_path):
     cw = _cw(tmp_path, datetime(2026, 6, 5, 14, 0, 5))
     cw.item_start("track", show="A", title="first")
     data = _read(tmp_path)
-    assert "audio_start" not in data                 # no audio yet
+    assert "audio_start" not in data  # no audio yet
     (tmp_path / "2026-06-05" / "2026-06-05 14-00.mp3").write_bytes(b"x")
     cw.item_end("track")
     data = _read(tmp_path)
     assert "audio_start" in data and data["audio_start_offset"] >= 0
-    assert len(data["marks"]) == 3                   # show start, track start, track end
+    assert len(data["marks"]) == 3  # show start, track start, track end
 
 
 def test_audio_start_is_written_once(tmp_path):
@@ -185,6 +179,7 @@ def test_audio_start_is_written_once(tmp_path):
 
 def test_parts_list_every_file_of_the_hour(tmp_path):
     import os
+
     day = tmp_path / "2026-06-05"
     day.mkdir()
     first = day / "2026-06-05 14-00.mp3"
@@ -192,12 +187,14 @@ def test_parts_list_every_file_of_the_hour(tmp_path):
     other_hour = day / "2026-06-05 15-00.mp3"
     for f in (first, second, other_hour):
         f.write_bytes(b"x")
-    (day / "2026-06-05 14-00.cues.json").write_text("{}", encoding="utf-8")   # not a part
+    (day / "2026-06-05 14-00.cues.json").write_text("{}", encoding="utf-8")  # not a part
     _cw(tmp_path, datetime(2026, 6, 5, 14, 40, 0)).item_start("track", show="A", title="t")
     data = _read(tmp_path)
     names = [p["file"] for p in data["parts"]]
     assert names == ["2026-06-05 14-00.mp3", "2026-06-05 14-00.2.mp3"] or set(names) == {
-        "2026-06-05 14-00.mp3", "2026-06-05 14-00.2.mp3"}
+        "2026-06-05 14-00.mp3",
+        "2026-06-05 14-00.2.mp3",
+    }
     assert all("start" in p and "offset" in p for p in data["parts"])
     assert data["audio_start"] == min(p["start"] for p in data["parts"])
     assert "15-00" not in json.dumps(data["parts"])
@@ -206,5 +203,7 @@ def test_parts_list_every_file_of_the_hour(tmp_path):
 def test_audio_start_respects_the_format_extension(tmp_path):
     (tmp_path / "2026-06-05").mkdir()
     (tmp_path / "2026-06-05" / "2026-06-05 14-00.ogg").write_bytes(b"x")
-    _cw(tmp_path, datetime(2026, 6, 5, 14, 1, 0), fmt="ogg").item_start("track", show="A", title="t")
+    _cw(tmp_path, datetime(2026, 6, 5, 14, 1, 0), fmt="ogg").item_start(
+        "track", show="A", title="t"
+    )
     assert "audio_start" in _read(tmp_path)

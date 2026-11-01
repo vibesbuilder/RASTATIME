@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,9 @@ def memory_warn_threshold_mb() -> int:
     try:
         return max(256, int(raw))
     except ValueError:
-        logger.warning("%s=%r is not an integer — using %d.", MEMORY_WARN_ENV, raw, DEFAULT_MEMORY_WARN_MB)
+        logger.warning(
+            "%s=%r is not an integer — using %d.", MEMORY_WARN_ENV, raw, DEFAULT_MEMORY_WARN_MB
+        )
         return DEFAULT_MEMORY_WARN_MB
 
 
@@ -85,7 +87,7 @@ _PS_QUERY = (
 
 def liquidsoap_process_info(
     runner=subprocess.run,
-) -> Optional[List[ProcessInfo]]:
+) -> Optional[list[ProcessInfo]]:
     """
     All ``liquidsoap.exe`` processes, or None on error.  Since the
     standby source (2026-09-09) there are normally two; each carries
@@ -96,7 +98,10 @@ def liquidsoap_process_info(
     try:
         proc = runner(
             ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", _PS_QUERY],
-            capture_output=True, text=True, timeout=20, check=False,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.debug("Get-Process liquidsoap failed: %s", exc)
@@ -104,7 +109,7 @@ def liquidsoap_process_info(
     if proc.returncode != 0:
         logger.debug("Get-Process liquidsoap exited %s: %s", proc.returncode, proc.stderr)
         return None
-    infos: List[ProcessInfo] = []
+    infos: list[ProcessInfo] = []
     for line in (proc.stdout or "").splitlines():
         parts = line.split(None, 3)
         if len(parts) not in (3, 4):
@@ -134,7 +139,7 @@ def _script_basename(info) -> str:
     return os.path.basename((getattr(info, "script", "") or "").replace("\\", "/")).lower()
 
 
-def main_instances(infos, script_name: Optional[str] = None) -> List[ProcessInfo]:
+def main_instances(infos, script_name: Optional[str] = None) -> list[ProcessInfo]:
     """
     The processes that run the main script (RASTATIME 2026-09-09).
 
@@ -160,7 +165,7 @@ def main_instances(infos, script_name: Optional[str] = None) -> List[ProcessInfo
     return [i for i in infos if not getattr(i, "script", "")]
 
 
-def render_endpoint_sessions() -> Optional[Dict[str, List[int]]]:
+def render_endpoint_sessions() -> Optional[dict[str, list[int]]]:
     """
     ``{endpoint friendly name: [pids with an audio session on it]}`` for
     every active render endpoint, or None when the Core Audio session
@@ -177,8 +182,8 @@ def render_endpoint_sessions() -> Optional[Dict[str, List[int]]]:
         )
         from pycaw.api.mmdeviceapi import IMMDeviceEnumerator  # noqa: PLC0415
         from pycaw.constants import (  # noqa: PLC0415
-            CLSID_MMDeviceEnumerator,
             DEVICE_STATE,
+            CLSID_MMDeviceEnumerator,
             EDataFlow,
         )
         from pycaw.pycaw import AudioUtilities  # noqa: PLC0415
@@ -186,7 +191,7 @@ def render_endpoint_sessions() -> Optional[Dict[str, List[int]]]:
         logger.debug("Core Audio session API unavailable: %s", exc)
         return None
 
-    result: Dict[str, List[int]] = {}
+    result: dict[str, list[int]] = {}
     try:
         comtypes.CoInitialize()
         enumerator = comtypes.CoCreateInstance(
@@ -198,7 +203,7 @@ def render_endpoint_sessions() -> Optional[Dict[str, List[int]]]:
         for i in range(collection.GetCount()):
             dev = collection.Item(i)
             name = AudioUtilities.CreateDevice(dev).FriendlyName or f"endpoint-{i}"
-            pids: List[int] = []
+            pids: list[int] = []
             try:
                 manager = dev.Activate(
                     IAudioSessionManager2._iid_, CLSCTX_ALL, None
@@ -218,7 +223,7 @@ def render_endpoint_sessions() -> Optional[Dict[str, List[int]]]:
     return result
 
 
-def endpoints_holding(sessions: Dict[str, List[int]], pids: List[int]) -> List[str]:
+def endpoints_holding(sessions: dict[str, list[int]], pids: list[int]) -> list[str]:
     """Names of the endpoints on which any of ``pids`` has a session."""
     wanted = set(pids)
     return [name for name, holders in sessions.items() if wanted.intersection(holders)]
@@ -243,6 +248,6 @@ def endpoint_matches(expected: str, endpoint_name: str) -> bool:
         return False
     if exp == got:
         return True
-    if got.startswith(exp) and got[len(exp):].lstrip().startswith("("):
+    if got.startswith(exp) and got[len(exp) :].lstrip().startswith("("):
         return True
-    return exp.startswith(got) and exp[len(got):].lstrip().startswith("(")
+    return exp.startswith(got) and exp[len(got) :].lstrip().startswith("(")

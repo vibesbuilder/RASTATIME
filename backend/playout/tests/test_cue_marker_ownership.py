@@ -4,13 +4,13 @@ owner only, and carry the schedule row id.  Before, a STOP that had been
 superseded by its successor still stamped an "end" marker ~30 ms behind
 the successor's "start" (start(B) -> end(B) in the sidecar).
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
@@ -30,10 +30,21 @@ class _Cues:
 
 def _file_event(start: datetime, row_id: int) -> FileEvent:
     return FileEvent(
-        type=EventKind.FILE, start=start, end=start + timedelta(minutes=3),
-        row_id=row_id, id=row_id, uri="C:/media/a.mp3", show_name="night",
-        cue_in=0.0, cue_out=180.0, track_title="t", artist_name="a",
-        replay_gain=None, fade_in=0.0, fade_out=0.0, mime="audio/mpeg",
+        type=EventKind.FILE,
+        start=start,
+        end=start + timedelta(minutes=3),
+        row_id=row_id,
+        id=row_id,
+        uri="C:/media/a.mp3",
+        show_name="night",
+        cue_in=0.0,
+        cue_out=180.0,
+        track_title="t",
+        artist_name="a",
+        replay_gain=None,
+        fade_in=0.0,
+        fade_out=0.0,
+        mime="audio/mpeg",
         filesize=1000,
     )
 
@@ -46,7 +57,8 @@ def sched(monkeypatch):
     engine.recording_stop.return_value = None
     engine.liquidsoap_uptime_seconds.return_value = 1000.0
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
     )
     s.reset_gates = MagicMock()
     cues = _Cues()
@@ -67,11 +79,11 @@ def test_owner_stop_writes_the_end_marker_with_the_item_id(sched):
 
 def test_stop_of_a_superseded_key_writes_nothing(sched):
     s, engine, cues = sched
-    s._playing_key = "B"                       # the successor already owns the spotlight
+    s._playing_key = "B"  # the successor already owns the spotlight
     s._current_event = _file_event(datetime(2026, 9, 10, 10, 3, 0), row_id=4712)
     s._on_stop("A")
     assert cues.marks == []
-    assert s._playing_key == "B"               # untouched
+    assert s._playing_key == "B"  # untouched
 
 
 def test_end_marker_is_written_after_the_ownership_re_check(sched):
@@ -101,5 +113,5 @@ def test_end_marker_is_written_after_the_ownership_re_check(sched):
         s._on_stop("A")
     finally:
         delattr(cls, "_playing_key")
-    assert reads["n"] >= 2                      # the re-check did run
-    assert cues.marks == []                     # superseded during teardown -> no end marker
+    assert reads["n"] >= 2  # the re-check did run
+    assert cues.marks == []  # superseded during teardown -> no end marker

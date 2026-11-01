@@ -20,13 +20,14 @@ touches nothing.  ``--apply`` moves the directory entries and rewrites the
 rows in one transaction; a failure rolls the rows back and moves the entries
 back.  Run it once, in a quiet moment, with the database dumped beforehand.
 """
+
 from __future__ import annotations
 
 import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import connection, transaction
@@ -53,28 +54,28 @@ def relative_path(value: Optional[str], root: str, owner_ids=()) -> Optional[str
     norm = _norm(value)
     root_norm = _norm(root).rstrip("/") + "/"
     if norm.lower().startswith(root_norm.lower()):
-        norm = norm[len(root_norm):]
+        norm = norm[len(root_norm) :]
     if re.match(r"^([A-Za-z]:/|//)", norm):
-        return norm                                   # outside the root
+        return norm  # outside the root
     norm = norm.lstrip("/")
     for owner in owner_ids:
         prefix = f"imported/{owner}/"
         if norm.startswith(prefix):
-            return "imported/" + norm[len(prefix):]
+            return "imported/" + norm[len(prefix) :]
     return norm
 
 
 @dataclass
 class Plan:
     root: Path
-    owner_dirs: List[Path] = field(default_factory=list)
-    owner_ids: List[str] = field(default_factory=list)
-    moves: List[Tuple[Path, Path]] = field(default_factory=list)
-    conflicts: List[Tuple[Path, Path]] = field(default_factory=list)
-    files: List[Tuple[int, str, str]] = field(default_factory=list)      # id, old, new filepath
-    artworks: List[Tuple[int, str, str]] = field(default_factory=list)
-    shows: List[Tuple[int, str, str]] = field(default_factory=list)
-    prefs: List[Tuple[str, str]] = field(default_factory=list)           # old, new
+    owner_dirs: list[Path] = field(default_factory=list)
+    owner_ids: list[str] = field(default_factory=list)
+    moves: list[tuple[Path, Path]] = field(default_factory=list)
+    conflicts: list[tuple[Path, Path]] = field(default_factory=list)
+    files: list[tuple[int, str, str]] = field(default_factory=list)  # id, old, new filepath
+    artworks: list[tuple[int, str, str]] = field(default_factory=list)
+    shows: list[tuple[int, str, str]] = field(default_factory=list)
+    prefs: list[tuple[str, str]] = field(default_factory=list)  # old, new
     resolvable_before: int = 0
     resolvable_after: int = 0
     with_path: int = 0
@@ -98,7 +99,9 @@ def build_plan(root: Path, extra_owner_ids=()) -> Plan:
                     (plan.conflicts if target.exists() else plan.moves).append((child, target))
 
     root_s = str(root)
-    for pk, filepath, artwork in File.objects.order_by("id").values_list("id", "filepath", "artwork"):
+    for pk, filepath, artwork in File.objects.order_by("id").values_list(
+        "id", "filepath", "artwork"
+    ):
         if filepath:
             plan.with_path += 1
             new = relative_path(filepath, root_s, plan.owner_ids)
@@ -116,7 +119,9 @@ def build_plan(root: Path, extra_owner_ids=()) -> Plan:
                 plan.artworks.append((pk, artwork, new))
 
     with connection.cursor() as cur:
-        cur.execute("SELECT id, image_path FROM cc_show WHERE image_path IS NOT NULL AND image_path <> '' ORDER BY id")
+        cur.execute(
+            "SELECT id, image_path FROM cc_show WHERE image_path IS NOT NULL AND image_path <> '' ORDER BY id"
+        )
         for pk, image in cur.fetchall():
             new = relative_path(image, root_s, plan.owner_ids)
             if new != image:
@@ -132,7 +137,7 @@ def build_plan(root: Path, extra_owner_ids=()) -> Plan:
 
 def apply_plan(plan: Plan, log) -> None:
     """Rows in one transaction, entries moved inside it; any failure undoes both."""
-    moved: List[Tuple[Path, Path]] = []
+    moved: list[tuple[Path, Path]] = []
     try:
         with transaction.atomic():
             for pk, _old, new in plan.files:
@@ -143,8 +148,10 @@ def apply_plan(plan: Plan, log) -> None:
                 for pk, _old, new in plan.shows:
                     cur.execute("UPDATE cc_show SET image_path = %s WHERE id = %s", [new, pk])
                 for old, new in plan.prefs:
-                    cur.execute("UPDATE cc_pref SET valstr = %s WHERE keystr = %s AND valstr = %s",
-                                [new, AUTO_DJ_LOGO_KEY, old])
+                    cur.execute(
+                        "UPDATE cc_pref SET valstr = %s WHERE keystr = %s AND valstr = %s",
+                        [new, AUTO_DJ_LOGO_KEY, old],
+                    )
             for src, dst in plan.moves:
                 os.rename(src, dst)
                 moved.append((src, dst))
@@ -154,7 +161,7 @@ def apply_plan(plan: Plan, log) -> None:
             try:
                 os.rename(dst, src)
                 log(f"undone {dst}  ->  {src}")
-            except OSError as exc:            # pragma: no cover - reported, not hidden
+            except OSError as exc:  # pragma: no cover - reported, not hidden
                 log(f"UNDO FAILED {dst} -> {src}: {exc}")
         raise
     for owner in plan.owner_dirs:
@@ -165,11 +172,15 @@ def apply_plan(plan: Plan, log) -> None:
             log(f"kept non-empty {owner}")
 
 
-def verify(root: Path) -> Tuple[int, int, List[str]]:
+def verify(root: Path) -> tuple[int, int, list[str]]:
     """(rows with a path, rows whose file exists, first missing paths)."""
     total = found = 0
-    missing: List[str] = []
-    for filepath in File.objects.exclude(filepath__isnull=True).exclude(filepath="").values_list("filepath", flat=True):
+    missing: list[str] = []
+    for filepath in (
+        File.objects.exclude(filepath__isnull=True)
+        .exclude(filepath="")
+        .values_list("filepath", flat=True)
+    ):
         total += 1
         if (root / filepath.lstrip("/")).is_file():
             found += 1
@@ -182,31 +193,46 @@ class Command(BaseCommand):
     help = "Drop the imported/<owner-id>/ level of the media library and make every stored path root-relative."
 
     def add_arguments(self, parser: CommandParser):
-        parser.add_argument("--apply", action="store_true", help="Move entries and rewrite rows (default: dry run).")
-        parser.add_argument("--root", help="Storage root (default: storage.path from the configuration).")
-        parser.add_argument("--owner-id", action="append", default=[],
-                            help="Owner id to strip from rows even when its directory is gone (repeatable).")
+        parser.add_argument(
+            "--apply", action="store_true", help="Move entries and rewrite rows (default: dry run)."
+        )
+        parser.add_argument(
+            "--root", help="Storage root (default: storage.path from the configuration)."
+        )
+        parser.add_argument(
+            "--owner-id",
+            action="append",
+            default=[],
+            help="Owner id to strip from rows even when its directory is gone (repeatable).",
+        )
 
     def handle(self, *args, **options):
         from ...root import get_storage_root  # noqa: PLC0415
+
         root = Path(options.get("root") or get_storage_root(refresh=True))
         if not root.is_dir():
             raise CommandError(f"storage root does not exist: {root}")
         plan = build_plan(root, options.get("owner_id") or [])
         out = self.stdout.write
         out(f"storage root: {root}")
-        out(f"owner-id directories: {[str(d) for d in plan.owner_dirs]}  owner ids: {plan.owner_ids}")
+        out(
+            f"owner-id directories: {[str(d) for d in plan.owner_dirs]}  owner ids: {plan.owner_ids}"
+        )
         out(f"entries to move: {len(plan.moves)}   conflicts: {len(plan.conflicts)}")
         for src, dst in plan.conflicts:
             out(f"  CONFLICT {src} -> {dst} exists")
-        out(f"rows to rewrite: cc_files.filepath {len(plan.files)}, cc_files.artwork {len(plan.artworks)}, "
-            f"cc_show.image_path {len(plan.shows)}, cc_pref.{AUTO_DJ_LOGO_KEY} {len(plan.prefs)}")
-        for pk, old, new in (plan.files[:3] + plan.artworks[:2] + plan.shows[:2]):
+        out(
+            f"rows to rewrite: cc_files.filepath {len(plan.files)}, cc_files.artwork {len(plan.artworks)}, "
+            f"cc_show.image_path {len(plan.shows)}, cc_pref.{AUTO_DJ_LOGO_KEY} {len(plan.prefs)}"
+        )
+        for pk, old, new in plan.files[:3] + plan.artworks[:2] + plan.shows[:2]:
             out(f"  {pk}: {old!r} -> {new!r}")
         for old, new in plan.prefs:
             out(f"  pref: {old!r} -> {new!r}")
-        out(f"cc_files rows with a path: {plan.with_path}, resolvable now: {plan.resolvable_before}, "
-            f"resolvable after: {plan.resolvable_after}")
+        out(
+            f"cc_files rows with a path: {plan.with_path}, resolvable now: {plan.resolvable_before}, "
+            f"resolvable after: {plan.resolvable_after}"
+        )
         if plan.conflicts:
             raise CommandError("conflicts - nothing done")
         if not options.get("apply"):

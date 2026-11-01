@@ -59,9 +59,7 @@ class PypoFile(Thread):
             except requests.exceptions.HTTPError as exception:
                 file_event.local_filepath.unlink(missing_ok=True)
 
-                raise RuntimeError(
-                    f"could not download file {file_event.id}"
-                ) from exception
+                raise RuntimeError(f"could not download file {file_event.id}") from exception
 
             # make file world readable and owner writable
             file_event.local_filepath.chmod(0o644)

@@ -4,7 +4,6 @@ import time
 from datetime import datetime
 from queue import Queue
 from threading import Thread
-from typing import List, Tuple
 
 from ..config import PUSH_INTERVAL, Config
 from .events import AnyEvent, Events, FileEvent
@@ -34,7 +33,7 @@ class PypoPush(Thread):
 
         self.config = config
 
-        self.future_scheduled_queue: "Queue[Events]" = Queue()
+        self.future_scheduled_queue: Queue[Events] = Queue()
         self.liquidsoap = liquidsoap
 
         self.plq = PypoLiqQueue(self.future_scheduled_queue, self.liquidsoap)
@@ -56,9 +55,7 @@ class PypoPush(Thread):
             logger.debug(events)
             # separate media_schedule list into currently_playing and
             # scheduled_for_future lists
-            currently_playing, scheduled_for_future = self.separate_present_future(
-                events
-            )
+            currently_playing, scheduled_for_future = self.separate_present_future(events)
 
             self.liquidsoap.verify_correct_present_media(currently_playing)
             self.future_scheduled_queue.put(scheduled_for_future)
@@ -68,10 +65,10 @@ class PypoPush(Thread):
                 loops = 0
             loops += 1
 
-    def separate_present_future(self, events: Events) -> Tuple[List[AnyEvent], Events]:
+    def separate_present_future(self, events: Events) -> tuple[list[AnyEvent], Events]:
         now = datetime.utcnow()
 
-        present: List[AnyEvent] = []
+        present: list[AnyEvent] = []
         future: Events = {}
 
         for key in sorted(events.keys()):

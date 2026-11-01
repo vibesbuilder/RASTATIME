@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from uuid import uuid4
 
 from . import _ffmpeg
@@ -163,7 +163,7 @@ def _timeout_for(src: Path, probe: AudioProbe) -> float:
     return max(_MIN_TIMEOUT_S, size / _TIMEOUT_BYTES_PER_SECOND)
 
 
-def _run_ffmpeg(args: List[str], timeout: float) -> None:
+def _run_ffmpeg(args: list[str], timeout: float) -> None:
     cmd = [_ffmpeg.FFMPEG, "-nostdin", "-hide_banner", "-v", "error", "-y", *args]
     try:
         completed = subprocess.run(
@@ -214,7 +214,9 @@ def remove_original(path) -> None:
             return
         except OSError as exception:
             if attempt + 1 == _UNLINK_ATTEMPTS:
-                logger.warning("convert_format: could not remove the original %s: %s", src, exception)
+                logger.warning(
+                    "convert_format: could not remove the original %s: %s", src, exception
+                )
                 return
             time.sleep(_UNLINK_RETRY_S)
 
@@ -266,7 +268,7 @@ def _text(value: Any) -> Optional[str]:
     return text or None
 
 
-def _first_text(tags: Dict[str, Any], *keys: str) -> Optional[str]:
+def _first_text(tags: dict[str, Any], *keys: str) -> Optional[str]:
     for key in keys:
         text = _text(tags.get(key))
         if text:
@@ -284,7 +286,7 @@ def _expiry_text(value: Any) -> Optional[str]:
     return None
 
 
-def _track_text(tags: Dict[str, Any]) -> Optional[str]:
+def _track_text(tags: dict[str, Any]) -> Optional[str]:
     number = _text(tags.get("track_number"))
     if not number:
         return None
@@ -292,7 +294,7 @@ def _track_text(tags: Dict[str, Any]) -> Optional[str]:
     return f"{number}/{total}" if total else number
 
 
-def _write_id3_tags(path: Path, tags: Dict[str, Any]) -> None:
+def _write_id3_tags(path: Path, tags: dict[str, Any]) -> None:
     """Write the metadata (cc_files names) into the MP3 as ID3v2.3."""
     # pylint: disable=import-outside-toplevel
     from mutagen.id3 import (
@@ -351,7 +353,7 @@ def _write_id3_tags(path: Path, tags: Dict[str, Any]) -> None:
     id3.save(path, v2_version=3)
 
 
-def _write_mp4_tags(path: Path, tags: Dict[str, Any]) -> None:
+def _write_mp4_tags(path: Path, tags: dict[str, Any]) -> None:
     """Write the metadata (cc_files names) into the M4A."""
     # pylint: disable=import-outside-toplevel
     from mutagen.easymp4 import EasyMP4
@@ -505,7 +507,7 @@ def convert_format(
     metadata: dict,
     *,
     convert_lossless: bool,
-) -> Tuple[str, str, dict]:
+) -> tuple[str, str, dict]:
     """
     Pipeline step: repack raw ADTS to M4A (always), transcode Windows Media
     Audio to MP3 320 kbps (always) and lossless audio to MP3 320 kbps (when
@@ -530,7 +532,10 @@ def convert_format(
     if is_raw_adts(probe):
         suffix, what = ".m4a", "repacked raw ADTS AAC to M4A"
     elif is_wma(probe):
-        suffix, what = ".mp3", f"transcoded {probe.codec} (Windows Media Audio) to MP3 {MP3_BITRATE}bit/s"
+        suffix, what = (
+            ".mp3",
+            f"transcoded {probe.codec} (Windows Media Audio) to MP3 {MP3_BITRATE}bit/s",
+        )
     elif convert_lossless and is_lossless(probe):
         suffix, what = ".mp3", f"transcoded {probe.codec} to MP3 {MP3_BITRATE}bit/s"
     else:
@@ -546,7 +551,8 @@ def convert_format(
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.warning(
             "convert_format: %s could not be converted (%s) - importing the original",
-            original_filename, exception,
+            original_filename,
+            exception,
         )
         _remove_quietly(dest)
         return audio_file_path, original_filename, metadata
@@ -569,7 +575,10 @@ def convert_format(
         result["track_title"] = new_filename
     logger.info(
         "convert_format: %s %s -> %s (%s bytes -> %s bytes)",
-        what, original_filename, new_filename,
-        metadata.get("filesize"), result.get("filesize"),
+        what,
+        original_filename,
+        new_filename,
+        metadata.get("filesize"),
+        result.get("filesize"),
     )
     return str(dest), new_filename, result

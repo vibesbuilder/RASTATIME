@@ -6,6 +6,7 @@ every two minutes, and every new telnet connection leaks ~262 KB on the
 Windows build - the whole idle growth left after the event-driven source
 switcher (measured 14 MB/h, 30 reconnects in 30 min).
 """
+
 from __future__ import annotations
 
 from rastatime_playout import liquidsoap_config as lc
@@ -15,9 +16,15 @@ LINE = "settings.server.timeout.set(-1.)"
 
 def _stream():
     return {
-        "type": "mp3", "host": "localhost", "port": 8000, "mount": "rastatime",
-        "pass": "hackme", "user": "source", "bitrate": 128,
-        "name": "RASTATIME", "description": "Live stream",
+        "type": "mp3",
+        "host": "localhost",
+        "port": 8000,
+        "mount": "rastatime",
+        "pass": "hackme",
+        "user": "source",
+        "bitrate": 128,
+        "name": "RASTATIME",
+        "description": "Live stream",
     }
 
 

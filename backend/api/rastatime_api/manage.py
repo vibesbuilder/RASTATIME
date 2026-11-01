@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+
 import os
 import sys
 
@@ -9,7 +10,9 @@ def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rastatime_api.settings.prod")
     os.environ.setdefault(
         "RASTATIME_CONFIG_FILEPATH",
-        r"C:\rastatime\config\rastatime.conf" if sys.platform == "win32" else "/etc/libretime/config.yml",
+        r"C:\rastatime\config\rastatime.conf"
+        if sys.platform == "win32"
+        else "/etc/libretime/config.yml",
     )
     try:
         # pylint: disable=import-outside-toplevel

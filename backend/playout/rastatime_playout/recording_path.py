@@ -13,10 +13,11 @@ Format::
 Dates + times are rendered in the system's local timezone so operator-
 visible filenames match wall-clock time on the studio computer.
 """
+
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # NTFS-illegal characters in a filename: <>:"/\|?*  plus the ASCII
@@ -70,7 +71,7 @@ def build_output_path(
         -> C:/rastatime/recordings/2026-05-17/2026-05-17 13-00-00 - Müllers Frühstück.mp3
     """
     if show_starts_at.tzinfo is None:
-        show_starts_at = show_starts_at.replace(tzinfo=timezone.utc)
+        show_starts_at = show_starts_at.replace(tzinfo=UTC)
     local_dt = show_starts_at.astimezone()  # system local tz
     day_str = local_dt.strftime("%Y-%m-%d")
     # RASTATIME 2026-10-19 - seconds in the name (operator): shifted shows start

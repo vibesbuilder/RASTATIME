@@ -11,7 +11,6 @@ exercised with a monkeypatched ffmpeg path.
 import array
 
 import pytest
-
 from rastatime_playout.engine import ffmpeg_linein_capture as flc
 from rastatime_playout.engine.linein_feeder import (
     extract_frames,
@@ -137,7 +136,7 @@ def test_find_device_ignores_other_hostapis_and_small_devices():
     sd = _StubSd(
         [
             _dev("Mikrofon (US-16x08)", 1, 16),  # WASAPI — wrong API
-            _dev("Mikrofon (US-16x08)", 0, 2),   # too few channels
+            _dev("Mikrofon (US-16x08)", 0, 2),  # too few channels
         ]
     )
     assert find_input_device("Mikrofon (US-16x08)", 6, sd) is None

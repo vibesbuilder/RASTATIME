@@ -35,22 +35,23 @@ from __future__ import annotations
 
 from django.db import models
 
-
 # ---------------------------------------------------------------------------
 # Source-type choices — mirrors PlaybackSourceType constants (no import dep)
 # ---------------------------------------------------------------------------
 
+
 class SourceType(models.TextChoices):
-    FILE      = "file",      "Audio file"
+    FILE = "file", "Audio file"
     WEBSTREAM = "webstream", "Web stream"
-    LINEIN    = "linein",    "Line-in source"
-    LIVE      = "live",      "Live input"
-    UNKNOWN   = "unknown",   "Unknown"
+    LINEIN = "linein", "Line-in source"
+    LIVE = "live", "Live input"
+    UNKNOWN = "unknown", "Unknown"
 
 
 # ---------------------------------------------------------------------------
 # ORM model
 # ---------------------------------------------------------------------------
+
 
 class PlaybackEvent(models.Model):
     """
@@ -149,6 +150,7 @@ class PlaybackEvent(models.Model):
             Immutable domain snapshot.
         """
         from playout.now_playing.playback_event import PlaybackEvent as DomainEvent  # lazy
+
         return DomainEvent(
             event_id=self.event_id,
             source_type=self.source_type,
@@ -162,7 +164,7 @@ class PlaybackEvent(models.Model):
         )
 
     @classmethod
-    def create_from_domain(cls, event) -> "PlaybackEvent":
+    def create_from_domain(cls, event) -> PlaybackEvent:
         """
         Create and save a new ORM row from a domain
         :class:`~playout.now_playing.playback_event.PlaybackEvent`.

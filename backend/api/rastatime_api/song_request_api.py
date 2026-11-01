@@ -62,11 +62,13 @@ DEDUP_WINDOW_MINUTES = 30
 
 class SongRequestSearchThrottle(AnonRateThrottle):
     """Per-IP throttle for the read-only catalogue search."""
+
     scope = "song_request_search"
 
 
 class SongRequestSubmitThrottle(AnonRateThrottle):
     """Per-IP throttle for the write-capable request submission."""
+
     scope = "song_request_submit"
 
 
@@ -84,7 +86,7 @@ def _hash_ip(request) -> str:
     if not ip:
         return ""
     salt = getattr(settings, "SECRET_KEY", "")
-    return hashlib.sha256(f"{salt}|{ip}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(f"{salt}|{ip}".encode()).hexdigest()
 
 
 @api_view(["GET"])
@@ -104,10 +106,7 @@ def song_request_search(request):
     params = []
     if len(q) >= SEARCH_MIN_CHARS:
         like = f"%{q}%"
-        where += (
-            "AND (track_title ILIKE %s OR artist_name ILIKE %s "
-            "OR album_title ILIKE %s) "
-        )
+        where += "AND (track_title ILIKE %s OR artist_name ILIKE %s OR album_title ILIKE %s) "
         params += [like, like, like]
         limit = SEARCH_LIMIT
     else:
@@ -118,17 +117,18 @@ def song_request_search(request):
         cursor.execute(
             "SELECT id, track_title, artist_name, album_title, "
             "(artwork IS NOT NULL AND artwork <> '') AS has_artwork "
-            "FROM cc_files "
-            + where
-            + "ORDER BY artist_name, track_title LIMIT %s",
+            "FROM cc_files " + where + "ORDER BY artist_name, track_title LIMIT %s",
             params,
         )
         rows = cursor.fetchall()
 
     results = [
         {
-            "id": r[0], "title": r[1] or "", "artist": r[2] or "",
-            "album": r[3] or "", "has_artwork": bool(r[4]),
+            "id": r[0],
+            "title": r[1] or "",
+            "artist": r[2] or "",
+            "album": r[3] or "",
+            "has_artwork": bool(r[4]),
         }
         for r in rows
     ]
@@ -163,9 +163,7 @@ def song_request_submit(request):
         )
         row = cursor.fetchone()
     if row is None:
-        return Response(
-            {"error": "This track is not available for requests."}, status=404
-        )
+        return Response({"error": "This track is not available for requests."}, status=404)
 
     # 2. De-duplicate: same track + same IP with an open request in the window.
     if ip_hash:
@@ -199,6 +197,4 @@ def song_request_submit(request):
                 [file_id],
             )
 
-    return Response(
-        {"ok": True, "title": row[0] or "", "artist": row[1] or ""}, status=201
-    )
+    return Response({"ok": True, "title": row[0] or "", "artist": row[1] or ""}, status=201)

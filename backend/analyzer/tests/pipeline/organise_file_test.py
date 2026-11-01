@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 
 import pytest
-
 from rastatime_analyzer.pipeline.organise_file import organise_file, safe_component
 
 from ..conftest import AUDIO_FILENAME
@@ -33,9 +32,7 @@ def test_organise_file_duplicate_file(src_dir: Path, dest_dir: Path):
         filename = f"{i}_{AUDIO_FILENAME}"
         shutil.copy(src_dir / AUDIO_FILENAME, src_dir / filename)
 
-        metadata = organise_file(
-            *organise_file_args_factory(src_dir / filename, dest_dir)
-        )
+        metadata = organise_file(*organise_file_args_factory(src_dir / filename, dest_dir))
 
         full_path = Path(metadata["full_path"])
         assert full_path.exists()

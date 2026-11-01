@@ -20,13 +20,16 @@ from pydantic import BaseModel
 
 from rastatime_shared.config import RabbitMQConfig, BaseConfig
 
+
 class AnalyzerConfig(BaseModel):
     bpm_enabled: bool = False
     bpm_track_max_length: int
 
+
 class Config(BaseConfig):
     rabbitmq: RabbitMQConfig
     analyzer: AnalyzerConfig
+
 
 config = Config("/etc/libretime/config.yml")
 ```
@@ -43,9 +46,11 @@ from rastatime_shared.cli import cli_logging_options, cli_config_options
 
 from .app import App
 
+
 @click.group()
 def cli():
     pass
+
 
 @cli.command()
 @cli_config_options()

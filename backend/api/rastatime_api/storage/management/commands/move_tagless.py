@@ -35,17 +35,23 @@ SKIP_AFTER = timedelta(hours=3)
 
 def candidates():
     """File rows whose path is ``imported/<name>`` with nothing in between."""
-    rows = File.objects.filter(exists=True, filepath__startswith="imported/").exclude(filepath__startswith="imported/%s/" % TAGLESS_DIR)
+    rows = File.objects.filter(exists=True, filepath__startswith="imported/").exclude(
+        filepath__startswith=f"imported/{TAGLESS_DIR}/"
+    )
     return [f for f in rows if f.filepath.count("/") == 1]
 
 
 def scheduled_soon(file_id: int) -> bool:
     now = timezone.now()
-    return Schedule.objects.filter(file_id=file_id, starts_at__gte=now - SKIP_BEFORE, starts_at__lte=now + SKIP_AFTER).exists()
+    return Schedule.objects.filter(
+        file_id=file_id, starts_at__gte=now - SKIP_BEFORE, starts_at__lte=now + SKIP_AFTER
+    ).exists()
 
 
 class Command(BaseCommand):
-    help = "Move tracks that sit directly in imported/ into imported/tagless/ (dry run without --yes)."
+    help = (
+        "Move tracks that sit directly in imported/ into imported/tagless/ (dry run without --yes)."
+    )
 
     def add_arguments(self, parser: CommandParser):
         parser.add_argument("--yes", action="store_true", help="Move (default: dry run).")

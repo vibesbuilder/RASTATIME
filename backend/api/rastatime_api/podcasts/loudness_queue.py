@@ -56,16 +56,12 @@ def queue_loudness_measurement(file_id: int, absolute_path: str) -> bool:
         connection = pika.BlockingConnection(params)
         try:
             channel = connection.channel()
-            channel.exchange_declare(
-                exchange=EXCHANGE, exchange_type=EXCHANGE_TYPE, durable=True
-            )
+            channel.exchange_declare(exchange=EXCHANGE, exchange_type=EXCHANGE_TYPE, durable=True)
             channel.basic_publish(
                 exchange=EXCHANGE,
                 routing_key="",
                 body=json.dumps(loudness_message(file_id, absolute_path)),
-                properties=pika.BasicProperties(
-                    content_type="text/plain", delivery_mode=2
-                ),
+                properties=pika.BasicProperties(content_type="text/plain", delivery_mode=2),
             )
         finally:
             connection.close()

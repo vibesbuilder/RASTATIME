@@ -14,30 +14,41 @@ No Liquidsoap process is started — we only verify the rendered
 text shape.  Phase C8 integration test will actually run
 Liquidsoap against a rendered .liq.
 """
+
 from __future__ import annotations
 
 import re
-
 from pathlib import Path
 
 import pytest
-
 from rastatime_playout import liquidsoap_config as lc
-
 
 # ---- Helpers ------------------------------------------------------------
 
 
 def _stream(
-    type_="mp3", host="localhost", port=8000, mount="rastatime",
-    password="hackme", user="source", bitrate=128, samplerate=None,
-    name="RASTATIME", description="Live stream",
+    type_="mp3",
+    host="localhost",
+    port=8000,
+    mount="rastatime",
+    password="hackme",
+    user="source",
+    bitrate=128,
+    samplerate=None,
+    name="RASTATIME",
+    description="Live stream",
 ):
     """Build a stream_output_N-shaped dict for tests."""
     out = {
-        "type": type_, "host": host, "port": port, "mount": mount,
-        "pass": password, "user": user, "bitrate": bitrate,
-        "name": name, "description": description,
+        "type": type_,
+        "host": host,
+        "port": port,
+        "mount": mount,
+        "pass": password,
+        "user": user,
+        "bitrate": bitrate,
+        "name": name,
+        "description": description,
     }
     if samplerate is not None:
         out["samplerate"] = samplerate
@@ -60,10 +71,7 @@ def test_escape_backslash():
 
 
 def test_escape_both():
-    assert (
-        lc._escape_liq_string(r'C:\path\with "quotes"')
-        == r'C:\\path\\with \"quotes\"'
-    )
+    assert lc._escape_liq_string(r'C:\path\with "quotes"') == r"C:\\path\\with \"quotes\""
 
 
 # ---- _render_icecast_block ----------------------------------------------
@@ -159,16 +167,12 @@ def test_render_mount_leading_slash_normalised():
 
 
 def test_render_password_with_quotes_escaped():
-    out = lc._render_icecast_block(
-        _stream(password='secret"with"quotes')
-    )
+    out = lc._render_icecast_block(_stream(password='secret"with"quotes'))
     assert 'password="secret\\"with\\"quotes"' in out
 
 
 def test_render_name_with_backslash_escaped():
-    out = lc._render_icecast_block(
-        _stream(name=r"RASTATIME\Production")
-    )
+    out = lc._render_icecast_block(_stream(name=r"RASTATIME\Production"))
     assert r'name="RASTATIME\\Production"' in out
 
 
@@ -182,11 +186,13 @@ def test_render_outputs_empty_list_comment_only():
 
 
 def test_render_outputs_three_blocks_separated_by_blank_lines():
-    blocks = lc._render_icecast_outputs([
-        _stream(type_="mp3", mount="mp3-mount"),
-        _stream(type_="aac", mount="aac-mount"),
-        _stream(type_="ogg", mount="ogg-mount"),
-    ])
+    blocks = lc._render_icecast_outputs(
+        [
+            _stream(type_="mp3", mount="mp3-mount"),
+            _stream(type_="aac", mount="aac-mount"),
+            _stream(type_="ogg", mount="ogg-mount"),
+        ]
+    )
     assert blocks.count("output.icecast(") == 3
     assert 'mount="/mp3-mount"' in blocks
     assert 'mount="/aac-mount"' in blocks
@@ -232,7 +238,10 @@ def test_full_render_defaults():
     assert "scheduled = crossfade(" not in out
     # 2026-09-29: the per-track gain sits on the queue, in front of cross
     # (a bus-level amplify kept the first track's gain across crossfades)
-    assert 'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)' in out
+    assert (
+        'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)'
+        in out
+    )
     assert 'amplify(override="replaygain_track_gain", 1., bus)' not in out
     # Regression guard: no `bus = crossfade(` anywhere in the active
     # script — that was the broken Phase-D-era pattern.
@@ -331,10 +340,8 @@ def test_full_render_has_recording_output_file_block():
     """
     out = lc.render_rastatime_liq([_stream()])
     # Active code (not just template-doc comments)
-    active = "\n".join(
-        ln for ln in out.splitlines() if not ln.lstrip().startswith("#")
-    )
-    assert 'output.file(' in active
+    active = "\n".join(ln for ln in out.splitlines() if not ln.lstrip().startswith("#"))
+    assert "output.file(" in active
     assert 'id="recording"' in active
     # MP3@320kbps is the default (operator decision 2026-05-27); since
     # 2026-10-18 Settings -> Local Machine -> Show Recording can change it.
@@ -344,9 +351,9 @@ def test_full_render_has_recording_output_file_block():
     # `var.set recording_path = "..."` telnet command takes effect.
     # (`var.get` only works on the telnet wire — in .liq script-code
     # it would error "Undefined variable var".)
-    assert 'interactive.string(' in active
+    assert "interactive.string(" in active
     assert '"recording_path"' in active
-    assert 'recording_path()' in active
+    assert "recording_path()" in active
     # fallible=true: transient device hiccups don't kill the output.
     # NOTE: start=false was the original design but Liquidsoap-2.4.4
     # doesn't honour `recording.start` correctly with start=false
@@ -359,7 +366,7 @@ def test_full_render_has_recording_output_file_block():
     # We assert the bus name appears in the recording block by scoping
     # to the output.file(id="recording") slice.
     rec_idx = active.index('id="recording"')
-    rec_block = active[rec_idx:rec_idx + 600]
+    rec_block = active[rec_idx : rec_idx + 600]
     assert "  bus,\n" in rec_block
 
 
@@ -374,9 +381,7 @@ def test_full_render_no_harbor_keeps_bus_scheduled():
         stripped = line.lstrip()
         if stripped.startswith("#"):
             continue
-        assert "input.harbor(" not in stripped, (
-            f"Unexpected active input.harbor line: {line!r}"
-        )
+        assert "input.harbor(" not in stripped, f"Unexpected active input.harbor line: {line!r}"
     # Bus is the direct scheduled assignment (no switch wrapper).
     assert "bus = scheduled" in out
     assert "no DJ-source harbor enabled" in out
@@ -384,10 +389,7 @@ def test_full_render_no_harbor_keeps_bus_scheduled():
 
 def _active_lines(rendered: str):
     """Return rendered lines that aren't pure-comment (template-header docs)."""
-    return [
-        ln for ln in rendered.splitlines()
-        if not ln.lstrip().startswith("#")
-    ]
+    return [ln for ln in rendered.splitlines() if not ln.lstrip().startswith("#")]
 
 
 # ---- 24/7 hourly recording block (RASTATIME 2026-06-05) ----------------
@@ -413,7 +415,10 @@ def test_hourly_enabled_basic_shape():
     rotating via reopen_when, with the seg seeded (no boot-reopen).
     """
     out = lc._render_hourly_recording_block(
-        enabled=True, folder="C:/rastatime/247", fmt="mp3", bitrate=192,
+        enabled=True,
+        folder="C:/rastatime/247",
+        fmt="mp3",
+        bitrate=192,
     )
     assert 'id="recording_hourly"' in out
     assert "reopen_when=rec247_reopen" in out
@@ -438,7 +443,8 @@ def test_hourly_enabled_basic_shape():
 def test_hourly_folder_backslashes_normalised_to_forward():
     """Windows path with backslashes -> forward slashes for Liquidsoap."""
     out = lc._render_hourly_recording_block(
-        enabled=True, folder="C:\\rastatime\\247\\",
+        enabled=True,
+        folder="C:\\rastatime\\247\\",
     )
     assert "C:/rastatime/247/" in out
     assert "\\rastatime" not in out
@@ -446,7 +452,9 @@ def test_hourly_folder_backslashes_normalised_to_forward():
 
 def test_hourly_bitrate_substituted():
     out = lc._render_hourly_recording_block(
-        enabled=True, folder="C:/r", bitrate=256,
+        enabled=True,
+        folder="C:/r",
+        bitrate=256,
     )
     assert 'b="256k"' in out
 
@@ -465,7 +473,10 @@ def test_hourly_format_ogg_uses_vorbis():
 
 def test_hourly_format_opus_clamps_samplerate():
     out = lc._render_hourly_recording_block(
-        enabled=True, folder="C:/r", fmt="opus", samplerate=44100,
+        enabled=True,
+        folder="C:/r",
+        fmt="opus",
+        samplerate=44100,
     )
     assert 'codec="libopus"' in out
     assert "samplerate=48000" in out
@@ -509,7 +520,11 @@ def test_read_hourly_config_returns_safe_dict():
     """
     cfg = lc.read_hourly_recording_config_from_db()
     assert set(cfg) == {
-        "enabled", "folder", "format", "bitrate", "retention_days",
+        "enabled",
+        "folder",
+        "format",
+        "bitrate",
+        "retention_days",
     }
     assert isinstance(cfg["enabled"], bool)
     assert isinstance(cfg["bitrate"], int)
@@ -523,7 +538,7 @@ def test_full_render_main_only_harbor():
         harbor_main_password="hackme-main",
     )
     active = "\n".join(_active_lines(out))
-    assert 'master_dj = input.harbor' in active
+    assert "master_dj = input.harbor" in active
     assert 'id="master_dj"' in active
     # Phase-C4 workaround: both mounts default to port 8001 because the
     # Liquidsoap-2.4 multi-port harbor bug only lets one of two distinct
@@ -545,7 +560,7 @@ def test_full_render_show_only_harbor():
         harbor_show_password="hackme-show",
     )
     active = "\n".join(_active_lines(out))
-    assert 'show_dj = input.harbor' in active
+    assert "show_dj = input.harbor" in active
     # Phase-C4 workaround: show defaults to port 8001 too (shared with
     # master). Liquidsoap-2.4 multi-port harbor bug forced the merge.
     assert "port=8001" in active
@@ -584,12 +599,12 @@ def test_full_render_both_harbor_passwords():
         harbor_main_password="m-pw",
         harbor_show_password="s-pw",
     )
-    assert 'master_dj = input.harbor' in out
-    assert 'show_dj = input.harbor' in out
+    assert "master_dj = input.harbor" in out
+    assert "show_dj = input.harbor" in out
     # Order in the switch: master first (priority), show second,
     # scheduled fallback last.
     bus_idx = out.index("bus = switch(")
-    bus_block = out[bus_idx:bus_idx + 500]
+    bus_block = out[bus_idx : bus_idx + 500]
     master_pos = bus_block.index("master_dj")
     show_pos = bus_block.index("show_dj")
     scheduled_pos = bus_block.index("scheduled)")
@@ -614,7 +629,7 @@ def test_full_render_switch_is_not_track_sensitive():
     )
     # The bus = switch(...) block must contain track_sensitive=false
     bus_idx = out.index("bus = switch(")
-    bus_block = out[bus_idx:bus_idx + 500]
+    bus_block = out[bus_idx : bus_idx + 500]
     assert "track_sensitive=false" in bus_block, (
         f"switch operator must be track_sensitive=false for immediate "
         f"DJ-take-over (operator decision 2026-05-28); got:\n{bus_block}"
@@ -708,7 +723,10 @@ def test_crossfade_block_track_and_show_shapes():
     assert "s_out = if old_nf then 0.001 else 2.5 end" in block
     assert "s_delay = if old_nf then 999999.0 else 0.0 end" in block
     # overbook at a show boundary: new at once, old fades under it
-    assert 'elsif mode == "show_skip" then\n    add(normalize=false, [fade.in(duration=0.05, new.source),\n                          fade.out(duration=s_cut, max_duration(s_cut, old_s))])' in block
+    assert (
+        'elsif mode == "show_skip" then\n    add(normalize=false, [fade.in(duration=0.05, new.source),\n                          fade.out(duration=s_cut, max_duration(s_cut, old_s))])'
+        in block
+    )
     assert "s_cut = if old_nf then 0.05 else 2.5 end" in block
     # in-show skip trims the tail to the track crossfade
     assert "fade.out(duration=t_cut, max_duration(t_cut, old_s))" in block
@@ -732,14 +750,18 @@ def test_crossfade_block_new_track_metadata_wins():
     the Live Text lagged one track.  New track first, tail without metadata."""
     for track, show in ((1.0, 2.5), (3.0, 1.0), (1.0, 1.0)):
         block = lc._render_crossfade_block(track, show)
-        assert "old_s = source.drop.metadata(old.source)" in block   # drop_metadata is deprecated in 2.4
+        assert (
+            "old_s = source.drop.metadata(old.source)" in block
+        )  # drop_metadata is deprecated in 2.4
         # an add list ends with "])" at a line end; the inner sequence ends with "]),"
         for add_list in re.findall(r"add\(normalize=false, \[(.*?)\]\)\n", block, re.S):
             # the new track (fade.in / blank + fade.in) is the first element,
             # the old tail (old_s) comes second
             assert add_list.lstrip().startswith(("fade.in(", "sequence([blank(")), add_list
             assert add_list.index("new") < add_list.index("old_s"), add_list
-        assert "old.source" not in block.replace("source.remaining(old.source)", "").replace("source.drop.metadata(old.source)", "")
+        assert "old.source" not in block.replace("source.remaining(old.source)", "").replace(
+            "source.drop.metadata(old.source)", ""
+        )
 
 
 def test_crossfade_block_zero_durations_never_fade():
@@ -756,15 +778,20 @@ def test_crossfade_block_equal_durations_have_no_wait():
     block = lc._render_crossfade_block(1.0, 1.0)
     # no wait when the overlap fills the buffer: decided at run time
     assert "elsif wait < 0.01 then" in block
-    assert "fade.in(duration=t_in, new.source),\n                            fade.out(duration=t_out, delay=t_delay, old_s)" in block
+    assert (
+        "fade.in(duration=t_in, new.source),\n                            fade.out(duration=t_out, delay=t_delay, old_s)"
+        in block
+    )
 
 
 def test_full_render_show_crossfade_reaches_block_and_bus():
     out = lc.render_rastatime_liq(
-        [_stream()], crossfade_duration=1.0, show_crossfade_duration=3.0,
+        [_stream()],
+        crossfade_duration=1.0,
+        show_crossfade_duration=3.0,
     )
     assert "# track crossfade 1.0 s, show crossfade 3.0 s, tail buffer 3.0 s" in out
-    assert "fade.out(duration=3.0, old)," in out          # bus input switches
+    assert "fade.out(duration=3.0, old)," in out  # bus input switches
     assert "${CROSSFADE_BLOCK}" not in out
 
 
@@ -777,16 +804,19 @@ def test_full_render_crossfade_fractional():
 # ---- _format_crossfade_duration -----------------------------------------
 
 
-@pytest.mark.parametrize("value,expected", [
-    (0,    "0.0"),
-    (0.0,  "0.0"),
-    (1,    "1.0"),
-    (2.0,  "2.0"),
-    (2.5,  "2.5"),
-    (2.50, "2.5"),
-    (1.25, "1.25"),
-    (2.123456, "2.12"),  # rounds to 2 decimals
-])
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (0, "0.0"),
+        (0.0, "0.0"),
+        (1, "1.0"),
+        (2.0, "2.0"),
+        (2.5, "2.5"),
+        (2.50, "2.5"),
+        (1.25, "1.25"),
+        (2.123456, "2.12"),  # rounds to 2 decimals
+    ],
+)
 def test_format_crossfade_duration(value, expected):
     assert lc._format_crossfade_duration(value) == expected
 
@@ -826,7 +856,7 @@ def test_full_render_log_path_with_quotes_escaped():
         [_stream()],
         log_file=r'C:/with"quote.log',
     )
-    assert r'C:/with\"quote.log' in out
+    assert r"C:/with\"quote.log" in out
 
 
 # ---- write_rastatime_liq ------------------------------------------------
@@ -897,9 +927,7 @@ def test_template_has_all_expected_placeholders():
         "${ICECAST_OUTPUTS}",
         "${HOURLY_RECORDING_BLOCK}",
     ):
-        assert placeholder in text, (
-            f"Template lost expected placeholder {placeholder}"
-        )
+        assert placeholder in text, f"Template lost expected placeholder {placeholder}"
 
 
 # ---- Phase-E: webstream input.http block -------------------------------
@@ -923,19 +951,26 @@ def test_full_render_default_includes_webstream_input_block():
     assert 'webstream_raw = source.dynamic(id="webstream", self_sync=false,' in active
     assert "webstream_current = ref(source.fail())" in active
     assert 'input.http(id="webstream_in_#{n}", start=true, self_sync=false,' in active
-    assert "start=false" not in active.split("linein")[0]      # no idle static input any more
+    assert "start=false" not in active.split("linein")[0]  # no idle static input any more
     # max_buffer / timeout / poll_delay rendered with the defaults
-    assert f"max_buffer={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS)}" in active
-    assert f"timeout={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_TIMEOUT_SECONDS)}" in active
-    assert f"poll_delay={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS)}" in active
+    assert (
+        f"max_buffer={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS)}"
+        in active
+    )
+    assert (
+        f"timeout={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_TIMEOUT_SECONDS)}" in active
+    )
+    assert (
+        f"poll_delay={lc._format_crossfade_duration(lc.DEFAULT_WEBSTREAM_POLL_DELAY_SECONDS)}"
+        in active
+    )
     # amplify-gain wrapper with interactive.float("webstream.gain", 1.0)
     # around the dynamic arm
     assert 'interactive.float("webstream.gain", 1.0)' in active
     assert "webstream = amplify({webstream_gain()}, webstream_raw)" in active
     # a fresh 5 s bridge (max 10 s) per slot - no stale audio from the
     # previous slot, and crossfade-compatible like before
-    assert ('b = buffer(id="webstream_bridge_#{n}",\n'
-            '      buffer=5.0, max=10.0, s)') in active
+    assert ('b = buffer(id="webstream_bridge_#{n}",\n      buffer=5.0, max=10.0, s)') in active
     assert "buffer=10.0,\n  max=20.0" not in active
     # PLAYOUT's telnet contract is registered by the template itself
     for cmd in ('"url"', '"start"', '"stop"', '"status"', '"ready"'):
@@ -948,7 +983,7 @@ def test_full_render_default_includes_webstream_input_block():
     # Switch must include the webstream arm at priority between
     # DJ-sources and scheduled.
     bus_idx = active.index("bus = switch(")
-    bus_block = active[bus_idx:bus_idx + 400]
+    bus_block = active[bus_idx : bus_idx + 400]
     assert "source.is_ready(webstream)" in bus_block
 
 
@@ -1002,7 +1037,7 @@ def test_full_render_webstream_switch_priority_below_dj_above_scheduled():
         # webstream + linein default to enabled
     )
     bus_idx = out.index("bus = switch(")
-    bus_block = out[bus_idx:bus_idx + 800]
+    bus_block = out[bus_idx : bus_idx + 800]
     master_pos = bus_block.index("master_dj")
     show_pos = bus_block.index("show_dj")
     webstream_pos = bus_block.index("webstream)")
@@ -1023,7 +1058,7 @@ def test_full_render_no_harbor_but_webstream_enabled_uses_switch():
     # And the switch must reference both webstream + scheduled
     assert "source.is_ready(webstream)" in active
     bus_idx = active.index("bus = switch(")
-    bus_block = active[bus_idx:bus_idx + 400]
+    bus_block = active[bus_idx : bus_idx + 400]
     assert "scheduled)" in bus_block
     # NO master/show in this scenario
     assert "master_dj" not in active
@@ -1075,7 +1110,7 @@ def test_full_render_default_includes_linein_input_block():
     # audio_to_stereo fixes the polymorphic input.ffmpeg type for the switch
     assert "linein_dshow = audio_to_stereo(linein_raw)" in active
     # input.ffmpeg does NOT auto-register commands → manual server.register
-    assert 'server.register(' in active
+    assert "server.register(" in active
     assert 'namespace="linein"' in active
     assert '"set_url"' in active
     assert '"start"' in active
@@ -1091,7 +1126,10 @@ def test_full_render_default_includes_linein_input_block():
     assert 's = input.http(id="linein_http_in_#{n}", start=true, self_sync=false,' in active
     assert '    "http://127.0.0.1:8000/linein-capture")' in active
     assert "linein_http = audio_to_stereo(linein_http_raw)" in active
-    assert 'server.register(namespace="linein_http", description="Open a fresh input for the /linein-capture mount",' in active
+    assert (
+        'server.register(namespace="linein_http", description="Open a fresh input for the /linein-capture mount",'
+        in active
+    )
     assert '"start", fun (_) -> linein_http_start())' in active
     assert '"stop", fun (_) -> linein_http_stop())' in active
     # RASTATIME 2026-11-01 - stop drains the armed input instead of
@@ -1100,20 +1138,19 @@ def test_full_render_default_includes_linein_input_block():
     assert "thread.run.recurrent(delay=0.5, check)" in active
     assert "linein_http_reap()" not in active
     assert "linein_http_zombies" not in active
-    assert 'linein_http_raw = input.http(' not in active
+    assert "linein_http_raw = input.http(" not in active
     # RASTATIME 2026-10-02 - the folded arm runs through the per-line-in
     # input gain (var.set linein.gain, unity by default).
     assert 'linein_gain = interactive.float("linein.gain", 1.0)' in active
     assert (
         "linein = amplify({linein_gain()},\n"
-        "  fallback(track_sensitive=false, [linein_dshow, linein_http]))"
-        in active
+        "  fallback(track_sensitive=false, [linein_dshow, linein_http]))" in active
     )
     # The dshow source itself must NOT have turned into input.http
     assert "linein_raw = input.http(" not in active
     # Switch arm
     bus_idx = active.index("bus = switch(")
-    bus_block = active[bus_idx:bus_idx + 500]
+    bus_block = active[bus_idx : bus_idx + 500]
     assert "source.is_ready(linein)" in bus_block
 
 
@@ -1151,7 +1188,7 @@ def test_full_render_switch_includes_both_webstream_and_linein_by_default():
     out = lc.render_rastatime_liq([_stream()])
     active = "\n".join(_active_lines(out))
     bus_idx = active.index("bus = switch(")
-    bus_block = active[bus_idx:bus_idx + 500]
+    bus_block = active[bus_idx : bus_idx + 500]
     assert "source.is_ready(webstream)" in bus_block
     assert "source.is_ready(linein)" in bus_block
     # webstream before linein (priority order)
@@ -1190,15 +1227,22 @@ def test_loudness_block_renders_the_limiter_only_for_r128():
     """2026-09-28 - EBU R128 stage 1: peak safety after the per-track gain."""
     off = lc.render_rastatime_liq([_stream()])
     assert "loudness limiter: off" in off
-    assert "limit(id=\"loudness_limit\"" not in off
+    assert 'limit(id="loudness_limit"' not in off
     on = lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=-1.0)
     assert 'loudness_ceiling = interactive.float("loudness_ceiling", -1.0)' in on
-    assert 'bus = limit(id="loudness_limit", threshold=loudness_ceiling, attack=5., release=80., ratio=20., bus)' in on
+    assert (
+        'bus = limit(id="loudness_limit", threshold=loudness_ceiling, attack=5., release=80., ratio=20., bus)'
+        in on
+    )
     # after the per-track gain (on the queue), before the ICY rewrite
-    assert on.index('amplify(id="track_gain", override="replaygain_track_gain"') < on.index('limit(id="loudness_limit"')
+    assert on.index('amplify(id="track_gain", override="replaygain_track_gain"') < on.index(
+        'limit(id="loudness_limit"'
+    )
     assert on.index('limit(id="loudness_limit"') < on.index('metadata.map(id="icy_rewrite"')
     # the ceiling is clamped to a sane range
-    assert 'interactive.float("loudness_ceiling", 0.0)' in lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=3.0)
+    assert 'interactive.float("loudness_ceiling", 0.0)' in lc.render_rastatime_liq(
+        [_stream()], loudness_limiter_ceiling=3.0
+    )
 
 
 def test_write_wrapper_forwards_the_loudness_ceiling(tmp_path):
@@ -1217,22 +1261,26 @@ def test_track_gain_is_applied_on_the_queue_before_the_crossfade():
     so every track of a run played with the FIRST track's gain (bench: C
     annotated -4 dB played at A's -10 dB)."""
     block = lc._render_crossfade_block(3.0, 1.0)
-    gain = 'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)'
+    gain = (
+        'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)'
+    )
     assert gain in block
     assert block.index(gain) < block.index('scheduled_x = cross(id="scheduled_x"')
     assert "rt_transition, scheduled_g)" in block
     out = lc.render_rastatime_liq([_stream()])
     active = "\n".join(ln for ln in out.splitlines() if not ln.lstrip().startswith("#"))
-    assert active.count("replaygain_track_gain") == 1          # one amplify, on the queue
+    assert active.count("replaygain_track_gain") == 1  # one amplify, on the queue
 
 
 def test_crossfade_block_overlap_zero_plays_the_tail_out():
     """2026-09-29 - crossfade per track type / Exclude from Crossover: with
     rt_dur = 0 the old track plays out and the new one follows at its end."""
     block = lc._render_crossfade_block(3.0, 1.0)
-    natural = block[block.index('elsif mode == "show" then'):]
+    natural = block[block.index('elsif mode == "show" then') :]
     assert "if d < 0.05 then\n      sequence([old_s, new.source])" in natural
-    skip = block[block.index('elsif mode == "track_skip" then'):block.index('elsif mode == "show" then')]
+    skip = block[
+        block.index('elsif mode == "track_skip" then') : block.index('elsif mode == "show" then')
+    ]
     assert "if d < 0.05 then\n      rt_instant(old_s, new.source)" in skip
     # never a zero-length fade, never more overlap than the buffer
     assert "fd = if d < 0.05 then 0.05 else d end" in block
@@ -1242,6 +1290,7 @@ def test_crossfade_block_overlap_zero_plays_the_tail_out():
 # ---------------------------------------------------------------------------
 # RASTATIME 2026-10-02 - output processing with Stereo Tool (optional)
 # ---------------------------------------------------------------------------
+
 
 def _st(tmp_path, **kw):
     lib = tmp_path / "libStereoTool_64.dll"
@@ -1260,11 +1309,19 @@ def test_stereotool_off_by_default_renders_a_comment_only():
 
 def test_stereotool_block_sits_between_the_limiter_and_the_icy_rewrite(tmp_path):
     lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
-    out = lc.render_rastatime_liq([_stream()], loudness_limiter_ceiling=-1.0, stereotool=_st(tmp_path, license_key="K-1", preset_file=""))
-    line = [l for l in out.splitlines() if l.startswith("bus = stereotool(")][0]
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        loudness_limiter_ceiling=-1.0,
+        stereotool=_st(tmp_path, license_key="K-1", preset_file=""),
+    )
+    line = [ln for ln in out.splitlines() if ln.startswith("bus = stereotool(")][0]
     assert 'library_file="' + str(tmp_path).replace("\\", "/") + '/libStereoTool_64.dll"' in line
     assert 'license_key="K-1"' in line and "preset=" not in line
-    assert out.index('limit(id="loudness_limit"') < out.index("bus = stereotool(") < out.index('metadata.map(id="icy_rewrite"')
+    assert (
+        out.index('limit(id="loudness_limit"')
+        < out.index("bus = stereotool(")
+        < out.index('metadata.map(id="icy_rewrite"')
+    )
     assert lc.STEREOTOOL_STATE == {"enabled": True, "active": True, "problem": ""}
 
 
@@ -1273,12 +1330,17 @@ def test_stereotool_preset_only_when_the_file_exists(tmp_path):
     preset.write_text("x")
     out = lc.render_rastatime_liq([_stream()], stereotool=_st(tmp_path, preset_file=str(preset)))
     assert 'preset="' + str(preset).replace("\\", "/") + '"' in out
-    out = lc.render_rastatime_liq([_stream()], stereotool=_st(tmp_path, preset_file=str(tmp_path / "missing.sts")))
+    out = lc.render_rastatime_liq(
+        [_stream()], stereotool=_st(tmp_path, preset_file=str(tmp_path / "missing.sts"))
+    )
     assert "preset=" not in out and "bus = stereotool(" in out
 
 
 def test_stereotool_missing_library_renders_off_and_notes_the_problem(tmp_path):
-    out = lc.render_rastatime_liq([_stream()], stereotool=lc.StereoToolSettings(enabled=True, library_file=str(tmp_path / "nope.dll")))
+    out = lc.render_rastatime_liq(
+        [_stream()],
+        stereotool=lc.StereoToolSettings(enabled=True, library_file=str(tmp_path / "nope.dll")),
+    )
     assert "stereotool(" not in out
     assert "library file not found" in out
     assert lc.STEREOTOOL_STATE["enabled"] is True and lc.STEREOTOOL_STATE["active"] is False
@@ -1298,10 +1360,14 @@ def test_stereotool_lockout_renders_off(tmp_path):
 
 
 def test_stereotool_settings_from_prefs():
-    s = lc.stereotool_settings_from_prefs({
-        "stereotool_enabled": "1", "stereotool_library": " C:\Tools\st\lib.dll ",
-        "stereotool_preset": "", "stereotool_license_key": "ABC",
-    })
+    s = lc.stereotool_settings_from_prefs(
+        {
+            "stereotool_enabled": "1",
+            "stereotool_library": " C:\Tools\st\lib.dll ",
+            "stereotool_preset": "",
+            "stereotool_license_key": "ABC",
+        }
+    )
     assert s == lc.StereoToolSettings(True, "C:\Tools\st\lib.dll", "", "ABC")
     assert lc.stereotool_settings_from_prefs({}) == lc.StereoToolSettings()
     assert lc.stereotool_settings_from_prefs({"stereotool_enabled": "0"}).enabled is False
@@ -1346,13 +1412,13 @@ def test_show_recording_extension_per_format():
 
 def test_full_render_show_recording_uses_chosen_encoder():
     out = lc.render_rastatime_liq(
-        [_stream()], show_recording_format="aac", show_recording_bitrate=192,
+        [_stream()],
+        show_recording_format="aac",
+        show_recording_bitrate=192,
     )
-    active = "\n".join(
-        ln for ln in out.splitlines() if not ln.lstrip().startswith("#")
-    )
+    active = "\n".join(ln for ln in out.splitlines() if not ln.lstrip().startswith("#"))
     rec_idx = active.index('id="recording"')
-    rec_block = active[rec_idx:rec_idx + 400]
+    rec_block = active[rec_idx : rec_idx + 400]
     assert 'codec="aac"' in rec_block
     assert 'b="192k"' in rec_block
     assert "${SHOW_RECORDING_ENCODER}" not in out

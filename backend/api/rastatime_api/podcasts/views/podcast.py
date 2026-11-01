@@ -1,6 +1,5 @@
 import logging
 
-from django.conf import settings
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -66,6 +65,7 @@ class PodcastEpisodeViewSet(viewsets.ModelViewSet):
         # while the library is being moved.
         from ...storage import move as storage_move  # noqa: PLC0415
         from ...storage.root import get_storage_root  # noqa: PLC0415
+
         if storage_move.JOB.is_locked():
             return Response(
                 {"error": "The media library is being moved - podcast downloads are paused."},

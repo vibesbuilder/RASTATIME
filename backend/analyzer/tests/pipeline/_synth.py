@@ -9,7 +9,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from rastatime_analyzer.pipeline import _ffmpeg
 
 

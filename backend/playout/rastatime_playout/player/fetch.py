@@ -6,13 +6,14 @@ from pathlib import Path
 from queue import Empty, Queue
 from subprocess import DEVNULL, PIPE, run
 from threading import Thread, Timer
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 from rastatime_api_client.v1 import ApiClient as LegacyClient
 from rastatime_api_client.v2 import ApiClient
 from requests import RequestException
 
 from ..config import CACHE_DIR, POLL_INTERVAL, Config
+
 # T-GH-1: Liquidsoap engine removed. Imports guarded for safe import on
 # platforms where liquidsoap is not installed.
 try:
@@ -43,7 +44,7 @@ class PypoFetch(Thread):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        fetch_queue: "Queue[Dict[str, Any]]",
+        fetch_queue: "Queue[dict[str, Any]]",
         push_queue: "Queue[Events]",
         file_queue: "Queue[FileEvents]",
         liq_client: LiquidsoapClient,
@@ -75,7 +76,7 @@ class PypoFetch(Thread):
     # Handle a message from RabbitMQ, put it into our yucky global var.
     # Hopefully there is a better way to do this.
 
-    def handle_message(self, message: Dict[str, Any]) -> None:
+    def handle_message(self, message: dict[str, Any]) -> None:
         try:
             command = message["event_type"]
             logger.debug("handling event %s: %s", command, message)
@@ -104,9 +105,7 @@ class PypoFetch(Thread):
                 )
             elif command == "disconnect_source":
                 logger.info("disconnect_on_source show command received...")
-                self.liquidsoap.telnet_liquidsoap.disconnect_source(
-                    message["sourcename"]
-                )
+                self.liquidsoap.telnet_liquidsoap.disconnect_source(message["sourcename"])
             else:
                 logger.info("Unknown command: %s", command)
 
@@ -127,9 +126,7 @@ class PypoFetch(Thread):
         logger.debug("Getting information needed on bootstrap from Airtime")
         try:
             info = Info(**self.api_client.get_info().json())
-            preferences = StreamPreferences(
-                **self.api_client.get_stream_preferences().json()
-            )
+            preferences = StreamPreferences(**self.api_client.get_stream_preferences().json())
             state = StreamState(**self.api_client.get_stream_state().json())
 
         except RequestException as exception:
@@ -266,9 +263,7 @@ class PypoFetch(Thread):
                 else:
                     logger.info("File '%s' not removed. Still busy!", expired_filepath)
             except Exception as exception:  # pylint: disable=broad-exception-caught
-                logger.exception(
-                    "Problem removing file '%s': %s", expired_file, exception
-                )
+                logger.exception("Problem removing file '%s': %s", expired_file, exception)
 
     def manual_schedule_fetch(self) -> bool:
         try:
@@ -333,9 +328,7 @@ class PypoFetch(Thread):
 
                 # Currently we are checking every POLL_INTERVAL seconds
 
-                message = self.fetch_queue.get(
-                    block=True, timeout=self.listener_timeout
-                )
+                message = self.fetch_queue.get(block=True, timeout=self.listener_timeout)
                 manual_fetch_needed = False
                 self.handle_message(message)
             except Empty:

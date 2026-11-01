@@ -18,6 +18,8 @@ extend-exclude = [
     "**/*.egg-info",
     # Legacy frontend is PHP — no Python here, but be defensive
     "frontend/legacy",
+    # Django migrations are generated code; left as written (2026-11-01)
+    "**/migrations",
 ]
 
 [lint]
@@ -32,14 +34,20 @@ ignore = [
     "B904",   # raise-from — a lot of legacy code does plain raise
     "UP007",  # `Optional[X]` — keep until we drop Python 3.9 support upstream
     "UP045",  # idem
+    "UP042",  # (str, Enum) -> StrEnum changes str() of the members; the
+              # playout/telnet protocol and the config models rely on it (2026-11-01)
+    "B027",   # empty methods in the engine ABC are deliberate no-op defaults
 ]
 
 [lint.per-file-ignores]
 # Tests can be looser
-"**/tests/**" = ["B", "F401"]
+"**/tests/**" = ["B", "F401", "E402"]
 "**/conftest.py" = ["F401"]
 # CLI entry points often need top-level side effects
 "**/__main__.py" = ["E402"]
+# re-export modules: the imports are the public surface (2026-11-01)
+"**/__init__.py" = ["F401"]
+"**/settings/*.py" = ["F401"]
 
 [format]
 # Match existing repo conventions

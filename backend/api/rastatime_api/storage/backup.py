@@ -29,6 +29,7 @@ same pattern as the storage move job::
 Restores stay a CLI/offline procedure (docs/operator/BACKUP.md section 7)
 - deliberately no restore endpoint.
 """
+
 from __future__ import annotations
 
 import glob
@@ -41,9 +42,9 @@ import subprocess
 import threading
 import time
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from django.conf import settings
 from django.db import connection
@@ -74,13 +75,13 @@ class BackupInProgress(Exception):
 
 
 class InvalidFolder(ValueError):
-    def __init__(self, errors: List[str]):
+    def __init__(self, errors: list[str]):
         super().__init__("; ".join(errors))
         self.errors = errors
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def load_state() -> dict:
@@ -161,14 +162,16 @@ def auto_backup_due(cfg: Optional[dict] = None, folder: Optional[str] = None):
     newest = newest_backup_at(folder)
     if newest is None:
         return True, "no backup yet"
-    age = datetime.now(timezone.utc) - newest
+    age = datetime.now(UTC) - newest
     threshold = timedelta(days=cfg["every_days"]) - timedelta(hours=1)
     if age >= threshold:
         return True, f"newest backup is {age.days} day(s) old"
     return False, f"newest backup is recent ({newest.isoformat(timespec='seconds')})"
 
 
-def prune_old_backups(folder: Optional[str] = None, retention_days: Optional[int] = None) -> List[str]:
+def prune_old_backups(
+    folder: Optional[str] = None, retention_days: Optional[int] = None
+) -> list[str]:
     """Deletes ZIPs older than ``retention_days`` (0 = keep everything).
     The newest backup always survives.  Returns the deleted names."""
     cfg_days = get_auto_config()["retention_days"] if retention_days is None else retention_days
@@ -178,9 +181,9 @@ def prune_old_backups(folder: Optional[str] = None, retention_days: Optional[int
     backups = list_backups(folder)
     if len(backups) <= 1:
         return []
-    cutoff = datetime.now(timezone.utc) - timedelta(days=cfg_days)
+    cutoff = datetime.now(UTC) - timedelta(days=cfg_days)
     deleted = []
-    for entry in backups[1:]:                      # newest first - keep [0]
+    for entry in backups[1:]:  # newest first - keep [0]
         if datetime.fromisoformat(entry["created_at"]) < cutoff:
             try:
                 os.remove(os.path.join(folder, entry["name"]))
@@ -188,8 +191,12 @@ def prune_old_backups(folder: Optional[str] = None, retention_days: Optional[int
             except OSError as exc:
                 logger.warning("retention: could not delete %s: %s", entry["name"], exc)
     if deleted:
-        logger.info("retention: deleted %d backup(s) older than %d day(s): %s",
-                    len(deleted), cfg_days, ", ".join(deleted))
+        logger.info(
+            "retention: deleted %d backup(s) older than %d day(s): %s",
+            len(deleted),
+            cfg_days,
+            ", ".join(deleted),
+        )
     return deleted
 
 
@@ -212,7 +219,7 @@ def config_dir() -> str:
 
 def validate_folder(target: str) -> dict:
     """Checks a candidate backup folder; never raises."""
-    errors: List[str] = []
+    errors: list[str] = []
     t = storage_root.normalize(target)
     root = storage_root.normalize(storage_root.get_storage_root(refresh=True))
     if not t:
@@ -226,8 +233,9 @@ def validate_folder(target: str) -> dict:
         drive = t[:3]
         if not os.path.isdir(drive):
             errors.append(f"Drive {t[:2]} does not exist.")
-        elif root and (t.lower() == root.lower()
-                       or t.lower().startswith(root.lower().rstrip("/") + "/")):
+        elif root and (
+            t.lower() == root.lower() or t.lower().startswith(root.lower().rstrip("/") + "/")
+        ):
             errors.append("The backup folder must not lie inside the media library.")
         else:
             try:
@@ -247,7 +255,7 @@ def validate_folder(target: str) -> dict:
     return {"ok": not errors, "errors": errors, "target": t, "free_bytes": free}
 
 
-def list_backups(folder: Optional[str] = None) -> List[dict]:
+def list_backups(folder: Optional[str] = None) -> list[dict]:
     folder = folder or get_backup_folder()
     if not folder or not os.path.isdir(folder):
         return []
@@ -260,10 +268,15 @@ def list_backups(folder: Optional[str] = None) -> List[dict]:
             st = os.stat(path)
         except OSError:
             continue
-        entries.append({
-            "name": name, "bytes": st.st_size,
-            "created_at": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(timespec="seconds"),
-        })
+        entries.append(
+            {
+                "name": name,
+                "bytes": st.st_size,
+                "created_at": datetime.fromtimestamp(st.st_mtime, UTC).isoformat(
+                    timespec="seconds"
+                ),
+            }
+        )
     entries.sort(key=lambda e: e["name"], reverse=True)
     return entries
 
@@ -293,11 +306,16 @@ def _pg_dump_command() -> tuple:
     binary = _pg_dump_binary()
     argv = [
         binary,
-        "--host", str(db.get("HOST") or "127.0.0.1"),
-        "--port", str(db.get("PORT") or "5432"),
-        "--username", str(db.get("USER") or ""),
-        "--dbname", str(db.get("NAME") or ""),
-        "--format", "custom",
+        "--host",
+        str(db.get("HOST") or "127.0.0.1"),
+        "--port",
+        str(db.get("PORT") or "5432"),
+        "--username",
+        str(db.get("USER") or ""),
+        "--dbname",
+        str(db.get("NAME") or ""),
+        "--format",
+        "custom",
     ]
     env = os.environ.copy()
     env["PGPASSWORD"] = str(db.get("PASSWORD") or "")
@@ -306,9 +324,16 @@ def _pg_dump_command() -> tuple:
 
 def _pg_dump_version(binary: str) -> str:
     try:
-        out = subprocess.run(  # noqa: S603
-            [binary, "--version"], capture_output=True, timeout=10, check=False,
-        ).stdout.decode("utf-8", "replace").strip()
+        out = (
+            subprocess.run(  # noqa: S603
+                [binary, "--version"],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            )
+            .stdout.decode("utf-8", "replace")
+            .strip()
+        )
         return out or "unknown"
     except OSError:
         return "unknown"
@@ -346,11 +371,16 @@ class BackupJob:
                 raise InvalidFolder(check["errors"])
             include_media = get_include_media()
             state = {
-                "state": "running", "phase": "database",
-                "started_at": _now(), "finished_at": None,
-                "file": None, "bytes": 0, "error": None,
+                "state": "running",
+                "phase": "database",
+                "started_at": _now(),
+                "finished_at": None,
+                "file": None,
+                "bytes": 0,
+                "error": None,
                 "include_media": include_media,
-                "pid": os.getpid(), "heartbeat": _now(),
+                "pid": os.getpid(),
+                "heartbeat": _now(),
             }
             if include_media:
                 # RASTATIME 2026-10-28 - sizes and the free-space check moved
@@ -358,14 +388,21 @@ class BackupJob:
                 # the mirror on a USB disk took minutes here, longer than the
                 # UI waits for the answer (20 s), and "Backup Now" reported
                 # "API not reachable" although the start was merely slow.
-                state.update(media_source=storage_root.get_storage_root(refresh=True),
-                             media_total_files=None, media_total_bytes=None,
-                             media_done_files=0, media_done_bytes=0,
-                             media_free_bytes=check.get("free_bytes"))
+                state.update(
+                    media_source=storage_root.get_storage_root(refresh=True),
+                    media_total_files=None,
+                    media_total_bytes=None,
+                    media_done_files=0,
+                    media_done_bytes=0,
+                    media_free_bytes=check.get("free_bytes"),
+                )
             save_state(state)
             self._cancel.clear()
             self._thread = threading.Thread(
-                target=self._run, args=(state, folder), name="backup", daemon=True,
+                target=self._run,
+                args=(state, folder),
+                name="backup",
+                daemon=True,
             )
             self._thread.start()
             return state
@@ -393,7 +430,7 @@ class BackupJob:
             beat = datetime.fromisoformat(state.get("heartbeat") or "")
         except ValueError:
             return False
-        return datetime.now(timezone.utc) - beat < timedelta(seconds=HEARTBEAT_STALE_SECONDS)
+        return datetime.now(UTC) - beat < timedelta(seconds=HEARTBEAT_STALE_SECONDS)
 
     def _zip_target(self, folder: str) -> str:
         stamp = datetime.now().strftime("%Y-%m-%dT%H%M")
@@ -408,9 +445,11 @@ class BackupJob:
         target = self._zip_target(folder)
         try:
             argv, env = _pg_dump_command()
-            config_files = sorted(
-                p for p in Path(config_dir()).glob("*") if p.is_file()
-            ) if os.path.isdir(config_dir()) else []
+            config_files = (
+                sorted(p for p in Path(config_dir()).glob("*") if p.is_file())
+                if os.path.isdir(config_dir())
+                else []
+            )
             with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
                 self._dump_database(zf, argv, env, state)
                 for cfg in config_files:
@@ -428,10 +467,13 @@ class BackupJob:
                 self._size_media(state, folder)
                 self._mirror_media(state, folder)
                 if self._cancel.is_set():
-                    state.update(state="cancelled", finished_at=_now(),
-                                 error="Cancelled by the operator - the database ZIP is "
-                                       "complete, the media mirror keeps what was copied "
-                                       "so far and the next run resumes there.")
+                    state.update(
+                        state="cancelled",
+                        finished_at=_now(),
+                        error="Cancelled by the operator - the database ZIP is "
+                        "complete, the media mirror keeps what was copied "
+                        "so far and the next run resumes there.",
+                    )
                     save_state(state)
                     return
             state.update(state="done", phase=None, finished_at=_now())
@@ -468,7 +510,9 @@ class BackupJob:
 
     def _with_heartbeat(self, state: dict, work):
         stop = threading.Event()
-        beat = threading.Thread(target=self._heartbeat, args=(state, stop), name="backup-heartbeat", daemon=True)
+        beat = threading.Thread(
+            target=self._heartbeat, args=(state, stop), name="backup-heartbeat", daemon=True
+        )
         beat.start()
         try:
             return work()
@@ -496,9 +540,14 @@ class BackupJob:
         except OSError:
             free = state.get("media_free_bytes") or 0
         needed = max(int(total * 1.1) - done_bytes, 0) + FREE_BYTES_MIN
-        state.update(media_total_files=files, media_total_bytes=total,
-                     media_done_files=done_files, media_done_bytes=done_bytes,
-                     media_free_bytes=free, heartbeat=_now())
+        state.update(
+            media_total_files=files,
+            media_total_bytes=total,
+            media_done_files=done_files,
+            media_done_bytes=done_bytes,
+            media_free_bytes=free,
+            heartbeat=_now(),
+        )
         save_state(state)
         if free and free < needed:
             raise RuntimeError(
@@ -516,14 +565,29 @@ class BackupJob:
         state.update(phase="media", heartbeat=_now())
         save_state(state)
         cmd = [
-            ROBOCOPY, str(Path(source)), str(Path(mirror)),
-            "/MIR", "/COPY:DAT", "/DCOPY:T", "/R:2", "/W:2",
-            "/NP", "/NJH", "/NJS", "/NDL", "/NFL",
-            "/XD", "$RECYCLE.BIN", "System Volume Information",
+            ROBOCOPY,
+            str(Path(source)),
+            str(Path(mirror)),
+            "/MIR",
+            "/COPY:DAT",
+            "/DCOPY:T",
+            "/R:2",
+            "/W:2",
+            "/NP",
+            "/NJH",
+            "/NJS",
+            "/NDL",
+            "/NFL",
+            "/XD",
+            "$RECYCLE.BIN",
+            "System Volume Information",
         ]
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         self._proc = subprocess.Popen(  # noqa: S603
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=flags,
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            creationflags=flags,
         )
 
         def progress(proc):
@@ -538,7 +602,9 @@ class BackupJob:
 
         def copy():
             proc = self._proc
-            walker = threading.Thread(target=progress, args=(proc,), name="backup-progress", daemon=True)
+            walker = threading.Thread(
+                target=progress, args=(proc,), name="backup-progress", daemon=True
+            )
             walker.start()
             out = proc.communicate()[0] if proc.stdout else b""
             walker.join(timeout=PROGRESS_INTERVAL_SECONDS * 2)
@@ -565,8 +631,11 @@ class BackupJob:
     def _dump_database(self, zf: zipfile.ZipFile, argv: list, env: dict, state: dict) -> None:
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         proc = subprocess.Popen(  # noqa: S603
-            argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=env, creationflags=flags,
+            argv,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            creationflags=flags,
         )
         try:
             last_beat = 0.0
@@ -577,7 +646,7 @@ class BackupJob:
                         break
                     member.write(chunk)
                     now = time.monotonic()
-                    if now - last_beat > 2.0:      # heartbeat, not a write storm
+                    if now - last_beat > 2.0:  # heartbeat, not a write storm
                         last_beat = now
                         state.update(heartbeat=_now())
                         save_state(state)

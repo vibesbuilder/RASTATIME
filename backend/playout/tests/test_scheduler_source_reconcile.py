@@ -4,12 +4,12 @@ asks the SourceSwitcher's reconciler to verify the DJ state over telnet.
 The harbor callbacks of the old process cannot report the connections
 that died with it, and the fresh process only reports new ones.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
@@ -25,7 +25,8 @@ def sched(monkeypatch):
     engine.recording_stop.return_value = None
     engine.liquidsoap_uptime_seconds.return_value = 1000.0
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
     )
     s.reset_gates = MagicMock()
     switcher = SourceSwitcher(switch_callback=lambda _state: None)
@@ -36,7 +37,7 @@ def sched(monkeypatch):
 
 def test_uptime_drop_requests_a_reconcile(sched):
     s, engine, switcher = sched
-    engine.liquidsoap_uptime_seconds.return_value = 3.0      # fresh instance
+    engine.liquidsoap_uptime_seconds.return_value = 3.0  # fresh instance
     s._maybe_reinit_after_liquidsoap_restart()
     assert switcher.wait_reconcile(0) is True
 
@@ -74,11 +75,11 @@ def test_switcher_without_request_reconcile_is_tolerated(sched):
     s, engine, _switcher = sched
     s.set_source_switcher(object())
     engine.liquidsoap_uptime_seconds.return_value = 3.0
-    s._maybe_reinit_after_liquidsoap_restart()             # must not raise
+    s._maybe_reinit_after_liquidsoap_restart()  # must not raise
 
 
 def test_no_switcher_is_tolerated(sched):
     s, engine, _switcher = sched
     s.set_source_switcher(None)
     engine.liquidsoap_uptime_seconds.return_value = 3.0
-    s._maybe_reinit_after_liquidsoap_restart()             # must not raise
+    s._maybe_reinit_after_liquidsoap_restart()  # must not raise

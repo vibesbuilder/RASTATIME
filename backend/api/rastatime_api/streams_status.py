@@ -42,6 +42,7 @@ playout engine).  A future task will add a shared transport (Redis / DB).
 
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET
+
 from rastatime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 
@@ -53,7 +54,7 @@ def stream_outputs(request: HttpRequest) -> JsonResponse:
 
     Always returns HTTP 200.  Returns ``[]`` if no egress manager is wired.
     """
-    import streams.egress._registry as _reg          # lazy — avoids circular dep
+    import streams.egress._registry as _reg  # lazy — avoids circular dep
     from streams.egress._api_helpers import list_output_statuses
 
     mgr = _reg.default_manager
@@ -71,7 +72,7 @@ def stream_output_detail(request: HttpRequest, output_id: str) -> JsonResponse:
 
     Returns HTTP 404 if the output is not registered or no manager is wired.
     """
-    import streams.egress._registry as _reg          # lazy — avoids circular dep
+    import streams.egress._registry as _reg  # lazy — avoids circular dep
     from streams.egress._api_helpers import get_single_output_status
 
     mgr = _reg.default_manager

@@ -7,7 +7,6 @@ DESCRIPTION, MP4 freeform, raw ADTS with an ID3v2 header, Opus).
 from pathlib import Path
 
 import pytest
-
 from rastatime_analyzer.pipeline.analyze_metadata import analyze_metadata
 
 from ._synth import SECONDS, raw_adts, raw_adts_with_id3, requires_ffmpeg, sine
@@ -191,7 +190,9 @@ def test_raw_adts_with_id3_header_does_not_abort(tmp_path: Path):
 
 
 def test_opus_gets_sample_rate_and_bit_rate(tmp_path: Path):
-    path = sine(tmp_path / "o.opus", "-c:a", "libopus", "-b:a", "96k", "-metadata", "title=Opus Title")
+    path = sine(
+        tmp_path / "o.opus", "-c:a", "libopus", "-b:a", "96k", "-metadata", "title=Opus Title"
+    )
 
     found = analyze_metadata(str(path), {})
 

@@ -21,13 +21,13 @@ Verdict criteria:
 How to run:
     C:\\rastatime\\.venv\\Scripts\\python.exe C:\\rastatime\\test_c5_mechanism_b.py
 """
+
 from __future__ import annotations
 
 import os
 import time
 
 from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
-
 
 PATH_A_LIQ = "C:/rastatime/recordings/c5-mechB-v2-A.mp3"
 PATH_B_LIQ = "C:/rastatime/recordings/c5-mechB-v2-B.mp3"
@@ -37,7 +37,7 @@ PATH_A_WIN = PATH_A_LIQ.replace("/", "\\")
 PATH_B_WIN = PATH_B_LIQ.replace("/", "\\")
 
 RECORD_DURATION_S = 10  # seconds to record per file
-BITRATE_KBPS = 320      # must match rastatime.liq encoder setting
+BITRATE_KBPS = 320  # must match rastatime.liq encoder setting
 SETTLE_AFTER_STOP_S = 0.3  # wait for OS to flush before measuring
 
 
@@ -77,8 +77,8 @@ def record_for(client, target_liq, target_win, duration_s, label):
     expected = expected_bytes(duration_s)
 
     print(f"    [{label}] wrote for {actual_duration:5.2f} s")
-    print(f"    [{label}] file size       : {size:>10} B ({size/1024:.1f} KB)")
-    print(f"    [{label}] expected at 320k: {expected:>10} B ({expected/1024:.1f} KB)")
+    print(f"    [{label}] file size       : {size:>10} B ({size / 1024:.1f} KB)")
+    print(f"    [{label}] expected at 320k: {expected:>10} B ({expected / 1024:.1f} KB)")
     pct = (size / expected * 100) if expected else 0
     print(f"    [{label}] ratio           : {pct:.1f} % of expected")
     return size, expected, actual_duration
@@ -159,7 +159,9 @@ def main():
 
     print(f"  A file size in tolerance (80-150 %): {'YES' if ok_a else 'NO'}")
     print(f"  B file size in tolerance (80-150 %): {'YES' if ok_b else 'NO'}")
-    print(f"  Back-to-back telnet roundtrip < 1 s : {'YES' if bb_ok else 'NO'} ({bb_lat_ms:.0f} ms)")
+    print(
+        f"  Back-to-back telnet roundtrip < 1 s : {'YES' if bb_ok else 'NO'} ({bb_lat_ms:.0f} ms)"
+    )
     print()
     if ok_a and ok_b and bb_ok:
         print("  RESULT: Mechanismus B works.  Continuous recording verified, ")

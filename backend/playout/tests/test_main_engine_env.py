@@ -6,12 +6,12 @@ environments, but the only accepted value is ``liquidsoap``; anything
 else (the deleted ``mpv`` / ``vlc`` engines) aborts the start with a
 critical log line instead of silently running a different setup.
 """
+
 from __future__ import annotations
 
 import logging
 
 import pytest
-
 from rastatime_playout import __main__ as main
 
 

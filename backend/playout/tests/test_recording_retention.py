@@ -2,6 +2,7 @@
 RASTATIME 2026-06-05 — Unit tests for recording_retention (Record-per-Hour
 stage 3): automatic cleanup of old 24/7 archive day-folders.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -27,15 +28,15 @@ def _make_day(folder: Path, day: str, *, files=("12-00.mp3",)) -> Path:
 
 
 def test_prune_deletes_old_keeps_recent(tmp_path):
-    old = _make_day(tmp_path, "2026-06-01")           # 14 days
-    edge = _make_day(tmp_path, "2026-06-08")          # 7 days
-    recent = _make_day(tmp_path, "2026-06-10")        # 5 days
+    old = _make_day(tmp_path, "2026-06-01")  # 14 days
+    edge = _make_day(tmp_path, "2026-06-08")  # 7 days
+    recent = _make_day(tmp_path, "2026-06-10")  # 5 days
     today_folder = _make_day(tmp_path, "2026-06-15")  # 0 days
 
     deleted = prune_old_recordings(tmp_path, 7, today=TODAY)
 
     assert old in deleted
-    assert edge in deleted          # exactly 7 days old -> deleted
+    assert edge in deleted  # exactly 7 days old -> deleted
     assert recent not in deleted
     assert not old.exists()
     assert not edge.exists()
@@ -44,7 +45,7 @@ def test_prune_deletes_old_keeps_recent(tmp_path):
 
 
 def test_prune_boundary_off_by_one(tmp_path):
-    six = _make_day(tmp_path, "2026-06-09")    # 6 days -> kept
+    six = _make_day(tmp_path, "2026-06-09")  # 6 days -> kept
     seven = _make_day(tmp_path, "2026-06-08")  # 7 days -> deleted
     deleted = prune_old_recordings(tmp_path, 7, today=TODAY)
     assert seven in deleted and not seven.exists()
@@ -79,7 +80,7 @@ def test_prune_ignores_non_date_dirs(tmp_path):
 
 
 def test_prune_ignores_loose_files(tmp_path):
-    f = tmp_path / "2026-06-01.txt"   # a *file*, not a YYYY-MM-DD dir
+    f = tmp_path / "2026-06-01.txt"  # a *file*, not a YYYY-MM-DD dir
     f.write_bytes(b"x")
     assert prune_old_recordings(tmp_path, 7, today=TODAY) == []
     assert f.exists()

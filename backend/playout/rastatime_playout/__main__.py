@@ -55,7 +55,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, NamedTuple
+from typing import NamedTuple, Optional
 from urllib.parse import urlparse
 
 import requests
@@ -71,15 +71,10 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Runtime configuration (from environment)
 # ---------------------------------------------------------------------------
-_HEALTH_URL = os.environ.get(
-    "RASTATIME_API_HEALTH_URL", "http://127.0.0.1:8765/health"
-)
+_HEALTH_URL = os.environ.get("RASTATIME_API_HEALTH_URL", "http://127.0.0.1:8765/health")
 _HEALTH_TIMEOUT = int(os.environ.get("RASTATIME_API_HEALTH_TIMEOUT", "120"))
 _POLL_INTERVAL = int(os.environ.get("RASTATIME_SCHEDULE_POLL", "120"))
-_CONFIG_FILE = (
-    os.environ.get("RASTATIME_CONFIG_FILEPATH")
-    or r"C:\rastatime\config\rastatime.conf"
-)
+_CONFIG_FILE = os.environ.get("RASTATIME_CONFIG_FILEPATH") or r"C:\rastatime\config\rastatime.conf"
 
 # RASTATIME_API_URL lets the playout service connect to the Django API
 # on its direct local port (8765) independently of config.general.public_url,
@@ -91,6 +86,7 @@ _API_URL_DEFAULT = _HEALTH_URL.removesuffix("/health").removesuffix("/")
 # ---------------------------------------------------------------------------
 # Health gate
 # ---------------------------------------------------------------------------
+
 
 def _wait_for_api(url: str = _HEALTH_URL, timeout: int = _HEALTH_TIMEOUT) -> bool:
     """
@@ -119,8 +115,7 @@ def _wait_for_api(url: str = _HEALTH_URL, timeout: int = _HEALTH_TIMEOUT) -> boo
         delay = min(delay * 2.0, 30.0)
 
     logger.warning(
-        "Health gate: API did not respond within %ds. "
-        "Playout will attempt to start anyway.",
+        "Health gate: API did not respond within %ds. Playout will attempt to start anyway.",
         timeout,
     )
     return False
@@ -130,30 +125,29 @@ def _wait_for_api(url: str = _HEALTH_URL, timeout: int = _HEALTH_TIMEOUT) -> boo
 # Django bootstrap (for reading cc_pref stream settings)
 # ---------------------------------------------------------------------------
 
+
 def _setup_django() -> bool:
     """Bootstrap Django ORM so we can query cc_pref."""
-    os.environ.setdefault(
-        "DJANGO_SETTINGS_MODULE", "rastatime_api.settings.prod"
-    )
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rastatime_api.settings.prod")
     # Django's prod.py reads RASTATIME_CONFIG_FILEPATH from the environment
     # when building its Config.  Make sure it resolves to the same file we
     # loaded above, even if the env var wasn't set by the NSSM service wrapper.
     os.environ.setdefault("RASTATIME_CONFIG_FILEPATH", _CONFIG_FILE)
     try:
         import django  # type: ignore[import-untyped]
+
         django.setup()
         logger.debug("Django ORM ready.")
         return True
     except Exception as exc:  # pylint: disable=broad-exception-caught
-        logger.warning(
-            "Django setup failed — stream output settings will not be read: %s", exc
-        )
+        logger.warning("Django setup failed — stream output settings will not be read: %s", exc)
         return False
 
 
 # ---------------------------------------------------------------------------
 # Read Icecast stream outputs from cc_pref
 # ---------------------------------------------------------------------------
+
 
 def _resolve_crossfade_seconds() -> float:
     """
@@ -176,7 +170,8 @@ def _resolve_crossfade_seconds() -> float:
         )
     except ValueError as exc:
         logger.critical(
-            "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS must be a float: %s", exc,
+            "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS must be a float: %s",
+            exc,
         )
         sys.exit(1)
     pref_crossfade = _read_pref_crossfade_duration()
@@ -184,12 +179,13 @@ def _resolve_crossfade_seconds() -> float:
         logger.info(
             "Crossfade duration %.2f s from Settings -> General "
             "(cc_pref default_crossfade_duration)%s",
-            pref_crossfade, " - input switches use ducking" if pref_crossfade == 0 else "",
+            pref_crossfade,
+            " - input switches use ducking" if pref_crossfade == 0 else "",
         )
         return pref_crossfade
     logger.info(
-        "Crossfade duration %.2f s from env/default (cc_pref key missing "
-        "or invalid)", crossfade,
+        "Crossfade duration %.2f s from env/default (cc_pref key missing or invalid)",
+        crossfade,
     )
     return crossfade
 
@@ -205,7 +201,7 @@ def _read_pref_crossfade_duration() -> Optional[float]:
     return _read_pref_seconds("default_crossfade_duration")
 
 
-def _resolve_loudness_limiter() -> Tuple[str, Optional[float]]:
+def _resolve_loudness_limiter() -> tuple[str, Optional[float]]:
     """
     RASTATIME 2026-09-28 - Settings -> Streams -> Loudness Normalization:
     ``(mode, ceiling)`` where ``ceiling`` is the true-peak ceiling (dBTP)
@@ -213,6 +209,7 @@ def _resolve_loudness_limiter() -> Tuple[str, Optional[float]]:
     """
     try:
         from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
+
         prefs = Preference.get_stream_preferences()
         mode = str(getattr(prefs, "loudness_mode", "off") or "off")
         ceiling = float(getattr(prefs, "loudness_true_peak_dbtp", -1.0))
@@ -229,10 +226,13 @@ def _resolve_stereotool():
     key never travels over the HTTP API).  Off when unreadable.
     """
     from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
-        StereoToolSettings, stereotool_settings_from_prefs,
+        StereoToolSettings,
+        stereotool_settings_from_prefs,
     )
+
     try:
         from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
+
         entries = dict(
             Preference.site.filter(key__startswith="stereotool_").values_list("key", "value")
         )
@@ -245,13 +245,19 @@ def _resolve_stereotool():
 def _stereotool_fingerprint(settings) -> list:
     """The settings as the fingerprint sees them - the key only as a hash."""
     import hashlib  # noqa: PLC0415
-    key = hashlib.sha1(settings.license_key.encode("utf-8")).hexdigest()[:12] if settings.license_key else ""  # noqa: S324
+
+    key = (
+        hashlib.sha1(settings.license_key.encode("utf-8")).hexdigest()[:12]
+        if settings.license_key
+        else ""
+    )  # noqa: S324
     return [settings.enabled, settings.library_file, settings.preset_file, key]
 
 
 def _read_pref_seconds(key: str) -> Optional[float]:
     try:
         from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
+
         raw = dict(Preference.site.values_list("key", "value")).get(key)
         if raw is None or str(raw).strip() == "":
             return None
@@ -278,8 +284,11 @@ def _build_live_text_writer():
     if cfg is not None and cfg.enabled:
         logger.info(
             "Live Text Info: enabled (format %d, web %s, file %r, ftp %s) -> %s",
-            cfg.label_format, "on" if cfg.web_enabled else "off", cfg.file_path or "-",
-            "on" if cfg.ftp.enabled else "off", writer.web_file,
+            cfg.label_format,
+            "on" if cfg.web_enabled else "off",
+            cfg.file_path or "-",
+            "on" if cfg.ftp.enabled else "off",
+            writer.web_file,
         )
     else:
         logger.info("Live Text Info: disabled (Settings -> General).")
@@ -298,7 +307,8 @@ def _build_tunein_pusher():
     if cfg is not None and cfg.enabled:
         logger.info(
             "TuneIn now-playing pushes: enabled for station %s (%s).",
-            cfg.station_id or "?", "credentials complete" if cfg.complete() else "credentials INCOMPLETE",
+            cfg.station_id or "?",
+            "credentials complete" if cfg.complete() else "credentials INCOMPLETE",
         )
     else:
         logger.info("TuneIn now-playing pushes: disabled (Settings -> TuneIn Settings).")
@@ -329,8 +339,8 @@ def _resolve_dj_fade_seconds() -> float:
     pref = _read_pref_seconds("default_transition_fade")
     if pref is not None:
         logger.info(
-            "DJ hand-over fade %.2f s from Settings -> Streams "
-            "(cc_pref default_transition_fade)", pref,
+            "DJ hand-over fade %.2f s from Settings -> Streams (cc_pref default_transition_fade)",
+            pref,
         )
         return pref
     logger.info(
@@ -359,24 +369,26 @@ def _resolve_show_crossfade_seconds() -> float:
         )
     except ValueError as exc:
         logger.critical(
-            "RASTATIME_LIQUIDSOAP_SHOW_CROSSFADE_SECONDS must be a float: %s", exc,
+            "RASTATIME_LIQUIDSOAP_SHOW_CROSSFADE_SECONDS must be a float: %s",
+            exc,
         )
         sys.exit(1)
     pref = _read_pref_seconds("default_show_crossfade_duration")
     if pref is not None:
         logger.info(
             "Show crossfade duration %.2f s from Settings -> General "
-            "(cc_pref default_show_crossfade_duration)", pref,
+            "(cc_pref default_show_crossfade_duration)",
+            pref,
         )
         return pref
     logger.info(
-        "Show crossfade duration %.2f s from env/default (cc_pref key missing "
-        "or invalid)", fallback,
+        "Show crossfade duration %.2f s from env/default (cc_pref key missing or invalid)",
+        fallback,
     )
     return fallback
 
 
-def _read_stream_outputs(numbered: bool = False) -> List[Dict]:
+def _read_stream_outputs(numbered: bool = False) -> list[dict]:
     """
     Return a list of enabled stream output dicts from ``cc_pref``.
 
@@ -389,10 +401,8 @@ def _read_stream_outputs(numbered: bool = False) -> List[Dict]:
     try:
         from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
 
-        all_entries: Dict[str, str] = dict(
-            Preference.site.values_list("key", "value")
-        )
-        outputs: List[Dict] = []
+        all_entries: dict[str, str] = dict(Preference.site.values_list("key", "value"))
+        outputs: list[dict] = []
         for n in range(1, 4):
             raw = all_entries.get(f"stream_output_{n}")
             if not raw:
@@ -416,6 +426,7 @@ def _read_stream_outputs(numbered: bool = False) -> List[Dict]:
 # ---------------------------------------------------------------------------
 # Load rastatime.conf (for API base_url and api_key)
 # ---------------------------------------------------------------------------
+
 
 def _load_config():
     """Load Config from rastatime.conf; exit(1) if the file is missing."""
@@ -480,7 +491,8 @@ def _read_harbor_credentials() -> tuple:
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
             "Could not read stream.harbor.* from %s: %s",
-            _CONFIG_FILE, exc,
+            _CONFIG_FILE,
+            exc,
         )
         return ("", "")
 
@@ -493,7 +505,7 @@ def _read_config_yaml() -> dict:
         return yaml.safe_load(fh) or {}
 
 
-def _local_icecast_source_credentials(stream_outputs) -> Optional[Tuple[str, str]]:
+def _local_icecast_source_credentials(stream_outputs) -> Optional[tuple[str, str]]:
     """Source user/password of the local Icecast, taken from the first
     enabled Icecast stream output that points at this machine (Settings ->
     Streams).  The Line-In capture pushes its ``/linein-capture`` mount with
@@ -513,7 +525,9 @@ def _local_icecast_source_credentials(stream_outputs) -> Optional[Tuple[str, str
         password = str(out.get("pass", "") or "")
         if not password:
             continue
-        candidates.append((str(out.get("port", "")), str(out.get("user", "") or "source"), password))
+        candidates.append(
+            (str(out.get("port", "")), str(out.get("user", "") or "source"), password)
+        )
     if not candidates:
         return None
     # prefer the output on the capture's own port (8000), else any local one
@@ -521,7 +535,7 @@ def _local_icecast_source_credentials(stream_outputs) -> Optional[Tuple[str, str
     return candidates[0][1], candidates[0][2]
 
 
-def _read_harbor_inputs(stream_outputs) -> Tuple[int, str, int, str]:
+def _read_harbor_inputs(stream_outputs) -> tuple[int, str, int, str]:
     """
     RASTATIME 2026-09-10 - the harbor ports and mounts come from
     ``stream.inputs.main`` / ``stream.inputs.show`` in rastatime.conf,
@@ -534,8 +548,11 @@ def _read_harbor_inputs(stream_outputs) -> Tuple[int, str, int, str]:
     such a value is replaced by the default with a loud warning.
     """
     from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
-        DEFAULT_HARBOR_MAIN_MOUNT, DEFAULT_HARBOR_PORT, DEFAULT_HARBOR_SHOW_MOUNT,
+        DEFAULT_HARBOR_MAIN_MOUNT,
+        DEFAULT_HARBOR_PORT,
+        DEFAULT_HARBOR_SHOW_MOUNT,
     )
+
     taken = {8000}
     for out in stream_outputs or []:
         try:
@@ -560,7 +577,10 @@ def _read_harbor_inputs(stream_outputs) -> Tuple[int, str, int, str]:
                 "stream.inputs.%s.port=%d is an Icecast port - the Liquidsoap harbor "
                 "cannot bind it; using %d instead.  Set it to %d in rastatime.conf so "
                 "Settings -> Streams shows what DJs must use.",
-                name, port, DEFAULT_HARBOR_PORT, DEFAULT_HARBOR_PORT,
+                name,
+                port,
+                DEFAULT_HARBOR_PORT,
+                DEFAULT_HARBOR_PORT,
             )
             port = DEFAULT_HARBOR_PORT
         return port, mount
@@ -599,7 +619,7 @@ def _dj_auth_web_url() -> str:
         return "http://127.0.0.1"
 
 
-def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[str]]:
+def _resolve_local_output_device() -> tuple[Optional[int], str, str, Optional[str]]:
     """
     Resolve the operator's **Main Output** setting to a PortAudio
     device index for ``output.portaudio``.
@@ -630,21 +650,20 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[st
     """
     try:
         from rastatime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
+
         row = SoundcardSettings.get_settings()
         stable_id = (row.main_output_id or "").strip()
         name = (row.main_output_name or "").strip()
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
             "Could not read the Main Output setting (%s) — the local "
-            "monitor falls back to the OS-default endpoint.", exc,
+            "monitor falls back to the OS-default endpoint.",
+            exc,
         )
         return (None, "", "", None)
 
     if not stable_id and not name:
-        logger.info(
-            "No Main Output configured — local monitor uses the "
-            "OS-default endpoint."
-        )
+        logger.info("No Main Output configured — local monitor uses the OS-default endpoint.")
         return (None, "", "", None)
 
     # Older rows may carry only the GUID; recover the friendly name via
@@ -654,11 +673,10 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[st
         try:
             import audio.soundcard._registry as _reg  # noqa: PLC0415
             from audio.soundcard.interface import AudioDeviceKind  # noqa: PLC0415
+
             mgr = _reg.default_manager
             if mgr is not None:
-                dev = mgr.find_device_by_id_or_name(
-                    stable_id, "", AudioDeviceKind.OUTPUT
-                )
+                dev = mgr.find_device_by_id_or_name(stable_id, "", AudioDeviceKind.OUTPUT)
                 if dev is not None:
                     name = dev.name
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -669,7 +687,8 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[st
             "Main Output %r has no friendly name stored — cannot match it "
             "against PortAudio.  Re-save the Main Output picker in "
             "Settings → Local Machine.  Falling back to the OS-default "
-            "endpoint.", stable_id,
+            "endpoint.",
+            stable_id,
         )
         return (None, "", "", None)
 
@@ -677,11 +696,12 @@ def _resolve_local_output_device() -> Tuple[Optional[int], str, str, Optional[st
         from rastatime_playout.engine.portaudio_output import (  # noqa: PLC0415
             resolve_output_device,
         )
+
         resolved = resolve_output_device(name)
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
-            "Main Output resolve raised %s — falling back to the "
-            "OS-default endpoint.", exc,
+            "Main Output resolve raised %s — falling back to the OS-default endpoint.",
+            exc,
         )
         return (None, "", "", None)
 
@@ -730,6 +750,7 @@ def _harbor_timeout_seconds() -> float:
     from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
         DEFAULT_HARBOR_TIMEOUT_SECONDS,
     )
+
     raw = os.environ.get(HARBOR_TIMEOUT_ENV, "").strip()
     if not raw:
         return DEFAULT_HARBOR_TIMEOUT_SECONDS
@@ -738,7 +759,9 @@ def _harbor_timeout_seconds() -> float:
     except ValueError:
         logger.warning(
             "%s=%r is not a number - using %.0f s",
-            HARBOR_TIMEOUT_ENV, raw, DEFAULT_HARBOR_TIMEOUT_SECONDS,
+            HARBOR_TIMEOUT_ENV,
+            raw,
+            DEFAULT_HARBOR_TIMEOUT_SECONDS,
         )
         return DEFAULT_HARBOR_TIMEOUT_SECONDS
     if value < 1.0:
@@ -747,7 +770,7 @@ def _harbor_timeout_seconds() -> float:
     return value
 
 
-def _render_rastatime_liq(stream_outputs: List[Dict]) -> bool:
+def _render_rastatime_liq(stream_outputs: list[dict]) -> bool:
     """Compatibility wrapper: the ``changed`` flag of
     :func:`_render_rastatime_liq_outcome`."""
     return _render_rastatime_liq_outcome(stream_outputs).changed
@@ -797,10 +820,12 @@ def _render_settings_fingerprint() -> Optional[str]:
 
     try:
         from rastatime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
+
         from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
             read_hourly_recording_config_from_db,
             read_show_recording_config_from_db,
         )
+
         row = SoundcardSettings.get_settings()
         payload = {
             "hourly": read_hourly_recording_config_from_db(),
@@ -821,7 +846,7 @@ def _render_settings_fingerprint() -> Optional[str]:
     ).hexdigest()
 
 
-def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
+def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
     """
     Render ``rastatime.liq`` from the operator-configured environment +
     ``cc_pref`` stream outputs.  Idempotent: writes only when content
@@ -835,18 +860,18 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     :class:`_LiquidsoapRenderError`; the startup wrapper turns that
     into ``sys.exit(1)``, the nightly caller into a log line.
     """
+    from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
+        DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
+        icecast_mounts_without_fallback,
+        read_hourly_recording_config_from_db,
+        read_show_recording_config_from_db,
+        write_rastatime_liq,
+        write_standby_liq,
+    )
     from rastatime_playout.liquidsoap_service import (  # noqa: PLC0415
         MAIN_OUTPUT_BY_INDEX,
         MAIN_OUTPUT_BY_NAME,
         MAIN_OUTPUT_DEFAULT,
-    )
-    from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
-        DEFAULT_LINEIN_HTTP_MAX_BUFFER_SECONDS,
-        read_hourly_recording_config_from_db,
-        read_show_recording_config_from_db,
-        icecast_mounts_without_fallback,
-        write_rastatime_liq,
-        write_standby_liq,
     )
 
     config_path = Path(
@@ -863,9 +888,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     try:
         telnet_port = int(os.environ.get("RASTATIME_LIQUIDSOAP_PORT", "1234"))
     except ValueError as exc:
-        logger.critical(
-            "RASTATIME_LIQUIDSOAP_PORT must be an integer: %s", exc
-        )
+        logger.critical("RASTATIME_LIQUIDSOAP_PORT must be an integer: %s", exc)
         raise _LiquidsoapRenderError(str(exc)) from exc
     crossfade = _resolve_crossfade_seconds()
     show_crossfade = _resolve_show_crossfade_seconds()
@@ -884,14 +907,15 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         )
     except ValueError as exc:
         logger.critical(
-            "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS must be "
-            "a float: %s", exc,
+            "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS must be a float: %s",
+            exc,
         )
         raise _LiquidsoapRenderError(str(exc)) from exc
     if linein_http_max_buffer < 0.2:
         logger.warning(
             "RASTATIME_LIQUIDSOAP_LINEIN_HTTP_MAX_BUFFER_SECONDS=%.3f is "
-            "below the 0.2 s floor; using 0.2 s.", linein_http_max_buffer,
+            "below the 0.2 s floor; using 0.2 s.",
+            linein_http_max_buffer,
         )
         linein_http_max_buffer = 0.2
     # 2026-09-27: RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS (Phase-D
@@ -903,10 +927,9 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             "RASTATIME_LIQUIDSOAP_CROSSFADE_FADE_SECONDS is set but no longer "
             "used (track/show crossfade come from Settings -> General)."
         )
-    local_output_enabled = (
-        os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").lower()
-        not in ("false", "0", "no", "off")
-    )
+    local_output_enabled = os.environ.get(
+        "RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true"
+    ).lower() not in ("false", "0", "no", "off")
     # RASTATIME 2026-09-14 - monitor bridge with drift compensation
     # (buffer.adaptative) unless the machine setting turns it off.
     local_output_adaptive = _local_output_adaptive_enabled()
@@ -922,13 +945,16 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     # Wenn unset, rendert der Renderer die input.harbor-Blöcke nicht
     # (= C3-Stand, nur scheduled queue auf dem Bus).
     harbor_main_pwd, harbor_show_pwd = _read_harbor_credentials()
-    harbor_main_port, harbor_main_mount, harbor_show_port, harbor_show_mount = (
-        _read_harbor_inputs(stream_outputs)
+    harbor_main_port, harbor_main_mount, harbor_show_port, harbor_show_mount = _read_harbor_inputs(
+        stream_outputs
     )
     logger.info(
         "Liquidsoap harbors: main %s:%d, show %s:%d (stream.inputs in rastatime.conf, "
         "as shown under Settings -> Streams).",
-        harbor_main_mount, harbor_main_port, harbor_show_mount, harbor_show_port,
+        harbor_main_mount,
+        harbor_main_port,
+        harbor_show_mount,
+        harbor_show_port,
     )
     if harbor_main_pwd or harbor_show_pwd:
         logger.info(
@@ -957,13 +983,17 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     if hourly["enabled"] and hourly["folder"]:
         logger.info(
             "24/7 hourly recording enabled: folder=%s format=%s %dk",
-            hourly["folder"], hourly["format"], hourly["bitrate"],
+            hourly["folder"],
+            hourly["format"],
+            hourly["bitrate"],
         )
     # RASTATIME 2026-10-18 - per-show recording encoder (Settings -> Local
     # Machine -> Show Recording), MP3 320k unless the operator chose otherwise.
     show_rec = read_show_recording_config_from_db()
     logger.info(
-        "Show recording encoder: format=%s %dk", show_rec["format"], show_rec["bitrate"],
+        "Show recording encoder: format=%s %dk",
+        show_rec["format"],
+        show_rec["bitrate"],
     )
 
     # Main Output (Settings -> Local Machine) -> PortAudio device index.
@@ -989,8 +1019,10 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         main_output_mode = MAIN_OUTPUT_DEFAULT
 
     from rastatime_playout.icy_metadata import (  # noqa: PLC0415
-        IcyPreferences, read_icy_preferences_from_db,
+        IcyPreferences,
+        read_icy_preferences_from_db,
     )
+
     icy = read_icy_preferences_from_db() or IcyPreferences()
     # RASTATIME 2026-09-28 - EBU R128 stage 1: the bus limiter only in R128 mode
     loudness_mode, loudness_ceiling = _resolve_loudness_limiter()
@@ -998,10 +1030,12 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         "Loudness Normalization: %s%s (Settings -> Streams).",
         loudness_mode,
         f", true-peak ceiling {loudness_ceiling:.1f} dBTP (bus limiter)"
-        if loudness_ceiling is not None else "",
+        if loudness_ceiling is not None
+        else "",
     )
     # RASTATIME 2026-10-02 - output processing (Stereo Tool), optional
     from rastatime_playout.liquidsoap_config import stereotool_render_active  # noqa: PLC0415
+
     stereotool = _resolve_stereotool()
     stereotool_active = stereotool_render_active(stereotool)
     if stereotool.enabled:
@@ -1009,7 +1043,8 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             "Output processing: Stereo Tool %s (library %s, preset %s, licence %s) "
             "(Settings -> Streams).",
             "ACTIVE" if stereotool_active else "enabled but NOT active - see the warning above",
-            stereotool.library_file or "-", stereotool.preset_file or "-",
+            stereotool.library_file or "-",
+            stereotool.preset_file or "-",
             "set" if stereotool.license_key else "not set",
         )
     else:
@@ -1017,7 +1052,9 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     logger.info(
         "ICY metadata: Stream Label format %d, off-air text %r, station %r "
         "(Settings -> Streams / General).",
-        icy.label_format, icy.offair_text, icy.station_name,
+        icy.label_format,
+        icy.offair_text,
+        icy.station_name,
     )
 
     try:
@@ -1067,7 +1104,8 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(
             "Failed to render Liquidsoap config %s: %s",
-            config_path, exc,
+            config_path,
+            exc,
         )
         raise _LiquidsoapRenderError(str(exc)) from exc
 
@@ -1075,8 +1113,7 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
         logger.info("Rendered %s (content changed).", config_path)
     else:
         logger.info(
-            "Liquidsoap config %s already up-to-date — no restart "
-            "needed.",
+            "Liquidsoap config %s already up-to-date — no restart needed.",
             config_path,
         )
     # RASTATIME 2026-09-09 - the standby source for the Icecast fallback
@@ -1092,7 +1129,9 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
     standby_audio = os.environ.get("RASTATIME_STANDBY_AUDIO", "").strip() or None
     try:
         standby_changed = write_standby_liq(
-            standby_path, stream_outputs, audio_file=standby_audio,
+            standby_path,
+            stream_outputs,
+            audio_file=standby_audio,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning("Could not render the standby source %s: %s", standby_path, exc)
@@ -1101,33 +1140,40 @@ def _render_rastatime_liq_outcome(stream_outputs: List[Dict]) -> RenderOutcome:
             logger.warning(
                 "Rendered %s (content changed).  RESTART the RASTATIME-STANDBY "
                 "NSSM service so the fallback mounts carry the new encoders "
-                "(no listener is affected by that restart).", standby_path,
+                "(no listener is affected by that restart).",
+                standby_path,
             )
     # The standby side follows the stream outputs by itself; Icecast's
     # fallback blocks do not.  Say so loudly when a public mount has none.
-    icecast_xml = Path(os.environ.get("RASTATIME_ICECAST_CONFIG_PATH", _ICECAST_DEFAULT_CONFIG_PATH))
+    icecast_xml = Path(
+        os.environ.get("RASTATIME_ICECAST_CONFIG_PATH", _ICECAST_DEFAULT_CONFIG_PATH)
+    )
     uncovered = icecast_mounts_without_fallback(icecast_xml, stream_outputs)
     if uncovered is None:
         logger.warning(
             "Cannot check the Icecast fallback mounts (%s unreadable) - listeners "
             "of mounts without <fallback-mount> are disconnected by a planned "
-            "restart.", icecast_xml,
+            "restart.",
+            icecast_xml,
         )
     elif uncovered:
         logger.warning(
             "Icecast mount(s) without a standby fallback in %s: %s - add a "
-            "<mount type=\"normal\"> block with <fallback-mount>%s-standby</fallback-mount> "
+            '<mount type="normal"> block with <fallback-mount>%s-standby</fallback-mount> '
             "and <fallback-override>1</fallback-override>, then restart RASTATIME-ICECAST; "
             "until then a planned restart disconnects their listeners.",
-            icecast_xml, ", ".join(uncovered), uncovered[0],
+            icecast_xml,
+            ", ".join(uncovered),
+            uncovered[0],
         )
     return RenderOutcome(
-        changed=changed, main_output_mode=main_output_mode,
+        changed=changed,
+        main_output_mode=main_output_mode,
         stereotool_active=stereotool_active,
     )
 
 
-def _render_rastatime_liq_at_startup(stream_outputs: List[Dict]) -> bool:
+def _render_rastatime_liq_at_startup(stream_outputs: list[dict]) -> bool:
     """
     Startup wrapper around :func:`_render_rastatime_liq`.
 
@@ -1216,7 +1262,9 @@ def _require_liquidsoap_engine() -> str:
             "%s=%r is not supported - Liquidsoap is the only playout engine "
             "since 2026-09-10 (the mpv engine was deleted).  Set "
             "%s=liquidsoap or remove the variable.",
-            PLAYOUT_ENGINE_ENV, kind, PLAYOUT_ENGINE_ENV,
+            PLAYOUT_ENGINE_ENV,
+            kind,
+            PLAYOUT_ENGINE_ENV,
         )
         sys.exit(1)
     return kind
@@ -1225,6 +1273,7 @@ def _require_liquidsoap_engine() -> str:
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     logger.info("RASTATIME-PLAYOUT: starting.")
@@ -1239,7 +1288,7 @@ def main() -> None:
     django_ok = _setup_django()
 
     # 4. Read Icecast stream settings from cc_pref
-    stream_outputs: List[Dict] = []
+    stream_outputs: list[dict] = []
     render_restart_pending = False
     if django_ok:
         stream_outputs = _read_stream_outputs()
@@ -1278,7 +1327,8 @@ def main() -> None:
         engine = LiquidsoapPlayoutEngine()
         logger.info(
             "Playout engine: Liquidsoap (telnet target %s:%d).",
-            engine._telnet._host, engine._telnet._port,
+            engine._telnet._host,
+            engine._telnet._port,
         )
     except RuntimeError as exc:
         logger.critical("Liquidsoap engine failed to initialise: %s", exc)
@@ -1296,6 +1346,7 @@ def main() -> None:
     api_url = os.environ.get("RASTATIME_API_URL", _API_URL_DEFAULT)
     logger.info("API client base URL: %s", api_url)
     from rastatime_api_client.v2 import ApiClient  # noqa: PLC0415
+
     api_client = ApiClient(
         base_url=api_url,
         api_key=config.general.api_key,
@@ -1310,11 +1361,14 @@ def main() -> None:
     # https address.
     legacy_url = config.general.internal_base_url()
     from rastatime_api_client.v1 import BaseApiClient as ApiClientV1  # noqa: PLC0415
+
     api_client_v1 = ApiClientV1(
         base_url=legacy_url,
         api_key=config.general.api_key,
     )
-    logger.info("Legacy v1 API client base URL: %s (public_url %s)", legacy_url, config.general.public_url)
+    logger.info(
+        "Legacy v1 API client base URL: %s (public_url %s)", legacy_url, config.general.public_url
+    )
 
     # 6b. Listener-stats collector (BACKLOG "Analytics: Listener Stats
     # sammeln keine Daten", fixed 2026-08-30).  Upstream started this
@@ -1341,32 +1395,30 @@ def main() -> None:
         stats_thread.start()
         logger.info("Listener-stats collector started (poll every 120 s).")
     else:
-        logger.warning(
-            "Django ORM unavailable — listener-stats collector NOT started."
-        )
+        logger.warning("Django ORM unavailable — listener-stats collector NOT started.")
 
     # 7. Initialise PlayoutScheduler
     # RASTATIME: pass storage path for direct file access (avoids API download
     # issues with X-Accel-Redirect on Windows/Waitress).
-    storage_path = str(config.storage.path) if hasattr(config, 'storage') else None
+    storage_path = str(config.storage.path) if hasattr(config, "storage") else None
     if storage_path:
         logger.info("Storage path for direct file access: %s", storage_path)
 
-    from rastatime_playout.playout_scheduler import PlayoutScheduler  # noqa: PLC0415
     from rastatime_playout.icy_metadata import read_icy_preferences_from_db  # noqa: PLC0415
+
     # Stream-output changes (Settings → Streams) reach the air only via a
     # re-render of rastatime.liq + a LIQUIDSOAP restart (planned restart
     # or operator); the scheduler has no hot-reload of its own since the
     # FfmpegStreamer path was deleted (2026-09-10).
-
     # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
     # (memory-leak safety net).  The re-render before the restart needs
     # the ORM for cc_pref.
     from rastatime_playout.liquidsoap_service import NightlyRestartPolicy  # noqa: PLC0415
+    from rastatime_playout.playout_scheduler import PlayoutScheduler  # noqa: PLC0415
+
     nightly_policy = NightlyRestartPolicy.from_env()
     render_for_restart = (
-        (lambda: _render_rastatime_liq_outcome(_read_stream_outputs()))
-        if django_ok else None
+        (lambda: _render_rastatime_liq_outcome(_read_stream_outputs())) if django_ok else None
     )
     if nightly_policy is not None and nightly_policy.enabled:
         logger.info(
@@ -1409,7 +1461,9 @@ def main() -> None:
             _local_icecast_source_credentials(_read_stream_outputs()) if django_ok else None
         ),
     )
-    logger.info("Webstream watchdog: inside Liquidsoap (frame counter, rendered into rastatime.liq).")
+    logger.info(
+        "Webstream watchdog: inside Liquidsoap (frame counter, rendered into rastatime.liq)."
+    )
     # RASTATIME 2026-09-04 - a previous Pypo may have died mid-prepare
     # with a bus gate closed; open both before the first refresh.
     # RASTATIME 2026-09-06 - the constructor tried once (recording
@@ -1431,6 +1485,7 @@ def main() -> None:
         saved_output_name: str = ""
         try:
             from rastatime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
+
             _row = SoundcardSettings.get_settings()
             saved_output = _row.main_output_id or None
             # RASTATIME 2026-05-14 — friendly-name fallback for when the
@@ -1441,7 +1496,8 @@ def main() -> None:
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
                 "Could not read SoundcardSettings.main_output_id "
-                "(falling back to OS-default audio device): %s", exc,
+                "(falling back to OS-default audio device): %s",
+                exc,
             )
 
         if saved_output:
@@ -1451,10 +1507,13 @@ def main() -> None:
             try:
                 import audio.soundcard._registry as _reg  # noqa: PLC0415
                 from audio.soundcard.interface import AudioDeviceKind  # noqa: PLC0415
+
                 mgr = _reg.default_manager
                 if mgr is not None:
                     dev = mgr.find_device_by_id_or_name(
-                        saved_output, saved_output_name, AudioDeviceKind.OUTPUT,
+                        saved_output,
+                        saved_output_name,
+                        AudioDeviceKind.OUTPUT,
                     )
                     if dev is None:
                         resolved_id = None
@@ -1462,7 +1521,8 @@ def main() -> None:
                             "Saved main_output_id %r and main_output_name %r "
                             "both fail to resolve — falling back to OS-default "
                             "audio device.",
-                            saved_output, saved_output_name,
+                            saved_output,
+                            saved_output_name,
                         )
                     elif dev.stable_id != saved_output.strip().lower():
                         logger.warning(
@@ -1470,13 +1530,16 @@ def main() -> None:
                             "name-fallback matched %r (stable_id=%s).  "
                             "Operator should re-save the Main Output picker "
                             "so future starts use the new id directly.",
-                            saved_output, dev.name, dev.stable_id,
+                            saved_output,
+                            dev.name,
+                            dev.stable_id,
                         )
                         resolved_id = dev.stable_id
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.warning(
                     "Audio-output resolve raised %s; using saved id %r as-is.",
-                    exc, saved_output,
+                    exc,
+                    saved_output,
                 )
 
             if resolved_id:
@@ -1486,13 +1549,9 @@ def main() -> None:
                 )
                 engine.set_audio_device(resolved_id)
             else:
-                logger.info(
-                    "No usable audio output device — using OS-default endpoint."
-                )
+                logger.info("No usable audio output device — using OS-default endpoint.")
         else:
-            logger.info(
-                "No saved audio output device — using OS-default endpoint."
-            )
+            logger.info("No saved audio output device — using OS-default endpoint.")
 
     # 8a. Pre-flight scanner — looks 48h ahead every 15 min and writes
     # operator-visible warnings (currently: missing Line-In devices) to
@@ -1502,6 +1561,7 @@ def main() -> None:
     # PHP frontend save → both scheduler.refresh() AND a fresh preflight
     # scan, so dashboard warnings appear within seconds of a show edit.
     from rastatime_playout.preflight import PreflightChecker  # noqa: PLC0415
+
     preflight = PreflightChecker(api_client=api_client)
 
     # 8b. Source switcher — Master DJ > Show DJ > Scheduled.  The HTTP
@@ -1515,12 +1575,13 @@ def main() -> None:
         reconcile_interval_from_env,
         start_listener,
     )
+
     switcher = SourceSwitcher(switch_callback=scheduler.switch_audio_source)
     scheduler.set_source_switcher(switcher)
     switcher_server = start_listener(
         switcher,
-        scheduler=scheduler,   # /reload-schedule needs the scheduler too
-        preflight=preflight,   # …and the preflight scanner for instant rescan
+        scheduler=scheduler,  # /reload-schedule needs the scheduler too
+        preflight=preflight,  # …and the preflight scanner for instant rescan
         host=_LISTENER_HOST,
         port=_LISTENER_PORT,
         # Option d (2026-09-09): the harbor callbacks report DJ events;
@@ -1545,6 +1606,7 @@ def main() -> None:
     from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
         read_hourly_recording_config_from_db as _read_247_cfg,
     )
+
     scheduler.set_cue_writer(CueWriter(_read_247_cfg))
 
     # 9. Initial schedule fetch
@@ -1558,8 +1620,8 @@ def main() -> None:
         preflight.start()
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
-            "PreflightChecker failed to start (dashboard warnings won't "
-            "appear): %s", exc,
+            "PreflightChecker failed to start (dashboard warnings won't appear): %s",
+            exc,
         )
 
     # 9c. RASTATIME 2026-06-05 — 24/7 recording retention.  Daemon thread
@@ -1572,9 +1634,8 @@ def main() -> None:
     from rastatime_playout.recording_retention import (  # noqa: PLC0415
         RecordingRetentionThread,
     )
-    retention_thread = RecordingRetentionThread(
-        read_hourly_recording_config_from_db
-    )
+
+    retention_thread = RecordingRetentionThread(read_hourly_recording_config_from_db)
     try:
         retention_thread.start()
     except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -1582,9 +1643,7 @@ def main() -> None:
 
     # 10. Main poll loop
     logger.info(
-        "RASTATIME-PLAYOUT: running. "
-        "Schedule refreshes every %ds. "
-        "Press Ctrl+C to stop.",
+        "RASTATIME-PLAYOUT: running. Schedule refreshes every %ds. Press Ctrl+C to stop.",
         _POLL_INTERVAL,
     )
     last_refresh = time.monotonic()

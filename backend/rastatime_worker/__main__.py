@@ -14,7 +14,6 @@ import logging
 import signal
 import sys
 import time
-from datetime import datetime, timezone
 
 from .interface import JobRunner  # noqa: F401 — verifies import is clean
 

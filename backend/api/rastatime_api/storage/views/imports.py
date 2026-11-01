@@ -18,10 +18,9 @@ both into the dashboard warning ``imports_failed``; the Upload page's
 
 from __future__ import annotations
 
-import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from rest_framework.response import Response
@@ -40,20 +39,24 @@ def organize_dir(root: str | None = None) -> Path:
 
 
 def failed_imports_payload(root: str | None = None) -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     failed = []
-    for row in File.objects.filter(import_status=IMPORT_STATUS_FAILED).order_by("-created_at", "-id")[:200]:
+    for row in File.objects.filter(import_status=IMPORT_STATUS_FAILED).order_by(
+        "-created_at", "-id"
+    )[:200]:
         utime = row.created_at
         if utime is not None and utime.tzinfo is None:
-            utime = utime.replace(tzinfo=timezone.utc)  # cc_files.utime is stored in UTC
+            utime = utime.replace(tzinfo=UTC)  # cc_files.utime is stored in UTC
         age = int((now - utime).total_seconds()) if utime else None
-        failed.append({
-            "id": row.id,
-            "name": row.track_title or row.name or "",
-            "comment": (row.comment or "")[:300],
-            "utime": utime.isoformat() if utime else None,
-            "age_seconds": age,
-        })
+        failed.append(
+            {
+                "id": row.id,
+                "name": row.track_title or row.name or "",
+                "comment": (row.comment or "")[:300],
+                "utime": utime.isoformat() if utime else None,
+                "age_seconds": age,
+            }
+        )
 
     leftovers = []
     folder = organize_dir(root)
@@ -70,20 +73,24 @@ def failed_imports_payload(root: str | None = None) -> dict:
             file_id = int(match.group(1)) if match else None
             state = "missing"
             if file_id is not None:
-                status = File.objects.filter(pk=file_id).values_list("import_status", flat=True).first()
+                status = (
+                    File.objects.filter(pk=file_id).values_list("import_status", flat=True).first()
+                )
                 if status == IMPORT_STATUS_FAILED:
                     state = "failed"
                 elif status == IMPORT_STATUS_PENDING:
                     state = "pending"
                 elif status is not None:
                     state = "imported"
-            leftovers.append({
-                "file": entry.name,
-                "size": st.st_size,
-                "age_seconds": int(now_ts - st.st_mtime),
-                "file_id": file_id,
-                "row": state,
-            })
+            leftovers.append(
+                {
+                    "file": entry.name,
+                    "size": st.st_size,
+                    "age_seconds": int(now_ts - st.st_mtime),
+                    "file_id": file_id,
+                    "row": state,
+                }
+            )
     return {"failed": failed, "leftovers": leftovers, "organize_dir": str(folder)}
 
 

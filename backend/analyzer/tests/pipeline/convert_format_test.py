@@ -8,8 +8,8 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
-from rastatime_analyzer.pipeline import _ffmpeg, convert_format as cf
+from rastatime_analyzer.pipeline import _ffmpeg
+from rastatime_analyzer.pipeline import convert_format as cf
 from rastatime_analyzer.pipeline.analyze_metadata import analyze_metadata
 from rastatime_analyzer.pipeline.convert_format import (
     AudioProbe,
@@ -97,7 +97,14 @@ def test_is_raw_adts():
 
 @pytest.mark.parametrize(
     "codec,expected",
-    [("wmav2", True), ("wmav1", True), ("wmapro", True), ("wmalossless", True), ("mp3", False), ("flac", False)],
+    [
+        ("wmav2", True),
+        ("wmav1", True),
+        ("wmapro", True),
+        ("wmalossless", True),
+        ("mp3", False),
+        ("flac", False),
+    ],
 )
 def test_is_wma(codec, expected):
     assert is_wma(_probe(codec=codec, format_name="asf")) is expected
@@ -186,7 +193,11 @@ def test_flac_with_cover_to_mp3_keeps_cover_and_tags(tmp_path: Path):
     assert new_name == "Song.mp3"
     # the original stays until the pipeline has filed the MP3 (remove_original)
     assert src.exists()
-    assert sorted(p.name for p in tmp_path.iterdir()) == ["17-Song.flac", "17-Song.mp3", "cover.png"]
+    assert sorted(p.name for p in tmp_path.iterdir()) == [
+        "17-Song.flac",
+        "17-Song.mp3",
+        "cover.png",
+    ]
 
     assert result["source_md5"] == original_md5
     assert result["md5"] != original_md5 and len(result["md5"]) == 32
@@ -236,7 +247,9 @@ def test_hires_flac_is_resampled_to_44100(tmp_path: Path):
     )
     assert probe_audio(src).bits == 24
 
-    new_path, _, result = convert_format(str(src), "hi.flac", analyze_metadata(str(src), {}), convert_lossless=True)
+    new_path, _, result = convert_format(
+        str(src), "hi.flac", analyze_metadata(str(src), {}), convert_lossless=True
+    )
 
     assert new_path.endswith(".mp3")
     stream = audio_stream(Path(new_path))
@@ -250,7 +263,9 @@ def test_hires_flac_is_resampled_to_44100(tmp_path: Path):
 def test_mp3_sample_rates_are_kept(tmp_path: Path, sample_rate: int):
     src = sine(tmp_path / "keep.wav", sample_rate=sample_rate)
 
-    new_path, _, _ = convert_format(str(src), "keep.wav", analyze_metadata(str(src), {}), convert_lossless=True)
+    new_path, _, _ = convert_format(
+        str(src), "keep.wav", analyze_metadata(str(src), {}), convert_lossless=True
+    )
 
     assert int(audio_stream(Path(new_path))["sample_rate"]) == sample_rate
 
@@ -260,8 +275,12 @@ def test_surround_is_downmixed_mono_is_kept(tmp_path: Path):
     surround = sine(tmp_path / "surround.flac", channels=6)
     mono = sine(tmp_path / "mono.wav", channels=1)
 
-    surround_path, _, _ = convert_format(str(surround), "s.flac", analyze_metadata(str(surround), {}), convert_lossless=True)
-    mono_path, _, _ = convert_format(str(mono), "m.wav", analyze_metadata(str(mono), {}), convert_lossless=True)
+    surround_path, _, _ = convert_format(
+        str(surround), "s.flac", analyze_metadata(str(surround), {}), convert_lossless=True
+    )
+    mono_path, _, _ = convert_format(
+        str(mono), "m.wav", analyze_metadata(str(mono), {}), convert_lossless=True
+    )
 
     assert audio_stream(Path(surround_path))["channels"] == 2
     assert audio_stream(Path(mono_path))["channels"] == 1
@@ -273,7 +292,9 @@ def test_wav_and_alac_are_transcoded(tmp_path: Path):
     alac = sine(tmp_path / "a.m4a", "-c:a", "alac")
 
     for src, name in ((wav, "w.wav"), (alac, "a.m4a")):
-        new_path, new_name, result = convert_format(str(src), name, analyze_metadata(str(src), {}), convert_lossless=True)
+        new_path, new_name, result = convert_format(
+            str(src), name, analyze_metadata(str(src), {}), convert_lossless=True
+        )
         assert new_name == Path(name).stem + ".mp3"
         assert audio_stream(Path(new_path))["codec_name"] == "mp3"
         assert result["mime"] == "audio/mp3"
@@ -335,7 +356,9 @@ def test_raw_adts_is_always_repacked_to_m4a(tmp_path: Path, convert_lossless: bo
     metadata = analyze_metadata(str(src), {})
     original_md5 = metadata["md5"]
 
-    new_path, new_name, result = convert_format(str(src), "show.aac", metadata, convert_lossless=convert_lossless)
+    new_path, new_name, result = convert_format(
+        str(src), "show.aac", metadata, convert_lossless=convert_lossless
+    )
 
     assert new_path == str(tmp_path / "5-show.m4a")
     assert new_name == "show.m4a"
@@ -358,7 +381,9 @@ def test_raw_adts_is_always_repacked_to_m4a(tmp_path: Path, convert_lossless: bo
 def test_raw_adts_is_detected_by_content_not_extension(tmp_path: Path):
     src = raw_adts(tmp_path / "misnamed.mp3")
 
-    new_path, new_name, _ = convert_format(str(src), "misnamed.mp3", analyze_metadata(str(src), {}), convert_lossless=False)
+    new_path, new_name, _ = convert_format(
+        str(src), "misnamed.mp3", analyze_metadata(str(src), {}), convert_lossless=False
+    )
 
     assert new_path == str(tmp_path / "misnamed.m4a")
     assert new_name == "misnamed.m4a"
@@ -388,7 +413,9 @@ def test_output_name_clash_gets_a_unique_name(tmp_path: Path):
     src = sine(tmp_path / "clash.flac")
     (tmp_path / "clash.mp3").write_bytes(b"someone else's file")
 
-    new_path, new_name, _ = convert_format(str(src), "clash.flac", analyze_metadata(str(src), {}), convert_lossless=True)
+    new_path, new_name, _ = convert_format(
+        str(src), "clash.flac", analyze_metadata(str(src), {}), convert_lossless=True
+    )
 
     assert new_path != str(tmp_path / "clash.mp3")
     assert Path(new_path).name.startswith("clash_") and new_path.endswith(".mp3")
@@ -502,7 +529,9 @@ def test_untagged_file_gets_its_new_name_as_title(tmp_path: Path):
     metadata = analyze_metadata(str(src), {})
     assert "track_title" not in metadata
 
-    _, new_name, result = convert_format(str(src), "Bare Track.flac", metadata, convert_lossless=True)
+    _, new_name, result = convert_format(
+        str(src), "Bare Track.flac", metadata, convert_lossless=True
+    )
 
     assert new_name == "Bare Track.mp3"
     assert result["track_title"] == "Bare Track.mp3"
@@ -512,7 +541,9 @@ def test_untagged_file_gets_its_new_name_as_title(tmp_path: Path):
 def test_a_title_tag_is_kept(tmp_path: Path):
     src = sine(tmp_path / "t.flac", "-metadata", "title=Real Title")
 
-    _, _, result = convert_format(str(src), "t.flac", analyze_metadata(str(src), {}), convert_lossless=True)
+    _, _, result = convert_format(
+        str(src), "t.flac", analyze_metadata(str(src), {}), convert_lossless=True
+    )
 
     assert result["track_title"] == "Real Title"
 

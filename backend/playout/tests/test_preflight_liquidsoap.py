@@ -2,12 +2,12 @@
 RASTATIME 2026-09-05 — PreflightChecker: Liquidsoap memory threshold and
 Main-Output session watchdog.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import liquidsoap_health as lh
 from rastatime_playout.preflight import PreflightChecker
 
@@ -59,7 +59,10 @@ def test_memory_twice_threshold_is_an_error(checker, monkeypatch):
     monkeypatch.setattr(lh, "liquidsoap_process_info", lambda: _procs(4200))
     monkeypatch.setattr(lh, "render_endpoint_sessions", lambda: {TASCAM: [9064]})
     checker._scan_liquidsoap_health()
-    assert checker._submitted[PreflightChecker.WARNING_TYPE_LIQUIDSOAP_MEMORY][0]["severity"] == "error"
+    assert (
+        checker._submitted[PreflightChecker.WARNING_TYPE_LIQUIDSOAP_MEMORY][0]["severity"]
+        == "error"
+    )
 
 
 def test_memory_threshold_from_env(checker, monkeypatch):
@@ -73,7 +76,8 @@ def test_memory_threshold_from_env(checker, monkeypatch):
 def test_session_on_wrong_endpoint_is_an_error(checker, monkeypatch):
     monkeypatch.setattr(lh, "liquidsoap_process_info", lambda: _procs(500))
     monkeypatch.setattr(
-        lh, "render_endpoint_sessions",
+        lh,
+        "render_endpoint_sessions",
         lambda: {"Realtek-Lautsprecher (Realtek(R) Audio)": [9064], TASCAM: [], "Jabra": [1234]},
     )
     checker._scan_liquidsoap_health()
@@ -137,7 +141,7 @@ def test_endpoint_matches_short_setting_name_against_friendly_name():
     assert lh.endpoint_matches(TASCAM, "Tascam-Lautsprecher")
     assert lh.endpoint_matches("tascam-lautsprecher (us-16x08)", TASCAM)
     assert not lh.endpoint_matches("Tascam-Lautsprecher", "Tascam-Mikrofon (US-16x08)")
-    assert not lh.endpoint_matches("Tascam", TASCAM)          # a bare prefix is not enough
+    assert not lh.endpoint_matches("Tascam", TASCAM)  # a bare prefix is not enough
     assert not lh.endpoint_matches("", TASCAM)
     assert not lh.endpoint_matches("Realtek-Lautsprecher", TASCAM)
 

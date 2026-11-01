@@ -2,13 +2,14 @@ import logging
 import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 # RASTATIME: mutagen is not installed on Windows by default.
 # Guard the import so this module can be safely imported without it.
 try:
     import mutagen
     from mutagen.easyid3 import EasyID3
+
     _MUTAGEN_AVAILABLE = True
 except ImportError:
     mutagen = None  # type: ignore[assignment]
@@ -43,9 +44,9 @@ def _parse_expiry(raw: str, filepath: Path) -> Optional[datetime]:
         return datetime.strptime(raw, "%Y-%m-%d")
     except ValueError:
         logger.warning(
-            "Expiry tag value %r in %s is not ISO 8601 date "
-            "(YYYY-MM-DD); ignoring",
-            raw, filepath,
+            "Expiry tag value %r in %s is not ISO 8601 date (YYYY-MM-DD); ignoring",
+            raw,
+            filepath,
         )
         return None
 
@@ -135,18 +136,18 @@ _FFPROBE_TIMEOUT_S = 60.0
 _COLUMN_MAX_LENGTHS = {"encoder": 64}
 
 
-def _clip_to_columns(metadata: Dict[str, Any]) -> None:
+def _clip_to_columns(metadata: dict[str, Any]) -> None:
     for key, max_length in _COLUMN_MAX_LENGTHS.items():
         value = metadata.get(key)
         if isinstance(value, str) and len(value) > max_length:
             metadata[key] = value[:max_length].rstrip()
 
 
-def _is_missing(metadata: Dict[str, Any], key: str) -> bool:
+def _is_missing(metadata: dict[str, Any], key: str) -> bool:
     return metadata.get(key) in (None, "")
 
 
-def _split_track(value: str) -> Tuple[str, Optional[str]]:
+def _split_track(value: str) -> tuple[str, Optional[str]]:
     """'3/12' -> ('3', '12'); '3-12' -> ('3', '12'); '3' -> ('3', None)."""
     for separator in ("/", "-"):
         if separator in value:
@@ -157,7 +158,7 @@ def _split_track(value: str) -> Tuple[str, Optional[str]]:
 
 def _probe_with_ffprobe(
     filepath: Path,
-) -> Optional[Tuple[Dict[str, Any], Dict[str, Any], Dict[str, str]]]:
+) -> Optional[tuple[dict[str, Any], dict[str, Any], dict[str, str]]]:
     """
     (format, first audio stream, merged lower-case tags) from ffprobe, or
     None when ffprobe is missing, fails or finds no audio stream.
@@ -177,7 +178,7 @@ def _probe_with_ffprobe(
         return None
 
     fmt = data.get("format") or {}
-    tags: Dict[str, str] = {}
+    tags: dict[str, str] = {}
     for source in (fmt.get("tags"), audio.get("tags")):
         if not isinstance(source, dict):
             continue
@@ -215,8 +216,8 @@ def _mime_from_probe(format_name: str, codec: str) -> Optional[str]:
 
 def _fill_from_ffprobe(
     filepath: Path,
-    metadata: Dict[str, Any],
-    probe: Tuple[Dict[str, Any], Dict[str, Any], Dict[str, str]],
+    metadata: dict[str, Any],
+    probe: tuple[dict[str, Any], dict[str, Any], dict[str, str]],
 ) -> None:
     fmt, audio, tags = probe
 
@@ -273,11 +274,12 @@ def _fill_from_ffprobe(
             metadata["expires_at"] = expiry.strftime("%Y-%m-%d")
             logger.info(
                 "Expiry tag found in %s: %s",
-                filepath, metadata["expires_at"],
+                filepath,
+                metadata["expires_at"],
             )
 
 
-def _extract_with_mutagen(filepath: Path, metadata: Dict[str, Any]) -> None:
+def _extract_with_mutagen(filepath: Path, metadata: dict[str, Any]) -> None:
     # RASTATIME 2026-10-14 - a mutagen error (e.g. HeaderNotFoundError "can't
     # sync to MPEG frame" for a raw ADTS .aac with an ID3v2 header) no longer
     # aborts the import: the ffprobe pass fills the metadata instead.
@@ -288,7 +290,9 @@ def _extract_with_mutagen(filepath: Path, metadata: Dict[str, Any]) -> None:
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.warning(
             "mutagen could not read %s (%s: %s); using ffprobe only",
-            filepath, type(exception).__name__, exception,
+            filepath,
+            type(exception).__name__,
+            exception,
         )
         return
     if extracted is None:
@@ -378,7 +382,7 @@ def _extract_with_mutagen(filepath: Path, metadata: Dict[str, Any]) -> None:
             continue
 
 
-def analyze_metadata(filepath_: str, metadata: Dict[str, Any]):
+def analyze_metadata(filepath_: str, metadata: dict[str, Any]):
     """
     Extract audio metadata from tags embedded in the file using mutagen,
     then fill what is still missing from ffprobe (RASTATIME 2026-10-14).
@@ -404,7 +408,8 @@ def analyze_metadata(filepath_: str, metadata: Dict[str, Any]):
         metadata["expires_at"] = expiry.strftime("%Y-%m-%d")
         logger.info(
             "Expiry tag found in %s: %s",
-            filepath, metadata["expires_at"],
+            filepath,
+            metadata["expires_at"],
         )
 
     # Get file properties

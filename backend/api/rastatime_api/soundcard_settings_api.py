@@ -47,6 +47,7 @@ import urllib.request
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+
 from rastatime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 logger = logging.getLogger(__name__)
@@ -70,13 +71,15 @@ def _push_audio_output_to_playout(stable_id: str) -> None:
         with urllib.request.urlopen(req, timeout=2.0) as resp:
             logger.info(
                 "set-audio-output: pushed %r to playout -> HTTP %d",
-                stable_id or "(default)", resp.status,
+                stable_id or "(default)",
+                resp.status,
             )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
             "set-audio-output: could not reach playout listener at %s "
             "(setting saved; will apply on next service start): %s",
-            url, exc,
+            url,
+            exc,
         )
 
 
@@ -88,14 +91,14 @@ def _orm_to_response(obj) -> dict:
     and is added by :func:`_build_response`.
     """
     return {
-        "main_output_id":       obj.main_output_id    or None,
-        "preview_output_id":    obj.preview_output_id or None,
-        "line_in_device_ids":   list(obj.line_in_device_ids or []),
+        "main_output_id": obj.main_output_id or None,
+        "preview_output_id": obj.preview_output_id or None,
+        "line_in_device_ids": list(obj.line_in_device_ids or []),
         # RASTATIME 2026-05-14 — B.4 #4 output side: friendly-name
         # fallback identifiers for when the saved stable_ids no longer
         # resolve after a reboot.  Empty string for legacy rows.
-        "main_output_name":     obj.main_output_name    or "",
-        "preview_output_name":  obj.preview_output_name or "",
+        "main_output_name": obj.main_output_name or "",
+        "preview_output_name": obj.preview_output_name or "",
     }
 
 
@@ -108,7 +111,8 @@ def _build_response(obj) -> dict:
     """
     base = _orm_to_response(obj)
 
-    import audio.soundcard._registry as _reg                  # lazy — avoids circular dep
+    import audio.soundcard._registry as _reg  # lazy — avoids circular dep
+
     mgr = _reg.default_manager
 
     if mgr is None:
@@ -125,7 +129,7 @@ def _build_response(obj) -> dict:
     return base
 
 
-@csrf_exempt                             # CSRF managed by RASTATIME's session auth layer
+@csrf_exempt  # CSRF managed by RASTATIME's session auth layer
 @require_http_methods(["GET", "POST"])
 @internal_only
 def soundcard_settings(request: HttpRequest) -> JsonResponse:
@@ -155,13 +159,15 @@ def soundcard_settings(request: HttpRequest) -> JsonResponse:
         raw = body["main_output_id"]
         if raw is not None and not isinstance(raw, str):
             return JsonResponse({"error": "main_output_id must be a string or null."}, status=400)
-        obj.main_output_id = (raw or "")
+        obj.main_output_id = raw or ""
 
     if "preview_output_id" in body:
         raw = body["preview_output_id"]
         if raw is not None and not isinstance(raw, str):
-            return JsonResponse({"error": "preview_output_id must be a string or null."}, status=400)
-        obj.preview_output_id = (raw or "")
+            return JsonResponse(
+                {"error": "preview_output_id must be a string or null."}, status=400
+            )
+        obj.preview_output_id = raw or ""
 
     # RASTATIME 2026-05-14 — B.4 #4 output side: friendly-name persistence.
     # Both are optional strings (may be empty).  Older frontends won't
@@ -170,20 +176,22 @@ def soundcard_settings(request: HttpRequest) -> JsonResponse:
         raw = body["main_output_name"]
         if raw is not None and not isinstance(raw, str):
             return JsonResponse({"error": "main_output_name must be a string."}, status=400)
-        obj.main_output_name = (raw or "")
+        obj.main_output_name = raw or ""
 
     if "preview_output_name" in body:
         raw = body["preview_output_name"]
         if raw is not None and not isinstance(raw, str):
             return JsonResponse({"error": "preview_output_name must be a string."}, status=400)
-        obj.preview_output_name = (raw or "")
+        obj.preview_output_name = raw or ""
 
     if "line_in_device_ids" in body:
         raw = body["line_in_device_ids"]
         if not isinstance(raw, list):
             return JsonResponse({"error": "line_in_device_ids must be a list."}, status=400)
         if not all(isinstance(x, str) for x in raw):
-            return JsonResponse({"error": "line_in_device_ids must be a list of strings."}, status=400)
+            return JsonResponse(
+                {"error": "line_in_device_ids must be a list of strings."}, status=400
+            )
         obj.line_in_device_ids = raw
 
     obj.save()

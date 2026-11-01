@@ -5,14 +5,15 @@ fingerprint change at refresh arms the planned-restart path (quiet moment
 at once, otherwise the next file-to-file boundary); a successful restart
 records the new baseline.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, time as dtime, timedelta
+from datetime import datetime, timedelta
+from datetime import time as dtime
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
@@ -29,11 +30,15 @@ def sched(monkeypatch):
     restart = MagicMock(return_value=True)
     monkeypatch.setattr(ps, "restart_liquidsoap_service", restart)
     monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
-    monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info",
-                        MagicMock(return_value=[SimpleNamespace(pid=1, private_mb=300.0, age_seconds=3600.0)]))
+    monkeypatch.setattr(
+        ps.liquidsoap_health,
+        "liquidsoap_process_info",
+        MagicMock(return_value=[SimpleNamespace(pid=1, private_mb=300.0, age_seconds=3600.0)]),
+    )
     fingerprint = MagicMock(return_value="a")
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
         render_liquidsoap=MagicMock(return_value=True),
         render_settings_fingerprint=fingerprint,
         nightly_restart=NightlyRestartPolicy(start=dtime(4, 0), quiet_margin_seconds=300),
@@ -64,7 +69,7 @@ def test_changed_settings_restart_at_once_when_quiet(sched):
     sched._test["restart"].assert_called_once()
     reason = sched._test["restart"].call_args[0][0]
     assert "settings changed" in reason and "quiet moment" in reason
-    assert sched._rendered_fingerprint == "b"          # new baseline after the restart
+    assert sched._rendered_fingerprint == "b"  # new baseline after the restart
     # no second restart for the same change
     assert sched._maybe_settings_restart(NOW + timedelta(minutes=4)) is False
     assert sched._test["restart"].call_count == 1
@@ -73,7 +78,7 @@ def test_changed_settings_restart_at_once_when_quiet(sched):
 def test_changed_settings_wait_for_the_track_boundary_when_on_air(sched):
     sched._maybe_settings_restart(NOW)
     sched._test["fingerprint"].return_value = "b"
-    sched._current_event = SimpleNamespace(start=NOW)   # anything on air
+    sched._current_event = SimpleNamespace(start=NOW)  # anything on air
     sched._playing_key = "k"
     assert sched._maybe_settings_restart(NOW + timedelta(minutes=2)) is False
     sched._test["restart"].assert_not_called()
@@ -85,9 +90,9 @@ def test_changed_settings_wait_for_the_track_boundary_when_on_air(sched):
 def test_failed_attempt_is_retried_after_thirty_minutes(sched):
     sched._maybe_settings_restart(NOW)
     sched._test["fingerprint"].return_value = "b"
-    sched._test["restart"].return_value = False        # nssm failed
+    sched._test["restart"].return_value = False  # nssm failed
     assert sched._maybe_settings_restart(NOW + timedelta(minutes=2)) is True
-    assert sched._rendered_fingerprint == "a"          # not applied
+    assert sched._rendered_fingerprint == "a"  # not applied
     assert sched._maybe_settings_restart(NOW + timedelta(minutes=10)) is False
     assert sched._test["restart"].call_count == 1
     sched._test["restart"].return_value = True
@@ -130,10 +135,15 @@ def test_main_fingerprint_hashes_the_rendered_settings(monkeypatch):
     monkeypatch.setattr(main, "_resolve_crossfade_seconds", lambda: 1.0)
     monkeypatch.setattr(main, "_read_stream_outputs", lambda: [{"mount": "a"}])
     import sys
-    fake_models = SimpleNamespace(SoundcardSettings=SimpleNamespace(
-        get_settings=lambda: SimpleNamespace(main_output_id="id1", main_output_name="Tascam")))
+
+    fake_models = SimpleNamespace(
+        SoundcardSettings=SimpleNamespace(
+            get_settings=lambda: SimpleNamespace(main_output_id="id1", main_output_name="Tascam")
+        )
+    )
     monkeypatch.setitem(sys.modules, "rastatime_api.soundcard.models", fake_models)
     from rastatime_playout import liquidsoap_config as lc
+
     cfg = {"enabled": True, "folder": "X", "format": "mp3", "bitrate": 128}
     monkeypatch.setattr(lc, "read_hourly_recording_config_from_db", lambda: cfg)
     first = main._render_settings_fingerprint()
@@ -142,11 +152,14 @@ def test_main_fingerprint_hashes_the_rendered_settings(monkeypatch):
     assert main._render_settings_fingerprint() != first
     cfg["bitrate"] = 128
     assert main._render_settings_fingerprint() == first
-    monkeypatch.setattr(lc, "read_hourly_recording_config_from_db", MagicMock(side_effect=RuntimeError("x")))
+    monkeypatch.setattr(
+        lc, "read_hourly_recording_config_from_db", MagicMock(side_effect=RuntimeError("x"))
+    )
     assert main._render_settings_fingerprint() is None
 
 
 # ---- startup render pending (RASTATIME 2026-09-16) --------------------------
+
 
 def _pending_sched(monkeypatch, fingerprint="a"):
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
@@ -155,10 +168,14 @@ def _pending_sched(monkeypatch, fingerprint="a"):
     restart = MagicMock(return_value=True)
     monkeypatch.setattr(ps, "restart_liquidsoap_service", restart)
     monkeypatch.setattr(ps.time, "sleep", lambda _s: None)
-    monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info",
-                        MagicMock(return_value=[SimpleNamespace(pid=1, private_mb=300.0, age_seconds=3600.0)]))
+    monkeypatch.setattr(
+        ps.liquidsoap_health,
+        "liquidsoap_process_info",
+        MagicMock(return_value=[SimpleNamespace(pid=1, private_mb=300.0, age_seconds=3600.0)]),
+    )
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
         render_liquidsoap=MagicMock(return_value=True),
         render_settings_fingerprint=MagicMock(return_value=fingerprint),
         render_restart_pending=True,
@@ -201,21 +218,32 @@ def test_startup_render_pending_without_fingerprint_still_restarts(monkeypatch):
 # RASTATIME 2026-10-02 - Stereo Tool: fallback when the fresh instance dies
 # ---------------------------------------------------------------------------
 
+
 def test_settle_falls_back_without_stereotool_when_the_instance_dies(sched, monkeypatch):
-    from rastatime_playout import playout_scheduler as ps
     from rastatime_playout import liquidsoap_config as lc
+    from rastatime_playout import playout_scheduler as ps
     from rastatime_playout.__main__ import RenderOutcome
+
     s = sched
     lc.STEREOTOOL_LOCKOUT.update(active=False, reason="")
     calls = {"render": 0, "restart": 0}
     s._render_liquidsoap = lambda: calls.__setitem__("render", calls["render"] + 1)
-    monkeypatch.setattr(ps, "restart_liquidsoap_service", lambda *a, **k: calls.__setitem__("restart", calls["restart"] + 1) or True)
+    monkeypatch.setattr(
+        ps,
+        "restart_liquidsoap_service",
+        lambda *a, **k: calls.__setitem__("restart", calls["restart"] + 1) or True,
+    )
     s._after_liquidsoap_restart = lambda *a, **k: None
     s._current_settings_fingerprint = lambda: "fp"
     stays = iter([False, True])
     s._confirm_liquidsoap_stays_up = lambda *a, **k: next(stays)
     try:
-        assert s._settle_after_restart(RenderOutcome(changed=True, main_output_mode="name", stereotool_active=True)) is True
+        assert (
+            s._settle_after_restart(
+                RenderOutcome(changed=True, main_output_mode="name", stereotool_active=True)
+            )
+            is True
+        )
         assert lc.STEREOTOOL_LOCKOUT["active"] is True
         assert calls == {"render": 1, "restart": 1}
     finally:
@@ -225,6 +253,7 @@ def test_settle_falls_back_without_stereotool_when_the_instance_dies(sched, monk
 def test_settle_without_stereotool_does_not_touch_the_lockout(sched):
     from rastatime_playout import liquidsoap_config as lc
     from rastatime_playout.__main__ import RenderOutcome
+
     s = sched
     s._confirm_liquidsoap_stays_up = lambda *a, **k: False
     assert s._settle_after_restart(RenderOutcome(changed=True, main_output_mode="name")) is False

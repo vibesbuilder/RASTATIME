@@ -11,14 +11,15 @@ RASTATIME 2026-09-07 - nightly/boot restart hardening after the
 * the preflight flags a missing or crash-looping Liquidsoap
   (``liquidsoap_unavailable``).
 """
+
 from __future__ import annotations
 
-from datetime import datetime, time as dtime
+from datetime import datetime
+from datetime import time as dtime
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import liquidsoap_health as lh
 from rastatime_playout import liquidsoap_service as svc
 from rastatime_playout import playout_scheduler as ps
@@ -27,10 +28,10 @@ from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from rastatime_playout.liquidsoap_service import NightlyRestartPolicy
 from rastatime_playout.preflight import PreflightChecker
 
-
 # ---------------------------------------------------------------------------
 # restart_liquidsoap_service(verify=...)
 # ---------------------------------------------------------------------------
+
 
 def _runner(codes):
     calls = []
@@ -39,7 +40,8 @@ def _runner(codes):
         calls.append(list(argv))
         code = codes.pop(0)
         return SimpleNamespace(
-            returncode=code, stdout="",
+            returncode=code,
+            stdout="",
             stderr="Unexpected status SERVICE_PAUSED in response to START control." if code else "",
         )
 
@@ -55,18 +57,26 @@ def _nssm(tmp_path):
 def test_nonzero_exit_but_verified_is_success_without_retry(tmp_path):
     run, calls = _runner([1, 1, 1])
     ok = svc.restart_liquidsoap_service(
-        "t", nssm_exe=_nssm(tmp_path), service="SVC", runner=run,
-        sleep=lambda _s: None, verify=lambda: True,
+        "t",
+        nssm_exe=_nssm(tmp_path),
+        service="SVC",
+        runner=run,
+        sleep=lambda _s: None,
+        verify=lambda: True,
     )
     assert ok
-    assert len(calls) == 1          # the fresh instance is NOT restarted again
+    assert len(calls) == 1  # the fresh instance is NOT restarted again
 
 
 def test_nonzero_exit_and_verify_false_retries(tmp_path):
     run, calls = _runner([1, 1, 1])
     ok = svc.restart_liquidsoap_service(
-        "t", nssm_exe=_nssm(tmp_path), service="SVC", runner=run,
-        sleep=lambda _s: None, verify=lambda: False,
+        "t",
+        nssm_exe=_nssm(tmp_path),
+        service="SVC",
+        runner=run,
+        sleep=lambda _s: None,
+        verify=lambda: False,
     )
     assert not ok
     assert len(calls) == 3
@@ -78,8 +88,12 @@ def test_verify_exception_counts_as_not_verified(tmp_path):
 
     run, calls = _runner([1, 1, 1])
     ok = svc.restart_liquidsoap_service(
-        "t", nssm_exe=_nssm(tmp_path), service="SVC", runner=run,
-        sleep=lambda _s: None, verify=boom,
+        "t",
+        nssm_exe=_nssm(tmp_path),
+        service="SVC",
+        runner=run,
+        sleep=lambda _s: None,
+        verify=boom,
     )
     assert not ok
     assert len(calls) == 3
@@ -89,8 +103,12 @@ def test_zero_exit_does_not_consult_verify(tmp_path):
     verify = MagicMock(return_value=False)
     run, calls = _runner([0])
     ok = svc.restart_liquidsoap_service(
-        "t", nssm_exe=_nssm(tmp_path), service="SVC", runner=run,
-        sleep=lambda _s: None, verify=verify,
+        "t",
+        nssm_exe=_nssm(tmp_path),
+        service="SVC",
+        runner=run,
+        sleep=lambda _s: None,
+        verify=verify,
     )
     assert ok
     verify.assert_not_called()
@@ -99,6 +117,7 @@ def test_zero_exit_does_not_consult_verify(tmp_path):
 # ---------------------------------------------------------------------------
 # scheduler: name-safe or not at all, verification, stays-up check
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sched(monkeypatch):
@@ -111,7 +130,8 @@ def sched(monkeypatch):
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
     render = MagicMock(return_value=True)
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
         render_liquidsoap=render,
         nightly_restart=NightlyRestartPolicy(start=dtime(4, 0), quiet_margin_seconds=300),
     )
@@ -125,11 +145,12 @@ IN_WINDOW = datetime(2026, 9, 7, 4, 1)
 
 def test_index_render_skips_the_restart(sched, caplog):
     sched._test["render"].return_value = SimpleNamespace(
-        changed=True, main_output_mode=svc.MAIN_OUTPUT_BY_INDEX,
+        changed=True,
+        main_output_mode=svc.MAIN_OUTPUT_BY_INDEX,
     )
     assert sched._maybe_nightly_restart(now_local=IN_WINDOW)
     sched._test["restart"].assert_not_called()
-    assert sched._nightly_restart_done == IN_WINDOW.date()      # not retried today
+    assert sched._nightly_restart_done == IN_WINDOW.date()  # not retried today
     assert any("skipped" in r.message for r in caplog.records)
 
 
@@ -149,7 +170,7 @@ def test_legacy_bool_render_still_restarts(sched):
 
 def test_restarted_recently_polls_until_fresh_uptime(sched):
     engine = sched._test["engine"]
-    engine.liquidsoap_uptime_seconds.reset_mock()      # the constructor seeded once
+    engine.liquidsoap_uptime_seconds.reset_mock()  # the constructor seeded once
     engine.liquidsoap_uptime_seconds.side_effect = [None, 5000.0, 3.0]
     assert sched._liquidsoap_restarted_recently(timeout=30.0, sleep=lambda _s: None)
     assert engine.liquidsoap_uptime_seconds.call_count == 3
@@ -212,8 +233,9 @@ def test_no_process_is_an_error(checker, monkeypatch):
 
 
 def test_healthy_old_process_clears_the_type(checker, monkeypatch):
-    monkeypatch.setattr(lh, "liquidsoap_process_info",
-                        lambda: [lh.ProcessInfo(9064, 200.0, 5000.0)])
+    monkeypatch.setattr(
+        lh, "liquidsoap_process_info", lambda: [lh.ProcessInfo(9064, 200.0, 5000.0)]
+    )
     checker._scan_liquidsoap_health()
     checker._scan_liquidsoap_health()
     assert checker._submitted[UNAVAILABLE] == []
@@ -221,8 +243,11 @@ def test_healthy_old_process_clears_the_type(checker, monkeypatch):
 
 def test_one_fresh_process_is_not_a_crash_loop(checker, monkeypatch):
     # a legitimate (nightly) restart: one young PID, then it ages
-    scans = [[lh.ProcessInfo(9064, 200.0, 5000.0)], [lh.ProcessInfo(9100, 80.0, 20.0)],
-             [lh.ProcessInfo(9100, 85.0, 920.0)]]
+    scans = [
+        [lh.ProcessInfo(9064, 200.0, 5000.0)],
+        [lh.ProcessInfo(9100, 80.0, 20.0)],
+        [lh.ProcessInfo(9100, 85.0, 920.0)],
+    ]
     monkeypatch.setattr(lh, "liquidsoap_process_info", lambda: scans.pop(0))
     for _ in range(3):
         checker._scan_liquidsoap_health()

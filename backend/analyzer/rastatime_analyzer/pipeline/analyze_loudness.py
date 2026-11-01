@@ -7,15 +7,16 @@ integrated loudness (LUFS), the true peak (dBTP) and the loudness range
 per-track gain when Settings → Streams → Loudness Normalization is set
 to EBU R128; the ReplayGain 1.0 value keeps serving the ReplayGain mode.
 """
+
 from subprocess import CalledProcessError
-from typing import Any, Dict
+from typing import Any
 
 from ._ffmpeg import compute_loudness
 
 LOUDNESS_KEYS = ("loudness_lufs", "true_peak_dbtp", "loudness_range_lu")
 
 
-def analyze_loudness(filepath: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_loudness(filepath: str, metadata: dict[str, Any]) -> dict[str, Any]:
     """
     Add the R128 measurement to ``metadata``.  A file that cannot be
     measured (silence, decoder error) keeps the keys absent so an

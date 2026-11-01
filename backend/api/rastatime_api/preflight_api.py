@@ -63,17 +63,19 @@ HTTP status codes
 from __future__ import annotations
 
 import json
+from datetime import UTC
 from typing import Any
 
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from rastatime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
+from rastatime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _serialize_warning(row) -> dict:
     """Convert a PreflightWarning ORM row to its JSON-API shape."""
@@ -85,8 +87,7 @@ def _serialize_warning(row) -> dict:
         "show_id": row.show_id,
         "show_instance_id": row.show_instance_id,
         "starts_at": (
-            row.starts_at.isoformat().replace("+00:00", "Z")
-            if row.starts_at is not None else None
+            row.starts_at.isoformat().replace("+00:00", "Z") if row.starts_at is not None else None
         ),
         "detail": row.detail or {},
     }
@@ -101,7 +102,8 @@ def _parse_starts_at(value: Any):
         return None
     if not isinstance(value, str):
         raise ValueError("'starts_at' must be an ISO-8601 string or null.")
-    from datetime import datetime, timezone   # lazy
+    from datetime import datetime  # lazy
+
     # Django/DRF clients commonly send "...Z"; Python <3.11 fromisoformat
     # cannot parse that suffix, so normalise to +00:00.
     normalised = value.replace("Z", "+00:00")
@@ -112,13 +114,14 @@ def _parse_starts_at(value: Any):
     # If the caller forgot the offset, assume UTC (the scanner runs in UTC
     # and the legacy frontend treats naive times as UTC).
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return parsed
 
 
 # ---------------------------------------------------------------------------
 # GET — list current warnings
 # ---------------------------------------------------------------------------
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -131,12 +134,14 @@ def preflight_warnings_list(request: HttpRequest) -> JsonResponse:
     frontend uses this directly for the dashboard banner — warnings
     closest to "now" appear first.
     """
-    from rastatime_api.preflight.models import PreflightWarning   # lazy
-
     # Postgres-friendly NULLS LAST via .order_by with F + nulls_last
-    from django.db.models import F   # lazy
+    from django.db.models import F  # lazy
+
+    from rastatime_api.preflight.models import PreflightWarning  # lazy
+
     rows = PreflightWarning.objects.order_by(
-        F("starts_at").asc(nulls_last=True), "id",
+        F("starts_at").asc(nulls_last=True),
+        "id",
     )
     return JsonResponse({"warnings": [_serialize_warning(r) for r in rows]})
 
@@ -144,6 +149,7 @@ def preflight_warnings_list(request: HttpRequest) -> JsonResponse:
 # ---------------------------------------------------------------------------
 # POST — atomic per-type replacement
 # ---------------------------------------------------------------------------
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -153,7 +159,7 @@ def preflight_warnings_replace(request: HttpRequest) -> JsonResponse:
     Atomically replace all warnings of one ``warning_type`` with a new
     batch.  See module docstring for body schema.
     """
-    from rastatime_api.preflight.models import PreflightWarning   # lazy
+    from rastatime_api.preflight.models import PreflightWarning  # lazy
 
     try:
         body = json.loads(request.body or b"{}")
@@ -206,13 +212,15 @@ def preflight_warnings_replace(request: HttpRequest) -> JsonResponse:
                 {"error": f"warnings[{idx}]: {exc}"},
                 status=400,
             )
-        normalised.append({
-            "severity":         severity,
-            "show_id":          w.get("show_id"),
-            "show_instance_id": w.get("show_instance_id"),
-            "starts_at":        starts_at,
-            "detail":           w.get("detail", {}),
-        })
+        normalised.append(
+            {
+                "severity": severity,
+                "show_id": w.get("show_id"),
+                "show_instance_id": w.get("show_instance_id"),
+                "starts_at": starts_at,
+                "detail": w.get("detail", {}),
+            }
+        )
 
     inserted = PreflightWarning.replace_warnings(
         warning_type=warning_type,

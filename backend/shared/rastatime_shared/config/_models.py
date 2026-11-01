@@ -1,18 +1,12 @@
 import os
 import sys
 from enum import Enum
-from typing import List, Literal, Optional, Union
+from typing import Annotated, Literal, Optional, Union
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, Field, field_validator
-from typing_extensions import Annotated
 
 from ._fields import AnyHttpUrlStr, AnyUrlStr, StrNoLeadingSlash, StrNoTrailingSlash
-
-if sys.version_info < (3, 9):
-    from backports.zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-else:
-    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
 
 # GeneralConfig
 ########################################################################################
@@ -34,7 +28,7 @@ class GeneralConfig(BaseModel):
 
     timezone: str = "UTC"
 
-    allowed_cors_origins: List[AnyHttpUrlStr] = []
+    allowed_cors_origins: list[AnyHttpUrlStr] = []
 
     def internal_base_url(self) -> str:
         """Base URL for calls to the legacy web app from this machine,
@@ -86,10 +80,7 @@ class DatabaseConfig(BaseModel):
 
     @property
     def url(self) -> str:
-        return (
-            f"postgresql://{self.user}:{self.password}"
-            f"@{self.host}:{self.port}/{self.name}"
-        )
+        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
 # RabbitMQConfig
@@ -106,10 +97,7 @@ class RabbitMQConfig(BaseModel):
 
     @property
     def url(self) -> str:
-        return (
-            f"amqp://{self.user}:{self.password}"
-            f"@{self.host}:{self.port}/{self.vhost}"
-        )
+        return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/{self.vhost}"
 
 
 # StreamConfig
@@ -264,12 +252,12 @@ AnySystemOutput = WASAPISystemOutput
 
 # pylint: disable=too-few-public-methods
 class Outputs(BaseModel):
-    icecast: List[IcecastOutput] = Field([], max_length=3)
-    shoutcast: List[ShoutcastOutput] = Field([], max_length=1)
-    system: List[AnySystemOutput] = Field([], max_length=1)
+    icecast: list[IcecastOutput] = Field([], max_length=3)
+    shoutcast: list[ShoutcastOutput] = Field([], max_length=1)
+    system: list[AnySystemOutput] = Field([], max_length=1)
 
     @property
-    def merged(self) -> List[Union[IcecastOutput, ShoutcastOutput]]:
+    def merged(self) -> list[Union[IcecastOutput, ShoutcastOutput]]:
         return self.icecast + self.shoutcast
 
 

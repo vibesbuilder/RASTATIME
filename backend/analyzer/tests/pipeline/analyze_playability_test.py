@@ -2,14 +2,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from rastatime_analyzer.pipeline.analyze_playability import (
     UnplayableFileError,
     analyze_playability,
 )
 
 from ..fixtures import FILE_INVALID_DRM, FILES
-
 
 # RASTATIME 2026-05-14 — filter to fixture files that actually exist
 # on disk.  Many upstream fixtures (s1-*.mp3, s1-*.m4a, s2-*.wav, …)

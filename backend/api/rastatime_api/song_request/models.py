@@ -92,10 +92,7 @@ class SongRequest(models.Model):
     played_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text=(
-            "Timestamp when the requested track actually aired "
-            "(NULL until played)."
-        ),
+        help_text=("Timestamp when the requested track actually aired (NULL until played)."),
     )
 
     class Meta:

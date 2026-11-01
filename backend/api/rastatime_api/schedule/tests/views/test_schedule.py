@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from django.conf import settings
 from django.utils import dateparse
@@ -25,13 +25,13 @@ class TestScheduleViewSet(APITestCase):
         )
         show = baker.make(
             "schedule.ShowInstance",
-            starts_at=datetime.now(tz=timezone.utc) - timedelta(minutes=5),
-            ends_at=datetime.now(tz=timezone.utc) + timedelta(minutes=5),
+            starts_at=datetime.now(tz=UTC) - timedelta(minutes=5),
+            ends_at=datetime.now(tz=UTC) + timedelta(minutes=5),
         )
         schedule_item = baker.make(
             "schedule.Schedule",
-            starts_at=datetime.now(tz=timezone.utc),
-            ends_at=datetime.now(tz=timezone.utc) + file.length,
+            starts_at=datetime.now(tz=UTC),
+            ends_at=datetime.now(tz=UTC) + file.length,
             cue_out=file.cue_out,
             instance=show,
             file=file,
@@ -40,9 +40,7 @@ class TestScheduleViewSet(APITestCase):
         response = self.client.get(self.path)
         self.assertEqual(response.status_code, 200)
         result = response.json()
-        self.assertEqual(
-            dateparse.parse_datetime(result[0]["ends_at"]), schedule_item.ends_at
-        )
+        self.assertEqual(dateparse.parse_datetime(result[0]["ends_at"]), schedule_item.ends_at)
         self.assertEqual(dateparse.parse_duration(result[0]["cue_out"]), file.cue_out)
 
     def test_schedule_item_trunc(self):
@@ -56,13 +54,13 @@ class TestScheduleViewSet(APITestCase):
         )
         show = baker.make(
             "schedule.ShowInstance",
-            starts_at=datetime.now(tz=timezone.utc) - timedelta(minutes=5),
-            ends_at=datetime.now(tz=timezone.utc) + timedelta(seconds=20),
+            starts_at=datetime.now(tz=UTC) - timedelta(minutes=5),
+            ends_at=datetime.now(tz=UTC) + timedelta(seconds=20),
         )
         schedule_item = baker.make(
             "schedule.Schedule",
-            starts_at=datetime.now(tz=timezone.utc),
-            ends_at=datetime.now(tz=timezone.utc) + file.length,
+            starts_at=datetime.now(tz=UTC),
+            ends_at=datetime.now(tz=UTC) + file.length,
             instance=show,
             file=file,
         )
@@ -73,9 +71,7 @@ class TestScheduleViewSet(APITestCase):
         self.assertEqual(dateparse.parse_datetime(result[0]["ends_at"]), show.ends_at)
         expected = show.ends_at - schedule_item.starts_at
         self.assertEqual(dateparse.parse_duration(result[0]["cue_out"]), expected)
-        self.assertNotEqual(
-            dateparse.parse_datetime(result[0]["ends_at"]), schedule_item.ends_at
-        )
+        self.assertNotEqual(dateparse.parse_datetime(result[0]["ends_at"]), schedule_item.ends_at)
 
     def test_schedule_item_invalid(self):
         file = baker.make(
@@ -88,18 +84,18 @@ class TestScheduleViewSet(APITestCase):
         )
         show = baker.make(
             "schedule.ShowInstance",
-            starts_at=datetime.now(tz=timezone.utc) - timedelta(minutes=5),
-            ends_at=datetime.now(tz=timezone.utc) + timedelta(minutes=5),
+            starts_at=datetime.now(tz=UTC) - timedelta(minutes=5),
+            ends_at=datetime.now(tz=UTC) + timedelta(minutes=5),
         )
         schedule_item = baker.make(
             "schedule.Schedule",
-            starts_at=datetime.now(tz=timezone.utc),
-            ends_at=datetime.now(tz=timezone.utc) + file.length,
+            starts_at=datetime.now(tz=UTC),
+            ends_at=datetime.now(tz=UTC) + file.length,
             cue_out=file.cue_out,
             instance=show,
             file=file,
         )
-        invalid_schedule_item = baker.make(  # pylint: disable=unused-variable
+        baker.make(
             "schedule.Schedule",
             starts_at=show.ends_at + timedelta(minutes=1),
             ends_at=show.ends_at + timedelta(minutes=1) + file.length,
@@ -113,9 +109,7 @@ class TestScheduleViewSet(APITestCase):
         result = response.json()
         # The invalid item should be filtered out and not returned
         self.assertEqual(len(result), 1)
-        self.assertEqual(
-            dateparse.parse_datetime(result[0]["ends_at"]), schedule_item.ends_at
-        )
+        self.assertEqual(dateparse.parse_datetime(result[0]["ends_at"]), schedule_item.ends_at)
         self.assertEqual(dateparse.parse_duration(result[0]["cue_out"]), file.cue_out)
 
     def test_schedule_item_range(self):
@@ -127,7 +121,7 @@ class TestScheduleViewSet(APITestCase):
             cue_in=timedelta(seconds=0),
             cue_out=timedelta(seconds=40.8131),
         )
-        filter_point = datetime.now(tz=timezone.utc)
+        filter_point = datetime.now(tz=UTC)
 
         show = baker.make(
             "schedule.ShowInstance",
@@ -142,7 +136,7 @@ class TestScheduleViewSet(APITestCase):
             instance=show,
             file=file,
         )
-        previous_item = baker.make(  # pylint: disable=unused-variable
+        baker.make(
             "schedule.Schedule",
             starts_at=filter_point - timedelta(minutes=5),
             ends_at=filter_point - timedelta(minutes=5) + file.length,
@@ -151,9 +145,7 @@ class TestScheduleViewSet(APITestCase):
             file=file,
         )
         self.client.credentials(HTTP_AUTHORIZATION=f"Api-Key {self.token}")
-        range_start = (filter_point - timedelta(minutes=1)).isoformat(
-            timespec="seconds"
-        )
+        range_start = (filter_point - timedelta(minutes=1)).isoformat(timespec="seconds")
         range_end = (filter_point + timedelta(minutes=1)).isoformat(timespec="seconds")
         response = self.client.get(
             self.path,
@@ -163,6 +155,4 @@ class TestScheduleViewSet(APITestCase):
         result = response.json()
         # The previous_item should be filtered out and not returned
         self.assertEqual(len(result), 1)
-        self.assertEqual(
-            dateparse.parse_datetime(result[0]["starts_at"]), schedule_item.starts_at
-        )
+        self.assertEqual(dateparse.parse_datetime(result[0]["starts_at"]), schedule_item.starts_at)

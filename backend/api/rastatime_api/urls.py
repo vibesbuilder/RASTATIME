@@ -9,17 +9,16 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from .audio_devices import audio_devices
-from .soundcard_settings_api import soundcard_settings
-from .linein_api import linein_list_or_create, linein_detail
-from .preflight_api import preflight_warnings_list, preflight_warnings_replace
-from .health import health
-from .now_playing import now_playing
-from .song_request_api import song_request_search, song_request_submit
-from .streams_status import stream_output_detail, stream_outputs
 from .core.router import urls as core_urls
+from .health import health
 from .history.router import urls as history_urls
+from .linein_api import linein_detail, linein_list_or_create
+from .now_playing import now_playing
 from .podcasts.router import urls as podcasts_urls
+from .preflight_api import preflight_warnings_list, preflight_warnings_replace
 from .schedule.router import urls as schedule_urls
+from .song_request_api import song_request_search, song_request_submit
+from .soundcard_settings_api import soundcard_settings
 from .storage.router import urls as storage_urls
 from .storage.views.backup import (
     BackupAutoView,
@@ -31,7 +30,6 @@ from .storage.views.backup import (
     BackupValidateView,
 )
 from .storage.views.imports import FailedImportsView
-from .storage.views.reread_tags import RereadTagsView
 from .storage.views.location import (
     StorageLocationView,
     StorageMoveCancelView,
@@ -39,6 +37,8 @@ from .storage.views.location import (
     StorageMoveStatusView,
     StorageMoveValidateView,
 )
+from .storage.views.reread_tags import RereadTagsView
+from .streams_status import stream_output_detail, stream_outputs
 
 api_urls = []
 api_urls += core_urls
@@ -67,20 +67,34 @@ urlpatterns = [
     path("api/v2/storage/location", StorageLocationView.as_view(), name="storage-location"),
     # RASTATIME 2026-10-21 - refresh tag columns from the files on disk (Library button)
     path("api/v2/files/reread-tags", RereadTagsView.as_view(), name="files-reread-tags"),
-    path("api/v2/storage/move/validate", StorageMoveValidateView.as_view(), name="storage-move-validate"),
+    path(
+        "api/v2/storage/move/validate",
+        StorageMoveValidateView.as_view(),
+        name="storage-move-validate",
+    ),
     path("api/v2/storage/move/start", StorageMoveStartView.as_view(), name="storage-move-start"),
     path("api/v2/storage/move/cancel", StorageMoveCancelView.as_view(), name="storage-move-cancel"),
     path("api/v2/storage/move/status", StorageMoveStatusView.as_view(), name="storage-move-status"),
     # RASTATIME 2026-09-16 - manual backup (Settings -> Backup, stage 1)
     path("api/v2/storage/backup", BackupStatusView.as_view(), name="storage-backup"),
-    path("api/v2/storage/backup/validate", BackupValidateView.as_view(), name="storage-backup-validate"),
+    path(
+        "api/v2/storage/backup/validate",
+        BackupValidateView.as_view(),
+        name="storage-backup-validate",
+    ),
     path("api/v2/storage/backup/folder", BackupFolderView.as_view(), name="storage-backup-folder"),
     path("api/v2/storage/backup/run", BackupRunView.as_view(), name="storage-backup-run"),
     path("api/v2/storage/backup/cancel", BackupCancelView.as_view(), name="storage-backup-cancel"),
     path("api/v2/storage/backup/auto", BackupAutoView.as_view(), name="storage-backup-auto"),
-    path("api/v2/storage/backup/download", BackupDownloadView.as_view(), name="storage-backup-download"),
+    path(
+        "api/v2/storage/backup/download",
+        BackupDownloadView.as_view(),
+        name="storage-backup-download",
+    ),
     # RASTATIME 2026-10-28 - failed imports + organize/ leftovers (preflight, Upload page)
-    path("api/v2/storage/imports/failed", FailedImportsView.as_view(), name="storage-imports-failed"),
+    path(
+        "api/v2/storage/imports/failed", FailedImportsView.as_view(), name="storage-imports-failed"
+    ),
     path("api/v2/streams/outputs", stream_outputs, name="stream-outputs"),
     path(
         "api/v2/streams/outputs/<str:output_id>",

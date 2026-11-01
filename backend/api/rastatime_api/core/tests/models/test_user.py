@@ -50,7 +50,6 @@ class TestUser(APITestCase):
         self.assertCountEqual(str_perms, GROUPS[Role.GUEST.value])
 
 
-
 # RASTATIME 2026-10-27 - bcrypt instead of unsalted md5, legacy md5 accepted
 # once and replaced on the first successful check.
 class TestUserPasswordHashing(APITestCase):

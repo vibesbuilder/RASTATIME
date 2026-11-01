@@ -15,13 +15,13 @@ without Liquidsoap audio on the Tascam).  ``liquidsoap --check`` does not
 notice a missing ``mksafe`` - only the start does - so the render is guarded
 here; ``C:/Temp/optd/bridge_probe.py`` is the runtime check.
 """
+
 from __future__ import annotations
 
 import subprocess
 from pathlib import Path
 
 import pytest
-
 from rastatime_playout import __main__ as main
 from rastatime_playout import liquidsoap_config as lc
 
@@ -32,9 +32,15 @@ MKSAFE_SOURCE = '  mksafe(id="portaudio_safe", bus_for_portaudio),'
 
 def _stream(**over):
     out = {
-        "type": "mp3", "host": "localhost", "port": 8000, "mount": "rastatime",
-        "pass": "hackme", "user": "source", "bitrate": 128,
-        "name": "RASTATIME", "description": "Live stream",
+        "type": "mp3",
+        "host": "localhost",
+        "port": 8000,
+        "mount": "rastatime",
+        "pass": "hackme",
+        "user": "source",
+        "bitrate": 128,
+        "name": "RASTATIME",
+        "description": "Live stream",
     }
     out.update(over)
     return out
@@ -49,12 +55,17 @@ def _portaudio_call(text: str) -> list[str]:
     lines = _active(text)
     start = next(i for i, ln in enumerate(lines) if ln.startswith("output.portaudio("))
     end = next(i for i in range(start, len(lines)) if lines[i] == ")")
-    return lines[start:end + 1]
+    return lines[start : end + 1]
 
 
 def _block(**kw):
     return lc._render_local_output_block(
-        True, None, TASCAM + " [Windows WASAPI]", "ep-1", TASCAM, **kw,
+        True,
+        None,
+        TASCAM + " [Windows WASAPI]",
+        "ep-1",
+        TASCAM,
+        **kw,
     )
 
 
@@ -92,9 +103,7 @@ def test_output_never_stops_mksafe_and_not_fallible(adaptive):
 def test_bridge_stays_on_its_own_clock(adaptive):
     joined = "\n".join(_active(_block(adaptive=adaptive)))
     assert (
-        'ignore(clock.assign_new(id="portaudio_clock", sync="auto", [\n'
-        "  bus_for_portaudio,\n"
-        "]))"
+        'ignore(clock.assign_new(id="portaudio_clock", sync="auto", [\n  bus_for_portaudio,\n]))'
     ) in joined
 
 
@@ -127,7 +136,9 @@ def test_full_render_default_is_adaptive():
 
 def test_full_render_passes_adaptive_false():
     out = lc.render_rastatime_liq(
-        [_stream()], local_output_device_name=TASCAM, local_output_adaptive=False,
+        [_stream()],
+        local_output_device_name=TASCAM,
+        local_output_adaptive=False,
     )
     active = _active(out)
     assert "bus_for_portaudio = buffer(buffer=2.0, bus)" in active
@@ -138,9 +149,14 @@ def test_full_render_passes_adaptive_false():
 def test_write_passes_adaptive_false(tmp_path):
     path = tmp_path / "rastatime.liq"
     lc.write_rastatime_liq(
-        path, [_stream()], local_output_device_name=TASCAM, local_output_adaptive=False,
+        path,
+        [_stream()],
+        local_output_device_name=TASCAM,
+        local_output_adaptive=False,
     )
-    assert "bus_for_portaudio = buffer(buffer=2.0, bus)" in _active(path.read_text(encoding="utf-8"))
+    assert "bus_for_portaudio = buffer(buffer=2.0, bus)" in _active(
+        path.read_text(encoding="utf-8")
+    )
 
 
 # ---- machine setting -----------------------------------------------------
@@ -172,12 +188,16 @@ def test_full_render_typechecks(tmp_path, adaptive):
     liq = tmp_path / f"bridge_{'adaptive' if adaptive else 'plain'}.liq"
     liq.write_text(
         lc.render_rastatime_liq(
-            [_stream()], local_output_device_name=TASCAM, local_output_adaptive=adaptive,
+            [_stream()],
+            local_output_device_name=TASCAM,
+            local_output_adaptive=adaptive,
         ),
         encoding="utf-8",
     )
     proc = subprocess.run(
         [str(LIQUIDSOAP_EXE), "--check", str(liq)],
-        capture_output=True, text=True, timeout=180,
+        capture_output=True,
+        text=True,
+        timeout=180,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr

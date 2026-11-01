@@ -37,14 +37,24 @@ class SoundcardConfig(AppConfig):
         # management commands.  The autoreloader child sets RUN_MAIN=true
         # before importing the app code, so we wire there.
         skip_commands = {
-            "migrate", "makemigrations", "showmigrations", "sqlmigrate",
-            "shell", "test", "collectstatic", "createsuperuser",
-            "check", "diffsettings", "dumpdata", "loaddata",
+            "migrate",
+            "makemigrations",
+            "showmigrations",
+            "sqlmigrate",
+            "shell",
+            "test",
+            "collectstatic",
+            "createsuperuser",
+            "check",
+            "diffsettings",
+            "dumpdata",
+            "loaddata",
         }
         argv1 = sys.argv[1] if len(sys.argv) > 1 else ""
         if argv1 in skip_commands:
             logger.debug(
-                "Soundcard manager: skipping for management command %r", argv1,
+                "Soundcard manager: skipping for management command %r",
+                argv1,
             )
             return
 
@@ -70,7 +80,8 @@ class SoundcardConfig(AppConfig):
             logger.info(
                 "Soundcard manager registered (WindowsAudioDeviceManager): "
                 "%d output(s), %d input(s) visible",
-                n_out, n_in,
+                n_out,
+                n_in,
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(

@@ -9,7 +9,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout.preflight import PreflightChecker
 
 TYPE = PreflightChecker.WARNING_TYPE_AUTOPLAYLIST_MISSING
@@ -36,16 +35,32 @@ def _shows(c, shows: dict):
 
 
 def test_show_without_playlist_but_autoloading_on_is_flagged(checker):
-    checker._api_client.session.get.return_value = _resp(200, [
-        {"id": 501, "show": 7, "starts_at": "2026-10-29T10:00:00Z"},
-        {"id": 502, "show": 8, "starts_at": "2026-10-29T12:00:00Z"},
-        {"id": 503, "show": 9, "starts_at": "2026-10-29T14:00:00Z"},
-    ])
-    _shows(checker, {
-        7: {"id": 7, "name": "Indie Lane", "auto_playlist_enabled": True, "auto_playlist": None},
-        8: {"id": 8, "name": "Healthy", "auto_playlist_enabled": True, "auto_playlist": 660},
-        9: {"id": 9, "name": "Live show", "auto_playlist_enabled": False, "auto_playlist": None},
-    })
+    checker._api_client.session.get.return_value = _resp(
+        200,
+        [
+            {"id": 501, "show": 7, "starts_at": "2026-10-29T10:00:00Z"},
+            {"id": 502, "show": 8, "starts_at": "2026-10-29T12:00:00Z"},
+            {"id": 503, "show": 9, "starts_at": "2026-10-29T14:00:00Z"},
+        ],
+    )
+    _shows(
+        checker,
+        {
+            7: {
+                "id": 7,
+                "name": "Indie Lane",
+                "auto_playlist_enabled": True,
+                "auto_playlist": None,
+            },
+            8: {"id": 8, "name": "Healthy", "auto_playlist_enabled": True, "auto_playlist": 660},
+            9: {
+                "id": 9,
+                "name": "Live show",
+                "auto_playlist_enabled": False,
+                "auto_playlist": None,
+            },
+        },
+    )
     checker._scan_autoplaylist_missing()
     warnings = checker._submitted[TYPE]
     assert len(warnings) == 1
@@ -62,10 +77,16 @@ def test_show_without_playlist_but_autoloading_on_is_flagged(checker):
 
 
 def test_healthy_window_clears_the_type(checker):
-    checker._api_client.session.get.return_value = _resp(200, [
-        {"id": 501, "show": 8, "starts_at": "2026-10-29T10:00:00Z"},
-    ])
-    _shows(checker, {8: {"id": 8, "name": "Healthy", "auto_playlist_enabled": True, "auto_playlist": 660}})
+    checker._api_client.session.get.return_value = _resp(
+        200,
+        [
+            {"id": 501, "show": 8, "starts_at": "2026-10-29T10:00:00Z"},
+        ],
+    )
+    _shows(
+        checker,
+        {8: {"id": 8, "name": "Healthy", "auto_playlist_enabled": True, "auto_playlist": 660}},
+    )
     checker._scan_autoplaylist_missing()
     assert checker._submitted[TYPE] == []
 
@@ -84,8 +105,15 @@ def test_unreachable_api_submits_nothing(checker):
 
 def test_scan_runs_it_with_the_other_checks(checker, monkeypatch):
     called = []
-    for name in ("_scan_linein_devices", "_scan_liquidsoap_health", "_scan_storage_root", "_scan_stereotool"):
+    for name in (
+        "_scan_linein_devices",
+        "_scan_liquidsoap_health",
+        "_scan_storage_root",
+        "_scan_stereotool",
+    ):
         monkeypatch.setattr(checker, name, lambda n=name: called.append(n))
-    monkeypatch.setattr(checker, "_scan_autoplaylist_missing", lambda: called.append("autoplaylist"))
+    monkeypatch.setattr(
+        checker, "_scan_autoplaylist_missing", lambda: called.append("autoplaylist")
+    )
     checker.scan_once()
     assert "autoplaylist" in called

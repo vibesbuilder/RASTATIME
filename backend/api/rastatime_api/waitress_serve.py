@@ -61,15 +61,14 @@ import logging
 import os
 import sys
 
-
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Built-in defaults
 # ---------------------------------------------------------------------------
 
-_DEFAULT_HOST    = "127.0.0.1"
-_DEFAULT_PORT    = 8765
+_DEFAULT_HOST = "127.0.0.1"
+_DEFAULT_PORT = 8765
 _DEFAULT_THREADS = 4
 _DEFAULT_SETTINGS = "rastatime_api.settings.prod"
 
@@ -77,6 +76,7 @@ _DEFAULT_SETTINGS = "rastatime_api.settings.prod"
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
+
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """
@@ -125,6 +125,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 # Serve entry point
 # ---------------------------------------------------------------------------
 
+
 def serve(
     host: str = _DEFAULT_HOST,
     port: int = _DEFAULT_PORT,
@@ -167,19 +168,20 @@ def serve(
 
     logger.info(
         "RASTATIME API: starting Waitress on %s:%d with %d thread(s).",
-        host, port, threads,
+        host,
+        port,
+        threads,
     )
     logger.info(
         "DJANGO_SETTINGS_MODULE = %s",
         os.environ["DJANGO_SETTINGS_MODULE"],
     )
     logger.info("Health endpoint: http://%s:%d/health", host, port)
-    logger.info(
-        "Swagger UI: http://%s:%d/api/v2/schema/swagger-ui", host, port
-    )
+    logger.info("Swagger UI: http://%s:%d/api/v2/schema/swagger-ui", host, port)
 
     # --- lazy imports -------------------------------------------------------
-    import waitress                           # noqa: PLC0415
+    import waitress  # noqa: PLC0415
+
     from rastatime_api.wsgi import application  # noqa: PLC0415
 
     waitress.serve(application, host=host, port=port, threads=threads, **PROXY_OPTIONS)
@@ -205,6 +207,7 @@ PROXY_OPTIONS = {
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 def main(argv: list[str] | None = None) -> None:
     """

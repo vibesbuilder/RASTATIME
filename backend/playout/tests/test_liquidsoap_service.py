@@ -2,19 +2,20 @@
 RASTATIME 2026-09-05 — liquidsoap_service: boot-window restart,
 nightly restart policy, nssm restart wrapper.
 """
+
 from __future__ import annotations
 
-from datetime import date, datetime, time as dtime
+from datetime import date, datetime
+from datetime import time as dtime
 from types import SimpleNamespace
 
 import pytest
-
 from rastatime_playout import liquidsoap_service as svc
-
 
 # --------------------------------------------------------------------
 # boot window
 # --------------------------------------------------------------------
+
 
 def test_within_boot_window_uses_uptime():
     assert svc.within_boot_window(30.0)
@@ -36,6 +37,7 @@ def test_boot_restart_env_switch(monkeypatch):
 # --------------------------------------------------------------------
 # nightly policy
 # --------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("raw", ["off", "0", "", "none", "false"])
 def test_policy_disabled_values(raw):
@@ -71,6 +73,7 @@ def test_policy_due_only_inside_window_and_once_per_day():
 # nssm restart wrapper
 # --------------------------------------------------------------------
 
+
 def _runner_factory(results):
     calls = []
 
@@ -88,7 +91,11 @@ def test_restart_success_first_try(tmp_path):
     runner, calls = _runner_factory([0])
     slept = []
     ok = svc.restart_liquidsoap_service(
-        "test", nssm_exe=str(nssm), service="SVC", runner=runner, sleep=slept.append,
+        "test",
+        nssm_exe=str(nssm),
+        service="SVC",
+        runner=runner,
+        sleep=slept.append,
     )
     assert ok
     assert calls == [[str(nssm), "restart", "SVC"]]
@@ -101,8 +108,12 @@ def test_restart_retries_then_succeeds(tmp_path):
     runner, calls = _runner_factory([1, 1, 0])
     slept = []
     ok = svc.restart_liquidsoap_service(
-        "test", nssm_exe=str(nssm), service="SVC", runner=runner,
-        sleep=slept.append, retry_delay=0.1,
+        "test",
+        nssm_exe=str(nssm),
+        service="SVC",
+        runner=runner,
+        sleep=slept.append,
+        retry_delay=0.1,
     )
     assert ok
     assert len(calls) == 3
@@ -114,7 +125,10 @@ def test_restart_gives_up_after_attempts(tmp_path):
     nssm.write_bytes(b"x")
     runner, calls = _runner_factory([1, 1, 1])
     ok = svc.restart_liquidsoap_service(
-        "test", nssm_exe=str(nssm), service="SVC", runner=runner,
+        "test",
+        nssm_exe=str(nssm),
+        service="SVC",
+        runner=runner,
         sleep=lambda _s: None,
     )
     assert not ok
@@ -124,7 +138,9 @@ def test_restart_gives_up_after_attempts(tmp_path):
 def test_restart_without_nssm_binary_is_false(tmp_path):
     runner, calls = _runner_factory([0])
     ok = svc.restart_liquidsoap_service(
-        "test", nssm_exe=str(tmp_path / "missing.exe"), runner=runner,
+        "test",
+        nssm_exe=str(tmp_path / "missing.exe"),
+        runner=runner,
     )
     assert not ok
     assert calls == []
@@ -138,6 +154,9 @@ def test_restart_runner_exception_is_swallowed(tmp_path):
         raise OSError("no")
 
     ok = svc.restart_liquidsoap_service(
-        "test", nssm_exe=str(nssm), runner=runner, attempts=1,
+        "test",
+        nssm_exe=str(nssm),
+        runner=runner,
+        attempts=1,
     )
     assert not ok

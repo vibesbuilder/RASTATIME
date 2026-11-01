@@ -5,13 +5,13 @@ absolute value, the age, the growth since the first sample of that
 instance and the average rate.  The memory week of 2026-09-08..15 had no
 such record; the next evaluation should be a grep, not a measuring session.
 """
+
 from __future__ import annotations
 
 import logging
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import liquidsoap_health as lh
 from rastatime_playout.preflight import PreflightChecker
 
@@ -38,12 +38,16 @@ def _scan(checker, monkeypatch, caplog, procs):
 
 
 def _main(mb, age):
-    return lh.ProcessInfo(pid=16424, private_mb=mb, age_seconds=age, script="C:/Tools/liquidsoap/rastatime.liq")
+    return lh.ProcessInfo(
+        pid=16424, private_mb=mb, age_seconds=age, script="C:/Tools/liquidsoap/rastatime.liq"
+    )
 
 
 def test_first_scan_logs_the_baseline(checker, monkeypatch, caplog):
     lines = _scan(checker, monkeypatch, caplog, [_main(103.0, 0.2 * H)])
-    assert lines == ["preflight: Liquidsoap memory: PID 16424 103 MB, 0.2 h old (first sample of this instance)."]
+    assert lines == [
+        "preflight: Liquidsoap memory: PID 16424 103 MB, 0.2 h old (first sample of this instance)."
+    ]
 
 
 def test_later_scans_log_growth_and_rate_since_the_first_sample(checker, monkeypatch, caplog):
@@ -75,16 +79,30 @@ def test_a_fresh_instance_starts_a_new_baseline(checker, monkeypatch, caplog):
     # NSSM restarted the engine: new PID, young
     fresh = lh.ProcessInfo(pid=777, private_mb=100.0, age_seconds=120.0, script="rastatime.liq")
     lines = _scan(checker, monkeypatch, caplog, [fresh])
-    assert lines == ["preflight: Liquidsoap memory: PID 777 100 MB, 0.0 h old (first sample of this instance)."]
-    assert 16424 not in checker._liquidsoap_memory_baseline     # old instance forgotten
+    assert lines == [
+        "preflight: Liquidsoap memory: PID 777 100 MB, 0.0 h old (first sample of this instance)."
+    ]
+    assert 16424 not in checker._liquidsoap_memory_baseline  # old instance forgotten
     # same PID reused but younger than the baseline -> also a fresh instance
-    _scan(checker, monkeypatch, caplog, [lh.ProcessInfo(pid=777, private_mb=400.0, age_seconds=10 * H, script="rastatime.liq")])
-    lines = _scan(checker, monkeypatch, caplog, [lh.ProcessInfo(pid=777, private_mb=90.0, age_seconds=60.0, script="rastatime.liq")])
+    _scan(
+        checker,
+        monkeypatch,
+        caplog,
+        [lh.ProcessInfo(pid=777, private_mb=400.0, age_seconds=10 * H, script="rastatime.liq")],
+    )
+    lines = _scan(
+        checker,
+        monkeypatch,
+        caplog,
+        [lh.ProcessInfo(pid=777, private_mb=90.0, age_seconds=60.0, script="rastatime.liq")],
+    )
     assert "first sample" in lines[0]
 
 
 def test_standby_instance_is_not_logged(checker, monkeypatch, caplog):
-    standby = lh.ProcessInfo(pid=13280, private_mb=81.0, age_seconds=50 * H, script="C:/Tools/liquidsoap/standby.liq")
+    standby = lh.ProcessInfo(
+        pid=13280, private_mb=81.0, age_seconds=50 * H, script="C:/Tools/liquidsoap/standby.liq"
+    )
     lines = _scan(checker, monkeypatch, caplog, [standby, _main(200.0, 3.0 * H)])
     assert len(lines) == 1 and "PID 16424" in lines[0]
 

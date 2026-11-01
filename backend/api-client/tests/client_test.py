@@ -1,5 +1,4 @@
 import pytest
-
 from rastatime_api_client._client import Session
 
 

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import requests
 from django.conf import settings
@@ -26,6 +26,7 @@ def allow_duplicates_from_preference() -> bool:
         .first()
     )
     return str(value or "").strip().lower() in ("true", "1", "on", "yes")
+
 
 # RASTATIME 2026-10-14 - aligned with the extensions the import folder /
 # FTP scan and CcFiles::createAndImport accept (raw .aac is repacked to
@@ -178,7 +179,7 @@ class Importer:
         self,
         path: Path,
         library: Optional[str],
-        allowed_extensions: List[str],
+        allowed_extensions: list[str],
     ) -> None:
         if not path.is_dir():
             raise ValueError(f"provided path {path} is not a directory")
@@ -200,13 +201,11 @@ class Importer:
         self,
         path: Path,
         library: Optional[str],
-        allowed_extensions: List[str],
+        allowed_extensions: list[str],
     ) -> None:
         if library is not None and not self._check_library(library):
             raise ValueError(f"provided library {library} does not exist")
 
-        allowed_extensions = [
-            (x if x.startswith(".") else "." + x) for x in allowed_extensions
-        ]
+        allowed_extensions = [(x if x.startswith(".") else "." + x) for x in allowed_extensions]
 
         self._walk_dir(path, library, allowed_extensions)

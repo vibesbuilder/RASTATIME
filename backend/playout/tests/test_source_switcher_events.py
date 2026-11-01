@@ -7,6 +7,7 @@ step of 2026-09-09, floor 5 s).  While an
 older render without the callbacks is loaded (probe
 ``rastatime.source_events``), the loop polls every 5 s as before.
 """
+
 from __future__ import annotations
 
 import logging
@@ -16,7 +17,6 @@ from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
 import pytest
-
 from rastatime_playout import source_switcher as ss
 from rastatime_playout.source_switcher import SourceState, SourceSwitcher
 
@@ -90,14 +90,17 @@ def test_defaults_are_slow_and_bounded():
     assert ss.SOURCE_EVENTS_PROBE == "rastatime.source_events"
 
 
-@pytest.mark.parametrize("raw,expected", [
-    ("", 600.0),
-    ("300", 300.0),
-    (" 45 ", 45.0),
-    ("abc", 600.0),      # not a number -> default
-    ("1", 5.0),          # below the floor -> floor
-    ("0", 5.0),
-])
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("", 600.0),
+        ("300", 300.0),
+        (" 45 ", 45.0),
+        ("abc", 600.0),  # not a number -> default
+        ("1", 5.0),  # below the floor -> floor
+        ("0", 5.0),
+    ],
+)
 def test_reconcile_interval_from_env(raw, expected):
     assert ss.reconcile_interval_from_env({ss.RECONCILE_INTERVAL_ENV: raw}) == expected
 
@@ -114,9 +117,9 @@ def test_request_reconcile_wakes_wait_once():
     sw, _ = _switcher()
     assert sw.wait_reconcile(0) is False
     sw.request_reconcile()
-    sw.request_reconcile()                  # idempotent
+    sw.request_reconcile()  # idempotent
     assert sw.wait_reconcile(0) is True
-    assert sw.wait_reconcile(0) is False    # cleared by the wait
+    assert sw.wait_reconcile(0) is False  # cleared by the wait
 
 
 def test_reconcile_once_syncs_state_from_telnet():
@@ -128,13 +131,16 @@ def test_reconcile_once_syncs_state_from_telnet():
     assert states == [SourceState.MASTER, SourceState.SCHEDULED]
 
 
-@pytest.mark.parametrize("reply,expected", [
-    ("on", True),
-    ("  on\n", True),
-    (NO_PROBE, False),
-    ("off", False),
-    ("", False),
-])
+@pytest.mark.parametrize(
+    "reply,expected",
+    [
+        ("on", True),
+        ("  on\n", True),
+        (NO_PROBE, False),
+        ("off", False),
+        ("", False),
+    ],
+)
 def test_source_events_probe(reply, expected):
     assert ss._source_events_present(_client(events=reply)) is expected
 
@@ -148,7 +154,7 @@ def test_source_event_applies_state_and_requests_verification(handler):
     assert sent == [(200, "ok")]
     assert sw.is_master_connected() is True
     assert states == [SourceState.MASTER]
-    assert sw.wait_reconcile(0) is True      # verification requested
+    assert sw.wait_reconcile(0) is True  # verification requested
     h._handle_source_event(urlparse("/source-event?source=master&status=off"))
     assert sw.current_state == SourceState.SCHEDULED
     assert sw.wait_reconcile(0) is True
@@ -187,16 +193,16 @@ def test_loop_verifies_right_after_an_event_instead_of_polling(telnet_factory):
     deadline = time.monotonic() + 5.0
     while client.send_command.call_count < 3 and time.monotonic() < deadline:
         time.sleep(0.01)
-    assert client.send_command.call_count == 3      # probe + 2 status, now waiting
+    assert client.send_command.call_count == 3  # probe + 2 status, now waiting
     time.sleep(0.3)
-    assert client.send_command.call_count == 3      # no polling while waiting
+    assert client.send_command.call_count == 3  # no polling while waiting
     client.send_command.side_effect = lambda cmd: LIVE if cmd == "master_dj.status" else IDLE
     sw.request_reconcile()
     thread.join(timeout=5.0)
     assert not thread.is_alive()
-    assert client.send_command.call_count == 5      # probe not repeated once present
+    assert client.send_command.call_count == 5  # probe not repeated once present
     assert sw.current_state == SourceState.MASTER
-    assert time.monotonic() - started < 5.0         # far below the 60-s interval
+    assert time.monotonic() - started < 5.0  # far below the 60-s interval
 
 
 def test_loop_settles_before_verifying_an_event(telnet_factory, monkeypatch):
@@ -204,9 +210,9 @@ def test_loop_settles_before_verifying_an_event(telnet_factory, monkeypatch):
     telnet_factory["client"] = _client()
     sleeps = []
     monkeypatch.setattr(ss.time, "sleep", lambda s: sleeps.append(s))
-    sw.request_reconcile()                          # pending before the loop starts
+    sw.request_reconcile()  # pending before the loop starts
     ss._liquidsoap_state_poll_loop(sw, interval_s=60.0, settle_s=1.5, max_ticks=2)
-    assert sleeps == [1.5]                          # the interval itself is never slept
+    assert sleeps == [1.5]  # the interval itself is never slept
 
 
 def test_loop_waits_the_slow_interval_when_events_are_present(telnet_factory, monkeypatch):
@@ -216,7 +222,7 @@ def test_loop_waits_the_slow_interval_when_events_are_present(telnet_factory, mo
     timeouts = _record_waits(monkeypatch, sw)
     ss._liquidsoap_state_poll_loop(sw, interval_s=60.0, settle_s=0.0, max_ticks=3)
     assert timeouts == [60.0, 60.0]
-    assert len(_probe_calls(client)) == 1           # probed once per instance
+    assert len(_probe_calls(client)) == 1  # probed once per instance
 
 
 def test_loop_polls_every_5s_while_an_old_render_is_loaded(telnet_factory, monkeypatch, caplog):
@@ -227,9 +233,9 @@ def test_loop_polls_every_5s_while_an_old_render_is_loaded(telnet_factory, monke
     with caplog.at_level(logging.WARNING, logger="rastatime_playout.source_switcher"):
         ss._liquidsoap_state_poll_loop(sw, interval_s=60.0, settle_s=0.0, max_ticks=3)
     assert timeouts == [ss.LEGACY_POLL_INTERVAL_S, ss.LEGACY_POLL_INTERVAL_S]
-    assert len(_probe_calls(client)) == 3           # re-probed every round
+    assert len(_probe_calls(client)) == 3  # re-probed every round
     warnings = [r for r in caplog.records if "no harbor source events" in r.getMessage()]
-    assert len(warnings) == 1                       # warned once, not every round
+    assert len(warnings) == 1  # warned once, not every round
 
 
 def test_loop_switches_to_the_slow_interval_after_a_new_render_appears(telnet_factory, monkeypatch):
@@ -263,7 +269,7 @@ def test_loop_reprobes_after_a_telnet_error(telnet_factory, monkeypatch):
     telnet_factory["client"] = client
     timeouts = _record_waits(monkeypatch, sw)
     ss._liquidsoap_state_poll_loop(sw, interval_s=60.0, settle_s=0.0, max_ticks=3)
-    assert timeouts == [5.0, 60.0]                  # quick retry, then slow
+    assert timeouts == [5.0, 60.0]  # quick retry, then slow
     assert calls["n"] == 2
 
 
@@ -273,7 +279,7 @@ def test_loop_survives_telnet_errors(telnet_factory):
     client.send_command.side_effect = ConnectionError("telnet down")
     telnet_factory["client"] = client
     ss._liquidsoap_state_poll_loop(sw, interval_s=0.01, settle_s=0.0, max_ticks=3)
-    assert client.send_command.call_count == 3      # the probe fails first each round
+    assert client.send_command.call_count == 3  # the probe fails first each round
     assert sw.current_state == SourceState.SCHEDULED
 
 
@@ -286,7 +292,9 @@ def test_start_listener_passes_the_interval_to_the_liquidsoap_loop(monkeypatch):
     monkeypatch.setattr(ss, "_liquidsoap_state_poll_loop", fake_loop)
     sw, _ = _switcher()
     server = ss.start_listener(
-        sw, host="127.0.0.1", port=0,
+        sw,
+        host="127.0.0.1",
+        port=0,
         reconcile_interval_s=77.0,
     )
     try:

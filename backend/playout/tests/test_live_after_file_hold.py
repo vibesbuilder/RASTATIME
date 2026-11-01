@@ -11,6 +11,7 @@ second away.  Inside its last BUFFER seconds a track sits in the cross
 operator's tail, so the engine cannot be asked how much is left - the end is
 computed from the exact row start, the clip and the measured chain lag.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -18,7 +19,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from rastatime_playout.player.events import (
@@ -104,8 +104,10 @@ def sched(monkeypatch):
         capture.listen_url = "http://localhost:8000/linein-capture"
         capture_cls.return_value = capture
         s = ps.PlayoutScheduler(
-            engine=engine, api_client=MagicMock(),
-            track_crossfade_seconds=3.0, input_transition_seconds=1.0,
+            engine=engine,
+            api_client=MagicMock(),
+            track_crossfade_seconds=3.0,
+            input_transition_seconds=1.0,
         )
     s._switcher = None
     s._ensure_file_cached = MagicMock(return_value=Path("C:/cache/a.mp3"))
@@ -131,13 +133,14 @@ def _ending_in(seconds, lag=0.25, **kw):
 # the end of the audio
 # ---------------------------------------------------------------------------
 
+
 def test_audio_end_is_exact_start_plus_clip_plus_chain_lag(sched):
     s, _, _ = sched
     ev = _file(datetime(2026, 9, 30, 6, 0, 59, 880000), seconds=6.9)
-    assert ev.start == datetime(2026, 9, 30, 6, 0, 59)          # timers: whole seconds
+    assert ev.start == datetime(2026, 9, 30, 6, 0, 59)  # timers: whole seconds
     s._file_chain_lag = 0.3
     assert s._file_audio_end(ev) == datetime(2026, 9, 30, 6, 1, 7, 80000)
-    s._file_chain_lag = None                                     # nothing measured yet
+    s._file_chain_lag = None  # nothing measured yet
     assert s._file_audio_end(ev) == datetime(2026, 9, 30, 6, 1, 7, 30000)
 
 
@@ -183,13 +186,20 @@ def test_generate_file_events_carries_the_exact_times():
         "ends_at": datetime(2026, 9, 30, 6, 1, 6),
         "starts_at_exact": datetime(2026, 9, 30, 6, 0, 59, 880000),
         "ends_at_exact": datetime(2026, 9, 30, 6, 1, 6, 780000),
-        "fade_in": "00:00:00.5", "fade_out": "00:00:00.5",
-        "cue_in": "00:00:00", "cue_out": "00:00:06.9",
+        "fade_in": "00:00:00.5",
+        "fade_out": "00:00:00.5",
+        "cue_in": "00:00:00",
+        "cue_out": "00:00:06.9",
         "instance": 2001,
     }
     file = {
-        "id": 593, "url": None, "track_title": "Intro BBC News", "artist_name": "ExampleFM",
-        "mime": "audio/mpeg", "replay_gain": "-9.0", "size": 1,
+        "id": 593,
+        "url": None,
+        "track_title": "Intro BBC News",
+        "artist_name": "ExampleFM",
+        "mime": "audio/mpeg",
+        "replay_gain": "-9.0",
+        "size": 1,
     }
     prefs = MagicMock(loudness_mode=None, replay_gain_enabled=False, replay_gain_offset=0.0)
     generate_file_events(events, schedule, file, {"name": "BBC"}, prefs)
@@ -202,6 +212,7 @@ def test_generate_file_events_carries_the_exact_times():
 # ---------------------------------------------------------------------------
 # webstream after a file track
 # ---------------------------------------------------------------------------
+
 
 def test_prewarmed_webstream_waits_for_the_jingle_to_end(sched):
     s, engine, _ = sched
@@ -289,7 +300,7 @@ def test_no_wait_while_a_dj_is_on_air(sched):
         s._on_webstream_start("W", ws)
     sleep.assert_not_called()
     engine.webstream_gate.assert_not_called()
-    assert s._current_event is ws                     # bookkeeping for the resume
+    assert s._current_event is ws  # bookkeeping for the resume
 
 
 def test_superseded_during_the_wait_leaves_the_engine_alone(sched):
@@ -311,6 +322,7 @@ def test_superseded_during_the_wait_leaves_the_engine_alone(sched):
 # ---------------------------------------------------------------------------
 # line-in after a file track
 # ---------------------------------------------------------------------------
+
 
 def test_prewarmed_linein_waits_for_the_jingle_to_end(sched):
     s, engine, _ = sched
@@ -346,6 +358,7 @@ def test_superseded_linein_does_not_fall_through_to_a_cold_start(sched):
 # ---------------------------------------------------------------------------
 # the stop of a file track
 # ---------------------------------------------------------------------------
+
 
 def test_stop_lets_the_track_run_out(sched):
     s, engine, _ = sched
@@ -406,6 +419,7 @@ def test_stop_of_a_webstream_does_not_wait(sched):
 # 2026-10-01 - the other direction: exact row times after a live item
 # ---------------------------------------------------------------------------
 
+
 def _live_ws(start_exact, end_exact, row_id=888, uri="http://stream.example/bbc"):
     return _webstream(start_exact, row_id=row_id).model_copy(
         update={"uri": uri, "end": end_exact.replace(microsecond=0), "end_exact": end_exact},
@@ -460,7 +474,10 @@ def test_file_start_on_the_whole_second_does_not_wait(sched):
 def test_file_superseded_during_the_wait_is_not_pushed(sched):
     s, engine, _ = sched
     now = datetime.utcnow()
-    s._current_event, s._playing_key = _live_ws(now - timedelta(minutes=5), now + timedelta(seconds=0.8)), "W"
+    s._current_event, s._playing_key = (
+        _live_ws(now - timedelta(minutes=5), now + timedelta(seconds=0.8)),
+        "W",
+    )
 
     def taken_over(_seconds):
         s._playing_key = "someone-else"
@@ -513,8 +530,13 @@ def test_live_stop_on_the_whole_second_does_not_wait(sched):
 def test_prewarmed_webstream_after_a_webstream_waits_for_the_exact_start(sched):
     s, engine, _ = sched
     now = datetime.utcnow()
-    s._current_event, s._playing_key = _live_ws(now - timedelta(minutes=5), now, uri="http://a"), "A"
-    nxt = _live_ws(now + timedelta(seconds=0.7), now + timedelta(minutes=5), row_id=2, uri="http://b")
+    s._current_event, s._playing_key = (
+        _live_ws(now - timedelta(minutes=5), now, uri="http://a"),
+        "A",
+    )
+    nxt = _live_ws(
+        now + timedelta(seconds=0.7), now + timedelta(minutes=5), row_id=2, uri="http://b"
+    )
     s._prepared = ("B", nxt)
     with patch(SLEEP) as sleep:
         s._on_webstream_start("B", nxt)
@@ -537,6 +559,7 @@ def test_a_late_timer_does_not_wait(sched):
 # 2026-10-02 - the chain lag follows an adopted track across a layout gap
 # ---------------------------------------------------------------------------
 
+
 def _adopt(s, engine, prev, nxt, lag):
     _on_air(s, prev, key="p", lag=lag)
     s._queued_ahead = ("n", nxt)
@@ -549,7 +572,13 @@ def test_adopted_track_keeps_the_lag_when_the_rows_abut(sched):
     s, engine, _ = sched
     now = datetime.utcnow()
     prev = _file(now - timedelta(seconds=8.0), seconds=9.9, crossfade=0.0, row_id=1, file_id=1)
-    nxt = _file(now - timedelta(seconds=8.0) + timedelta(seconds=9.9), seconds=50.0, crossfade=0.0, row_id=2, file_id=2)
+    nxt = _file(
+        now - timedelta(seconds=8.0) + timedelta(seconds=9.9),
+        seconds=50.0,
+        crossfade=0.0,
+        row_id=2,
+        file_id=2,
+    )
     _adopt(s, engine, prev, nxt, lag=0.3)
     assert s._file_chain_lag == pytest.approx(0.3, abs=0.01)
 
@@ -560,7 +589,13 @@ def test_adopted_track_after_a_layout_gap_loses_the_gap(sched):
     s, engine, _ = sched
     now = datetime.utcnow()
     prev = _file(now - timedelta(seconds=17.0), seconds=17.7, crossfade=0.0, row_id=1, file_id=1)
-    nxt = _file(now - timedelta(seconds=17.0) + timedelta(seconds=18.0), seconds=9.0, crossfade=0.0, row_id=2, file_id=2)
+    nxt = _file(
+        now - timedelta(seconds=17.0) + timedelta(seconds=18.0),
+        seconds=9.0,
+        crossfade=0.0,
+        row_id=2,
+        file_id=2,
+    )
     nxt = nxt.model_copy(update={"instance_id": 99, "show_name": "next"})
     prev = prev.model_copy(update={"instance_id": 98})
     _adopt(s, engine, prev, nxt, lag=0.3)
@@ -571,6 +606,12 @@ def test_adopted_track_with_an_overlap_keeps_the_lag(sched):
     s, engine, _ = sched
     now = datetime.utcnow()
     prev = _file(now - timedelta(seconds=190.0), seconds=200.0, crossfade=None, row_id=1, file_id=1)
-    nxt = _file(now - timedelta(seconds=190.0) + timedelta(seconds=197.0), seconds=200.0, crossfade=None, row_id=2, file_id=2)
+    nxt = _file(
+        now - timedelta(seconds=190.0) + timedelta(seconds=197.0),
+        seconds=200.0,
+        crossfade=None,
+        row_id=2,
+        file_id=2,
+    )
     _adopt(s, engine, prev, nxt, lag=1.0)
     assert s._file_chain_lag == pytest.approx(1.0, abs=0.01)

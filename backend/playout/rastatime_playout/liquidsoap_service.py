@@ -40,9 +40,11 @@ import socket
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, datetime, time as dtime, timedelta
-from typing import Callable, Optional
+from datetime import date, datetime, timedelta
+from datetime import time as dtime
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +52,7 @@ logger = logging.getLogger(__name__)
 NSSM_EXE = os.environ.get("RASTATIME_NSSM_EXE", r"C:\Tools\nssm\nssm.exe")
 
 #: NSSM service name of the Liquidsoap process.
-LIQUIDSOAP_SERVICE = os.environ.get(
-    "RASTATIME_LIQUIDSOAP_SERVICE", "RASTATIME-LIQUIDSOAP"
-)
+LIQUIDSOAP_SERVICE = os.environ.get("RASTATIME_LIQUIDSOAP_SERVICE", "RASTATIME-LIQUIDSOAP")
 
 #: Seconds after boot during which a changed render may restart
 #: LIQUIDSOAP automatically.  Later changes keep the manual rule
@@ -113,16 +113,19 @@ def within_boot_window(
 
 def boot_restart_enabled() -> bool:
     return os.environ.get(BOOT_RESTART_ENV, "1").strip().lower() not in (
-        "0", "false", "no", "off",
+        "0",
+        "false",
+        "no",
+        "off",
     )
 
 
 #: How the last render addressed the Main Output - the renderer reports
 #: it so automatic restarts can refuse the one mode that is unsafe
 #: across a device-list change (RASTATIME 2026-09-07).
-MAIN_OUTPUT_BY_NAME = "name"      # output.portaudio(device_name=...) - index-independent
-MAIN_OUTPUT_BY_INDEX = "index"    # output.portaudio(device_id=N) - valid for one device list only
-MAIN_OUTPUT_DEFAULT = "default"   # no device argument - OS default endpoint
+MAIN_OUTPUT_BY_NAME = "name"  # output.portaudio(device_name=...) - index-independent
+MAIN_OUTPUT_BY_INDEX = "index"  # output.portaudio(device_id=N) - valid for one device list only
+MAIN_OUTPUT_DEFAULT = "default"  # no device argument - OS default endpoint
 
 
 def restart_liquidsoap_service(
@@ -132,7 +135,7 @@ def restart_liquidsoap_service(
     service: str = LIQUIDSOAP_SERVICE,
     attempts: int = RESTART_ATTEMPTS,
     retry_delay: float = RESTART_RETRY_DELAY_SECONDS,
-    runner: Callable[..., "subprocess.CompletedProcess[str]"] = subprocess.run,
+    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     sleep: Callable[[float], None] = time.sleep,
     verify: Optional[Callable[[], bool]] = None,
 ) -> bool:
@@ -156,14 +159,19 @@ def restart_liquidsoap_service(
     if not os.path.exists(nssm_exe):
         logger.error(
             "Cannot restart %s (%s): NSSM binary %s not found.",
-            service, reason, nssm_exe,
+            service,
+            reason,
+            nssm_exe,
         )
         return False
 
     for attempt in range(1, max(1, attempts) + 1):
         logger.warning(
             "Restarting %s (%s) — attempt %d/%d.",
-            service, reason, attempt, attempts,
+            service,
+            reason,
+            attempt,
+            attempts,
         )
         try:
             proc = runner(
@@ -184,7 +192,9 @@ def restart_liquidsoap_service(
             detail = (proc.stdout or "") + (proc.stderr or "")
             logger.error(
                 "nssm restart %s exited %s: %s",
-                service, proc.returncode, detail.replace("\x00", "").strip()[:300],
+                service,
+                proc.returncode,
+                detail.replace("\x00", "").strip()[:300],
             )
             if verify is not None:
                 try:
@@ -196,7 +206,9 @@ def restart_liquidsoap_service(
                     logger.warning(
                         "%s is back after the restart (%s) although nssm exited %s "
                         "- treating the restart as done, not retrying.",
-                        service, reason, proc.returncode,
+                        service,
+                        reason,
+                        proc.returncode,
                     )
                     return True
         if attempt < attempts:
@@ -252,9 +264,10 @@ class NightlyRestartPolicy:
     memory_hard_mb: Optional[int] = DEFAULT_RESTART_HARD_MB
 
     @classmethod
-    def from_env(cls, value: Optional[str] = None) -> "NightlyRestartPolicy":
+    def from_env(cls, value: Optional[str] = None) -> NightlyRestartPolicy:
         raw = (
-            value if value is not None
+            value
+            if value is not None
             else os.environ.get(NIGHTLY_RESTART_ENV, DEFAULT_NIGHTLY_RESTART)
         )
         raw = (raw or "").strip().lower()
@@ -266,7 +279,8 @@ class NightlyRestartPolicy:
         except (ValueError, TypeError):
             logger.warning(
                 "%s=%r is not HH:MM or 'off' — nightly restart disabled.",
-                NIGHTLY_RESTART_ENV, raw,
+                NIGHTLY_RESTART_ENV,
+                raw,
             )
             return cls(start=None)
         return cls(
@@ -311,19 +325,11 @@ class NightlyRestartPolicy:
         """
         if self.start is None:
             return None
-        if (
-            self.memory_hard_mb
-            and private_mb is not None
-            and private_mb >= self.memory_hard_mb
-        ):
+        if self.memory_hard_mb and private_mb is not None and private_mb >= self.memory_hard_mb:
             return f"memory {int(private_mb)} MB >= hard limit {self.memory_hard_mb} MB"
         if not self.in_window(now_local) or last_done == now_local.date():
             return None
-        if (
-            self.memory_soft_mb
-            and private_mb is not None
-            and private_mb >= self.memory_soft_mb
-        ):
+        if self.memory_soft_mb and private_mb is not None and private_mb >= self.memory_soft_mb:
             return f"memory {int(private_mb)} MB >= {self.memory_soft_mb} MB"
         if not self.every_days or self.every_days <= 0:
             return None

@@ -42,9 +42,7 @@ class TestFileViewSet(APITestCase):
             response = self.client.delete(f"/api/v2/files/{file.id}")
 
         self.assertEqual(response.status_code, 204)
-        remove_mock.assert_called_with(
-            os.path.join(settings.CONFIG.storage.path, file.filepath)
-        )
+        remove_mock.assert_called_with(os.path.join(settings.CONFIG.storage.path, file.filepath))
 
     def test_destroy_no_file(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Api-Key {self.token}")

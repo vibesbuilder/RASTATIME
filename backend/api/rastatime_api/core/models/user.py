@@ -8,7 +8,6 @@ from django.db import models
 from ...permission_constants import GROUPS
 from .role import Role
 
-
 # RASTATIME 2026-10-27 - bcrypt instead of unsalted md5.  The legacy PHP
 # side writes "$2y$" (password_hash), this side "$2b$" (python bcrypt); both
 # verify both.  A 32-character hex value is the pre-2026-10-27 md5, still
@@ -27,7 +26,9 @@ def is_legacy_md5_hash(stored: str) -> bool:
 
 
 def hash_password(raw_password: str) -> str:
-    return bcrypt.hashpw(raw_password.encode("utf-8"), bcrypt.gensalt(BCRYPT_ROUNDS)).decode("ascii")
+    return bcrypt.hashpw(raw_password.encode("utf-8"), bcrypt.gensalt(BCRYPT_ROUNDS)).decode(
+        "ascii"
+    )
 
 
 def verify_password(raw_password: str, stored: str) -> bool:

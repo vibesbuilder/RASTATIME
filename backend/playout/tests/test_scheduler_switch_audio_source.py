@@ -11,12 +11,12 @@ queue for MASTER / SHOW; only SCHEDULED resumes the in-progress item.
 We build a minimal PlayoutScheduler with mocked dependencies and call
 ``switch_audio_source`` for each SourceState.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout.engine.interface import PlayoutEngine
 from rastatime_playout.source_switcher import SourceState
 
@@ -29,6 +29,7 @@ def minimal_scheduler():
     isolation.
     """
     from rastatime_playout.playout_scheduler import PlayoutScheduler
+
     engine = MagicMock(spec=PlayoutEngine)
     api_client = MagicMock()
     sched = PlayoutScheduler(
@@ -88,8 +89,10 @@ def test_state_transitions_dont_leak(minimal_scheduler):
 def test_legacy_streaming_flag_is_gone():
     """The mpv-era ``streaming_handled_externally`` kwarg no longer exists."""
     from rastatime_playout.playout_scheduler import PlayoutScheduler
+
     with pytest.raises(TypeError):
         PlayoutScheduler(
-            engine=MagicMock(spec=PlayoutEngine), api_client=MagicMock(),
+            engine=MagicMock(spec=PlayoutEngine),
+            api_client=MagicMock(),
             streaming_handled_externally=False,
         )

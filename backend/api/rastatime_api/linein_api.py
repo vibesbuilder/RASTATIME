@@ -57,12 +57,13 @@ import json
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from rastatime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
+from rastatime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 # ---------------------------------------------------------------------------
 # GET list + POST create
 # ---------------------------------------------------------------------------
+
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
@@ -72,12 +73,13 @@ def linein_list_or_create(request: HttpRequest) -> JsonResponse:
     GET  — list all line-in sources.
     POST — create a new line-in source.
     """
-    from rastatime_api.linein.models import LineIn as OrmLineIn   # lazy
     from audio.linein._api_helpers import (
-        list_lineins_response, serialize_linein,
+        list_lineins_response,
         parse_linein_create_body,
+        serialize_linein,
     )
     from audio.linein.domain import LineIn as DomainLineIn
+    from rastatime_api.linein.models import LineIn as OrmLineIn  # lazy
 
     # --- GET ---------------------------------------------------------------
     if request.method == "GET":
@@ -99,13 +101,14 @@ def linein_list_or_create(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"error": str(exc)}, status=400)
 
     domain = DomainLineIn.create(**fields)
-    orm    = OrmLineIn.create_from_domain(domain)
+    orm = OrmLineIn.create_from_domain(domain)
     return JsonResponse(serialize_linein(orm.to_domain()), status=201)
 
 
 # ---------------------------------------------------------------------------
 # PATCH update + DELETE
 # ---------------------------------------------------------------------------
+
 
 @csrf_exempt
 @require_http_methods(["GET", "PATCH", "DELETE"])
@@ -120,8 +123,8 @@ def linein_detail(request: HttpRequest, linein_id: str) -> HttpResponse:
     dialog can fetch one entry directly instead of pulling the full
     list and filtering client-side.
     """
-    from rastatime_api.linein.models import LineIn as OrmLineIn   # lazy
-    from audio.linein._api_helpers import serialize_linein, parse_linein_patch_body
+    from audio.linein._api_helpers import parse_linein_patch_body, serialize_linein
+    from rastatime_api.linein.models import LineIn as OrmLineIn  # lazy
 
     # Resolve the ORM row by either the domain UUID (linein_id, used by
     # the Frontend) or the integer DB pk (used by the playout service
@@ -160,18 +163,27 @@ def linein_detail(request: HttpRequest, linein_id: str) -> HttpResponse:
         return JsonResponse({"error": str(exc)}, status=400)
 
     # Apply only the fields present in the patch body.
-    if "name"            in fields: orm.name            = fields["name"]
-    if "device_id"       in fields: orm.device_id       = fields["device_id"]
-    if "device_name"     in fields: orm.device_name     = fields["device_name"]
-    if "channel_mapping" in fields: orm.channel_mapping = fields["channel_mapping"]
-    if "enabled"         in fields: orm.enabled         = fields["enabled"]
-    if "description"     in fields: orm.description     = fields["description"]
-    if "priority"        in fields: orm.priority        = fields["priority"]
-    if "length_seconds"  in fields:
+    if "name" in fields:
+        orm.name = fields["name"]
+    if "device_id" in fields:
+        orm.device_id = fields["device_id"]
+    if "device_name" in fields:
+        orm.device_name = fields["device_name"]
+    if "channel_mapping" in fields:
+        orm.channel_mapping = fields["channel_mapping"]
+    if "enabled" in fields:
+        orm.enabled = fields["enabled"]
+    if "description" in fields:
+        orm.description = fields["description"]
+    if "priority" in fields:
+        orm.priority = fields["priority"]
+    if "length_seconds" in fields:
         from datetime import timedelta
+
         ls = fields["length_seconds"]
         orm.length = timedelta(seconds=ls) if ls is not None else None
-    if "input_gain_db"   in fields: orm.input_gain_db   = fields["input_gain_db"]
+    if "input_gain_db" in fields:
+        orm.input_gain_db = fields["input_gain_db"]
 
     orm.save()
     return JsonResponse(serialize_linein(orm.to_domain()))

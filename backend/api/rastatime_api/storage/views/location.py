@@ -12,6 +12,7 @@ All of them use the API's default permission (API key or logged-in user);
 the Local Machine page reaches them through PHP actions behind the
 operator login and a CSRF token.
 """
+
 from __future__ import annotations
 
 from rest_framework import status
@@ -26,9 +27,12 @@ def _location_payload() -> dict:
     info = storage_root.root_info()
     files, size = storage_root.library_size(info["root"]) if info["exists"] else (0, 0)
     age = storage_root.library_size_age(info["root"]) if info["exists"] else None
-    info.update(library_files=files, library_bytes=size,
-                library_size_age_seconds=None if age is None else int(age),
-                move=storage_move.JOB.status())
+    info.update(
+        library_files=files,
+        library_bytes=size,
+        library_size_age_seconds=None if age is None else int(age),
+        move=storage_move.JOB.status(),
+    )
     return info
 
 
@@ -41,7 +45,7 @@ class StorageMoveValidateView(APIView):
     def post(self, request):
         path = str((request.data or {}).get("path", ""))
         source = storage_root.get_storage_root(refresh=True)
-        _files, size = storage_root.library_size(source, refresh=True)   # exact for the move check
+        _files, size = storage_root.library_size(source, refresh=True)  # exact for the move check
         return Response(storage_move.validate_target(path, source, size))
 
 
@@ -51,8 +55,10 @@ class StorageMoveStartView(APIView):
         try:
             state = storage_move.JOB.start(path)
         except storage_move.MoveInProgress:
-            return Response({"errors": ["A move is already running."], "move": storage_move.JOB.status()},
-                            status=status.HTTP_409_CONFLICT)
+            return Response(
+                {"errors": ["A move is already running."], "move": storage_move.JOB.status()},
+                status=status.HTTP_409_CONFLICT,
+            )
         except storage_move.InvalidTarget as exc:
             return Response({"errors": exc.errors}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"move": state}, status=status.HTTP_202_ACCEPTED)

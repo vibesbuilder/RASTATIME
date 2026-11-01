@@ -1,6 +1,5 @@
 import pytest
 from pydantic import TypeAdapter
-
 from rastatime_shared.config._fields import (
     AnyHttpUrlStr,
     StrNoLeadingSlash,

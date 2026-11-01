@@ -9,7 +9,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from rastatime_analyzer import message_listener
 from rastatime_analyzer.message_listener import HEARTBEAT_SECONDS, MessageListener
 
@@ -33,9 +32,7 @@ def _listener() -> MessageListener:
             internal_base_url=lambda: "http://localhost",
             api_key="key",
         ),
-        rabbitmq=SimpleNamespace(
-            host="localhost", port=5672, vhost="/", user="u", password="p"
-        ),
+        rabbitmq=SimpleNamespace(host="localhost", port=5672, vhost="/", user="u", password="p"),
     )
     return listener
 
@@ -56,9 +53,7 @@ def _frame(redelivered: bool):
     return SimpleNamespace(delivery_tag=7, routing_key="", redelivered=redelivered)
 
 
-def test_redelivered_import_of_a_filed_file_is_acked_without_a_report(
-    tmp_path: Path, monkeypatch
-):
+def test_redelivered_import_of_a_filed_file_is_acked_without_a_report(tmp_path: Path, monkeypatch):
     def must_not_run(*_args, **_kwargs):
         raise AssertionError("must not run")
 

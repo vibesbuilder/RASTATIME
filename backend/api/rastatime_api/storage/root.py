@@ -12,12 +12,13 @@ asks ``GET /api/v2/storage/location`` on every refresh.
 Readers call :func:`get_storage_root`; the value is cached for a few
 seconds because the file views resolve it on every download.
 """
+
 from __future__ import annotations
 
 import os
 import threading
 import time
-from typing import Optional, Tuple
+from typing import Optional
 
 from django.conf import settings
 
@@ -32,7 +33,7 @@ ROOT_CACHE_SECONDS = 15.0
 SIZE_CACHE_SECONDS = 900.0
 
 _lock = threading.Lock()
-_root_cache: Tuple[float, Optional[str]] = (0.0, None)
+_root_cache: tuple[float, Optional[str]] = (0.0, None)
 _size_cache: dict = {}
 _size_refreshing: set = set()
 
@@ -100,7 +101,7 @@ def set_storage_root_setting(path: Optional[str]) -> None:
     invalidate()
 
 
-def walk_size(root: str) -> Tuple[int, int]:
+def walk_size(root: str) -> tuple[int, int]:
     """(files, bytes) below ``root``; missing root -> (0, 0)."""
     files = total = 0
     for _dirpath, _dirs, names in os.walk(root):
@@ -124,7 +125,7 @@ def _recount(root: str) -> None:
             _size_refreshing.discard(root.lower())
 
 
-def library_size(root: Optional[str] = None, refresh: bool = False) -> Tuple[int, int]:
+def library_size(root: Optional[str] = None, refresh: bool = False) -> tuple[int, int]:
     """
     (files, bytes) below the root.  Served from the cache; a stale entry
     (older than SIZE_CACHE_SECONDS) is returned at once and recounted in a
@@ -138,7 +139,9 @@ def library_size(root: Optional[str] = None, refresh: bool = False) -> Tuple[int
         if entry and not refresh:
             if now - entry[0] >= SIZE_CACHE_SECONDS and key not in _size_refreshing:
                 _size_refreshing.add(key)
-                threading.Thread(target=_recount, args=(root,), name="library-size", daemon=True).start()
+                threading.Thread(
+                    target=_recount, args=(root,), name="library-size", daemon=True
+                ).start()
             return entry[1]
     size = walk_size(root)
     with _lock:

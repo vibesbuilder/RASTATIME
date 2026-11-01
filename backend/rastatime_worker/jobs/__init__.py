@@ -25,7 +25,6 @@ Concrete job classes (stubs — implemented in T16.3):
 """
 
 from ._base import Job, JobResult, JobTrigger
-from ._registry import JobRegistry, default_registry
 from ._inventory import (
     DeviceStartupCheckJob,
     LibraryScanJob,
@@ -34,6 +33,7 @@ from ._inventory import (
     PodcastFetchJob,
     SchedulePollJob,
 )
+from ._registry import JobRegistry, default_registry
 
 __all__ = [
     # Primitives

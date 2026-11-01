@@ -5,12 +5,12 @@ the telnet ``uptime`` command: every telnet command leaks ~87-155 KB on
 the Windows build, and the ``uptime`` poll was one of the last three
 periodic commands.  The telnet path stays as the fallback.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import liquidsoap_health as lh
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
@@ -43,7 +43,8 @@ def sched(monkeypatch):
 
     monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", probe)
     s = ps.PlayoutScheduler(
-        engine=engine, api_client=MagicMock(),
+        engine=engine,
+        api_client=MagicMock(),
     )
     s.reset_gates = MagicMock()
     switcher = SourceSwitcher(switch_callback=lambda _state: None)
@@ -61,10 +62,10 @@ def _seed(s, table, pid=14516, age=300.0):
 
 def test_first_cycle_seeds_silently_with_the_main_instance(sched):
     s, engine, switcher, table = sched
-    _seed(s, table)                                      # not the older standby
+    _seed(s, table)  # not the older standby
     engine.recording_stop.assert_not_called()
     assert switcher.wait_reconcile(0) is False
-    engine.liquidsoap_uptime_seconds.assert_not_called()   # no telnet at all
+    engine.liquidsoap_uptime_seconds.assert_not_called()  # no telnet at all
 
 
 def test_same_pid_growing_age_is_a_noop(sched):
@@ -92,7 +93,7 @@ def test_new_pid_triggers_reinit_and_reconcile(sched):
 def test_same_pid_younger_age_triggers_reinit(sched):
     s, engine, switcher, table = sched
     _seed(s, table)
-    table["infos"] = [_main(14516, 20.0)]                # PID reused, fresh process
+    table["infos"] = [_main(14516, 20.0)]  # PID reused, fresh process
     s._maybe_reinit_after_liquidsoap_restart()
     engine.recording_stop.assert_called_once()
     assert switcher.wait_reconcile(0) is True
@@ -101,7 +102,7 @@ def test_same_pid_younger_age_triggers_reinit(sched):
 def test_small_age_jitter_is_not_a_restart(sched):
     s, engine, switcher, table = sched
     _seed(s, table)
-    table["infos"] = [_main(14516, 297.0)]               # 3 s < 5 s margin
+    table["infos"] = [_main(14516, 297.0)]  # 3 s < 5 s margin
     s._maybe_reinit_after_liquidsoap_restart()
     engine.recording_stop.assert_not_called()
 
@@ -112,11 +113,11 @@ def test_failed_reinit_keeps_the_baseline_for_a_retry(sched):
     engine.recording_stop.side_effect = ConnectionError("telnet not up yet")
     table["infos"] = [_main(15000, 3.0)]
     s._maybe_reinit_after_liquidsoap_restart()
-    assert s._last_liquidsoap_process == (14516, 300.0)   # baseline kept
+    assert s._last_liquidsoap_process == (14516, 300.0)  # baseline kept
     assert switcher.wait_reconcile(0) is False
     engine.recording_stop.side_effect = None
     table["infos"] = [_main(15000, 123.0)]
-    s._maybe_reinit_after_liquidsoap_restart()             # retried next cycle
+    s._maybe_reinit_after_liquidsoap_restart()  # retried next cycle
     assert s._last_liquidsoap_process == (15000, 123.0)
     assert switcher.wait_reconcile(0) is True
 
@@ -124,20 +125,20 @@ def test_failed_reinit_keeps_the_baseline_for_a_retry(sched):
 def test_planned_restart_resets_the_baseline_so_the_fresh_pid_seeds_silently(sched):
     s, engine, switcher, table = sched
     _seed(s, table)
-    ok, _ = s._apply_initial_liquidsoap_state()            # what a planned restart runs
+    ok, _ = s._apply_initial_liquidsoap_state()  # what a planned restart runs
     assert ok
     assert s._last_liquidsoap_process is None
     engine.recording_stop.reset_mock()
     table["infos"] = [_main(15000, 12.0)]
     s._maybe_reinit_after_liquidsoap_restart()
-    engine.recording_stop.assert_not_called()               # no second "restarted" round
+    engine.recording_stop.assert_not_called()  # no second "restarted" round
     assert s._last_liquidsoap_process == (15000, 12.0)
 
 
 def test_probe_unavailable_falls_back_to_telnet_uptime(sched):
     s, engine, switcher, table = sched
     table["infos"] = None
-    engine.liquidsoap_uptime_seconds.return_value = 12.0   # constructor seeded 1000 s
+    engine.liquidsoap_uptime_seconds.return_value = 12.0  # constructor seeded 1000 s
     s._maybe_reinit_after_liquidsoap_restart()
     engine.recording_stop.assert_called_once()
     assert switcher.wait_reconcile(0) is True
@@ -175,7 +176,7 @@ def test_process_table_is_read_once_per_cycle(sched):
     s._liquidsoap_process_probe()
     s._liquidsoap_main_process()
     assert table["calls"] == 1
-    s._cycle_process_cache_enabled = False                # outside a cycle: every call reads
+    s._cycle_process_cache_enabled = False  # outside a cycle: every call reads
     s._cycle_process_infos = None
     s._liquidsoap_process_identity()
     s._liquidsoap_process_probe()

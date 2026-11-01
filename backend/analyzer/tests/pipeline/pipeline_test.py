@@ -3,7 +3,6 @@ from pathlib import Path
 from queue import Queue
 
 import pytest
-
 from rastatime_analyzer.pipeline import Pipeline, PipelineOptions
 
 from ..conftest import AUDIO_FILENAME, AUDIO_IMPORT_DEST
@@ -138,4 +137,6 @@ def test_pipeline_options_convert_lossless():
     # an import message without the key (older legacy app) converts nothing
     assert PipelineOptions().convert_lossless is False
     assert PipelineOptions(**{"analyze_cue_points": True}).convert_lossless is False
-    assert PipelineOptions(**{"analyze_cue_points": True, "convert_lossless": True}).convert_lossless
+    assert PipelineOptions(
+        **{"analyze_cue_points": True, "convert_lossless": True}
+    ).convert_lossless

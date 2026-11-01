@@ -1,6 +1,5 @@
-from rest_framework.test import APITestCase
-
 from rastatime_api.core.models import Role, User
+from rest_framework.test import APITestCase
 
 
 # RASTATIME 2026-10-25 - the installation account "admin" cannot be deleted

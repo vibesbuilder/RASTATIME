@@ -3,6 +3,7 @@ RASTATIME 2026-09-16 - manual backup via the UI (work-order point 10,
 stage 1): folder validation, the backup job (stubbed pg_dump writing to
 stdout), the endpoints behind Settings -> Backup.
 """
+
 from __future__ import annotations
 
 import json
@@ -10,7 +11,7 @@ import os
 import sys
 import time
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from django.urls import reverse
@@ -28,7 +29,9 @@ def _fresh_caches(db):
     # committed folder/state of a job test would leak into the next test.
     def wipe():
         sr.invalidate()
-        Preference.site.filter(key__in=[sb.BACKUP_FOLDER_KEY, sb.BACKUP_STATE_KEY, sb.INCLUDE_MEDIA_KEY, sb.AUTO_KEY]).delete()
+        Preference.site.filter(
+            key__in=[sb.BACKUP_FOLDER_KEY, sb.BACKUP_STATE_KEY, sb.INCLUDE_MEDIA_KEY, sb.AUTO_KEY]
+        ).delete()
 
     wipe()
     yield
@@ -55,7 +58,8 @@ def fake_config(tmp_path, monkeypatch):
 def fake_pg_dump(monkeypatch):
     """pg_dump stand-in: a Python one-liner that writes bytes to stdout."""
     argv = [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         "import sys; sys.stdout.buffer.write(b'PGDMP-fake' * 1000)",
     ]
     monkeypatch.setattr(sb, "_pg_dump_command", lambda: (argv, os.environ.copy()))
@@ -155,7 +159,7 @@ def test_a_running_backup_blocks_a_second_start(target, monkeypatch):
 
 @pytest.mark.django_db
 def test_a_dead_job_shows_as_interrupted():
-    stale = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat(timespec="seconds")
+    stale = (datetime.now(UTC) - timedelta(minutes=10)).isoformat(timespec="seconds")
     sb.save_state({"state": "running", "pid": 99999999, "heartbeat": stale})
     assert sb.JOB.status()["state"] == "interrupted"
 
@@ -187,7 +191,8 @@ def test_media_mirror_is_copied_and_verified(target, fake_config, fake_pg_dump, 
     mirror = os.path.join(target, "media")
     copied = sorted(
         os.path.relpath(os.path.join(d, f), mirror).replace("\\", "/")
-        for d, _dirs, files in os.walk(mirror) for f in files
+        for d, _dirs, files in os.walk(mirror)
+        for f in files
     )
     assert copied == ["imported/Artist/a.mp3", "imported/artwork/a", "imported/b.mp3"]
     assert state["media_done_files"] == 3
@@ -200,7 +205,9 @@ def test_media_mirror_is_copied_and_verified(target, fake_config, fake_pg_dump, 
 # The sizes are now measured by the job thread, so start() returns at once.
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.skipif(not WINDOWS, reason="real robocopy")
-def test_start_with_media_returns_before_the_sizes_are_known(target, fake_config, fake_pg_dump, library, monkeypatch):
+def test_start_with_media_returns_before_the_sizes_are_known(
+    target, fake_config, fake_pg_dump, library, monkeypatch
+):
     slow = {"calls": 0}
     real_walk = sr.walk_size
 
@@ -224,7 +231,9 @@ def test_start_with_media_returns_before_the_sizes_are_known(target, fake_config
 
 
 @pytest.mark.django_db(transaction=True)
-def test_media_without_free_space_fails_the_job_with_a_message(target, fake_config, fake_pg_dump, library, monkeypatch):
+def test_media_without_free_space_fails_the_job_with_a_message(
+    target, fake_config, fake_pg_dump, library, monkeypatch
+):
     sb.set_backup_folder(target)
     sb.set_include_media(True)
     # a library far bigger than any disk: the folder itself passes the
@@ -251,7 +260,7 @@ def test_second_run_mirrors_deletions(target, fake_config, fake_pg_dump, library
     state = wait_state("done", "failed", timeout=60.0)
     assert state["state"] == "done", state.get("error")
     mirror = os.path.join(target, "media", "imported")
-    assert not os.path.exists(os.path.join(mirror, "b.mp3"))       # /MIR purged it
+    assert not os.path.exists(os.path.join(mirror, "b.mp3"))  # /MIR purged it
     assert os.path.isfile(os.path.join(mirror, "c.mp3"))
 
 
@@ -306,11 +315,13 @@ def test_endpoints_roundtrip(api_client, target, fake_config, fake_pg_dump):
     assert saved.status_code == 200 and saved.json()["configured"] is True
     # include_media travels through the folder endpoint (2026-09-17: the PHP
     # proxy dropped it and no test caught that - the API side is covered now)
-    on = api_client.post(reverse("storage-backup-folder"),
-                         {"path": target, "include_media": True}, format="json")
+    on = api_client.post(
+        reverse("storage-backup-folder"), {"path": target, "include_media": True}, format="json"
+    )
     assert on.json()["include_media"] is True
-    off = api_client.post(reverse("storage-backup-folder"),
-                          {"path": target, "include_media": "false"}, format="json")
+    off = api_client.post(
+        reverse("storage-backup-folder"), {"path": target, "include_media": "false"}, format="json"
+    )
     assert off.json()["include_media"] is False
 
     bad = api_client.post(reverse("storage-backup-folder"), {"path": "nope"}, format="json")
@@ -332,7 +343,9 @@ def test_endpoints_roundtrip(api_client, target, fake_config, fake_pg_dump):
     assert name in dl.headers.get("Content-Disposition", "")
     dl.close()
 
-    missing = api_client.get(reverse("storage-backup-download"), {"name": "rastatime-backup-2000-01-01T0000.zip"})
+    missing = api_client.get(
+        reverse("storage-backup-download"), {"name": "rastatime-backup-2000-01-01T0000.zip"}
+    )
     assert missing.status_code == 404
 
 
@@ -346,8 +359,8 @@ def test_auto_config_roundtrip_and_defaults():
     sb.set_auto_config({"enabled": True, "every_days": 0, "retention_days": -5})
     cfg = sb.get_auto_config()
     assert cfg["enabled"] is True
-    assert cfg["every_days"] == 1          # clamped
-    assert cfg["retention_days"] == 0      # clamped
+    assert cfg["every_days"] == 1  # clamped
+    assert cfg["retention_days"] == 0  # clamped
 
 
 @pytest.mark.django_db
@@ -356,12 +369,12 @@ def test_auto_due_logic(target):
     sb.set_backup_folder(target)
     os.makedirs(target, exist_ok=True)
     sb.set_auto_config({"enabled": False, "every_days": 1, "retention_days": 0})
-    assert sb.auto_backup_due()[0] is False            # disabled
+    assert sb.auto_backup_due()[0] is False  # disabled
     sb.set_auto_config({"enabled": True, "every_days": 1, "retention_days": 0})
     assert sb.auto_backup_due() == (True, "no backup yet")
     fresh = os.path.join(target, "rastatime-backup-2026-09-17T1200.zip")
     open(fresh, "wb").write(b"zip")
-    assert sb.auto_backup_due()[0] is False            # just created
+    assert sb.auto_backup_due()[0] is False  # just created
     two_days_ago = time.time() - 2 * 86400
     os.utime(fresh, (two_days_ago, two_days_ago))
     assert sb.auto_backup_due()[0] is True
@@ -373,16 +386,17 @@ def test_retention_prunes_old_zips_but_keeps_the_newest(target):
     sb.set_backup_folder(target)
     os.makedirs(target, exist_ok=True)
     old_days = time.time() - 40 * 86400
-    for name in ("rastatime-backup-2026-08-01T0300.zip",
-                 "rastatime-backup-2026-08-02T0300.zip"):
+    for name in ("rastatime-backup-2026-08-01T0300.zip", "rastatime-backup-2026-08-02T0300.zip"):
         path = os.path.join(target, name)
         open(path, "wb").write(b"zip")
         os.utime(path, (old_days, old_days))
     newest = os.path.join(target, "rastatime-backup-2026-09-17T0300.zip")
     open(newest, "wb").write(b"zip")
     deleted = sb.prune_old_backups(target, 30)
-    assert sorted(deleted) == ["rastatime-backup-2026-08-01T0300.zip",
-                               "rastatime-backup-2026-08-02T0300.zip"]
+    assert sorted(deleted) == [
+        "rastatime-backup-2026-08-01T0300.zip",
+        "rastatime-backup-2026-08-02T0300.zip",
+    ]
     assert [e["name"] for e in sb.list_backups(target)] == ["rastatime-backup-2026-09-17T0300.zip"]
     # retention 0 = keep everything; the newest always survives even when old
     os.utime(newest, (old_days, old_days))
@@ -415,7 +429,7 @@ def test_backup_auto_command_runs_when_due_and_prunes(target, fake_config, fake_
 
     out = StringIO()
     call_command("backup_auto", stdout=out)
-    assert "nothing to do" in out.getvalue()           # fresh backup exists
+    assert "nothing to do" in out.getvalue()  # fresh backup exists
 
 
 @pytest.mark.django_db(transaction=True)
@@ -434,11 +448,14 @@ def test_backup_auto_command_reports_failure(target, fake_config, monkeypatch):
 @pytest.mark.django_db
 @pytest.mark.skipif(not WINDOWS, reason="windows paths")
 def test_auto_endpoint_saves_and_reports(api_client, target):
-    saved = api_client.post(reverse("storage-backup-auto"),
-                            {"enabled": True, "every_days": 7, "retention_days": 60},
-                            format="json")
+    saved = api_client.post(
+        reverse("storage-backup-auto"),
+        {"enabled": True, "every_days": 7, "retention_days": 60},
+        format="json",
+    )
     assert saved.status_code == 200
     assert saved.json()["auto"] == {"enabled": True, "every_days": 7, "retention_days": 60}
-    bad = api_client.post(reverse("storage-backup-auto"),
-                          {"enabled": True, "every_days": "week"}, format="json")
+    bad = api_client.post(
+        reverse("storage-backup-auto"), {"enabled": True, "every_days": "week"}, format="json"
+    )
     assert bad.status_code == 400

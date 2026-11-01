@@ -64,9 +64,7 @@ def process_http_requests(ipc_queue, http_retry_queue_path):
             while not shutdown:
                 try:
                     request = ipc_queue.get(block=True, timeout=5)
-                    if (
-                        isinstance(request, str) and request == "shutdown"
-                    ):  # Bit of a cheat
+                    if isinstance(request, str) and request == "shutdown":  # Bit of a cheat
                         shutdown = True
                         break
                 except queue.Empty:
@@ -88,9 +86,7 @@ def process_http_requests(ipc_queue, http_retry_queue_path):
             with open(http_retry_queue_path, "wb") as pickle_file:
                 pickle.dump(retry_queue, pickle_file)
             return
-        except (
-            Exception
-        ) as exception:  # Terrible top-level exception handler to prevent the thread from dying, just in case.
+        except Exception as exception:  # Terrible top-level exception handler to prevent the thread from dying, just in case.
             if shutdown:
                 return
             logger.exception("Unhandled exception in StatusReporter %s", exception)
@@ -103,17 +99,13 @@ def send_http_request(picklable_request: PicklableHttpRequest, retry_queue):
         bare_request = picklable_request.create_request()
         session = requests.Session()
         prepared_request = session.prepare_request(bare_request)
-        resp = session.send(
-            prepared_request, timeout=StatusReporter._HTTP_REQUEST_TIMEOUT
-        )
+        resp = session.send(prepared_request, timeout=StatusReporter._HTTP_REQUEST_TIMEOUT)
         resp.raise_for_status()  # Raise an exception if there was an http error code returned
         logger.info("HTTP request sent successfully.")
     except requests.exceptions.HTTPError as exception:
         if exception.response.status_code == 422:
             # Do no retry the request if there was a metadata validation error
-            logger.exception(
-                f"HTTP request failed due to an HTTP exception: {exception}"
-            )
+            logger.exception(f"HTTP request failed due to an HTTP exception: {exception}")
         else:
             # The request failed with an error 500 probably, so let's check if Airtime and/or
             # the web server are broken. If not, then our request was probably causing an

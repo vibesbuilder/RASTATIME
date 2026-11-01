@@ -19,11 +19,13 @@ re-reads them on every schedule refresh, pushing changes over telnet
 (``var.set icy_format / offair_text / station_name``) - a Settings
 change takes effect within one refresh cycle, no restart.
 """
+
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +67,25 @@ def parse_icy_preferences(entries: Mapping[str, object]) -> IcyPreferences:
     """
     raw_format = entries.get(_PREF_FORMAT)
     try:
-        label_format = int(str(raw_format).strip()) if raw_format not in (None, "") else DEFAULT_ICY_FORMAT
+        label_format = (
+            int(str(raw_format).strip()) if raw_format not in (None, "") else DEFAULT_ICY_FORMAT
+        )
     except (TypeError, ValueError):
-        logger.warning("cc_pref %s=%r is not an integer - using %d", _PREF_FORMAT, raw_format, DEFAULT_ICY_FORMAT)
+        logger.warning(
+            "cc_pref %s=%r is not an integer - using %d",
+            _PREF_FORMAT,
+            raw_format,
+            DEFAULT_ICY_FORMAT,
+        )
         label_format = DEFAULT_ICY_FORMAT
     if label_format not in VALID_FORMATS:
-        logger.warning("cc_pref %s=%r is not one of %s - using %d", _PREF_FORMAT, raw_format, VALID_FORMATS, DEFAULT_ICY_FORMAT)
+        logger.warning(
+            "cc_pref %s=%r is not one of %s - using %d",
+            _PREF_FORMAT,
+            raw_format,
+            VALID_FORMATS,
+            DEFAULT_ICY_FORMAT,
+        )
         label_format = DEFAULT_ICY_FORMAT
     return IcyPreferences(
         label_format=label_format,

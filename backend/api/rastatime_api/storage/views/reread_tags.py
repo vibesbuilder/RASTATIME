@@ -21,9 +21,9 @@ to the file.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from django.db import transaction
 from rest_framework import status
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 # analyzer key -> File model field.  A tag that is absent from the file
 # clears the column (the file is the truth the operator asked for).
-TAG_FIELDS: Dict[str, str] = {
+TAG_FIELDS: dict[str, str] = {
     "track_title": "track_title",
     "artist_name": "artist_name",
     "album_title": "album_title",
@@ -54,7 +54,7 @@ TAG_FIELDS: Dict[str, str] = {
     "mood": "mood",
 }
 # file facts that follow the file (never cleared)
-FILE_FIELDS: Dict[str, str] = {
+FILE_FIELDS: dict[str, str] = {
     "md5": "md5",
     "filesize": "size",
     "bit_rate": "bit_rate",
@@ -73,13 +73,17 @@ def _normalise(field: str, value: Any) -> Any:
         except (TypeError, ValueError):
             return None
     text = str(value).strip()
-    limit = File._meta.get_field(field).max_length if hasattr(File._meta.get_field(field), "max_length") else None
+    limit = (
+        File._meta.get_field(field).max_length
+        if hasattr(File._meta.get_field(field), "max_length")
+        else None
+    )
     if limit and len(text) > limit:
         text = text[:limit].rstrip()
     return text or None
 
 
-def _reread_one(file: File, root: Path) -> Tuple[Dict[str, List[Any]], Optional[str]]:
+def _reread_one(file: File, root: Path) -> tuple[dict[str, list[Any]], Optional[str]]:
     """(changes {field: [old, new]}, skip reason)."""
     from rastatime_analyzer.pipeline.analyze_metadata import analyze_metadata
 
@@ -93,7 +97,7 @@ def _reread_one(file: File, root: Path) -> Tuple[Dict[str, List[Any]], Optional[
         found = analyze_metadata(str(path), {})
     except Exception as exc:  # pylint: disable=broad-exception-caught
         return {}, f"unreadable ({exc})"
-    changes: Dict[str, List[Any]] = {}
+    changes: dict[str, list[Any]] = {}
     for key, field in TAG_FIELDS.items():
         new = _normalise(field, found.get(key))
         old = _normalise(field, getattr(file, field))
@@ -115,7 +119,10 @@ class RereadTagsView(APIView):
     def post(self, request):
         ids = request.data.get("ids") if isinstance(request.data, dict) else None
         if not isinstance(ids, list) or not ids:
-            return Response({"errors": ["ids: a non-empty list is required"]}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"errors": ["ids: a non-empty list is required"]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
             ids = [int(i) for i in ids][:MAX_IDS]
         except (TypeError, ValueError):
@@ -125,21 +132,23 @@ class RereadTagsView(APIView):
         changed_files = 0
         for file in File.objects.filter(pk__in=ids).order_by("pk"):
             changes, skip = _reread_one(file, root)
-            entry: Dict[str, Any] = {"id": file.pk, "title": file.track_title or file.name}
+            entry: dict[str, Any] = {"id": file.pk, "title": file.track_title or file.name}
             if skip:
                 entry["skipped"] = skip
             elif changes:
                 values = {field: new for field, (_, new) in changes.items()}
-                values["updated_at"] = datetime.now(timezone.utc)
+                values["updated_at"] = datetime.now(UTC)
                 with transaction.atomic():
                     File.objects.filter(pk=file.pk).update(**values)
                 changed_files += 1
                 entry["changes"] = changes
                 logger.info("reread-tags: file %s (%s): %s", file.pk, entry["title"], changes)
             report.append(entry)
-        return Response({
-            "read": len(report),
-            "changed": changed_files,
-            "skipped": sum(1 for e in report if "skipped" in e),
-            "files": report,
-        })
+        return Response(
+            {
+                "read": len(report),
+                "changed": changed_files,
+                "skipped": sum(1 for e in report if "skipped" in e),
+                "files": report,
+            }
+        )

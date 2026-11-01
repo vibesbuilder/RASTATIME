@@ -1,12 +1,10 @@
 from os import environ
 from pathlib import Path
-from typing import List, Union
+from typing import Annotated, Union
 from unittest import mock
 
 from pydantic import BaseModel, Field
 from pytest import mark, raises
-from typing_extensions import Annotated
-
 from rastatime_shared.config import (
     AnyHttpUrlStr,
     BaseConfig,
@@ -26,10 +24,10 @@ AnyOutput = Annotated[
 class FixtureConfig(BaseConfig):
     public_url: AnyHttpUrlStr
     api_key: str
-    allowed_hosts: List[str] = []
+    allowed_hosts: list[str] = []
     database: DatabaseConfig
     rabbitmq: RabbitMQConfig = RabbitMQConfig()
-    outputs: List[AnyOutput]
+    outputs: list[AnyOutput]
 
 
 FIXTURE_CONFIG_JSON_SCHEMA = {
@@ -97,7 +95,12 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "IcecastOutput": {
             "properties": {
-                "kind": {"const": "icecast", "default": "icecast", "title": "Kind", "type": "string"},
+                "kind": {
+                    "const": "icecast",
+                    "default": "icecast",
+                    "title": "Kind",
+                    "type": "string",
+                },
                 "enabled": {"default": False, "title": "Enabled", "type": "boolean"},
                 "public_url": {
                     "anyOf": [{"format": "uri", "type": "string"}, {"type": "null"}],
@@ -172,7 +175,12 @@ FIXTURE_CONFIG_JSON_SCHEMA = {
         },
         "ShoutcastOutput": {
             "properties": {
-                "kind": {"const": "shoutcast", "default": "shoutcast", "title": "Kind", "type": "string"},
+                "kind": {
+                    "const": "shoutcast",
+                    "default": "shoutcast",
+                    "title": "Kind",
+                    "type": "string",
+                },
                 "enabled": {"default": False, "title": "Enabled", "type": "boolean"},
                 "public_url": {
                     "anyOf": [{"format": "uri", "type": "string"}, {"type": "null"}],

@@ -4,12 +4,12 @@ only: the standby source is a second liquidsoap.exe, so a standby-only
 process table means "Liquidsoap is down" and memory warnings name the
 main instance.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import liquidsoap_health as lh
 from rastatime_playout.preflight import PreflightChecker
 

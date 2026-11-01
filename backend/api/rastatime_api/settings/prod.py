@@ -2,6 +2,8 @@ import socket
 from os import getenv
 from urllib.parse import urlparse
 
+from rastatime_shared.config import config_filepath_from_env
+
 # pylint: disable=unused-import
 from ._internal import (
     API_VERSION,
@@ -24,8 +26,6 @@ from ._internal import (
     WSGI_APPLICATION,
     setup_logger,
 )
-from rastatime_shared.config import config_filepath_from_env
-
 from ._schema import Config
 
 RASTATIME_LOG_FILEPATH = getenv("RASTATIME_LOG_FILEPATH")
@@ -58,7 +58,9 @@ def _local_ipv4_addresses() -> list:
     address (http://192.168.1.64) after public_url moved to the https name
     (RASTATIME 2026-10-06, go-live stage 2.4)."""
     try:
-        return sorted({a[4][0] for a in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)})
+        return sorted(
+            {a[4][0] for a in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)}
+        )
     except OSError:
         return []
 

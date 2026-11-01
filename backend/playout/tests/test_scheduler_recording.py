@@ -23,17 +23,16 @@ events — asserting:
     silencing ``recording.stop``.
   * Shutdown in Liquidsoap mode calls ``engine.recording_stop()``.
 """
+
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from rastatime_playout.player.events import EventKind, ShowRecordEvent
-
 
 # ---- Helpers -----------------------------------------------------------
 
@@ -48,6 +47,7 @@ def _make_show_record_event(
 ) -> ShowRecordEvent:
     """Build a ShowRecordEvent for testing without going through the API."""
     from datetime import timedelta
+
     end_at = starts_at + timedelta(seconds=duration_seconds)
     return ShowRecordEvent(
         type=type_,
@@ -112,7 +112,7 @@ def test_constructor_liquidsoap_tolerates_engine_recording_stop_failure(tmp_path
     engine.recording_stop.side_effect = ConnectionError("liquidsoap not up yet")
     api_client = MagicMock()
 
-    sched = PlayoutScheduler(
+    PlayoutScheduler(
         engine=engine,
         api_client=api_client,
     )
@@ -183,9 +183,7 @@ def test_liquidsoap_record_start_does_not_spawn_lifecycle_thread(liquidsoap_sche
     engine.recording_stop.reset_mock()
     engine.recording_start.reset_mock()
 
-    with patch(
-        "rastatime_playout.playout_scheduler.threading.Thread"
-    ) as mock_thread:
+    with patch("rastatime_playout.playout_scheduler.threading.Thread") as mock_thread:
         event = _make_show_record_event()
         sched._on_show_record_start("k", event)
 
@@ -291,9 +289,7 @@ def test_liquidsoap_record_end_does_not_spawn_post_roll_timer(liquidsoap_schedul
     sched, engine, _ = liquidsoap_scheduler
     engine.recording_stop.reset_mock()
 
-    with patch(
-        "rastatime_playout.playout_scheduler.threading.Timer"
-    ) as mock_timer:
+    with patch("rastatime_playout.playout_scheduler.threading.Timer") as mock_timer:
         event = _make_show_record_event(type_=EventKind.SHOW_RECORD_END)
         sched._on_show_record_end("k", event)
 
@@ -344,7 +340,9 @@ def test_show_record_start_uses_rendered_extension(tmp_path):
     api_resp.json.return_value = {"folder": str(tmp_path), "format": "mp3"}
     api_client.session.get.return_value = api_resp
     sched = PlayoutScheduler(
-        engine=engine, api_client=api_client, recording_extension=lambda: "opus",
+        engine=engine,
+        api_client=api_client,
+        recording_extension=lambda: "opus",
     )
     event = _make_show_record_event(
         show_id=7,
@@ -365,7 +363,9 @@ def test_recording_extension_lookup_failure_falls_back_to_mp3(tmp_path):
 
     engine = MagicMock(spec=LiquidsoapPlayoutEngine)
     sched = PlayoutScheduler(
-        engine=engine, api_client=MagicMock(), recording_extension=boom,
+        engine=engine,
+        api_client=MagicMock(),
+        recording_extension=boom,
     )
     assert sched._recording_file_extension() == "mp3"
 
@@ -378,7 +378,7 @@ def test_build_output_path_has_seconds(tmp_path):
 
     from rastatime_playout.recording_path import build_output_path
 
-    starts = datetime(2026, 10, 19, 10, 5, 7, tzinfo=timezone.utc)
+    starts = datetime(2026, 10, 19, 10, 5, 7, tzinfo=UTC)
     out = build_output_path(tmp_path, starts, "A & B / C", extension="opus")
     local = starts.astimezone()
     assert out.name == local.strftime("%Y-%m-%d %H-%M-%S") + " - A & B _ C.opus"
@@ -427,15 +427,19 @@ def test_record_events_carry_the_instance_id():
     )
     assert len(events) == 2
     assert {e.instance_id for e in events.values()} == {4711}
-    assert {e.type for e in events.values()} == {EventKind.SHOW_RECORD_START, EventKind.SHOW_RECORD_END}
+    assert {e.type for e in events.values()} == {
+        EventKind.SHOW_RECORD_START,
+        EventKind.SHOW_RECORD_END,
+    }
 
 
 def test_record_end_reports_the_closed_file_to_legacy(tmp_path):
     """start remembers (instance, path); end stops, waits for a stable file
     and POSTs recording-finished with the instance id and the path."""
     sched, engine, v1 = _recording_scheduler(tmp_path)
-    start = _make_show_record_event(show_id=212, show_name="Event Calendar",
-                                    starts_at=datetime(2026, 10, 19, 8, 7))
+    start = _make_show_record_event(
+        show_id=212, show_name="Event Calendar", starts_at=datetime(2026, 10, 19, 8, 7)
+    )
     start.instance_id = 4711
     sched._on_show_record_start("k-start", start)
     assert sched._open_show_recording is not None
@@ -445,9 +449,12 @@ def test_record_end_reports_the_closed_file_to_legacy(tmp_path):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(b"x" * 100)
 
-    end = _make_show_record_event(type_=EventKind.SHOW_RECORD_END, show_id=212,
-                                  show_name="Event Calendar",
-                                  starts_at=datetime(2026, 10, 19, 8, 7))
+    end = _make_show_record_event(
+        type_=EventKind.SHOW_RECORD_END,
+        show_id=212,
+        show_name="Event Calendar",
+        starts_at=datetime(2026, 10, 19, 8, 7),
+    )
     end.instance_id = 4711
     sched._on_show_record_end("k-end", end)
     _join_report_threads()
@@ -477,13 +484,13 @@ def test_record_end_without_open_recording_or_client_is_quiet(tmp_path):
     sched, engine, v1 = _recording_scheduler(tmp_path)
     end = _make_show_record_event(type_=EventKind.SHOW_RECORD_END)
     end.instance_id = 5
-    sched._on_show_record_end("k-end", end)        # nothing open
+    sched._on_show_record_end("k-end", end)  # nothing open
     _join_report_threads()
     v1.notify_recording_finished.assert_not_called()
 
     sched2, engine2, _ = _recording_scheduler(tmp_path, with_v1=False)
     sched2._open_show_recording = (5, tmp_path / "x.mp3")
-    sched2._on_show_record_end("k-end", end)        # no client: no crash
+    sched2._on_show_record_end("k-end", end)  # no client: no crash
     assert sched2._open_show_recording is None
 
 

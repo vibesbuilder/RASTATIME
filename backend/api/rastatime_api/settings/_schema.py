@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 
+from pydantic import BaseModel
 from rastatime_shared.config import (
     BaseConfig,
     DatabaseConfig,
@@ -7,7 +8,6 @@ from rastatime_shared.config import (
     RabbitMQConfig,
     StorageConfig,
 )
-from pydantic import BaseModel
 
 
 class EmailConfig(BaseModel):

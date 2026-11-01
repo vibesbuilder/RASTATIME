@@ -1,4 +1,5 @@
 """RASTATIME 2026-09-28 - TuneIn now-playing pushes from the playout."""
+
 from __future__ import annotations
 
 import threading
@@ -7,7 +8,6 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
@@ -15,7 +15,9 @@ from rastatime_playout.player.events import EventKind, FileEvent
 from rastatime_playout.tunein import KEEPALIVE_SECONDS, TuneInConfig, TuneInPusher
 
 OK_XML = "<RadioTime><head><status>200</status></head></RadioTime>"
-BAD_XML = "<RadioTime><head><status>403</status><fault>Invalid partner key</fault></head></RadioTime>"
+BAD_XML = (
+    "<RadioTime><head><status>403</status><fault>Invalid partner key</fault></head></RadioTime>"
+)
 
 
 class FakeSession:
@@ -38,7 +40,12 @@ def _cfg(enabled=True, **kw):
 
 def _pusher(cfg, session=None, clock=None):
     t = {"now": 1000.0}
-    return TuneInPusher(lambda: cfg, session=session or FakeSession(), clock=clock or (lambda: t["now"]), api_url="https://tunein.test/Playing.ashx"), t
+    return TuneInPusher(
+        lambda: cfg,
+        session=session or FakeSession(),
+        clock=clock or (lambda: t["now"]),
+        api_url="https://tunein.test/Playing.ashx",
+    ), t
 
 
 def test_push_sends_credentials_and_metadata():
@@ -47,8 +54,14 @@ def test_push_sends_credentials_and_metadata():
     assert p.push("Song", "Band") is True
     url, params, timeout = session.calls[0]
     assert url == "https://tunein.test/Playing.ashx"
-    assert params == {"partnerId": "p1", "partnerKey": "secret-key", "id": "s123",
-                      "title": "Song", "artist": "Band", "commercial": "false"}
+    assert params == {
+        "partnerId": "p1",
+        "partnerKey": "secret-key",
+        "id": "s123",
+        "title": "Song",
+        "artist": "Band",
+        "commercial": "false",
+    }
     assert timeout == 10.0
     assert p.last_ok is True
 
@@ -59,7 +72,7 @@ def test_disabled_or_incomplete_settings_send_nothing(caplog):
     assert p.push("Song", "Band") is False
     p2, _ = _pusher(_cfg(partner_key=""), session)
     assert p2.push("Song", "Band") is False
-    assert p2.push("Song", "Band") is False          # warning only once
+    assert p2.push("Song", "Band") is False  # warning only once
     assert session.calls == []
     assert sum("incomplete" in r.getMessage() for r in caplog.records) == 1
     p3, _ = _pusher(None, session)
@@ -82,7 +95,7 @@ def test_rejections_and_network_errors_are_logged_without_the_key(caplog):
 def test_keepalive_resends_after_the_interval_only():
     session = FakeSession()
     p, t = _pusher(_cfg(), session)
-    p.keepalive()                                   # nothing on air yet
+    p.keepalive()  # nothing on air yet
     assert session.calls == []
     p.push("Song", "Band")
     t["now"] += KEEPALIVE_SECONDS - 1
@@ -118,12 +131,25 @@ def test_now_playing_cleans_and_remembers_the_payload():
 # scheduler integration
 # ---------------------------------------------------------------------------
 
+
 def _file(start, row_id, title="t", artist="a"):
     return FileEvent(
-        type=EventKind.FILE, start=start, end=start + timedelta(seconds=180),
-        row_id=row_id, id=row_id, uri="C:/media/a.mp3", show_name="night",
-        cue_in=0.0, cue_out=180.0, track_title=title, artist_name=artist,
-        replay_gain=None, fade_in=0.0, fade_out=0.0, mime="audio/mpeg", filesize=1000,
+        type=EventKind.FILE,
+        start=start,
+        end=start + timedelta(seconds=180),
+        row_id=row_id,
+        id=row_id,
+        uri="C:/media/a.mp3",
+        show_name="night",
+        cue_in=0.0,
+        cue_out=180.0,
+        track_title=title,
+        artist_name=artist,
+        replay_gain=None,
+        fade_in=0.0,
+        fade_out=0.0,
+        mime="audio/mpeg",
+        filesize=1000,
     )
 
 
@@ -162,4 +188,4 @@ def test_refresh_hook_calls_keepalive(sched):
     s._tunein_keepalive()
     tunein.keepalive.assert_called_once()
     s._tunein = None
-    s._tunein_keepalive()          # no pusher: no error
+    s._tunein_keepalive()  # no pusher: no error

@@ -32,7 +32,7 @@ external tool, not a contract change.
 
 import logging
 import subprocess
-from typing import Any, Dict
+from typing import Any
 
 from ._ffmpeg import FFMPEG
 
@@ -50,7 +50,7 @@ class UnplayableFileError(Exception):
 _DECODE_TIMEOUT_S = 120
 
 
-def analyze_playability(filename: str, metadata: Dict[str, Any]):
+def analyze_playability(filename: str, metadata: dict[str, Any]):
     """
     Decode-verify *filename* with FFmpeg.
 
@@ -64,9 +64,13 @@ def analyze_playability(filename: str, metadata: Dict[str, Any]):
     """
     cmd = [
         FFMPEG,
-        "-v", "error",         # only emit errors on stderr
-        "-i", str(filename),
-        "-f", "null", "-",     # decode-to-null sink
+        "-v",
+        "error",  # only emit errors on stderr
+        "-i",
+        str(filename),
+        "-f",
+        "null",
+        "-",  # decode-to-null sink
         "-hide_banner",
         "-nostats",
     ]
@@ -74,7 +78,7 @@ def analyze_playability(filename: str, metadata: Dict[str, Any]):
     try:
         completed = subprocess.run(
             cmd,
-            check=False,                # we look at returncode ourselves
+            check=False,  # we look at returncode ourselves
             capture_output=True,
             text=True,
             timeout=_DECODE_TIMEOUT_S,
@@ -87,7 +91,8 @@ def analyze_playability(filename: str, metadata: Dict[str, Any]):
         logger.warning(
             "analyze_playability: ffmpeg not found (%s) — skipping check. "
             "File %r will be imported without playability verification.",
-            exc, filename,
+            exc,
+            filename,
         )
         return metadata
     except subprocess.TimeoutExpired as exc:
@@ -96,7 +101,9 @@ def analyze_playability(filename: str, metadata: Dict[str, Any]):
         logger.warning(
             "analyze_playability: ffmpeg decode-verify timed out after "
             "%ds for %r — soft-warn and continue.  Tail: %r",
-            _DECODE_TIMEOUT_S, filename, (exc.stderr or "")[-200:],
+            _DECODE_TIMEOUT_S,
+            filename,
+            (exc.stderr or "")[-200:],
         )
         return metadata
 
@@ -106,11 +113,12 @@ def analyze_playability(filename: str, metadata: Dict[str, Any]):
         # Hard reject — file couldn't decode end-to-end.
         logger.warning(
             "analyze_playability: ffmpeg rejected %r (exit=%d).  stderr:\n%s",
-            filename, completed.returncode, stderr_tail[-1000:],
+            filename,
+            completed.returncode,
+            stderr_tail[-1000:],
         )
         raise UnplayableFileError(
-            f"ffmpeg decode failed (exit {completed.returncode}): "
-            f"{stderr_tail[:200]!r}"
+            f"ffmpeg decode failed (exit {completed.returncode}): {stderr_tail[:200]!r}"
         )
 
     if stderr_tail:
@@ -125,7 +133,8 @@ def analyze_playability(filename: str, metadata: Dict[str, Any]):
             "analyze_playability: %r decoded successfully but ffmpeg "
             "produced decoder warnings (typically a trailing-frame "
             "issue or bad ID3 tail).  Import allowed.  Tail:\n%s",
-            filename, stderr_tail[-500:],
+            filename,
+            stderr_tail[-500:],
         )
 
     return metadata

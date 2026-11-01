@@ -26,8 +26,12 @@ def _events_for(linein: dict) -> LineinEvent:
 
 def _linein(**extra) -> dict:
     return {
-        "id": "uuid-1", "name": "Studio A", "device_id": "dev-1",
-        "device_name": "Line (US-16x08)", "channel_mapping": [4, 5], **extra,
+        "id": "uuid-1",
+        "name": "Studio A",
+        "device_id": "dev-1",
+        "device_name": "Line (US-16x08)",
+        "channel_mapping": [4, 5],
+        **extra,
     }
 
 

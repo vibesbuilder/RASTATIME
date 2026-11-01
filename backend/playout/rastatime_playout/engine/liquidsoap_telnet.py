@@ -51,12 +51,13 @@ diagnostic warning.  We do NOT do background auto-reconnect:
 silent reconnects on a polling-driven scheduler can mask real
 problems (e.g. Liquidsoap subprocess died).
 """
+
 from __future__ import annotations
 
 import logging
 import socket
 import threading
-from typing import List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +175,8 @@ class LiquidsoapTelnetClient:
             except (OSError, ConnectionError) as exc:
                 logger.debug(
                     "Telnet attempt 1 for %r failed (%s); reconnecting + retrying",
-                    command.strip(), exc,
+                    command.strip(),
+                    exc,
                 )
                 self._close_locked(send_quit=False)
 
@@ -258,8 +260,7 @@ class LiquidsoapTelnetClient:
         the .liq pipeline names its sources.
         """
         encoded = ",".join(
-            f'{key}="{self._escape_value(str(value))}"'
-            for key, value in fields.items()
+            f'{key}="{self._escape_value(str(value))}"' for key, value in fields.items()
         )
         return self.send_command(f"metadata.update {encoded}")
 
@@ -273,7 +274,7 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command(f"var.set {name} = {value}")
 
-    def help(self) -> List[str]:
+    def help(self) -> list[str]:
         """
         Ask Liquidsoap for the list of registered server commands.
         Returns each command line as a separate string.  Mostly
@@ -324,7 +325,7 @@ class LiquidsoapTelnetClient:
         """
         # Quick sanity guard — these characters break the wire form
         # silently and produce mkdir-on-junk-path crashes.
-        if any(ch in path for ch in ('\n', '\r', '"', '\\')):
+        if any(ch in path for ch in ("\n", "\r", '"', "\\")):
             raise ValueError(
                 f"recording_set_path: path contains a character that "
                 f"would break the Liquidsoap telnet wire form: {path!r}"
@@ -403,7 +404,7 @@ class LiquidsoapTelnetClient:
                 "http://stream.live.vc.bbcmedia.co.uk/world_service_b2b_04"
             )
         """
-        if any(ch in url for ch in ('\n', '\r', '"')):
+        if any(ch in url for ch in ("\n", "\r", '"')):
             raise ValueError(
                 f"webstream_set_url: url contains a character that "
                 f"would break the Liquidsoap telnet wire form: {url!r}"
@@ -560,7 +561,7 @@ class LiquidsoapTelnetClient:
         rastatime.liq via server.register (input.ffmpeg does not
         auto-expose set_url as a telnet command, unlike input.http).
         """
-        if any(ch in dshow_spec for ch in ('\n', '\r', '"')):
+        if any(ch in dshow_spec for ch in ("\n", "\r", '"')):
             raise ValueError(
                 f"linein_set_url: dshow_spec contains a character that "
                 f"would break the Liquidsoap telnet wire form: {dshow_spec!r}"
@@ -692,12 +693,12 @@ class LiquidsoapTelnetClient:
             self._recv_buf = b""
             logger.info(
                 "Connected to Liquidsoap telnet at %s:%d",
-                self._host, self._port,
+                self._host,
+                self._port,
             )
         except OSError as exc:
             raise ConnectionError(
-                f"Cannot connect to Liquidsoap telnet at "
-                f"{self._host}:{self._port}: {exc}"
+                f"Cannot connect to Liquidsoap telnet at {self._host}:{self._port}: {exc}"
             ) from exc
 
     def _close_locked(self, *, send_quit: bool) -> None:
@@ -746,17 +747,13 @@ class LiquidsoapTelnetClient:
 
             try:
                 chunk = self._socket.recv(4096)
-            except socket.timeout as exc:
+            except TimeoutError as exc:
                 raise ConnectionError(
-                    f"Timed out waiting for END sentinel after "
-                    f"{self._timeout}s"
+                    f"Timed out waiting for END sentinel after {self._timeout}s"
                 ) from exc
 
             if not chunk:
-                raise ConnectionError(
-                    "Telnet socket closed unexpectedly before END "
-                    "sentinel"
-                )
+                raise ConnectionError("Telnet socket closed unexpectedly before END sentinel")
             self._recv_buf += chunk
 
     @classmethod
@@ -773,14 +770,14 @@ class LiquidsoapTelnetClient:
             idx = buf.find(sentinel)
             if idx != -1:
                 body = buf[:idx]
-                remaining = buf[idx + len(sentinel):]
+                remaining = buf[idx + len(sentinel) :]
                 return body.decode("utf-8", errors="replace").strip(), remaining
 
         # Empty-response special case: buf starts with "END\r\n" or "END\n"
         # (no preceding body, no leading newline before END).
         for sentinel in cls._END_ONLY_VARIANTS:
             if buf.startswith(sentinel):
-                remaining = buf[len(sentinel):]
+                remaining = buf[len(sentinel) :]
                 return "", remaining
 
         return None

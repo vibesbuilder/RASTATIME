@@ -3,7 +3,7 @@ from collections import deque
 from datetime import datetime
 from queue import Empty, Queue
 from threading import Thread
-from typing import Any, Dict
+from typing import Any
 
 from ..utils import seconds_between
 from .events import AnyEvent
@@ -23,7 +23,7 @@ class PypoLiqQueue(Thread):
 
     def __init__(
         self,
-        future_queue: "Queue[Dict[str, Any]]",
+        future_queue: "Queue[dict[str, Any]]",
         liquidsoap: Liquidsoap,
     ):
         Thread.__init__(self)
@@ -41,12 +41,8 @@ class PypoLiqQueue(Thread):
                     logger.info("waiting indefinitely for schedule")
                     media_schedule = self.queue.get(block=True)
                 else:
-                    logger.info(
-                        "waiting %ss until next scheduled item", time_until_next_play
-                    )
-                    media_schedule = self.queue.get(
-                        block=True, timeout=time_until_next_play
-                    )
+                    logger.info("waiting %ss until next scheduled item", time_until_next_play)
+                    media_schedule = self.queue.get(block=True, timeout=time_until_next_play)
             except Empty:
                 # Time to push a scheduled item.
                 media_item = schedule_deque.popleft()

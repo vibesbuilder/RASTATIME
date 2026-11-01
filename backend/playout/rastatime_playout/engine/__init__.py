@@ -13,6 +13,7 @@ The remaining subprocess module, ``ffmpeg_linein_capture``, is the MME
 feeder that publishes a scheduled line-in on the local /linein-capture
 mount for Liquidsoap's ``input.http`` companion source.
 """
+
 from .interface import PlayoutEngine, PlayoutState
 
 __all__ = [

@@ -1,6 +1,5 @@
 import pytest
 from pydantic import ValidationError
-
 from rastatime_shared.config._models import (
     AudioAAC,
     AudioMP3,

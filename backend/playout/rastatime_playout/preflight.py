@@ -45,7 +45,7 @@ import logging
 import threading
 import uuid
 from datetime import datetime, timedelta
-from typing import Optional, Set
+from typing import Optional
 
 from rastatime_api_client.v2 import ApiClient
 
@@ -64,9 +64,9 @@ class PreflightChecker:
     # ------------------------------------------------------------------
     # Tunable constants
     # ------------------------------------------------------------------
-    SCAN_INTERVAL_SECS = 15 * 60   # 15 minutes between scans
-    LOOKAHEAD_HOURS    = 48        # warn about shows up to 48 h out
-    FIRST_SCAN_DELAY_SECS = 10.0   # ~10 s after boot, run the first scan
+    SCAN_INTERVAL_SECS = 15 * 60  # 15 minutes between scans
+    LOOKAHEAD_HOURS = 48  # warn about shows up to 48 h out
+    FIRST_SCAN_DELAY_SECS = 10.0  # ~10 s after boot, run the first scan
 
     # Warning-type discriminator constants — also the value the
     # frontend looks for in the JSON.  Add new ones here when you
@@ -92,7 +92,7 @@ class PreflightChecker:
     #: RASTATIME 2026-10-28 - failed uploads waiting on the Upload page, or
     #: files left in the analyzer's organize/ folder.
     WARNING_TYPE_IMPORTS_FAILED = "imports_failed"
-    FAILED_IMPORT_MIN_AGE_SECS = 60 * 60          # a failure younger than this is still "being looked at"
+    FAILED_IMPORT_MIN_AGE_SECS = 60 * 60  # a failure younger than this is still "being looked at"
     ORGANIZE_LEFTOVER_MIN_AGE_SECS = 24 * 60 * 60  # a pending import may sit here for a while
 
     # ------------------------------------------------------------------
@@ -174,7 +174,9 @@ class PreflightChecker:
             self.scan_once()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error(
-                "PreflightChecker scan failed: %s", exc, exc_info=True,
+                "PreflightChecker scan failed: %s",
+                exc,
+                exc_info=True,
             )
         finally:
             self._schedule_next_scan(self.SCAN_INTERVAL_SECS)
@@ -254,37 +256,46 @@ class PreflightChecker:
             threshold = liquidsoap_health.memory_warn_threshold_mb()
             for info in infos:
                 if info.private_mb >= threshold:
-                    memory_warnings.append({
-                        "severity": "error" if info.private_mb >= 2 * threshold else "warning",
-                        "show_id": None,
-                        "show_instance_id": None,
-                        "starts_at": None,
-                        "detail": {
-                            "pid": info.pid,
-                            "private_mb": int(info.private_mb),
-                            "threshold_mb": int(threshold),
-                            "age_seconds": int(info.age_seconds),
-                            "message": (
-                                f"Liquidsoap (PID {info.pid}) uses {int(info.private_mb)} MB "
-                                f"(threshold {int(threshold)} MB) — restart PLAYOUT, then "
-                                "LIQUIDSOAP, in a quiet moment."
-                            ),
-                        },
-                    })
+                    memory_warnings.append(
+                        {
+                            "severity": "error" if info.private_mb >= 2 * threshold else "warning",
+                            "show_id": None,
+                            "show_instance_id": None,
+                            "starts_at": None,
+                            "detail": {
+                                "pid": info.pid,
+                                "private_mb": int(info.private_mb),
+                                "threshold_mb": int(threshold),
+                                "age_seconds": int(info.age_seconds),
+                                "message": (
+                                    f"Liquidsoap (PID {info.pid}) uses {int(info.private_mb)} MB "
+                                    f"(threshold {int(threshold)} MB) — restart PLAYOUT, then "
+                                    "LIQUIDSOAP, in a quiet moment."
+                                ),
+                            },
+                        }
+                    )
             session_warnings = self._main_output_session_warnings(infos)
             unavailable_warnings = self._liquidsoap_unavailable_warnings(infos)
         self._submit_warnings(
-            self.WARNING_TYPE_LIQUIDSOAP_MEMORY, str(uuid.uuid4()), memory_warnings,
+            self.WARNING_TYPE_LIQUIDSOAP_MEMORY,
+            str(uuid.uuid4()),
+            memory_warnings,
         )
         self._submit_warnings(
-            self.WARNING_TYPE_MAIN_OUTPUT_SESSION, str(uuid.uuid4()), session_warnings,
+            self.WARNING_TYPE_MAIN_OUTPUT_SESSION,
+            str(uuid.uuid4()),
+            session_warnings,
         )
         self._submit_warnings(
-            self.WARNING_TYPE_LIQUIDSOAP_UNAVAILABLE, str(uuid.uuid4()), unavailable_warnings,
+            self.WARNING_TYPE_LIQUIDSOAP_UNAVAILABLE,
+            str(uuid.uuid4()),
+            unavailable_warnings,
         )
 
     def _log_liquidsoap_memory(
-        self, infos: list["liquidsoap_health.ProcessInfo"],
+        self,
+        infos: list[liquidsoap_health.ProcessInfo],
     ) -> None:
         """
         RASTATIME 2026-09-15 - one INFO line per scan and main instance:
@@ -306,7 +317,9 @@ class PreflightChecker:
                 logger.info(
                     "preflight: Liquidsoap memory: PID %d %d MB, %.1f h old "
                     "(first sample of this instance).",
-                    info.pid, int(info.private_mb), info.age_seconds / 3600.0,
+                    info.pid,
+                    int(info.private_mb),
+                    info.age_seconds / 3600.0,
                 )
                 continue
             base_mb, base_age = base
@@ -316,8 +329,12 @@ class PreflightChecker:
             logger.info(
                 "preflight: Liquidsoap memory: PID %d %d MB, %.1f h old, "
                 "%+d MB since the first sample %.1f h ago%s.",
-                info.pid, int(info.private_mb), info.age_seconds / 3600.0,
-                int(round(grown)), span_h, rate,
+                info.pid,
+                int(info.private_mb),
+                info.age_seconds / 3600.0,
+                int(round(grown)),
+                span_h,
+                rate,
             )
         for pid in list(self._liquidsoap_memory_baseline):
             if pid not in seen:
@@ -332,22 +349,25 @@ class PreflightChecker:
         database, no telnet.
         """
         from .liquidsoap_config import STEREOTOOL_STATE  # noqa: PLC0415
+
         warnings: list[dict] = []
         if STEREOTOOL_STATE.get("enabled") and not STEREOTOOL_STATE.get("active"):
             problem = str(STEREOTOOL_STATE.get("problem") or "not rendered")
-            warnings.append({
-                "severity": "error",
-                "show_id": None,
-                "show_instance_id": None,
-                "starts_at": None,
-                "detail": {
-                    "problem": problem,
-                    "message": (
-                        f"Stereo Tool is enabled but not running on the output: {problem}. "
-                        "Check Settings -> Streams -> Output Processing."
-                    ),
-                },
-            })
+            warnings.append(
+                {
+                    "severity": "error",
+                    "show_id": None,
+                    "show_instance_id": None,
+                    "starts_at": None,
+                    "detail": {
+                        "problem": problem,
+                        "message": (
+                            f"Stereo Tool is enabled but not running on the output: {problem}. "
+                            "Check Settings -> Streams -> Output Processing."
+                        ),
+                    },
+                }
+            )
         self._submit_warnings(self.WARNING_TYPE_STEREOTOOL, str(uuid.uuid4()), warnings)
 
     def _scan_storage_root(self) -> None:
@@ -373,26 +393,29 @@ class PreflightChecker:
         writable = bool(data.get("writable"))
         if not exists or not writable:
             problem = "is missing" if not exists else "is not writable"
-            warnings.append({
-                "severity": "error",
-                "show_id": None,
-                "show_instance_id": None,
-                "starts_at": None,
-                "detail": {
-                    "root": root,
-                    "source": data.get("source"),
-                    "exists": exists,
-                    "writable": writable,
-                    "message": (
-                        f"Media library location {root} {problem} - check the drive, "
-                        "then Settings -> Local Machine."
-                    ),
-                },
-            })
+            warnings.append(
+                {
+                    "severity": "error",
+                    "show_id": None,
+                    "show_instance_id": None,
+                    "starts_at": None,
+                    "detail": {
+                        "root": root,
+                        "source": data.get("source"),
+                        "exists": exists,
+                        "writable": writable,
+                        "message": (
+                            f"Media library location {root} {problem} - check the drive, "
+                            "then Settings -> Local Machine."
+                        ),
+                    },
+                }
+            )
         self._submit_warnings(self.WARNING_TYPE_STORAGE_ROOT, str(uuid.uuid4()), warnings)
 
     def _liquidsoap_unavailable_warnings(
-        self, infos: list["liquidsoap_health.ProcessInfo"],
+        self,
+        infos: list[liquidsoap_health.ProcessInfo],
     ) -> list[dict]:
         """
         ``liquidsoap_unavailable``: no ``liquidsoap.exe`` at all, or a
@@ -413,45 +436,48 @@ class PreflightChecker:
         recent_pids = sorted({pid for pid, _ in self._liquidsoap_recent})
         base = {"show_id": None, "show_instance_id": None, "starts_at": None}
         if not infos:
-            return [{
-                "severity": "error",
-                **base,
-                "detail": {
-                    "crash_loop": False,
-                    "pids": recent_pids,
-                    "message": (
-                        "Liquidsoap is not running (no liquidsoap.exe process).  If "
-                        "NSSM is throttling a crash loop, the newest "
-                        "logs/liquidsoap-stdout-*.log says why (Main Output "
-                        "device?).  Fix the cause, then restart PLAYOUT, "
-                        "then LIQUIDSOAP."
-                    ),
-                },
-            }]
+            return [
+                {
+                    "severity": "error",
+                    **base,
+                    "detail": {
+                        "crash_loop": False,
+                        "pids": recent_pids,
+                        "message": (
+                            "Liquidsoap is not running (no liquidsoap.exe process).  If "
+                            "NSSM is throttling a crash loop, the newest "
+                            "logs/liquidsoap-stdout-*.log says why (Main Output "
+                            "device?).  Fix the cause, then restart PLAYOUT, "
+                            "then LIQUIDSOAP."
+                        ),
+                    },
+                }
+            ]
         young_limit = liquidsoap_health.MIN_PROCESS_AGE_SECONDS
-        young_pids = sorted({
-            pid for pid, age in self._liquidsoap_recent if age < young_limit
-        })
+        young_pids = sorted({pid for pid, age in self._liquidsoap_recent if age < young_limit})
         if youngest.age_seconds < young_limit and len(young_pids) >= 2:
-            return [{
-                "severity": "error",
-                **base,
-                "detail": {
-                    "crash_loop": True,
-                    "pids": young_pids,
-                    "message": (
-                        f"Liquidsoap keeps restarting (PIDs "
-                        f"{', '.join(str(p) for p in young_pids)} within the last "
-                        "scans) - a crash loop, most likely the Main Output device.  "
-                        "Read the newest logs/liquidsoap-stdout-*.log, fix the "
-                        "cause, then restart PLAYOUT, then LIQUIDSOAP."
-                    ),
-                },
-            }]
+            return [
+                {
+                    "severity": "error",
+                    **base,
+                    "detail": {
+                        "crash_loop": True,
+                        "pids": young_pids,
+                        "message": (
+                            f"Liquidsoap keeps restarting (PIDs "
+                            f"{', '.join(str(p) for p in young_pids)} within the last "
+                            "scans) - a crash loop, most likely the Main Output device.  "
+                            "Read the newest logs/liquidsoap-stdout-*.log, fix the "
+                            "cause, then restart PLAYOUT, then LIQUIDSOAP."
+                        ),
+                    },
+                }
+            ]
         return []
 
     def _main_output_session_warnings(
-        self, infos: list["liquidsoap_health.ProcessInfo"],
+        self,
+        infos: list[liquidsoap_health.ProcessInfo],
     ) -> list[dict]:
         """Warn when no old-enough Liquidsoap process has a session on the Main Output."""
         expected = self._expected_main_output_name()
@@ -469,32 +495,39 @@ class PreflightChecker:
         if any(liquidsoap_health.endpoint_matches(expected, name) for name in holding):
             return []
         actual = ", ".join(holding) if holding else "no render endpoint"
-        return [{
-            "severity": "error",
-            "show_id": None,
-            "show_instance_id": None,
-            "starts_at": None,
-            "detail": {
-                "expected": expected,
-                "actual": holding,
-                "pids": pids,
-                "message": (
-                    f"Liquidsoap plays its Main Output to {actual}, not to "
-                    f"'{expected}' — restart PLAYOUT, then LIQUIDSOAP."
-                ),
-            },
-        }]
+        return [
+            {
+                "severity": "error",
+                "show_id": None,
+                "show_instance_id": None,
+                "starts_at": None,
+                "detail": {
+                    "expected": expected,
+                    "actual": holding,
+                    "pids": pids,
+                    "message": (
+                        f"Liquidsoap plays its Main Output to {actual}, not to "
+                        f"'{expected}' — restart PLAYOUT, then LIQUIDSOAP."
+                    ),
+                },
+            }
+        ]
 
     @staticmethod
     def _expected_main_output_name() -> str:
         """Main Output friendly name from Settings → Local Machine ('' when unset/disabled)."""
         import os  # noqa: PLC0415
+
         if os.environ.get("RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT", "true").strip().lower() in (
-            "0", "false", "no", "off",
+            "0",
+            "false",
+            "no",
+            "off",
         ):
             return ""
         try:
             from rastatime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
+
             row = SoundcardSettings.get_settings()
             return (row.main_output_name or "").strip()
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -527,33 +560,43 @@ class PreflightChecker:
         if not isinstance(data, dict):
             return
         failed = [
-            f for f in data.get("failed", [])
+            f
+            for f in data.get("failed", [])
             if (f.get("age_seconds") or 0) >= self.FAILED_IMPORT_MIN_AGE_SECS
         ]
         leftovers = [
-            l for l in data.get("leftovers", [])
-            if (l.get("age_seconds") or 0) >= self.ORGANIZE_LEFTOVER_MIN_AGE_SECS and l.get("row") != "pending"
+            row
+            for row in data.get("leftovers", [])
+            if (row.get("age_seconds") or 0) >= self.ORGANIZE_LEFTOVER_MIN_AGE_SECS
+            and row.get("row") != "pending"
         ]
         warnings: list[dict] = []
         if failed or leftovers:
-            names = [f.get("name") or "?" for f in failed[:5]] + [l.get("file") or "?" for l in leftovers[:5]]
+            names = [f.get("name") or "?" for f in failed[:5]] + [
+                row.get("file") or "?" for row in leftovers[:5]
+            ]
             parts = []
             if failed:
                 parts.append(f"{len(failed)} failed upload(s) on the Upload page")
             if leftovers:
-                parts.append(f"{len(leftovers)} file(s) left in {data.get('organize_dir') or 'organize/'}")
-            warnings.append({
-                "severity":         "warning",
-                "show_id":          None,
-                "show_instance_id": None,
-                "starts_at":        None,
-                "detail": {
-                    "failed_count":   len(failed),
-                    "leftover_count": len(leftovers),
-                    "names":          names[:8],
-                    "message":        "; ".join(parts) + " - Upload page, filter Failed: Download or Clear.",
-                },
-            })
+                parts.append(
+                    f"{len(leftovers)} file(s) left in {data.get('organize_dir') or 'organize/'}"
+                )
+            warnings.append(
+                {
+                    "severity": "warning",
+                    "show_id": None,
+                    "show_instance_id": None,
+                    "starts_at": None,
+                    "detail": {
+                        "failed_count": len(failed),
+                        "leftover_count": len(leftovers),
+                        "names": names[:8],
+                        "message": "; ".join(parts)
+                        + " - Upload page, filter Failed: Download or Clear.",
+                    },
+                }
+            )
         self._submit_warnings(self.WARNING_TYPE_IMPORTS_FAILED, str(uuid.uuid4()), warnings)
 
     # ------------------------------------------------------------------
@@ -577,30 +620,36 @@ class PreflightChecker:
         if instances is None:
             return
         warnings: list[dict] = []
-        seen: Set[int] = set()
+        seen: set[int] = set()
         for inst in instances:
             show_id = inst.get("show")
             instance_id = inst.get("id")
             if show_id is None or instance_id in seen:
                 continue
             show = self._fetch_show(show_id)
-            if not show or not show.get("auto_playlist_enabled") or show.get("auto_playlist") is not None:
+            if (
+                not show
+                or not show.get("auto_playlist_enabled")
+                or show.get("auto_playlist") is not None
+            ):
                 continue
             seen.add(instance_id)
             name = show.get("name") or "?"
-            warnings.append({
-                "severity":         "error",
-                "show_id":          show_id,
-                "show_instance_id": instance_id,
-                "starts_at":        inst.get("starts_at"),
-                "detail": {
-                    "show_name": name,
-                    "message": (
-                        f"Autoloading is on for '{name}', but the show has no playlist "
-                        "(deleted from the library?) - the slot would run silent."
-                    ),
-                },
-            })
+            warnings.append(
+                {
+                    "severity": "error",
+                    "show_id": show_id,
+                    "show_instance_id": instance_id,
+                    "starts_at": inst.get("starts_at"),
+                    "detail": {
+                        "show_name": name,
+                        "message": (
+                            f"Autoloading is on for '{name}', but the show has no playlist "
+                            "(deleted from the library?) - the slot would run silent."
+                        ),
+                    },
+                }
+            )
         self._submit_warnings(self.WARNING_TYPE_AUTOPLAYLIST_MISSING, str(uuid.uuid4()), warnings)
 
     def _fetch_lookahead_instances(self) -> Optional[list]:
@@ -612,7 +661,7 @@ class PreflightChecker:
         now = datetime.utcnow()
         end = now + timedelta(hours=self.LOOKAHEAD_HOURS)
         params = {
-            "starts_after":  f"{now.isoformat(timespec='seconds')}Z",
+            "starts_after": f"{now.isoformat(timespec='seconds')}Z",
             "starts_before": f"{end.isoformat(timespec='seconds')}Z",
             "modified": "false",
         }
@@ -640,8 +689,8 @@ class PreflightChecker:
             schedule = self._fetch_lookahead_schedule()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
-                "preflight: schedule fetch failed (%s) — leaving previous "
-                "warnings in place.", exc,
+                "preflight: schedule fetch failed (%s) — leaving previous warnings in place.",
+                exc,
             )
             return
 
@@ -667,7 +716,7 @@ class PreflightChecker:
         # warning, not N.  Across different shows, however, each show
         # gets its own row — the operator needs to know about every
         # affected slot.
-        seen_dedup_keys: Set[tuple] = set()
+        seen_dedup_keys: set[tuple] = set()
         warnings: list[dict] = []
 
         for item in linein_items:
@@ -696,9 +745,7 @@ class PreflightChecker:
             # available and skip the warning — the playout's
             # ffmpeg_linein_capture will pick it up via the same
             # fallback when the show actually starts.
-            device_name = (
-                str(linein_info.get("device_name") or "").strip().lower()
-            )
+            device_name = str(linein_info.get("device_name") or "").strip().lower()
             if device_name and device_name in available_names:
                 continue
 
@@ -722,21 +769,25 @@ class PreflightChecker:
                     if show_info is not None:
                         show_name = show_info.get("name", "?")
 
-            warnings.append({
-                "severity":         "warning",
-                "show_id":          show_id,
-                "show_instance_id": instance_id,
-                "starts_at":        starts_at,
-                "detail": {
-                    "linein_id":   linein_pk_int,
-                    "linein_name": linein_info.get("name", "?"),
-                    "device_id":   device_id,
-                    "show_name":   show_name,
-                },
-            })
+            warnings.append(
+                {
+                    "severity": "warning",
+                    "show_id": show_id,
+                    "show_instance_id": instance_id,
+                    "starts_at": starts_at,
+                    "detail": {
+                        "linein_id": linein_pk_int,
+                        "linein_name": linein_info.get("name", "?"),
+                        "device_id": device_id,
+                        "show_name": show_name,
+                    },
+                }
+            )
 
         self._submit_warnings(
-            self.WARNING_TYPE_LINEIN_UNAVAILABLE, scan_run_id, warnings,
+            self.WARNING_TYPE_LINEIN_UNAVAILABLE,
+            scan_run_id,
+            warnings,
         )
 
     # ------------------------------------------------------------------
@@ -748,9 +799,9 @@ class PreflightChecker:
         now = datetime.utcnow()
         end = now + timedelta(hours=self.LOOKAHEAD_HOURS)
         params = {
-            "ends_after":  f"{now.isoformat(timespec='seconds')}Z",
+            "ends_after": f"{now.isoformat(timespec='seconds')}Z",
             "ends_before": f"{end.isoformat(timespec='seconds')}Z",
-            "overbooked":  False,
+            "overbooked": False,
             "position_status__gt": 0,
         }
         return self._api_client.list_schedule(params=params).json()
@@ -766,7 +817,8 @@ class PreflightChecker:
             return self._linein_cache[pk]
         try:
             resp = self._api_client.session.get(
-                f"/api/v2/audio/linein/{pk}", timeout=5,
+                f"/api/v2/audio/linein/{pk}",
+                timeout=5,
             )
         except Exception:  # pylint: disable=broad-exception-caught
             return None
@@ -799,7 +851,7 @@ class PreflightChecker:
         self._show_cache[pk] = data
         return data
 
-    def _get_available_input_device_ids(self) -> Optional[Set[str]]:
+    def _get_available_input_device_ids(self) -> Optional[set[str]]:
         """
         Return the set of currently-visible input stable_ids (lower-cased)
         or ``None`` if the manager is not wired.  ``None`` is the signal
@@ -813,7 +865,7 @@ class PreflightChecker:
 
     def _get_available_input_device_snapshot(
         self,
-    ) -> Optional[tuple[Set[str], Set[str]]]:
+    ) -> Optional[tuple[set[str], set[str]]]:
         """
         Return ``(stable_ids, friendly_names_lower)`` from one snapshot of
         the audio manager, or ``None`` if the manager is not wired.
@@ -824,7 +876,7 @@ class PreflightChecker:
         written (driver / port re-enumeration).
         """
         try:
-            import audio.soundcard._registry as _reg   # noqa: PLC0415
+            import audio.soundcard._registry as _reg  # noqa: PLC0415
         except ImportError:
             return None
         mgr = _reg.default_manager
@@ -835,8 +887,8 @@ class PreflightChecker:
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("preflight: list_inputs failed: %s", exc)
             return None
-        ids   = {str(d.stable_id).strip().lower()       for d in inputs}
-        names = {(d.name or "").strip().lower()         for d in inputs if d.name}
+        ids = {str(d.stable_id).strip().lower() for d in inputs}
+        names = {(d.name or "").strip().lower() for d in inputs if d.name}
         return ids, names
 
     def _submit_warnings(
@@ -848,8 +900,8 @@ class PreflightChecker:
         """POST the warning batch (possibly empty) to the API for atomic replace."""
         body = {
             "warning_type": warning_type,
-            "scan_run_id":  scan_run_id,
-            "warnings":     warnings,
+            "scan_run_id": scan_run_id,
+            "warnings": warnings,
         }
         try:
             resp = self._api_client.session.post(
@@ -860,13 +912,16 @@ class PreflightChecker:
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error(
                 "preflight: warnings/replace POST failed (%s): %s",
-                warning_type, exc,
+                warning_type,
+                exc,
             )
             return
         if resp.status_code != 200:
             logger.warning(
                 "preflight: warnings/replace (%s) HTTP %d: %s",
-                warning_type, resp.status_code, resp.text[:200],
+                warning_type,
+                resp.status_code,
+                resp.text[:200],
             )
             return
         try:
@@ -875,10 +930,12 @@ class PreflightChecker:
             inserted = -1
         if inserted == 0:
             logger.info(
-                "preflight (%s): no warnings active.", warning_type,
+                "preflight (%s): no warnings active.",
+                warning_type,
             )
         else:
             logger.info(
                 "preflight (%s): %d warning(s) active.",
-                warning_type, inserted,
+                warning_type,
+                inserted,
             )

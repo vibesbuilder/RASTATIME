@@ -46,6 +46,7 @@ either leak unused mounts (operator only configured 1) or silently
 skip configured ones (operator configured 4).  A Python render step
 adapts to whatever the operator has actually enabled in cc_pref.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -53,8 +54,9 @@ import json
 import logging
 import os
 import sys
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Dict, List, Mapping, NamedTuple, Optional, Tuple
+from typing import NamedTuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +65,6 @@ from .icy_metadata import (  # noqa: E402
     DEFAULT_OFFAIR_TEXT,
     DEFAULT_STATION_NAME,
 )
-
 
 # Template lives next to this module's config directory.
 # In the repo: backend/playout/config/rastatime.liq.template
@@ -131,6 +132,7 @@ def crossfade_buffer_seconds(track_seconds: float, show_seconds: float) -> float
         float(track_seconds or 0.0),
         float(show_seconds or 0.0),
     )
+
 
 # Whether to emit a Liquidsoap output to the local soundcard.  On the
 # Windows-only RASTATIME deployment this is `output.wasapi`, defaulting
@@ -273,8 +275,8 @@ DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS = 10.0
 # the frame counter costs nothing, a thread.run.recurrent timer ~31 KB
 # per tick and the scheduler's telnet poll 66-87 KB per command (the
 # Windows Unix.select leak) - ~157 MB per webstream hour in production.
-DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES = 100      # 2 s at 50 frames/s
-DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS = 2       # -> reconnect after ~4 s
+DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES = 100  # 2 s at 50 frames/s
+DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS = 2  # -> reconnect after ~4 s
 
 
 # ---------------------------------------------------------------------
@@ -429,9 +431,9 @@ _ENCODER_FOR_TYPE = {
     # encoder is happier at 44.1 / 48 kHz too.  FFmpeg does the
     # resampling automatically when this encoder samplerate differs
     # from Liquidsoap's PCM input rate.
-    "mp3":  '%ffmpeg(format="mp3",  %audio(codec="libmp3lame", b="${BITRATE}k", samplerate=${SAMPLERATE}))',
-    "aac":  '%ffmpeg(format="adts", %audio(codec="aac",        b="${BITRATE}k", samplerate=${SAMPLERATE}))',
-    "ogg":  '%ffmpeg(format="ogg",  %audio(codec="libvorbis",  b="${BITRATE}k", samplerate=${SAMPLERATE}))',
+    "mp3": '%ffmpeg(format="mp3",  %audio(codec="libmp3lame", b="${BITRATE}k", samplerate=${SAMPLERATE}))',
+    "aac": '%ffmpeg(format="adts", %audio(codec="aac",        b="${BITRATE}k", samplerate=${SAMPLERATE}))',
+    "ogg": '%ffmpeg(format="ogg",  %audio(codec="libvorbis",  b="${BITRATE}k", samplerate=${SAMPLERATE}))',
     "opus": '%ffmpeg(format="ogg",  %audio(codec="libopus",    b="${BITRATE}k", samplerate=${SAMPLERATE}))',
 }
 
@@ -449,7 +451,7 @@ DEFAULT_SAMPLERATE = 44100
 # real on-disk extension matching the container the encoder writes.)
 _FILE_EXT_FOR_TYPE = {
     "mp3": "mp3",
-    "aac": "aac",   # %ffmpeg(format="adts") = raw AAC stream
+    "aac": "aac",  # %ffmpeg(format="adts") = raw AAC stream
     "ogg": "ogg",
     "opus": "opus",
 }
@@ -485,7 +487,8 @@ def _render_show_recording_encoder(
     fmt = str(fmt or DEFAULT_SHOW_RECORDING_FORMAT).lower()
     if fmt not in _ENCODER_FOR_TYPE:
         logger.warning(
-            "Unsupported show recording format %r - rendering mp3 instead", fmt,
+            "Unsupported show recording format %r - rendering mp3 instead",
+            fmt,
         )
         fmt = "mp3"
     try:
@@ -540,7 +543,7 @@ def _normalize_loopback_host(host: str) -> str:
     return "127.0.0.1" if host.strip().lower() == "localhost" else host
 
 
-def _live_text_report_lines(live_text_url: Optional[str]) -> List[str]:
+def _live_text_report_lines(live_text_url: Optional[str]) -> list[str]:
     """``livetext_report(m)``: POST the Live Text line to PLAYOUT (or a no-op)."""
     if not live_text_url:
         return ["def livetext_report(_) = () end"]
@@ -598,7 +601,7 @@ def _render_icy_metadata_block(
         f'station_name = interactive.string("station_name", "{_escape_liq_string(station_name)}")',
         'bus_show = interactive.string("bus_show", "")',
         "",
-        "# label_for: the label for one metadata packet in format fmt (\"\" = leave",
+        '# label_for: the label for one metadata packet in format fmt ("" = leave',
         "# the packet alone).  Only the fields of THAT",
         "# packet are known - a harbor packet with just a title takes the show",
         "# from bus_show().  Formats: 0 Artist - Title, 1 Show - Artist - Title,",
@@ -675,7 +678,7 @@ def _render_icy_metadata_block(
 
 
 def _render_icecast_block(
-    stream: Dict,
+    stream: dict,
     *,
     station_name: str = DEFAULT_STATION_NAME,
     icy_song: Optional[str] = "icy_song_title",
@@ -696,8 +699,7 @@ def _render_icecast_block(
     stream_type = str(stream.get("type", "")).lower()
     if stream_type not in _ENCODER_FOR_TYPE:
         raise ValueError(
-            f"Unsupported stream type {stream_type!r} — "
-            f"must be one of {sorted(_ENCODER_FOR_TYPE)}"
+            f"Unsupported stream type {stream_type!r} — must be one of {sorted(_ENCODER_FOR_TYPE)}"
         )
 
     bitrate = int(stream.get("bitrate", 128))
@@ -712,9 +714,9 @@ def _render_icecast_block(
     # don't second-guess them.
     if stream_type == "opus" and samplerate not in _OPUS_VALID_SAMPLERATES:
         logger.warning(
-            "Stream samplerate %d Hz not supported by libopus; "
-            "clamping to 48000 Hz for mount %r",
-            samplerate, stream.get("mount", "?"),
+            "Stream samplerate %d Hz not supported by libopus; clamping to 48000 Hz for mount %r",
+            samplerate,
+            stream.get("mount", "?"),
         )
         samplerate = 48000
 
@@ -724,9 +726,7 @@ def _render_icecast_block(
         .replace("${SAMPLERATE}", str(samplerate))
     )
 
-    host = _escape_liq_string(
-        _normalize_loopback_host(str(stream.get("host", "localhost")))
-    )
+    host = _escape_liq_string(_normalize_loopback_host(str(stream.get("host", "localhost"))))
     port = int(stream.get("port", 8000))
     mount_raw = str(stream.get("mount", "stream")).lstrip("/")
     mount = "/" + _escape_liq_string(mount_raw)
@@ -782,7 +782,7 @@ def _render_icecast_block(
 
 
 def _render_icecast_outputs(
-    stream_outputs: List[Dict],
+    stream_outputs: list[dict],
     *,
     station_name: str = DEFAULT_STATION_NAME,
     icy_song: Optional[str] = "icy_song_title",
@@ -966,13 +966,8 @@ def _render_local_output_block(
     if enabled:
         if device_name:
             safe_label = str(device_label).replace("\n", " ").strip()
-            safe_ep = "".join(
-                c for c in str(endpoint_id) if c.isalnum() or c in "-_"
-            )
-            quoted = (
-                str(device_name).replace("\\", "\\\\").replace('"', '\\"')
-                .replace("\n", " ")
-            )
+            safe_ep = "".join(c for c in str(endpoint_id) if c.isalnum() or c in "-_")
+            quoted = str(device_name).replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
             device_line = (
                 f"  # rastatime-main-output: {safe_ep or 'unknown'}\n"
                 f"  # Main Output (Settings -> Local Machine): {safe_label}\n"
@@ -991,9 +986,7 @@ def _render_local_output_block(
             )
         else:
             safe_label = str(device_label).replace("\n", " ").strip()
-            safe_ep = "".join(
-                c for c in str(endpoint_id) if c.isalnum() or c in "-_"
-            )
+            safe_ep = "".join(c for c in str(endpoint_id) if c.isalnum() or c in "-_")
             device_line = (
                 f"  # rastatime-main-output: {safe_ep or 'unknown'}\n"
                 f"  # Main Output (Settings -> Local Machine): {safe_label}\n"
@@ -1001,7 +994,7 @@ def _render_local_output_block(
             )
         if adaptive:
             bridge_line = (
-                "bus_for_portaudio = buffer.adaptative(id=\"portaudio_buffer\", "
+                'bus_for_portaudio = buffer.adaptative(id="portaudio_buffer", '
                 f"fallible=true, buffer={LOCAL_OUTPUT_BUFFER_SECONDS:.1f}, "
                 f"limit={LOCAL_OUTPUT_ADAPTIVE_LIMIT}, bus)\n"
             )
@@ -1024,10 +1017,10 @@ def _render_local_output_block(
             "# CPU/disk stalls (the C5 crash was ~10 s after Show-start, at\n"
             "# track-decode peak).  Trade-off: lokales Monitor-Speaker laeuft\n"
             "# 2 s hinter Stream/Recording.\n"
-            "# RASTATIME 2026-09-05: sync=\"auto\" instead of sync=\"cpu\".\n"
+            '# RASTATIME 2026-09-05: sync="auto" instead of sync="cpu".\n'
             "# output.portaudio is self-synced (blocking writes pace the clock\n"
             "# at the device's sample clock); with sync=cpu the clock ALSO tried\n"
-            "# to hold wall-time and logged \"Latency is too high\" every second\n"
+            '# to hold wall-time and logged "Latency is too high" every second\n'
             "# (3,560/h) whenever the output really played.  auto lets the device\n"
             "# pace the clock; the buffer() bridge above absorbs the drift to the\n"
             "# main clock, which is exactly what it is for.\n"
@@ -1038,19 +1031,17 @@ def _render_local_output_block(
             "# silently opened another device.  mksafe plays silence while the\n"
             "# bridge refills, fallible=false turns a missing mksafe into a start\n"
             "# error, buffer.adaptative compensates the device clock drift.\n"
-            + bridge_line +
-            "ignore(clock.assign_new(id=\"portaudio_clock\", sync=\"auto\", [\n"
+            + bridge_line
+            + 'ignore(clock.assign_new(id="portaudio_clock", sync="auto", [\n'
             "  bus_for_portaudio,\n"
             "]))\n"
             "output.portaudio(\n"
             "  fallible=false,\n"
-            + device_line +
-            "  mksafe(id=\"portaudio_safe\", bus_for_portaudio),\n"
+            + device_line
+            + '  mksafe(id="portaudio_safe", bus_for_portaudio),\n'
             ")\n"
         )
-    return (
-        "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"
-    )
+    return "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"
 
 
 def _render_harbor_inputs_block(
@@ -1098,17 +1089,19 @@ def _render_harbor_inputs_block(
     # password is passed along as the fallback for an unreachable PLAYOUT.
     main_auth = (
         f'  auth=rastatime_dj_auth("master", "{_escape_liq_string(main_password or "")}"),\n'
-        if dj_auth_url else ""
+        if dj_auth_url
+        else ""
     )
     show_auth = (
         f'  auth=rastatime_dj_auth("show", "{_escape_liq_string(show_password or "")}"),\n'
-        if dj_auth_url else ""
+        if dj_auth_url
+        else ""
     )
     if main_password:
         parts.append(
             "master_dj = input.harbor(\n"
             f'  "{_escape_liq_string(main_mount)}",\n'
-            f"  id=\"master_dj\",\n"
+            f'  id="master_dj",\n'
             f"  port={int(main_port)},\n"
             f'  password="{_escape_liq_string(main_password)}",\n'
             f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
@@ -1121,7 +1114,7 @@ def _render_harbor_inputs_block(
         parts.append(
             "show_dj = input.harbor(\n"
             f'  "{_escape_liq_string(show_mount)}",\n'
-            f"  id=\"show_dj\",\n"
+            f'  id="show_dj",\n'
             f"  port={int(show_port)},\n"
             f'  password="{_escape_liq_string(show_password)}",\n'
             f"  buffer={_format_crossfade_duration(buffer_seconds)},\n"
@@ -1150,7 +1143,8 @@ def _render_harbor_inputs_block(
 
 
 def _render_dj_auth_function(
-    url: str, timeout_seconds: float = DEFAULT_DJ_AUTH_TIMEOUT_SECONDS,
+    url: str,
+    timeout_seconds: float = DEFAULT_DJ_AUTH_TIMEOUT_SECONDS,
 ) -> str:
     """
     Render ``rastatime_dj_auth(kind, static_password)``: the harbor's
@@ -1187,16 +1181,16 @@ def _render_dj_auth_function(
         "      # body.  Decide on the body - PLAYOUT answers ok / denied / error.",
         '      if verdict == "ok" then',
         '        log(level=3, label="rastatime.dj_auth",',
-        '          "#{kind}: accepted user \'#{login.user}\' from #{login.address}")',
+        "          \"#{kind}: accepted user '#{login.user}' from #{login.address}\")",
         "        true",
         '      elsif verdict == "denied" then',
         '        log(level=3, label="rastatime.dj_auth",',
-        '          "#{kind}: rejected user \'#{login.user}\' from #{login.address}")',
+        "          \"#{kind}: rejected user '#{login.user}' from #{login.address}\")",
         "        false",
         "      else",
         '        ok = login.user == "source" and login.password == static_password',
         '        log(level=3, label="rastatime.dj_auth",',
-        '          "#{kind}: PLAYOUT unreachable or failing (\'#{verdict}\') - static check for \'#{login.user}\': #{ok}")',
+        "          \"#{kind}: PLAYOUT unreachable or failing ('#{verdict}') - static check for '#{login.user}': #{ok}\")",
         "        ok",
         "      end",
         "    end",
@@ -1234,18 +1228,18 @@ def _render_harbor_source_events(
         "def rastatime_source_event(src, status) =",
         "  thread.run(fun () ->",
         "    try",
-        f"      ignore(http.post(timeout={timeout}, data=\"\",",
-        f"        \"{target}?source=#{{src}}&status=#{{status}}\"))",
+        f'      ignore(http.post(timeout={timeout}, data="",',
+        f'        "{target}?source=#{{src}}&status=#{{status}}"))',
         "    catch err do",
-        "      log(level=3, label=\"rastatime.source_event\",",
-        "        \"POST #{src}/#{status} failed: #{err}\")",
+        '      log(level=3, label="rastatime.source_event",',
+        '        "POST #{src}/#{status} failed: #{err}")',
         "    end)",
         "end",
         "# Telnet marker for PLAYOUT: this render posts harbor events.  PLAYOUT",
         "# keeps its old 5-s status poll while an older render is loaded.",
-        "server.register(namespace=\"rastatime\", "
-        "description=\"Harbor source events rendered (option d)\",",
-        "  \"source_events\", fun (_) -> \"on\")",
+        'server.register(namespace="rastatime", '
+        'description="Harbor source events rendered (option d)",',
+        '  "source_events", fun (_) -> "on")',
     ]
     for enabled, source_id, name in (
         (main_enabled, "master_dj", "master"),
@@ -1255,11 +1249,11 @@ def _render_harbor_source_events(
             continue
         lines.append(
             f"{source_id}.on_connect(synchronous=true, "
-            f"fun (_) -> rastatime_source_event(\"{name}\", \"on\"))"
+            f'fun (_) -> rastatime_source_event("{name}", "on"))'
         )
         lines.append(
             f"{source_id}.on_disconnect(synchronous=true, "
-            f"fun () -> rastatime_source_event(\"{name}\", \"off\"))"
+            f'fun () -> rastatime_source_event("{name}", "off"))'
         )
     return "\n".join(lines) + "\n"
 
@@ -1632,7 +1626,7 @@ def _render_linein_input_block(
     return (
         "linein_raw = input.ffmpeg(\n"
         '  id="linein",\n'
-        "  format=\"dshow\",\n"
+        '  format="dshow",\n'
         "  start=false,\n"
         "  self_sync=false,\n"
         f"  max_buffer={_format_crossfade_duration(max_buffer_seconds)},\n"
@@ -1647,24 +1641,24 @@ def _render_linein_input_block(
         "\n"
         "# input.ffmpeg does NOT auto-register its runtime controls as\n"
         "# telnet commands (unlike input.http).  Register them manually\n"
-        "# under the \"linein\" namespace so Pypo can drive the dshow\n"
+        '# under the "linein" namespace so Pypo can drive the dshow\n'
         "# device at show-start/-end.  Commands act on linein_raw (the\n"
         "# input.ffmpeg source that has set_url/start/stop/status; the\n"
         "# audio_to_stereo wrapper doesn't expose them).  Spike-verified\n"
         "# 2026-05-30.\n"
-        'server.register(\n'
+        "server.register(\n"
         '  namespace="linein", description="Set the dshow input spec",\n'
         '  "set_url", fun (spec) -> begin linein_raw.set_url(spec); "Done" end\n'
         ")\n"
-        'server.register(\n'
+        "server.register(\n"
         '  namespace="linein", description="Start the dshow capture",\n'
         '  "start", fun (_) -> begin linein_raw.start(); "Done" end\n'
         ")\n"
-        'server.register(\n'
+        "server.register(\n"
         '  namespace="linein", description="Stop the dshow capture",\n'
         '  "stop", fun (_) -> begin linein_raw.stop(); "Done" end\n'
         ")\n"
-        'server.register(\n'
+        "server.register(\n"
         '  namespace="linein", description="dshow capture status",\n'
         '  "status", fun (_) -> linein_raw.status()\n'
         ")\n"
@@ -1862,8 +1856,8 @@ def _render_hourly_recording_block(
         samplerate = DEFAULT_SAMPLERATE
     if fmt == "opus" and samplerate not in _OPUS_VALID_SAMPLERATES:
         logger.warning(
-            "24/7 recording samplerate %d Hz not supported by libopus; "
-            "clamping to 48000 Hz", samplerate,
+            "24/7 recording samplerate %d Hz not supported by libopus; clamping to 48000 Hz",
+            samplerate,
         )
         samplerate = 48000
 
@@ -1961,9 +1955,9 @@ def _render_loudness_block(ceiling_dbtp: Optional[float]) -> str:
 # STEREOTOOL_LOCKOUT when the fresh instance does not stay up after a start
 # with Stereo Tool - every later render in this process is without it and
 # the preflight warns (see STEREOTOOL_STATE).
-STEREOTOOL_LOCKOUT: Dict[str, object] = {"active": False, "reason": ""}
+STEREOTOOL_LOCKOUT: dict[str, object] = {"active": False, "reason": ""}
 #: what the last render did with Stereo Tool - read by the preflight scan
-STEREOTOOL_STATE: Dict[str, object] = {"enabled": False, "active": False, "problem": ""}
+STEREOTOOL_STATE: dict[str, object] = {"enabled": False, "active": False, "problem": ""}
 
 
 class StereoToolSettings(NamedTuple):
@@ -1989,7 +1983,7 @@ def _liq_path(path: str) -> str:
     return path.replace("\\", "/").replace('"', '\\"')
 
 
-def _render_stereotool_block(settings: Optional[StereoToolSettings]) -> Tuple[str, bool]:
+def _render_stereotool_block(settings: Optional[StereoToolSettings]) -> tuple[str, bool]:
     """
     The Stereo Tool block for the bus, and whether it is active.  Off,
     locked out after a crash, or a missing library file render a comment
@@ -2020,8 +2014,8 @@ def _render_stereotool_block(settings: Optional[StereoToolSettings]) -> Tuple[st
         )
     if settings.preset_file and not os.path.isfile(settings.preset_file):
         logger.warning(
-            "Stereo Tool preset file %r does not exist - starting with the "
-            "library's defaults.", settings.preset_file,
+            "Stereo Tool preset file %r does not exist - starting with the library's defaults.",
+            settings.preset_file,
         )
     args = [f'library_file="{_liq_path(settings.library_file)}"']
     if settings.license_key:
@@ -2284,7 +2278,7 @@ def _render_bus_source_block(
     dj_shape, faded = "bus_dj", "bus_transition"
     from_dj = 'source.id(old) == "master_dj" or source.id(old) == "show_dj"'
     has_dj = bool(main_enabled or show_enabled)  # no DJ arms: plain shapes, no DJ ids in the script
-    transitions: List[str] = []
+    transitions: list[str] = []
     # RASTATIME 2026-09-13 - every arm gets a thin wrapper around the
     # shared shape: live arms insert one metadata packet with the show on
     # air (show_name from bus_show) so the ICY title changes at once, the
@@ -2293,11 +2287,12 @@ def _render_bus_source_block(
     # the two fades): a replica probe showed that an insert on the arm
     # (an operator such as amplify) or on the source under it never
     # reaches the bus, while the transition source carries it at once.
-    wrappers: List[str] = []
+    wrappers: list[str] = []
 
     def _arm(name: str, source: str, shape: str) -> str:
         pick = (
-            f"  s = {shape}(old, new)\n" if shape == dj_shape or not has_dj
+            f"  s = {shape}(old, new)\n"
+            if shape == dj_shape or not has_dj
             else f"  s = if {from_dj} then bus_dj(old, new) else {shape}(old, new) end\n"
         )
         return (
@@ -2328,8 +2323,11 @@ def _render_bus_source_block(
     transitions.append("bus_arm_scheduled")
     wrappers.append(
         "def bus_arm_scheduled(old, new) =\n"
-        + (f"  s = if {from_dj} then bus_dj(old, new) else {faded}(old, new) end\n" if has_dj
-           else f"  s = {faded}(old, new)\n")
+        + (
+            f"  s = if {from_dj} then bus_dj(old, new) else {faded}(old, new) end\n"
+            if has_dj
+            else f"  s = {faded}(old, new)\n"
+        )
         + "  # queue empty: the silence arm goes on air -> Off Air Metadata\n"
         "  if not source.is_ready(scheduled_q) then\n"
         '    s.insert_metadata([("off_air", "true"), ("title", offair_text())])\n'
@@ -2338,10 +2336,7 @@ def _render_bus_source_block(
         "end\n"
     )
 
-    if (
-        not main_enabled and not show_enabled
-        and not webstream_enabled and not linein_enabled
-    ):
+    if not main_enabled and not show_enabled and not webstream_enabled and not linein_enabled:
         # No upstream switching candidate at all — keep the C3-era
         # simple assignment so the switch operator doesn't show up as a
         # noise line in `--check` output and so the bus chain is
@@ -2395,26 +2390,18 @@ def _render_bus_source_block(
         "# outage 2026-09-04 19:26; DJ arms were never in the verify render).\n"
         "def bus_instant(old, new) =\n"
         "  add(normalize=false, [fade.out(duration=0.05, old), fade.in(duration=0.05, new)])\n"
-        "end\n"
-        + transition_fn
-        + "\n"
-        + "".join(wrappers)
-        + "\n"
+        "end\n" + transition_fn + "\n" + "".join(wrappers) + "\n"
         "bus = switch(\n"
         "  track_sensitive=false,\n"
         f"  transition_length={_format_crossfade_duration(max(fade_len, dj_len) + 0.5)},\n"
-        "  transitions=[\n"
-        + "".join(f"    {t},\n" for t in transitions)
-        + "  ],\n"
-        "  [\n"
-        + "".join(f"    {arm},\n" for arm in arms)
-        + "  ]\n"
+        "  transitions=[\n" + "".join(f"    {t},\n" for t in transitions) + "  ],\n"
+        "  [\n" + "".join(f"    {arm},\n" for arm in arms) + "  ]\n"
         ")\n"
     )
 
 
 def render_rastatime_liq(
-    stream_outputs: List[Dict],
+    stream_outputs: list[dict],
     *,
     telnet_host: str = DEFAULT_TELNET_HOST,
     telnet_port: int = DEFAULT_TELNET_PORT,
@@ -2499,10 +2486,13 @@ def render_rastatime_liq(
     template = template_path.read_text(encoding="utf-8")
 
     icecast_blocks = _render_icecast_outputs(
-        stream_outputs, station_name=icy_station_name,
+        stream_outputs,
+        station_name=icy_station_name,
     )
     icy_block = _render_icy_metadata_block(
-        icy_label_format, icy_offair_text, icy_station_name,
+        icy_label_format,
+        icy_offair_text,
+        icy_station_name,
         live_text_url=live_text_url,
     )
 
@@ -2557,8 +2547,7 @@ def render_rastatime_liq(
     )
 
     rendered = (
-        template
-        .replace("${TELNET_HOST}", _escape_liq_string(telnet_host))
+        template.replace("${TELNET_HOST}", _escape_liq_string(telnet_host))
         .replace("${TELNET_PORT}", str(int(telnet_port)))
         .replace("${LOG_FILE}", _escape_liq_string(log_file))
         .replace(
@@ -2593,7 +2582,7 @@ def render_rastatime_liq(
 
 def write_rastatime_liq(
     output_path: Path,
-    stream_outputs: List[Dict],
+    stream_outputs: list[dict],
     *,
     telnet_host: str = DEFAULT_TELNET_HOST,
     telnet_port: int = DEFAULT_TELNET_PORT,
@@ -2738,7 +2727,7 @@ def standby_mount(mount: str, suffix: str = DEFAULT_STANDBY_MOUNT_SUFFIX) -> str
 
 
 def render_standby_liq(
-    stream_outputs: List[Dict],
+    stream_outputs: list[dict],
     *,
     audio_file: Optional[str] = None,
     log_file: str = DEFAULT_STANDBY_LOG_FILE,
@@ -2803,7 +2792,7 @@ def render_standby_liq(
 
 def write_standby_liq(
     output_path: Path,
-    stream_outputs: List[Dict],
+    stream_outputs: list[dict],
     *,
     audio_file: Optional[str] = None,
     log_file: str = DEFAULT_STANDBY_LOG_FILE,
@@ -2826,10 +2815,10 @@ def write_standby_liq(
 
 def icecast_mounts_without_fallback(
     icecast_xml: Path,
-    stream_outputs: List[Dict],
+    stream_outputs: list[dict],
     *,
     mount_suffix: str = DEFAULT_STANDBY_MOUNT_SUFFIX,
-) -> Optional[List[str]]:
+) -> Optional[list[str]]:
     """
     Which configured public mounts have NO ``<fallback-mount>`` to their
     standby mount in ``icecast.xml``?
@@ -2854,7 +2843,7 @@ def icecast_mounts_without_fallback(
         fallback = (mount.findtext("fallback-mount") or "").strip()
         if name and fallback:
             covered[name] = fallback
-    missing: List[str] = []
+    missing: list[str] = []
     for out in stream_outputs:
         mount = str(out.get("mount", "")).strip()
         if not mount:
@@ -2870,7 +2859,7 @@ def icecast_mounts_without_fallback(
 # ---------------------------------------------------------------------
 
 
-def _read_stream_outputs_from_db() -> List[Dict]:
+def _read_stream_outputs_from_db() -> list[dict]:
     """
     Load the cc_pref ``stream_output_N`` rows (same shape Pypo reads).
     Returns [] if the Django ORM is unavailable — caller decides what
@@ -2882,10 +2871,8 @@ def _read_stream_outputs_from_db() -> List[Dict]:
     try:
         from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
 
-        all_entries: Dict[str, str] = dict(
-            Preference.site.values_list("key", "value")
-        )
-        outputs: List[Dict] = []
+        all_entries: dict[str, str] = dict(Preference.site.values_list("key", "value"))
+        outputs: list[dict] = []
         for n in range(1, 4):
             raw = all_entries.get(f"stream_output_{n}")
             if not raw:
@@ -2895,16 +2882,14 @@ def _read_stream_outputs_from_db() -> List[Dict]:
                 if str(data.get("enable", "")).lower() == "true":
                     outputs.append(data)
             except (json.JSONDecodeError, AttributeError) as exc:
-                logger.warning(
-                    "Could not parse stream_output_%d: %s", n, exc
-                )
+                logger.warning("Could not parse stream_output_%d: %s", n, exc)
         return outputs
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning("Could not read stream outputs from DB: %s", exc)
         return []
 
 
-def read_hourly_recording_config_from_db() -> Dict:
+def read_hourly_recording_config_from_db() -> dict:
     """
     Load the 24/7 hourly recording settings from cc_pref.  Returns a dict
     with safe defaults (recorder disabled) when the ORM is unavailable or
@@ -2933,33 +2918,26 @@ def read_hourly_recording_config_from_db() -> Dict:
     try:
         from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
 
-        entries: Dict[str, str] = dict(
-            Preference.site.values_list("key", "value")
-        )
+        entries: dict[str, str] = dict(Preference.site.values_list("key", "value"))
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning("Could not read 24/7 recording config from DB: %s", exc)
         return disabled
 
-    enabled = (
-        str(entries.get("local_247_recording_enabled", "")).strip().lower()
-        == "true"
-    )
+    enabled = str(entries.get("local_247_recording_enabled", "")).strip().lower() == "true"
     folder = (entries.get("local_247_recording_folder") or "").strip()
     fmt = (
-        entries.get("local_247_recording_format")
-        or DEFAULT_HOURLY_RECORDING_FORMAT
-    ).strip().lower()
+        (entries.get("local_247_recording_format") or DEFAULT_HOURLY_RECORDING_FORMAT)
+        .strip()
+        .lower()
+    )
     try:
         bitrate = int(
-            entries.get("local_247_recording_bitrate")
-            or DEFAULT_HOURLY_RECORDING_BITRATE
+            entries.get("local_247_recording_bitrate") or DEFAULT_HOURLY_RECORDING_BITRATE
         )
     except (TypeError, ValueError):
         bitrate = DEFAULT_HOURLY_RECORDING_BITRATE
     try:
-        retention_days = int(
-            entries.get("local_247_recording_retention_days") or 0
-        )
+        retention_days = int(entries.get("local_247_recording_retention_days") or 0)
     except (TypeError, ValueError):
         retention_days = 0
 
@@ -2972,7 +2950,7 @@ def read_hourly_recording_config_from_db() -> Dict:
     }
 
 
-def read_show_recording_config_from_db() -> Dict[str, object]:
+def read_show_recording_config_from_db() -> dict[str, object]:
     """
     RASTATIME 2026-10-18 - per-show recording encoder from cc_pref
     (``local_recording_format`` mp3/aac/ogg/opus, ``local_recording_bitrate``
@@ -2987,7 +2965,7 @@ def read_show_recording_config_from_db() -> Dict[str, object]:
     try:
         from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
 
-        entries: Dict[str, str] = dict(
+        entries: dict[str, str] = dict(
             Preference.site.filter(
                 key__in=["local_recording_format", "local_recording_bitrate"]
             ).values_list("key", "value")
@@ -3018,9 +2996,7 @@ def _setup_django_if_available() -> bool:
     try:
         import django  # type: ignore[import-untyped]  # noqa: PLC0415
 
-        os.environ.setdefault(
-            "DJANGO_SETTINGS_MODULE", "rastatime_api.settings"
-        )
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rastatime_api.settings")
         django.setup()
         return True
     except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -3028,7 +3004,7 @@ def _setup_django_if_available() -> bool:
         return False
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     """
     CLI entry-point.  Usage::
 
@@ -3047,27 +3023,32 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    render = sub.add_parser(
-        "render", help="Render rastatime.liq from template + DB."
-    )
+    render = sub.add_parser("render", help="Render rastatime.liq from template + DB.")
     render.add_argument(
-        "--out", required=True, type=Path,
+        "--out",
+        required=True,
+        type=Path,
         help="Path to write the rendered .liq (e.g. C:/Tools/liquidsoap/rastatime.liq).",
     )
     render.add_argument(
-        "--telnet-host", default=DEFAULT_TELNET_HOST,
+        "--telnet-host",
+        default=DEFAULT_TELNET_HOST,
         help=f"Liquidsoap telnet bind addr (default {DEFAULT_TELNET_HOST}).",
     )
     render.add_argument(
-        "--telnet-port", type=int, default=DEFAULT_TELNET_PORT,
+        "--telnet-port",
+        type=int,
+        default=DEFAULT_TELNET_PORT,
         help=f"Liquidsoap telnet port (default {DEFAULT_TELNET_PORT}).",
     )
     render.add_argument(
-        "--log-file", default=DEFAULT_LOG_FILE,
+        "--log-file",
+        default=DEFAULT_LOG_FILE,
         help=f"Liquidsoap log-file path (default {DEFAULT_LOG_FILE}).",
     )
     render.add_argument(
-        "--crossfade-duration", type=float,
+        "--crossfade-duration",
+        type=float,
         default=DEFAULT_CROSSFADE_DURATION,
         help=(
             f"Crossfade duration in seconds between request.queue items "
@@ -3075,18 +3056,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     render.add_argument(
-        "--local-output", dest="local_output_enabled",
-        action="store_true", default=DEFAULT_LOCAL_OUTPUT_ENABLED,
+        "--local-output",
+        dest="local_output_enabled",
+        action="store_true",
+        default=DEFAULT_LOCAL_OUTPUT_ENABLED,
         help="Enable output.wasapi to OS-default soundcard (default).",
     )
     render.add_argument(
-        "--no-local-output", dest="local_output_enabled",
+        "--no-local-output",
+        dest="local_output_enabled",
         action="store_false",
         help="Skip the soundcard output (headless server install).",
     )
     render.add_argument(
-        "--no-local-output-adaptive", dest="local_output_adaptive",
-        action="store_false", default=DEFAULT_LOCAL_OUTPUT_ADAPTIVE,
+        "--no-local-output-adaptive",
+        dest="local_output_adaptive",
+        action="store_false",
+        default=DEFAULT_LOCAL_OUTPUT_ADAPTIVE,
         help="Plain buffer() instead of buffer.adaptative for the soundcard bridge.",
     )
 

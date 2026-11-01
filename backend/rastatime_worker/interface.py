@@ -1,20 +1,21 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 # Opaque identifier for a submitted job instance.
 JobId = str
 
 
 class JobStatus(Enum):
-    PENDING = "pending"      # queued, not yet started
-    RUNNING = "running"      # currently executing
+    PENDING = "pending"  # queued, not yet started
+    RUNNING = "running"  # currently executing
     COMPLETED = "completed"  # finished successfully
-    FAILED = "failed"        # finished with an error
+    FAILED = "failed"  # finished with an error
     CANCELLED = "cancelled"  # cancelled before or during execution
-    RETRYING = "retrying"    # failed, scheduled for retry
+    RETRYING = "retrying"  # failed, scheduled for retry
 
 
 @dataclass
@@ -38,7 +39,7 @@ class JobResult:
 
     job_id: JobId
     success: bool
-    value: Any = None                  # return value on success
+    value: Any = None  # return value on success
     error_message: Optional[str] = None
 
 

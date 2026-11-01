@@ -1,7 +1,6 @@
 from datetime import time
 
 from pytest import approx
-
 from rastatime_shared.datetime import time_in_milliseconds, time_in_seconds
 
 

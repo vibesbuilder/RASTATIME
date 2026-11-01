@@ -20,14 +20,16 @@ playout now owns the push:
 HTTP runs on a daemon thread and never blocks a playout callback; the
 partner key is never logged.
 """
+
 from __future__ import annotations
 
 import logging
 import threading
 import time
 import xml.etree.ElementTree as ET
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional, Tuple
+from typing import Optional
 
 import requests
 
@@ -47,9 +49,7 @@ class TuneInConfig:
     partner_key: str
 
     def complete(self) -> bool:
-        return bool(
-            self.enabled and self.station_id and self.partner_id and self.partner_key
-        )
+        return bool(self.enabled and self.station_id and self.partner_id and self.partner_key)
 
 
 def read_tunein_config_from_db() -> Optional[TuneInConfig]:
@@ -85,7 +85,7 @@ class TuneInPusher:
         self._clock = clock
         self._api_url = api_url
         self._lock = threading.Lock()
-        self._last_payload: Optional[Tuple[str, str]] = None
+        self._last_payload: Optional[tuple[str, str]] = None
         self._last_push_at: Optional[float] = None
         self._last_ok: Optional[bool] = None
         self._disabled_logged = False
@@ -94,7 +94,9 @@ class TuneInPusher:
     # public API (called from playout callbacks - never blocks)
     # ------------------------------------------------------------------
 
-    def now_playing(self, title: Optional[str], artist: Optional[str], *, kind: str = "track") -> None:
+    def now_playing(
+        self, title: Optional[str], artist: Optional[str], *, kind: str = "track"
+    ) -> None:
         """A new item is on air: remember it and push it on a daemon thread."""
         payload = (self._clean(title) or "n/a", self._clean(artist))
         with self._lock:
@@ -124,10 +126,13 @@ class TuneInPusher:
     def _clean(value: Optional[str]) -> str:
         return " ".join(str(value or "").split())[:255]
 
-    def _push_async(self, payload: Tuple[str, str], *, reason: str) -> None:
+    def _push_async(self, payload: tuple[str, str], *, reason: str) -> None:
         t = threading.Thread(
-            target=self.push, args=(payload[0], payload[1]), kwargs={"reason": reason},
-            name="tunein-push", daemon=True,
+            target=self.push,
+            args=(payload[0], payload[1]),
+            kwargs={"reason": reason},
+            name="tunein-push",
+            daemon=True,
         )
         t.start()
 
@@ -162,7 +167,9 @@ class TuneInPusher:
         }
         now = self._clock()
         try:
-            response = self._session.get(self._api_url, params=params, timeout=REQUEST_TIMEOUT_SECONDS)
+            response = self._session.get(
+                self._api_url, params=params, timeout=REQUEST_TIMEOUT_SECONDS
+            )
             ok = self._answer_ok(response.status_code, response.text)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("TuneIn push (%s) failed: %s", reason, exc)

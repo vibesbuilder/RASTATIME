@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import List
 from unittest.mock import Mock, call
 
 import pytest
-from rastatime_shared.config import IcecastOutput, ShoutcastOutput
 from lxml.etree import XMLSyntaxError
-from requests.exceptions import HTTPError
-
 from rastatime_playout.history.stats import AnyOutput, Stats, StatsCollector
+from rastatime_shared.config import IcecastOutput, ShoutcastOutput
+from requests.exceptions import HTTPError
 
 from ..fixtures import icecast_stats, shoutcast_admin
 
@@ -35,7 +33,7 @@ def outputs_fixture():
 
 def test_stats_collector_collect_server_stats(
     requests_mock,
-    outputs: List[AnyOutput],
+    outputs: list[AnyOutput],
 ):
     requests_mock.get(
         "http://localhost:8000/admin/stats.xml",
@@ -56,7 +54,7 @@ def test_stats_collector_collect_server_stats(
 
 def test_stats_collector_collect_server_stats_unauthorized(
     requests_mock,
-    outputs: List[AnyOutput],
+    outputs: list[AnyOutput],
 ):
     requests_mock.get(
         "http://localhost:8000/admin/stats.xml",
@@ -72,7 +70,7 @@ def test_stats_collector_collect_server_stats_unauthorized(
 
 def test_stats_collector_collect_server_stats_invalid_xml(
     requests_mock,
-    outputs: List[AnyOutput],
+    outputs: list[AnyOutput],
 ):
     requests_mock.get(
         "http://localhost:8000/admin/stats.xml",
@@ -88,7 +86,7 @@ def test_stats_collector_collect_server_stats_invalid_xml(
 
 def test_stats_collector_collect(
     requests_mock,
-    outputs: List[AnyOutput],
+    outputs: list[AnyOutput],
 ):
     requests_mock.get(
         "http://localhost:8000/admin/stats.xml",
@@ -161,14 +159,23 @@ def test_stats_collector_collect(
 def test_outputs_from_stream_settings_maps_fields():
     from rastatime_playout.history.stats import outputs_from_stream_settings
 
-    outputs = outputs_from_stream_settings([
-        {
-            "enable": "true", "output": "icecast", "host": "127.0.0.1",
-            "port": "8000", "mount": "/rastatime", "user": "source",
-            "pass": "sourcepw", "admin_user": "admin", "admin_pass": "adminpw",
-            "type": "mp3", "bitrate": "320",
-        }
-    ])
+    outputs = outputs_from_stream_settings(
+        [
+            {
+                "enable": "true",
+                "output": "icecast",
+                "host": "127.0.0.1",
+                "port": "8000",
+                "mount": "/rastatime",
+                "user": "source",
+                "pass": "sourcepw",
+                "admin_user": "admin",
+                "admin_pass": "adminpw",
+                "type": "mp3",
+                "bitrate": "320",
+            }
+        ]
+    )
     assert len(outputs) == 1
     out = outputs[0]
     assert out.kind == "icecast"
@@ -183,21 +190,24 @@ def test_outputs_from_stream_settings_maps_fields():
 def test_outputs_from_stream_settings_skips_missing_admin_pass():
     from rastatime_playout.history.stats import outputs_from_stream_settings
 
-    outputs = outputs_from_stream_settings([
-        {"mount": "/no-admin", "host": "127.0.0.1", "port": "8000"},
-        {"mount": "/ok", "host": "127.0.0.1", "port": "8000",
-         "admin_pass": "pw"},
-    ])
+    outputs = outputs_from_stream_settings(
+        [
+            {"mount": "/no-admin", "host": "127.0.0.1", "port": "8000"},
+            {"mount": "/ok", "host": "127.0.0.1", "port": "8000", "admin_pass": "pw"},
+        ]
+    )
     assert [o.mount for o in outputs] == ["ok"]
 
 
 def test_outputs_from_stream_settings_skips_empty_mount_and_bad_port():
     from rastatime_playout.history.stats import outputs_from_stream_settings
 
-    outputs = outputs_from_stream_settings([
-        {"mount": "", "admin_pass": "pw"},
-        {"mount": "/weird-port", "port": "notanint", "admin_pass": "pw"},
-    ])
+    outputs = outputs_from_stream_settings(
+        [
+            {"mount": "", "admin_pass": "pw"},
+            {"mount": "/weird-port", "port": "notanint", "admin_pass": "pw"},
+        ]
+    )
     assert len(outputs) == 1
     assert outputs[0].mount == "weird-port"
     assert outputs[0].port == 8000  # fallback
@@ -210,13 +220,19 @@ def test_stats_collector_accepts_mounted_output(requests_mock):
         outputs_from_stream_settings,
     )
 
-    outputs = outputs_from_stream_settings([
-        {
-            "enable": "true", "host": "127.0.0.1", "port": "8000",
-            "mount": "/main.ogg", "admin_user": "admin",
-            "admin_pass": "hackme", "type": "mp3",
-        }
-    ])
+    outputs = outputs_from_stream_settings(
+        [
+            {
+                "enable": "true",
+                "host": "127.0.0.1",
+                "port": "8000",
+                "mount": "/main.ogg",
+                "admin_user": "admin",
+                "admin_pass": "hackme",
+                "type": "mp3",
+            }
+        ]
+    )
     requests_mock.get(
         "http://127.0.0.1:8000/admin/stats.xml",
         content=icecast_stats.read_bytes(),
@@ -242,8 +258,11 @@ def _mounted(stream_id=None):
     from rastatime_playout.history.stats import outputs_from_stream_settings
 
     entry = {
-        "host": "127.0.0.1", "port": "8000", "mount": "/main.ogg",
-        "admin_user": "admin", "admin_pass": "hackme",
+        "host": "127.0.0.1",
+        "port": "8000",
+        "mount": "/main.ogg",
+        "admin_user": "admin",
+        "admin_pass": "hackme",
     }
     if stream_id is not None:
         entry["stream_id"] = stream_id
@@ -333,7 +352,5 @@ def test_status_uses_stream_number_not_position(requests_mock):
 def test_status_falls_back_to_position_without_stream_number(requests_mock):
     requests_mock.get(STATS_URL, content=icecast_stats.read_bytes())
     legacy_client = Mock()
-    StatsCollector(legacy_client).collect(
-        _mounted(), _timestamp=datetime(2026, 10, 26, 12, 0)
-    )
+    StatsCollector(legacy_client).collect(_mounted(), _timestamp=datetime(2026, 10, 26, 12, 0))
     assert _status_calls(legacy_client) == [{1: "OK"}]

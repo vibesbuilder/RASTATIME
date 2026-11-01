@@ -18,6 +18,7 @@ appended.  Identical lines are ignored.  Settings (Settings -> General,
 effect at the next change.  I/O runs on a worker thread; the playout
 callback never blocks.
 """
+
 from __future__ import annotations
 
 import ftplib
@@ -27,9 +28,10 @@ import os
 import shutil
 import subprocess
 import threading
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Mapping, Optional, Tuple
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +174,9 @@ def _find_curl_with_libssh2() -> Optional[str]:
         if not cand or not Path(cand).exists():
             continue
         try:
-            out = subprocess.run([cand, "--version"], capture_output=True, text=True, timeout=10, check=False).stdout
+            out = subprocess.run(
+                [cand, "--version"], capture_output=True, text=True, timeout=10, check=False
+            ).stdout
         except Exception:  # pylint: disable=broad-exception-caught
             continue
         if "libssh2" in out or "sftp" in out.lower():
@@ -187,16 +191,31 @@ def upload_ftp(cfg: LiveTextFtp, local_file: Path) -> None:
     if cfg.protocol == "sftp":
         curl = _find_curl_with_libssh2()
         if not curl:
-            raise RuntimeError("SFTP needs a curl with libssh2 (e.g. the one shipped with Git for Windows)")
+            raise RuntimeError(
+                "SFTP needs a curl with libssh2 (e.g. the one shipped with Git for Windows)"
+            )
         port = f":{cfg.port}" if cfg.port else ""
         cmd = [
-            curl, "-sS", "--connect-timeout", "10", "--max-time", str(int(FTP_TIMEOUT_SECONDS)),
-            "-k", "-u", f"{cfg.username}:{cfg.password}", "-T", str(local_file),
+            curl,
+            "-sS",
+            "--connect-timeout",
+            "10",
+            "--max-time",
+            str(int(FTP_TIMEOUT_SECONDS)),
+            "-k",
+            "-u",
+            f"{cfg.username}:{cfg.password}",
+            "-T",
+            str(local_file),
             f"sftp://{cfg.host}{port}{remote}",
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=FTP_TIMEOUT_SECONDS + 5, check=False)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=FTP_TIMEOUT_SECONDS + 5, check=False
+        )
         if result.returncode != 0:
-            raise RuntimeError(f"curl exit {result.returncode}: {(result.stderr or '').strip()[:200]}")
+            raise RuntimeError(
+                f"curl exit {result.returncode}: {(result.stderr or '').strip()[:200]}"
+            )
         return
     client: ftplib.FTP = ftplib.FTP_TLS() if cfg.protocol == "ftps" else ftplib.FTP()
     client.connect(cfg.host, cfg.port or 21, timeout=FTP_TIMEOUT_SECONDS)
@@ -217,6 +236,7 @@ def upload_ftp(cfg: LiveTextFtp, local_file: Path) -> None:
 # the writer
 # ---------------------------------------------------------------------------
 
+
 class LiveTextWriter:
     def __init__(
         self,
@@ -229,13 +249,13 @@ class LiveTextWriter:
         self._ftp_upload = ftp_upload
         self._lock = threading.Lock()
         self._io_lock = threading.Lock()
-        self._last: Optional[Tuple[str, LiveTextConfig]] = None
+        self._last: Optional[tuple[str, LiveTextConfig]] = None
         self._seq = 0
         self.last_error: Optional[str] = None
 
     # -- settings for the Liquidsoap side --------------------------------------
 
-    def liquidsoap_settings(self) -> Optional[Tuple[bool, int]]:
+    def liquidsoap_settings(self) -> Optional[tuple[bool, int]]:
         cfg = self._read_config()
         if cfg is None:
             return None
@@ -272,7 +292,9 @@ class LiveTextWriter:
         if wait:
             self._write_targets(line, cfg, seq)
         else:
-            t = threading.Thread(target=self._write_targets, args=(line, cfg, seq), name="live-text", daemon=True)
+            t = threading.Thread(
+                target=self._write_targets, args=(line, cfg, seq), name="live-text", daemon=True
+            )
             t.start()
         return True
 
@@ -316,12 +338,18 @@ class LiveTextWriter:
                             self._ftp_upload(cfg.ftp, source)
                             self.last_error = None
                             logger.info(
-                                "Live Text: pushed to %s://%s%s", cfg.ftp.protocol, cfg.ftp.host, cfg.ftp.remote_path(),
+                                "Live Text: pushed to %s://%s%s",
+                                cfg.ftp.protocol,
+                                cfg.ftp.host,
+                                cfg.ftp.remote_path(),
                             )
                         except Exception as exc:  # pylint: disable=broad-exception-caught
                             self.last_error = f"ftp: {exc}"
                             logger.warning(
-                                "Live Text: FTP push to %s://%s failed: %s", cfp(cfg), cfg.ftp.host, exc,
+                                "Live Text: FTP push to %s://%s failed: %s",
+                                cfp(cfg),
+                                cfg.ftp.host,
+                                exc,
                             )
             logger.info("Live Text: %r", line)
 

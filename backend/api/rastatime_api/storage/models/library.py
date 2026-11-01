@@ -25,7 +25,10 @@ class Library(models.Model):
     # RASTATIME 2026-09-29 - crossfade per track type (legacy migration
     # 0062): seconds two neighbouring tracks overlap; NULL = house value.
     crossfade_duration = models.DecimalField(
-        max_digits=5, decimal_places=2, blank=True, null=True,
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        null=True,
     )
     # RASTATIME 2026-09-30 - "No Fade during Crossover" as the type's preset
     # (legacy migration 0063): tracks set to "As the track type" keep their

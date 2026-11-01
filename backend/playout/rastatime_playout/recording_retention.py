@@ -27,14 +27,15 @@ folder are ever considered.  Any other name — and in particular the
 disabled (no-op) unless the recorder is enabled, a folder is set, AND
 ``retention_days > 0``.
 """
+
 from __future__ import annotations
 
 import logging
 import shutil
 import threading
+from collections.abc import Callable
 from datetime import date, datetime
 from pathlib import Path
-from typing import Callable, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ def prune_old_recordings(
     retention_days: int,
     *,
     today: date,
-) -> List[Path]:
+) -> list[Path]:
     """
     Delete per-day subfolders (named ``YYYY-MM-DD``) under ``folder`` that
     are at least ``retention_days`` days old.  Returns the deleted folder
@@ -71,7 +72,7 @@ def prune_old_recordings(
         logger.warning("Recording retention: cannot list %s: %s", folder, exc)
         return []
 
-    deleted: List[Path] = []
+    deleted: list[Path] = []
     for entry in entries:
         if not entry.is_dir():
             continue
@@ -86,7 +87,8 @@ def prune_old_recordings(
             except OSError as exc:
                 logger.warning(
                     "Recording retention: could not delete %s: %s",
-                    entry, exc,
+                    entry,
+                    exc,
                 )
     return deleted
 
@@ -113,7 +115,7 @@ class RecordingRetentionThread(threading.Thread):
 
     def __init__(
         self,
-        get_config: Callable[[], Dict],
+        get_config: Callable[[], dict],
         *,
         interval_s: float = 3600.0,
         today_fn: Callable[[], date] = date.today,
@@ -158,8 +160,9 @@ class RecordingRetentionThread(threading.Thread):
         )
         if deleted:
             logger.info(
-                "Recording retention: deleted %d day-folder(s) older than "
-                "%d days from %s (%s).",
-                len(deleted), retention_days, cfg["folder"],
+                "Recording retention: deleted %d day-folder(s) older than %d days from %s (%s).",
+                len(deleted),
+                retention_days,
+                cfg["folder"],
                 ", ".join(p.name for p in deleted),
             )

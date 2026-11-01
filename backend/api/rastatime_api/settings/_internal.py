@@ -18,11 +18,11 @@ INSTALLED_APPS = [
     "rastatime_api.storage",
     "rastatime_api.podcasts",
     "rastatime_api.schedule",
-    "rastatime_api.soundcard",     # T13.1 — soundcard settings persistence
-    "rastatime_api.linein",        # T14.1 — line-in source persistence
+    "rastatime_api.soundcard",  # T13.1 — soundcard settings persistence
+    "rastatime_api.linein",  # T14.1 — line-in source persistence
     "rastatime_api.song_request",  # SR Phase 1 — listener song requests
-    "rastatime_api.preflight",     # T-B4-2 — pre-flight schedule warnings (line-in device missing etc.)
-    "rastatime_api.playback",      # T19.1 — normalized playback event record
+    "rastatime_api.preflight",  # T-B4-2 — pre-flight schedule warnings (line-in device missing etc.)
+    "rastatime_api.playback",  # T19.1 — normalized playback event record
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -84,9 +84,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # (T20.2 adds the German locale scaffolding).
 
 LANGUAGE_CODE = "en-us"
-TIME_ZONE     = "UTC"
-USE_I18N      = True
-USE_TZ        = True
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
 
 # Project-level locale directory — contains German (and future) .po/.mo files
 # for RASTATIME-specific Django strings.

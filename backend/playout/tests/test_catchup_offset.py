@@ -7,6 +7,7 @@ Production 2026-09-28: after a PLAYOUT restart the catch-up replayed
 moved the playing row 9 s (same row id) and the refresh declared it
 "removed from schedule", stopped it and restarted the same track.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -14,7 +15,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from rastatime_playout.player.events import EventKind, FileEvent, WebStreamEvent
@@ -84,6 +84,7 @@ def _refresh(s, events):
 # A - catch-up at the offset
 # ---------------------------------------------------------------------------
 
+
 def test_catch_up_hands_the_offset_to_the_start(sched):
     s, _ = sched
     now = datetime.utcnow()
@@ -120,7 +121,7 @@ def test_catch_up_past_the_audio_plays_nothing(sched):
     s._on_file_start("K", ev, seek=199.8)
     engine.play.assert_not_called()
     s._notify_media_started.assert_called_once_with(ev.row_id)
-    assert s._current_event is ev              # bookkeeping for the stop timer
+    assert s._current_event is ev  # bookkeeping for the stop timer
 
 
 def test_catch_up_drops_a_queued_copy_that_would_start_at_the_top(sched):
@@ -141,11 +142,14 @@ def test_catch_up_drops_a_queued_copy_that_would_start_at_the_top(sched):
 # B - identity without the start; re-timed rows are rebound
 # ---------------------------------------------------------------------------
 
+
 def test_same_item_ignores_the_start_but_not_the_medium(sched):
     s, _ = sched
     now = datetime.utcnow()
     a = _file(now, row_id=5, file_id=9)
-    assert s._same_scheduled_item(a, _file(now + timedelta(seconds=9), row_id=5, file_id=9, cue_in=2.2))
+    assert s._same_scheduled_item(
+        a, _file(now + timedelta(seconds=9), row_id=5, file_id=9, cue_in=2.2)
+    )
     assert not s._same_scheduled_item(a, _file(now, row_id=5, file_id=10))
     assert not s._same_scheduled_item(a, _file(now, row_id=6, file_id=9))
     w = _webstream(now)
@@ -162,7 +166,9 @@ def test_refresh_rebinds_a_re_timed_running_row(sched):
     running = _file(now - timedelta(seconds=220), row_id=6252, file_id=614, seconds=300.0)
     s._playing_key, s._current_event = "2026-09-28-16-26-41#file-6252", running
     s._current_audio_path = "C:/cache/a.mp3"
-    moved = _file(now - timedelta(seconds=211), row_id=6252, file_id=614, cue_in=2.18, seconds=300.0)
+    moved = _file(
+        now - timedelta(seconds=211), row_id=6252, file_id=614, cue_in=2.18, seconds=300.0
+    )
 
     with patch.object(s, "_on_file_start") as on_start:
         _refresh(s, {"2026-09-28-16-26-50#file-6252": moved})
@@ -170,7 +176,7 @@ def test_refresh_rebinds_a_re_timed_running_row(sched):
     on_start.assert_not_called()
     engine.stop.assert_not_called()
     assert s._playing_key == "2026-09-28-16-26-50#file-6252"
-    assert s._current_event is running        # the audio on air keeps its timing
+    assert s._current_event is running  # the audio on air keeps its timing
 
 
 def test_refresh_stops_a_running_row_moved_into_the_future(sched):
@@ -188,8 +194,8 @@ def test_refresh_stops_a_running_row_moved_into_the_future(sched):
     engine.stop.assert_called_once()
     on_start.assert_not_called()
     assert s._playing_key is None and s._current_event is None
-    assert s._queued_ahead is None            # flushed with the stop
-    assert timers["K2"][0] is not None        # armed for its new start
+    assert s._queued_ahead is None  # flushed with the stop
+    assert timers["K2"][0] is not None  # armed for its new start
 
 
 def test_refresh_still_removes_a_really_gone_row(sched):
@@ -198,7 +204,7 @@ def test_refresh_still_removes_a_really_gone_row(sched):
     running = _file(now - timedelta(seconds=20), row_id=7, file_id=3)
     s._playing_key, s._current_event = "K1", running
     s._current_audio_path = "C:/cache/a.mp3"
-    other = _file(now + timedelta(seconds=120), row_id=9, file_id=3)   # same file, other row
+    other = _file(now + timedelta(seconds=120), row_id=9, file_id=3)  # same file, other row
 
     _refresh(s, {"K2": other})
 
@@ -209,12 +215,14 @@ def test_refresh_still_removes_a_really_gone_row(sched):
 def test_queue_ahead_re_enqueues_a_re_cued_successor(sched):
     s, engine = sched
     now = datetime.utcnow()
-    prev = _file(now - timedelta(seconds=190), row_id=1, file_id=1)        # 10 s left
+    prev = _file(now - timedelta(seconds=190), row_id=1, file_id=1)  # 10 s left
     queued = _file(now + timedelta(seconds=8), row_id=2, file_id=2)
     s._current_event, s._playing_key = prev, "p"
     s._queued_ahead = ("old", queued)
     # same row, same key shift: nothing to do
-    s._on_file_queue_ahead("new", queued.model_copy(update={"start": queued.start + timedelta(seconds=1)}))
+    s._on_file_queue_ahead(
+        "new", queued.model_copy(update={"start": queued.start + timedelta(seconds=1)})
+    )
     engine.flush_queued.assert_not_called()
     engine.enqueue.assert_not_called()
     assert s._queued_ahead[0] == "new"
@@ -231,13 +239,14 @@ def test_queue_ahead_re_enqueues_a_re_cued_successor(sched):
 # "remaining" that belonged to the successor
 # ---------------------------------------------------------------------------
 
+
 def test_refresh_does_not_catch_up_a_predecessor_of_the_playing_item(sched):
     """The successor's PLAY fired while the refresh was fetching; the
     re-arm saw the predecessor 'in progress' (its row overlaps by the
     crossfade) and caught it up - cutting the successor."""
     s, _ = sched
     now = datetime.utcnow()
-    prev = _file(now - timedelta(seconds=325), row_id=1, file_id=1, seconds=328.0)   # 3 s left
+    prev = _file(now - timedelta(seconds=325), row_id=1, file_id=1, seconds=328.0)  # 3 s left
     cur = _file(now - timedelta(seconds=1), row_id=2, file_id=2)
     s._playing_key, s._current_event = "cur", cur
     with patch.object(s, "_on_file_start") as on_start:
@@ -283,7 +292,7 @@ def test_plausible_engine_remaining_still_skips_a_late_predecessor(sched):
     prev = _file(now - timedelta(seconds=145), row_id=1, file_id=1, seconds=300.0)
     nxt = _file(now, row_id=2, file_id=2)
     s._current_event, s._playing_key = prev, "p"
-    s._current_started_at = now - timedelta(seconds=100)      # pushed 45 s late
+    s._current_started_at = now - timedelta(seconds=100)  # pushed 45 s late
     s._current_clip_seconds = 300.0
     s._queued_ahead = ("n", nxt)
     engine.playing_remaining_seconds.return_value = 200.0
@@ -304,14 +313,17 @@ def test_file_start_records_push_time_and_clip_after_seek(sched):
 # emptied the queue, the successor's PLAY adopted nothing -> dead air
 # ---------------------------------------------------------------------------
 
+
 def test_fresh_liquidsoap_instance_forgets_the_queued_successor(sched):
     s, _ = sched
     now = datetime.utcnow()
     s._queued_ahead = ("n", _file(now, row_id=2, file_id=2))
     s._queued_ahead_prev = _file(now - timedelta(seconds=100), row_id=1, file_id=1)
     s._current_started_at, s._current_clip_seconds = now, 200.0
-    with patch.object(s, "_retry_initial_liquidsoap_state", return_value=True), \
-         patch.object(s, "_request_source_reconcile"):
+    with (
+        patch.object(s, "_retry_initial_liquidsoap_state", return_value=True),
+        patch.object(s, "_request_source_reconcile"),
+    ):
         s._after_liquidsoap_restart(attempts=1, delay=0.0)
     assert s._queued_ahead is None and s._queued_ahead_prev is None
     assert s._current_started_at is None and s._current_clip_seconds is None
@@ -327,13 +339,17 @@ def test_boundary_restart_pushes_the_successor_afresh(sched):
     s._boundary_restart_pending = "rastatime.liq changed"
 
     def restart(reason, settle_async=False):
-        with patch.object(s, "_retry_initial_liquidsoap_state", return_value=True), \
-             patch.object(s, "_request_source_reconcile"):
+        with (
+            patch.object(s, "_retry_initial_liquidsoap_state", return_value=True),
+            patch.object(s, "_request_source_reconcile"),
+        ):
             s._after_liquidsoap_restart(attempts=1, delay=0.0)
         return True
 
-    with patch.object(s, "_boundary_allows_restart", return_value=True), \
-         patch.object(s, "_perform_planned_restart", side_effect=restart):
+    with (
+        patch.object(s, "_boundary_allows_restart", return_value=True),
+        patch.object(s, "_perform_planned_restart", side_effect=restart),
+    ):
         s._on_file_start("n", nxt)
     engine.adopt_queued.assert_not_called()
     engine.play.assert_called_once()
@@ -343,10 +359,15 @@ def test_boundary_restart_pushes_the_successor_afresh(sched):
 
 def _boundary_restart_taking(s, seconds):
     """A planned restart that blocks for ``seconds`` (simulated by shifting the clock)."""
+
     def restart(reason, settle_async=False):
-        with patch.object(s, "_retry_initial_liquidsoap_state", return_value=True),              patch.object(s, "_request_source_reconcile"):
+        with (
+            patch.object(s, "_retry_initial_liquidsoap_state", return_value=True),
+            patch.object(s, "_request_source_reconcile"),
+        ):
             s._after_liquidsoap_restart(attempts=1, delay=0.0)
         return True
+
     return restart
 
 
@@ -360,7 +381,10 @@ def test_boundary_restart_enters_the_track_by_the_time_it_took(sched):
     s._current_event, s._playing_key = prev, "p"
     s._queued_ahead = ("n", nxt)
     s._boundary_restart_pending = "rastatime.liq changed"
-    with patch.object(s, "_boundary_allows_restart", return_value=True),          patch.object(s, "_perform_planned_restart", side_effect=_boundary_restart_taking(s, 3.8)):
+    with (
+        patch.object(s, "_boundary_allows_restart", return_value=True),
+        patch.object(s, "_perform_planned_restart", side_effect=_boundary_restart_taking(s, 3.8)),
+    ):
         s._on_file_start("n", nxt)
     engine.play.assert_called_once()
     assert engine.play.call_args.kwargs["cue_in"] == pytest.approx(1.0 + 3.8, abs=0.3)
@@ -375,7 +399,10 @@ def test_boundary_restart_within_timer_granularity_leaves_the_push_alone(sched):
     nxt = _file(now - timedelta(seconds=0.3), row_id=2, file_id=2)
     s._current_event, s._playing_key = prev, "p"
     s._boundary_restart_pending = "rastatime.liq changed"
-    with patch.object(s, "_boundary_allows_restart", return_value=True),          patch.object(s, "_perform_planned_restart", side_effect=_boundary_restart_taking(s, 0.3)):
+    with (
+        patch.object(s, "_boundary_allows_restart", return_value=True),
+        patch.object(s, "_perform_planned_restart", side_effect=_boundary_restart_taking(s, 0.3)),
+    ):
         s._on_file_start("n", nxt)
     assert engine.play.call_args.kwargs["cue_in"] == 0.0
 
@@ -395,13 +422,14 @@ def test_no_boundary_restart_means_no_catch_up(sched):
 # E - 2026-10-03 12:17:55: refresh tick in the row's start second
 # ---------------------------------------------------------------------------
 
+
 def test_catch_up_skips_a_row_whose_timer_is_starting_right_now(sched):
     s, engine = sched
     now = datetime.utcnow()
     jingle = _file(now - timedelta(milliseconds=50), row_id=5, file_id=5, seconds=4)
     s._current_event, s._playing_key = _file(now - timedelta(seconds=170), row_id=1, file_id=1), "p"
-    s._starting = {"j": jingle}                       # its timer PLAY is executing
-    s._arm_file_event("j2", jingle, now)              # the refresh re-keys it
+    s._starting = {"j": jingle}  # its timer PLAY is executing
+    s._arm_file_event("j2", jingle, now)  # the refresh re-keys it
     start_t, stop_t = s._timers["j2"]
     assert start_t is None and stop_t is not None
     engine.play.assert_not_called()
@@ -414,13 +442,15 @@ def test_catch_up_still_enters_a_row_nobody_is_starting(sched):
     s._current_event, s._playing_key = None, None
     with patch("rastatime_playout.playout_scheduler.threading.Timer") as timer:
         s._arm_file_event("k", row, now)
-    assert any(c.args[0] == 0 for c in timer.call_args_list)   # the catch-up Timer(0, ...)
+    assert any(c.args[0] == 0 for c in timer.call_args_list)  # the catch-up Timer(0, ...)
 
 
 def test_refresh_leaves_the_hand_over_to_the_queue_when_the_row_ended_this_second(sched):
     s, engine = sched
     now = datetime.utcnow()
-    prev = _file(now - timedelta(seconds=200.1), row_id=1, file_id=1, seconds=200.0)   # ended 0.1 s ago
+    prev = _file(
+        now - timedelta(seconds=200.1), row_id=1, file_id=1, seconds=200.0
+    )  # ended 0.1 s ago
     nxt = _file(now + timedelta(seconds=1), row_id=2, file_id=2)
     s._current_event, s._playing_key = prev, "p"
     s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
@@ -432,7 +462,7 @@ def test_refresh_leaves_the_hand_over_to_the_queue_when_the_row_ended_this_secon
 def test_refresh_still_tears_down_a_row_truncated_long_ago(sched):
     s, engine = sched
     now = datetime.utcnow()
-    prev = _file(now - timedelta(seconds=230), row_id=1, file_id=1, seconds=200.0)   # ended 30 s ago
+    prev = _file(now - timedelta(seconds=230), row_id=1, file_id=1, seconds=200.0)  # ended 30 s ago
     nxt = _file(now + timedelta(seconds=1), row_id=2, file_id=2)
     s._current_event, s._playing_key = prev, "p"
     s._queued_ahead = ("n", nxt)
@@ -445,19 +475,20 @@ def test_refresh_still_tears_down_a_row_truncated_long_ago(sched):
 # F - 2026-10-03 12:40:23: the held-back row is queued when the jingle starts
 # ---------------------------------------------------------------------------
 
+
 def test_jingle_start_queues_the_row_held_back_behind_it(sched):
     s, engine = sched
     now = datetime.utcnow()
-    prev = _file(now - timedelta(seconds=178), row_id=1, file_id=1, seconds=180.0)   # 2 s left
+    prev = _file(now - timedelta(seconds=178), row_id=1, file_id=1, seconds=180.0)  # 2 s left
     tief = _file(now, row_id=2, file_id=2, seconds=3)
     music = _file(now + timedelta(seconds=3), row_id=3, file_id=3)
     s._current_event, s._playing_key = prev, "p"
     s._armed_events = {"tief": tief, "music": music}
     s._queued_ahead, s._queued_ahead_prev = ("tief", tief), prev
-    s._on_file_queue_ahead("music", music)             # lead window opened early
+    s._on_file_queue_ahead("music", music)  # lead window opened early
     engine.enqueue.assert_not_called()
     assert s._deferred_queue_ahead == ("music", music)
-    s._on_file_start("tief", tief)                       # adopts the queued jingle
+    s._on_file_start("tief", tief)  # adopts the queued jingle
     engine.adopt_queued.assert_called_once()
     engine.enqueue.assert_called_once()
     assert engine.enqueue.call_args.kwargs["cue_out"] == music.cue_out
@@ -471,7 +502,7 @@ def test_held_back_row_is_dropped_when_it_left_the_schedule(sched):
     tief = _file(now, row_id=2, file_id=2, seconds=3)
     music = _file(now + timedelta(seconds=3), row_id=3, file_id=3)
     s._current_event, s._playing_key = prev, "p"
-    s._armed_events = {"tief": tief}                     # music vanished from the schedule
+    s._armed_events = {"tief": tief}  # music vanished from the schedule
     s._queued_ahead, s._queued_ahead_prev = ("tief", tief), prev
     s._deferred_queue_ahead = ("music", music)
     s._on_file_start("tief", tief)
@@ -483,17 +514,19 @@ def test_held_back_row_is_dropped_when_it_left_the_schedule(sched):
 # G - 2026-10-10 11:15: slow housekeeping in refresh() armed the timers late
 # ---------------------------------------------------------------------------
 
+
 def test_refresh_takes_the_timer_clock_reference_after_the_housekeeping(sched):
     import time as _time
+
     s, _ = sched
     now = datetime.utcnow()
     row = _file(now + timedelta(seconds=30), row_id=9, file_id=9)
-    s._refresh_storage_root = lambda: _time.sleep(0.4)      # a 0.4 s storage-location call
+    s._refresh_storage_root = lambda: _time.sleep(0.4)  # a 0.4 s storage-location call
     timers = _refresh(s, {"r": row})
     start_t = timers["r"][0]
     expected = (row.start - datetime.utcnow()).total_seconds()
     assert start_t is not None
-    assert abs(start_t.interval - expected) < 0.15         # not 0.4 s too long
+    assert abs(start_t.interval - expected) < 0.15  # not 0.4 s too long
 
 
 def test_crash_detected_restart_forgets_the_queued_successor(sched):
@@ -501,8 +534,10 @@ def test_crash_detected_restart_forgets_the_queued_successor(sched):
     now = datetime.utcnow()
     s._queued_ahead = ("n", _file(now, row_id=2, file_id=2))
     s._last_liquidsoap_process = (100, 500.0)
-    with patch.object(s, "_liquidsoap_process_identity", return_value=(200, 3.0)), \
-         patch.object(s, "_apply_initial_liquidsoap_state", return_value=(True, None)), \
-         patch.object(s, "_request_source_reconcile"):
+    with (
+        patch.object(s, "_liquidsoap_process_identity", return_value=(200, 3.0)),
+        patch.object(s, "_apply_initial_liquidsoap_state", return_value=(True, None)),
+        patch.object(s, "_request_source_reconcile"),
+    ):
         s._maybe_reinit_after_liquidsoap_restart()
     assert s._queued_ahead is None

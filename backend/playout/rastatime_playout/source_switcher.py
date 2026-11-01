@@ -47,9 +47,10 @@ import logging
 import os
 import threading
 import time
+from collections.abc import Callable, Mapping
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Callable, Mapping, Optional
+from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger(__name__)
@@ -95,13 +96,17 @@ def reconcile_interval_from_env(
     except ValueError:
         logger.warning(
             "%s=%r is not a number - using %.0f s",
-            RECONCILE_INTERVAL_ENV, raw, default,
+            RECONCILE_INTERVAL_ENV,
+            raw,
+            default,
         )
         return default
     if value < MIN_RECONCILE_INTERVAL_S:
         logger.warning(
             "%s=%r is below the %.0f s floor - using the floor",
-            RECONCILE_INTERVAL_ENV, raw, MIN_RECONCILE_INTERVAL_S,
+            RECONCILE_INTERVAL_ENV,
+            raw,
+            MIN_RECONCILE_INTERVAL_S,
         )
         return MIN_RECONCILE_INTERVAL_S
     return value
@@ -215,8 +220,10 @@ class SourceSwitcher:
         # Log + callback OUTSIDE the lock.
         logger.info(
             "SourceSwitcher: %s -> %s  (master=%s, show=%s)",
-            old_state.value, new_state.value,
-            self._master_connected, self._show_connected,
+            old_state.value,
+            new_state.value,
+            self._master_connected,
+            self._show_connected,
         )
         try:
             self._switch_callback(new_state)
@@ -234,6 +241,7 @@ class SourceSwitcher:
 # ---------------------------------------------------------------------------
 # HTTP listener
 # ---------------------------------------------------------------------------
+
 
 class _EventHandler(BaseHTTPRequestHandler):
     """
@@ -301,7 +309,7 @@ class _EventHandler(BaseHTTPRequestHandler):
             logger.exception("listener error: %s", exc)
             self._send(500, "internal error")
 
-    def do_GET(self) -> None:   # noqa: N802 — http.server requires this name
+    def do_GET(self) -> None:  # noqa: N802 — http.server requires this name
         self._dispatch()
 
     def do_POST(self) -> None:  # noqa: N802
@@ -323,7 +331,7 @@ class _EventHandler(BaseHTTPRequestHandler):
             self._send(500, "switcher not initialised")
             return
 
-        connected = (status == "on")
+        connected = status == "on"
         sw = _EventHandler.switcher
 
         if source == "master":
@@ -420,7 +428,11 @@ class _EventHandler(BaseHTTPRequestHandler):
         checker = _EventHandler.dj_auth
         throttle = getattr(checker, "throttle", None)
         cleared = bool(throttle.unblock(address)) if throttle is not None else False
-        logger.info("dj-auth: operator unblocked %s (%s)", address, "cleared" if cleared else "was not blocked")
+        logger.info(
+            "dj-auth: operator unblocked %s (%s)",
+            address,
+            "cleared" if cleared else "was not blocked",
+        )
         self._send_json(200, {"address": address, "cleared": cleared})
 
     def _handle_source_state(self) -> None:
@@ -492,9 +504,7 @@ class _EventHandler(BaseHTTPRequestHandler):
 
         sched = _EventHandler.scheduler
         if sched is None or not hasattr(sched, "kick_dj_source"):
-            logger.error(
-                "disconnect-source: scheduler is None or missing kick_dj_source"
-            )
+            logger.error("disconnect-source: scheduler is None or missing kick_dj_source")
             self._send(500, "scheduler not initialised")
             return
 
@@ -520,9 +530,7 @@ class _EventHandler(BaseHTTPRequestHandler):
         """
         sched = _EventHandler.scheduler
         if sched is None or not hasattr(sched, "set_audio_output"):
-            logger.error(
-                "set-audio-output: scheduler is None or missing set_audio_output"
-            )
+            logger.error("set-audio-output: scheduler is None or missing set_audio_output")
             self._send(500, "scheduler not initialised")
             return
 
@@ -629,7 +637,8 @@ def _safe_preflight_scan(preflight) -> None:
         preflight.scan_once()
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
-            "reload-schedule: preflight rescan failed: %s", exc,
+            "reload-schedule: preflight rescan failed: %s",
+            exc,
         )
 
 
@@ -707,20 +716,16 @@ def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
     # Anything else (incl. an ERROR reply for an undefined harbor)
     # is treated as "DJ source present" - but we filter ERRORs
     # explicitly so a mis-configured .liq doesn't fake DJ-connects.
-    actual_master = (
-        master_resp != "no source client connected"
-        and not master_resp.startswith("ERROR")
+    actual_master = master_resp != "no source client connected" and not master_resp.startswith(
+        "ERROR"
     )
-    actual_show = (
-        show_resp != "no source client connected"
-        and not show_resp.startswith("ERROR")
-    )
+    actual_show = show_resp != "no source client connected" and not show_resp.startswith("ERROR")
 
     if actual_master != switcher.is_master_connected():
         logger.warning(
-            "SourceSwitcher: master state reconcile %s -> %s "
-            "(liquidsoap master_dj.status: %r)",
-            switcher.is_master_connected(), actual_master,
+            "SourceSwitcher: master state reconcile %s -> %s (liquidsoap master_dj.status: %r)",
+            switcher.is_master_connected(),
+            actual_master,
             master_resp,
         )
         if actual_master:
@@ -730,9 +735,9 @@ def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
 
     if actual_show != switcher.is_show_connected():
         logger.warning(
-            "SourceSwitcher: show state reconcile %s -> %s "
-            "(liquidsoap show_dj.status: %r)",
-            switcher.is_show_connected(), actual_show,
+            "SourceSwitcher: show state reconcile %s -> %s (liquidsoap show_dj.status: %r)",
+            switcher.is_show_connected(),
+            actual_show,
             show_resp,
         )
         if actual_show:
@@ -818,11 +823,14 @@ def _liquidsoap_state_poll_loop(
         "Source state reconciler started (Liquidsoap telnet %s:%d; verifies "
         "master_dj.status + show_dj.status %.1fs after each harbor event "
         "and every %.0fs)",
-        telnet_host, telnet_port, settle_s, interval_s,
+        telnet_host,
+        telnet_port,
+        settle_s,
+        interval_s,
     )
 
     ticks = 0
-    events_present: Optional[bool] = None    # unknown until probed
+    events_present: Optional[bool] = None  # unknown until probed
     while max_ticks is None or ticks < max_ticks:
         try:
             if events_present is not True:
@@ -830,7 +838,8 @@ def _liquidsoap_state_poll_loop(
                 if probed and events_present is not None:
                     logger.info(
                         "SourceSwitcher: the loaded rastatime.liq posts harbor "
-                        "events - verifying every %.0fs from now on", interval_s,
+                        "events - verifying every %.0fs from now on",
+                        interval_s,
                     )
                 elif not probed and events_present is not False:
                     logger.warning(
@@ -842,15 +851,16 @@ def _liquidsoap_state_poll_loop(
                 events_present = probed
             _reconcile_liquidsoap_once(client, switcher)
         except ConnectionError as exc:
-            events_present = None         # a fresh instance may carry another render
+            events_present = None  # a fresh instance may carry another render
             logger.warning(
                 "SourceSwitcher: Liquidsoap telnet verification failed "
-                "(connection): %s - will retry next round", exc,
+                "(connection): %s - will retry next round",
+                exc,
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
-                "SourceSwitcher: Liquidsoap telnet verification unexpected "
-                "error: %s", exc,
+                "SourceSwitcher: Liquidsoap telnet verification unexpected error: %s",
+                exc,
             )
         ticks += 1
         if max_ticks is not None and ticks >= max_ticks:
@@ -903,18 +913,21 @@ def start_listener(
     # each on their own coalescing runner (see _handle_reload_schedule).
     preflight_runner = (
         _CoalescingRunner(
-            "preflight-rescan-on-reload", lambda: _safe_preflight_scan(preflight),
+            "preflight-rescan-on-reload",
+            lambda: _safe_preflight_scan(preflight),
         )
-        if preflight is not None else None
+        if preflight is not None
+        else None
     )
     _EventHandler.reload_runner = (
         _CoalescingRunner(
             "reload-schedule",
             lambda: _reload_schedule_once(scheduler, preflight_runner),
         )
-        if scheduler is not None else None
+        if scheduler is not None
+        else None
     )
-    _EventHandler.dj_auth = dj_auth      # /dj-auth (RASTATIME 2026-09-10)
+    _EventHandler.dj_auth = dj_auth  # /dj-auth (RASTATIME 2026-09-10)
     _EventHandler.live_text = live_text  # /live-text (RASTATIME 2026-09-28)
     server = ThreadingHTTPServer((host, port), _EventHandler)
     thread = threading.Thread(
@@ -927,7 +940,8 @@ def start_listener(
         "Playout HTTP listener bound to http://%s:%d "
         "(/source-event, /source-state, /reload-schedule, "
         "/disconnect-source, /set-audio-output, /dj-auth)",
-        host, port,
+        host,
+        port,
     )
 
     # The DJ-source mounts live inside Liquidsoap; its telnet server is

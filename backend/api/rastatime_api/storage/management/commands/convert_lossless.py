@@ -43,15 +43,17 @@ ffmpeg / ffprobe are found like the analyzer finds them (FFMPEG_PATH /
 FFPROBE_PATH or PATH); ``--ffmpeg-dir C:\\ffmpeg\\bin`` helps when the shell
 has neither.
 """
+
 from __future__ import annotations
 
 import importlib
 import os
 import shutil
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Optional
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
@@ -87,12 +89,12 @@ class Candidate:
 @dataclass
 class Scan:
     rows: int = 0
-    candidates: List[Candidate] = field(default_factory=list)
+    candidates: list[Candidate] = field(default_factory=list)
     not_lossless: int = 0
-    missing: List[str] = field(default_factory=list)
-    unreadable: List[str] = field(default_factory=list)
+    missing: list[str] = field(default_factory=list)
+    unreadable: list[str] = field(default_factory=list)
     # --ids: why a requested id is not a candidate
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -127,12 +129,7 @@ def starts_with_mpeg_audio(path: Path) -> bool:
                 head = handle.read(2)
     except OSError:
         return False
-    return (
-        len(head) >= 2
-        and head[0] == 0xFF
-        and (head[1] & 0xE0) == 0xE0
-        and (head[1] & 0x06) != 0
-    )
+    return len(head) >= 2 and head[0] == 0xFF and (head[1] & 0xE0) == 0xE0 and (head[1] & 0x06) != 0
 
 
 def resolve(root: Path, filepath: str) -> Path:
@@ -160,7 +157,7 @@ def _text(value: Any) -> str:
     return "" if value is None else str(value).strip()
 
 
-def tags_from_row(row: File) -> Dict[str, str]:
+def tags_from_row(row: File) -> dict[str, str]:
     """
     The tags written into the MP3, from the database row (the operator may
     have edited the metadata after the import).  Legacy stores 0 for an
@@ -241,9 +238,7 @@ def find_candidates(root: Path, conv, ids: Optional[Sequence[int]] = None) -> Sc
         # RASTATIME 2026-10-21 - Windows Media Audio too (the analyzer converts
         # it on import since the same day; 36 files slipped in before its restart)
         if conv.is_lossless(probe) or conv.is_wma(probe):
-            scan.candidates.append(
-                Candidate(file_id, filepath, path, probe, path.stat().st_size)
-            )
+            scan.candidates.append(Candidate(file_id, filepath, path, probe, path.stat().st_size))
         else:
             scan.not_lossless += 1
             if ids:
@@ -251,7 +246,7 @@ def find_candidates(root: Path, conv, ids: Optional[Sequence[int]] = None) -> Sc
     return scan
 
 
-def _read_mp3(path: Path) -> Dict[str, Any]:
+def _read_mp3(path: Path) -> dict[str, Any]:
     """The facts the analyzer would store for the new file."""
     # pylint: disable=import-outside-toplevel
     from mutagen.mp3 import MP3
@@ -268,7 +263,7 @@ def _read_mp3(path: Path) -> Dict[str, Any]:
     }
 
 
-def _measure_loudness(path: Path) -> Dict[str, Any]:
+def _measure_loudness(path: Path) -> dict[str, Any]:
     """
     EBU R128 of the new MP3 with the analyzer's own step.  The integrated
     loudness barely moves, but the MP3's true peak can sit higher than the
@@ -296,8 +291,8 @@ def convert_candidate(
     cand: Candidate,
     conv,
     now_fn: Callable = timezone.now,
-    read_mp3: Callable[[Path], Dict[str, Any]] = _read_mp3,
-    measure_loudness: Optional[Callable[[Path], Dict[str, Any]]] = None,
+    read_mp3: Callable[[Path], dict[str, Any]] = _read_mp3,
+    measure_loudness: Optional[Callable[[Path], dict[str, Any]]] = None,
 ) -> Outcome:
     """Convert one file; the original is only touched after the commit."""
     measure_loudness = measure_loudness or _measure_loudness
@@ -320,7 +315,7 @@ def convert_candidate(
         return Outcome("failed", f"conversion failed, original kept: {exc}")
     loudness = measure_loudness(dest)
 
-    changes: Dict[str, Any] = {}
+    changes: dict[str, Any] = {}
     old_length = None
     try:
         with transaction.atomic():
@@ -347,9 +342,10 @@ def convert_candidate(
             if is_file_name_title(title, cand.path):
                 changes["track_title"] = title[: -len(cand.path.suffix)] + MP3_SUFFIX
             new_length = timedelta(seconds=facts["length_seconds"])
-            if current.length is None or abs(
-                (new_length - current.length).total_seconds()
-            ) > LENGTH_TOLERANCE_SECONDS:
+            if (
+                current.length is None
+                or abs((new_length - current.length).total_seconds()) > LENGTH_TOLERANCE_SECONDS
+            ):
                 changes["length"] = new_length
                 # Cue-out never beyond the length (same rule as the Cue Points editor)
                 if current.cue_out is not None and current.cue_out > new_length:
@@ -385,9 +381,7 @@ def _use_ffmpeg_dir(directory: str) -> None:
 
 def _require_tool(env: str, name: str) -> None:
     if shutil.which(os.environ.get(env) or name) is None:
-        raise CommandError(
-            f"{name} not found - set {env}, put ffmpeg on PATH or pass --ffmpeg-dir"
-        )
+        raise CommandError(f"{name} not found - set {env}, put ffmpeg on PATH or pass --ffmpeg-dir")
 
 
 class Command(BaseCommand):

@@ -23,6 +23,7 @@ refuses uploads, the import-folder scan skips, podcast downloads answer
 409.  A job whose process died (API restart) shows as ``interrupted``;
 starting again resumes the copy.
 """
+
 from __future__ import annotations
 
 import json
@@ -33,9 +34,9 @@ import shutil
 import subprocess
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from django.db import connection
 
@@ -55,13 +56,13 @@ class MoveInProgress(Exception):
 
 
 class InvalidTarget(ValueError):
-    def __init__(self, errors: List[str]):
+    def __init__(self, errors: list[str]):
         super().__init__("; ".join(errors))
         self.errors = errors
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def load_state() -> dict:
@@ -81,7 +82,7 @@ def save_state(state: dict) -> None:
 
 def validate_target(target: str, source: str, library_bytes: int) -> dict:
     """Checks a candidate location; never raises, returns ok/errors/space."""
-    errors: List[str] = []
+    errors: list[str] = []
     t = storage_root.normalize(target)
     s = storage_root.normalize(source)
     if not t:
@@ -120,12 +121,18 @@ def validate_target(target: str, source: str, library_bytes: int) -> dict:
                     f"Not enough free space: {free // 1048576} MB free, "
                     f"{needed // 1048576} MB needed."
                 )
-    return {"ok": not errors, "errors": errors, "target": t, "free_bytes": free, "needed_bytes": needed}
+    return {
+        "ok": not errors,
+        "errors": errors,
+        "target": t,
+        "free_bytes": free,
+        "needed_bytes": needed,
+    }
 
 
-def verify_copy(source: str, target: str, limit: int = 20) -> List[str]:
+def verify_copy(source: str, target: str, limit: int = 20) -> list[str]:
     """Relative paths missing at the target or differing in size."""
-    problems: List[str] = []
+    problems: list[str] = []
     src = Path(source)
     for dirpath, _dirs, names in os.walk(source):
         for name in names:
@@ -142,11 +149,15 @@ def verify_copy(source: str, target: str, limit: int = 20) -> List[str]:
     return problems
 
 
-def unresolvable_db_paths(target: str, limit: int = 20) -> List[str]:
+def unresolvable_db_paths(target: str, limit: int = 20) -> list[str]:
     from .models import File  # noqa: PLC0415
 
-    missing: List[str] = []
-    for filepath in File.objects.exclude(filepath__isnull=True).exclude(filepath="").values_list("filepath", flat=True):
+    missing: list[str] = []
+    for filepath in (
+        File.objects.exclude(filepath__isnull=True)
+        .exclude(filepath="")
+        .values_list("filepath", flat=True)
+    ):
         if not (Path(target) / filepath.lstrip("/")).is_file():
             missing.append(filepath)
             if len(missing) >= limit:
@@ -169,7 +180,9 @@ class MoveJob:
         state = load_state()
         if state.get("state") in ACTIVE_STATES and not self._alive(state):
             state["state"] = "interrupted"
-            state["error"] = "The move was interrupted (service restart) - start it again to resume."
+            state["error"] = (
+                "The move was interrupted (service restart) - start it again to resume."
+            )
             state["finished_at"] = _now()
             save_state(state)
         return state
@@ -188,21 +201,36 @@ class MoveJob:
             if not check["ok"]:
                 raise InvalidTarget(check["errors"])
             state = {
-                "state": "copying", "source": source, "target": check["target"],
-                "started_at": _now(), "finished_at": None,
-                "total_files": files, "total_bytes": total, "done_files": 0, "done_bytes": 0,
-                "error": None, "old_copy": None, "pid": os.getpid(), "heartbeat": _now(),
+                "state": "copying",
+                "source": source,
+                "target": check["target"],
+                "started_at": _now(),
+                "finished_at": None,
+                "total_files": files,
+                "total_bytes": total,
+                "done_files": 0,
+                "done_bytes": 0,
+                "error": None,
+                "old_copy": None,
+                "pid": os.getpid(),
+                "heartbeat": _now(),
             }
             save_state(state)
             self._cancel.clear()
-            self._thread = threading.Thread(target=self._run, args=(state,), name="storage-move", daemon=True)
+            self._thread = threading.Thread(
+                target=self._run, args=(state,), name="storage-move", daemon=True
+            )
             self._thread.start()
             return state
 
     def cancel(self) -> dict:
         with self._lock:
             state = self.status()
-            if state.get("state") == "copying" and self._proc is not None and self._proc.poll() is None:
+            if (
+                state.get("state") == "copying"
+                and self._proc is not None
+                and self._proc.poll() is None
+            ):
                 self._cancel.set()
                 try:
                     self._proc.terminate()
@@ -219,15 +247,18 @@ class MoveJob:
             beat = datetime.fromisoformat(state.get("heartbeat") or "")
         except ValueError:
             return False
-        return datetime.now(timezone.utc) - beat < timedelta(seconds=HEARTBEAT_STALE_SECONDS)
+        return datetime.now(UTC) - beat < timedelta(seconds=HEARTBEAT_STALE_SECONDS)
 
     def _run(self, state: dict) -> None:
         source, target = state["source"], state["target"]
         try:
             self._copy(state, source, target)
             if self._cancel.is_set():
-                state.update(state="cancelled", finished_at=_now(),
-                             error="Cancelled by the operator - the target keeps what was copied so far.")
+                state.update(
+                    state="cancelled",
+                    finished_at=_now(),
+                    error="Cancelled by the operator - the target keeps what was copied so far.",
+                )
                 save_state(state)
                 return
             state.update(state="verifying", heartbeat=_now())
@@ -239,8 +270,13 @@ class MoveJob:
             if missing:
                 raise RuntimeError("library files missing at the target: " + ", ".join(missing[:5]))
             storage_root.set_storage_root_setting(target)
-            state.update(state="switched", finished_at=_now(), old_copy=source,
-                         done_files=state["total_files"], done_bytes=state["total_bytes"])
+            state.update(
+                state="switched",
+                finished_at=_now(),
+                old_copy=source,
+                done_files=state["total_files"],
+                done_bytes=state["total_bytes"],
+            )
             save_state(state)
             logger.info("storage move: library now at %s (old copy left at %s)", target, source)
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -252,13 +288,29 @@ class MoveJob:
 
     def _copy(self, state: dict, source: str, target: str) -> None:
         cmd = [
-            ROBOCOPY, str(Path(source)), str(Path(target)),
-            "/E", "/COPY:DAT", "/DCOPY:T", "/R:2", "/W:2", "/NP", "/NJH", "/NJS", "/NDL", "/NFL",
-            "/XD", "$RECYCLE.BIN", "System Volume Information",
+            ROBOCOPY,
+            str(Path(source)),
+            str(Path(target)),
+            "/E",
+            "/COPY:DAT",
+            "/DCOPY:T",
+            "/R:2",
+            "/W:2",
+            "/NP",
+            "/NJH",
+            "/NJS",
+            "/NDL",
+            "/NFL",
+            "/XD",
+            "$RECYCLE.BIN",
+            "System Volume Information",
         ]
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         self._proc = subprocess.Popen(  # noqa: S603
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=flags,
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            creationflags=flags,
         )
         try:
             while self._proc.poll() is None:
@@ -266,7 +318,11 @@ class MoveJob:
                 files, done = storage_root.walk_size(target)
                 state.update(done_files=files, done_bytes=done, heartbeat=_now())
                 save_state(state)
-            output = (self._proc.stdout.read() or b"").decode("utf-8", "replace") if self._proc.stdout else ""
+            output = (
+                (self._proc.stdout.read() or b"").decode("utf-8", "replace")
+                if self._proc.stdout
+                else ""
+            )
             rc = self._proc.returncode
         finally:
             self._proc = None

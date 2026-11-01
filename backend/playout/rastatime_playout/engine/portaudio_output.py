@@ -85,13 +85,14 @@ from __future__ import annotations
 import logging
 import re
 import threading
-from typing import List, NamedTuple, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import NamedTuple, Optional
 
 logger = logging.getLogger(__name__)
 
 #: Host APIs we will use for the local monitor, best first.  See the
 #: module docstring for why WDM-KS is last.
-HOST_API_PREFERENCE: Tuple[str, ...] = (
+HOST_API_PREFERENCE: tuple[str, ...] = (
     "WASAPI",
     "MME",
     "DirectSound",
@@ -135,7 +136,7 @@ class ResolvedOutput(NamedTuple):
 #: hours on 2026-09-05, silent, without a single error), WDM-KS has no
 #: blocking API at all (process exit at open).  A name that Liquidsoap
 #: would resolve to one of those must NOT be rendered by name.
-NAME_SAFE_HOST_APIS: Tuple[str, ...] = ("MME", "WASAPI")
+NAME_SAFE_HOST_APIS: tuple[str, ...] = ("MME", "WASAPI")
 
 
 def _host_api_rank(host_api: str) -> int:
@@ -146,7 +147,7 @@ def _host_api_rank(host_api: str) -> int:
     return len(HOST_API_PREFERENCE)
 
 
-def _hardware_tokens(names: Sequence[str]) -> List[str]:
+def _hardware_tokens(names: Sequence[str]) -> list[str]:
     """
     Extract model-ish tokens from parenthesised device-name suffixes.
 
@@ -165,7 +166,7 @@ def _hardware_tokens(names: Sequence[str]) -> List[str]:
     generic words like "Audio" or "Lautsprecher" don't match half the
     system.
     """
-    tokens: List[str] = []
+    tokens: list[str] = []
     for name in names:
         for inner in re.findall(r"\(([^)]*)\)", name):
             for tok in inner.split():
@@ -177,7 +178,7 @@ def _hardware_tokens(names: Sequence[str]) -> List[str]:
     return tokens
 
 
-def find_output_candidates(device_name: str, sd) -> List[Tuple[int, str, str]]:
+def find_output_candidates(device_name: str, sd) -> list[tuple[int, str, str]]:
     """
     Return ``(index, name, host_api)`` output candidates for
     ``device_name``, best host API first.
@@ -190,16 +191,14 @@ def find_output_candidates(device_name: str, sd) -> List[Tuple[int, str, str]]:
         return []
 
     apis = sd.query_hostapis()
-    outputs: List[Tuple[int, str, str]] = []
+    outputs: list[tuple[int, str, str]] = []
     for idx, dev in enumerate(sd.query_devices()):
         if dev["max_output_channels"] < 1:
             continue
         outputs.append((idx, dev["name"], apis[dev["hostapi"]]["name"]))
 
     # Pass 1 — friendly name, exact then substring either way.
-    matched = [
-        (i, n, a) for i, n, a in outputs if n.strip().lower() == wanted
-    ]
+    matched = [(i, n, a) for i, n, a in outputs if n.strip().lower() == wanted]
     if not matched:
         matched = [
             (i, n, a)
@@ -229,7 +228,7 @@ def probe_output(
     samplerate: int = DEFAULT_PROBE_SAMPLERATE,
     channels: int = 2,
     timeout: float = PROBE_TIMEOUT_SECONDS,
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """
     Briefly open ``index`` as an output and close it again.
 
@@ -270,9 +269,7 @@ def probe_output(
                 except Exception:  # pylint: disable=broad-exception-caught
                     pass
 
-    worker = threading.Thread(
-        target=_worker, name=f"portaudio-probe-{index}", daemon=True
-    )
+    worker = threading.Thread(target=_worker, name=f"portaudio-probe-{index}", daemon=True)
     worker.start()
     worker.join(timeout=timeout)
     if worker.is_alive():
@@ -280,7 +277,7 @@ def probe_output(
     return bool(result["ok"]), str(result["detail"])
 
 
-def first_exact_name_match(name: str, sd) -> Optional[Tuple[int, str, int]]:
+def first_exact_name_match(name: str, sd) -> Optional[tuple[int, str, int]]:
     """
     ``(index, host_api, max_output_channels)`` of the first PortAudio
     device whose name equals ``name`` — inputs included — or ``None``.
@@ -338,7 +335,11 @@ def with_name_selection(
         logger.warning(
             "Main Output %r: the first PortAudio entry with that name (%d, %s) "
             "has %d output channel(s) — rendering by index %d instead.",
-            resolved.name, idx, api, outputs, resolved.index,
+            resolved.name,
+            idx,
+            api,
+            outputs,
+            resolved.index,
         )
         return resolved
     if not any(safe.lower() in api.lower() for safe in NAME_SAFE_HOST_APIS):
@@ -347,7 +348,11 @@ def with_name_selection(
             "%s cannot be used through Liquidsoap's blocking write (DirectSound: "
             "silent stub, WDM-KS: no blocking API) — rendering by index %d instead. "
             "A shorter device name (<= 31 characters) would match the MME entry.",
-            resolved.name, idx, api, api, resolved.index,
+            resolved.name,
+            idx,
+            api,
+            api,
+            resolved.index,
         )
         return resolved
     if idx != resolved.index and probe:
@@ -356,14 +361,22 @@ def with_name_selection(
             logger.warning(
                 "Main Output %r: PortAudio %d [%s] (the entry the name selects) "
                 "did not open at %d Hz (%s) — rendering by index %d instead.",
-                resolved.name, idx, api, samplerate, detail or "open failed",
+                resolved.name,
+                idx,
+                api,
+                samplerate,
+                detail or "open failed",
                 resolved.index,
             )
             return resolved
     logger.info(
         "Main Output %r rendered by name -> PortAudio %d [%s] "
         "(index-independent; the index path would have used %d [%s]).",
-        resolved.name, idx, api, resolved.index, resolved.host_api,
+        resolved.name,
+        idx,
+        api,
+        resolved.index,
+        resolved.host_api,
     )
     return resolved._replace(by_name=resolved.name)
 
@@ -397,8 +410,8 @@ def refresh_device_list(sd) -> bool:
         initialize()
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
-            "PortAudio re-enumeration failed (%s) - resolving against the "
-            "cached device list.", exc,
+            "PortAudio re-enumeration failed (%s) - resolving against the cached device list.",
+            exc,
         )
         try:
             initialize()
@@ -438,7 +451,9 @@ def resolve_output_device(
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning(
             "Cannot resolve audio output %r — sounddevice unavailable: %s. "
-            "Falling back to the OS-default endpoint.", device_name, exc,
+            "Falling back to the OS-default endpoint.",
+            device_name,
+            exc,
         )
         return None
 
@@ -459,7 +474,8 @@ def resolve_output_device(
 
     logger.info(
         "Main Output %r -> %d PortAudio candidate(s): %s",
-        device_name, len(candidates),
+        device_name,
+        len(candidates),
         ", ".join(f"{n} [{a}]" for _, n, a in candidates),
     )
 
@@ -467,22 +483,29 @@ def resolve_output_device(
         idx, name, api = candidates[0]
         return with_name_selection(
             ResolvedOutput(index=idx, name=name, host_api=api, probed=False),
-            sd, samplerate=samplerate, channels=channels, probe=False,
+            sd,
+            samplerate=samplerate,
+            channels=channels,
+            probe=False,
         )
 
-    tried: List[str] = []
+    tried: list[str] = []
     for idx, name, api in candidates:
-        ok, detail = probe_output(
-            idx, sd, samplerate=samplerate, channels=channels
-        )
+        ok, detail = probe_output(idx, sd, samplerate=samplerate, channels=channels)
         if ok:
             logger.info(
-                "Main Output resolved: PortAudio device %d — %s [%s] "
-                "(probe at %d Hz succeeded)", idx, name, api, samplerate,
+                "Main Output resolved: PortAudio device %d — %s [%s] (probe at %d Hz succeeded)",
+                idx,
+                name,
+                api,
+                samplerate,
             )
             return with_name_selection(
                 ResolvedOutput(index=idx, name=name, host_api=api, probed=True),
-                sd, samplerate=samplerate, channels=channels, probe=True,
+                sd,
+                samplerate=samplerate,
+                channels=channels,
+                probe=True,
             )
         tried.append(f"{api}: {detail or 'open failed'}")
 
@@ -490,7 +513,9 @@ def resolve_output_device(
         "Main Output %r: no candidate could be opened at %d Hz — tried %s.  "
         "Falling back to the OS-default endpoint; the local monitor will "
         "not follow the Main Output setting.",
-        device_name, samplerate, " | ".join(tried),
+        device_name,
+        samplerate,
+        " | ".join(tried),
     )
     if any("invalid sample rate" in t.lower() for t in tried):
         # Measured 2026-09-03: this is exactly what a WASAPI endpoint says
@@ -504,6 +529,8 @@ def resolve_output_device(
             "format is set to a different rate.  Fix: Windows Sound "
             "settings -> this output -> Advanced -> default format %d Hz, "
             "then apply the audio chain again.",
-            device_name, samplerate, samplerate,
+            device_name,
+            samplerate,
+            samplerate,
         )
     return None

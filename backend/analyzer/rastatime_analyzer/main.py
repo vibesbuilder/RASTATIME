@@ -8,7 +8,7 @@ from rastatime_shared.cli import cli_config_options, cli_logging_options
 from rastatime_shared.config import DEFAULT_ENV_PREFIX
 from rastatime_shared.logging import setup_logger
 
-from . import PACKAGE, VERSION
+from . import PACKAGE
 from .config import Config
 from .message_listener import MessageListener
 from .status_reporter import StatusReporter

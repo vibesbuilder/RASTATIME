@@ -52,6 +52,7 @@ shared transport (Redis / DB).
 
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET
+
 from rastatime_api.permissions import internal_only  # RASTATIME 2026-10-25 role audit S3/S4
 
 
@@ -64,7 +65,7 @@ def audio_devices(request: HttpRequest) -> JsonResponse:
     Always returns HTTP 200.  Returns ``{"outputs": [], "inputs": []}``
     if no device manager is connected to the process singleton.
     """
-    import audio.soundcard._registry as _reg          # lazy — avoids circular dep
+    import audio.soundcard._registry as _reg  # lazy — avoids circular dep
     from audio.soundcard._api_helpers import list_devices_response
 
     mgr = _reg.default_manager

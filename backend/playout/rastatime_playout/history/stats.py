@@ -1,14 +1,15 @@
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from threading import Thread
 from time import sleep
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import requests
+from lxml import etree
 from rastatime_api_client.v1 import ApiClient as LegacyClient
 from rastatime_shared.config import IcecastOutput, ShoutcastOutput
-from lxml import etree
 from requests import Session
 
 from ..config import Config
@@ -52,7 +53,7 @@ class MountedOutput:
     stream_id: Optional[int] = None
 
 
-def outputs_from_stream_settings(settings: List[Dict]) -> List[MountedOutput]:
+def outputs_from_stream_settings(settings: list[dict]) -> list[MountedOutput]:
     """
     Map ``cc_pref`` ``stream_output_N`` dicts (as returned by the
     playout's ``_read_stream_outputs``) to :class:`MountedOutput`.
@@ -61,7 +62,7 @@ def outputs_from_stream_settings(settings: List[Dict]) -> List[MountedOutput]:
     the collector could not authenticate against ``/admin/stats.xml``
     anyway, and a loud skip beats a silent 401 loop.
     """
-    outputs: List[MountedOutput] = []
+    outputs: list[MountedOutput] = []
     for entry in settings:
         mount = str(entry.get("mount", "")).lstrip("/")
         if not mount:
@@ -69,8 +70,7 @@ def outputs_from_stream_settings(settings: List[Dict]) -> List[MountedOutput]:
         admin_password = str(entry.get("admin_pass", "") or "")
         if not admin_password:
             logger.warning(
-                "stream output %r has no admin_pass — skipping listener "
-                "stats for this mount",
+                "stream output %r has no admin_pass — skipping listener stats for this mount",
                 mount,
             )
             continue
@@ -137,15 +137,13 @@ class StatsCollector:
         # on Listener Stats for good once Icecast had recovered (operator
         # report: three 401s from the password change of 2026-10-24).  Now
         # every change is reported once, nothing in between.
-        self._reported: Dict[int, str] = {}
+        self._reported: dict[int, str] = {}
 
     def _report_status(self, stream_id: int, status: str) -> None:
         kind = status.split("|", 1)[0]
         if self._reported.get(stream_id) == kind:
             return
-        response = self._legacy_client.update_stream_setting_table(
-            {stream_id: status}
-        )
+        response = self._legacy_client.update_stream_setting_table({stream_id: status})
         # the v1 wrapper returns None when the request failed: try again
         # on the next poll
         if response is not None:
@@ -159,7 +157,7 @@ class StatsCollector:
     def collect_output_stats(
         self,
         output: AnyOutput,
-    ) -> Dict[str, Stats]:
+    ) -> dict[str, Stats]:
         response = self._session.get(
             url=self.get_output_url(output),
             auth=(output.admin_user, output.admin_password or ""),
@@ -202,16 +200,16 @@ class StatsCollector:
 
     def collect(
         self,
-        outputs: List[AnyOutput],
+        outputs: list[AnyOutput],
         *,
         _timestamp: Optional[datetime] = None,
     ) -> None:
         if _timestamp is None:
             _timestamp = datetime.utcnow()
 
-        stats: List[Dict[str, Any]] = []
+        stats: list[dict[str, Any]] = []
         stats_timestamp = _timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        cache: Dict[str, Dict[str, Stats]] = {}
+        cache: dict[str, dict[str, Stats]] = {}
 
         for output_id, output in enumerate(outputs, start=1):
             if (
@@ -233,9 +231,7 @@ class StatsCollector:
                     requests.exceptions.Timeout,
                 ) as exception:
                     logger.exception(exception)
-                    self._report_status(
-                        stream_id, status_from_exception(exception, _timestamp)
-                    )
+                    self._report_status(stream_id, status_from_exception(exception, _timestamp))
                     continue
 
             self._report_status(stream_id, "OK")
@@ -264,7 +260,7 @@ class StatsCollectorThread(Thread):
         self,
         config: Config,
         legacy_client: LegacyClient,
-        outputs_provider: Optional[Callable[[], List[Any]]] = None,
+        outputs_provider: Optional[Callable[[], list[Any]]] = None,
     ) -> None:
         """
         ``outputs_provider`` — optional callable returning the output

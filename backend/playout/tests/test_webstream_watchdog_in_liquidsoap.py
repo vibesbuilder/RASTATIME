@@ -7,12 +7,12 @@ setting ``RASTATIME_WEBSTREAM_WATCHDOG`` and the "older render still
 loaded" stop-gap were removed after a quiet week.  The tests below cover
 the rendered block and guard against the removed switch coming back.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout import __main__ as main
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PlayoutState
@@ -25,26 +25,31 @@ from rastatime_playout.liquidsoap_config import (
     render_rastatime_liq,
 )
 
-STREAMS = [{"type": "mp3", "host": "127.0.0.1", "port": 8000, "mount": "x", "pass": "x", "bitrate": 128}]
+STREAMS = [
+    {"type": "mp3", "host": "127.0.0.1", "port": 8000, "mount": "x", "pass": "x", "bitrate": 128}
+]
 
 
 # ---------------------------------------------------------------------------
 # renderer
 # ---------------------------------------------------------------------------
 
+
 def test_default_render_carries_the_in_process_watchdog():
     liq = render_rastatime_liq(STREAMS, harbor_main_password="x", harbor_show_password="y")
     assert "bus.on_frame(synchronous=true" in liq
     assert f"mod {DEFAULT_WEBSTREAM_WATCHDOG_CHECK_FRAMES} == 0" in liq
     assert f"webstream_wd_starved() >= {DEFAULT_WEBSTREAM_WATCHDOG_STARVE_CHECKS}" in liq
-    assert "if webstream_started() then" in liq            # 2026-09-08: fresh source per slot
+    assert "if webstream_started() then" in liq  # 2026-09-08: fresh source per slot
     assert "ignore(webstream_stop())" in liq and "ignore(webstream_start())" in liq
     assert "webstream_raw.is_started()" not in liq
     assert "thread.run(webstream_wd_reconnect)" in liq
-    assert '"watchdog", fun (_) ->' in liq                 # telnet webstream.watchdog (diagnostic)
-    assert '"ready", fun (_) -> string(source.is_ready(webstream))' in liq   # diagnostic kept
+    assert '"watchdog", fun (_) ->' in liq  # telnet webstream.watchdog (diagnostic)
+    assert '"ready", fun (_) -> string(source.is_ready(webstream))' in liq  # diagnostic kept
     # the block must come after the final bus definition (bus.on_frame needs it)
-    assert liq.index("${LOUDNESS_BLOCK}" if "${LOUDNESS_BLOCK}" in liq else "loudness limiter") < liq.index("bus.on_frame(")
+    assert liq.index(
+        "${LOUDNESS_BLOCK}" if "${LOUDNESS_BLOCK}" in liq else "loudness limiter"
+    ) < liq.index("bus.on_frame(")
     # ... and before the outputs that consume the bus (line start: the
     # template's header comment also mentions output.icecast)
     assert liq.index("bus.on_frame(") < liq.index("\noutput.icecast(")
@@ -64,7 +69,7 @@ def test_dropped_inputs_are_remembered_and_reaped():
     assert "reaping (start+stop)" in liq
     # the reaper closure really is start followed by stop
     i = liq.index("webstream_reaper.set(fun () -> begin")
-    assert "s.start()" in liq[i:i + 120] and "s.stop()" in liq[i:i + 120]
+    assert "s.start()" in liq[i : i + 120] and "s.stop()" in liq[i : i + 120]
     # reaped on every watchdog check, counters exposed
     assert "  webstream_reap()\n" in liq
     assert "zombies=#{list.length(webstream_zombies())} reaped=#{webstream_reaped()}" in liq
@@ -77,7 +82,9 @@ def test_no_webstream_input_means_no_watchdog():
 
 
 def test_block_clamps_silly_parameters():
-    block = _render_webstream_watchdog_block(webstream_enabled=True, check_frames=0, starve_checks=-3)
+    block = _render_webstream_watchdog_block(
+        webstream_enabled=True, check_frames=0, starve_checks=-3
+    )
     assert "mod 1 == 0" in block
     assert "webstream_wd_starved() >= 1" in block
 
@@ -85,6 +92,7 @@ def test_block_clamps_silly_parameters():
 # ---------------------------------------------------------------------------
 # 2026-09-15: the scheduler poll fallback is gone - guard the removal
 # ---------------------------------------------------------------------------
+
 
 def test_render_has_no_scheduler_mode_any_more():
     liq = render_rastatime_liq(STREAMS, harbor_main_password="x", harbor_show_password="y")
@@ -102,13 +110,20 @@ def test_scheduler_has_no_telnet_poll_any_more():
     with pytest.raises(TypeError):
         ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), webstream_watchdog="scheduler")
     for name in (
-        "_start_webstream_watchdog", "_stop_webstream_watchdog", "_arm_webstream_watchdog",
-        "_webstream_watchdog_tick", "_reconnect_stalled_webstream",
+        "_start_webstream_watchdog",
+        "_stop_webstream_watchdog",
+        "_arm_webstream_watchdog",
+        "_webstream_watchdog_tick",
+        "_reconnect_stalled_webstream",
         "_liquidsoap_has_internal_watchdog",
     ):
         assert not hasattr(ps.PlayoutScheduler, name), name
-    for name in ("WEBSTREAM_WATCHDOG_LIQUIDSOAP", "WEBSTREAM_WATCHDOG_SCHEDULER",
-                 "WEBSTREAM_WATCHDOG_INTERVAL_SECONDS", "WEBSTREAM_WATCHDOG_STARVE_TICKS"):
+    for name in (
+        "WEBSTREAM_WATCHDOG_LIQUIDSOAP",
+        "WEBSTREAM_WATCHDOG_SCHEDULER",
+        "WEBSTREAM_WATCHDOG_INTERVAL_SECONDS",
+        "WEBSTREAM_WATCHDOG_STARVE_TICKS",
+    ):
         assert not hasattr(ps, name), name
 
 

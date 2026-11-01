@@ -1,6 +1,7 @@
 """
 RASTATIME 2026-09-10 - event keys with identity: ``<timestamp>#<tag>``.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -46,6 +47,6 @@ def test_event_key_to_datetime_ignores_tag_and_legacy_suffix():
 def test_insert_event_keeps_the_suffix_fallback_and_dedupes():
     events = {}
     insert_event(events, "k#file-1", "a")
-    insert_event(events, "k#file-1", "a")            # identical -> ignored
-    insert_event(events, "k#file-1", "b")            # same key, other event -> fallback
+    insert_event(events, "k#file-1", "a")  # identical -> ignored
+    insert_event(events, "k#file-1", "b")  # same key, other event -> fallback
     assert events == {"k#file-1": "a", "k#file-1_0": "b"}

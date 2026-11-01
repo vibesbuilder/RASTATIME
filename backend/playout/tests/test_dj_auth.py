@@ -2,6 +2,7 @@
 RASTATIME 2026-09-10 - DjAuthenticator (PLAYOUT -> legacy
 check-live-stream-auth) and the /dj-auth listener endpoint.
 """
+
 from __future__ import annotations
 
 import logging
@@ -10,7 +11,6 @@ from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
 import pytest
-
 from rastatime_playout import source_switcher as ss
 from rastatime_playout.dj_auth import CHECK_PATH, DjAuthenticator
 
@@ -35,7 +35,9 @@ def test_accepted_master_login_posts_to_the_legacy_endpoint():
     url = session.post.call_args.args[0]
     assert url == "http://192.168.1.64" + CHECK_PATH
     assert session.post.call_args.kwargs["data"] == {
-        "djtype": "master", "username": "chef", "password": "secret",
+        "djtype": "master",
+        "username": "chef",
+        "password": "secret",
     }
 
 
@@ -46,21 +48,36 @@ def test_show_login_maps_to_djtype_dj():
 
 
 def test_rejected_login():
-    assert DjAuthenticator("http://web", session=_session(401, None)).check(
-        "master", "chef", "wrong",
-    ) == "denied"
+    assert (
+        DjAuthenticator("http://web", session=_session(401, None)).check(
+            "master",
+            "chef",
+            "wrong",
+        )
+        == "denied"
+    )
     # 200 without the icecast-auth-user header is a rejection too
-    assert DjAuthenticator("http://web", session=_session(200, None)).check(
-        "master", "chef", "wrong",
-    ) == "denied"
+    assert (
+        DjAuthenticator("http://web", session=_session(200, None)).check(
+            "master",
+            "chef",
+            "wrong",
+        )
+        == "denied"
+    )
 
 
 def test_unreachable_web_application_is_an_error_not_a_denial():
     auth = DjAuthenticator("http://web", session=_session(exc=ConnectionError("down")))
     assert auth.check("master", "chef", "secret") == "error"
-    assert DjAuthenticator("http://web", session=_session(500, None)).check(
-        "show", "host", "pw",
-    ) == "error"
+    assert (
+        DjAuthenticator("http://web", session=_session(500, None)).check(
+            "show",
+            "host",
+            "pw",
+        )
+        == "error"
+    )
     assert DjAuthenticator("", session=_session()).check("master", "a", "b") == "error"
 
 
@@ -75,9 +92,13 @@ def test_unknown_source_and_empty_credentials_are_denied_without_a_request():
 
 def test_password_never_appears_in_the_log(caplog):
     with caplog.at_level(logging.DEBUG, logger="rastatime_playout.dj_auth"):
-        DjAuthenticator("http://web", session=_session()).check("master", "chef", "s3cr3t", "1.2.3.4")
+        DjAuthenticator("http://web", session=_session()).check(
+            "master", "chef", "s3cr3t", "1.2.3.4"
+        )
         DjAuthenticator("http://web", session=_session(401, None)).check("show", "host", "s3cr3t")
-        DjAuthenticator("http://web", session=_session(exc=OSError("x"))).check("show", "host", "s3cr3t")
+        DjAuthenticator("http://web", session=_session(exc=OSError("x"))).check(
+            "show", "host", "s3cr3t"
+        )
     text = "\n".join(r.getMessage() for r in caplog.records)
     assert "s3cr3t" not in text
     assert "chef" in text and "1.2.3.4" in text
@@ -136,7 +157,9 @@ def test_start_listener_wires_the_authenticator(monkeypatch):
     checker = object()
     server = ss.start_listener(
         ss.SourceSwitcher(switch_callback=lambda _s: None),
-        host="127.0.0.1", port=0, dj_auth=checker,
+        host="127.0.0.1",
+        port=0,
+        dj_auth=checker,
     )
     try:
         assert ss._EventHandler.dj_auth is checker

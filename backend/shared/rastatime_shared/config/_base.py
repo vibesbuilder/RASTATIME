@@ -3,7 +3,7 @@ import os
 import sys
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ValidationError
 from yaml import YAMLError, safe_load
@@ -68,7 +68,7 @@ class BaseConfig(BaseModel):
     def _load_file_values(
         self,
         filepath: Optional[Path] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if filepath is None:
             logger.debug("no config filepath is provided")
             return {}
@@ -80,14 +80,12 @@ class BaseConfig(BaseModel):
         try:
             return safe_load(filepath.read_text(encoding="utf-8"))
         except YAMLError as exception:
-            logger.error(
-                "config file '%s' is not a valid yaml file: %s", filepath, exception
-            )
+            logger.error("config file '%s' is not a valid yaml file: %s", filepath, exception)
 
         return {}
 
 
-def deep_merge_dict(base: Dict[str, Any], *elements: Dict[str, Any]) -> Dict[str, Any]:
+def deep_merge_dict(base: dict[str, Any], *elements: dict[str, Any]) -> dict[str, Any]:
     result = base.copy()
 
     for element in elements:
@@ -107,8 +105,8 @@ def deep_merge_dict(base: Dict[str, Any], *elements: Dict[str, Any]) -> Dict[str
     return result
 
 
-def deep_merge_list(base: List[Any], *elements: List[Any]) -> List[Any]:
-    result: List[Any] = []
+def deep_merge_list(base: list[Any], *elements: list[Any]) -> list[Any]:
+    result: list[Any] = []
     for element in elements:
         for base_item, next_item in zip_longest(base, element):
             if isinstance(base_item, list) and isinstance(next_item, list):

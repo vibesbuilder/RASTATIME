@@ -57,14 +57,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
-
 
 # ---------------------------------------------------------------------------
 # JobTrigger
 # ---------------------------------------------------------------------------
+
 
 class JobTrigger(str, Enum):
     """
@@ -83,14 +83,15 @@ class JobTrigger(str, Enum):
         when the event fires; the job itself does not implement any polling.
     """
 
-    STARTUP  = "startup"
+    STARTUP = "startup"
     INTERVAL = "interval"
-    EVENT    = "event"
+    EVENT = "event"
 
 
 # ---------------------------------------------------------------------------
 # JobResult
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class JobResult:
@@ -116,12 +117,10 @@ class JobResult:
         ``0.0`` if not measured.
     """
 
-    job_name:         str
-    success:          bool
-    error_message:    Optional[str] = None
-    started_at:       datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    job_name: str
+    success: bool
+    error_message: Optional[str] = None
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     duration_seconds: float = 0.0
 
     @property
@@ -133,6 +132,7 @@ class JobResult:
 # ---------------------------------------------------------------------------
 # Job — abstract base class
 # ---------------------------------------------------------------------------
+
 
 class Job(ABC):
     """

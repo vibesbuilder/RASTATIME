@@ -4,11 +4,13 @@ library become MP3 320 kbps.  The analyzer's convert_format module is
 replaced by a fake (probe by magic bytes, "transcode" = copy the fixture
 MP3), so the tests need neither ffmpeg nor real lossless files.
 """
+
 from __future__ import annotations
 
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import UTC, datetime, timedelta
+from datetime import timezone as dt_timezone
 from decimal import Decimal
 from io import StringIO
 from pathlib import Path
@@ -21,11 +23,11 @@ from django.core.management.base import CommandError
 from django.db.models.query import QuerySet
 from django.utils import timezone
 from model_bakery import baker
+from rastatime_shared.files import compute_md5
 
 from rastatime_api._fixtures import AUDIO_FILENAME, fixture_path
 from rastatime_api.storage.management.commands import convert_lossless as cl
 from rastatime_api.storage.models import File
-from rastatime_shared.files import compute_md5
 
 FIXTURE_MP3 = fixture_path / AUDIO_FILENAME
 FIXTURE_LENGTH = 40.81312925170068  # mutagen, song.mp3
@@ -66,7 +68,9 @@ class FakeConverter:
 
     @staticmethod
     def is_lossless(probe: FakeProbe) -> bool:
-        return probe.codec in ("flac", "alac", "wavpack", "ape", "tta") or probe.codec.startswith("pcm_")
+        return probe.codec in ("flac", "alac", "wavpack", "ape", "tta") or probe.codec.startswith(
+            "pcm_"
+        )
 
     @staticmethod
     def is_wma(probe: FakeProbe) -> bool:
@@ -85,13 +89,30 @@ class FakeConverter:
 def _file(filepath, exists=True, **extra):
     now = timezone.now()
     values = dict(
-        filepath=filepath, size=1, exists=exists, mime="audio/flac", md5="0" * 32,
-        import_status=File.ImportStatus.SUCCESS, hidden=False, accessed=0, scheduled=False,
-        part_of_list=False, disabled=False, created_at=now, updated_at=now,
-        name="x", track_title="x", cue_in=timedelta(seconds=0.5),
-        cue_out=timedelta(seconds=40), length=timedelta(seconds=FIXTURE_LENGTH),
-        loudness_lufs=Decimal("-10.10"), true_peak_dbtp=Decimal("-0.50"),
-        loudness_range_lu=Decimal("6.00"), bit_rate=897662, sample_rate=44100, channels=2,
+        filepath=filepath,
+        size=1,
+        exists=exists,
+        mime="audio/flac",
+        md5="0" * 32,
+        import_status=File.ImportStatus.SUCCESS,
+        hidden=False,
+        accessed=0,
+        scheduled=False,
+        part_of_list=False,
+        disabled=False,
+        created_at=now,
+        updated_at=now,
+        name="x",
+        track_title="x",
+        cue_in=timedelta(seconds=0.5),
+        cue_out=timedelta(seconds=40),
+        length=timedelta(seconds=FIXTURE_LENGTH),
+        loudness_lufs=Decimal("-10.10"),
+        true_peak_dbtp=Decimal("-0.50"),
+        loudness_range_lu=Decimal("6.00"),
+        bit_rate=897662,
+        sample_rate=44100,
+        channels=2,
     )
     values.update(extra)
     return File.objects.create(**values)
@@ -124,10 +145,19 @@ def _library(db, tmp_path):
     _write(root / "imported/gone.flac", b"fLaC")
     rows = SimpleNamespace(
         root=root,
-        flac=_file("imported/Artist/Album/01 - Song.flac", md5=compute_md5(flac),
-                   track_title="Song", artist_name="Artist", album_title="Album",
-                   genre="Pop", track_number=1, date="2013", bpm=0,
-                   comment=None, description="from the description"),
+        flac=_file(
+            "imported/Artist/Album/01 - Song.flac",
+            md5=compute_md5(flac),
+            track_title="Song",
+            artist_name="Artist",
+            album_title="Album",
+            genre="Pop",
+            track_number=1,
+            date="2013",
+            bpm=0,
+            comment=None,
+            description="from the description",
+        ),
         wav=_file("imported/03 - Track.wav", md5=compute_md5(wav), mime="audio/wav"),
         # wrong mime on purpose: the probe decides, not the column
         mp3=_file("imported/Artist/Album/02 - Other.mp3", mime="audio/flac"),
@@ -146,8 +176,14 @@ def _run(*args, **options):
 
 
 def _schedule(file_row, starts, ends):
-    return baker.make("schedule.Schedule", file=file_row, starts_at=starts, ends_at=ends,
-                      cue_in=timedelta(0), cue_out=ends - starts)
+    return baker.make(
+        "schedule.Schedule",
+        file=file_row,
+        starts_at=starts,
+        ends_at=ends,
+        cue_in=timedelta(0),
+        cue_out=ends - starts,
+    )
 
 
 # --- helpers (no database) ------------------------------------------------
@@ -156,7 +192,9 @@ def _schedule(file_row, starts, ends):
 def test_starts_with_mpeg_audio(tmp_path):
     assert cl.starts_with_mpeg_audio(FIXTURE_MP3)
     # ID3v2 tag (syncsafe size 20) in front of the first frame
-    tagged = _write(tmp_path / "tagged.mp3", b"ID3\x03\x00\x00\x00\x00\x00\x14" + b"\0" * 20 + b"\xff\xfb\x90d")
+    tagged = _write(
+        tmp_path / "tagged.mp3", b"ID3\x03\x00\x00\x00\x00\x00\x14" + b"\0" * 20 + b"\xff\xfb\x90d"
+    )
     assert cl.starts_with_mpeg_audio(tagged)
     # ID3v2 tag in front of FLAC: probe it
     assert not cl.starts_with_mpeg_audio(
@@ -191,10 +229,21 @@ def test_sibling_filepath():
 
 def test_tags_from_row():
     row = File(
-        track_title="Plansch", artist_name="Bilderbuch", album_title="Feinste Seide",
-        genre="Alternative", comment="", description="dLs", date="2013", track_number=4,
-        composer="", copyright=None, label="Maschin", isrc="ATX", bpm=0, language="de",
-        expires_at=datetime(2027, 1, 31, tzinfo=dt_timezone.utc),
+        track_title="Plansch",
+        artist_name="Bilderbuch",
+        album_title="Feinste Seide",
+        genre="Alternative",
+        comment="",
+        description="dLs",
+        date="2013",
+        track_number=4,
+        composer="",
+        copyright=None,
+        label="Maschin",
+        isrc="ATX",
+        bpm=0,
+        language="de",
+        expires_at=datetime(2027, 1, 31, tzinfo=UTC),
     )
     assert cl.tags_from_row(row) == {
         "track_title": "Plansch",
@@ -238,9 +287,7 @@ def test_dry_run_lists_candidates_and_changes_nothing(library, conv):
 def test_ids_restrict_the_scan(library, conv):
     pending = _file("imported/03 - Track.wav", import_status=File.ImportStatus.PENDING)
 
-    output = _run(
-        root=str(library.root), ids=[library.flac.id, library.mp3.id, pending.id, 999999]
-    )
+    output = _run(root=str(library.root), ids=[library.flac.id, library.mp3.id, pending.id, 999999])
 
     assert "lossless: 1" in output
     assert f"  {library.flac.id}: flac," in output
@@ -290,8 +337,13 @@ def test_convert_updates_row_in_place_and_deletes_original(library, conv):
     src, dest, tags, probe = conv.transcoded[0]
     assert (src, dest) == (library.paths.flac, new_path)
     assert tags == {
-        "track_title": "Song", "artist_name": "Artist", "album_title": "Album",
-        "genre": "Pop", "comment": "from the description", "year": "2013", "track_number": "1",
+        "track_title": "Song",
+        "artist_name": "Artist",
+        "album_title": "Album",
+        "genre": "Pop",
+        "comment": "from the description",
+        "year": "2013",
+        "track_number": "1",
     }
     assert probe.codec == "flac"
     # the other lossless file is untouched
@@ -397,14 +449,19 @@ def test_failed_database_update_deletes_the_mp3_and_keeps_the_original(library, 
 
     out = StringIO()
     with pytest.raises(CommandError):
-        call_command("convert_lossless", root=str(library.root), ids=[library.flac.id],
-                     yes=True, stdout=out)
+        call_command(
+            "convert_lossless", root=str(library.root), ids=[library.flac.id], yes=True, stdout=out
+        )
 
     assert "database update failed, original kept: database is gone" in out.getvalue()
     assert library.paths.flac.is_file()
     assert not (library.root / "imported/Artist/Album/01 - Song.mp3").exists()
     row = File.objects.get(pk=library.flac.id)
-    assert (row.filepath, row.md5, row.source_md5) == (library.flac.filepath, library.flac.md5, None)
+    assert (row.filepath, row.md5, row.source_md5) == (
+        library.flac.filepath,
+        library.flac.md5,
+        None,
+    )
 
 
 def test_original_that_cannot_be_deleted_is_reported(library, conv, monkeypatch):
@@ -450,7 +507,6 @@ def test_ffmpeg_dir_sets_the_tool_paths(monkeypatch, tmp_path):
     assert cl.os.environ["PATH"].startswith(str(tmp_path))
     assert Path(cl.os.environ["FFMPEG_PATH"]).parent == tmp_path
     assert Path(cl.os.environ["FFPROBE_PATH"]).parent == tmp_path
-
 
 
 # --- review fixes 2026-10-14 ------------------------------------------------

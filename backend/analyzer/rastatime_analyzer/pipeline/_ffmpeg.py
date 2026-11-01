@@ -5,7 +5,7 @@ import subprocess
 from math import inf
 from os import getenv
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from ._utils import run_
 
@@ -24,7 +24,7 @@ def low_priority_creationflags() -> int:
     return BELOW_NORMAL_PRIORITY_CLASS if os.name == "nt" else 0
 
 
-def ffprobe_json(filepath, timeout: float = 60.0) -> Dict[str, Any]:
+def ffprobe_json(filepath, timeout: float = 60.0) -> dict[str, Any]:
     """
     RASTATIME 2026-10-14 - ``ffprobe -show_format -show_streams`` as a dict.
 
@@ -168,8 +168,41 @@ def _loudness_text_normalised(filepath: Path, timeout: float = 600.0) -> str:
         channels = str(int(audio.get("channels") or 2))
     except Exception:  # pylint: disable=broad-exception-caught
         return ""
-    decode_cmd = [FFMPEG, "-hide_banner", "-nostats", "-loglevel", "error", "-i", str(filepath), "-vn", "-f", "s32le", "-ar", rate, "-ac", channels, "-"]
-    measure_cmd = [FFMPEG, "-hide_banner", "-nostats", "-f", "s32le", "-ar", rate, "-ac", channels, "-i", "pipe:0", "-filter", "ebur128=peak=true", "-f", "null", _NULL_DEVICE]
+    decode_cmd = [
+        FFMPEG,
+        "-hide_banner",
+        "-nostats",
+        "-loglevel",
+        "error",
+        "-i",
+        str(filepath),
+        "-vn",
+        "-f",
+        "s32le",
+        "-ar",
+        rate,
+        "-ac",
+        channels,
+        "-",
+    ]
+    measure_cmd = [
+        FFMPEG,
+        "-hide_banner",
+        "-nostats",
+        "-f",
+        "s32le",
+        "-ar",
+        rate,
+        "-ac",
+        channels,
+        "-i",
+        "pipe:0",
+        "-filter",
+        "ebur128=peak=true",
+        "-f",
+        "null",
+        _NULL_DEVICE,
+    ]
     try:
         with subprocess.Popen(
             decode_cmd,
@@ -240,7 +273,7 @@ _SILENCE_DETECT_RE = re.compile(
 )
 
 
-def compute_silences(filepath: Path) -> List[Tuple[float, float]]:
+def compute_silences(filepath: Path) -> list[tuple[float, float]]:
     """
     Compute silence will analyse the given audio file and return a list of silences.
     """
@@ -281,7 +314,7 @@ def compute_silences(filepath: Path) -> List[Tuple[float, float]]:
     if len(starts) - 1 == len(ends):
         ends.append(inf)
 
-    return list(zip(starts, ends))
+    return list(zip(starts, ends, strict=False))
 
 
 def probe_duration(filepath: Path) -> float:

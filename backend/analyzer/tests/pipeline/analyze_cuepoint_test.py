@@ -1,5 +1,4 @@
 import pytest
-
 from rastatime_analyzer.pipeline.analyze_cuepoint import (
     analyze_cuepoint,
     analyze_duration,
@@ -11,9 +10,7 @@ from ..fixtures import FILES
 @pytest.mark.parametrize(
     "filepath,length,cuein,cueout",
     map(
-        lambda i: pytest.param(
-            str(i.path), i.length, i.cuein, i.cueout, id=i.path.name
-        ),
+        lambda i: pytest.param(str(i.path), i.length, i.cuein, i.cueout, id=i.path.name),
         FILES,
     ),
 )

@@ -1,9 +1,9 @@
 """RASTATIME 2026-09-28 - EBU R128 measurement (analyzer stage 1)."""
+
 from queue import Queue
 from subprocess import CompletedProcess
 
 import pytest
-
 from rastatime_analyzer.pipeline import _ffmpeg
 from rastatime_analyzer.pipeline.analyze_loudness import LOUDNESS_KEYS, analyze_loudness
 from rastatime_analyzer.pipeline.pipeline import Pipeline
@@ -30,13 +30,16 @@ SUMMARY = """[Parsed_ebur128_0 @ 0000] Summary:
 def _fake_ffmpeg(stderr):
     def run(*args, **kwargs):
         return CompletedProcess(args, 0, stdout="", stderr=stderr)
+
     return run
 
 
 def test_summary_is_parsed(monkeypatch):
     monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg("noise\n" + SUMMARY))
     assert _ffmpeg.compute_loudness("x.mp3") == {
-        "loudness_lufs": -14.2, "true_peak_dbtp": -0.4, "loudness_range_lu": 5.3,
+        "loudness_lufs": -14.2,
+        "true_peak_dbtp": -0.4,
+        "loudness_range_lu": 5.3,
     }
     metadata = analyze_loudness("x.mp3", {"track_title": "t"})
     assert metadata["loudness_lufs"] == -14.2 and metadata["track_title"] == "t"
@@ -58,18 +61,24 @@ def test_ffmpeg_output_is_read_tolerantly(monkeypatch):
 
 
 def test_silence_and_garbage_are_not_measurable(monkeypatch):
-    monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg(SUMMARY.replace("-14.2 LUFS", "-inf LUFS")))
+    monkeypatch.setattr(
+        _ffmpeg, "_ffmpeg", _fake_ffmpeg(SUMMARY.replace("-14.2 LUFS", "-inf LUFS"))
+    )
     assert _ffmpeg.compute_loudness("x.mp3") is None
-    monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg(SUMMARY.replace("-14.2 LUFS", "-70.0 LUFS")))
+    monkeypatch.setattr(
+        _ffmpeg, "_ffmpeg", _fake_ffmpeg(SUMMARY.replace("-14.2 LUFS", "-70.0 LUFS"))
+    )
     assert _ffmpeg.compute_loudness("x.mp3") is None
     monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg("no summary here"))
-    assert analyze_loudness("x.mp3", {"a": 1}) == {"a": 1}     # keys stay absent
+    assert analyze_loudness("x.mp3", {"a": 1}) == {"a": 1}  # keys stay absent
 
 
 # the parametrised FILES fixtures (s1-*.mp3 etc.) are not present in this
 # checkout (the ReplayGain / cue-point tests fail on them as well); the
 # three flac fixtures that exist are measured for real
-REAL_FILES = [p for p in (fixtures_path / n for n in ("s1.flac", "s2.flac", "s3.flac")) if p.is_file()]
+REAL_FILES = [
+    p for p in (fixtures_path / n for n in ("s1.flac", "s2.flac", "s3.flac")) if p.is_file()
+]
 
 
 @pytest.mark.parametrize("filepath", [pytest.param(str(p), id=p.name) for p in REAL_FILES])
@@ -107,12 +116,19 @@ def test_run_loudness_reports_only_the_measurement():
 # file is measured again from a normalised stream (one summary).
 def test_multiple_summaries_measure_again_from_a_normalised_stream(monkeypatch):
     stub = SUMMARY.replace("-14.2 LUFS", "-70.0 LUFS").replace("-0.4 dBFS", "26.4 dBFS")
-    monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg("noise" + chr(10) + SUMMARY + chr(10) + stub + chr(10) + stub))
+    monkeypatch.setattr(
+        _ffmpeg,
+        "_ffmpeg",
+        _fake_ffmpeg("noise" + chr(10) + SUMMARY + chr(10) + stub + chr(10) + stub),
+    )
     calls = []
     monkeypatch.setattr(
         _ffmpeg,
         "_loudness_text_normalised",
-        lambda path, timeout=600.0: calls.append(path) or SUMMARY.replace("-14.2 LUFS", "-13.7 LUFS").replace("-0.4 dBFS", "6.4 dBFS"),
+        lambda path, timeout=600.0: (
+            calls.append(path)
+            or SUMMARY.replace("-14.2 LUFS", "-13.7 LUFS").replace("-0.4 dBFS", "6.4 dBFS")
+        ),
     )
     result = _ffmpeg.compute_loudness("x.mp3")
     assert calls == ["x.mp3"]
@@ -122,7 +138,9 @@ def test_multiple_summaries_measure_again_from_a_normalised_stream(monkeypatch):
 
 def test_single_summary_never_measures_twice(monkeypatch):
     monkeypatch.setattr(_ffmpeg, "_ffmpeg", _fake_ffmpeg("noise" + chr(10) + SUMMARY))
-    monkeypatch.setattr(_ffmpeg, "_loudness_text_normalised", lambda *a, **k: pytest.fail("not expected"))
+    monkeypatch.setattr(
+        _ffmpeg, "_loudness_text_normalised", lambda *a, **k: pytest.fail("not expected")
+    )
     assert _ffmpeg.compute_loudness("x.mp3")["loudness_lufs"] == -14.2
 
 

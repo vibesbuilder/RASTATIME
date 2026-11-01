@@ -12,17 +12,16 @@ These tests verify:
   * ``_on_stop`` — webstream-specific teardown via webstream_stop()
   * ``_resume_scheduled_locked`` — the DJ-off resume re-arms the source
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
 from rastatime_playout.player.events import EventKind, WebStreamEvent
-
 
 # ---- Helpers -----------------------------------------------------------
 
@@ -95,7 +94,8 @@ def test_webstream_start_liquidsoap_path_calls_engine_webstream_start(
 
     # New Liquidsoap webstream_start was called with the URL + gain
     engine.webstream_start.assert_called_once_with(
-        "http://stream.example.com/test.mp3", gain_db=3.0,
+        "http://stream.example.com/test.mp3",
+        gain_db=3.0,
     )
     # Legacy engine.play MUST NOT be called in this path
     engine.play.assert_not_called()
@@ -132,7 +132,8 @@ def test_webstream_start_liquidsoap_path_with_none_gain(
     sched._on_webstream_start("key1", event)
 
     engine.webstream_start.assert_called_once_with(
-        event.uri, gain_db=None,
+        event.uri,
+        gain_db=None,
     )
 
 
@@ -174,7 +175,7 @@ def test_on_stop_liquidsoap_webstream_calls_webstream_stop(
     sched._on_stop("key1")
 
     engine.webstream_gate.assert_called_once_with(False)
-    engine.webstream_stop.assert_not_called()   # draining
+    engine.webstream_stop.assert_not_called()  # draining
     engine.stop.assert_not_called()
     assert sched._playing_key is None
     assert sched._current_event is None
@@ -192,6 +193,7 @@ def test_on_stop_liquidsoap_file_event_unchanged(liquidsoap_scheduler):
     # Manually set a non-webstream current event to simulate a file
     # currently playing.
     from rastatime_playout.player.events import EventKind, FileEvent
+
     file_event = FileEvent(
         type=EventKind.FILE,
         start=datetime(2026, 5, 29, 10, 0),
@@ -256,7 +258,7 @@ def test_resume_webstream_rearms_the_source_instead_of_engine_play(
     queue via engine.play.
     """
     sched, engine = liquidsoap_scheduler
-    event = _make_webstream_event(input_gain_db=-2.0, duration_seconds=10 ** 8)
+    event = _make_webstream_event(input_gain_db=-2.0, duration_seconds=10**8)
     sched._playing_key = "key1"
     sched._current_event = event
     sched._current_audio_path = event.uri

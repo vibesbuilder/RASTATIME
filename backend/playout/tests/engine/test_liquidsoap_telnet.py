@@ -16,18 +16,18 @@ The fake also lets us simulate failure modes:
   * Slow / delayed response (timeout path)
   * Stale-socket recovery via reconnect-and-retry
 """
+
 from __future__ import annotations
 
 import socket
 import threading
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Dict, Iterator, Optional
+from typing import Optional
 
 import pytest
-
 from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
-
 
 # ---- Fake server fixture ------------------------------------------------
 
@@ -49,7 +49,7 @@ class _FakeLiquidsoapServer:
         timeouts to test the timeout path).
     """
 
-    def __init__(self, responses: Optional[Dict[str, str]] = None):
+    def __init__(self, responses: Optional[dict[str, str]] = None):
         self._responses = responses or {}
         self._sock: Optional[socket.socket] = None
         self._thread: Optional[threading.Thread] = None
@@ -65,9 +65,7 @@ class _FakeLiquidsoapServer:
         self.port = self._sock.getsockname()[1]
         self._sock.listen(1)
         self._sock.settimeout(0.5)  # so the accept loop can poll _stop_flag
-        self._thread = threading.Thread(
-            target=self._run, name="fake-ls-server", daemon=True
-        )
+        self._thread = threading.Thread(target=self._run, name="fake-ls-server", daemon=True)
         self._thread.start()
 
     def stop(self) -> None:
@@ -84,7 +82,7 @@ class _FakeLiquidsoapServer:
         while not self._stop_flag.is_set():
             try:
                 client, _ = self._sock.accept()
-            except (socket.timeout, OSError):
+            except (TimeoutError, OSError):
                 continue
             try:
                 self._serve_client(client)
@@ -100,7 +98,7 @@ class _FakeLiquidsoapServer:
         while not self._stop_flag.is_set():
             try:
                 chunk = client.recv(4096)
-            except (socket.timeout, OSError):
+            except (TimeoutError, OSError):
                 return
             if not chunk:
                 return
@@ -125,7 +123,7 @@ class _FakeLiquidsoapServer:
 
 @contextmanager
 def fake_server(
-    responses: Optional[Dict[str, str]] = None,
+    responses: Optional[dict[str, str]] = None,
 ) -> Iterator[_FakeLiquidsoapServer]:
     server = _FakeLiquidsoapServer(responses)
     server.start()
@@ -233,6 +231,7 @@ def test_reconnect_then_success():
     We simulate this by responding to the FIRST occurrence of "thing"
     with __close__ and any later occurrence with the real reply.
     """
+
     # Use a tiny custom server that flips behaviour after the first
     # request.
     class FlipFlopServer(_FakeLiquidsoapServer):
@@ -246,7 +245,7 @@ def test_reconnect_then_success():
             while not self._stop_flag.is_set():
                 try:
                     chunk = client.recv(4096)
-                except (socket.timeout, OSError):
+                except (TimeoutError, OSError):
                     return
                 if not chunk:
                     return
@@ -319,7 +318,9 @@ def test_request_queue_push_custom_queue_id():
     """Custom queue_id is honoured in the wire-form command."""
     with fake_server({"my_queue.push file:///bar.mp3": "5"}) as srv:
         client = LiquidsoapTelnetClient(
-            host=srv.host, port=srv.port, queue_id="my_queue",
+            host=srv.host,
+            port=srv.port,
+            queue_id="my_queue",
         )
         try:
             assert client.request_queue_push("file:///bar.mp3") == "5"
@@ -340,9 +341,7 @@ def test_var_set_wrapper():
 
 def test_metadata_update_escapes_quotes():
     """metadata_update() backslash-escapes embedded quotes."""
-    expected_cmd = (
-        'metadata.update title="She said \\"hi\\"",artist="Test"'
-    )
+    expected_cmd = 'metadata.update title="She said \\"hi\\"",artist="Test"'
     with fake_server({expected_cmd: ""}) as srv:
         client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
         try:
@@ -396,7 +395,7 @@ def test_crlf_end_sentinel():
             while not self._stop_flag.is_set():
                 try:
                     chunk = client.recv(4096)
-                except (socket.timeout, OSError):
+                except (TimeoutError, OSError):
                     return
                 if not chunk:
                     return
@@ -433,13 +432,11 @@ def test_recording_set_path_wrapper():
     `"path"` lands the literal quote characters in the variable and
     causes mkdir(`"C`) to fail at file-open time.
     """
-    expected = 'var.set recording_path = C:/rastatime/recordings/2026-05-27/foo.mp3'
+    expected = "var.set recording_path = C:/rastatime/recordings/2026-05-27/foo.mp3"
     with fake_server({expected: ""}) as srv:
         client = LiquidsoapTelnetClient(host=srv.host, port=srv.port)
         try:
-            client.recording_set_path(
-                "C:/rastatime/recordings/2026-05-27/foo.mp3"
-            )
+            client.recording_set_path("C:/rastatime/recordings/2026-05-27/foo.mp3")
             assert srv.received == [expected]
         finally:
             client.close()
@@ -455,10 +452,11 @@ def test_recording_set_path_rejects_special_chars():
     show name to safe forward-slash + ASCII-ish chars.
     """
     import pytest
+
     client = LiquidsoapTelnetClient()
     for bad in (
         r'C:\with"quote.mp3',
-        r'C:\backslash\path.mp3',
+        r"C:\backslash\path.mp3",
         "C:/with\nnewline.mp3",
         "C:/with\rcarriage.mp3",
     ):
@@ -530,6 +528,7 @@ def test_webstream_set_url_rejects_special_chars():
     Liquidsoap's set_url string).
     """
     import pytest
+
     client = LiquidsoapTelnetClient()
     for bad in (
         'http://example.com/with"quote',
@@ -645,6 +644,7 @@ def test_linein_set_url_rejects_special_chars():
     but backslash (needed for dshow alt-names) is ALLOWED.
     """
     import pytest
+
     client = LiquidsoapTelnetClient()
     for bad in (
         'audio=@device\\wave_{x}"quote',
@@ -698,7 +698,7 @@ def test_empty_response_crlf():
             while not self._stop_flag.is_set():
                 try:
                     chunk = client.recv(4096)
-                except (socket.timeout, OSError):
+                except (TimeoutError, OSError):
                     return
                 if not chunk:
                     return

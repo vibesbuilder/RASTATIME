@@ -26,33 +26,32 @@ Design references
 QUEUE_BEHAVIOR.md §3.1, §4.1 (show start HARD mode), §4.2 (show end),
 §6.1 (cue_in/cue_out not yet enforced — stop timer uses schedule end_at).
 """
+
 import logging
 import threading
 import time
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Callable, Dict, Optional, Tuple
+from typing import Optional
 
 import requests
 from rastatime_api_client.v2 import ApiClient
 
+from . import liquidsoap_health
 from .config import CACHE_DIR
 from .engine.ffmpeg_linein_capture import FfmpegLineinCapture
-from .recording_path import build_output_path
 from .engine.interface import PlayoutEngine, PlayoutState
 from .liquidsoap_config import (
     DEFAULT_CROSSFADE_DURATION,
-    DEFAULT_INPUT_DUCK_FADE_SECONDS,
     crossfade_buffer_seconds,
 )
-from . import liquidsoap_health
-from .tunein import TuneInPusher
-from .live_text import LiveTextWriter
 from .liquidsoap_service import (
     MAIN_OUTPUT_BY_INDEX,
     NightlyRestartPolicy,
     restart_liquidsoap_service,
 )
+from .live_text import LiveTextWriter
 from .player.events import (
     EventKind,
     FileEvent,
@@ -61,7 +60,9 @@ from .player.events import (
     WebStreamEvent,
 )
 from .player.schedule import get_schedule
+from .recording_path import build_output_path
 from .source_switcher import SourceState
+from .tunein import TuneInPusher
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +180,7 @@ class PlayoutScheduler:
         recording_extension: Optional[Callable[[], str]] = None,
         tunein: Optional[TuneInPusher] = None,
         live_text: Optional[LiveTextWriter] = None,
-        linein_icecast_credentials: Optional[Tuple[str, str]] = None,
+        linein_icecast_credentials: Optional[tuple[str, str]] = None,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
@@ -193,7 +194,7 @@ class PlayoutScheduler:
         self._storage_path = storage_path
 
         # Active timers: event_key → (start_timer | None, stop_timer | None)
-        self._timers: Dict[str, Tuple[Optional[threading.Timer], Optional[threading.Timer]]] = {}
+        self._timers: dict[str, tuple[Optional[threading.Timer], Optional[threading.Timer]]] = {}
         # Currently armed events, parallel to ``self._timers`` — keyed
         # by the same event_key.  Stored separately (rather than as a
         # third tuple element on ``_timers``) so the lookup is a clean
@@ -202,7 +203,7 @@ class PlayoutScheduler:
         # ``_on_stop`` for show A can ask "is there a same-device
         # LineinEvent B already armed?" without poking around in timer
         # internals.
-        self._armed_events: Dict[str, object] = {}
+        self._armed_events: dict[str, object] = {}
         self._lock = threading.Lock()
         # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
         # (memory-leak safety net, see liquidsoap_service).  The render
@@ -235,7 +236,7 @@ class PlayoutScheduler:
         # _on_show_record_end, which reports the closed file to the legacy
         # API (copy into the library).  None while nothing is recording or
         # after a PLAYOUT restart mid-show (the path is then unknown).
-        self._open_show_recording: Optional[Tuple[Optional[int], Path]] = None
+        self._open_show_recording: Optional[tuple[Optional[int], Path]] = None
         # RASTATIME 2026-09-06 - did the constructor's recording.stop +
         # gate reset reach Liquidsoap?  False means telnet was not up yet
         # and ensure_liquidsoap_initial_state() has to keep trying.
@@ -250,7 +251,7 @@ class PlayoutScheduler:
         # age_seconds) of the main instance from the process table; the
         # process probe is fetched once per refresh cycle and shared with
         # the planned-restart triggers.
-        self._last_liquidsoap_process: Optional[Tuple[int, float]] = None
+        self._last_liquidsoap_process: Optional[tuple[int, float]] = None
         self._cycle_process_infos: Optional[tuple] = None
         self._cycle_process_cache_enabled = False
 
@@ -284,8 +285,8 @@ class PlayoutScheduler:
         # fade when D = 0) plus a margin: the old source must keep being
         # pulled until the fade is over, THEN it is stopped.
         self._webstream_generation: int = 0
-        self._prepare_timers: Dict[str, threading.Timer] = {}
-        self._prepared: Optional[Tuple[str, object]] = None
+        self._prepare_timers: dict[str, threading.Timer] = {}
+        self._prepared: Optional[tuple[str, object]] = None
         # RASTATIME 2026-09-27 - input_transition_seconds is the Default
         # SHOW Crossfade Duration (every input switch: new source at once,
         # old fades out under it over this many seconds); the drain keeps
@@ -296,22 +297,23 @@ class PlayoutScheduler:
         self._drain_seconds = self._input_transition_seconds + 0.5
         self._track_crossfade_seconds = max(0.0, float(track_crossfade_seconds))
         self._cross_buffer_seconds = crossfade_buffer_seconds(
-            self._track_crossfade_seconds, self._input_transition_seconds,
+            self._track_crossfade_seconds,
+            self._input_transition_seconds,
         )
         # (key, FileEvent) queued behind the playing track, or None; and the
         # track it was queued behind (the predecessor's STOP may clear
         # _current_event before the successor's start runs - same instant
         # when rows are clipped at a show boundary, rehearsal 2026-09-27)
-        self._queued_ahead: Optional[Tuple[str, FileEvent]] = None
+        self._queued_ahead: Optional[tuple[str, FileEvent]] = None
         self._queued_ahead_prev: Optional[FileEvent] = None
         # RASTATIME 2026-10-03 - a row whose queue-ahead was held back
         # behind a shorter queued row (see _on_file_queue_ahead); queued as
         # soon as that row starts, so cross has its partner in time.
-        self._deferred_queue_ahead: Optional[Tuple[str, FileEvent]] = None
+        self._deferred_queue_ahead: Optional[tuple[str, FileEvent]] = None
         # RASTATIME 2026-10-03 - rows whose _on_file_start is executing right
         # now (key -> event): a refresh in the same second must not catch
         # them up a second time (12:17:55 incident: a jingle aired twice).
-        self._starting: Dict[str, FileEvent] = {}
+        self._starting: dict[str, FileEvent] = {}
         # RASTATIME 2026-09-28 - when the current file track was pushed and
         # how much audio it had then: the upper bound for what the engine
         # may report as "left" (the queue's remaining belongs to the
@@ -354,7 +356,7 @@ class PlayoutScheduler:
         # format (pushed on refresh when they change); the writer itself is
         # fed by the /live-text listener endpoint.
         self._live_text = live_text
-        self._live_text_pushed: Optional[Tuple[bool, int]] = None
+        self._live_text_pushed: Optional[tuple[bool, int]] = None
         self._icy_pushed: Optional[object] = None
         self._bus_show_pushed: Optional[str] = None
 
@@ -376,16 +378,16 @@ class PlayoutScheduler:
                     "icecast_user": linein_icecast_credentials[0],
                     "icecast_password": linein_icecast_credentials[1],
                 }
-            self._linein_capture: Optional[FfmpegLineinCapture] = FfmpegLineinCapture(**capture_kwargs)
+            self._linein_capture: Optional[FfmpegLineinCapture] = FfmpegLineinCapture(
+                **capture_kwargs
+            )
             # Phase B.4 #1 — wire the auto-restart callback so the
             # capture's watchdog can re-arm Liquidsoap's input.http
             # companion on the listen URL after a successful restart
             # (e.g. operator yanked the mic USB cable mid-show).
             # Otherwise the Icecast mount comes back but the consumer
             # stays tuned to a now-dead stream.
-            self._linein_capture.set_on_restart_callback(
-                self._on_linein_capture_restart
-            )
+            self._linein_capture.set_on_restart_callback(self._on_linein_capture_restart)
             logger.info(
                 "PlayoutScheduler: Line-In capture ready -> %s",
                 self._linein_capture.listen_url,
@@ -403,8 +405,7 @@ class PlayoutScheduler:
         # block on the internal bus.  The legacy FfmpegRecorder class
         # (HTTP-tap + lifecycle-watchdog + post-roll-Timer) was deleted.
         logger.info(
-            "PlayoutScheduler: recording is owned by Liquidsoap output.file "
-            "from the internal bus.",
+            "PlayoutScheduler: recording is owned by Liquidsoap output.file from the internal bus.",
         )
         # rastatime.liq's output.file(id="recording") uses default
         # start=true because Liquidsoap-2.4.4 silently swallows
@@ -561,7 +562,8 @@ class PlayoutScheduler:
                         logger.info(
                             "Playing event %s is keyed %s in the refreshed "
                             "schedule (same item%s) - rebinding, no teardown.",
-                            self._playing_key, match,
+                            self._playing_key,
+                            match,
                             ", re-timed" if events[match].start != cur.start else "",
                         )
                         self._playing_key = match
@@ -569,10 +571,7 @@ class PlayoutScheduler:
                     else:
                         # A DIFFERENT item under our old key is not us.
                         current_evt = None
-                event_gone_or_truncated = (
-                    current_evt is None
-                    or current_evt.end <= now
-                )
+                event_gone_or_truncated = current_evt is None or current_evt.end <= now
                 if (
                     current_evt is not None
                     and current_evt.end <= now
@@ -586,7 +585,8 @@ class PlayoutScheduler:
                     logger.info(
                         "Playing event %s ended this second with %s queued ahead "
                         "- leaving the hand-over to the queue.",
-                        self._playing_key, self._queued_ahead[0],
+                        self._playing_key,
+                        self._queued_ahead[0],
                     )
                     event_gone_or_truncated = False
                 if event_gone_or_truncated:
@@ -608,14 +608,16 @@ class PlayoutScheduler:
                         logger.info(
                             "Scheduled event %s %s while Master source is "
                             "active — Master stays on-air, clearing bookkeeping.",
-                            stale_key, reason,
+                            stale_key,
+                            reason,
                         )
                         # Liquidsoap keeps relaying the master harbor; leave it be.
                     elif dj_state == SourceState.SHOW:
                         logger.info(
                             "Scheduled event %s %s while Show source is "
                             "active — kicking the show DJ off the harbor.",
-                            stale_key, reason,
+                            stale_key,
+                            reason,
                         )
                         self.kick_dj_source("show")
                         # The source-disconnect event will transition the
@@ -626,7 +628,8 @@ class PlayoutScheduler:
                     else:  # SCHEDULED
                         logger.info(
                             "Scheduled event %s %s — stopping playback.",
-                            stale_key, reason,
+                            stale_key,
+                            reason,
                         )
                         self._engine.stop()
                         # engine.stop() flushes pending requests: a
@@ -673,6 +676,7 @@ class PlayoutScheduler:
                     # (VLC plays HTTP streams natively).  Only arm if the
                     # event type is a start event.
                     from .player.events import EventKind  # local import to avoid cycles
+
                     if event.type == EventKind.WEB_STREAM_OUTPUT_START:
                         end_diff = (event.end - now).total_seconds()
                         if end_diff <= 0:
@@ -700,6 +704,7 @@ class PlayoutScheduler:
                     # same helper; the helper checks event.type and
                     # routes to start_recording / stop_recording.
                     from .player.events import EventKind  # local import to avoid cycles
+
                     end_diff = (event.start - now).total_seconds()
                     if end_diff < 0:
                         # END events that already fired are OK to drop
@@ -721,9 +726,15 @@ class PlayoutScheduler:
             "PlayoutScheduler: armed=%d  past=%d  other=%d  (fetch %.2f s, icy %.2f s, "
             "root %.2f s, lock wait %.2f s, bookkeeping %.2f s; timers armed %.2f s "
             "after the clock reference)",
-            armed_count, skipped_past, skipped_type,
-            t_now - t_fetch0, t_icy - t_now, t_root - t_icy, t_lock - t_root,
-            t_arm0 - t_lock, t_end - t_arm0,
+            armed_count,
+            skipped_past,
+            skipped_type,
+            t_now - t_fetch0,
+            t_icy - t_now,
+            t_root - t_icy,
+            t_lock - t_root,
+            t_arm0 - t_lock,
+            t_end - t_arm0,
         )
 
         # RASTATIME 2026-09-05 - after the timers are re-armed we know
@@ -742,7 +753,7 @@ class PlayoutScheduler:
     # RASTATIME 2026-09-05 - nightly quiet-window restart of LIQUIDSOAP
     # ------------------------------------------------------------------
 
-    def _quiet_for_restart_locked(self, margin_seconds: float) -> Tuple[bool, str]:
+    def _quiet_for_restart_locked(self, margin_seconds: float) -> tuple[bool, str]:
         """
         Caller holds ``_lock``.  Quiet means: nothing on air, nothing
         pre-warmed, and no armed item starting within ``margin_seconds``.
@@ -805,7 +816,7 @@ class PlayoutScheduler:
             return False
         now_local = now_local or datetime.now()
         if self._boundary_restart_pending:
-            return False                      # armed already (any reason)
+            return False  # armed already (any reason)
         if (
             self._settings_restart_attempted_at is not None
             and now_local - self._settings_restart_attempted_at < timedelta(minutes=30)
@@ -815,14 +826,19 @@ class PlayoutScheduler:
         margin = policy.quiet_margin_seconds if policy is not None else 300.0
         with self._lock:
             quiet, why = self._quiet_for_restart_locked(margin)
-        reason = self.RENDER_RESTART_REASON if self._render_restart_pending else self.SETTINGS_RESTART_REASON
+        reason = (
+            self.RENDER_RESTART_REASON
+            if self._render_restart_pending
+            else self.SETTINGS_RESTART_REASON
+        )
         if quiet:
             self._settings_restart_attempted_at = now_local
             return self._perform_planned_restart(f"quiet moment: {reason}", now_local)
         self._boundary_restart_pending = reason
         logger.warning(
             "Settings changed (24/7 recording / Main Output / crossfade / stream "
-            "outputs) but %s - applying at the next file-to-file track boundary.", why,
+            "outputs) but %s - applying at the next file-to-file track boundary.",
+            why,
         )
         return False
 
@@ -845,15 +861,18 @@ class PlayoutScheduler:
             return False
         now_local = now_local or datetime.now()
         if self._boundary_restart_pending:
-            return False                      # armed - waits for a track boundary
+            return False  # armed - waits for a track boundary
         if (
             self._planned_restart_attempted_at is not None
             and now_local - self._planned_restart_attempted_at < timedelta(minutes=30)
         ):
-            return False                      # a failed attempt is not hammered
+            return False  # a failed attempt is not hammered
         age_seconds, private_mb = self._liquidsoap_process_probe()
         reason = policy.reason_due(
-            now_local, self._nightly_restart_done, age_seconds, private_mb,
+            now_local,
+            self._nightly_restart_done,
+            age_seconds,
+            private_mb,
         )
         if reason is None:
             return False
@@ -866,7 +885,9 @@ class PlayoutScheduler:
         self._boundary_restart_pending = reason
         logger.warning(
             "Planned Liquidsoap restart due (%s) but %s - restarting at the "
-            "next file-to-file track boundary instead.", reason, why,
+            "next file-to-file track boundary instead.",
+            reason,
+            why,
         )
         return False
 
@@ -903,14 +924,14 @@ class PlayoutScheduler:
             return None
         return max(candidates, key=lambda i: i.age_seconds)
 
-    def _liquidsoap_process_probe(self) -> Tuple[Optional[float], Optional[float]]:
+    def _liquidsoap_process_probe(self) -> tuple[Optional[float], Optional[float]]:
         """``(age_seconds, private_mb)`` of the main instance, or ``(None, None)``."""
         info = self._liquidsoap_main_process()
         if info is None:
             return None, None
         return float(info.age_seconds), float(info.private_mb)
 
-    def _liquidsoap_process_identity(self) -> Optional[Tuple[int, float]]:
+    def _liquidsoap_process_identity(self) -> Optional[tuple[int, float]]:
         """``(pid, age_seconds)`` of the main instance, or None."""
         info = self._liquidsoap_main_process()
         if info is None:
@@ -926,7 +947,9 @@ class PlayoutScheduler:
         return prev_event is None or isinstance(prev_event, FileEvent)
 
     def _perform_planned_restart(
-        self, reason: str, now_local: Optional[datetime] = None,
+        self,
+        reason: str,
+        now_local: Optional[datetime] = None,
         settle_async: bool = False,
     ) -> bool:
         """
@@ -952,7 +975,8 @@ class PlayoutScheduler:
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.error(
                     "Planned restart: re-render failed (%s) - restarting "
-                    "with the existing rastatime.liq.", exc,
+                    "with the existing rastatime.liq.",
+                    exc,
                 )
         # RASTATIME 2026-09-07: name-safe or not at all.  A device_id
         # render is only valid for the device list it was taken from;
@@ -980,7 +1004,9 @@ class PlayoutScheduler:
         self._after_liquidsoap_restart()
         # RASTATIME 2026-09-16 - the fresh instance carries the current
         # settings: new baseline for the settings change detector.
-        self._rendered_fingerprint = self._current_settings_fingerprint() or self._rendered_fingerprint
+        self._rendered_fingerprint = (
+            self._current_settings_fingerprint() or self._rendered_fingerprint
+        )
         self._render_restart_pending = False
         # The 30-minute hold is for FAILED attempts only - live 2026-09-16 the
         # folder change (16:53) was applied at once, the bitrate change saved
@@ -988,7 +1014,9 @@ class PlayoutScheduler:
         self._settings_restart_attempted_at = None
         if settle_async:
             t = threading.Thread(
-                target=self._settle_after_restart, args=(outcome,), daemon=True,
+                target=self._settle_after_restart,
+                args=(outcome,),
+                daemon=True,
                 name="liquidsoap-settle-check",
             )
             t.start()
@@ -1013,6 +1041,7 @@ class PlayoutScheduler:
 
     def _fall_back_without_stereotool(self) -> bool:
         from .liquidsoap_config import STEREOTOOL_LOCKOUT  # noqa: PLC0415
+
         STEREOTOOL_LOCKOUT["active"] = True
         STEREOTOOL_LOCKOUT["reason"] = (
             "Liquidsoap did not stay up after a start with Stereo Tool at "
@@ -1032,16 +1061,21 @@ class PlayoutScheduler:
                 logger.error("Stereo Tool fallback: re-render failed: %s", exc)
                 return False
         if not restart_liquidsoap_service(
-            "fallback without Stereo Tool", verify=self._liquidsoap_restarted_recently,
+            "fallback without Stereo Tool",
+            verify=self._liquidsoap_restarted_recently,
         ):
             logger.error("Stereo Tool fallback: restart failed - restart LIQUIDSOAP by hand.")
             return False
         self._after_liquidsoap_restart()
-        self._rendered_fingerprint = self._current_settings_fingerprint() or self._rendered_fingerprint
+        self._rendered_fingerprint = (
+            self._current_settings_fingerprint() or self._rendered_fingerprint
+        )
         return self._confirm_liquidsoap_stays_up()
 
     def _liquidsoap_restarted_recently(
-        self, timeout: float = 30.0, fresh_seconds: float = 120.0,
+        self,
+        timeout: float = 30.0,
+        fresh_seconds: float = 120.0,
         sleep: Optional[Callable[[float], None]] = None,
     ) -> bool:
         """
@@ -1067,7 +1101,8 @@ class PlayoutScheduler:
                 and 0 <= uptime < fresh_seconds
             ):
                 logger.info(
-                    "Liquidsoap is back as a fresh instance (uptime %.0f s).", uptime,
+                    "Liquidsoap is back as a fresh instance (uptime %.0f s).",
+                    uptime,
                 )
                 return True
             if time.monotonic() >= deadline:
@@ -1075,7 +1110,8 @@ class PlayoutScheduler:
             sleep(1.0)
 
     def _confirm_liquidsoap_stays_up(
-        self, settle_seconds: float = 10.0,
+        self,
+        settle_seconds: float = 10.0,
         sleep: Optional[Callable[[float], None]] = None,
     ) -> bool:
         """
@@ -1090,15 +1126,12 @@ class PlayoutScheduler:
             return True
         (sleep or time.sleep)(settle_seconds)
         uptime = reader()
-        alive = (
-            isinstance(uptime, (int, float))
-            and not isinstance(uptime, bool)
-            and uptime >= 0
-        )
+        alive = isinstance(uptime, (int, float)) and not isinstance(uptime, bool) and uptime >= 0
         if alive:
             logger.info(
                 "Nightly restart: Liquidsoap still up after %.0f s (uptime %.0f s).",
-                settle_seconds, uptime,
+                settle_seconds,
+                uptime,
             )
             return True
         logger.error(
@@ -1106,7 +1139,8 @@ class PlayoutScheduler:
             "- a crash loop (NSSM throttling)?  Most likely the Main Output "
             "device: read the newest logs/liquidsoap-stdout-*.log, then "
             "restart PLAYOUT and LIQUIDSOAP manually once the cause is "
-            "fixed.", settle_seconds,
+            "fixed.",
+            settle_seconds,
         )
         return False
 
@@ -1135,8 +1169,8 @@ class PlayoutScheduler:
             self._request_source_reconcile()
         else:
             logger.error(
-                "Nightly restart: Liquidsoap telnet did not come back "
-                "within %d attempts.", attempts,
+                "Nightly restart: Liquidsoap telnet did not come back within %d attempts.",
+                attempts,
             )
 
     # ------------------------------------------------------------------
@@ -1144,8 +1178,9 @@ class PlayoutScheduler:
     # ------------------------------------------------------------------
 
     def _apply_initial_liquidsoap_state(
-        self, reset_gates: bool = True,
-    ) -> Tuple[bool, Optional[BaseException]]:
+        self,
+        reset_gates: bool = True,
+    ) -> tuple[bool, Optional[BaseException]]:
         """
         One attempt: ``recording.stop`` (raises while telnet is down,
         so it doubles as the readiness probe) and then, unless
@@ -1179,7 +1214,10 @@ class PlayoutScheduler:
         return True, None
 
     def _retry_initial_liquidsoap_state(
-        self, attempts: int, delay: float, sleep: Callable[[float], None],
+        self,
+        attempts: int,
+        delay: float,
+        sleep: Callable[[float], None],
     ) -> bool:
         for attempt in range(1, attempts + 1):
             ok, exc = self._apply_initial_liquidsoap_state()
@@ -1187,7 +1225,8 @@ class PlayoutScheduler:
                 if attempt > 1:
                     logger.info(
                         "PlayoutScheduler: Liquidsoap telnet is back (attempt %d): "
-                        "recording sentinel stopped, gates reset.", attempt,
+                        "recording sentinel stopped, gates reset.",
+                        attempt,
                     )
                 return True
             logger.debug("PlayoutScheduler: Liquidsoap not ready (attempt %d): %s", attempt, exc)
@@ -1205,7 +1244,9 @@ class PlayoutScheduler:
         if self._queued_ahead is not None:
             logger.info(
                 "%s: forgetting the queued-ahead successor %s (the fresh "
-                "instance's queue is empty).", why, self._queued_ahead[0],
+                "instance's queue is empty).",
+                why,
+                self._queued_ahead[0],
             )
         self._queued_ahead = None
         self._queued_ahead_prev = None
@@ -1239,13 +1280,14 @@ class PlayoutScheduler:
             logger.warning(
                 "Liquidsoap restarted under PLAYOUT (uptime %.0f s < previous "
                 "%.0f s) - re-sending recording.stop and reopening the gates.",
-                uptime, prev,
+                uptime,
+                prev,
             )
-            ok, exc = self._apply_initial_liquidsoap_state()   # also re-seeds uptime
+            ok, exc = self._apply_initial_liquidsoap_state()  # also re-seeds uptime
             if not ok:
                 logger.warning(
-                    "Post-restart re-init failed (telnet not ready yet?): %s - "
-                    "retrying next poll.", exc,
+                    "Post-restart re-init failed (telnet not ready yet?): %s - retrying next poll.",
+                    exc,
                 )
                 return
             self._forget_queued_ahead("Liquidsoap restarted")
@@ -1253,7 +1295,7 @@ class PlayoutScheduler:
         else:
             self._last_liquidsoap_uptime = uptime
 
-    def _maybe_reinit_by_process(self, ident: Tuple[int, float]) -> None:
+    def _maybe_reinit_by_process(self, ident: tuple[int, float]) -> None:
         """
         Process-table restart detector (2026-09-09): a new PID, or the
         same PID with a younger age than last cycle, is a fresh instance.
@@ -1271,21 +1313,27 @@ class PlayoutScheduler:
         logger.warning(
             "Liquidsoap restarted under PLAYOUT (pid %d, %.0f s old; before pid "
             "%d, %.0f s) - re-sending recording.stop and reopening the gates.",
-            pid, age, prev_pid, prev_age,
+            pid,
+            age,
+            prev_pid,
+            prev_age,
         )
         ok, exc = self._apply_initial_liquidsoap_state()
         if not ok:
             logger.warning(
-                "Post-restart re-init failed (telnet not ready yet?): %s - "
-                "retrying next poll.", exc,
+                "Post-restart re-init failed (telnet not ready yet?): %s - retrying next poll.",
+                exc,
             )
-            return                      # baseline kept -> detected again next cycle
+            return  # baseline kept -> detected again next cycle
         self._last_liquidsoap_process = ident
         self._forget_queued_ahead("Liquidsoap restarted")
         self._request_source_reconcile()
 
     def ensure_liquidsoap_initial_state(
-        self, attempts: int = 45, delay: float = 2.0, background: bool = True,
+        self,
+        attempts: int = 45,
+        delay: float = 2.0,
+        background: bool = True,
     ) -> Optional[bool]:
         """
         Keep trying to put Liquidsoap into its start state until its
@@ -1343,7 +1391,8 @@ class PlayoutScheduler:
             self._engine.recording_stop()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning(
-                "Shutdown: Liquidsoap recording_stop failed: %s", exc,
+                "Shutdown: Liquidsoap recording_stop failed: %s",
+                exc,
             )
         logger.info("PlayoutScheduler: shutdown complete")
 
@@ -1352,7 +1401,7 @@ class PlayoutScheduler:
     # ------------------------------------------------------------------
 
     def _cancel_all_timers(self) -> None:
-        for key, (start_t, stop_t) in list(self._timers.items()):
+        for _key, (start_t, stop_t) in list(self._timers.items()):
             if start_t is not None:
                 start_t.cancel()
             if stop_t is not None:
@@ -1366,7 +1415,7 @@ class PlayoutScheduler:
         # snapshot of "what's armed right now" (rather than ghosts of
         # the previous refresh).
         self._armed_events.clear()
-        self._deferred_queue_ahead = None   # re-armed by the queue-ahead timers
+        self._deferred_queue_ahead = None  # re-armed by the queue-ahead timers
 
     def _arm_file_event(
         self,
@@ -1386,31 +1435,33 @@ class PlayoutScheduler:
             start_t.start()
             logger.debug(
                 "Armed FileEvent %s: starts in %.1fs  track=%r",
-                key, start_delay, event.track_title,
+                key,
+                start_delay,
+                event.track_title,
             )
             self._arm_queue_ahead(key, event, start_delay)
 
-        elif key != self._playing_key and self._same_scheduled_item(
-            self._current_event, event
-        ):
+        elif key != self._playing_key and self._same_scheduled_item(self._current_event, event):
             # RASTATIME 2026-09-04 - same item, new key (see
             # _same_scheduled_item): adopt the key, do not re-play.
             logger.info(
-                "Catch-up skipped: %s is the playing track under a new key "
-                "(%s -> %s); rebinding.", event.track_title, self._playing_key, key,
+                "Catch-up skipped: %s is the playing track under a new key (%s -> %s); rebinding.",
+                event.track_title,
+                self._playing_key,
+                key,
             )
             self._playing_key = key
 
         elif key != self._playing_key and any(
-            self._same_scheduled_item(starting, event)
-            for starting in list(self._starting.values())
+            self._same_scheduled_item(starting, event) for starting in list(self._starting.values())
         ):
             # RASTATIME 2026-10-03 - the refresh landed in the row's start
             # second: its timer PLAY is running this very moment.  A
             # catch-up here pushed the same jingle a second time (12:17:55).
             logger.info(
-                "Catch-up skipped: %s (%r) is starting right now - its timer "
-                "fired this second.", key, event.track_title,
+                "Catch-up skipped: %s (%r) is starting right now - its timer fired this second.",
+                key,
+                event.track_title,
             )
 
         elif key != self._playing_key and self._precedes_playing(event):
@@ -1421,7 +1472,9 @@ class PlayoutScheduler:
             # the successor and left dead air (20:05:36 incident).
             logger.info(
                 "Catch-up skipped: %s (%r) precedes the playing item %s.",
-                key, event.track_title, self._playing_key,
+                key,
+                event.track_title,
+                self._playing_key,
             )
 
         elif key != self._playing_key:
@@ -1439,7 +1492,10 @@ class PlayoutScheduler:
             logger.info(
                 "Catch-up: in-progress event %s (started %.0fs ago)  track=%r "
                 "- entering at +%.1f s",
-                key, seek, event.track_title, seek,
+                key,
+                seek,
+                event.track_title,
+                seek,
             )
             start_t = threading.Timer(0, self._on_file_start, args=(key, event, seek))
             start_t.daemon = True
@@ -1449,7 +1505,8 @@ class PlayoutScheduler:
             # We are already playing this event — don't restart it.
             logger.debug(
                 "Skipping re-arm for currently-playing event %s  track=%r",
-                key, event.track_title,
+                key,
+                event.track_title,
             )
 
         stop_t = threading.Timer(stop_delay, self._on_stop, args=(key,))
@@ -1474,25 +1531,27 @@ class PlayoutScheduler:
             start_t = threading.Timer(start_delay, self._on_webstream_start, args=(key, event))
             start_t.daemon = True
             start_t.start()
-        elif key != self._playing_key and self._same_scheduled_item(
-            self._current_event, event
-        ):
+        elif key != self._playing_key and self._same_scheduled_item(self._current_event, event):
             # RASTATIME 2026-09-04 - same item, new key: rebind instead of
             # reconnecting the stream (an audible gap).
             logger.info(
                 "Catch-up skipped: web stream already playing under a new "
-                "key (%s -> %s); rebinding.", self._playing_key, key,
+                "key (%s -> %s); rebinding.",
+                self._playing_key,
+                key,
             )
             self._playing_key = key
         elif key != self._playing_key and self._precedes_playing(event):
             logger.info(
                 "Catch-up skipped: web stream %s precedes the playing item %s.",
-                key, self._playing_key,
+                key,
+                self._playing_key,
             )
         elif key != self._playing_key:
             logger.info(
                 "Catch-up: in-progress web stream %s (started %.0fs ago)",
-                key, -start_delay,
+                key,
+                -start_delay,
             )
             start_t = threading.Timer(0, self._on_webstream_start, args=(key, event))
             start_t.daemon = True
@@ -1507,7 +1566,10 @@ class PlayoutScheduler:
         self._armed_events[key] = event
         logger.debug(
             "Armed WebStreamEvent %s: start=%.1fs stop=%.1fs  uri=%s",
-            key, start_delay, stop_delay, event.uri,
+            key,
+            start_delay,
+            stop_delay,
+            event.uri,
         )
 
     def _arm_linein_event(
@@ -1532,15 +1594,14 @@ class PlayoutScheduler:
         start_t: Optional[threading.Timer] = None
 
         if start_delay >= 0:
-            start_t = threading.Timer(
-                start_delay, self._on_linein_start, args=(key, event)
-            )
+            start_t = threading.Timer(start_delay, self._on_linein_start, args=(key, event))
             start_t.daemon = True
             start_t.start()
         elif key != self._playing_key and self._precedes_playing(event):
             logger.info(
                 "Catch-up skipped: line-in %s precedes the playing item %s.",
-                key, self._playing_key,
+                key,
+                self._playing_key,
             )
         elif key != self._playing_key:
             # RASTATIME 2026-09-03 - a schedule refresh can hand the SAME
@@ -1566,7 +1627,8 @@ class PlayoutScheduler:
                 logger.info(
                     "Catch-up skipped: line-in already on air with the same "
                     "device+channels (key %s -> %s); not bouncing the source.",
-                    self._playing_key, key,
+                    self._playing_key,
+                    key,
                 )
                 self._playing_key = key
                 # Nothing to arm: the source is already playing.  None is
@@ -1576,12 +1638,12 @@ class PlayoutScheduler:
                 start_t = None
             else:
                 logger.info(
-                    "Catch-up: in-progress line-in %s (started %.0fs ago)  "
-                    "name=%r", key, -start_delay, event.name,
+                    "Catch-up: in-progress line-in %s (started %.0fs ago)  name=%r",
+                    key,
+                    -start_delay,
+                    event.name,
                 )
-                start_t = threading.Timer(
-                    0, self._on_linein_start, args=(key, event)
-                )
+                start_t = threading.Timer(0, self._on_linein_start, args=(key, event))
                 start_t.daemon = True
                 start_t.start()
 
@@ -1594,7 +1656,10 @@ class PlayoutScheduler:
         self._armed_events[key] = event
         logger.debug(
             "Armed LineinEvent %s: start=%.1fs stop=%.1fs  device=%s",
-            key, start_delay, stop_delay, event.device_id,
+            key,
+            start_delay,
+            stop_delay,
+            event.device_id,
         )
 
     def _arm_show_record_event(
@@ -1630,7 +1695,11 @@ class PlayoutScheduler:
         self._armed_events[key] = event
         logger.debug(
             "Armed ShowRecordEvent %s: type=%s delay=%.1fs show_id=%s name=%r",
-            key, event.type.value, delay, event.show_id, event.show_name,
+            key,
+            event.type.value,
+            delay,
+            event.show_id,
+            event.show_name,
         )
 
     # ------------------------------------------------------------------
@@ -1663,7 +1732,10 @@ class PlayoutScheduler:
         return getattr(event, "start", None) is not None and event.start <= cur.start  # type: ignore[attr-defined]
 
     def _plausible_remaining(
-        self, now: datetime, started_at: Optional[datetime], clip_seconds: Optional[float],
+        self,
+        now: datetime,
+        started_at: Optional[datetime],
+        clip_seconds: Optional[float],
     ) -> Optional[float]:
         """
         RASTATIME 2026-09-28 - the most audio a file track pushed at
@@ -1694,7 +1766,10 @@ class PlayoutScheduler:
         return end + timedelta(seconds=lag)
 
     def _catch_up_after_boundary_restart(
-        self, key: str, event: FileEvent, seek: float,
+        self,
+        key: str,
+        event: FileEvent,
+        seek: float,
     ) -> float:
         """
         RASTATIME 2026-10-02 - operator decision (a): after a planned restart
@@ -1709,7 +1784,10 @@ class PlayoutScheduler:
             return seek
         logger.info(
             "PLAY  %s: the boundary restart took %.1f s - entering the track at "
-            "+%.1f s so the show stays on its rows.", key, elapsed - seek, elapsed,
+            "+%.1f s so the show stays on its rows.",
+            key,
+            elapsed - seek,
+            elapsed,
         )
         return elapsed
 
@@ -1738,15 +1816,14 @@ class PlayoutScheduler:
         if self._file_chain_lag is None or abs(lag - self._file_chain_lag) > 0.005:
             logger.info(
                 "PLAY  %s: the file chain runs %.2f s behind the rows (was %s).",
-                event.track_title or event.id, lag,
+                event.track_title or event.id,
+                lag,
                 "unknown" if self._file_chain_lag is None else f"{self._file_chain_lag:.2f} s",
             )
         self._file_chain_lag = lag
 
     def _dj_on_air(self) -> bool:
-        return bool(
-            self._switcher and self._switcher.current_state != SourceState.SCHEDULED
-        )
+        return bool(self._switcher and self._switcher.current_state != SourceState.SCHEDULED)
 
     def _wait_for_exact_time(self, key: str, when: Optional[datetime], what: str) -> bool:
         """
@@ -1765,7 +1842,9 @@ class PlayoutScheduler:
         if self._playing_key != key:
             logger.info(
                 "%s  %s: superseded by %s during the wait - leaving the engine alone.",
-                what, key, self._playing_key,
+                what,
+                key,
+                self._playing_key,
             )
             return False
         return True
@@ -1781,7 +1860,7 @@ class PlayoutScheduler:
         if self._dj_on_air():
             return True
         if self._prepared is None or not self._same_scheduled_item(self._prepared[1], event):
-            return True   # a cold start has its own start-up time
+            return True  # a cold start has its own start-up time
         if not isinstance(prev_event, FileEvent):
             return self._wait_for_exact_time(key, getattr(event, "start_exact", None), "PLAY")
         overlap = min(self._track_crossfade(prev_event), self._input_transition_seconds)
@@ -1791,20 +1870,26 @@ class PlayoutScheduler:
             return True
         if hold > FILE_TAIL_HOLD_MAX_SECONDS:
             logger.info(
-                "PLAY  %s: %r has %.1f s of audio left - overbook, the live item "
-                "starts now.", key, prev_event.track_title or prev_event.id, left,
+                "PLAY  %s: %r has %.1f s of audio left - overbook, the live item starts now.",
+                key,
+                prev_event.track_title or prev_event.id,
+                left,
             )
             return True
         logger.info(
-            "PLAY  %s: %r has %.2f s of audio left (overlap %.2f s) - the gate "
-            "opens in %.2f s.", key, prev_event.track_title or prev_event.id,
-            left, overlap, hold,
+            "PLAY  %s: %r has %.2f s of audio left (overlap %.2f s) - the gate opens in %.2f s.",
+            key,
+            prev_event.track_title or prev_event.id,
+            left,
+            overlap,
+            hold,
         )
         time.sleep(hold)
         if self._playing_key != key:
             logger.info(
-                "PLAY  %s: superseded by %s during the wait - leaving the engine "
-                "alone.", key, self._playing_key,
+                "PLAY  %s: superseded by %s during the wait - leaving the engine alone.",
+                key,
+                self._playing_key,
             )
             return False
         return True
@@ -1821,7 +1906,9 @@ class PlayoutScheduler:
         if left <= 0.05 or left > FILE_TAIL_HOLD_MAX_SECONDS:
             return
         logger.info(
-            "STOP  %s: %.2f s of audio left - letting the track run out.", key, left,
+            "STOP  %s: %.2f s of audio left - letting the track run out.",
+            key,
+            left,
         )
         time.sleep(left)
 
@@ -1909,13 +1996,15 @@ class PlayoutScheduler:
         if isinstance(prev_event, LineinEvent):
             logger.info(
                 "PLAY %s takes over from line-in %r - releasing it.",
-                key, prev_event.name,
+                key,
+                prev_event.name,
             )
             self._release_linein(f"successor {key}")
         elif isinstance(prev_event, WebStreamEvent):
             logger.info(
                 "PLAY %s takes over from web stream %s - releasing it.",
-                key, prev_event.uri,
+                key,
+                prev_event.uri,
             )
             self._release_webstream(f"successor {key}")
 
@@ -1990,7 +2079,9 @@ class PlayoutScheduler:
                 logger.info(
                     "Queue-ahead: %s stays queued ahead of %s (rows shorter than "
                     "the lead window) - %s is queued as soon as it starts.",
-                    self._queued_ahead[0], key, key,
+                    self._queued_ahead[0],
+                    key,
+                    key,
                 )
                 self._deferred_queue_ahead = (key, event)
                 return
@@ -1998,7 +2089,8 @@ class PlayoutScheduler:
             # edit (2026-09-28): the queued request carries the old cues
             logger.info(
                 "Queue-ahead: %s replaces the stale queued track %s.",
-                key, self._queued_ahead[0],
+                key,
+                self._queued_ahead[0],
             )
             self._engine.flush_queued()
             self._queued_ahead = None
@@ -2022,8 +2114,11 @@ class PlayoutScheduler:
             self._queued_ahead_prev = prev
             logger.info(
                 "Queue-ahead %s | %r follows %r in %.1f s (%s)",
-                key, event.track_title or event.id, prev.track_title or prev.id,
-                remaining, mode,
+                key,
+                event.track_title or event.id,
+                prev.track_title or prev.id,
+                remaining,
+                mode,
             )
 
     def _cross_mode(self, prev: object, nxt: FileEvent, *, skip: bool) -> str:
@@ -2079,7 +2174,7 @@ class PlayoutScheduler:
         return min(self._track_crossfade(prev), self._track_crossfade(nxt))
 
     @staticmethod
-    def _track_metadata(event: FileEvent) -> Dict[str, str]:
+    def _track_metadata(event: FileEvent) -> dict[str, str]:
         # RASTATIME 2026-10-14 - a track whose metadata stays off the stream
         # sends no artist / title; icy_hide makes the label builder show
         # "Station name - Show name" in every format (jingles, IDs, promos).
@@ -2091,17 +2186,18 @@ class PlayoutScheduler:
         # why; see CHANGELOG 2026-10-15.
         if getattr(event, "icy_hidden", False):
             return {
-                "icy_hide":  "true",
+                "icy_hide": "true",
                 "show_name": event.show_name or "",
             }
         return {
-            "title":     event.track_title or "",
-            "artist":    event.artist_name or "",
+            "title": event.track_title or "",
+            "artist": event.artist_name or "",
             "show_name": event.show_name or "",
         }
 
-    def _arm_prepare(self, key: str, event: object, start_delay: float,
-                     handler: Callable[[str, object], None]) -> None:
+    def _arm_prepare(
+        self, key: str, event: object, start_delay: float, handler: Callable[[str, object], None]
+    ) -> None:
         """Arm the prepare timer at start - PREPARE_LEAD_SECONDS (an item
         starting sooner than that goes the normal way)."""
         if start_delay < MIN_PREPARE_SECONDS:
@@ -2113,7 +2209,8 @@ class PlayoutScheduler:
         # fires immediately; the handlers are idempotent for an item that
         # is already pre-warmed.
         lead_seconds = (
-            WEBSTREAM_PREPARE_LEAD_SECONDS if isinstance(event, WebStreamEvent)
+            WEBSTREAM_PREPARE_LEAD_SECONDS
+            if isinstance(event, WebStreamEvent)
             else PREPARE_LEAD_SECONDS
         )
         lead = max(0.0, start_delay - lead_seconds)
@@ -2129,7 +2226,8 @@ class PlayoutScheduler:
         if isinstance(self._current_event, LineinEvent):
             logger.info(
                 "Prepare %s skipped: a line-in is on air (single capture); "
-                "it starts the normal way at its slot.", key,
+                "it starts the normal way at its slot.",
+                key,
             )
             return
         if self._prepared is not None:
@@ -2152,7 +2250,9 @@ class PlayoutScheduler:
         self._engine.linein_start_http()
         try:
             self._linein_capture.start(
-                resolved, channel_mapping=tuple(mapping), device_name=dev_name,
+                resolved,
+                channel_mapping=tuple(mapping),
+                device_name=dev_name,
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.error("Prepare %s: capture start failed: %s", key, exc)
@@ -2170,7 +2270,8 @@ class PlayoutScheduler:
         """T - 10 s: connect + buffer the webstream with the bus gate CLOSED."""
         if isinstance(self._current_event, WebStreamEvent):
             logger.info(
-                "Prepare %s skipped: a web stream is on air (single source).", key,
+                "Prepare %s skipped: a web stream is on air (single source).",
+                key,
             )
             return
         if self._prepared is not None:
@@ -2242,8 +2343,11 @@ class PlayoutScheduler:
 
     def _drained_linein_stop(self, gen: int) -> None:
         if self._linein_generation != gen:
-            logger.info("Drained line-in stop skipped: a newer line-in took over (gen %d->%d).",
-                        gen, self._linein_generation)
+            logger.info(
+                "Drained line-in stop skipped: a newer line-in took over (gen %d->%d).",
+                gen,
+                self._linein_generation,
+            )
             return
         if self._linein_capture is not None:
             self._linein_capture.stop()
@@ -2252,7 +2356,9 @@ class PlayoutScheduler:
     def _release_webstream(self, why: str) -> None:
         gen = self._webstream_generation
         self._engine.webstream_gate(False)
-        logger.info("Web stream released (%s): gate closed, stop in %.1f s.", why, self._drain_seconds)
+        logger.info(
+            "Web stream released (%s): gate closed, stop in %.1f s.", why, self._drain_seconds
+        )
         t = threading.Timer(self._drain_seconds, self._drained_webstream_stop, args=(gen,))
         t.daemon = True
         t.start()
@@ -2280,13 +2386,13 @@ class PlayoutScheduler:
         if not isinstance(cur, FileEvent) or self._same_scheduled_item(cur, event):
             return
         if event.start < cur.start or not any(
-            self._same_scheduled_item(armed, event)
-            for armed in list(self._armed_events.values())
+            self._same_scheduled_item(armed, event) for armed in list(self._armed_events.values())
         ):
             return
         logger.info(
             "Queue-ahead: %s was held back behind %r - queuing it now.",
-            key, cur.track_title or cur.id,
+            key,
+            cur.track_title or cur.id,
         )
         self._on_file_queue_ahead(key, event)
 
@@ -2300,7 +2406,8 @@ class PlayoutScheduler:
             if late > 0.5:
                 logger.info(
                     "PLAY  %s: the start timer fired %.2f s after the row second.",
-                    key, late,
+                    key,
+                    late,
                 )
         self._starting[key] = event
         try:
@@ -2336,7 +2443,8 @@ class PlayoutScheduler:
         # hear a short gap instead of a mid-track hole; Icecast keeps
         # them on the fallback mounts meanwhile (see icecast.xml).
         if self._boundary_restart_pending and self._boundary_allows_restart(
-            self._current_event, event,
+            self._current_event,
+            event,
         ):
             reason = self._boundary_restart_pending
             self._boundary_restart_pending = None
@@ -2368,15 +2476,22 @@ class PlayoutScheduler:
         self._current_audio_path = str(local)
         self._current_started_at = datetime.utcnow()
         self._current_clip_seconds = max(
-            0.0, float(event.cue_out or 0.0) - float(event.cue_in or 0.0) - seek,
+            0.0,
+            float(event.cue_out or 0.0) - float(event.cue_in or 0.0) - seek,
         )
         # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
         self._cue_item_start(
-            "track", show=event.show_name, item=event.row_id,
-            title=event.track_title, artist=event.artist_name,
+            "track",
+            show=event.show_name,
+            item=event.row_id,
+            title=event.track_title,
+            artist=event.artist_name,
         )
         self._tunein_now_playing(
-            "track", title=event.track_title, artist=event.artist_name, show=event.show_name,
+            "track",
+            title=event.track_title,
+            artist=event.artist_name,
+            show=event.show_name,
         )
         # RASTATIME 2026-05-16 — cache the effective gain for the
         # resume path.  For file events the value is the precomputed
@@ -2385,7 +2500,7 @@ class PlayoutScheduler:
         # ``None`` ⇒ replay-gain globally disabled; engines/streamers
         # skip the volume filter.
         self._current_gain_db = event.replay_gain
-        self._set_bus_show(event.show_name)   # ICY show for DJ takeovers (2026-09-13)
+        self._set_bus_show(event.show_name)  # ICY show for DJ takeovers (2026-09-13)
 
         # If a DJ source is currently dominant, do not touch the audio
         # engine — the DJ stream stays on air.  We've already recorded
@@ -2394,7 +2509,8 @@ class PlayoutScheduler:
         if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
             logger.info(
                 "Track %s queued — %s source active, scheduled audio held back",
-                key, self._switcher.current_state.value,
+                key,
+                self._switcher.current_state.value,
             )
             self._notify_media_started(event.row_id)
             return
@@ -2405,7 +2521,10 @@ class PlayoutScheduler:
         if seek > 0 and clip > 0 and seek >= clip - 0.5:
             logger.info(
                 "PLAY  %s: the catch-up offset +%.1f s is past the track's %.1f s "
-                "of audio - nothing to play.", key, seek, clip,
+                "of audio - nothing to play.",
+                key,
+                seek,
+                clip,
             )
             self._notify_media_started(event.row_id)
             return
@@ -2422,14 +2541,17 @@ class PlayoutScheduler:
             # in needs a fresh request with the offset.
             logger.info(
                 "PLAY  %s: catch-up at +%.1f s - dropping the queued copy, "
-                "which starts at the top.", key, seek,
+                "which starts at the top.",
+                key,
+                seek,
             )
             self._engine.flush_queued()
             self._queued_ahead = None
             self._queued_ahead_prev = None
             queued = None
         if (
-            prev_event is None and queued is not None
+            prev_event is None
+            and queued is not None
             and self._same_scheduled_item(queued[1], event)
         ):
             # The predecessor's STOP ran a moment ago (rows clipped at the
@@ -2439,7 +2561,8 @@ class PlayoutScheduler:
             prev_event = self._queued_ahead_prev
         prev_remaining = (
             (self._natural_end(prev_event) - now).total_seconds()
-            if isinstance(prev_event, FileEvent) else 0.0
+            if isinstance(prev_event, FileEvent)
+            else 0.0
         )
         # RASTATIME 2026-09-27 - prefer the engine's own measurement: a
         # predecessor that started late (second rehearsal: 45 s, after a
@@ -2460,13 +2583,19 @@ class PlayoutScheduler:
                         "PLAY  %s: the engine's %.1f s left cannot belong to %r "
                         "(at most %.1f s of its audio is left) - the queue is on "
                         "the successor, no skip.",
-                        key, measured, getattr(prev_event, "track_title", None) or "-", bound,
+                        key,
+                        measured,
+                        getattr(prev_event, "track_title", None) or "-",
+                        bound,
                     )
                     measured = 0.0
                 if abs(measured - prev_remaining) > 1.0:
                     logger.info(
                         "PLAY  %s: predecessor has %.1f s of audio left (engine), "
-                        "rows said %.1f s.", key, measured, prev_remaining,
+                        "rows said %.1f s.",
+                        key,
+                        measured,
+                        prev_remaining,
                     )
                 prev_remaining = float(measured)
         if queued is not None and self._same_scheduled_item(queued[1], event):
@@ -2476,7 +2605,9 @@ class PlayoutScheduler:
             skip = prev_remaining > self._cross_buffer_seconds + SKIP_TOLERANCE_SECONDS
             mode = self._cross_mode(prev_event, event, skip=skip)
             self._engine.adopt_queued(
-                str(local), skip_current=skip, transition=mode if skip else None,
+                str(local),
+                skip_current=skip,
+                transition=mode if skip else None,
             )
             if skip:
                 # 2026-09-29: the cut starts a new chain at this instant
@@ -2485,14 +2616,18 @@ class PlayoutScheduler:
                 self._carry_file_chain_lag(prev_event, event, mode)
             logger.info(
                 "PLAY  %s takes over from %r: %s (predecessor has %.1f s left)",
-                key, getattr(prev_event, "track_title", None) or "-",
-                mode, max(0.0, prev_remaining),
+                key,
+                getattr(prev_event, "track_title", None) or "-",
+                mode,
+                max(0.0, prev_remaining),
             )
             self._notify_media_started(event.row_id)
             return
         if queued is not None:
             logger.info(
-                "PLAY  %s: dropping the stale queued track %s.", key, queued[0],
+                "PLAY  %s: dropping the stale queued track %s.",
+                key,
+                queued[0],
             )
             self._engine.flush_queued()
             self._queued_ahead = None
@@ -2562,7 +2697,10 @@ class PlayoutScheduler:
         )
         logger.info(
             "PLAY (web stream)  %s  |  uri=%s  |  gain=%s  |  show: %s",
-            key, event.uri, gain_for_log, event.show_name,
+            key,
+            event.uri,
+            gain_for_log,
+            event.show_name,
         )
 
         # Track which event is "current" regardless of whether a DJ
@@ -2576,14 +2714,17 @@ class PlayoutScheduler:
         self._current_audio_path = event.uri
         # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
         self._cue_item_start(
-            "webstream", show=event.show_name, item=event.row_id, uri=event.uri,
+            "webstream",
+            show=event.show_name,
+            item=event.row_id,
+            uri=event.uri,
         )
         self._tunein_now_playing("webstream", title=None, artist=None, show=event.show_name)
         # RASTATIME 2026-05-16 — cache the webstream's input-gain so the
         # resume path (DJ disconnect, hot-reload) reapplies it after the
         # stop/restart, instead of falling back to "no gain".
         self._current_gain_db = event.input_gain_db
-        self._set_bus_show(event.show_name)   # ICY show for the webstream packets (2026-09-13)
+        self._set_bus_show(event.show_name)  # ICY show for the webstream packets (2026-09-13)
 
         # Drive the dashboard "On Air" light (web streams have row_id too)
         row_id = getattr(event, "row_id", None)
@@ -2596,9 +2737,9 @@ class PlayoutScheduler:
         # the DJ disconnects.
         if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
             logger.info(
-                "Web stream %s queued — %s source active, "
-                "scheduled audio held back",
-                key, self._switcher.current_state.value,
+                "Web stream %s queued — %s source active, scheduled audio held back",
+                key,
+                self._switcher.current_state.value,
             )
             return
 
@@ -2635,12 +2776,13 @@ class PlayoutScheduler:
             and (prev_event.input_gain_db or 0.0) == (event.input_gain_db or 0.0)
         ):
             logger.info(
-                "Web stream %s: same stream as %s - keeping the source, "
-                "no bounce.", key, prev_event.uri,
+                "Web stream %s: same stream as %s - keeping the source, no bounce.",
+                key,
+                prev_event.uri,
             )
             self._take_prepared(event)
-            self._webstream_generation += 1   # a pending drain must not stop us
-            self._engine.stop()               # clear the scheduled queue as usual
+            self._webstream_generation += 1  # a pending drain must not stop us
+            self._engine.stop()  # clear the scheduled queue as usual
             self._engine.webstream_gate(True)  # in case a race closed it
             return
         if isinstance(prev_event, WebStreamEvent):
@@ -2653,7 +2795,9 @@ class PlayoutScheduler:
             # tail is cut and the new stream needs its buffer-up.
             logger.info(
                 "Web stream %s replaces %s on the single stream source - "
-                "stop + start (no drain possible).", key, prev_event.uri,
+                "stop + start (no drain possible).",
+                key,
+                prev_event.uri,
             )
             self._webstream_generation += 1
             self._engine.webstream_stop()
@@ -2669,7 +2813,8 @@ class PlayoutScheduler:
             return
         self._webstream_generation += 1
         self._engine.webstream_start(
-            event.uri, gain_db=event.input_gain_db,
+            event.uri,
+            gain_db=event.input_gain_db,
         )
         self._engine.webstream_gate(True)
 
@@ -2700,7 +2845,7 @@ class PlayoutScheduler:
               GUID nor name match; caller should not attempt start().
         """
         try:
-            import audio.soundcard._registry as _reg   # noqa: PLC0415
+            import audio.soundcard._registry as _reg  # noqa: PLC0415
         except ImportError:
             return event.device_id or None
         mgr = _reg.default_manager
@@ -2708,6 +2853,7 @@ class PlayoutScheduler:
             return event.device_id or None
 
         from audio.soundcard.interface import AudioDeviceKind  # noqa: PLC0415
+
         try:
             dev = mgr.find_device_by_id_or_name(
                 event.device_id,
@@ -2718,7 +2864,9 @@ class PlayoutScheduler:
             logger.warning(
                 "Linein '%s': device lookup raised %s; falling through to "
                 "the original device_id %r.",
-                event.name, exc, event.device_id,
+                event.name,
+                exc,
+                event.device_id,
             )
             return event.device_id or None
 
@@ -2732,7 +2880,10 @@ class PlayoutScheduler:
                 "will use the new id for this run; the operator should "
                 "re-save the device picker so future shows use it "
                 "without the fallback step.",
-                event.name, event.device_id, dev.name, dev.stable_id,
+                event.name,
+                event.device_id,
+                dev.name,
+                dev.stable_id,
             )
         return dev.stable_id
 
@@ -2768,14 +2919,18 @@ class PlayoutScheduler:
         """
         logger.info(
             "PLAY (line-in)  %s  |  name=%r device=%s  |  show: %s",
-            key, event.name, event.device_id, event.show_name,
+            key,
+            event.name,
+            event.device_id,
+            event.show_name,
         )
 
         if self._linein_capture is None:
             logger.error(
                 "Line-In %s cannot start: FfmpegLineinCapture failed to "
                 "initialise at startup (likely missing ffmpeg).  Slot "
-                "stays silent.", key,
+                "stays silent.",
+                key,
             )
             return
 
@@ -2801,10 +2956,13 @@ class PlayoutScheduler:
         self._current_audio_path = self._linein_capture.listen_url
         # RASTATIME 2026-06-05 — cue mark for the 24/7 recording sidecar.
         self._cue_item_start(
-            "linein", show=event.show_name, item=event.row_id, name=event.name,
+            "linein",
+            show=event.show_name,
+            item=event.row_id,
+            name=event.name,
         )
         self._tunein_now_playing("linein", title=None, artist=None, show=event.show_name)
-        self._set_bus_show(event.show_name)   # ICY show for the line-in packets (2026-09-13)
+        self._set_bus_show(event.show_name)  # ICY show for the line-in packets (2026-09-13)
 
         # Drive the dashboard "On Air" light for the new row.
         row_id = getattr(event, "row_id", None)
@@ -2822,7 +2980,8 @@ class PlayoutScheduler:
                 "Line-In %s: same-device transition (device=%s) — keeping "
                 "the running capture and the Liquidsoap source alive; "
                 "no audio-pipeline bounce.",
-                key, event.device_id,
+                key,
+                event.device_id,
             )
             return
 
@@ -2832,10 +2991,7 @@ class PlayoutScheduler:
         # that would run below, the queue is cleared, and we are done.
         # 2026-09-29: after a file track the gate opens when its audio is
         # over (the wait only happens for the pre-warmed item).
-        if (
-            self._linein_capture.is_running
-            and not self._hold_live_start(key, prev_event, event)
-        ):
+        if self._linein_capture.is_running and not self._hold_live_start(key, prev_event, event):
             return
         if (
             self._linein_capture is not None
@@ -2857,7 +3013,8 @@ class PlayoutScheduler:
             logger.error(
                 "Line-In %s: device %r unavailable (and no name-fallback "
                 "matched name=%r) — leaving line-in stopped.",
-                key, event.device_id,
+                key,
+                event.device_id,
                 getattr(event, "device_name", "") or "",
             )
             return
@@ -2868,9 +3025,9 @@ class PlayoutScheduler:
         # resume path re-arms on disconnect.
         if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
             logger.info(
-                "Line-In %s queued — %s source active, scheduled "
-                "line-in held back.",
-                key, self._switcher.current_state.value,
+                "Line-In %s queued — %s source active, scheduled line-in held back.",
+                key,
+                self._switcher.current_state.value,
             )
             return
         # RASTATIME 2026-09-03 - EVERY scheduled line-in now runs
@@ -2902,7 +3059,8 @@ class PlayoutScheduler:
                 "the direct dshow source on channels 1/2 (requested "
                 "mapping %s).  Re-save the line-in in Settings -> Local "
                 "Machine to store the device name.",
-                key, mapping,
+                key,
+                mapping,
             )
 
         # RASTATIME 2026-09-04 - a webstream predecessor outranks us in
@@ -2938,9 +3096,11 @@ class PlayoutScheduler:
                 )
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.error(
-                    "Line-In %s: feeder capture start failed for "
-                    "device %s (channels %s): %s",
-                    key, resolved_device_id, mapping, exc,
+                    "Line-In %s: feeder capture start failed for device %s (channels %s): %s",
+                    key,
+                    resolved_device_id,
+                    mapping,
+                    exc,
                 )
                 self._engine.linein_stop()
                 return
@@ -2952,7 +3112,8 @@ class PlayoutScheduler:
                 logger.error(
                     "Line-In %s: capture did not come up - stopping "
                     "the pre-armed linein_http source so it does not "
-                    "poll a dead mount.", key,
+                    "poll a dead mount.",
+                    key,
                 )
                 self._engine.linein_stop()
                 return
@@ -2963,6 +3124,7 @@ class PlayoutScheduler:
         # feeder module); it's a pure helper, safe to reuse without
         # instantiating the capture class.
         from .engine.ffmpeg_linein_capture import _stable_id_to_dshow_audio
+
         dshow_spec = _stable_id_to_dshow_audio(resolved_device_id)
         self._engine.linein_start(dshow_spec)
 
@@ -3003,10 +3165,7 @@ class PlayoutScheduler:
                 )
                 return
 
-            if (
-                self._switcher
-                and self._switcher.current_state != SourceState.SCHEDULED
-            ):
+            if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
                 logger.info(
                     "Line-In capture restart callback: %s source dominant "
                     "— capture is back, but the DJ stays on air.",
@@ -3064,20 +3223,25 @@ class PlayoutScheduler:
             logger.warning(
                 "Show-record start ignored (key=%s show_id=%s name=%r): "
                 "no recording folder configured in Settings -> Local Machine",
-                key, event.show_id, event.show_name,
+                key,
+                event.show_id,
+                event.show_name,
             )
             return
 
         try:
             output_path = build_output_path(
-                Path(folder), event.show_starts_at, event.show_name,
+                Path(folder),
+                event.show_starts_at,
+                event.show_name,
                 extension=self._recording_file_extension(),
             )
         except (TypeError, ValueError) as exc:
             logger.warning(
-                "Show-record start ignored (key=%s show_id=%s): could not "
-                "build output path: %s",
-                key, event.show_id, exc,
+                "Show-record start ignored (key=%s show_id=%s): could not build output path: %s",
+                key,
+                event.show_id,
+                exc,
             )
             return
 
@@ -3089,9 +3253,11 @@ class PlayoutScheduler:
             output_path.parent.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
             logger.warning(
-                "Show-record start ignored (key=%s show_id=%s): could not "
-                "create directory %s: %s",
-                key, event.show_id, output_path.parent, exc,
+                "Show-record start ignored (key=%s show_id=%s): could not create directory %s: %s",
+                key,
+                event.show_id,
+                output_path.parent,
+                exc,
             )
             return
 
@@ -3102,17 +3268,21 @@ class PlayoutScheduler:
         liq_path = str(output_path).replace("\\", "/")
 
         logger.info(
-            "PLAY (show-record start, Liquidsoap)  %s  |  show_id=%s "
-            "name=%r  |  output=%s",
-            key, event.show_id, event.show_name, output_path,
+            "PLAY (show-record start, Liquidsoap)  %s  |  show_id=%s name=%r  |  output=%s",
+            key,
+            event.show_id,
+            event.show_name,
+            output_path,
         )
         try:
             self._engine.recording_start(liq_path)
         except (OSError, ConnectionError, ValueError) as exc:
             logger.error(
-                "Show-record start failed (Liquidsoap telnet, "
-                "key=%s show_id=%s name=%r): %s",
-                key, event.show_id, event.show_name, exc,
+                "Show-record start failed (Liquidsoap telnet, key=%s show_id=%s name=%r): %s",
+                key,
+                event.show_id,
+                event.show_name,
+                exc,
             )
             return
         self._open_show_recording = (getattr(event, "instance_id", None), output_path)
@@ -3127,17 +3297,20 @@ class PlayoutScheduler:
         HTTP-source-buffering lag that doesn't apply to the bus tap).
         """
         logger.info(
-            "STOP (show-record end, Liquidsoap)  %s  |  show_id=%s "
-            "name=%r",
-            key, event.show_id, event.show_name,
+            "STOP (show-record end, Liquidsoap)  %s  |  show_id=%s name=%r",
+            key,
+            event.show_id,
+            event.show_name,
         )
         try:
             self._engine.recording_stop()
         except (OSError, ConnectionError) as exc:
             logger.error(
-                "Show-record stop failed (Liquidsoap telnet): %s "
-                "(key=%s show_id=%s name=%r)",
-                exc, key, event.show_id, event.show_name,
+                "Show-record stop failed (Liquidsoap telnet): %s (key=%s show_id=%s name=%r)",
+                exc,
+                key,
+                event.show_id,
+                event.show_name,
             )
             return
         # RASTATIME 2026-10-19 - hand the closed file to the legacy API
@@ -3177,11 +3350,15 @@ class PlayoutScheduler:
             for attempt in range(1, 4):
                 try:
                     resp = self._api_client_v1.notify_recording_finished(
-                        instance_id=instance_id, path=str(path), timeout=120,
+                        instance_id=instance_id,
+                        path=str(path),
+                        timeout=120,
                     )
                     logger.info(
                         "recording-finished reported (instance %s, %s): HTTP %s %s",
-                        instance_id, path, getattr(resp, "status_code", "?"),
+                        instance_id,
+                        path,
+                        getattr(resp, "status_code", "?"),
                         (getattr(resp, "text", "") or "")[:200].replace("\n", " "),
                     )
                     return
@@ -3189,11 +3366,16 @@ class PlayoutScheduler:
                     last_exc = exc
                     logger.warning(
                         "recording-finished attempt %d/3 failed (instance %s): %s",
-                        attempt, instance_id, exc,
+                        attempt,
+                        instance_id,
+                        exc,
                     )
                     time.sleep(self._recording_report_retry_seconds)
             logger.error(
-                "recording-finished gave up (instance %s, %s): %s", instance_id, path, last_exc,
+                "recording-finished gave up (instance %s, %s): %s",
+                instance_id,
+                path,
+                last_exc,
             )
 
         t = threading.Thread(target=_send, name=f"recording-finished-{instance_id}", daemon=True)
@@ -3218,7 +3400,11 @@ class PlayoutScheduler:
                 return
             last = size
             time.sleep(self._recording_settle_poll_seconds)
-        logger.warning("recording file %s did not settle within %.0f s", path, self._recording_settle_max_seconds)
+        logger.warning(
+            "recording file %s did not settle within %.0f s",
+            path,
+            self._recording_settle_max_seconds,
+        )
 
     def _recording_file_extension(self) -> str:
         """Extension of the rendered show-recording encoder (mp3 fallback)."""
@@ -3284,7 +3470,8 @@ class PlayoutScheduler:
         if isinstance(self._current_event, FileEvent) and self._queued_ahead is not None:
             logger.info(
                 "STOP  %s: successor %s is queued ahead - leaving the queue to its start.",
-                key, self._queued_ahead[0],
+                key,
+                self._queued_ahead[0],
             )
             return
 
@@ -3293,13 +3480,17 @@ class PlayoutScheduler:
         self._let_file_run_out(key, self._current_event)
         if self._playing_key != key:
             logger.info(
-                "STOP  %s: %s took over while the track ran out.", key, self._playing_key,
+                "STOP  %s: %s took over while the track ran out.",
+                key,
+                self._playing_key,
             )
             return
         # RASTATIME 2026-10-01 - a live item ends at its row's exact time,
         # not on the whole second (its gate closed up to a second early).
         if not isinstance(self._current_event, FileEvent) and not self._wait_for_exact_time(
-            key, getattr(self._current_event, "end_exact", None), "STOP",
+            key,
+            getattr(self._current_event, "end_exact", None),
+            "STOP",
         ):
             return
 
@@ -3314,7 +3505,8 @@ class PlayoutScheduler:
         was_linein = isinstance(self._current_event, LineinEvent)
         cur_device = (
             self._current_event.device_id  # type: ignore[attr-defined]
-            if was_linein else None
+            if was_linein
+            else None
         )
 
         # RASTATIME 2026-05-29 — Phase E: webstream stop-detection.
@@ -3364,14 +3556,19 @@ class PlayoutScheduler:
                     logger.info(
                         "STOP %s: same-device line-in %s is armed but starts "
                         "in %.0fs - not back-to-back, tearing down normally.",
-                        key, other_key, starts_in,
+                        key,
+                        other_key,
+                        starts_in,
                     )
                     continue
                 logger.info(
                     "STOP %s: same-device follow-up %s starts in %.1fs "
                     "(device=%s) - skipping audio teardown; bookkeeping "
                     "handoff happens when its start timer fires.",
-                    key, other_key, starts_in, cur_device,
+                    key,
+                    other_key,
+                    starts_in,
+                    cur_device,
                 )
                 return
 
@@ -3395,7 +3592,9 @@ class PlayoutScheduler:
                 logger.info(
                     "STOP %s: same-stream follow-up %s starts in %.1fs - "
                     "skipping release; hand-over happens at its start.",
-                    key, other_key, starts_in,
+                    key,
+                    other_key,
+                    starts_in,
                 )
                 return
 
@@ -3413,7 +3612,9 @@ class PlayoutScheduler:
             logger.info(
                 "STOP %s: a newer line-in source already started "
                 "(gen %d->%d) — skipping teardown to keep it alive.",
-                key, linein_gen, self._linein_generation,
+                key,
+                linein_gen,
+                self._linein_generation,
             )
             return
 
@@ -3429,7 +3630,9 @@ class PlayoutScheduler:
         if self._playing_key != key:
             logger.info(
                 "STOP %s: superseded by %s during teardown - leaving its "
-                "bookkeeping and sources alone.", key, self._playing_key,
+                "bookkeeping and sources alone.",
+                key,
+                self._playing_key,
             )
             return
         # The re-check above and this reset must stay adjacent: a
@@ -3487,7 +3690,9 @@ class PlayoutScheduler:
                 logger.info(
                     "STOP %s: newer line-in source started during teardown "
                     "(gen %d->%d) — not calling linein_stop.",
-                    key, linein_gen, self._linein_generation,
+                    key,
+                    linein_gen,
+                    self._linein_generation,
                 )
                 return
             self._release_linein(f"slot end {key}")
@@ -3536,7 +3741,12 @@ class PlayoutScheduler:
     # ------------------------------------------------------------------
 
     def _tunein_now_playing(
-        self, kind: str, *, title: Optional[str], artist: Optional[str], show: Optional[str],
+        self,
+        kind: str,
+        *,
+        title: Optional[str],
+        artist: Optional[str],
+        show: Optional[str],
     ) -> None:
         """A track pushes title + artist; a webstream or line-in the show name."""
         if self._tunein is None:
@@ -3589,10 +3799,12 @@ class PlayoutScheduler:
             return
         root = data.get("root") if isinstance(data, dict) else None
         if isinstance(root, str) and root and root != self._storage_path:
-            logger.info("Storage root for direct file access: %s (was %s)", root, self._storage_path)
+            logger.info(
+                "Storage root for direct file access: %s (was %s)", root, self._storage_path
+            )
             self._storage_path = root
 
-    def _sync_icy_metadata(self, events: Dict[str, object], now: datetime) -> None:
+    def _sync_icy_metadata(self, events: dict[str, object], now: datetime) -> None:
         """
         Once per refresh: push the Stream Label / Off Air Metadata /
         station name when they changed (the reader is None without the
@@ -3609,7 +3821,9 @@ class PlayoutScheduler:
                 prefs = None
             if prefs is not None and prefs != self._icy_pushed:
                 self._engine.icy_settings(
-                    prefs.label_format, prefs.offair_text, prefs.station_name,
+                    prefs.label_format,
+                    prefs.offair_text,
+                    prefs.station_name,
                 )
                 self._icy_pushed = prefs
         self._sync_live_text_settings()
@@ -3630,7 +3844,7 @@ class PlayoutScheduler:
         self._live_text_pushed = current
 
     @staticmethod
-    def _show_on_air(events: Dict[str, object], now: datetime) -> str:
+    def _show_on_air(events: dict[str, object], now: datetime) -> str:
         """Name of the show whose file / webstream / line-in item covers
         ``now`` - '' when nothing is scheduled right now."""
         for event in events.values():
@@ -3758,13 +3972,14 @@ class PlayoutScheduler:
             source = "show"
         else:
             logger.warning(
-                "kick_dj_source: unknown source kind %r — ignoring.", kind,
+                "kick_dj_source: unknown source kind %r — ignoring.",
+                kind,
             )
             return
         if not hasattr(self._engine, "dj_kick"):
             logger.warning(
-                "kick_dj_source(%s): the engine cannot kick harbor clients — "
-                "ignoring.", kind,
+                "kick_dj_source(%s): the engine cannot kick harbor clients — ignoring.",
+                kind,
             )
             return
         logger.info("kick_dj_source(%s) -> Liquidsoap %s harbor stop", kind, source)
@@ -3825,7 +4040,8 @@ class PlayoutScheduler:
             # request.
             self._webstream_generation += 1
             self._engine.webstream_start(
-                self._current_audio_path, gain_db=self._current_gain_db,
+                self._current_audio_path,
+                gain_db=self._current_gain_db,
             )
             self._engine.webstream_gate(True)
             return
@@ -3846,9 +4062,7 @@ class PlayoutScheduler:
                     getattr(self._current_event, "device_name", "") or "",
                 )
                 return
-            mapping = list(
-                getattr(self._current_event, "channel_mapping", None) or [0, 1]
-            )
+            mapping = list(getattr(self._current_event, "channel_mapping", None) or [0, 1])
             dev_name = getattr(self._current_event, "device_name", "") or ""
             # RASTATIME 2026-09-03 - mirrors the Option B decision in
             # _on_linein_start: the feeder serves every mapping, plain
@@ -3871,13 +4085,14 @@ class PlayoutScheduler:
                     )
                 except Exception as exc:  # pylint: disable=broad-exception-caught
                     logger.error(
-                        "Resume line-in: capture (re)start failed: %s", exc,
+                        "Resume line-in: capture (re)start failed: %s",
+                        exc,
                     )
 
             # RASTATIME 2026-08-31 — re-arm the linein sources themselves
             # (mirror of _on_linein_start).
             self._linein_generation += 1
-            self._apply_linein_gain(self._current_event)   # 2026-10-02
+            self._apply_linein_gain(self._current_event)  # 2026-10-02
             if use_feeder:
                 self._engine.linein_start_http()
                 self._engine.linein_gate(True)
@@ -3885,9 +4100,8 @@ class PlayoutScheduler:
                 from .engine.ffmpeg_linein_capture import (
                     _stable_id_to_dshow_audio,
                 )
-                self._engine.linein_start(
-                    _stable_id_to_dshow_audio(resume_device_id)
-                )
+
+                self._engine.linein_start(_stable_id_to_dshow_audio(resume_device_id))
             return
 
         # FileEvent — seek into the track to catch up.
@@ -3909,8 +4123,8 @@ class PlayoutScheduler:
         resume_metadata = None
         if isinstance(self._current_event, FileEvent):
             resume_metadata = {
-                "title":     self._current_event.track_title or "",
-                "artist":    self._current_event.artist_name or "",
+                "title": self._current_event.track_title or "",
+                "artist": self._current_event.artist_name or "",
                 "show_name": self._current_event.show_name or "",
             }
         self._engine.play(
@@ -3948,7 +4162,8 @@ class PlayoutScheduler:
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.warning(
                     "notify_media_item_start_play failed (row_id=%d): %s",
-                    schedule_row_id, exc,
+                    schedule_row_id,
+                    exc,
                 )
 
         t = threading.Thread(
@@ -4030,7 +4245,8 @@ class PlayoutScheduler:
             if full_path.is_file():
                 logger.info(
                     "Direct storage hit: %s (%d bytes)",
-                    full_path, full_path.stat().st_size,
+                    full_path,
+                    full_path.stat().st_size,
                 )
                 return full_path
             else:

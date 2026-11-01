@@ -25,12 +25,12 @@ client into the engine via the ``telnet_client=`` constructor
 arg — no real socket I/O, no live Liquidsoap subprocess, no
 flaky test timing.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import pytest
-
 from rastatime_playout.engine.interface import PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import (
     LiquidsoapPlayoutEngine,
@@ -38,7 +38,6 @@ from rastatime_playout.engine.liquidsoap_engine import (
 from rastatime_playout.engine.liquidsoap_telnet import (
     LiquidsoapTelnetClient,
 )
-
 
 # ---- Helpers ------------------------------------------------------------
 
@@ -60,44 +59,49 @@ def _make_engine_with_mock(mock_telnet=None):
 
 def test_normalise_windows_path_backslash():
     """Windows back-slash drive path → file://C:/... (2 slashes, Liquidsoap 2.4)."""
-    assert LiquidsoapPlayoutEngine._normalise_uri(
-        r"C:\rastatime\580.mp3"
-    ) == "file://C:/rastatime/580.mp3"
+    assert (
+        LiquidsoapPlayoutEngine._normalise_uri(r"C:\rastatime\580.mp3")
+        == "file://C:/rastatime/580.mp3"
+    )
 
 
 def test_normalise_windows_path_forwardslash():
     """Windows forward-slash drive path → same file:// shape."""
-    assert LiquidsoapPlayoutEngine._normalise_uri(
-        "C:/rastatime/580.mp3"
-    ) == "file://C:/rastatime/580.mp3"
+    assert (
+        LiquidsoapPlayoutEngine._normalise_uri("C:/rastatime/580.mp3")
+        == "file://C:/rastatime/580.mp3"
+    )
 
 
 def test_normalise_3slash_file_uri_rewritten_to_2slash():
     """Legacy file:///C:/... URI gets rewritten to 2-slash form."""
-    assert LiquidsoapPlayoutEngine._normalise_uri(
-        "file://C:/rastatime/580.mp3"
-    ) == "file://C:/rastatime/580.mp3"
+    assert (
+        LiquidsoapPlayoutEngine._normalise_uri("file://C:/rastatime/580.mp3")
+        == "file://C:/rastatime/580.mp3"
+    )
 
 
 def test_normalise_2slash_file_uri_passes_through():
     """Already-correct 2-slash file:// URI is left alone."""
-    assert LiquidsoapPlayoutEngine._normalise_uri(
-        "file://C:/rastatime/580.mp3"
-    ) == "file://C:/rastatime/580.mp3"
+    assert (
+        LiquidsoapPlayoutEngine._normalise_uri("file://C:/rastatime/580.mp3")
+        == "file://C:/rastatime/580.mp3"
+    )
 
 
 def test_normalise_http_passes_through():
     """HTTP URIs pass through unchanged."""
-    assert LiquidsoapPlayoutEngine._normalise_uri(
-        "http://example.com/stream.mp3"
-    ) == "http://example.com/stream.mp3"
+    assert (
+        LiquidsoapPlayoutEngine._normalise_uri("http://example.com/stream.mp3")
+        == "http://example.com/stream.mp3"
+    )
 
 
 def test_normalise_lowercase_drive_letter():
     """Lower-case drive letter still gets the file:// wrapping."""
-    assert LiquidsoapPlayoutEngine._normalise_uri(
-        r"d:\music\track.mp3"
-    ) == "file://d:/music/track.mp3"
+    assert (
+        LiquidsoapPlayoutEngine._normalise_uri(r"d:\music\track.mp3") == "file://d:/music/track.mp3"
+    )
 
 
 # ---- Annotate URI building ----------------------------------------------
@@ -106,7 +110,10 @@ def test_normalise_lowercase_drive_letter():
 def test_annotate_no_options_returns_bare_uri():
     """No cue points + no gain → bare URI, no annotate: wrap."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=None,
     )
     assert out == "file:///x.mp3"
 
@@ -114,7 +121,10 @@ def test_annotate_no_options_returns_bare_uri():
 def test_annotate_zero_gain_returns_bare_uri():
     """gain_db == 0.0 (within float epsilon) → no annotate."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=0.0,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=0.0,
     )
     assert out == "file:///x.mp3"
 
@@ -122,7 +132,10 @@ def test_annotate_zero_gain_returns_bare_uri():
 def test_annotate_cue_in_only():
     """Only cue_in present → annotate with just that key."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=2.5, cue_out=None, gain_db=None,
+        "file:///x.mp3",
+        cue_in=2.5,
+        cue_out=None,
+        gain_db=None,
     )
     assert out == 'annotate:liq_cue_in="2.50":file:///x.mp3'
 
@@ -130,7 +143,10 @@ def test_annotate_cue_in_only():
 def test_annotate_cue_out_only():
     """Only cue_out present → annotate with just that key."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=180.0, gain_db=None,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=180.0,
+        gain_db=None,
     )
     assert out == 'annotate:liq_cue_out="180.00":file:///x.mp3'
 
@@ -138,7 +154,10 @@ def test_annotate_cue_out_only():
 def test_annotate_gain_negative():
     """Negative gain (typical ReplayGain) is rendered with sign + dB."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=-5.95,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=-5.95,
     )
     assert out == 'annotate:replaygain_track_gain="-5.95 dB":file:///x.mp3'
 
@@ -146,7 +165,10 @@ def test_annotate_gain_negative():
 def test_annotate_gain_positive():
     """Positive gain gets a leading '+'."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=3.5,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=3.5,
     )
     assert out == 'annotate:replaygain_track_gain="+3.50 dB":file:///x.mp3'
 
@@ -154,7 +176,10 @@ def test_annotate_gain_positive():
 def test_annotate_all_three_attrs():
     """All three options → annotate: with three comma-separated KVs."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.5, cue_out=180.0, gain_db=-5.95,
+        "file:///x.mp3",
+        cue_in=0.5,
+        cue_out=180.0,
+        gain_db=-5.95,
     )
     assert out == (
         'annotate:liq_cue_in="0.50",liq_cue_out="180.00",'
@@ -180,7 +205,10 @@ def test_annotate_no_liq_cross_duration_for_any_track_length():
     """
     for cue_out in (None, 0.0, 3.23, 5.0, 7.99, 8.0, 180.0):
         out = LiquidsoapPlayoutEngine._build_annotate_uri(
-            "file:///x.mp3", cue_in=0.0, cue_out=cue_out, gain_db=None,
+            "file:///x.mp3",
+            cue_in=0.0,
+            cue_out=cue_out,
+            gain_db=None,
         )
         assert "liq_cross_duration" not in out, (
             f"unexpected liq_cross_duration annotation for cue_out={cue_out}: {out}"
@@ -191,12 +219,11 @@ def test_annotate_with_windows_path():
     """Windows path gets normalised THEN wrapped in annotate."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
         r"C:\rastatime\580.mp3",
-        cue_in=0.0, cue_out=None, gain_db=-2.0,
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=-2.0,
     )
-    assert out == (
-        'annotate:replaygain_track_gain="-2.00 dB":'
-        'file://C:/rastatime/580.mp3'
-    )
+    assert out == ('annotate:replaygain_track_gain="-2.00 dB":file://C:/rastatime/580.mp3')
 
 
 # ---- Annotate with metadata (Phase C6 Teil 2) ---------------------------
@@ -205,18 +232,22 @@ def test_annotate_with_windows_path():
 def test_annotate_with_metadata_only():
     """metadata-only annotate: no cue, no gain — just metadata keys."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=None,
         metadata={"title": "Song Title", "artist": "Band Name"},
     )
-    assert out == (
-        'annotate:title="Song Title",artist="Band Name":file:///x.mp3'
-    )
+    assert out == ('annotate:title="Song Title",artist="Band Name":file:///x.mp3')
 
 
 def test_annotate_metadata_skips_none_values():
     """None / empty-string metadata values are silently skipped."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=None,
         metadata={"title": "Song", "artist": None, "album": ""},
     )
     assert out == 'annotate:title="Song":file:///x.mp3'
@@ -225,7 +256,10 @@ def test_annotate_metadata_skips_none_values():
 def test_annotate_metadata_empty_dict_no_wrap():
     """Empty metadata dict → no annotate wrapper at all."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=None,
         metadata={},
     )
     assert out == "file:///x.mp3"
@@ -234,18 +268,22 @@ def test_annotate_metadata_empty_dict_no_wrap():
 def test_annotate_metadata_escapes_quotes():
     """Embedded double-quote in metadata value → backslash-escaped."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=None,
         metadata={"title": 'He said "Hello"'},
     )
-    assert out == (
-        'annotate:title="He said \\"Hello\\"":file:///x.mp3'
-    )
+    assert out == ('annotate:title="He said \\"Hello\\"":file:///x.mp3')
 
 
 def test_annotate_metadata_escapes_backslashes():
     """Embedded backslash in metadata value → doubled."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.0, cue_out=None, gain_db=None,
+        "file:///x.mp3",
+        cue_in=0.0,
+        cue_out=None,
+        gain_db=None,
         metadata={"path": r"C:\foo\bar"},
     )
     assert out == 'annotate:path="C:\\\\foo\\\\bar":file:///x.mp3'
@@ -254,7 +292,10 @@ def test_annotate_metadata_escapes_backslashes():
 def test_annotate_all_three_attrs_plus_metadata():
     """Cue + gain + metadata all together — order: cue, gain, then metadata."""
     out = LiquidsoapPlayoutEngine._build_annotate_uri(
-        "file:///x.mp3", cue_in=0.5, cue_out=180.0, gain_db=-5.95,
+        "file:///x.mp3",
+        cue_in=0.5,
+        cue_out=180.0,
+        gain_db=-5.95,
         metadata={"title": "Song", "artist": "Band"},
     )
     assert out == (
@@ -268,13 +309,15 @@ def test_play_passes_metadata_to_telnet():
     """play(metadata=...) flows through to request_queue_push payload."""
     eng, telnet = _make_engine_with_mock()
     eng.play(
-        r"C:\rastatime\foo.mp3", cue_in=0.0, gain_db=-3.0,
+        r"C:\rastatime\foo.mp3",
+        cue_in=0.0,
+        gain_db=-3.0,
         metadata={"title": "Song", "artist": "Band"},
     )
     expected = (
         'annotate:replaygain_track_gain="-3.00 dB",'
         'title="Song",artist="Band":'
-        'file://C:/rastatime/foo.mp3'
+        "file://C:/rastatime/foo.mp3"
     )
     telnet.request_queue_push.assert_called_once_with(expected)
 
@@ -292,12 +335,11 @@ def test_play_without_metadata_still_works():
 def test_play_pushes_to_request_queue():
     """play() sends the annotate-wrapped URI to request_queue_push."""
     eng, telnet = _make_engine_with_mock()
-    eng.play(r"C:\rastatime\foo.mp3", cue_in=0.5,
-             cue_out=120.0, gain_db=-3.0)
+    eng.play(r"C:\rastatime\foo.mp3", cue_in=0.5, cue_out=120.0, gain_db=-3.0)
     expected_uri = (
         'annotate:liq_cue_in="0.50",liq_cue_out="120.00",'
         'replaygain_track_gain="-3.00 dB":'
-        'file://C:/rastatime/foo.mp3'
+        "file://C:/rastatime/foo.mp3"
     )
     telnet.request_queue_push.assert_called_once_with(expected_uri)
 
@@ -364,7 +406,7 @@ def test_play_error_response_flips_state_to_error():
     """
     eng, telnet = _make_engine_with_mock()
     telnet.request_queue_push.return_value = (
-        "ERROR: unknown command, type \"help\" to get a list of commands."
+        'ERROR: unknown command, type "help" to get a list of commands.'
     )
     eng.play("file:///x.mp3")
     assert eng.get_state() == PlayoutState.ERROR
@@ -393,7 +435,9 @@ def test_stop_flushed_by_timer_after_window():
     eventually flushes the skip.
     """
     import time
+
     from rastatime_playout.engine.liquidsoap_engine import _DEFERRED_STOP_SECONDS
+
     eng, telnet = _make_engine_with_mock()
     eng.play("file:///x.mp3")
     telnet.request_queue_skip.reset_mock()
@@ -503,6 +547,7 @@ def test_wait_until_stopped_is_immediate_true():
     eng, _ = _make_engine_with_mock()
     # Even with a "long" timeout the call returns essentially instantly.
     import time
+
     start = time.monotonic()
     assert eng.wait_until_stopped(timeout=5.0) is True
     assert time.monotonic() - start < 0.1  # truly immediate, not polling
@@ -544,21 +589,18 @@ def test_extract_request_id_non_digit():
 
 
 def test_redact_strips_password():
-    assert LiquidsoapPlayoutEngine._redact(
-        "http://user:secret@stream.com/mount"
-    ) == "http://user:***@stream.com/mount"
+    assert (
+        LiquidsoapPlayoutEngine._redact("http://user:secret@stream.com/mount")
+        == "http://user:***@stream.com/mount"
+    )
 
 
 def test_redact_no_userinfo():
-    assert LiquidsoapPlayoutEngine._redact(
-        "http://stream.com/mount"
-    ) == "http://stream.com/mount"
+    assert LiquidsoapPlayoutEngine._redact("http://stream.com/mount") == "http://stream.com/mount"
 
 
 def test_redact_file_uri_no_userinfo():
-    assert LiquidsoapPlayoutEngine._redact(
-        "file:///C:/x.mp3"
-    ) == "file:///C:/x.mp3"
+    assert LiquidsoapPlayoutEngine._redact("file:///C:/x.mp3") == "file:///C:/x.mp3"
 
 
 def test_redact_none():
@@ -580,13 +622,12 @@ def test_webstream_start_calls_telnet_set_url_set_gain_start_in_order():
 
     # Filter mock_calls for just the methods we care about (in order)
     method_names = [
-        c[0] for c in telnet.mock_calls
+        c[0]
+        for c in telnet.mock_calls
         if c[0] in ("webstream_set_url", "webstream_set_gain", "webstream_start")
     ]
     assert method_names == ["webstream_set_url", "webstream_set_gain", "webstream_start"]
-    telnet.webstream_set_url.assert_called_once_with(
-        "http://stream.example.com/test.mp3"
-    )
+    telnet.webstream_set_url.assert_called_once_with("http://stream.example.com/test.mp3")
 
 
 def test_webstream_start_converts_db_to_linear_for_positive_gain():
@@ -689,8 +730,7 @@ def test_linein_start_uses_mechanism_b_stop_seturl_start():
     engine.linein_start(spec)
 
     method_names = [
-        c[0] for c in telnet.mock_calls
-        if c[0] in ("linein_stop", "linein_set_url", "linein_start")
+        c[0] for c in telnet.mock_calls if c[0] in ("linein_stop", "linein_set_url", "linein_start")
     ]
     assert method_names == ["linein_stop", "linein_set_url", "linein_start"]
     telnet.linein_set_url.assert_called_once_with(spec)
@@ -725,19 +765,16 @@ def test_linein_stop_handles_telnet_error_without_raising():
 def test_linein_status_delegates_to_telnet():
     """engine.linein_status returns Liquidsoap's free-text status."""
     engine, telnet = _make_engine_with_mock()
-    telnet.linein_status.return_value = (
-        "connected http://localhost:8000/linein-capture"
-    )
+    telnet.linein_status.return_value = "connected http://localhost:8000/linein-capture"
 
-    assert engine.linein_status() == (
-        "connected http://localhost:8000/linein-capture"
-    )
+    assert engine.linein_status() == ("connected http://localhost:8000/linein-capture")
     telnet.linein_status.assert_called_once()
 
 
 # RASTATIME 2026-09-04 - stop() drops PENDING requests immediately (the
 # deferred skip only reaches the item on air).  Four jingles pushed
 # while a line-in masked the scheduled branch came out 7 min late.
+
 
 def test_stop_flushes_pending_requests_before_deferring_the_skip():
     engine, telnet = _make_engine_with_mock()
@@ -762,8 +799,8 @@ def test_play_does_not_flush_on_its_own():
     telnet.request_queue_flush.assert_not_called()
 
 
-
 # RASTATIME 2026-09-04 - bus gates (Paket 2)
+
 
 def test_linein_gate_sets_the_bus_variable():
     engine, telnet = _make_engine_with_mock()
@@ -782,12 +819,12 @@ def test_webstream_gate_sets_the_bus_variable():
 def test_gates_survive_a_telnet_error():
     engine, telnet = _make_engine_with_mock()
     telnet.var_set.side_effect = OSError("telnet down")
-    engine.linein_gate(True)      # must not raise
+    engine.linein_gate(True)  # must not raise
     engine.webstream_gate(False)  # must not raise
 
 
-
 # RASTATIME 2026-10-02 - per-line-in input gain (var.set linein.gain)
+
 
 def test_linein_set_gain_converts_db_to_linear():
     engine, telnet = _make_engine_with_mock()
@@ -810,14 +847,15 @@ def test_linein_set_gain_tolerates_an_old_script_and_telnet_errors(caplog):
     engine, telnet = _make_engine_with_mock()
     telnet.linein_set_gain.return_value = "Syntax error or variable not found."
     with caplog.at_level("WARNING"):
-        engine.linein_set_gain(3.0)          # must not raise
+        engine.linein_set_gain(3.0)  # must not raise
     assert "no linein.gain" in caplog.text
     telnet.linein_set_gain.side_effect = OSError("telnet down")
-    engine.linein_set_gain(3.0)              # must not raise
+    engine.linein_set_gain(3.0)  # must not raise
 
 
 def test_telnet_linein_set_gain_wire_form():
     from rastatime_playout.engine.liquidsoap_telnet import LiquidsoapTelnetClient
+
     client = LiquidsoapTelnetClient(host="127.0.0.1", port=1)
     client.send_command = MagicMock(return_value="Variable linein.gain set.")
     client.linein_set_gain(0.5)
@@ -854,4 +892,4 @@ def test_dj_kick_unknown_source_raises():
 def test_dj_kick_swallows_telnet_errors():
     engine, telnet = _make_engine_with_mock()
     telnet.harbor_stop.side_effect = ConnectionError("telnet down")
-    engine.dj_kick("show")          # must not raise - best-effort kick
+    engine.dj_kick("show")  # must not raise - best-effort kick

@@ -1,5 +1,4 @@
 import pytest
-
 from rastatime_analyzer.pipeline._ffmpeg import (
     _SILENCE_DETECT_RE,
     compute_replaygain,

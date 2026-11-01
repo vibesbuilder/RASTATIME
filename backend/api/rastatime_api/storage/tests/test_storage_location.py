@@ -3,13 +3,14 @@ RASTATIME 2026-09-16 - the storage root as a setting (stage 2): resolver,
 target validation, the move job (real robocopy on a temp tree) and the
 endpoints behind Settings -> Local Machine -> Media Library Location.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from django.urls import reverse
@@ -59,10 +60,18 @@ def as_root_tx(transactional_db, library, monkeypatch):
 
 # ---- resolver ----------------------------------------------------------------
 
-@pytest.mark.parametrize("value,expected", [
-    ("D:\\stor\\", "D:/stor"), ("D:/stor/", "D:/stor"), (" D:/stor ", "D:/stor"),
-    ("D:", "D:/"), ("D:/", "D:/"), ("", ""),
-])
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("D:\\stor\\", "D:/stor"),
+        ("D:/stor/", "D:/stor"),
+        (" D:/stor ", "D:/stor"),
+        ("D:", "D:/"),
+        ("D:/", "D:/"),
+        ("", ""),
+    ],
+)
 def test_normalize(value, expected):
     assert sr.normalize(value) == expected
 
@@ -95,12 +104,18 @@ def test_library_size_counts_files_and_bytes(as_root):
     assert sr.library_size(as_root, refresh=True) == (3, 3000)
 
 
-def test_library_size_serves_the_stale_cache_and_recounts_in_the_background(as_root, monkeypatch, tmp_path):
+def test_library_size_serves_the_stale_cache_and_recounts_in_the_background(
+    as_root, monkeypatch, tmp_path
+):
     """2026-10-10: the playout's refresh paid a 2 s walk every 120 s and armed its timers late."""
-    import threading, time
+    import threading
+    import time
+
     assert sr.library_size(as_root, refresh=True) == (3, 3000)
-    (tmp_path / "library" / "extra.bin").write_bytes(b"x" * 500) if (tmp_path / "library").is_dir() else None
-    monkeypatch.setattr(sr, "SIZE_CACHE_SECONDS", 0.0)      # the entry is stale at once
+    (tmp_path / "library" / "extra.bin").write_bytes(b"x" * 500) if (
+        tmp_path / "library"
+    ).is_dir() else None
+    monkeypatch.setattr(sr, "SIZE_CACHE_SECONDS", 0.0)  # the entry is stale at once
     counted = threading.Event()
     real_walk = sr.walk_size
 
@@ -110,9 +125,9 @@ def test_library_size_serves_the_stale_cache_and_recounts_in_the_background(as_r
 
     monkeypatch.setattr(sr, "walk_size", slow_walk)
     t = time.perf_counter()
-    assert sr.library_size(as_root) == (3, 3000)              # stale value, returned at once
+    assert sr.library_size(as_root) == (3, 3000)  # stale value, returned at once
     assert time.perf_counter() - t < 0.5
-    assert counted.wait(5.0)                                   # the background recount ran
+    assert counted.wait(5.0)  # the background recount ran
     for _ in range(50):
         if as_root.lower() not in sr._size_refreshing:
             break
@@ -121,6 +136,7 @@ def test_library_size_serves_the_stale_cache_and_recounts_in_the_background(as_r
 
 
 # ---- validation ----------------------------------------------------------------
+
 
 def test_validate_rejects_bad_targets(as_root, tmp_path):
     def errors(path, size=0):
@@ -133,7 +149,7 @@ def test_validate_rejects_bad_targets(as_root, tmp_path):
     assert "current location" in errors(as_root)[0]
     assert "inside the current" in errors(as_root + "/sub")[0]
     assert "lies inside the new" in errors(str(tmp_path))[0]
-    assert "free space" in errors(str(tmp_path / "ok"), 10 ** 15)[0]
+    assert "free space" in errors(str(tmp_path / "ok"), 10**15)[0]
 
 
 def test_validate_accepts_and_creates_a_good_target(as_root, tmp_path):
@@ -145,6 +161,7 @@ def test_validate_accepts_and_creates_a_good_target(as_root, tmp_path):
 
 # ---- job ---------------------------------------------------------------------
 
+
 def _wait(job, seconds=90):
     deadline = time.time() + seconds
     while time.time() < deadline:
@@ -152,7 +169,7 @@ def _wait(job, seconds=90):
         if state["state"] not in sm.ACTIVE_STATES:
             return state
         time.sleep(0.2)
-    raise AssertionError("move did not finish: %r" % job.status())
+    raise AssertionError(f"move did not finish: {job.status()!r}")
 
 
 @pytest.mark.skipif(not WINDOWS, reason="robocopy")
@@ -172,7 +189,9 @@ def test_move_copies_verifies_and_switches(as_root_tx, tmp_path):
     assert final["old_copy"] == as_root and final["done_files"] == 3
     assert (target / "imported" / "Artist" / "Album" / "a.mp3").read_bytes() == b"x" * 1000
     assert sr.get_storage_root() == sr.normalize(str(target))
-    assert (as_root and os.path.isfile(os.path.join(as_root, "imported", "podcast_ep1.mp3")))   # old copy kept
+    assert as_root and os.path.isfile(
+        os.path.join(as_root, "imported", "podcast_ep1.mp3")
+    )  # old copy kept
     assert not job.is_locked()
     assert File.objects.count() == 1
 
@@ -187,7 +206,7 @@ def test_move_fails_when_a_library_row_is_missing_at_the_target(as_root_tx, tmp_
     job.start(str(tmp_path / "new"))
     final = _wait(job)
     assert final["state"] == "failed" and "missing at the target" in final["error"]
-    assert sr.get_storage_root() == as_root                      # not switched
+    assert sr.get_storage_root() == as_root  # not switched
 
 
 def test_double_start_and_bad_target_raise(as_root, tmp_path, monkeypatch):
@@ -202,7 +221,7 @@ def test_double_start_and_bad_target_raise(as_root, tmp_path, monkeypatch):
 
 
 def test_dead_process_marks_the_move_interrupted(as_root):
-    stale = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat(timespec="seconds")
+    stale = (datetime.now(UTC) - timedelta(minutes=5)).isoformat(timespec="seconds")
     sm.save_state({"state": "copying", "pid": 1, "heartbeat": stale, "source": "a", "target": "b"})
     job = sm.MoveJob()
     state = job.status()
@@ -212,11 +231,14 @@ def test_dead_process_marks_the_move_interrupted(as_root):
 
 
 def test_fresh_heartbeat_of_another_process_still_counts_as_running(as_root):
-    sm.save_state({"state": "verifying", "pid": 1, "heartbeat": sm._now(), "source": "a", "target": "b"})
+    sm.save_state(
+        {"state": "verifying", "pid": 1, "heartbeat": sm._now(), "source": "a", "target": "b"}
+    )
     assert sm.MoveJob().is_locked()
 
 
 # ---- endpoints ---------------------------------------------------------------
+
 
 def test_location_endpoint(api_client, as_root):
     resp = api_client.get(reverse("storage-location"))
@@ -236,8 +258,12 @@ def test_validate_and_start_endpoints_reject_bad_paths(api_client, as_root):
 
 
 def test_start_endpoint_refuses_while_a_move_runs(api_client, as_root, tmp_path, monkeypatch):
-    sm.save_state({"state": "copying", "pid": 1, "heartbeat": sm._now(), "source": "a", "target": "b"})
-    resp = api_client.post(reverse("storage-move-start"), {"path": str(tmp_path / "n")}, format="json")
+    sm.save_state(
+        {"state": "copying", "pid": 1, "heartbeat": sm._now(), "source": "a", "target": "b"}
+    )
+    resp = api_client.post(
+        reverse("storage-move-start"), {"path": str(tmp_path / "n")}, format="json"
+    )
     assert resp.status_code == 409
 
 

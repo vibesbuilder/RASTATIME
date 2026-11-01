@@ -5,9 +5,10 @@ All playout actions in RASTATIME must go through this interface.
 The only implementation is LiquidsoapPlayoutEngine (production since
 Phase-C5, 2026-05-28); the mpv engine was deleted on 2026-09-10.
 """
+
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Optional
 
 
 class PlayoutState(str, Enum):
@@ -26,9 +27,9 @@ class PlayoutEngine(ABC):
         *,
         cue_in: float = 0.0,
         cue_out: Optional[float] = None,
-        media_options: Optional[List[str]] = None,
+        media_options: Optional[list[str]] = None,
         gain_db: Optional[float] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: Optional[dict[str, str]] = None,
         transition: Optional[str] = None,
         skip_current: bool = True,
     ) -> None:
@@ -88,7 +89,7 @@ class PlayoutEngine(ABC):
         cue_in: float = 0.0,
         cue_out: Optional[float] = None,
         gain_db: Optional[float] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        metadata: Optional[dict[str, str]] = None,
         transition: Optional[str] = None,
     ) -> bool:
         """
@@ -172,8 +173,10 @@ class PlayoutEngine(ABC):
         on their current output.
         """
         import logging
+
         logging.getLogger(__name__).warning(
             "set_audio_device(%r) called but engine does not implement "
             "live audio-device switching — playback stays on the "
-            "previously selected device.", device_id,
+            "previously selected device.",
+            device_id,
         )

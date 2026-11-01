@@ -74,7 +74,8 @@ INTERVAL jobs (run periodically):
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Optional
 
 from ._base import Job, JobResult, JobTrigger
 from ._registry import default_registry
@@ -90,6 +91,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 # STARTUP jobs
 # ---------------------------------------------------------------------------
+
 
 class DeviceStartupCheckJob(Job):
     """
@@ -119,10 +121,10 @@ class DeviceStartupCheckJob(Job):
     def __init__(
         self,
         *,
-        manager: "Optional[AudioDeviceManager]" = None,
-        settings: "Optional[SoundcardSettings]" = None,
+        manager: Optional[AudioDeviceManager] = None,
+        settings: Optional[SoundcardSettings] = None,
     ) -> None:
-        self._manager  = manager
+        self._manager = manager
         self._settings = settings
 
     # ---- Metadata --------------------------------------------------------
@@ -152,6 +154,7 @@ class DeviceStartupCheckJob(Job):
             if manager is None:
                 try:
                     import audio.soundcard._registry as _reg  # noqa: PLC0415
+
                     manager = _reg.default_manager
                 except Exception:  # noqa: BLE001
                     manager = None
@@ -171,6 +174,7 @@ class DeviceStartupCheckJob(Job):
                     from rastatime_api.soundcard.models import (  # noqa: PLC0415
                         SoundcardSettings as _ORM,
                     )
+
                     settings = _ORM.get_settings().to_domain()
                 except Exception as exc:  # noqa: BLE001
                     return JobResult(
@@ -184,6 +188,7 @@ class DeviceStartupCheckJob(Job):
             from audio.soundcard._startup import (  # noqa: PLC0415
                 check_devices_at_startup,
             )
+
             check_result = check_devices_at_startup(settings, manager)
 
             error_message: Optional[str] = None
@@ -210,6 +215,7 @@ class DeviceStartupCheckJob(Job):
 # ---------------------------------------------------------------------------
 # INTERVAL jobs
 # ---------------------------------------------------------------------------
+
 
 class SchedulePollJob(Job):
     """
@@ -239,7 +245,7 @@ class SchedulePollJob(Job):
         api_client: Optional[Any] = None,
         on_schedule_data: Optional[Callable[[list], None]] = None,
     ) -> None:
-        self._client           = api_client
+        self._client = api_client
         self._on_schedule_data = on_schedule_data
 
     # ---- Metadata --------------------------------------------------------
@@ -258,10 +264,7 @@ class SchedulePollJob(Job):
 
     @property
     def description(self) -> str:
-        return (
-            "Poll GET /api/v2/schedule for upcoming shows and feed them to "
-            "the PlayoutScheduler."
-        )
+        return "Poll GET /api/v2/schedule for upcoming shows and feed them to the PlayoutScheduler."
 
     # ---- Execution -------------------------------------------------------
 
@@ -331,11 +334,11 @@ class NowPlayingPushJob(Job):
     def __init__(
         self,
         *,
-        state: "Optional[NowPlayingState]" = None,
+        state: Optional[NowPlayingState] = None,
         push_fn: Optional[Callable[[dict], None]] = None,
     ) -> None:
-        self._state          = state
-        self._push_fn        = push_fn
+        self._state = state
+        self._push_fn = push_fn
         self._last_pushed_id: Optional[str] = None
 
     # ---- Metadata --------------------------------------------------------
@@ -366,6 +369,7 @@ class NowPlayingPushJob(Job):
             if state is None:
                 try:
                     import playout.now_playing as _np  # noqa: PLC0415
+
                     state = _np.default_state
                 except Exception:  # noqa: BLE001
                     state = None
@@ -584,7 +588,7 @@ class MediaCleanupJob(Job):
         tmp_dir: Optional[str] = None,
         max_age_hours: int = 24,
     ) -> None:
-        self._tmp_dir       = tmp_dir
+        self._tmp_dir = tmp_dir
         self._max_age_hours = max_age_hours
 
     # ---- Metadata --------------------------------------------------------
@@ -628,14 +632,12 @@ class MediaCleanupJob(Job):
                 return JobResult(
                     job_name=self.name,
                     success=True,
-                    error_message=(
-                        f"skipped: tmp_dir '{self._tmp_dir}' does not exist"
-                    ),
+                    error_message=(f"skipped: tmp_dir '{self._tmp_dir}' does not exist"),
                     duration_seconds=time.monotonic() - started,
                 )
 
-            cutoff   = time.time() - self._max_age_hours * 3600
-            removed  = 0
+            cutoff = time.time() - self._max_age_hours * 3600
+            removed = 0
             errors: list[str] = []
 
             for entry in tmp_path.iterdir():
@@ -651,8 +653,7 @@ class MediaCleanupJob(Job):
                     job_name=self.name,
                     success=False,
                     error_message=(
-                        f"removed {removed} file(s); "
-                        f"{len(errors)} deletion error(s): {errors[0]}"
+                        f"removed {removed} file(s); {len(errors)} deletion error(s): {errors[0]}"
                     ),
                     duration_seconds=time.monotonic() - started,
                 )
