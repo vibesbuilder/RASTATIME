@@ -6443,16 +6443,21 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   Platzhalter-URLs → `vibesbuilder/RASTATIME` (README-Badges, INSTALL, CRASH_RECOVERY, CHANGELOG-Link, constants.php);
   `icecast.xml.example` mit `<charset>UTF-8</charset>`; `SECURITY.md`; `.github/ISSUE_TEMPLATE` (bug/feature/config).
   COMPONENTS.md war bereits aktuell.
-- 🟢 **Phase 4 in Arbeit (2026-11-01):** privates Repo `vibesbuilder/RASTATIME` vom Operator angelegt (Name RASTATIME,
+- ✅ **Phase 4 erledigt 2026-11-01:** privates Repo `vibesbuilder/RASTATIME` vom Operator angelegt (Name RASTATIME,
   „Studio“ verworfen); Remote `origin`, erster Push `master` ohne `live-*`-Tags (Operator, Credential Manager),
   Remote = lokal, README/Commits geprüft.  Actions musste der Operator erst aktivieren.  CI-Befunde und Fixes:
   Workflows horchten auf `main` → `master`; Geschwisterpakete vor dem Testpaket installieren; ffmpeg auf dem Runner;
   zwei Prozesstabellen-Tests setzen die Plattform selbst; Fixture-Generator `tests/fixtures/generate.sh` aus der
   Historie zurückgeholt (war als „totes Linux-Skript“ gelöscht, Makefile zeigte noch darauf).  **Operator-Entscheidung:**
   Test-Matrix auf `windows-latest` (Produktplattform, Python 3.11 + 3.13), Lint und PHP bleiben auf Ubuntu;
-  Analyzer-Job vorübergehend `continue-on-error` (siehe 🟡 unten).  php grün; python: shared, api-client, playout
-  grün auf Ubuntu, Windows-Lauf offen; **ruff rot (833 Verstöße, 575 auto-fix)** → Sweep nach lokaler
-  ruff-Installation durch den Operator.
+  Analyzer-Job vorübergehend `continue-on-error` (siehe 🟡 unten).  **ruff-Sweep** (`fc269947`, Operator installierte
+  ruff 0.17.3 in die venv): 632 Auto-Fixes, 161 Dateien formatiert, Rest von Hand; `.ruff.toml` mit begründeten
+  Ausnahmen (UP042 StrEnum, B027, F401 in Re-Export-Modulen/Settings, Migrationen ausgeschlossen); Wächtertest für
+  generate.sh umgedreht.  Windows-Runner-Fund: zoneinfo ohne IANA-Datenbank → `tzdata` als Windows-Abhängigkeit
+  von `rastatime_shared` (`a319f9ff`).  **Lauf #8 grün:** ruff, shared/api-client/playout auf Windows 3.11 + 3.13,
+  php grün; Analyzer rot-nicht-blockierend (47 bekannte Fehler).  Suiten lokal: api 195, playout 845, unit 738,
+  shared 36.  **Nächste Phasen:** 5 Install-Probe auf frischer Windows-VM (Operator), 6 Release v1.0.0; vorher die
+  Analyzer-Suite (🟡 unten).
 - 🟡 **Analyzer-Testsuite an die RASTATIME-Pipeline anpassen** (Befund 2026-11-01): lokal mit erzeugten Fixtures
   47 von 352 Tests rot (Cue-Punkte, `compute_silences`, zwei Metadaten-Fälle, drei Windows-Rechte-Tests in
   `organise_file_test.py`).  Die Erwartungswerte stammen aus LibreTime, die Pipeline misst seit den Cue-Punkt- und

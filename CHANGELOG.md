@@ -383,8 +383,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vibesbuilder/RASTATIME`, Push von `master` ohne `live-*`-Tags.  CI-Nachzieher: Workflows auf `master`,
   Geschwisterpakete vor dem Testpaket, ffmpeg + Fixture-Generator (`tests/fixtures/generate.sh` aus der Historie
   zurückgeholt), Prozesstabellen-Tests plattformunabhängig; Test-Matrix auf `windows-latest` mit Python 3.11/3.13
-  (Produktplattform), Analyzer-Job bis zur Suite-Anpassung nicht blockierend (BACKLOG 🟡).  php grün; python:
-  shared, api-client, playout grün (Ubuntu-Lauf), ruff offen.
+  (Produktplattform), Analyzer-Job bis zur Suite-Anpassung nicht blockierend (BACKLOG 🟡).  Erster ruff-Lauf
+  des Repos (`fc269947`: 632 Auto-Fixes, 161 Dateien formatiert, begründete Ausnahmen in `.ruff.toml`), `tzdata`
+  als Windows-Abhängigkeit von `rastatime_shared` (`a319f9ff`, zoneinfo ohne IANA-Datenbank auf dem Runner).
+  Lauf #8 grün: ruff, shared, api-client, playout auf Windows 3.11/3.13, php; Analyzer meldet 47 bekannte Fehler
+  ohne zu blockieren.
 - **GitHub Phase 3: Historie bereinigt** (2026-11-01, Operator-Go).  `git filter-repo` im Spiegel-Klon:
   Audiodateien unter `scheduler/` (133 MP3, 1 WAV, 1 FLAC, 1.006 MB) und die vier Versionen von
   `config/icecast.xml` aus allen Commits entfernt, Autor/Committer per Mailmap auf den Betreiber vereinheitlicht,
