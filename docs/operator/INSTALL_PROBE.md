@@ -107,24 +107,107 @@ VM (snapshot `03-installed`) until phase 6 - the release test runs on it.
 | Date of the rehearsal | |
 | Commit / tag installed (`git rev-parse --short HEAD`) | |
 
-## 2. Downloads to prepare (versions as on the studio machine, 2026-11-01)
+## 2. Prerequisites, tool by tool (versions as on the studio machine, 2026-11-01)
 
-| Component | Version | Source | INSTALL section |
-|---|---|---|---|
-| Visual C++ Redistributable x64 | latest | Microsoft | 2.6 |
-| Python | 3.13 (3.11 minimum) | python.org, "Add to PATH" | 2.1 |
-| PostgreSQL | 17 | EnterpriseDB installer | 2.2 |
-| Liquidsoap | 2.4.6 win64 zip | github.com/savonet/liquidsoap/releases | 2.3 |
-| Erlang OTP + RabbitMQ | 4.x | rabbitmq.com | 2.4 |
-| NSSM | 2.24 | nssm.cc | 2.5 |
-| Apache httpd | 2.4.68 Win64 VS18 | Apache Lounge | 2.6 / INSTALL_APACHE |
-| mod_fcgid | current VS18 build | Apache Lounge | INSTALL_APACHE |
-| PHP | 8.5 NTS x64 zip | windows.php.net | 2.6 / INSTALL_APACHE |
-| Composer | 2.x `composer.phar` | getcomposer.org | 2.6 |
-| Icecast | 2.5.0 win64 | icecast.org (verify SHA512) | 2.7 |
-| FFmpeg | current release build | ffmpeg.org / gyan.dev | 2.8 |
-| Git for Windows | current | git-scm.com | Step 1 |
-| CA bundle for PHP | current `cacert.pem` | curl.se | INSTALL_APACHE §3.1 |
+Two kinds of components: **installers** that may keep their default
+location (Program Files), and **zips / single files** that RASTATIME
+expects at a fixed path under `C:\Tools\` or `C:\ffmpeg\` because the
+service installers, `bootstrap.ps1` and the Apache/PHP configuration
+point there.  Where the installer offers a destination, the line below
+says which one to pick.  Run every installer **as administrator**; the
+order is the order of INSTALL.md §2.
+
+**T0 Windows (INSTALL §2.0).**  Smart App Control off (Windows Security →
+App & browser control) before anything else; on the VM a static address is
+not needed (NAT).
+
+**T1 Visual C++ Redistributable x64 (INSTALL_APACHE §1).**  Microsoft
+`vc_redist.x64.exe`, latest.  Installer, default location.  Needed by
+Apache, PHP and Liquidsoap - without it they exit silently.
+
+**T2 Git for Windows (Step 1).**  git-scm.com installer, default
+location (`C:\Program Files\Git`), default options.  Brings Git Bash,
+which the analyzer fixture generator and coding assistant use.  Check:
+`git --version`.
+
+**T3 Python 3.13 (INSTALL §2.1).**  python.org 64-bit installer.  Tick
+**"Add python.exe to PATH"**, choose **"Install for all users"**
+(services run as LocalSystem), otherwise defaults.  Check:
+`python --version`.
+
+**T4 PostgreSQL 17 (INSTALL §2.2).**  EnterpriseDB installer, default
+location `C:\Program Files\PostgreSQL\17`, components **PostgreSQL Server**
+and **Command Line Tools** (pgAdmin optional, skip Stack Builder), port
+5432, locale default.  Note the superuser password you set (throw-away on
+the VM).  Afterwards add `C:\Program Files\PostgreSQL\17\bin` to the
+**system** PATH (Settings → System → Advanced → Environment variables) and
+open a new PowerShell.  Check: `pg_isready -h 127.0.0.1 -p 5432`.
+
+**T5 Liquidsoap 2.4.6 (INSTALL §2.3).**  Zip
+`liquidsoap-2.4.6-win64.zip` from github.com/savonet/liquidsoap/releases.
+No installer: create `C:\Tools\liquidsoap\` and extract so that
+`C:\Tools\liquidsoap\liquidsoap.exe` exists **directly** in that folder
+(if the zip unpacks into a sub-folder, move its content one level up).
+The folder also receives the rendered `rastatime.liq` later.  Check:
+`& C:\Tools\liquidsoap\liquidsoap.exe --version`.
+
+**T6 Erlang OTP, then RabbitMQ 4.x (INSTALL §2.4).**  Two installers from
+rabbitmq.com (Erlang first, the version the RabbitMQ page names), both at
+their default locations, defaults throughout; RabbitMQ registers its
+Windows service itself.  Check: `Get-Service RabbitMQ` is Running.  If the
+service crashes at start, re-register it with `RABBITMQ_BASE` as in
+INSTALL §2.4.  The vhost and user come later (Step 6b).
+
+**T7 NSSM 2.24 (INSTALL §2.5).**  Zip from nssm.cc.  No installer: copy
+`win64\nssm.exe` to `C:\Tools\nssm\nssm.exe` and add `C:\Tools\nssm` to the
+system PATH.  Check: `nssm version`.
+
+**T8 Apache 2.4 + mod_fcgid (INSTALL §2.6, INSTALL_APACHE §1-§2).**  Two
+zips from apachelounge.com/download: `httpd-2.4.x-win64-VS18.zip` and the
+matching `mod_fcgid` zip.  No installer: the httpd zip contains an
+`Apache24` folder - extract it to `C:\Tools\` so that
+`C:\Tools\Apache24\bin\httpd.exe` exists; copy `mod_fcgid.so` from the
+second zip into `C:\Tools\Apache24\modules\`.  Then edit `httpd.conf` as
+INSTALL_APACHE §2 describes.  Check: `& C:\Tools\Apache24\bin\httpd.exe -v`
+and later `httpd -t`.
+
+**T9 PHP 8.5 NTS x64 (INSTALL §2.6, INSTALL_APACHE §1, §3).**  Zip
+`php-8.5.x-nts-Win32-vs17-x64.zip` from windows.php.net/download.  No
+installer: extract so that `C:\Tools\PHP\php.exe` and `php-cgi.exe` exist
+directly in the folder.  Copy `php.ini-production` to `php.ini` and apply
+INSTALL_APACHE §3 (upload limits), §3.1 (CA bundle: `cacert.pem` from
+curl.se to `C:\Tools\PHP\cacert.pem`, two php.ini keys) and §3.2 (PHP 8.5
+settings).  Check: `& C:\Tools\PHP\php.exe -v`.
+
+**T10 Composer 2 (INSTALL §2.6).**  Single file `composer.phar` from
+getcomposer.org/download (the "manual download" link; do **not** use the
+Windows installer, it would register a different PHP).  Save it as
+`C:\Tools\composer\composer.phar`.  Check:
+`& C:\Tools\PHP\php.exe C:\Tools\composer\composer.phar --version`.
+
+**T11 Icecast 2.5.0 (INSTALL §2.7).**  Windows installer from icecast.org
+(verify the SHA512 against `SHA512SUMS.txt`, the installer is unsigned).
+When it asks for the destination, choose **`C:\Tools\Icecast`** instead of
+Program Files, so that `C:\Tools\Icecast\bin\icecast.exe` with its `web\`
+and `admin\` siblings exists.  Do not start it from the installer; the
+service comes in Step 9g with `config\icecast.xml` (from the example).
+Check: `& C:\Tools\Icecast\bin\icecast.exe -v`.
+
+**T12 FFmpeg (INSTALL §2.8).**  Release build zip, e.g. the
+"essentials" build from gyan.dev (linked from ffmpeg.org/download).  No
+installer: the zip unpacks into `ffmpeg-<version>-essentials_build\`;
+rename or move that folder to `C:\ffmpeg` so that
+`C:\ffmpeg\bin\ffmpeg.exe` and `ffprobe.exe` exist.  The service
+installers prepend exactly `C:\ffmpeg\bin` to the services' PATH.  Check:
+`& C:\ffmpeg\bin\ffmpeg.exe -version`.
+
+**T13 Checker.**  `powershell -ExecutionPolicy Bypass -File
+C:\rastatime\infra\scripts\dev\bootstrap.ps1` - ten `[PASS]`, exit 0.
+
+Summary of the fixed paths: `C:\Tools\liquidsoap`, `C:\Tools\nssm`,
+`C:\Tools\Apache24`, `C:\Tools\PHP`, `C:\Tools\composer`,
+`C:\Tools\Icecast`, `C:\ffmpeg`.  Everything else (VC++, Git, Python,
+PostgreSQL, Erlang, RabbitMQ) stays where its installer puts it.
 
 The repository is private until the end of the publication: the clone
 needs a GitHub login on the VM (Git Credential Manager asks once) or a
