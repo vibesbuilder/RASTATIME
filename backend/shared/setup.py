@@ -12,7 +12,10 @@ setup(
     packages=find_packages(exclude=["*tests*", "*fixtures*"]),
     package_data={"": ["py.typed"]},
     install_requires=[
-        "backports.zoneinfo>=0.2.1,<0.3;python_version<'3.9'",
+        # zoneinfo has no IANA database on Windows without this package
+        # (RASTATIME 2026-11-01: the CI runner failed on timezone "UTC";
+        # locally it arrives as a dependency of Django).
+        "tzdata>=2024.1;sys_platform=='win32'",
         "click>=8.0.4,<8.2",
         "pydantic>=2.9.0",
         "pyyaml>=5.3.1,<6.1",
