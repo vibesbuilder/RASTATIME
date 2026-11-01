@@ -19,7 +19,7 @@ name: php
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "frontend/**"
       - ".github/workflows/php.yml"

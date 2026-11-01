@@ -21,7 +21,7 @@ name: python
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "backend/**"
       - ".ruff.toml"
