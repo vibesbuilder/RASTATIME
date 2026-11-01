@@ -4246,7 +4246,7 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 2-s-Takt (69.000 Zeilen am 30.10., pausiert nur zwischen Liquidsoap-Neustart 14:16 und nächstem Line-In-Slot 22:00);
 nach dem PLAYOUT-Neustart 2026-11-01 10:26 ohne Feeder-Mount 18.000 Icecast-404 in 1,5 h, Liquidsoap 87 MB/h statt
 21 MB/h (2.576 MB, harte Grenze 3.072 wäre ~17:30 gefallen).  Operator startete LIQUIDSOAP 12:23 neu (Schleife weg).
-**Ursache (Replikat, Liquidsoap 2.4.6 + Mock-Mount `C:/Users/studio/.../scratchpad/mock_mount.py`, Proben 1-5):**
+**Ursache (Replikat, Liquidsoap 2.4.6 + Mock-Mount + Proben 1-5 in `C:/Temp/optd/linein_zombie/`):**
 ein vom `source.dynamic`-Arm getrennter `input.http` schläft und verarbeitet `stop()` nie (Status bleibt `connected`,
 Stream läuft weiter); `start()`+`stop()` darauf verbindet nur neu; ein Re-Armieren des Zombies löst eine ffmpeg-
 Assertion aus.  **Fix:** `linein_http_stop()` hält den Eingang armiert bis `stopped` (0,5-s-Prüfung, 5 s Deckel,
@@ -4260,7 +4260,7 @@ PLAYOUT-Neustart (rendert neu, Liquidsoap folgt planmäßig an der Titelgrenze);
 `webstream_stop()` trennt den Arm ebenfalls sofort und der Reaper macht start+stop auf `connected`-Zombies.  In den
 Logs seit 2026-10-27 keine Schleife (Webstream-Eingänge laufen über den Cloud-Wächter mit eigener Reconnect-Logik),
 darum nicht mit angefasst.  **Wenn** `webstream_watchdog ... reaping` gehäuft auftaucht: den Abbau wie beim Line-In
-(armiert bis `stopped`, dann trennen) übernehmen; Probe-Vorlagen `reaper_probe*.liq` + Mock-Mount sind die Vorlage.
+(armiert bis `stopped`, dann trennen) übernehmen; Probe-Vorlagen `C:/Temp/optd/linein_zombie/reaper_probe*.liq` + `mock_mount.py` sind die Vorlage.
 
 ### ✅ Backup/Janitor eine Stunde zu früh seit der Zeitumstellung (Befund 2026-11-01) - behoben 2026-11-01 (Operator-Go)
 
