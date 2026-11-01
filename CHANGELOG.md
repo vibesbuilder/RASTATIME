@@ -370,6 +370,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Table layout" EN/DE/FR/ES, Architektur §23.42 Addendum (0.87).  Commit cc60fc7.
 
 ### Changed
+- **GitHub Phase 3: Historie bereinigt** (2026-11-01, Operator-Go).  `git filter-repo` im Spiegel-Klon:
+  Audiodateien unter `scheduler/` (133 MP3, 1 WAV, 1 FLAC, 1.006 MB) und die vier Versionen von
+  `config/icecast.xml` aus allen Commits entfernt, Autor/Committer per Mailmap auf den Betreiber vereinheitlicht,
+  Trailer-Zeilen und Werkzeugnamen aus 1.135 Commit-Texten und 529 alten Dateiversionen ersetzt.  HEAD-Baum
+  unverändert (gleicher Tree-Hash), 1.191 statt 1.193 Commits (ein leer gewordenes Feature/Revert-Paar vom
+  2026-05-21), 37 Tags umgeschrieben, Pack 52 MB statt 1,07 GiB.  Live-Checkout umgehängt (Arbeitsbaum
+  unberührt, Dienste weiter 200).  **Alle vor diesem Datum in CHANGELOG/BACKLOG/Doku zitierten Commit-Hashes
+  sind alte Hashes**: Zuordnung in `docs/dev/history/commit-map-2026-11-01.txt`.  Rückfall-Tag
+  `pre-rewrite-2026-11-01` bis zum `gc`.
 - **Marke Stufe B: Brücke protokolliert jede Nutzung, Live-Umschaltung, Phase 2 vorgezogen** (2026-10-29,
   nachmittags).  Die vier Python-Dienste laufen seit 14:16 unter den neuen Namen
   (`-m rastatime_*`, `rastatime-analyzer.exe`, `RASTATIME_CONFIG_FILEPATH`), `libretime.conf` ist gelöscht.

@@ -6405,6 +6405,17 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
 - ✅ **Phase 1 gebaut 2026-10-29** (Marke Stufe B, eigener Abschnitt oben): Repo-Teil committet (`d07b4890`, `20364f4f`), Suiten grün;
   Live-Umschaltung der vier Python-Dienste 2026-10-29 14:16 (Skript brach zweimal ab, Schritte 2a–4 von Hand);
   Brücke instrumentiert, **Phase 2 (Brücke entfernt) 2026-11-01** nach drei Nächten ohne Treffer.
+- ✅ **Phase 3 Historie bereinigt 2026-11-01** (Operator installierte `git filter-repo`, Lauf im Spiegel-Klon
+  `C:\Temp\rt-clean-work\rt-clean2.git`, 26 s): `scheduler/` + `config/icecast.xml` aus allen Commits, Mailmap auf
+  vibesbuilder, Message-Callback (Trailer raus, Werkzeugnamen ersetzt), `--replace-text` über alte Dateiversionen
+  (8 Regex-Regeln; eine Passwort-Regel wurde verworfen, weil der alte Wert ein Allerweltswort ist und 178 aktuelle
+  Dateien traf).  Verifiziert: HEAD-Tree identisch, 1.191 Commits (Feature/Revert-Paar vom 2026-05-21 leer
+  geworden), 37 Tags, 0 Werkzeugnamen in Texten und Blobs, eine Identität, Pack 52 MB.  Live-Checkout per
+  `reset --soft` umgehängt, Tags ersetzt, Rückfall-Tag `pre-rewrite-2026-11-01`; **offen:** `reflog expire` +
+  `gc --prune=now` nach Operator-Bestätigung (dann ist der Rückfall weg und `.git` schrumpft von 1,1 GB).
+  Alte→neue Hashes: `docs/dev/history/commit-map-2026-11-01.txt`.
+- 🟡 **Phase 2b (vor dem Push):** INSTALL.md auf Liquidsoap 2.4.6 / Icecast 2.5.0 + `composer install`-Schritt,
+  COMPONENTS.md abgleichen, `SECURITY.md`, Issue-Vorlagen.
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche
