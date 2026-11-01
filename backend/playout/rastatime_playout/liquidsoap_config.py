@@ -1538,7 +1538,6 @@ def _render_webstream_watchdog_block(
         "def webstream_wd_check() =\n"
         "  webstream_wd_checks.set(webstream_wd_checks() + 1)\n"
         "  webstream_reap()\n"
-        "  linein_http_reap()\n"
         "  if webstream_started() then\n"
         "    if source.is_ready(webstream) then\n"
         "      webstream_wd_seen_ready.set(true)\n"
@@ -1684,54 +1683,79 @@ def _render_linein_input_block(
         "# silence_fallback for the whole slot on 2026-10-20 21:12 and\n"
         "# 2026-10-21 08:42 although the feeder streamed).  PLAYOUT keeps its\n"
         "# telnet contract: linein_http.start / .stop (+ .status).\n"
+        "# RASTATIME 2026-11-01 - stop drains the input while it is still\n"
+        "# armed; detaching first left zombies that the old reaper only\n"
+        "# reconnected every 2 s (see linein_http_stop).\n"
         "linein_http_seq = ref(0)\n"
         "linein_http_started = ref(false)\n"
         "linein_http_current = ref(source.fail())\n"
         "linein_http_stopper = ref(fun () -> ())\n"
         'linein_http_status_fn = ref(fun () -> "stopped")\n'
         'linein_http_current_name = ref("")\n'
-        "linein_http_reaper = ref(fun () -> ())\n"
-        "linein_http_zombies = ref([])\n"
+        'linein_http_armed_name = ref("")\n'
+        "linein_http_next = ref(source.fail())\n"
+        'linein_http_next_name = ref("")\n'
+        'linein_http_drain_name = ref("")\n'
         'linein_http_raw = source.dynamic(id="linein_http", self_sync=false,\n'
         "  track_sensitive=false, {linein_http_current()})\n"
         "linein_http = audio_to_stereo(linein_http_raw)\n"
+        "\n"
+        "def linein_http_arm(s, name) =\n"
+        "  linein_http_current.set(s)\n"
+        "  linein_http_armed_name.set(name)\n"
+        "end\n"
+        "\n"
+        "def linein_http_drain_done(name, st) =\n"
+        "  if linein_http_drain_name() == name then\n"
+        '    if st != "stopped" then\n'
+        '      log(level=2, label="linein_http",\n'
+        '          "input #{name} did not stop within 5 s (status #{st}) - detached anyway, it stays a zombie until the next restart")\n'
+        "    end\n"
+        '    linein_http_drain_name.set("")\n'
+        "    linein_http_arm(linein_http_next(), linein_http_next_name())\n"
+        "    linein_http_next.set(source.fail())\n"
+        '    linein_http_next_name.set("")\n'
+        "  end\n"
+        "end\n"
         "\n"
         "def linein_http_stop() =\n"
         "  if linein_http_started() then\n"
         "    f = linein_http_stopper()\n"
         "    f()\n"
         "    status_fn = linein_http_status_fn()\n"
-        '    if status_fn() != "stopped" then\n'
-        "      # a stop lost while polling the (gone) mount: reaped once the\n"
-        "      # input reports connected again, like the webstream zombies\n"
-        "      linein_http_zombies.set(list.append(linein_http_zombies(),\n"
-        "        [(linein_http_current_name(), status_fn, linein_http_reaper())]))\n"
+        "    name = linein_http_current_name()\n"
+        "    if name == linein_http_next_name() then\n"
+        "      # never armed, never connected: forget it\n"
+        "      linein_http_next.set(source.fail())\n"
+        '      linein_http_next_name.set("")\n'
+        '    elsif status_fn() == "stopped" then\n'
+        '      linein_http_arm(source.fail(), "")\n'
+        "    else\n"
+        "      # RASTATIME 2026-11-01 - an input.http detached from its arm falls\n"
+        "      # asleep and never processes the stop: it keeps streaming as a\n"
+        "      # zombie (and a start+stop on it only reconnects it, 2 s loop with\n"
+        "      # 404 floods once the feeder is gone, 2026-10-29..11-01).  Keep it\n"
+        "      # armed until it reports stopped (checked every 0.5 s, 5 s max);\n"
+        "      # the gate (linein_live) already keeps it off air.\n"
+        "      linein_http_drain_name.set(name)\n"
+        "      tries = ref(0)\n"
+        "      def check() =\n"
+        "        tries.set(tries() + 1)\n"
+        "        st = status_fn()\n"
+        '        if st == "stopped" or tries() >= 10 then\n'
+        "          linein_http_drain_done(name, st)\n"
+        "          (-1.)\n"
+        "        else\n"
+        "          0.5\n"
+        "        end\n"
+        "      end\n"
+        "      thread.run.recurrent(delay=0.5, check)\n"
         "    end\n"
         "  end\n"
         "  linein_http_started.set(false)\n"
-        "  linein_http_current.set(source.fail())\n"
         "  linein_http_stopper.set(fun () -> ())\n"
         '  linein_http_status_fn.set(fun () -> "stopped")\n'
         '  "Done"\n'
-        "end\n"
-        "\n"
-        "def linein_http_reap() =\n"
-        "  if list.length(linein_http_zombies()) > 0 then\n"
-        "    linein_http_zombies.set(list.filter(fun (z) -> begin\n"
-        "      let (name, status_fn, reap_fn) = z\n"
-        "      st = status_fn()\n"
-        '      if st == "stopped" then\n'
-        "        false\n"
-        '      elsif string.contains(prefix="connected", st) then\n'
-        '        log(level=2, label="linein_http",\n'
-        '            "dropped input #{name} reconnected on its own - reaping (start+stop)")\n'
-        "        reap_fn()\n"
-        "        true\n"
-        "      else\n"
-        "        true\n"
-        "      end\n"
-        "    end, linein_http_zombies()))\n"
-        "  end\n"
         "end\n"
         "\n"
         "def linein_http_start() =\n"
@@ -1747,12 +1771,14 @@ def _render_linein_input_block(
         "  linein_http_stopper.set(fun () -> s.stop())\n"
         "  linein_http_status_fn.set(fun () -> s.status())\n"
         '  linein_http_current_name.set("linein_http_in_#{n}")\n'
-        "  linein_http_reaper.set(fun () -> begin\n"
-        "    s.start()\n"
-        "    s.stop()\n"
-        "  end)\n"
         "  linein_http_started.set(true)\n"
-        "  linein_http_current.set(s)\n"
+        '  if linein_http_drain_name() != "" then\n'
+        "    # the previous input is still draining: take its arm once it stopped\n"
+        "    linein_http_next.set(s)\n"
+        '    linein_http_next_name.set("linein_http_in_#{n}")\n'
+        "  else\n"
+        '    linein_http_arm(s, "linein_http_in_#{n}")\n'
+        "  end\n"
         '  "Done"\n'
         "end\n"
         "\n"

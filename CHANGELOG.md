@@ -811,6 +811,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Line-In: verworfener input.http blieb als Zombie verbunden, Wächter schleifte alle 2 s mit start+stop**
+  (2026-11-01, Befund beim Icecast-Rückblick, Operator-Go).  Seit dem 2026-10-29 fragte jeder abgelaufene
+  Line-In-Eingang den Mount `/linein-capture` im 2-s-Takt neu an (69.000 Log-Zeilen am 30.10.); nach dem
+  PLAYOUT-Neustart heute 10:26 fehlte der Feeder-Mount, 18.000 Icecast-404 in 1,5 h und 87 MB/h statt 21 MB/h
+  Liquidsoap-Speicher.  Ursache (Replikat-Proben mit 2.4.6 gegen einen Mock-Mount): ein vom Arm getrennter,
+  schlafender `input.http` verarbeitet seinen Stop nie; `linein_http_stop()` trennte aber sofort.  Jetzt bleibt
+  der Eingang bis `stopped` armiert (Prüfung alle 0,5 s, max. 5 s; Gate hält ihn stumm), ein währenddessen
+  eintreffender Start wird vorgemerkt und danach armiert; der Line-In-Reaper entfällt.  §23.68 Nachtrag, Tests
+  angepasst, Vorlage per `liquidsoap --check` geprüft.  Wirksam nach PLAYOUT-Neustart (rendert neu, Liquidsoap
+  folgt planmäßig an der nächsten Titelgrenze).  Webstream-Reaper hat dasselbe Muster, bisher ohne Schleife
+  (BACKLOG).  Commit folgt.
 - **Backup- und Janitor-Aufgabe liefen seit der Zeitumstellung um 02:30 / 02:50** (2026-11-01, Befund beim
   Phase-2-Log-Check).  `New-ScheduledTaskTrigger` speichert die Startzeit mit UTC-Offset, der Task Scheduler
   hält dann den UTC-Zeitpunkt fest; seit dem 2026-10-26 feuerten `RASTATIME-Backup` und `RASTATIME-LogJanitor`

@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.105
+Draft version: 0.106
 Date: 2026-11-01
 
 > **Revision history**
+> - **0.106 (2026-11-01)** - **Line-in input drains before it is
+>   detached** (§23.68 addendum): the start+stop reaper looped every
+>   2 s on a sleeping zombie input; stop now completes while armed.
 > - **0.105 (2026-11-01)** - **Brand stage B, phase 2** (§23.77): the
 >   bridge is removed after three nights without a hit; only the
 >   `rastatime_*` / `RASTATIME_*` names are read (hard cut).
@@ -7615,6 +7618,34 @@ linein_http])` are unchanged, PLAYOUT's engine sequence (`linein.stop`,
 the new block), the rendered script passes `liquidsoap --check` with the
 same single pre-existing warning as the live file.  Live acceptance: a
 recorded show with a line-in after the PLAYOUT restart, then its repeat.
+
+**Addendum 2026-11-01 - the stop must happen while the input is armed.**
+`linein_http_stop()` used to call `s.stop()` and immediately swap the
+`source.dynamic` arm to `source.fail()`.  Replica probes with Liquidsoap
+2.4.6 against a mock mount show why that left zombies: an `input.http`
+that falls asleep (detached from every output) never processes a stop,
+its status stays `connected` and it keeps streaming.  The old reaper then
+fired `start()` + `stop()` on it every watchdog tick, which only
+reconnected it - one request per 2 s per zombie since 2026-10-29 (69,000
+log lines on 2026-10-30), and after the feeder stopped on 2026-11-01
+10:26 a 404 flood (18,000 Icecast lines in 1.5 h) that pushed the
+Liquidsoap leak from 21 MB/h to 87 MB/h.  A zombie cannot be rescued
+afterwards (re-arming it trips an ffmpeg assertion), so the fix is on
+the stop path: the input stays armed, a `thread.run.recurrent` checks
+its status every 0.5 s and detaches the arm once it reports `stopped`
+(5 s cap, then detached anyway with one WARN).  The gate `linein_live`
+keeps the draining input off air.  A `linein_http.start` that arrives
+while the previous input drains (PLAYOUT sends stop+start back to back
+for the next slot) parks the new input as `linein_http_next` and arms
+it when the drain finishes - unarmed, it has not started connecting, so
+nothing is lost.  Probe results (`reaper_probe5.liq`): plain stop
+detached after one check; stop+start armed the successor after 2 s and
+it connected; stop while the mount answered 404 reached `stopped` and
+nothing reconnected when the mount returned.  The watchdog no longer
+calls a line-in reaper; the webstream path keeps its reaper for now
+(no loop seen in its logs since 2026-10-27) and is noted in BACKLOG.md
+as the same latent pattern.  Tests: `test_liquidsoap_config.py` asserts
+the drain block and the absence of the reaper.
 
 ### 23.69 Re-read Tags (2026-10-21)
 

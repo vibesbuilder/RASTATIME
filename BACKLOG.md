@@ -4240,6 +4240,28 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### ✅ Line-In-Zombie: Wächter-Schleife start+stop alle 2 s, 404-Flut nach Feeder-Stopp (Befund 2026-11-01) - behoben 2026-11-01 (Operator-Go)
+
+**Befund:** seit 2026-10-29 09:30 `dropped input linein_http_in_N reconnected on its own - reaping (start+stop)` im
+2-s-Takt (69.000 Zeilen am 30.10., pausiert nur zwischen Liquidsoap-Neustart 14:16 und nächstem Line-In-Slot 22:00);
+nach dem PLAYOUT-Neustart 2026-11-01 10:26 ohne Feeder-Mount 18.000 Icecast-404 in 1,5 h, Liquidsoap 87 MB/h statt
+21 MB/h (2.576 MB, harte Grenze 3.072 wäre ~17:30 gefallen).  Operator startete LIQUIDSOAP 12:23 neu (Schleife weg).
+**Ursache (Replikat, Liquidsoap 2.4.6 + Mock-Mount `C:/Users/studio/.../scratchpad/mock_mount.py`, Proben 1-5):**
+ein vom `source.dynamic`-Arm getrennter `input.http` schläft und verarbeitet `stop()` nie (Status bleibt `connected`,
+Stream läuft weiter); `start()`+`stop()` darauf verbindet nur neu; ein Re-Armieren des Zombies löst eine ffmpeg-
+Assertion aus.  **Fix:** `linein_http_stop()` hält den Eingang armiert bis `stopped` (0,5-s-Prüfung, 5 s Deckel,
+Gate `linein_live` hält ihn stumm), Start während des Abbaus wird als `linein_http_next` vorgemerkt; Line-In-Reaper
+aus dem Wächter entfernt.  §23.68 Nachtrag (0.106), Test angepasst, `liquidsoap --check` grün.  **Offen (Operator):**
+PLAYOUT-Neustart (rendert neu, Liquidsoap folgt planmäßig an der Titelgrenze); Abnahme = nächster Line-In-Slot ohne
+`reaping`-Zeilen und ohne 404 nach dem Slot-Ende.
+
+### 🟡 Webstream-Reaper: dasselbe Zombie-Muster wie beim Line-In (notiert 2026-11-01)
+
+`webstream_stop()` trennt den Arm ebenfalls sofort und der Reaper macht start+stop auf `connected`-Zombies.  In den
+Logs seit 2026-10-27 keine Schleife (Webstream-Eingänge laufen über den Cloud-Wächter mit eigener Reconnect-Logik),
+darum nicht mit angefasst.  **Wenn** `webstream_watchdog ... reaping` gehäuft auftaucht: den Abbau wie beim Line-In
+(armiert bis `stopped`, dann trennen) übernehmen; Probe-Vorlagen `reaper_probe*.liq` + Mock-Mount sind die Vorlage.
+
 ### ✅ Backup/Janitor eine Stunde zu früh seit der Zeitumstellung (Befund 2026-11-01) - behoben 2026-11-01 (Operator-Go)
 
 **Status:** Erledigt 2026-11-01.  Beide Aufgaben hatten `StartBoundary ...T02:30:00+01:00` bzw. `02:50:00+01:00`

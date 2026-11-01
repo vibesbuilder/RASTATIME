@@ -1094,7 +1094,12 @@ def test_full_render_default_includes_linein_input_block():
     assert 'server.register(namespace="linein_http", description="Open a fresh input for the /linein-capture mount",' in active
     assert '"start", fun (_) -> linein_http_start())' in active
     assert '"stop", fun (_) -> linein_http_stop())' in active
-    assert "  linein_http_reap()" in active
+    # RASTATIME 2026-11-01 - stop drains the armed input instead of
+    # detaching it (a detached input.http never processes its stop)
+    assert "def linein_http_drain_done(name, st) =" in active
+    assert "thread.run.recurrent(delay=0.5, check)" in active
+    assert "linein_http_reap()" not in active
+    assert "linein_http_zombies" not in active
     assert 'linein_http_raw = input.http(' not in active
     # RASTATIME 2026-10-02 - the folded arm runs through the per-line-in
     # input gain (var.set linein.gain, unity by default).
