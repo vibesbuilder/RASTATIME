@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.107
+Draft version: 0.108
 Date: 2026-11-01
 
 > **Revision history**
+> - **0.108 (2026-11-01)** - **Library-wide cue-point re-detection**
+>   (§23.45): CLI script on the legacy model, 19,975 files applied;
+>   detect() without a shell (`!`/`%` paths).
 > - **0.107 (2026-11-01)** - **Cue points were never measured by the
 >   analyzer** (addendum to the cue-point section): ffmpeg's
 >   `Parsed_silencedetect` prefix; parser fixed, analyzer suite green.
@@ -6273,9 +6276,25 @@ files, from the first imports in May on).  The Library button above
 measures through the legacy PHP path and was therefore the only working
 route.  The pattern accepts both prefixes since `686ad377` (regression
 test `silencedetect_parse_test.py`); the analyzer suite, now part of
-`run_tests.ps1` and of the CI matrix, would have caught it.  Re-measuring
-the existing library is an open evaluation (BACKLOG): shorter cue-outs
-move show-boundary fades and the autoloading budget.
+`run_tests.ps1` and of the CI matrix, would have caught it.
+
+**Library-wide re-detection (2026-11-01 15:58, operator go).**
+`frontend/legacy/scripts/cue_redetect_all.php` runs the model above from
+the command line: `--dry-run` (shardable by `id % N`, retry of skipped
+rows from earlier reports) measures and writes a CSV with old and new
+values plus outlier flags (cue in > 10 s, silent tail > 30 s, clip < 1 s);
+`--apply [--skip-flagged] <csv...>` writes the reviewed numbers in one
+transaction with the button's UPDATE, `applyToFutureRows()` per file and
+one `relayoutInstances()` pass; `--restore <csv...>` writes the old values
+back the same way.  Measured 4 s per hour of audio; the whole library
+(1,775 h) took 40 min in four parallel shards.  Result: 19,997 of 24,857
+files change, 22 flagged outliers left to the operator, 19,975 applied in
+10 s, 65 upcoming instances laid out again, every upcoming row equal to
+its file afterwards.  Finding on the way: `escapeshellarg()` turns `!`
+and `%` into spaces on Windows, so `detect()` failed on 383 paths (the
+button too); it now runs ffmpeg through `proc_open` with an argument
+array and reads stderr only (stdout to the null device - reading two
+pipes in sequence deadlocked once stderr filled).
 
 ### 23.46 In-App User Manual and the RASTATIME-only Help Menu (2026-10-01)
 

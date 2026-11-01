@@ -825,8 +825,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   LibreTime-Parser erwartete `[silencedetect @ ...]`; `compute_silences()` lieferte darum eine leere Liste,
   ohne Fehler, und jeder Import bekam Cue-In 0 und Cue-Out gleich Länge.  Bestand auf der Studio-Maschine:
   24.857 von 24.999 Dateien (Mai 168/309, Oktober 24.665/24.666).  Beide Schreibweisen werden jetzt erkannt
-  (Regressionstest).  Wirksam für neue Importe nach dem ANALYZER-Neustart; Nachmessen des Bestands ist eine
-  eigene Entscheidung (BACKLOG 🟡, Auswirkung auf Übergänge und Füllung).
+  (Regressionstest).  Wirksam für neue Importe seit dem ANALYZER-Neustart 14:39.  **Bestand nachgemessen
+  2026-11-01 15:58** (Operator-Go nach Evaluierung): `frontend/legacy/scripts/cue_redetect_all.php` (`98062966`)
+  misst mit dem Modell des Library-Knopfs - Trockenlauf in vier Teilen (40 min, 24.857 gemessen, 19.997 Änderungen,
+  22 Ausreißer markiert: Cue-In > 10 s oder stiller Rest > 30 s), dann `--apply --skip-flagged`: 19.975 Dateien in
+  einer Transaktion, 155 künftige Sendeplan-Zeilen übernommen, 65 Instanzen neu ausgelegt, 10 s.  Alte Werte in
+  den CSV-Berichten (`logs/cue_redetect-*.csv`, Kopie `C:/Temp/optd/cue_reports/`), `--restore` schreibt sie zurück.
+  Die 22 markierten Titel (Hidden Tracks, lange stille Intros) bleiben zur Einzelentscheidung (BACKLOG).
+- **Cue-Punkt-Messung scheiterte an Pfaden mit `!` oder `%`** (2026-11-01, Befund im Trockenlauf, 383 Dateien,
+  Commit `98062966`).  PHPs `escapeshellarg()` ersetzt beide Zeichen unter Windows durch Leerzeichen; der
+  Library-Knopf „Cue Points“ war ebenso betroffen.  `Application_Model_CuePoints::detect()` startet ffmpeg jetzt
+  ohne Shell über `proc_open` mit Argumentliste und liest nur stderr (stdout ins Nichts, kein Pipe-Deadlock).
 - **Analyzer-Testsuite an die RASTATIME-Pipeline angepasst** (2026-11-01, Operator-Go): tagless-Ordner seit
   2026-10-24, Mono-m4a-Fixtures sind mit dem aktuellen Encoder mono, Rechte-Test ohne Linux-Pfad `/sys`.
   358 bestanden; `run_tests.ps1` kennt jetzt `analyzer` und `shared` (Teil von `all`), der CI-Job blockiert wieder.

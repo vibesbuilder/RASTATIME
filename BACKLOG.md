@@ -6463,13 +6463,18 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   blieben seit Mai bei 0/Länge (siehe 🟡 unten).  Die übrigen fünf: tagless-Ordner (gewollt seit 2026-10-24),
   Mono-m4a mit aktuellem Encoder mono, Rechte-Test ohne `/sys`.  Suite in `run_tests.ps1` (`analyzer`, `shared`,
   Teil von `all`), Regressionstest `silencedetect_parse_test.py`, `continue-on-error` im Workflow entfernt.
-- 🟡 **Cue-Punkte der Bestandsbibliothek nachmessen** (Befund 2026-11-01): 24.857 von 24.999 Dateien tragen Cue-In 0
-  und Cue-Out = Länge, weil der Analyzer seit Mai nie Stillen erkannte (Parser-Fehler, behoben `686ad377`; der
-  Library-Knopf „Cue Points“ misst unabhängig per Legacy und wurde darum für Einzelfälle gebaut).  Vor einem
-  Massenlauf evaluieren: Dauer (ffmpeg je Datei ~1 s → Stunden, als Hintergrundlauf in ruhigen Stunden),
-  Auswirkung auf Show-Grenzen-Crossfade (Cue-Out früher = frühere Blende) und auf Autoloading-Füllung
-  (geplante Dauer je Zeile sinkt; „Cue-Änderungen laufen in künftige Zeilen“), Jingles mit ~1 s Stille am Ende
-  werden kürzer; Reihenfolge (zuerst Jingles/Teaser?) und Rückfall (Werte sichern).  Nur mit Operator-Go.
+- ✅ **Cue-Punkte der Bestandsbibliothek nachgemessen 2026-11-01 15:58** (Evaluierung + Go, `98062966`): 24.857
+  Dateien trugen Cue-In 0 / Cue-Out = Länge (Analyzer-Parser-Fehler seit Mai, `686ad377`).  Messgeschwindigkeit
+  4 s je Stunde Audio; Trockenlauf in vier Teilen 40 min → 19.997 Änderungen, 22 Ausreißer; Nebenfund `!`/`%` in
+  Pfaden (383 Dateien, `escapeshellarg`, behoben, auch Library-Knopf).  `--apply --skip-flagged`: 19.975 Dateien,
+  155 künftige Zeilen, 65 Instanzen neu ausgelegt, 10 s; Nachprüfung: 4.882 Dateien bleiben bei 0/Länge (4.860 ohne
+  Stille + 22 markiert), alle künftigen Zeilen = Dateiwerte, PLAYOUT las den Plan 15:58 neu.  Rückfall: `--restore`
+  mit den CSV-Berichten (`logs/cue_redetect-*.csv`, Kopie `C:/Temp/optd/cue_reports/`) + Backup 02:30.
+- 💡 **22 markierte Titel einzeln entscheiden** (aus dem Lauf 2026-11-01, nicht übernommen): 3× Cue-In > 10 s
+  (ids 3081 „35 Minutes“ 30 s, 17253 „Swans Will Save“ 60 s, 22303 „Meine Abschiedssendung“ 11 s), 19× stiller Rest
+  > 30 s, meist Hidden Tracks (ids 1125, 1650, 2653, 2779, 4643, 6678 „DMD KIU LIDT“ 367 s, 7567, 8929, 9235, 11793,
+  16413, 16889, 17415, 17615, 18581, 18754, 19835, 20877, 24335).  Werkzeug: Library-Knopf „Cue Points“ (übernimmt
+  die Messung) oder Track-Editor (Hand).  Operator-Geschmack, kein Fehler.
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche
