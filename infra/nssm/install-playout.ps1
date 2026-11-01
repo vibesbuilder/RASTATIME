@@ -267,7 +267,8 @@ Write-Step "Configuring environment variables..."
     "RASTATIME_CONFIG_FILEPATH=$cfgFile" `
     "RASTATIME_API_URL=http://127.0.0.1:8765" `
     "PYTHONPATH=$pythonPath" `
-    "PATH=C:\ffmpeg\bin;%PATH%"
+    "PATH=C:\ffmpeg\bin;%PATH%" `
+    "PYTHONUTF8=1"
 Write-OK "Environment variables set (FFmpeg on PATH)."
 
 Write-Host ""

@@ -221,7 +221,8 @@ Write-Step "Setting restart policy (${RestartDelayMs} ms delay)..."
 Write-Step "Configuring environment variables (FFmpeg on PATH)..."
 & $nssm set $ServiceName AppEnvironmentExtra `
     "RASTATIME_CONFIG_FILEPATH=$cfgFile" `
-    "PATH=C:\ffmpeg\bin;%PATH%"
+    "PATH=C:\ffmpeg\bin;%PATH%" `
+    "PYTHONUTF8=1"
 Write-OK "Environment variables set."
 
 Write-Host ""

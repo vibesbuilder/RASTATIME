@@ -405,16 +405,16 @@ The example file ships with placeholder values that are safe for a fresh
 install on a local LAN but **must** be replaced before the host is
 reachable from the public internet:
 
-> **Note:** the `stream:` section (`stream.internal_listener`,
-> `stream.harbor`) is not included in `rastatime.conf.example` — add it
-> to your live `rastatime.conf` by hand when configuring the relay
-> listener and DJ harbor passwords.
+> **Note:** the `stream:` section (`stream.inputs`, `stream.harbor`) is
+> present in `rastatime.conf.example` as a commented block — uncomment it
+> and set the harbor fallback passwords when you configure the DJ inputs.
+> `stream.internal_listener` is obsolete since 2026-10-25 (nothing reads
+> it any more; an old file that still carries it keeps validating).
 
 | Setting | Where | Why |
 |---|---|---|
 | `general.api_key` | `rastatime.conf` | Authenticates inter-service API calls and the v1 legacy notify hook. |
 | `general.secret_key` | `rastatime.conf` | Django session / CSRF signing key. Must be at least 50 random chars. |
-| `stream.internal_listener.password` | `rastatime.conf` | Service-to-service password the playout uses to listen to `/main` and `/show` for relay. Default value is `change-me-internal-listener-secret`. Replace with a long random string (32+ chars). After changing, restart `RASTATIME-PLAYOUT` (it caches the value at startup); the PHP frontend re-reads the config on the next request — no Apache restart needed. |
 | `<source-password>` | `C:\rastatime\config\icecast.xml` | Icecast admin / relay / source password. Default value is `admin`. Replace with a long random string. |
 | Master DJ password | `cc_pref` row `live_stream_master_password` (set via Settings → Streams in the frontend) | Authenticates the master-source DJ at `/main`. |
 
@@ -506,17 +506,26 @@ powershell -ExecutionPolicy Bypass `
 
 # 9d — Playout engine environment variables
 # install-playout.ps1 does NOT set the engine selection.  `nssm set`
-# REPLACES the whole environment block, so repeat the five variables the
-# script sets and append the three engine extras:
+# REPLACES the whole environment block, so repeat the six variables the
+# script sets and append the engine extras.  PYTHONUTF8=1 is set by every
+# install script since 2026-11-01 (German PostgreSQL messages and file
+# names outside the code page otherwise break logging).  The three
+# RASTATIME_LIQUIDSOAP_RESTART_* / MEMORY_WARN values are the planned
+# restart of a 24/7 programme (ARCHITECTURE §23.27 and §23.48) -
+# optional, the values below are the studio machine's:
 nssm set RASTATIME-PLAYOUT AppEnvironmentExtra `
     "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
     "RASTATIME_CONFIG_FILEPATH=C:\rastatime\config\rastatime.conf" `
     "RASTATIME_API_URL=http://127.0.0.1:8765" `
     "PYTHONPATH=C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime" `
     "PATH=C:\ffmpeg\bin;%PATH%" `
+    "PYTHONUTF8=1" `
     "RASTATIME_MPV_LOG_LEVEL=warn" `
     "RASTATIME_PLAYOUT_ENGINE=liquidsoap" `
-    "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS=1.0"
+    "RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS=1.0" `
+    "RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS=7" `
+    "RASTATIME_LIQUIDSOAP_RESTART_AT_MB=2560" `
+    "RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB=2816"
 nssm start RASTATIME-PLAYOUT
 
 # 9e — Analyzer (mandatory — uploads stay at "Pending Import" without it)
@@ -697,7 +706,9 @@ After completing §4, verify each item:
 - [ ] `Get-Service RabbitMQ` shows `Running`
 - [ ] `http://127.0.0.1:8765/health` returns HTTP 200
 - [ ] `http://127.0.0.1:8765/api/v2/schema/swagger-ui` loads the API docs
-- [ ] The web UI loads at `http://<host>/` (Apache) and login works
+- [ ] The web UI loads at `http://<host>/` (Apache) and login works — a fresh
+      database has one account, **`admin` / `admin`** (seeded by the legacy
+      migration); change the password under Settings → Users before anything else
 - [ ] A test upload leaves "Pending Import" and becomes "Ready" (analyzer round-trip)
 - [ ] Podcasts → open an imported podcast: the episode list fills (needs the PHP CA bundle, INSTALL_APACHE.md §3.1)
 - [ ] `C:\rastatime\logs\` contains `api-stdout.log` (non-empty after first request)

@@ -247,7 +247,8 @@ Write-Step "Configuring environment variables..."
     "RASTATIME_API_HOST=$ApiHost" `
     "RASTATIME_API_PORT=$ApiPort" `
     "RASTATIME_API_THREADS=$ApiThreads" `
-    "PYTHONPATH=$pythonPath"
+    "PYTHONPATH=$pythonPath" `
+    "PYTHONUTF8=1"
 Write-OK "Environment variables set."
 
 # ---------------------------------------------------------------------------

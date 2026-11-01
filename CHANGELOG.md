@@ -212,6 +212,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **GitHub Phase 5 vorbereitet: Install-Probe auf frischer Windows-VM** (2026-11-01).  Neues Protokoll
+  `docs/operator/INSTALL_PROBE.md` (Regeln, Download-Liste mit den Versionen der Studio-Maschine, Zeile je
+  INSTALL-Abschnitt mit Ergebnis/Minuten/Abweichung, Abnahme aus TEST_PLAN, Fazit für v1.0.0).  Vorab gegen die
+  Live-Maschine geprüft und nachgezogen: die vier NSSM-Installer setzen jetzt `PYTHONUTF8=1` (lag live nur von
+  Hand an), INSTALL 9d nennt die Variable und die drei Werte des geplanten Neustarts, der Erst-Login
+  `admin`/`admin` mit Passwortwechsel steht in der Checkliste, der seit 2026-10-25 tote Schlüssel
+  `stream.internal_listener` ist aus der Geheimnis-Tabelle und dem HTTPS-Runbook raus, das Konfig-Beispiel hat
+  einen kommentierten `playout:`-Block.  Bekannte Lücke: `bootstrap.ps1` prüft noch VLC statt ffmpeg/Liquidsoap/
+  Icecast (BACKLOG 💡).
 - **GitHub Phase 2b: Install-Doku auf den Live-Stand, SECURITY.md, Issue-Vorlagen** (2026-11-01, Operator-Go).
   INSTALL.md nennt Liquidsoap 2.4.6 und Icecast 2.5.0 (DJ-Prüfung läuft über den Harbor, nicht über
   Icecast-URL-Auth), bekommt Composer 2 als Voraussetzung, Schritt 4b `composer install --no-dev`,

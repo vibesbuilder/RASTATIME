@@ -265,7 +265,8 @@ Write-Step "Configuring environment variables..."
 & $nssm set $ServiceName AppEnvironmentExtra `
     "DJANGO_SETTINGS_MODULE=rastatime_api.settings.prod" `
     "RASTATIME_CONFIG_FILEPATH=$cfgFile" `
-    "PYTHONPATH=$pythonPath"
+    "PYTHONPATH=$pythonPath" `
+    "PYTHONUTF8=1"
 Write-OK "Environment variables set."
 
 Write-Host ""

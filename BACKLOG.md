@@ -6456,8 +6456,15 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   generate.sh umgedreht.  Windows-Runner-Fund: zoneinfo ohne IANA-Datenbank → `tzdata` als Windows-Abhängigkeit
   von `rastatime_shared` (`a319f9ff`).  **Lauf #8 grün:** ruff, shared/api-client/playout auf Windows 3.11 + 3.13,
   php grün; Analyzer rot-nicht-blockierend (47 bekannte Fehler).  Suiten lokal: api 195, playout 845, unit 738,
-  shared 36.  **Nächste Phasen:** 5 Install-Probe auf frischer Windows-VM (Operator), 6 Release v1.0.0; vorher die
-  Analyzer-Suite (🟡 unten).
+  shared 36.
+- 🟢 **Phase 5 vorbereitet 2026-11-01, Probe durch den Operator offen:** Protokoll `docs/operator/INSTALL_PROBE.md`
+  (Download-Liste, Zeile je INSTALL-Abschnitt, Abnahme A1.1/A1.3/A1.5 + Upload-Rundlauf + Reboot).  Vorab-Prüfung
+  INSTALL gegen Live: NSSM-Installer ohne `PYTHONUTF8` (behoben), 9d ohne Neustart-Variablen (ergänzt), Erst-Login
+  fehlte (ergänzt), `stream.internal_listener` tot seit 2026-10-25 (raus), `playout:`-Block im Beispiel.  Die Probe
+  selbst macht der Operator auf der VM und füllt das Protokoll; Abweichungen = Doku-Fix oder BACKLOG.
+- 💡 **`bootstrap.ps1` modernisieren** (Befund 2026-11-01): der Bootstrap-Checker (INSTALL Schritt 2) prüft Python,
+  PostgreSQL, RabbitMQ und VLC; VLC ist seit 2026-09-10 bedeutungslos, dafür fehlen ffmpeg (`C:\ffmpeg\bin`),
+  Liquidsoap, Icecast, Apache/PHP/Composer unter `C:\Tools`.  Klein, vor oder nach der Probe.
 - ✅ **Analyzer-Testsuite angepasst 2026-11-01** (`686ad377`, Operator-Go): von 47 roten Tests waren 42 ein echter
   Produktionsfehler - der silencedetect-Parser kannte das ffmpeg-Präfix `Parsed_silencedetect_N` nicht, Cue-Punkte
   blieben seit Mai bei 0/Länge (siehe 🟡 unten).  Die übrigen fünf: tagless-Ordner (gewollt seit 2026-10-24),

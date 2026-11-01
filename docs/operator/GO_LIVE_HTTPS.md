@@ -26,7 +26,7 @@ or a system setting is done by the operator; the verification afterwards is read
 | Icecast source / relay / admin | `config/icecast.xml` + Settings → Streams outputs 1–3 (`pass`, `admin_pass`) + rendered `rastatime.liq` / `standby.liq` + Line-In capture | **5-character defaults** | rotate (0.4) |
 | Harbor fallback passwords | `rastatime.conf` `stream.harbor.main_password` / `show_password` (only used while PLAYOUT is unreachable) | **8-character default** | rotate (0.4) |
 | `general.api_key`, `general.secret_key` | `rastatime.conf` | custom (42 / 62 chars) | keep |
-| `stream.internal_listener` | `rastatime.conf` | custom | keep |
+| `stream.internal_listener` | `rastatime.conf` | obsolete since 2026-10-25 (nothing reads it) | remove from the file |
 | Master Source password (Settings → Streams) | `cc_pref live_stream_master_password` | custom | keep (username is short — fine) |
 
 Code change that belongs to this stage (`backend/playout`): the Line-In

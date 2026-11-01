@@ -49,3 +49,10 @@ rabbitmq:
 #   harbor:
 #     main_password: change-me
 #     show_password: change-me
+
+# RASTATIME 2026-11-01 - where PLAYOUT reaches Liquidsoap's telnet server.
+# The defaults match the rendered rastatime.liq; only change them together
+# with the script (ARCHITECTURE §23.27).
+# playout:
+#   liquidsoap_host: localhost
+#   liquidsoap_port: 1234
