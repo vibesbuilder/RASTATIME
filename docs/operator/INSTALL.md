@@ -311,8 +311,9 @@ where.exe python
 ### Step 4 — Install Python dependencies
 
 ```powershell
-# With the venv active:
-pip install --upgrade pip
+# With the venv active (pip cannot replace its own pip.exe on Windows,
+# hence python -m):
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 # psycopg2 is not declared by any backend package but is required by the
