@@ -6442,8 +6442,23 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   Composer-Voraussetzung + Schritt 4b + Fehlerbild 5.8 + Update-Schritt 3b; README Schritt 3b + Security-Abschnitt;
   Platzhalter-URLs → `vibesbuilder/RASTATIME` (README-Badges, INSTALL, CRASH_RECOVERY, CHANGELOG-Link, constants.php);
   `icecast.xml.example` mit `<charset>UTF-8</charset>`; `SECURITY.md`; `.github/ISSUE_TEMPLATE` (bug/feature/config).
-  COMPONENTS.md war bereits aktuell.  **Nächste Phase 4:** Operator legt das private Repo an, Push ohne `live-*`-Tags,
-  CI grün.
+  COMPONENTS.md war bereits aktuell.
+- 🟢 **Phase 4 in Arbeit (2026-11-01):** privates Repo `vibesbuilder/RASTATIME` vom Operator angelegt (Name RASTATIME,
+  „Studio“ verworfen); Remote `origin`, erster Push `master` ohne `live-*`-Tags (Operator, Credential Manager),
+  Remote = lokal, README/Commits geprüft.  Actions musste der Operator erst aktivieren.  CI-Befunde und Fixes:
+  Workflows horchten auf `main` → `master`; Geschwisterpakete vor dem Testpaket installieren; ffmpeg auf dem Runner;
+  zwei Prozesstabellen-Tests setzen die Plattform selbst; Fixture-Generator `tests/fixtures/generate.sh` aus der
+  Historie zurückgeholt (war als „totes Linux-Skript“ gelöscht, Makefile zeigte noch darauf).  **Operator-Entscheidung:**
+  Test-Matrix auf `windows-latest` (Produktplattform, Python 3.11 + 3.13), Lint und PHP bleiben auf Ubuntu;
+  Analyzer-Job vorübergehend `continue-on-error` (siehe 🟡 unten).  php grün; python: shared, api-client, playout
+  grün auf Ubuntu, Windows-Lauf offen; **ruff rot (833 Verstöße, 575 auto-fix)** → Sweep nach lokaler
+  ruff-Installation durch den Operator.
+- 🟡 **Analyzer-Testsuite an die RASTATIME-Pipeline anpassen** (Befund 2026-11-01): lokal mit erzeugten Fixtures
+  47 von 352 Tests rot (Cue-Punkte, `compute_silences`, zwei Metadaten-Fälle, drei Windows-Rechte-Tests in
+  `organise_file_test.py`).  Die Erwartungswerte stammen aus LibreTime, die Pipeline misst seit den Cue-Punkt- und
+  Format-Änderungen anders; die Suite lief in RASTATIME nie mit (nicht in `run_tests.ps1`).  Aufgabe: je Fall
+  gewollte Änderung vs. Regression klären, Erwartungen nachziehen, Suite in `run_tests.ps1` aufnehmen, dann
+  `continue-on-error` im Workflow entfernen.  Vor Phase 5.
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche

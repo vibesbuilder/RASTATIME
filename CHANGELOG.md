@@ -379,6 +379,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Table layout" EN/DE/FR/ES, Architektur §23.42 Addendum (0.87).  Commit cc60fc7.
 
 ### Changed
+- **GitHub Phase 4: Repo, erster Push, CI auf Windows** (2026-11-01, Operator).  Privates Repo
+  `vibesbuilder/RASTATIME`, Push von `master` ohne `live-*`-Tags.  CI-Nachzieher: Workflows auf `master`,
+  Geschwisterpakete vor dem Testpaket, ffmpeg + Fixture-Generator (`tests/fixtures/generate.sh` aus der Historie
+  zurückgeholt), Prozesstabellen-Tests plattformunabhängig; Test-Matrix auf `windows-latest` mit Python 3.11/3.13
+  (Produktplattform), Analyzer-Job bis zur Suite-Anpassung nicht blockierend (BACKLOG 🟡).  php grün; python:
+  shared, api-client, playout grün (Ubuntu-Lauf), ruff offen.
 - **GitHub Phase 3: Historie bereinigt** (2026-11-01, Operator-Go).  `git filter-repo` im Spiegel-Klon:
   Audiodateien unter `scheduler/` (133 MP3, 1 WAV, 1 FLAC, 1.006 MB) und die vier Versionen von
   `config/icecast.xml` aus allen Commits entfernt, Autor/Committer per Mailmap auf den Betreiber vereinheitlicht,
