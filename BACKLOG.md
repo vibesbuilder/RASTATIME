@@ -471,7 +471,7 @@ playout 845, unit 739, shared 36); Login 200 (PHP sofort live).  **Offen (Operat
 Python-Dienste; ANALYZER dabei stoppen → `pip install -e backend/analyzer` → starten (die EXE war im
 Lauf gesperrt, ein Pfad-Eintrag hält das Paket bis dahin importierbar); zugleich `PYTHONUTF8=1` für
 PLAYOUT/ANALYZER/WORKER (Nebenbefund: PLAYOUT-stderr cp1252, 103 Logging-Fehler bei Sonderzeichen-Pfaden).
-Rückfall: `git revert` + Neustart.  Tag `live-2026-11-01`.
+Rückfall: `git revert 73be94d8` + Neustart.  Tag `live-2026-11-01` davor.
 
 **Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
 GitHub, Releases, Update-Weg", Stufe 0) und erst dort angegangen; bis dahin Defer, nicht erneut vorschlagen.

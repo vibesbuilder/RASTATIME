@@ -1269,7 +1269,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `find_packages`-Ausschluss in drei setup.py, `.gitignore`-Zeile `config/libretime.conf`, Brücken-Tests
   (shared 45 → 36).  Harter Schnitt: alte Importnamen scheitern, alte Variablen werden nicht gelesen
   (`docs/operator/UPGRADE.md`).  Suiten grün (api 195, playout 845, unit 739, shared 36).  Wirksam für die
-  Dienste nach dem Neustart durch den Operator.  Commit folgt.
+  Dienste nach dem Neustart durch den Operator.  Commit `73be94d8`.
 - **Totes Upstream-Playout entfernt: `main.py`, `message_handler.py`
   (2026-10-22, Operator-Go 22.10.)** — Der pypo-Einstieg `main.py` (Console-
   Script `libretime-playout`) und sein RabbitMQ-Consumer `message_handler.py`
