@@ -22,6 +22,80 @@
 - Checkpoint the VM before Step 9 (services) so a failed service round
   can be retried without reinstalling the prerequisites.
 
+## 0b. How to run it on a VirtualBox VM with coding assistant (2026-11-01)
+
+The operator does the parts that need a human hand (installers, GitHub
+login, browser); a coding assistant session **inside the VM** does the
+command-line parts of INSTALL §4-§6 and fills the protocol.  The split
+keeps the rehearsal honest: assistant knows the code and would paper over a
+documentation gap without noticing, so its brief is to follow INSTALL.md
+literally and to stop and report instead of improvising.
+
+**A. The VM (operator, ~30 min + Windows setup).**  VirtualBox 7.x on a
+machine that is not the studio computer.  New VM: Windows 11, 4 CPUs,
+8 GB RAM, 80 GB disk, EFI + Secure Boot + TPM 2.0 enabled, audio controller
+on (Intel HD Audio, output to the host), network **NAT** (internet for
+downloads and the clone; everything is tested from inside the VM, so no
+Host-Only or Bridged adapter).  Install Windows 11 with a local account,
+run Windows Update once, install the Guest Additions (clipboard, shared
+folder), snapshot `01-clean`.
+
+**B. Git, clone, prerequisites (operator, ~1.5 h).**  Install Git for
+Windows (default options), then in PowerShell:
+
+```powershell
+git clone https://github.com/vibesbuilder/RASTATIME.git C:\rastatime
+```
+
+The repository is private: Git Credential Manager opens a browser login
+once.  Then work through INSTALL.md §2.0-§2.8 and INSTALL_APACHE.md by
+hand - every installer and download is yours (the table in §2 below lists
+versions and sources).  Finish with the checker:
+
+```powershell
+cd C:\rastatime
+powershell -ExecutionPolicy Bypass -File infra\scripts\dev\bootstrap.ps1
+```
+
+All ten required lines `[PASS]`, exit 0.  Snapshot `02-prereqs`.  Note the
+minutes of every §2 section in the protocol table (§3 below).
+
+**C. coding assistant in the VM (operator, ~10 min).**  Install the coding assistant
+for Windows following the current setup page
+((the assistant's setup guide) Git for Windows from
+step B is a prerequisite), start it in `C:\rastatime` and sign in with
+your own account.  The VM session has no memory of the studio machine: the
+repository is its only context.
+
+**D. The brief for the VM session (copy as the first message).**
+
+> Run the installation rehearsal described in docs/operator/INSTALL_PROBE.md.
+> The prerequisites of INSTALL.md §2 are installed and bootstrap.ps1 is
+> green.  Do INSTALL.md §4 Step 1 (already cloned) to Step 10 and the §6
+> checklist **exactly as written**.  Rules: do not improvise and do not
+> repair anything silently - when a step is unclear, fails or does not
+> match the machine, stop, write the row into the protocol table of
+> INSTALL_PROBE.md (result `doc` or `bug`, what happened) and ask me before
+> you continue.  Time every step.  Downloads and installers are mine, ask
+> me.  Secrets: generate throw-away values with the command in Step 5,
+> never show them in the chat.  Work on a branch `probe/vm-2026-11`,
+> commit the protocol and every documentation fix there, push when I say
+> so.
+
+**E. Browser acceptance (operator, in the VM's browser, ~20 min).**  After
+Step 10: `http://localhost/` - login `admin` / `admin`, change the password
+(Settings → Users); upload a short MP3 (Library → Upload) and watch it
+leave "Pending Import", then open its track editor: cue in / cue out must
+not be 0 / full length; create a show for the next quarter hour with that
+file (Calendar), then `http://localhost:8000/` shows the mount with the
+title while it plays; finally `Restart-Computer` and `status.ps1` after
+the boot.  Tell the VM session the results, it writes §4 of the protocol.
+
+**F. Hand-back (operator + studio session).**  The VM session pushes
+`probe/vm-2026-11`; the studio session reviews the protocol and the fixes,
+merges them into `master` and files product bugs in BACKLOG.md.  Keep the
+VM (snapshot `03-installed`) until phase 6 - the release test runs on it.
+
 ## 1. The machine
 
 | Item | Value |
