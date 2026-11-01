@@ -378,7 +378,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   2026-05-21), 37 Tags umgeschrieben, Pack 52 MB statt 1,07 GiB.  Live-Checkout umgehängt (Arbeitsbaum
   unberührt, Dienste weiter 200).  **Alle vor diesem Datum in CHANGELOG/BACKLOG/Doku zitierten Commit-Hashes
   sind alte Hashes**: Zuordnung in `docs/dev/history/commit-map-2026-11-01.txt`.  Rückfall-Tag
-  `pre-rewrite-2026-11-01` bis zum `gc`.
+  `pre-rewrite-2026-11-01` bis zum `gc` (ausgeführt 2026-11-01, Operator-Ja; `.git` 23 MB statt 1,1 GB).
 - **Marke Stufe B: Brücke protokolliert jede Nutzung, Live-Umschaltung, Phase 2 vorgezogen** (2026-10-29,
   nachmittags).  Die vier Python-Dienste laufen seit 14:16 unter den neuen Namen
   (`-m rastatime_*`, `rastatime-analyzer.exe`, `RASTATIME_CONFIG_FILEPATH`), `libretime.conf` ist gelöscht.
