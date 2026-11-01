@@ -100,12 +100,12 @@ VM (snapshot `03-installed`) until phase 6 - the release test runs on it.
 
 | Item | Value |
 |---|---|
-| Windows 11 edition / build | |
-| CPU / RAM / disk | |
-| Network: internet during install (downloads) | yes / no |
-| Audio device present (playout output test) | |
-| Date of the rehearsal | |
-| Commit / tag installed (`git rev-parse --short HEAD`) | |
+| Windows 11 edition / build | Windows 11 Pro N, 26200.6584 (VirtualBox VM) |
+| CPU / RAM / disk | i3-1315U, 4 vCPU / **4 GB** (§0b A asks for 8) / 80 GB, 44 GB free after §2 |
+| Network: internet during install (downloads) | yes |
+| Audio device present (playout output test) | yes (High Definition Audio) |
+| Date of the rehearsal | 2026-11-01 |
+| Commit / tag installed (`git rev-parse --short HEAD`) | `ee7ccbb9` (master) |
 
 ## 2. Prerequisites, tool by tool (versions as on the studio machine, 2026-11-01)
 
@@ -226,7 +226,7 @@ had to be corrected) / `bug` (product problem) / `skip` (with reason).
 | 2.3 | Liquidsoap 2.4.6 | | | |
 | 2.4 | RabbitMQ + Erlang | | | |
 | 2.5 | NSSM | | | |
-| 2.6 | Apache + PHP + Composer (INSTALL_APACHE) | | | |
+| 2.6 | Apache + PHP + Composer (INSTALL_APACHE) | doc | op: ? / session: T8 edit 7, T9 edit 1 | Operator extracted Apache 2.4.69 VS18, mod_fcgid, PHP 8.5.12, Composer and fetched `cacert.pem` (curl.se, 2026-10-20); the session made the `httpd.conf` / `php.ini` edits by the letter of INSTALL_APACHE §2-§3.2. (1) `httpd -t` failed: `AH00526: Syntax error on line 542 ... FcgidMaxRequestLen takes one argument` - the §2 fcgid block put `# 512 MiB = ...` after the value; Apache has no end-of-line comments. Fixed in httpd.conf and §2 (comment on its own line), `Syntax OK`. (2) The stock Apache Lounge file sets `Define SRVROOT "C:/Apache24"` + `ServerRoot "${SRVROOT}"`; §2 named only `ServerRoot`, leaving the cgi-bin alias (and `${SRVROOT}/logs` in `infra\apache\rastatime-https.conf`) on `C:/Apache24`. Fixed: §2 now changes `SRVROOT`. (3) `DirectoryIndex` stays `index.html`, `public\` has only `index.php` - check at Step 9f whether `/` shows the login page. (4) §3.1 check fails: `Unable to find the wrapper "https"`, `bool(false)`. §3 enables no extension: `php.ini-production` has every `extension=` commented out and `extension_dir` resolves to `C:\php\ext`; `curl.cainfo` / `openssl.cafile` stay unregistered (`ini_get` false). Composer.lock hard-requires `ext-mbstring` and `ext-sockets` (php-amqplib); the code uses PDO pgsql, curl, gettext, fileinfo. `RASTATIME-APACHE` restart in §3.1 not applicable yet (service comes in Step 9f). Stopped here, asked the operator. |
 | 2.7 | Icecast 2.5.0 | | | |
 | 2.8 | FFmpeg | | | |
 | 4 / 1 | Clone or release archive | | | |

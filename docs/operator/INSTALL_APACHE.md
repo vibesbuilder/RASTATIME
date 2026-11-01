@@ -51,10 +51,17 @@ Edit `C:\Tools\Apache24\conf\httpd.conf`. Key sections:
 ### Root directives
 
 ```apache
-ServerRoot "C:/Tools/Apache24"
+Define SRVROOT "C:/Tools/Apache24"
+ServerRoot "${SRVROOT}"
 Listen 80
 ServerName localhost:80
 ```
+
+The Apache Lounge `httpd.conf` sets the root through `Define SRVROOT`
+(stock value `C:/Apache24`): change that line and leave `ServerRoot
+"${SRVROOT}"` as it is - the cgi-bin alias and
+`infra\apache\rastatime-https.conf` use `${SRVROOT}` too.  `ServerName`
+is commented out in the stock file; add the line.
 
 ### Required modules
 
@@ -106,7 +113,9 @@ LoadModule fcgid_module modules/mod_fcgid.so
     FcgidInitialEnv PHPRC "C:/Tools/PHP"
     FcgidWrapper "C:/Tools/PHP/php-cgi.exe" .php
     AddHandler fcgid-script .php
-    FcgidMaxRequestLen 536870912  # 512 MiB = PHP post_max_size; the UI shows that limit
+    # 512 MiB = PHP post_max_size; the UI shows that limit.  Apache has no
+    # end-of-line comments: keep this comment on its own line.
+    FcgidMaxRequestLen 536870912
     FcgidConnectTimeout 20
     FcgidIOTimeout 120
     # RASTATIME: keep the fcgid pool small and short-lived so PHP
