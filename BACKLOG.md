@@ -4251,9 +4251,10 @@ ein vom `source.dynamic`-Arm getrennter `input.http` schläft und verarbeitet `s
 Stream läuft weiter); `start()`+`stop()` darauf verbindet nur neu; ein Re-Armieren des Zombies löst eine ffmpeg-
 Assertion aus.  **Fix:** `linein_http_stop()` hält den Eingang armiert bis `stopped` (0,5-s-Prüfung, 5 s Deckel,
 Gate `linein_live` hält ihn stumm), Start während des Abbaus wird als `linein_http_next` vorgemerkt; Line-In-Reaper
-aus dem Wächter entfernt.  §23.68 Nachtrag (0.106), Test angepasst, `liquidsoap --check` grün.  **Offen (Operator):**
-PLAYOUT-Neustart (rendert neu, Liquidsoap folgt planmäßig an der Titelgrenze); Abnahme = nächster Line-In-Slot ohne
-`reaping`-Zeilen und ohne 404 nach dem Slot-Ende.
+aus dem Wächter entfernt.  §23.68 Nachtrag (0.106), Test angepasst, `liquidsoap --check` grün.  **LIVE 2026-11-01
+12:57:24:** PLAYOUT-Neustart durch den Operator, Render mit Drain-Block, planmäßiger Liquidsoap-Neustart an der
+Titelgrenze 12:57:20-24 (Standby-Metadaten „back on air soon“ 4 s), Mounts wieder auf dem Hauptprogramm, keine
+Line-In-Zeile, kein 404.  **Abnahme offen:** nächster Line-In-Slot ohne `reaping`-Zeilen und ohne 404 nach dem Ende.
 
 ### 🟡 Webstream-Reaper: dasselbe Zombie-Muster wie beim Line-In (notiert 2026-11-01)
 

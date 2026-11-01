@@ -819,8 +819,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schlafender `input.http` verarbeitet seinen Stop nie; `linein_http_stop()` trennte aber sofort.  Jetzt bleibt
   der Eingang bis `stopped` armiert (Prüfung alle 0,5 s, max. 5 s; Gate hält ihn stumm), ein währenddessen
   eintreffender Start wird vorgemerkt und danach armiert; der Line-In-Reaper entfällt.  §23.68 Nachtrag, Tests
-  angepasst, Vorlage per `liquidsoap --check` geprüft.  Wirksam nach PLAYOUT-Neustart (rendert neu, Liquidsoap
-  folgt planmäßig an der nächsten Titelgrenze).  Webstream-Reaper hat dasselbe Muster, bisher ohne Schleife
+  angepasst, Vorlage per `liquidsoap --check` geprüft.  LIVE seit 2026-11-01 12:57:24: PLAYOUT-Neustart renderte
+  neu, Liquidsoap folgte planmäßig an der Titelgrenze (Standby überbrückte 4 s); Abnahme am nächsten Line-In-Slot
+  offen.  Webstream-Reaper hat dasselbe Muster, bisher ohne Schleife
   (BACKLOG).  Commit `77fa3a09`.
 - **Backup- und Janitor-Aufgabe liefen seit der Zeitumstellung um 02:30 / 02:50** (2026-11-01, Befund beim
   Phase-2-Log-Check).  `New-ScheduledTaskTrigger` speichert die Startzeit mit UTC-Offset, der Task Scheduler
