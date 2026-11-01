@@ -133,18 +133,23 @@ every uploaded media file.  Without RabbitMQ, uploads stay at
    `%APPDATA%\RabbitMQ` of the account that ran the installer, or
    `C:\ProgramData\RabbitMQ` after the quirk fix below:
    ```ini
-   # RASTATIME: AMQP only on loopback (TEST_PLAN A1.5)
-   listeners.tcp.default = 127.0.0.1:5672
+   # RASTATIME: AMQP only on loopback (TEST_PLAN A1.5), IPv4 and IPv6 -
+   # clients connect to "localhost", which resolves to ::1 first.
+   listeners.tcp.1 = 127.0.0.1:5672
+   listeners.tcp.2 = ::1:5672
    ```
    then `Restart-Service RabbitMQ` (elevated; a restart reads the new file,
-   no service re-registration needed)
+   no service re-registration needed).  Keep both lines: with 127.0.0.1
+   alone every client of `rabbitmq.host: localhost` (analyzer, frontend)
+   first fails on `::1` - three ERROR lines and 2 s per connect in
+   `analyzer-stderr.log` - before it falls back to IPv4
 6. Verify:
    ```powershell
    Get-Service RabbitMQ
    # Expected: Running
    rabbitmqctl status
    # Expected: exit 0, "Status of node rabbit@<host> ...", rabbitmq.conf
-   # under "Config files", "Interface: 127.0.0.1, port: 5672"
+   # under "Config files", listeners on 127.0.0.1 and ::1, port 5672
    ```
 
 > Steps 3-5 found 2026-11-01/02 in the fresh-machine rehearsal
