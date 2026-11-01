@@ -6458,12 +6458,18 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   php grün; Analyzer rot-nicht-blockierend (47 bekannte Fehler).  Suiten lokal: api 195, playout 845, unit 738,
   shared 36.  **Nächste Phasen:** 5 Install-Probe auf frischer Windows-VM (Operator), 6 Release v1.0.0; vorher die
   Analyzer-Suite (🟡 unten).
-- 🟡 **Analyzer-Testsuite an die RASTATIME-Pipeline anpassen** (Befund 2026-11-01): lokal mit erzeugten Fixtures
-  47 von 352 Tests rot (Cue-Punkte, `compute_silences`, zwei Metadaten-Fälle, drei Windows-Rechte-Tests in
-  `organise_file_test.py`).  Die Erwartungswerte stammen aus LibreTime, die Pipeline misst seit den Cue-Punkt- und
-  Format-Änderungen anders; die Suite lief in RASTATIME nie mit (nicht in `run_tests.ps1`).  Aufgabe: je Fall
-  gewollte Änderung vs. Regression klären, Erwartungen nachziehen, Suite in `run_tests.ps1` aufnehmen, dann
-  `continue-on-error` im Workflow entfernen.  Vor Phase 5.
+- ✅ **Analyzer-Testsuite angepasst 2026-11-01** (`686ad377`, Operator-Go): von 47 roten Tests waren 42 ein echter
+  Produktionsfehler - der silencedetect-Parser kannte das ffmpeg-Präfix `Parsed_silencedetect_N` nicht, Cue-Punkte
+  blieben seit Mai bei 0/Länge (siehe 🟡 unten).  Die übrigen fünf: tagless-Ordner (gewollt seit 2026-10-24),
+  Mono-m4a mit aktuellem Encoder mono, Rechte-Test ohne `/sys`.  Suite in `run_tests.ps1` (`analyzer`, `shared`,
+  Teil von `all`), Regressionstest `silencedetect_parse_test.py`, `continue-on-error` im Workflow entfernt.
+- 🟡 **Cue-Punkte der Bestandsbibliothek nachmessen** (Befund 2026-11-01): 24.857 von 24.999 Dateien tragen Cue-In 0
+  und Cue-Out = Länge, weil der Analyzer seit Mai nie Stillen erkannte (Parser-Fehler, behoben `686ad377`; der
+  Library-Knopf „Cue Points“ misst unabhängig per Legacy und wurde darum für Einzelfälle gebaut).  Vor einem
+  Massenlauf evaluieren: Dauer (ffmpeg je Datei ~1 s → Stunden, als Hintergrundlauf in ruhigen Stunden),
+  Auswirkung auf Show-Grenzen-Crossfade (Cue-Out früher = frühere Blende) und auf Autoloading-Füllung
+  (geplante Dauer je Zeile sinkt; „Cue-Änderungen laufen in künftige Zeilen“), Jingles mit ~1 s Stille am Ende
+  werden kürzer; Reihenfolge (zuerst Jingles/Teaser?) und Rückfall (Werte sichern).  Nur mit Operator-Go.
 
 **Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
 einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche

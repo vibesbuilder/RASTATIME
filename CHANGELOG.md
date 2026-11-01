@@ -820,6 +820,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Analyzer: Cue-Punkte wurden seit Mai nie berechnet** (2026-11-01, Befund beim Anpassen der Analyzer-Testsuite,
+  Commit `686ad377`).  Neuere ffmpeg-Builds melden den Filter als `[Parsed_silencedetect_N @ ...]`, der
+  LibreTime-Parser erwartete `[silencedetect @ ...]`; `compute_silences()` lieferte darum eine leere Liste,
+  ohne Fehler, und jeder Import bekam Cue-In 0 und Cue-Out gleich Länge.  Bestand auf der Studio-Maschine:
+  24.857 von 24.999 Dateien (Mai 168/309, Oktober 24.665/24.666).  Beide Schreibweisen werden jetzt erkannt
+  (Regressionstest).  Wirksam für neue Importe nach dem ANALYZER-Neustart; Nachmessen des Bestands ist eine
+  eigene Entscheidung (BACKLOG 🟡, Auswirkung auf Übergänge und Füllung).
+- **Analyzer-Testsuite an die RASTATIME-Pipeline angepasst** (2026-11-01, Operator-Go): tagless-Ordner seit
+  2026-10-24, Mono-m4a-Fixtures sind mit dem aktuellen Encoder mono, Rechte-Test ohne Linux-Pfad `/sys`.
+  358 bestanden; `run_tests.ps1` kennt jetzt `analyzer` und `shared` (Teil von `all`), der CI-Job blockiert wieder.
 - **Line-In: verworfener input.http blieb als Zombie verbunden, Wächter schleifte alle 2 s mit start+stop**
   (2026-11-01, Befund beim Icecast-Rückblick, Operator-Go).  Seit dem 2026-10-29 fragte jeder abgelaufene
   Line-In-Eingang den Mount `/linein-capture` im 2-s-Takt neu an (69.000 Log-Zeilen am 30.10.); nach dem

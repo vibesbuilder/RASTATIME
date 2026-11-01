@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.106
+Draft version: 0.107
 Date: 2026-11-01
 
 > **Revision history**
+> - **0.107 (2026-11-01)** - **Cue points were never measured by the
+>   analyzer** (addendum to the cue-point section): ffmpeg's
+>   `Parsed_silencedetect` prefix; parser fixed, analyzer suite green.
 > - **0.106 (2026-11-01)** - **Line-in input drains before it is
 >   detached** (§23.68 addendum): the start+stop reaper looped every
 >   2 s on a sleeping zombie input; stop now completes while armed.
@@ -6259,6 +6262,20 @@ by `relayoutInstances()`.  A longer relay can push rows past the show
 end; the layout does not cut them (the API clips `ends_at` / `cue_out`
 for the playout as before), the tool `ws_length_apply.php` reports such
 rows before anything is saved.
+
+**Addendum 2026-11-01 - the analyzer never measured cue points on this
+machine.**  The ffmpeg build logs the silence filter as
+`[Parsed_silencedetect_N @ ...]`; the upstream regex in
+`pipeline/_ffmpeg.py` matched `[silencedetect @ ...]` only, so
+`compute_silences()` returned an empty list without an error and every
+import kept `cue_in = 0`, `cue_out = length` (24,857 of 24,999 library
+files, from the first imports in May on).  The Library button above
+measures through the legacy PHP path and was therefore the only working
+route.  The pattern accepts both prefixes since `686ad377` (regression
+test `silencedetect_parse_test.py`); the analyzer suite, now part of
+`run_tests.ps1` and of the CI matrix, would have caught it.  Re-measuring
+the existing library is an open evaluation (BACKLOG): shorter cue-outs
+move show-boundary fades and the autoloading budget.
 
 ### 23.46 In-App User Manual and the RASTATIME-only Help Menu (2026-10-01)
 
