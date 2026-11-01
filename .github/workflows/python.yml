@@ -71,10 +71,6 @@ jobs:
     # RASTATIME is Windows-only: the tests run on the product platform
     # (2026-11-01).  3.11 is the documented minimum, 3.13 runs in production.
     runs-on: windows-latest
-    # The analyzer suite still carries LibreTime's expectations for cue
-    # points, silence detection and metadata (47 local failures, BACKLOG
-    # "Analyzer-Testsuite"); it reports but does not block until it is fixed.
-    continue-on-error: ${{ matrix.package == 'analyzer' }}
     strategy:
       fail-fast: false
       matrix:

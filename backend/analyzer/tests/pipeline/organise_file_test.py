@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from rastatime_analyzer.pipeline.organise_file import organise_file, safe_component
+from rastatime_analyzer.pipeline.organise_file import TAGLESS_DIR, organise_file, safe_component
 
 from ..conftest import AUDIO_FILENAME
 
@@ -16,14 +16,19 @@ def organise_file_args_factory(filepath: Path, dest_dir: Path):
     )
 
 
+# RASTATIME 2026-10-24: a file without an artist tag lands in <storage>/tagless/
 def test_organise_file(src_dir: Path, dest_dir: Path):
     organise_file(*organise_file_args_factory(src_dir / AUDIO_FILENAME, dest_dir))
-    assert (dest_dir / AUDIO_FILENAME).exists()
+    assert (dest_dir / TAGLESS_DIR / AUDIO_FILENAME).exists()
 
 
 def test_organise_file_samefile(src_dir: Path):
-    organise_file(*organise_file_args_factory(src_dir / AUDIO_FILENAME, src_dir))
-    assert (src_dir / AUDIO_FILENAME).exists()
+    metadata = organise_file(*organise_file_args_factory(src_dir / AUDIO_FILENAME, src_dir))
+    dest = Path(metadata["full_path"])
+    assert dest == src_dir / TAGLESS_DIR / AUDIO_FILENAME and dest.exists()
+    # organising the file from its storage place again is a no-op
+    again = organise_file(*organise_file_args_factory(dest, src_dir))
+    assert Path(again["full_path"]) == dest and dest.exists()
 
 
 def test_organise_file_duplicate_file(src_dir: Path, dest_dir: Path):
@@ -42,13 +47,17 @@ def test_organise_file_duplicate_file(src_dir: Path, dest_dir: Path):
             assert len(full_path.name) == len(AUDIO_FILENAME) + 1 + 36  # _ + UUID size
 
 
-def test_organise_file_bad_permissions_dest_dir(src_dir: Path):
+def test_organise_file_bad_permissions_dest_dir(src_dir: Path, tmp_path: Path):
+    # RASTATIME 2026-11-01: platform-neutral replacement for the Linux-only
+    # /sys target - a regular file where the storage directory should be
+    # makes every mkdir fail on Windows and Linux alike.
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory")
     with pytest.raises(OSError):
-        # /sys is using sysfs on Linux, which is unwritable
         organise_file(
             *organise_file_args_factory(
                 src_dir / AUDIO_FILENAME,
-                Path("/sys/foobar"),
+                blocker / "storage",
             )
         )
 

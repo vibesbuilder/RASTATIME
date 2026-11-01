@@ -268,8 +268,14 @@ def compute_loudness(filepath: Path) -> Optional[dict]:
     return result
 
 
+# RASTATIME 2026-11-01 - newer ffmpeg builds log the filter instance as
+# "[Parsed_silencedetect_1 @ 0x...]" (the index follows the position in the
+# filter chain; the highpass sits in front).  The upstream pattern matched
+# "[silencedetect @ ...]" only, so every import since the ffmpeg update got
+# cuein 0 and cueout = length without an error.  Both spellings are accepted.
 _SILENCE_DETECT_RE = re.compile(
-    r"\[silencedetect.*\] silence_(start|end): (-?\d+(?:\.\d+)?)(?: \| silence_duration: (\d+(?:\.\d+)?))?"
+    r"\[(?:Parsed_)?silencedetect[^\]]*\] silence_(start|end): (-?\d+(?:\.\d+)?)"
+    r"(?: \| silence_duration: (\d+(?:\.\d+)?))?"
 )
 
 

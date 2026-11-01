@@ -20,7 +20,9 @@
     Nothing is printed from the configuration file.
 
 .PARAMETER Suite
-    api | playout | unit | all (default all).
+    api | playout | unit | shared | analyzer | all (default all).
+    analyzer (2026-11-01) needs ffmpeg in C:\ffmpeg\bin and Git Bash for the
+    fixture generator; it is part of 'all'.
 
 .PARAMETER Path
     Optional test path or node id inside the suite, e.g.
@@ -35,7 +37,7 @@
     .\scripts\run_tests.ps1            # all three suites
 #>
 param(
-    [ValidateSet('api', 'playout', 'unit', 'all')]
+    [ValidateSet('api', 'playout', 'unit', 'analyzer', 'shared', 'all')]
     [string]$Suite = 'all',
     [string]$Path = '',
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -92,6 +94,25 @@ if ($Suite -in @('unit', 'all')) {
     # which must come from THIS checkout (a worktree), not from the editable
     # install that points at C:\RASTATIME.
     Invoke-Suite 'unit' '.' ((Join-Path $root 'backend\api') + $sep + (Join-Path $root 'backend\shared') + $sep + (Join-Path $root 'backend\playout') + $sep + $root) $target
+}
+if ($Suite -in @('shared', 'all')) {
+    $target = if ($Path) { $Path } else { 'tests' }
+    Invoke-Suite 'shared' 'backend\shared' '' $target
+}
+if ($Suite -in @('analyzer', 'all')) {
+    # RASTATIME 2026-11-01 - the analyzer pipeline shells out to ffmpeg/ffprobe
+    # and its tests need the git-ignored audio fixtures (derived once by the
+    # bash generator, Git Bash on this machine).
+    $ffmpegDir = 'C:\ffmpeg\bin'
+    if (Test-Path $ffmpegDir) { $env:PATH = $ffmpegDir + $sep + $env:PATH }
+    $bash = Join-Path ${env:ProgramFiles} 'Git\bin\bash.exe'
+    if (Test-Path $bash) {
+        & $bash (Join-Path $root 'backend\analyzer\tests\fixtures\generate.sh') | Out-Null
+    } else {
+        Write-Host 'bash.exe not found - analyzer fixtures not generated' -ForegroundColor Yellow
+    }
+    $target = if ($Path) { $Path } else { 'tests' }
+    Invoke-Suite 'analyzer' 'backend\analyzer' '' $target
 }
 
 Remove-Item -Recurse -Force $baseTemp -ErrorAction SilentlyContinue

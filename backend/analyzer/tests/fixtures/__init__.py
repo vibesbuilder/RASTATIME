@@ -162,7 +162,9 @@ FILES_TAGGED = [
             **meta,
             **mp3Tags,
             "bit_rate": approx(65000, abs=5e4),
-            "channels": 2,  # Weird
+            # RASTATIME 2026-11-01: upstream expected 2 ("Weird" - an older
+            # ffmpeg aac encoder upmixed); the current build keeps the mono file mono.
+            "channels": 1,
             "mime": "audio/mp4",
         },
     ),
@@ -302,7 +304,9 @@ FILES_TAGGED += [
             **meta,
             **mp3Tags,
             "bit_rate": approx(65000, abs=5e4),
-            "channels": 2,  # Weird
+            # RASTATIME 2026-11-01: upstream expected 2 ("Weird" - an older
+            # ffmpeg aac encoder upmixed); the current build keeps the mono file mono.
+            "channels": 1,
             "mime": "audio/mp4",
         },
     ),
