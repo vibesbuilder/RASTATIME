@@ -352,7 +352,7 @@ cd C:\rastatime\frontend\legacy
 Test-Path .\vendor\autoload.php   # must be True
 ```
 
-> `composer.lock` pins the 99 packages; `composer install` reproduces them
+> `composer.lock` pins the 52 packages; `composer install` reproduces them
 > exactly.  After pulling a change under `application\common\` run
 > `composer.phar dump-autoload` (classmap), see UPGRADE.md.
 
