@@ -428,11 +428,17 @@ reachable from the public internet:
 | `<source-password>` | `C:\rastatime\config\icecast.xml` | Icecast admin / relay / source password. Default value is `admin`. Replace with a long random string. |
 | Master DJ password | `cc_pref` row `live_stream_master_password` (set via Settings → Streams in the frontend) | Authenticates the master-source DJ at `/main`. |
 
-Generate strong values e.g. with PowerShell:
+Generate strong values e.g. with PowerShell (cryptographic random, 48
+bytes, about 62 alphanumeric characters - enough for the 50 of
+`secret_key`):
 
 ```powershell
-[System.Convert]::ToBase64String((1..36 | ForEach-Object { Get-Random -Min 0 -Max 255 })) -replace '[+/=]', ''
+$b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b) -replace '[+/=]', ''
 ```
+
+> Until 2026-11-01 this read `(1..36 | ForEach-Object { Get-Random ... })`:
+> 46-48 characters, below the 50 `secret_key` needs, and `Get-Random` is
+> not a cryptographic generator (fresh-machine rehearsal, INSTALL_PROBE.md).
 
 ### Step 6 — Create the PostgreSQL database
 
