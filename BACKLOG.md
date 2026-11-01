@@ -467,10 +467,12 @@ Janitor 03:50, 04:00-Fenster) und dem Wochenende: PowerShell `Select-String -Pat
 Stubs, `rastatime_shared.compat`, `LEGACY_ENV_PREFIX` + `report_legacy_env()`, zweite Click-Variable,
 `LIBRETIME_*`-Rückfälle in Python und PHP, `libretime-*`-Entry-Points + `find_packages`-Ausschluss,
 `.gitignore`-Zeile, Brücken-Tests; UPGRADE.md beschreibt den harten Schnitt.  Suiten grün (api 195,
-playout 845, unit 739, shared 36); Login 200 (PHP sofort live).  **Offen (Operator):** Neustart der vier
-Python-Dienste; ANALYZER dabei stoppen → `pip install -e backend/analyzer` → starten (die EXE war im
-Lauf gesperrt, ein Pfad-Eintrag hält das Paket bis dahin importierbar); zugleich `PYTHONUTF8=1` für
-PLAYOUT/ANALYZER/WORKER (Nebenbefund: PLAYOUT-stderr cp1252, 103 Logging-Fehler bei Sonderzeichen-Pfaden).
+playout 845, unit 739, shared 36); Login 200 (PHP sofort live).  **Neustart der vier Python-Dienste durch den
+Operator 2026-11-01 10:25–10:26 (abgenommen 10:30):** alle Running, API-Health und Login 200, Liquidsoap nahm
+den laufenden Titel per Catch-up wieder auf, drei Icecast-Mounts senden, Analyzer neu installiert (`pip show`
+findet die Distribution, die EXE war im ersten Lauf gesperrt) und an RabbitMQ verbunden, `PYTHONUTF8=1` jetzt
+auch bei PLAYOUT/ANALYZER/WORKER (Nebenbefund: PLAYOUT-stderr war cp1252, 103 Logging-Fehler bei
+Sonderzeichen-Pfaden), keine Fehlerzeile in den acht Dienst-Logs, kein Brücken-Treffer.
 Rückfall: `git revert 73be94d8` + Neustart.  Tag `live-2026-11-01` davor.
 
 **Operator 2026-10-28:** Stufe B wird **Vorbedingung des GitHub-Themas** (Abschnitt „Veröffentlichung auf
