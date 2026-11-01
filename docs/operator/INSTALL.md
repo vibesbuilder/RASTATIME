@@ -292,13 +292,21 @@ Fix any `[FAIL]` items before continuing.
 ```powershell
 cd C:\rastatime
 python -m venv .venv
+# A fresh Windows 11 runs no PowerShell scripts (policy Restricted), so
+# Activate.ps1 would fail; allow scripts for this window only:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .venv\Scripts\Activate.ps1
 
 # Verify the venv is active:
 python --version
-where python
-# Should show: C:\rastatime\.venv\Scripts\python.exe
+where.exe python
+# First line must be: C:\rastatime\.venv\Scripts\python.exe
 ```
+
+> The `Process` scope ends with the window: every new PowerShell that
+> activates the venv (Step 4, Step 7, §7) needs the `Set-ExecutionPolicy`
+> line again.  `where.exe`, not `where` - in PowerShell `where` is the
+> alias of `Where-Object` and prints nothing.
 
 ### Step 4 — Install Python dependencies
 

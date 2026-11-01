@@ -235,7 +235,7 @@ had to be corrected) / `bug` (product problem) / `skip` (with reason).
 | 2.8 | FFmpeg | | | |
 | 4 / 1 | Clone or release archive | ok | 0 | Cloned by the operator in §0b B (option A), `ee7ccbb9`. |
 | 4 / 2 | bootstrap.ps1 (all §2 components, exit 0) | ok | <1 | Ten required `[PASS]`, Composer 2.11.1 and Git 2.56.0 optional `[PASS]`, exit 0 (4 s). Note: it was green before the 2.6 fixes too - it only runs `httpd.exe -v` / `php.exe -v`, not `httpd -t` or a check of the PHP extensions (BACKLOG candidate). |
-| 4 / 3 | venv | | | |
+| 4 / 3 | venv | doc | 1 | `python -m venv .venv` ok (Python 3.13.0). (1) `.venv\Scripts\Activate.ps1` fails in an operator's PowerShell: the effective execution policy of a fresh Windows 11 is `Restricted` (`Die Datei ... Activate.ps1 kann nicht geladen werden, da die Ausführung von Skripts auf diesem System deaktiviert ist`). It worked in the assistant session only because its shell runs with `Process = Bypass`. (2) `where python` prints nothing: in PowerShell `where` is the alias of `Where-Object`; `where.exe python` shows `C:\rastatime\.venv\Scripts\python.exe` first. Operator chose: Step 3 now sets `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` before `Activate.ps1` (window only, nothing persistent; note that Step 4 / 7 / §7 need it again) and uses `where.exe`. |
 | 4 / 4 | Python dependencies, editable installs | | | |
 | 4 / 4b | composer install (frontend) | | | |
 | 4 / 5 | rastatime.conf from the example | | | |
