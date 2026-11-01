@@ -4240,6 +4240,16 @@ Sortierung der bereits-gespielten + nächsten Tracks freezable.
 
 ## 🐞 Known Issues / Bug Backlog
 
+### ✅ Backup/Janitor eine Stunde zu früh seit der Zeitumstellung (Befund 2026-11-01) - behoben 2026-11-01 (Operator-Go)
+
+**Status:** Erledigt 2026-11-01.  Beide Aufgaben hatten `StartBoundary ...T02:30:00+01:00` bzw. `02:50:00+01:00`
+(so legt `New-ScheduledTaskTrigger -At 03:30` sie im September ab); mit Offset hält der Task Scheduler den
+UTC-Zeitpunkt, nach dem 2026-10-25 also 02:30/02:50 Wanduhr.  Fix: `StartBoundary` ohne Offset auf
+`2026-11-01T03:30:00` / `T03:50:00` gesetzt (`Set-ScheduledTask`), nächster Lauf 2026-11-02 03:30/03:50.
+Manual BACKUP (vier Sprachen) und `scripts/log-janitor.ps1` nennen jetzt die drei Zeilen zum Festnageln.
+FirewallWatch (Minutentakt) und PhpCgiReaper (Ereignis) sind nicht betroffen.  **Kontrolle:** `backup-auto.log`
+und `log-janitor.log` am 2026-11-02 mit 03:30/03:50-Stempel.
+
 ### ✅ Upload über die UI ab 128 MiB: Apache 500 vor PHP (Befund Operator 2026-10-29) - behoben 2026-10-29 (`1b4be74e`)
 
 **Status:** Erledigt 2026-10-29 16:46 (Operator-Go, Apache-Neustart durch den

@@ -793,6 +793,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Backup- und Janitor-Aufgabe liefen seit der Zeitumstellung um 02:30 / 02:50** (2026-11-01, Befund beim
+  Phase-2-Log-Check).  `New-ScheduledTaskTrigger` speichert die Startzeit mit UTC-Offset, der Task Scheduler
+  hält dann den UTC-Zeitpunkt fest; seit dem 2026-10-26 feuerten `RASTATIME-Backup` und `RASTATIME-LogJanitor`
+  eine Stunde zu früh.  Beide Trigger auf lokale Wanduhrzeit ohne Offset gesetzt (03:30 / 03:50, nächster Lauf
+  2026-11-02), Registrierungsanleitung im Manual (EN/DE/FR/ES) und im Kopf von `scripts/log-janitor.ps1` um
+  die drei Zeilen zum Festnageln ergänzt.
 - **Upload über die UI scheiterte ab 128 MiB mit Apache 500** (2026-10-29, Befund des
   Operators).  mod_fcgid begrenzte den Request-Body mit `FcgidMaxRequestLen 134217728`,
   während PHP (`post_max_size`/`upload_max_filesize`) und damit die Upload-Seite 512 MB

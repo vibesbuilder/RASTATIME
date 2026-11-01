@@ -6,6 +6,10 @@
 #   $trigger = New-ScheduledTaskTrigger -Daily -At 03:50
 #   Register-ScheduledTask -TaskName "RASTATIME-LogJanitor" -Action $action `
 #       -Trigger $trigger -User "SYSTEM" -RunLevel Highest
+#   # pin to local wall-clock time (the cmdlet stores a UTC offset -> DST drift):
+#   $task = Get-ScheduledTask -TaskName "RASTATIME-LogJanitor"
+#   $task.Triggers[0].StartBoundary = (Get-Date -Format yyyy-MM-dd) + "T03:50:00"
+#   Set-ScheduledTask -InputObject $task | Out-Null
 #
 # What it does, every night at 03:50 (after the 03:30 backup):
 #   1. NSSM-rotated service slices (*-stdout-*.log / *-stderr-*.log) and

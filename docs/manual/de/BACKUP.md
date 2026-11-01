@@ -96,7 +96,17 @@ $action  = New-ScheduledTaskAction -Execute "powershell.exe" `
 $trigger = New-ScheduledTaskTrigger -Daily -At 03:30
 Register-ScheduledTask -TaskName "RASTATIME-Backup" -Action $action `
     -Trigger $trigger -User "SYSTEM" -RunLevel Highest
+# Pin the trigger to local wall-clock time: the cmdlet stores a UTC offset,
+# so the task would otherwise drift by one hour at every DST change.
+$task = Get-ScheduledTask -TaskName "RASTATIME-Backup"
+$task.Triggers[0].StartBoundary = (Get-Date -Format yyyy-MM-dd) + "T03:30:00"
+Set-ScheduledTask -InputObject $task | Out-Null
 ```
+
+Die letzten drei Zeilen sind wichtig: ohne sie behält die Aufgabe den
+UTC-Zeitpunkt des Registrierungstags und läuft nach einer Zeitumstellung
+eine Stunde zu früh oder zu spät (beobachtet 2026-10-26 bis 2026-11-01:
+02:30 statt 03:30).
 
 Die Aufgabe feuert täglich, aber der Lauf entscheidet anhand der
 Einstellungen dieser Seite selbst, ob eine Sicherung fällig ist — „alle
