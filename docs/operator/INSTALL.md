@@ -103,11 +103,32 @@ every uploaded media file.  Without RabbitMQ, uploads stay at
 1. Install Erlang OTP (64-bit), then RabbitMQ 4.x
 2. RASTATIME expects vhost `/rastatime` on port **5672** with the
    user/password from the `rabbitmq:` section of `rastatime.conf`
-3. Verify:
+3. Add the RabbitMQ `sbin` folder to the **system** PATH - the installer
+   adds nothing, and Step 6b and the quirk below call `rabbitmqctl` /
+   `rabbitmq-service.bat` by name:
+   `C:\Program Files\RabbitMQ Server\rabbitmq_server-<version>\sbin`
+   (Settings → System → Advanced → Environment variables), then open a new
+   PowerShell
+4. Give the CLI the service's Erlang cookie.  The service runs as
+   LocalSystem with the cookie in its own profile; `rabbitmqctl` reads the
+   one in your profile and otherwise fails with `TCP connection succeeded
+   but Erlang distribution failed` (exit 69).  In an **elevated**
+   PowerShell:
+   ```powershell
+   Copy-Item C:\Windows\System32\config\systemprofile\.erlang.cookie $env:USERPROFILE\.erlang.cookie -Force
+   ```
+   Every Windows account that runs `rabbitmqctl` needs this copy.
+5. Verify:
    ```powershell
    Get-Service RabbitMQ
    # Expected: Running
+   rabbitmqctl status
+   # Expected: exit 0, "Status of node rabbit@<host> ..."
    ```
+
+> Steps 3-4 found 2026-11-01 in the fresh-machine rehearsal
+> (INSTALL_PROBE.md): RabbitMQ 4.4.0 put nothing on PATH, and the cookies
+> of the CLI user and the service differed.
 
 > **Windows service quirk:** if the installer ran as a normal user, the
 > LocalSystem service can crash on start.  Re-register the service with
