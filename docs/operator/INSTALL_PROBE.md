@@ -65,7 +65,11 @@ for Windows following the current setup page
 ((the assistant's setup guide) Git for Windows from
 step B is a prerequisite), start it in `C:\rastatime` and sign in with
 your own account.  The VM session has no memory of the studio machine: the
-repository is its only context.
+repository is its only context.  Give the clone a commit identity first -
+a fresh Git for Windows has none, and the session's first commit fails with
+`Author identity unknown` (2026-11-01):
+`git -C C:\rastatime config user.name "..."` and `... config user.email "..."`
+(repo-local, not `--global`).
 
 **D. The brief for the VM session (copy as the first message).**
 
@@ -175,7 +179,7 @@ and later `httpd -t`.
 `php-8.5.x-nts-Win32-vs17-x64.zip` from windows.php.net/download.  No
 installer: extract so that `C:\Tools\PHP\php.exe` and `php-cgi.exe` exist
 directly in the folder.  Copy `php.ini-production` to `php.ini` and apply
-INSTALL_APACHE §3 (upload limits), §3.1 (CA bundle: `cacert.pem` from
+INSTALL_APACHE §3 (`extension_dir`, eight extensions, upload limits), §3.1 (CA bundle: `cacert.pem` from
 curl.se to `C:\Tools\PHP\cacert.pem`, two php.ini keys) and §3.2 (PHP 8.5
 settings).  Check: `& C:\Tools\PHP\php.exe -v`.
 
@@ -226,7 +230,7 @@ had to be corrected) / `bug` (product problem) / `skip` (with reason).
 | 2.3 | Liquidsoap 2.4.6 | | | |
 | 2.4 | RabbitMQ + Erlang | | | |
 | 2.5 | NSSM | | | |
-| 2.6 | Apache + PHP + Composer (INSTALL_APACHE) | doc | op: ? / session: T8 edit 7, T9 edit 1 | Operator extracted Apache 2.4.69 VS18, mod_fcgid, PHP 8.5.12, Composer and fetched `cacert.pem` (curl.se, 2026-10-20); the session made the `httpd.conf` / `php.ini` edits by the letter of INSTALL_APACHE §2-§3.2. (1) `httpd -t` failed: `AH00526: Syntax error on line 542 ... FcgidMaxRequestLen takes one argument` - the §2 fcgid block put `# 512 MiB = ...` after the value; Apache has no end-of-line comments. Fixed in httpd.conf and §2 (comment on its own line), `Syntax OK`. (2) The stock Apache Lounge file sets `Define SRVROOT "C:/Apache24"` + `ServerRoot "${SRVROOT}"`; §2 named only `ServerRoot`, leaving the cgi-bin alias (and `${SRVROOT}/logs` in `infra\apache\rastatime-https.conf`) on `C:/Apache24`. Fixed: §2 now changes `SRVROOT`. (3) `DirectoryIndex` stays `index.html`, `public\` has only `index.php` - check at Step 9f whether `/` shows the login page. (4) §3.1 check fails: `Unable to find the wrapper "https"`, `bool(false)`. §3 enables no extension: `php.ini-production` has every `extension=` commented out and `extension_dir` resolves to `C:\php\ext`; `curl.cainfo` / `openssl.cafile` stay unregistered (`ini_get` false). Composer.lock hard-requires `ext-mbstring` and `ext-sockets` (php-amqplib); the code uses PDO pgsql, curl, gettext, fileinfo. `RASTATIME-APACHE` restart in §3.1 not applicable yet (service comes in Step 9f). Stopped here, asked the operator. |
+| 2.6 | Apache + PHP + Composer (INSTALL_APACHE) | doc | op: ? / session: T8 edit 7, T9 edit 8 (incl. both stops) | Operator extracted Apache 2.4.69 VS18, mod_fcgid, PHP 8.5.12, Composer and fetched `cacert.pem` (curl.se, 2026-10-20); the session made the `httpd.conf` / `php.ini` edits by the letter of INSTALL_APACHE §2-§3.2. (1) `httpd -t` failed: `AH00526: Syntax error on line 542 ... FcgidMaxRequestLen takes one argument` - the §2 fcgid block put `# 512 MiB = ...` after the value; Apache has no end-of-line comments. Fixed in httpd.conf and §2 (comment on its own line), `Syntax OK`. (2) The stock Apache Lounge file sets `Define SRVROOT "C:/Apache24"` + `ServerRoot "${SRVROOT}"`; §2 named only `ServerRoot`, leaving the cgi-bin alias (and `${SRVROOT}/logs` in `infra\apache\rastatime-https.conf`) on `C:/Apache24`. Fixed: §2 now changes `SRVROOT`. (3) `DirectoryIndex` stays `index.html`, `public\` has only `index.php` - check at Step 9f whether `/` shows the login page. (4) §3.1 check fails: `Unable to find the wrapper "https"`, `bool(false)`. §3 enables no extension: `php.ini-production` has every `extension=` commented out and `extension_dir` resolves to `C:\php\ext`; `curl.cainfo` / `openssl.cafile` stay unregistered (`ini_get` false). Composer.lock hard-requires `ext-mbstring` and `ext-sockets` (php-amqplib); the code uses PDO pgsql, curl, gettext, fileinfo. Operator agreed: `extension_dir = "C:\Tools\PHP\ext"` (absolute, php-cgi runs elsewhere under mod_fcgid) + `curl fileinfo gettext mbstring openssl pdo_pgsql sockets zip`; §3 now says so and also that `php.ini` is a copy of `php.ini-production` (INSTALL_APACHE never said it). `php -m` lists all eight, both CA keys set, §3.1 check `bool(true)`. `RASTATIME-APACHE` restart in §3.1 not applicable yet (service comes in Step 9f). (5) No Git identity on the VM, first commit failed: repo-local identity set on the operator's word, §0b C now says so. |
 | 2.7 | Icecast 2.5.0 | | | |
 | 2.8 | FFmpeg | | | |
 | 4 / 1 | Clone or release archive | | | |

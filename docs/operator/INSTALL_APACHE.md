@@ -150,9 +150,38 @@ not use 8000 — that port belongs to Icecast.  `ProxyPreserveHost On`
 keeps the original `Host:` header so the API builds correct absolute
 URLs.
 
-## 3. Adjust PHP upload limits
+## 3. php.ini: extensions and upload limits
 
-Edit `C:\Tools\PHP\php.ini`:
+The PHP zip ships no `php.ini`: copy `C:\Tools\PHP\php.ini-production` to
+`C:\Tools\PHP\php.ini`, then edit it.  `php.ini-production` loads no
+extension and leaves `extension_dir` unset (PHP then looks in
+`C:\php\ext`).  Point it at the PHP folder - absolute, because
+`php-cgi.exe` under mod_fcgid does not run in the PHP folder - and enable
+the extensions RASTATIME needs (the `;extension=` lines exist commented
+out):
+
+```ini
+extension_dir = "C:\Tools\PHP\ext"
+extension=curl
+extension=fileinfo
+extension=gettext
+extension=mbstring
+extension=openssl
+extension=pdo_pgsql
+extension=sockets
+extension=zip
+```
+
+`openssl` provides the `https://` wrapper (§3.1, Composer), `curl`
+SimplePie and the frontend's outbound HTTP calls, `pdo_pgsql` the
+database, `mbstring` and `sockets` are required by php-amqplib (the
+RabbitMQ message for every upload), `gettext` the translations,
+`fileinfo` the file type detection, `zip` Composer's dist downloads.
+Check with `C:\Tools\PHP\php.exe -m`.  Found 2026-11-01 in the
+fresh-machine rehearsal (INSTALL_PROBE.md): without them the §3.1 check
+fails with `Unable to find the wrapper "https"`.
+
+Upload limits:
 
 ```ini
 upload_max_filesize = 512M
