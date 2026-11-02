@@ -662,6 +662,14 @@ def _resolve_local_output_device() -> tuple[Optional[int], str, str, Optional[st
         )
         return (None, "", "", None)
 
+    if stable_id.lower() == "none":
+        # RASTATIME 2026-11-02 - "Off - stream only": no output.portaudio at
+        # all (headless / virtual machines, where a monitor underflow killed
+        # the engine in the fresh-machine rehearsal).  The caller turns the
+        # local output off; the endpoint id "none" becomes the marker line.
+        logger.info("Main Output is Off (stream only) - no local monitor output is rendered.")
+        return (None, "Off (stream only)", "none", None)
+
     if not stable_id and not name:
         logger.info("No Main Output configured — local monitor uses the OS-default endpoint.")
         return (None, "", "", None)
@@ -872,6 +880,8 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
         MAIN_OUTPUT_BY_INDEX,
         MAIN_OUTPUT_BY_NAME,
         MAIN_OUTPUT_DEFAULT,
+        MAIN_OUTPUT_OFF,
+        MAIN_OUTPUT_OFF_ID,
     )
 
     config_path = Path(
@@ -1007,11 +1017,17 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
             local_output_endpoint_id,
             local_output_device_name,
         ) = _resolve_local_output_device()
+        if local_output_endpoint_id == MAIN_OUTPUT_OFF_ID:
+            # RASTATIME 2026-11-02 - Settings -> Local Machine -> Main Output
+            # "Off (stream only)": render no output.portaudio at all.
+            local_output_enabled = False
     else:
         local_output_device_id, local_output_device_label = (None, "")
         local_output_endpoint_id = ""
         local_output_device_name = None
-    if local_output_device_name:
+    if local_output_endpoint_id == MAIN_OUTPUT_OFF_ID:
+        main_output_mode = MAIN_OUTPUT_OFF
+    elif local_output_device_name:
         main_output_mode = MAIN_OUTPUT_BY_NAME
     elif local_output_device_id is not None:
         main_output_mode = MAIN_OUTPUT_BY_INDEX
@@ -1091,6 +1107,8 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
             harbor_show_port=harbor_show_port,
             harbor_show_mount=harbor_show_mount,
             dj_auth_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/dj-auth",
+            # RASTATIME 2026-11-02 - output.icecast connect / error -> Settings -> Streams
+            stream_status_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/stream-event",
             # RASTATIME 2026-09-13 - rendered defaults of the ICY metadata
             # values; the scheduler pushes changes over telnet afterwards.
             icy_label_format=icy.label_format,
@@ -1291,7 +1309,8 @@ def main() -> None:
     stream_outputs: list[dict] = []
     render_restart_pending = False
     if django_ok:
-        stream_outputs = _read_stream_outputs()
+        # numbered: the render binds output N to rt_stream_N (2026-11-02)
+        stream_outputs = _read_stream_outputs(numbered=True)
         if stream_outputs:
             logger.info(
                 "Found %d enabled Icecast stream output(s) - "
@@ -1418,7 +1437,9 @@ def main() -> None:
 
     nightly_policy = NightlyRestartPolicy.from_env()
     render_for_restart = (
-        (lambda: _render_rastatime_liq_outcome(_read_stream_outputs())) if django_ok else None
+        (lambda: _render_rastatime_liq_outcome(_read_stream_outputs(numbered=True)))
+        if django_ok
+        else None
     )
     if nightly_policy is not None and nightly_policy.enabled:
         logger.info(
@@ -1575,6 +1596,7 @@ def main() -> None:
         reconcile_interval_from_env,
         start_listener,
     )
+    from rastatime_playout.stream_status import StreamStatusReporter  # noqa: PLC0415
 
     switcher = SourceSwitcher(switch_callback=scheduler.switch_audio_source)
     scheduler.set_source_switcher(switcher)
@@ -1593,6 +1615,9 @@ def main() -> None:
         # RASTATIME 2026-09-28 - /live-text feeds the Live Text writer (must be
         # passed here: start_listener sets every handler attribute itself)
         live_text=live_text_writer,
+        # RASTATIME 2026-11-02 - /stream-event: output.icecast connect / error
+        # reports go to the web application (Settings -> Streams status box).
+        stream_status=StreamStatusReporter(api_client_v1),
     )
     logger.info(
         "DJ logins are checked against the web application at %s.",

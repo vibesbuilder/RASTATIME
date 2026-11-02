@@ -85,6 +85,19 @@ comme sortie audio par défaut.
 > périphérique sélectionné est persisté dans `cc_pref`
 > comme `default_output_device_id`. Voir ARCHITECTURE §9.
 
+### « Off - stream only » (depuis le 2026-11-02)
+
+La liste **Main Output** a une entrée permanente **Off - stream only
+(no local monitor output)**. Choisissez-la sur une machine sans
+périphérique audio utilisable - machine virtuelle, serveur sans carte
+son, studio qui écoute le stream Icecast à la place : le moteur de
+playout ne rend alors aucune sortie locale. Pourquoi c'est important :
+un sous-débit du tampon d'une sortie locale peut arrêter tout le moteur,
+streams compris (vu deux fois sur une carte son virtuelle pendant la
+répétition d'installation). Appliquez comme tout autre changement de
+Main Output (« Appliquer maintenant » ci-dessous) ; la ligne d'état
+indique alors **off (stream only)**.
+
 ### Appliquer un changement — « Appliquer maintenant »
 
 > **Depuis le 16/09/2026, cela se fait tout seul.** Après

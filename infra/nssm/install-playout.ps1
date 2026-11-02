@@ -284,9 +284,17 @@ if ($StartService) {
     $null = Wait-ApiHealth -TimeoutSecs $HealthTimeout
     Write-Step "Starting '$ServiceName'..."
     & $nssm start $ServiceName
-    Start-Sleep -Seconds 4
+    # Poll up to 30 s (every 2 s): the service sits in StartPending while
+    # Python boots and is usually Running after 10-20 s.
+    $svc = $null
+    $waited = 0
+    while ($waited -lt 30) {
+        Start-Sleep -Seconds 2
+        $waited += 2
+        $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+        if ($svc -and $svc.Status -eq 'Running') { break }
+    }
 
-    $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
     if ($svc -and $svc.Status -eq 'Running') {
         Write-OK "$ServiceName is Running."
     } else {

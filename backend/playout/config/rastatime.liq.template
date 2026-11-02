@@ -269,18 +269,11 @@ def request.queue_sync(
       "#{request.id(r)}"
     end
 
-    s.register_command(
-      description="Flush the queue and skip the current track",
-      "flush_and_skip",
-      fun (_) ->
-        try
-          s.set_queue([])
-          s.skip()
-          "Done."
-        catch err do
-          "Error while flushing and skipping source: #{err}"
-        end
-    )
+    # RASTATIME 2026-11-02 - no "flush_and_skip" here: the stdlib's
+    # telnet.liq already registers that command on the underlying
+    # request.dynamic at wake-up, and the second registration logged
+    # "scheduled.flush_and_skip already registered!" at every start.
+    # PLAYOUT uses scheduled.flush + scheduled.skip, never this one.
 
     s.register_command(
       description="Push a new request in the queue.",

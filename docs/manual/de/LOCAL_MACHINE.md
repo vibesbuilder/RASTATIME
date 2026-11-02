@@ -131,6 +131,19 @@ Nützlich, wenn:
 > Audio-Output-Modul mit der Geräte-ID pro Output gesetzt.
 > Siehe ARCHITECTURE §9.
 
+### „Off - stream only“ (seit 2026-11-02)
+
+Die Liste **Main Output** hat einen festen Eintrag **Off - stream only
+(no local monitor output)**. Wählen Sie ihn auf einer Maschine ohne
+brauchbares Audiogerät - virtuelle Maschine, Server ohne Soundkarte,
+ein Studio, das stattdessen den Icecast-Stream abhört: die
+Playout-Engine rendert dann gar keinen lokalen Ausgang. Warum das
+wichtig ist: ein Pufferunterlauf eines lokalen Ausgangs kann die ganze
+Engine samt Streams anhalten (zweimal auf einer virtuellen Soundkarte
+während der Installationsprobe beobachtet). Anwenden wie jede andere
+Main-Output-Änderung („Jetzt anwenden“ unten); die Statuszeile zeigt
+dann **off (stream only)**.
+
 ### Änderung anwenden — "Jetzt anwenden"
 
 > **Seit dem 16.09.2026 geschieht das von selbst.** Nach dem Speichern

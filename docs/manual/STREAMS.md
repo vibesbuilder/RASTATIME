@@ -189,6 +189,17 @@ The badge to the right of each enabled stream's name:
 The badge refreshes every 5 seconds via the
 `/api/v2/streams` endpoint.
 
+> **Since 2026-11-02.** When Icecast answers but the mount is missing,
+> the status box shows the playout engine's own last message
+> ("Liquidsoap reports: Connection failed: 401, Authentication
+> Required" for a wrong source password, for example) instead of the
+> generic "Icecast is running" hint; saving the page clears it. Saving
+> also refuses an **enabled** stream without a mount point, with a port
+> outside 1-65535 or without a source password (typed or already
+> stored) - the problems are listed in red above the form and nothing
+> is saved until they are fixed. On a fresh database pick a **Stream
+> Label** option if none is selected; the first one is the default.
+
 > **Operator tip.** A red badge on Stream 1 means listeners
 > hear nothing. Check Icecast (`Get-Service icecast2`),
 > verify credentials, confirm port 8000 is reachable. See

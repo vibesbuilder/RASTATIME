@@ -157,6 +157,18 @@ Notas:
 La insignia se actualiza cada 5 segundos vía el endpoint
 `/api/v2/streams`.
 
+> **Desde el 2026-11-02.** Cuando Icecast responde pero falta el mount,
+> la caja de estado muestra el último mensaje del propio motor de
+> playout (p. ej. «Liquidsoap reports: Connection failed: 401,
+> Authentication Required» con una contraseña de fuente incorrecta) en
+> lugar del aviso genérico «Icecast is running»; guardar la página lo
+> borra. Guardar también rechaza un stream **habilitado** sin
+> mountpoint, con puerto fuera de 1-65535 o sin contraseña de fuente
+> (escrita o ya guardada): los problemas se listan en rojo sobre el
+> formulario y no se guarda nada hasta corregirlos. En una base de datos
+> nueva elija un **Stream Label** si ninguno está marcado; el primero es
+> el predeterminado.
+
 > **Consejo del operador.** Una insignia roja en Stream 1
 > significa que los oyentes no oyen nada. Verifique
 > Icecast (`Get-Service icecast2`), credenciales, puerto

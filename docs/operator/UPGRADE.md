@@ -126,9 +126,12 @@ Expand-Archive rastatime-0.23.x.zip -DestinationPath C:\rastatime -Force
 
 ```powershell
 cd C:\rastatime
+# A fresh Windows has execution policy Restricted - allow scripts for
+# this window only, or Activate.ps1 is refused:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .venv\Scripts\Activate.ps1
 
-pip install --upgrade pip
+python -m pip install --upgrade pip   # pip cannot replace its own pip.exe on Windows
 pip install -r requirements.txt
 # The root requirements.txt holds only python-vlc + pytest — Django,
 # Waitress and psycopg2 come from the editable backend installs.
@@ -148,6 +151,7 @@ python -c "import importlib.metadata as m; print('Waitress', m.version('waitress
 > deactivate
 > Remove-Item -Recurse -Force C:\rastatime\.venv
 > python -m venv C:\rastatime\.venv
+> Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass   # fresh Windows: policy Restricted
 > C:\rastatime\.venv\Scripts\Activate.ps1
 > pip install -r requirements.txt
 > pip install psycopg2-binary
@@ -282,6 +286,7 @@ psql -U postgres -d rastatime -f C:\rastatime\backups\pre-upgrade-rastatime.sql
 ```powershell
 Remove-Item -Recurse -Force C:\rastatime\.venv
 python -m venv C:\rastatime\.venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass   # fresh Windows: policy Restricted
 C:\rastatime\.venv\Scripts\Activate.ps1
 # Full dependency sequence (INSTALL.md §4 Step 4) — requirements.txt
 # alone is not enough:

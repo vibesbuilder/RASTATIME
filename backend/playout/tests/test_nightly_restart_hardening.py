@@ -37,6 +37,10 @@ def _runner(codes):
     calls = []
 
     def run(argv, **kwargs):
+        if len(argv) > 1 and argv[1] == "status":
+            # 2026-11-02: the "is the service installed?" probe before a
+            # restart - answered "installed", not counted as a restart call
+            return SimpleNamespace(returncode=0, stdout="SERVICE_RUNNING", stderr="")
         calls.append(list(argv))
         code = codes.pop(0)
         return SimpleNamespace(

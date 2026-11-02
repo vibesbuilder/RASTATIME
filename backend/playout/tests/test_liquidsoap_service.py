@@ -74,15 +74,56 @@ def test_policy_due_only_inside_window_and_once_per_day():
 # --------------------------------------------------------------------
 
 
-def _runner_factory(results):
+def _runner_factory(results, installed=True):
+    """
+    ``calls`` records the restart invocations only.  The ``nssm status``
+    probe that precedes them (2026-11-02) answers 0 (installed) or 3 with
+    "Can't open service!" (not installed) without consuming ``results``.
+    """
     calls = []
 
     def runner(argv, **kwargs):
+        if len(argv) > 1 and argv[1] == "status":
+            if installed:
+                return SimpleNamespace(returncode=0, stdout="SERVICE_RUNNING", stderr="")
+            return SimpleNamespace(returncode=3, stdout="", stderr="Can't open service!")
         calls.append(argv)
         code = results.pop(0)
         return SimpleNamespace(returncode=code, stdout="", stderr="boom" if code else "")
 
     return runner, calls
+
+
+def test_restart_skips_a_service_that_is_not_installed(tmp_path, caplog):
+    """Fresh install between INSTALL 9d and 9h: INFO, no restart attempt."""
+    nssm = tmp_path / "nssm.exe"
+    nssm.write_bytes(b"x")
+    runner, calls = _runner_factory([0], installed=False)
+    with caplog.at_level("INFO"):
+        ok = svc.restart_liquidsoap_service(
+            "test", nssm_exe=str(nssm), service="SVC", runner=runner, sleep=lambda _s: None
+        )
+    assert ok is False
+    assert calls == []
+    assert any("not installed yet" in r.getMessage() for r in caplog.records)
+    assert not any(r.levelname == "ERROR" for r in caplog.records)
+
+
+def test_service_installed_probe_outcomes(tmp_path):
+    nssm = tmp_path / "nssm.exe"
+    nssm.write_bytes(b"x")
+    runner, _ = _runner_factory([], installed=True)
+    assert (
+        svc.liquidsoap_service_installed(nssm_exe=str(nssm), service="SVC", runner=runner) is True
+    )
+    runner, _ = _runner_factory([], installed=False)
+    assert (
+        svc.liquidsoap_service_installed(nssm_exe=str(nssm), service="SVC", runner=runner) is False
+    )
+    # unknown answers never block a restart
+    odd = lambda argv, **kw: SimpleNamespace(returncode=1, stdout="", stderr="odd")  # noqa: E731
+    assert svc.liquidsoap_service_installed(nssm_exe=str(nssm), service="SVC", runner=odd) is None
+    assert svc.liquidsoap_service_installed(nssm_exe=str(tmp_path / "missing.exe")) is None
 
 
 def test_restart_success_first_try(tmp_path):

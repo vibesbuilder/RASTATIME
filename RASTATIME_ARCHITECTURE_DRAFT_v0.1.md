@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.108
+Draft version: 0.109
 Date: 2026-11-01
 
 > **Revision history**
+> - **0.109 (2026-11-02)** - **Fresh-machine rehearsal fixes** (§23.78): output.icecast state reported
+>   to Settings -> Streams via PLAYOUT `/stream-event`, Main Output "Off" (no portaudio), unplanned
+>   Liquidsoap restart re-arms the running item, installer / status script hardening.
 > - **0.108 (2026-11-01)** - **Library-wide cue-point re-detection**
 >   (§23.45): CLI script on the legacy model, 19,975 files applied;
 >   detect() without a shell (`!`/`%` paths).
@@ -8277,3 +8280,90 @@ former names: `manage.py check` (both names), `-m libretime_api.waitress_serve -
 `libretime-analyzer.exe --help`, `rastatime_worker` import; PHP login page
 200 after classmap regeneration, `.mo` catalogs rebuilt (de 1475, es 1440,
 fr 1439 entries).
+
+### 23.78 Fresh-Machine Rehearsal Fixes: Stream State to the UI, Main Output Off, Restart Re-Arm (2026-11-02)
+
+**Context.**  GitHub phase 5 installed RASTATIME on a fresh Windows 11 VM
+by the letter of INSTALL (`docs/operator/INSTALL_PROBE.md`).  Besides 15
+documentation fixes it produced 14 product findings; the operator gave
+a Go per finding and all were built the same day.  Three of them changed
+the architecture.
+
+**Stream state reaches the UI (finding 6).**  Every rendered
+`output.icecast` is now bound to `rt_stream_N` (N = the slot of
+`stream_output_N`, carried as `stream_id` by `_read_stream_outputs(numbered=True)`)
+and registers two callbacks: `on_connect` posts `ok`, `on_error` posts
+the error text (`"#{err}"`, the 2.4.6 `error` type is opaque) and keeps
+the stdlib retry with `restart_in(3.)`.  Both go through
+`rastatime_stream_event(n, status, message)`, an `http.post` from a
+detached `thread.run` to PLAYOUT's listener
+`/stream-event?stream=N&status=ok|error&message=...` (new handler in
+`source_switcher._EventHandler`).  `stream_status.StreamStatusReporter`
+deduplicates per slot (the error callback fires every retry) and forwards
+the message on a daemon thread to the legacy v1 endpoint
+`api/update-liquidsoap-status` (stream_id `sN`, boot_time empty so the
+legacy "older than the last save" guard never hides it); the web
+application stores `cc_pref` `stream_liquidsoap_status:N`, returns it from
+`get-liquidsoap-status` whenever Icecast answers but the mount is missing,
+and clears all three on every save of the page.  The standby script
+renders plain outputs (`status_url=None`).  Why not `output.icecast`'s
+deprecated `on_error` argument: 2.4.6 wants the source method, and the
+type was verified with `liquidsoap --check` before rendering.
+
+**Main Output "Off" (finding 3).**  `output.portaudio` has no
+`on_error` in 2.4.6 and `settings.clock.allow_streaming_errors` no
+longer exists, so a PortAudio write error (`Output underflowed`, twice on
+the VM's virtual HD Audio) is fatal for the whole engine, Icecast outputs
+included; the 2026-09-14 bridge (`buffer.adaptative` + `mksafe`, §23.23)
+absorbs underruns on the Liquidsoap side but not the device's own error
+codes.  The Main Output picker (Settings -> Local Machine) therefore has
+a permanent option **Off - stream only**, stored as `main_output_id =
+"none"` (`liquidsoap_service.MAIN_OUTPUT_OFF_ID`).  `__main__` resolves it
+to `local_output_enabled=False` with mode `MAIN_OUTPUT_OFF`; the render
+emits no `output.portaudio` and the marker `# rastatime-main-output: none`,
+which `check.php` reads so the page shows "off (stream only)" as the
+active monitor.  The machine variable `RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false`
+renders the same marker.  Headless and virtual installs pick Off; the
+studio keeps its Tascam monitor.
+
+**Unplanned Liquidsoap restart re-arms the running item (finding 2).**
+The restart detectors (`_maybe_reinit_by_process`, uptime fallback,
+§23.27) re-sent `recording.stop`, reopened the gates and forgot the
+queued-ahead successor, but kept `_playing_key` / `_current_event`: the
+fresh instance sat on `silence_fallback` while the scheduler believed the
+item was on air (rehearsal 02:28, ~6 min of silence after the operator's
+`nssm restart` landed a few seconds after PLAYOUT's own start catch-up).
+`_forget_current_after_restart()` now clears the same bookkeeping the
+planned-restart path clears (`_after_liquidsoap_restart`), and because the
+detector runs at the top of `refresh()`, the same pass re-arms the item
+through the existing catch-up (`Catch-up: in-progress event ... entering
+at +N s`).  `_on_file_start` additionally logs an unexpected exception of
+its Timer thread instead of losing it to stderr.  Still open: the hang
+after `Liquidsoap stop (deferred up to 0.5s)` seen once in the rehearsal
+needs the VM's log to be explained.
+
+**Smaller changes.**  `restart_liquidsoap_service` asks `nssm status`
+first and logs INFO for a service that is not registered yet (fresh
+install between INSTALL 9d and 9h) instead of three ERROR lines.  A render
+without DJ harbor registers `rastatime.source_events` answering `none`;
+`_probe_source_events` distinguishes on / none / absent and the
+reconciler logs once at INFO.  `stereo()` replaces the deprecated
+`audio_to_stereo`; the template no longer registers `flush_and_skip`
+(the stdlib's `telnet.liq` does it on the underlying `request.dynamic`).
+Settings -> Streams validates enabled streams (mount, port, source
+password) and answers `valid` as a real boolean.  `conf.php` creates
+`storage.path`.  `install-api.ps1` defaults to 127.0.0.1,
+`install-icecast.ps1` refuses a missing or `CHANGEME` `icecast.xml`, all
+installers poll up to 30 s for Running, `status.ps1` lists STANDBY, shows
+service and child-process uptime with a restart warning, the age of each
+log tail, reads UTF-8 and marks WORKER optional; `bootstrap.ps1` runs
+`httpd -t` and checks the eight PHP extensions.
+
+**Verification.**  playout suite 861 passed (new
+`test_rehearsal_fixes_2026_11.py`: callbacks, Off marker, probe `none`,
+`/stream-event`, reporter dedup, restart re-arm, Timer-thread logging;
+service probe tests), ruff clean, two rendered scripts (`harbor + line-in
++ webstream`, `no harbor + Off`) type-check with `liquidsoap --check`
+2.4.6, `php -l` on six files, `status.ps1` and `bootstrap.ps1` run on the
+studio machine.  Rollback: `git revert` of the commit + PLAYOUT restart;
+no migration, no nssm change.

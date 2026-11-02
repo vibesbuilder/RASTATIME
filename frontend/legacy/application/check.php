@@ -62,19 +62,22 @@ function checkDatabaseDependencies()
  *
  *     # rastatime-main-output: <windows endpoint id>
  *     # rastatime-main-output: os-default
+ *     # rastatime-main-output: none        (2026-11-02: no local monitor,
+ *                                           stream only)
  *
  * We read that rather than guessing from device names: PortAudio names
  * the same endpoint differently per host API, so a name comparison
  * would produce false mismatches.
  *
- * @return array{known: bool, os_default: bool, endpoint_id: string}
+ * @return array{known: bool, os_default: bool, off: bool, endpoint_id: string}
  *         ``known=false`` when the script is missing/unreadable or has
  *         no marker (e.g. rendered by an older build) -- callers should
- *         then say nothing rather than guess.
+ *         then say nothing rather than guess.  ``off=true`` when the
+ *         monitor output is switched off (main_output_id "none").
  */
 function rastatime_active_main_output()
 {
-    $unknown = ['known' => false, 'os_default' => false, 'endpoint_id' => ''];
+    $unknown = ['known' => false, 'os_default' => false, 'off' => false, 'endpoint_id' => ''];
 
     $path = getenv('RASTATIME_LIQUIDSOAP_CONFIG_PATH');
     if (!$path) {
@@ -93,10 +96,14 @@ function rastatime_active_main_output()
 
     $value = trim($m[1]);
     if ($value === 'os-default' || $value === 'unknown') {
-        return ['known' => true, 'os_default' => true, 'endpoint_id' => ''];
+        return ['known' => true, 'os_default' => true, 'off' => false, 'endpoint_id' => ''];
+    }
+    // RASTATIME 2026-11-02 - "none" = Main Output off, stream only.
+    if ($value === 'none') {
+        return ['known' => true, 'os_default' => false, 'off' => true, 'endpoint_id' => 'none'];
     }
 
-    return ['known' => true, 'os_default' => false, 'endpoint_id' => $value];
+    return ['known' => true, 'os_default' => false, 'off' => false, 'endpoint_id' => $value];
 }
 
 /**

@@ -9,7 +9,7 @@
 
 ## 1. Overview
 
-RASTATIME runs as seven Windows services managed by NSSM.  This document
+RASTATIME runs as eight Windows services managed by NSSM.  This document
 defines the correct order to start, stop, and recover those services so
 that dependency constraints are respected and on-air audio is protected.
 
@@ -113,8 +113,8 @@ After all services are started, run the status helper:
 powershell -ExecutionPolicy Bypass -File infra\nssm\status.ps1
 ```
 
-Expected output (covers all seven services, with HTTP probes for the
-API, Apache and Icecast):
+Expected output (covers all eight services incl. RASTATIME-STANDBY since
+2026-11-02, with HTTP probes for the API, Apache and Icecast):
 - All mandatory services: `Running`
 - API / Apache / Icecast probes: `HTTP 200 healthy`
 
@@ -210,6 +210,10 @@ Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 # d. If restart does not help, reinstall the service
 powershell -File infra\nssm\install-api.ps1 -StartService
 ```
+
+> `install-api.ps1` binds the API to 127.0.0.1 by default (since
+> 2026-11-02; Apache proxies to it locally).  `-ApiHost 0.0.0.0` is only
+> for a deliberately LAN-exposed API.
 
 ---
 
@@ -386,7 +390,7 @@ nssm start RASTATIME-PLAYOUT
 powershell -File infra\nssm\install-analyzer.ps1 -StartService
 powershell -File infra\nssm\install-apache.ps1   -StartService
 
-# 4. Verify (status.ps1 covers all seven services)
+# 4. Verify (status.ps1 covers all eight services incl. RASTATIME-STANDBY)
 powershell -File infra\nssm\status.ps1
 ```
 

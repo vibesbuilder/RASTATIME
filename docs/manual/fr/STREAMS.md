@@ -168,6 +168,18 @@ Remarques :
 Le badge se rafraîchit toutes les 5 secondes via l'endpoint
 `/api/v2/streams`.
 
+> **Depuis le 2026-11-02.** Quand Icecast répond mais que le mount
+> manque, la boîte d'état affiche le dernier message du moteur de
+> playout lui-même (par ex. « Liquidsoap reports: Connection failed:
+> 401, Authentication Required » pour un mauvais mot de passe source)
+> au lieu de l'indication générique « Icecast is running » ;
+> l'enregistrement de la page l'efface. L'enregistrement refuse aussi
+> un stream **activé** sans mountpoint, avec un port hors de 1-65535 ou
+> sans mot de passe source (saisi ou déjà stocké) - les problèmes sont
+> listés en rouge au-dessus du formulaire et rien n'est enregistré tant
+> qu'ils ne sont pas corrigés. Sur une base fraîche, choisissez un
+> **Stream Label** si aucun n'est sélectionné ; le premier est le défaut.
+
 > **Conseil opérateur.** Un badge rouge sur Stream 1
 > signifie que les auditeurs n'entendent rien. Vérifiez
 > Icecast (`Get-Service icecast2`), credentials, port

@@ -7,14 +7,18 @@
 .DESCRIPTION
     T22.1 - Idempotent NSSM install script for RASTATIME-ICECAST.
 
-    RASTATIME-ICECAST is the OPTIONAL Icecast 2.x stream server.
-    Install it only if the deployment requires:
+    RASTATIME-ICECAST is the Icecast 2.x stream server - required for
+    listeners; the DJ harbor and the fallback mounts depend on it:
       * Outgoing public audio streams (HTTP/Opus/MP3 for internet listeners)
+      * The -standby fallback mounts fed by RASTATIME-STANDBY (listeners
+        stay connected while RASTATIME-LIQUIDSOAP restarts)
       * Incoming remote live-stream ingress (source client -> Icecast mount
         -> RASTATIME-PLAYOUT)
 
-    When Icecast is absent, audio reaches listeners only through the local
-    soundcard.  The rest of the RASTATIME stack does not depend on Icecast.
+    The script refuses to install when the Icecast config file is missing
+    or still holds the CHANGEME placeholders of the example: without a
+    readable config icecast.exe hangs silently (no port, no log) while
+    NSSM reports Running (fresh-machine rehearsal 2026-11-02).
 
     Port assignment (see docs/architecture/SERVICE_TOPOLOGY.md §5):
         RASTATIME-API runs on port 8765, so Icecast can use the standard
@@ -64,9 +68,10 @@
         -IcecastExe "D:\icecast\icecast.exe" -StartService
 
 .NOTES
-    OPTIONAL service - only install if streaming is required.
-    Icecast is independent of the RASTATIME stack; it can be started at
-    any time without affecting the API, worker, or playout services.
+    Stream server - required for listeners; the DJ harbor and the fallback
+    mounts depend on it.  Icecast itself does not depend on the API,
+    worker or playout services and can be (re)started at any time; stop
+    RASTATIME-STANDBY first when restarting it (RESTART_ORDER.md §5.4).
 
     Default Icecast port is 8000 (separate from RASTATIME-API on 8765).
     The <logdir> in icecast.xml should be set to C:/rastatime/logs so
@@ -171,12 +176,29 @@ function Test-IcecastPresent {
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "  RASTATIME  -  NSSM service install: $ServiceName  (T22.1)" -ForegroundColor Cyan
-Write-Host "  [OPTIONAL - install only if streaming is required]" -ForegroundColor DarkYellow
+Write-Host "  [stream server - required for listeners; the DJ harbor and the fallback mounts depend on it]" -ForegroundColor DarkYellow
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 
 $nssm      = Find-Nssm
 $iceCfg    = Resolve-IcecastConfig
+
+# The config must exist and be filled in before anything is installed:
+# without it icecast.exe hangs silently (no port 8000, no log line) while
+# NSSM reports Running (fresh-machine rehearsal 2026-11-02, INSTALL Step 9g).
+if (-not (Test-Path $iceCfg)) {
+    Write-Err "Icecast config not found: $iceCfg"
+    Write-Err "Fix: copy $InstallRoot\config\icecast.xml.example to $InstallRoot\config\icecast.xml,"
+    Write-Err "     replace the four CHANGEME passwords and <hostname> (INSTALL.md Step 9g), then re-run."
+    exit 1
+}
+if (Select-String -Path $iceCfg -Pattern 'CHANGEME' -SimpleMatch -Quiet) {
+    Write-Err "Icecast config still holds the CHANGEME placeholder(s): $iceCfg"
+    Write-Err "Fix: replace the four CHANGEME passwords (source, relay, admin, master) and <hostname>"
+    Write-Err "     as in INSTALL.md Step 9g, then re-run."
+    exit 1
+}
+
 # Icecast working directory: the install root (parent of bin\), so it can
 # resolve its web\ and admin\ subdirectories relative to AppDirectory.
 if ($IcecastRoot -ne "") {
@@ -260,9 +282,16 @@ Write-Host ""
 if ($StartService) {
     Write-Step "Starting '$ServiceName'..."
     & $nssm start $ServiceName
-    Start-Sleep -Seconds 4
+    # Poll up to 30 s (every 2 s) until the service reports Running.
+    $svc = $null
+    $waited = 0
+    while ($waited -lt 30) {
+        Start-Sleep -Seconds 2
+        $waited += 2
+        $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+        if ($svc -and $svc.Status -eq 'Running') { break }
+    }
 
-    $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
     if ($svc -and $svc.Status -eq 'Running') {
         Write-OK "$ServiceName is Running."
         Write-Host "  Stream / Status URL : http://localhost:8000/"      -ForegroundColor Green

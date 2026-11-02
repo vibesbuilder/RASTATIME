@@ -125,6 +125,11 @@ $rtTip = function ($text) {
                     <dd>
                         <select id="soundcard-main-output" name="main_output_id" style="width:100%">
                             <option value=""><?php echo _("— Loading devices …") ?></option>
+                            <?php /* RASTATIME 2026-11-02 - permanent option: no local monitor
+                                   output at all (the playout renders "none" into rastatime.liq);
+                                   soundcardsetting.js keeps data-permanent options when it
+                                   fills in the device list. */ ?>
+                            <option value="none" data-permanent="1"><?php echo _("Off - stream only (no local monitor output)") ?></option>
                         </select>
 
                         <?php
@@ -146,7 +151,7 @@ $rtTip = function ($text) {
                         // the operator in the first place.
                         $rtActive = function_exists('rastatime_active_main_output')
                             ? rastatime_active_main_output()
-                            : ['known' => false, 'os_default' => false, 'endpoint_id' => ''];
+                            : ['known' => false, 'os_default' => false, 'off' => false, 'endpoint_id' => ''];
 
                         $rtSavedId = '';
                         $rtSavedName = '';
@@ -165,8 +170,17 @@ $rtTip = function ($text) {
 
                         $rtMismatch = false;
                         $rtActiveText = '';
+                        // RASTATIME 2026-11-02 - the saved "none" (Off) reads as its label,
+                        // not as the raw id, in the mismatch sentence below.
+                        $rtSavedLabel = $rtSavedId === 'none'
+                            ? _('off (stream only)')
+                            : ($rtSavedName !== '' ? $rtSavedName : $rtSavedId);
                         if ($rtActive['known']) {
-                            if ($rtActive['os_default']) {
+                            if (!empty($rtActive['off'])) {
+                                // RASTATIME 2026-11-02 - Main Output off, stream only
+                                $rtActiveText = _('off (stream only)');
+                                $rtMismatch = ($rtSavedId !== 'none');
+                            } elseif ($rtActive['os_default']) {
                                 $rtActiveText = _('system default output');
                                 $rtMismatch = ($rtSavedId !== '');
                             } else {
@@ -183,7 +197,7 @@ $rtTip = function ($text) {
                                     <?php echo sprintf(
                                         _('Currently active: %1$s — this does not match the saved device (%2$s). Either it has not been applied yet, or the device cannot be opened; see the playout log.'),
                                         '<strong>' . htmlspecialchars($rtActiveText, ENT_QUOTES) . '</strong>',
-                                        htmlspecialchars($rtSavedName !== '' ? $rtSavedName : $rtSavedId, ENT_QUOTES)
+                                        htmlspecialchars($rtSavedLabel, ENT_QUOTES)
                                     ) ?>
                                 <?php else: ?>
                                     <?php echo sprintf(

@@ -16,8 +16,8 @@ on a fresh Windows machine.  By the end you will have:
 - The RASTATIME codebase deployed to `C:\rastatime`
 - A Python virtual environment with all dependencies
 - A `rastatime.conf` configuration file pointing at your PostgreSQL database
-- All eight NSSM Windows services registered and running (the seven of
-  `status.ps1` plus the standby source RASTATIME-STANDBY)
+- All eight NSSM Windows services registered and running (all listed by
+  `status.ps1`, incl. the standby source RASTATIME-STANDBY)
 - A rendered Liquidsoap production script (`C:\Tools\liquidsoap\rastatime.liq`)
 - A healthy API confirmed by `status.ps1`
 
@@ -548,9 +548,10 @@ Run the install scripts as **Administrator**, in dependency order:
 ```powershell
 # Open an elevated PowerShell prompt, then:
 
-# 9a — API (mandatory; start immediately).  -ApiHost 127.0.0.1: the
-# script's default 0.0.0.0 would expose the API on the LAN (TEST_PLAN A1.5);
-# Apache reaches it through 127.0.0.1.
+# 9a — API (mandatory; start immediately).  -ApiHost 127.0.0.1 is the
+# script's default since 2026-11-02 (before: 0.0.0.0, which exposed the
+# API on the LAN - TEST_PLAN A1.5); the argument is kept explicit for
+# clarity.  Apache reaches the API through 127.0.0.1.
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-api.ps1 `
     -InstallRoot C:\rastatime `
@@ -563,7 +564,9 @@ Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 # Expected: StatusCode 200
 Get-NetTCPConnection -State Listen -LocalPort 8765   # 127.0.0.1 only
 
-# 9b — Worker (mandatory)
+# 9b — Worker.  A placeholder service without jobs yet (it runs an idle
+# loop - "dev stub (no real handlers registered)"); status.ps1 lists it
+# as optional.
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-worker.ps1 `
     -InstallRoot C:\rastatime `
@@ -598,11 +601,9 @@ nssm set RASTATIME-PLAYOUT AppEnvironmentExtra `
     "RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS=7" `
     "RASTATIME_LIQUIDSOAP_RESTART_AT_MB=2560" `
     "RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB=2816"
-nssm start RASTATIME-PLAYOUT
-# nssm may answer "Unexpected status SERVICE_START_PENDING in response to
-# START control" (exit 1): the service reaches Running within ~15 s.
-# Check: Get-Service RASTATIME-PLAYOUT = Running, and playout-stdout.log
-# shows "Health gate: API healthy" and "Rendered ...\rastatime.liq".
+Start-Service RASTATIME-PLAYOUT   # waits until the service is Running
+# Check: playout-stdout.log shows "Health gate: API healthy" and
+# "Rendered ...\rastatime.liq".
 # Until 9h the log also shows telnet errors on 127.0.0.1:1234 and up to
 # three "nssm restart RASTATIME-LIQUIDSOAP exited 3: Can't open service!"
 # - expected, the Liquidsoap service does not exist yet.
@@ -650,7 +651,7 @@ Test-Path C:\Tools\liquidsoap\rastatime.liq   # must be True; if False,
 
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\backend\playout\config\nssm-install-liquidsoap.ps1
-nssm start RASTATIME-LIQUIDSOAP
+Start-Service RASTATIME-LIQUIDSOAP   # waits until the service is Running
 
 # 9i — Standby source for the Icecast fallback mounts (after 9g and 9h).
 # A second, tiny Liquidsoap streams silence to /<mount>-standby with the
@@ -714,21 +715,23 @@ powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\status.ps1
 ```
 
-Expected output (all seven services; HTTP probes for API, Apache and
-Icecast):
+Expected output (all eight services; HTTP probes for API, Apache and
+Icecast; the worker is listed as optional - placeholder service, 9b):
 ```
-  RASTATIME-API         Running    HTTP 200 healthy
-  RASTATIME-WORKER      Running
-  RASTATIME-PLAYOUT     Running
-  RASTATIME-ANALYZER    Running
-  RASTATIME-APACHE      Running    HTTP 200 healthy
-  RASTATIME-ICECAST     Running    HTTP 200 healthy
-  RASTATIME-LIQUIDSOAP  Running
+              RASTATIME-API         Running    HTTP 200 healthy
+  [optional]  RASTATIME-WORKER      Running
+              RASTATIME-PLAYOUT     Running
+              RASTATIME-ANALYZER    Running
+              RASTATIME-APACHE      Running    HTTP 200 healthy
+              RASTATIME-ICECAST     Running    HTTP 200 healthy
+              RASTATIME-LIQUIDSOAP  Running
+              RASTATIME-STANDBY     Running
   All mandatory services are Running.
 ```
 
-`status.ps1` does not list RASTATIME-STANDBY (9i) yet; check it on its
-own: `Get-Service RASTATIME-STANDBY` must be `Running`.
+`status.ps1` lists RASTATIME-STANDBY (9i) since 2026-11-02; the separate
+`Get-Service RASTATIME-STANDBY` in 9i is only the first check right
+after its installation.
 
 If any mandatory service shows `Stopped` or `Not installed`, see §5
 (Troubleshooting) or `docs\operator\RESTART_ORDER.md` §5 for per-service
@@ -838,8 +841,8 @@ Apache serves `index.php` but PHP dies before any output because
 
 After completing §4, verify each item:
 
-- [ ] `status.ps1` shows all seven services `Running` (incl. the HTTP probes)
-- [ ] `Get-Service RASTATIME-STANDBY` shows `Running` (not in `status.ps1`)
+- [ ] `status.ps1` shows all eight services `Running` (incl. the HTTP probes;
+      RASTATIME-STANDBY is listed since 2026-11-02)
 - [ ] `Get-Service RabbitMQ` shows `Running`
 - [ ] `http://127.0.0.1:8765/health` returns HTTP 200
 - [ ] `http://127.0.0.1:8765/api/v2/schema/swagger-ui` loads the API docs

@@ -17,11 +17,14 @@
                     <br>
                     <dd id="streamFormat-element" class="radio-list">
                         <?php $i = 0;
-                        $value = $this->form->getElement('streamFormat')->getValue();
+                        // RASTATIME 2026-11-02 - compare as integers: on a fresh database the
+                        // value is '' and under PHP 8 (0 == '') is false, so no radio was
+                        // checked and the browser posted no streamFormat at all (HTTP 500).
+                        $value = (int) ($this->form->getElement('streamFormat')->getValue() ?: 0);
                         ?>
                         <?php foreach ($this->form->getElement('streamFormat')->getMultiOptions() as $radio) : ?>
                             <label for="streamFormat-<?php echo $i ?>">
-                                <input type="radio" value="<?php echo $i ?>" id="streamFormat-<?php echo $i ?>" name="streamFormat" <?php if ($i == $value) {
+                                <input type="radio" value="<?php echo $i ?>" id="streamFormat-<?php echo $i ?>" name="streamFormat" <?php if ((int) $i === $value) {
                                                                                                                                         echo 'checked="checked"';
                                                                                                                                     } ?>>
                                 <?php echo $radio ?><br><br>

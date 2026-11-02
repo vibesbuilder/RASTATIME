@@ -81,13 +81,16 @@ def test_probe_command_is_registered_with_the_callbacks():
     assert out.index(PROBE) < out.index(MASTER_ON)
 
 
-def test_no_harbor_renders_no_callbacks_and_no_probe():
+def test_no_harbor_renders_no_callbacks_and_the_probe_answers_none():
     out = _active(lc.render_rastatime_liq([_stream()]))
     assert "rastatime_source_event" not in out
     # 2026-09-28: the Live Text hook has its own http.post (/live-text);
     # only the harbor callbacks must be absent here
     assert "/source-event" not in out
-    assert PROBE not in out
+    # 2026-11-02: the probe stays and answers "none" so PLAYOUT knows this
+    # is a setting (no DJ harbor), not an older render
+    assert PROBE in out
+    assert '"source_events", fun (_) -> "none")' in out
 
 
 def test_source_event_url_none_disables_callbacks():

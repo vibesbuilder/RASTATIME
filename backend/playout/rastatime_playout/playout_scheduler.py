@@ -1251,6 +1251,37 @@ class PlayoutScheduler:
         self._queued_ahead = None
         self._queued_ahead_prev = None
 
+    def _forget_current_after_restart(self, why: str) -> None:
+        """
+        RASTATIME 2026-11-02 - an UNPLANNED Liquidsoap restart (crash +
+        NSSM restart, or the operator's ``nssm restart`` a few seconds
+        after PLAYOUT's own start) leaves the fresh instance on
+        ``silence_fallback``: its queue is empty, but this scheduler
+        still believed the running item was on air and never pushed it
+        again - the station stayed silent until the row ended or PLAYOUT
+        was restarted (fresh-machine rehearsal 2026-11-02 02:28, ~6 min
+        of silence).  The planned restart path (``_after_liquidsoap_restart``)
+        clears the same bookkeeping; do it here too, so the refresh pass
+        that follows the detection re-arms the running item as a catch-up
+        (``Catch-up: in-progress event ... entering at +N s``) exactly
+        like a PLAYOUT start does.  A pre-warmed source died with the old
+        instance as well.
+        """
+        with self._lock:
+            current = self._current_event
+            self._prepared = None
+            self._playing_key = None
+            self._current_event = None
+            self._current_started_at = None
+            self._current_clip_seconds = None
+        if current is not None:
+            logger.warning(
+                "%s: the fresh instance plays nothing - re-arming %r as a catch-up "
+                "on this refresh pass.",
+                why,
+                getattr(current, "track_title", None) or getattr(current, "uri", None) or current,
+            )
+
     def _maybe_reinit_after_liquidsoap_restart(self) -> None:
         """
         Detect a Liquidsoap restart and re-apply the initial state
@@ -1291,6 +1322,7 @@ class PlayoutScheduler:
                 )
                 return
             self._forget_queued_ahead("Liquidsoap restarted")
+            self._forget_current_after_restart("Liquidsoap restarted")
             self._request_source_reconcile()
         else:
             self._last_liquidsoap_uptime = uptime
@@ -1327,6 +1359,7 @@ class PlayoutScheduler:
             return  # baseline kept -> detected again next cycle
         self._last_liquidsoap_process = ident
         self._forget_queued_ahead("Liquidsoap restarted")
+        self._forget_current_after_restart("Liquidsoap restarted")
         self._request_source_reconcile()
 
     def ensure_liquidsoap_initial_state(
@@ -2412,6 +2445,17 @@ class PlayoutScheduler:
         self._starting[key] = event
         try:
             self._on_file_start_impl(key, event, seek)
+        except Exception:  # pylint: disable=broad-exception-caught
+            # RASTATIME 2026-11-02 - this runs on a Timer thread: an
+            # unhandled exception used to vanish into stderr and the row
+            # simply never played (rehearsal 2026-11-02: silence after a
+            # catch-up with no further line in playout-stdout.log).  Log it
+            # where the operator looks and let the next row proceed.
+            logger.exception(
+                "PLAY  %s failed with an unexpected error - the row stays silent, "
+                "the next row starts on its own timer.",
+                key,
+            )
         finally:
             self._starting.pop(key, None)
             self._queue_deferred_ahead()

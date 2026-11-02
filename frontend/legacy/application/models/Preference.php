@@ -370,7 +370,11 @@ class Application_Model_Preference
 
     public static function GetStreamLabelFormat()
     {
-        return self::getValue('stream_label_format');
+        // RASTATIME 2026-11-02 - a fresh database has no stream_label_format row, so
+        // getValue() yields ''; option 0 ("Artist - Title") is the default then.
+        $format = self::getValue('stream_label_format');
+
+        return ($format === '' || $format === false || $format === null) ? '0' : (string) $format;
     }
 
     public static function getOffAirMeta()
@@ -2737,11 +2741,17 @@ class Application_Model_Preference
      */
     public static function setLiquidsoapError($stream_id, $msg, $boot_time = null)
     {
-        $update_time = Application_Model_Preference::GetStreamUpdateTimestemp();
+        // RASTATIME 2026-11-02 - the playout posts "OK" on connect and otherwise
+        // Liquidsoap's connection error (e.g. "Connection failed: 401, ...");
+        // Settings -> Streams shows it in the status box.  A message without
+        // boot_time is always stored; with a boot_time only when that engine
+        // started after the operator's last save, so an engine still running
+        // the old configuration cannot overwrite a fixed one.
+        $update_time = (int) Application_Model_Preference::GetStreamUpdateTimestemp();
 
-        if ($boot_time == null || $boot_time > $update_time) {
-            $stream_id = trim($stream_id, 's');
-            self::setValue("stream_liquidsoap_status:{$stream_id}", $msg);
+        if ($boot_time === null || $boot_time === '' || (int) $boot_time > $update_time) {
+            $stream_id = trim((string) $stream_id, 's');
+            self::setValue("stream_liquidsoap_status:{$stream_id}", (string) $msg);
         }
     }
 
@@ -2750,6 +2760,19 @@ class Application_Model_Preference
         $result = self::getValue("stream_liquidsoap_status:{$stream_id}");
 
         return ($result !== false) ? $result : null;
+    }
+
+    /**
+     * RASTATIME 2026-11-02 - forget the stored Liquidsoap connection
+     * messages of all three streams; called when the operator saves
+     * Settings -> Streams, so a stale error does not outlive a fixed
+     * configuration.
+     */
+    public static function clearLiquidsoapErrors()
+    {
+        for ($i = 1; $i <= 3; ++$i) {
+            self::setValue("stream_liquidsoap_status:{$i}", '');
+        }
     }
 
     public static function GetAllListenerStatErrors()

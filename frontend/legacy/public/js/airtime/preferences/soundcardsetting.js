@@ -57,11 +57,16 @@
    */
   function fillSelect(selectId, devices, addNone, currentId) {
     var $sel = $("#" + selectId);
+    // RASTATIME 2026-11-02 - options the page marks data-permanent (the
+    // "Off - stream only" choice, value "none") survive the fill and sit
+    // right after the "None" (system default) entry.
+    var $permanent = $sel.find("option[data-permanent]").detach();
     $sel.empty();
 
     if (addNone) {
       $sel.append($("<option>").val("").text("— " + AIRTIME.i18n.none + " —"));
     }
+    $sel.append($permanent);
 
     $.each(devices, function (_, dev) {
       // RASTATIME 2026-05-14 — B.4 #4 output side: stash friendly name

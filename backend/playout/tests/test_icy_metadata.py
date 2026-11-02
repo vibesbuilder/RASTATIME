@@ -131,7 +131,7 @@ def test_full_render_has_icy_block_and_offair_fallback():
     assert (
         out.index("def icy_label(m) =")
         < out.index("def offair_mark() =")
-        < out.index("\noutput.icecast(\n")
+        < out.index("\nrt_stream_1 = output.icecast(\n")  # bound since 2026-11-02
     )
     assert '  name="RASTATIME",\n' in out  # the stream's own name wins
 

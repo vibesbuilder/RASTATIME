@@ -6,11 +6,16 @@
 .DESCRIPTION
     T22.3 - Status and health helper for the RASTATIME service stack.
 
-    For each of the seven RASTATIME NSSM services (API, WORKER, PLAYOUT,
-    ANALYZER, APACHE, ICECAST, LIQUIDSOAP) this script reports:
+    For each of the eight RASTATIME NSSM services (API, WORKER, PLAYOUT,
+    ANALYZER, APACHE, ICECAST, LIQUIDSOAP, STANDBY) this script reports:
         * Windows SCM status (Running / Stopped / not installed)
-        * PID and uptime (if running)
-        * Recent log tail (configurable line count)
+        * PID, start time and uptime of the service process and - for the
+          NSSM-wrapped services - of the child process NSSM runs (the real
+          engine); a child younger than 120 s under an older service is
+          flagged "[WARN] restarted <n> s ago" (crash loop still reads
+          Running otherwise)
+        * Recent log tail (configurable line count) with the log file's
+          last write time and age
 
     Additionally, live HTTP probes:
         * RASTATIME-API     : http://127.0.0.1:8765/health   (expect 200)
@@ -98,14 +103,19 @@ $Services = @(
         Logs        = @("$InstallRoot\logs\api-stdout.log",
                         "$InstallRoot\logs\api-stderr.log")
         Optional    = $false
+        Note        = $null
         HttpUrl     = $ApiHealthUrl
         InstallHint = "infra\nssm\install-api.ps1"
     },
     [PSCustomObject]@{
+        # Placeholder service: the worker registers no jobs yet (runs as
+        # "dev stub (no real handlers registered)", fresh-machine rehearsal
+        # 2026-11-02 finding 13) - optional until it does real work.
         Name        = "RASTATIME-WORKER"
         Logs        = @("$InstallRoot\logs\worker-stdout.log",
                         "$InstallRoot\logs\worker-stderr.log")
-        Optional    = $false
+        Optional    = $true
+        Note        = "placeholder service - no jobs registered yet (idle loop only)"
         HttpUrl     = $null
         InstallHint = "infra\nssm\install-worker.ps1"
     },
@@ -114,6 +124,7 @@ $Services = @(
         Logs        = @("$InstallRoot\logs\playout-stdout.log",
                         "$InstallRoot\logs\playout-stderr.log")
         Optional    = $false
+        Note        = $null
         HttpUrl     = $null
         InstallHint = "infra\nssm\install-playout.ps1  (then re-apply the engine env vars - MIGRATION.md 4.7)"
     },
@@ -122,6 +133,7 @@ $Services = @(
         Logs        = @("$InstallRoot\logs\analyzer-stdout.log",
                         "$InstallRoot\logs\analyzer-stderr.log")
         Optional    = $false
+        Note        = $null
         HttpUrl     = $null
         InstallHint = "infra\nssm\install-analyzer.ps1"
     },
@@ -130,6 +142,7 @@ $Services = @(
         Logs        = @("$InstallRoot\logs\apache-nssm-stdout.log",
                         "$InstallRoot\logs\apache-nssm-stderr.log")
         Optional    = $false
+        Note        = $null
         HttpUrl     = $ApacheUrl
         InstallHint = "infra\nssm\install-apache.ps1"
     },
@@ -138,6 +151,7 @@ $Services = @(
         Logs        = @("$InstallRoot\logs\icecast-nssm-stdout.log",
                         "$InstallRoot\logs\icecast-nssm-stderr.log")
         Optional    = $false
+        Note        = $null
         HttpUrl     = $IcecastUrl
         InstallHint = "infra\nssm\install-icecast.ps1 -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe'"
     },
@@ -146,8 +160,22 @@ $Services = @(
         Logs        = @("$InstallRoot\logs\liquidsoap-stdout.log",
                         "$InstallRoot\logs\liquidsoap-stderr.log")
         Optional    = $false
+        Note        = $null
         HttpUrl     = $null
         InstallHint = "backend\playout\config\nssm-install-liquidsoap.ps1"
+    },
+    [PSCustomObject]@{
+        # Standby Liquidsoap feeding the Icecast -standby fallback mounts
+        # (listeners stay connected while RASTATIME-LIQUIDSOAP restarts).
+        # nssm-install-standby.ps1 routes stderr into standby-stdout.log as
+        # well, so the stderr file may not exist.
+        Name        = "RASTATIME-STANDBY"
+        Logs        = @("$InstallRoot\logs\standby-stdout.log",
+                        "$InstallRoot\logs\standby-stderr.log")
+        Optional    = $false
+        Note        = $null
+        HttpUrl     = $null
+        InstallHint = "backend\playout\config\nssm-install-standby.ps1"
     }
 )
 
@@ -196,6 +224,14 @@ function Get-StatusColor([string]$Status) {
     return "DarkYellow"
 }
 
+# Compact age / uptime text: "45 s", "94 min", "5 h 12 min", "3 d 02 h".
+function Format-Age([TimeSpan]$Span) {
+    if ($Span.TotalSeconds -lt 120)  { return ("{0} s" -f [int][math]::Floor($Span.TotalSeconds)) }
+    if ($Span.TotalMinutes -lt 120)  { return ("{0} min" -f [int][math]::Floor($Span.TotalMinutes)) }
+    if ($Span.TotalHours -lt 48)     { return ("{0} h {1:D2} min" -f [int][math]::Floor($Span.TotalHours), $Span.Minutes) }
+    return ("{0} d {1:D2} h" -f $Span.Days, $Span.Hours)
+}
+
 # ---------------------------------------------------------------------------
 # Tail a log file
 # ---------------------------------------------------------------------------
@@ -205,14 +241,60 @@ function Show-LogTail([string]$LogPath, [int]$Lines) {
         Write-Host "    [log not found: $LogPath]" -ForegroundColor DarkGray
         return
     }
-    $content = Get-Content $LogPath -ErrorAction SilentlyContinue
-    if (-not $content -or $content.Count -eq 0) {
+    # Header with the file's last write (local time) and age: a stderr tail
+    # often shows stale lines from an earlier start.
+    $item = Get-Item $LogPath -ErrorAction SilentlyContinue
+    if ($item) {
+        $lastWrite = $item.LastWriteTime
+        $age = Format-Age ((Get-Date) - $lastWrite)
+        Write-Host "    [log: $LogPath - last write $($lastWrite.ToString('yyyy-MM-dd HH:mm:ss')), $age ago]" -ForegroundColor DarkGray
+    }
+    # The services write UTF-8; @() keeps .Count valid for a one-line file
+    # under Set-StrictMode (Get-Content returns a bare string then).
+    $content = @(Get-Content $LogPath -Encoding UTF8 -ErrorAction SilentlyContinue)
+    if ($content.Count -eq 0) {
         Write-Host "    [empty]" -ForegroundColor DarkGray
         return
     }
-    $tail = $content | Select-Object -Last $Lines
+    $tail = @($content | Select-Object -Last $Lines)
     foreach ($line in $tail) {
         Write-Host "    $line" -ForegroundColor Gray
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Process start time / uptime of the service process and NSSM's child
+# ---------------------------------------------------------------------------
+function Show-ProcessUptime([string]$SvcName) {
+    # NSSM is the service process; the child it runs is the real engine.  A
+    # crash loop keeps the SCM status at Running while the child is restarted,
+    # so a young child under an old service process is flagged.
+    $wsvc = Get-CimInstance Win32_Service -Filter "Name='$SvcName'" -ErrorAction SilentlyContinue
+    if (-not $wsvc -or -not $wsvc.ProcessId -or $wsvc.ProcessId -eq 0) { return }
+    $svcPid  = [int]$wsvc.ProcessId
+    $svcProc = Get-CimInstance Win32_Process -Filter "ProcessId=$svcPid" -ErrorAction SilentlyContinue
+    if (-not $svcProc -or -not $svcProc.CreationDate) {
+        Write-Host "  PID         : $svcPid" -ForegroundColor Gray
+        return
+    }
+    $now    = Get-Date
+    $svcUp  = $now - $svcProc.CreationDate
+    Write-Host ("  PID         : {0}  ({1})  started {2:yyyy-MM-dd HH:mm:ss}  uptime {3}" -f `
+        $svcPid, $svcProc.Name, $svcProc.CreationDate, (Format-Age $svcUp)) -ForegroundColor Gray
+
+    # Console programs (Icecast, Liquidsoap) also get a conhost.exe child - skip it.
+    $child = @(Get-CimInstance Win32_Process -Filter "ParentProcessId=$svcPid" -ErrorAction SilentlyContinue |
+               Where-Object { $_.CreationDate -and $_.Name -ne 'conhost.exe' } | Sort-Object CreationDate) | Select-Object -First 1
+    if (-not $child) { return }
+    $childUp = $now - $child.CreationDate
+    Write-Host ("  Child PID   : {0}  ({1})  started {2:yyyy-MM-dd HH:mm:ss}  uptime {3}" -f `
+        $child.ProcessId, $child.Name, $child.CreationDate, (Format-Age $childUp)) -ForegroundColor Gray -NoNewline
+    # Young child under a service process that is itself older than the
+    # threshold = NSSM restarted the engine (crash or planned restart).
+    if ($childUp.TotalSeconds -lt 120 -and $svcUp.TotalSeconds -ge 120) {
+        Write-Host ("  [WARN] restarted {0} s ago" -f [int][math]::Floor($childUp.TotalSeconds)) -ForegroundColor DarkYellow
+    } else {
+        Write-Host ""
     }
 }
 
@@ -260,6 +342,9 @@ function Show-ServiceStatus([PSCustomObject]$Svc) {
     $color = Get-StatusColor $svcObj.Status
     Write-Host "  Status      : $(Format-Status $svcObj.Status)" -ForegroundColor $color -NoNewline
     Write-Host "  StartType: $($svcObj.StartType)" -ForegroundColor Gray
+    if ($Svc.Note) {
+        Write-Host "  Note        : $($Svc.Note)" -ForegroundColor DarkYellow
+    }
 
     # NSSM richer detail (if available)
     if ($Nssm) {
@@ -269,24 +354,10 @@ function Show-ServiceStatus([PSCustomObject]$Svc) {
         }
     }
 
-    # PID (Windows 2008+ / PS 4+)
-    try {
-        $proc = Get-WmiObject Win32_Service -Filter "Name='$($Svc.Name)'" -ErrorAction SilentlyContinue
-        if ($proc -and $proc.ProcessId -and $proc.ProcessId -ne 0) {
-            $pid_ = $proc.ProcessId
-            Write-Host "  PID         : $pid_" -ForegroundColor Gray -NoNewline
-            # Uptime via Process object
-            $p = Get-Process -Id $pid_ -ErrorAction SilentlyContinue
-            if ($p) {
-                $uptime = (Get-Date) - $p.StartTime
-                $uptimeStr = "{0}d {1:D2}h {2:D2}m {3:D2}s" -f `
-                    $uptime.Days, $uptime.Hours, $uptime.Minutes, $uptime.Seconds
-                Write-Host "    uptime: $uptimeStr" -ForegroundColor Gray
-            } else {
-                Write-Host ""
-            }
-        }
-    } catch { <# non-fatal #> }
+    # PID, start time and uptime of the service process and NSSM's child
+    if ($svcObj.Status -eq 'Running') {
+        try { Show-ProcessUptime -SvcName $Svc.Name } catch { <# non-fatal #> }
+    }
 
     # HTTP probe (API / Apache / Icecast)
     if ($Svc.HttpUrl) {
@@ -338,7 +409,14 @@ function Show-Summary([System.Collections.Generic.List[PSCustomObject]]$Results)
     Write-Host "    RASTATIME-APACHE     : port 80    (HTTP, web UI; proxies /api/v2/ to $ApiPort)" -ForegroundColor Gray
     Write-Host "    RASTATIME-API        : port $ApiPort  (HTTP, Waitress)" -ForegroundColor Gray
     Write-Host "    RASTATIME-ICECAST    : port $IcecastPort  (HTTP, listener streams + admin)" -ForegroundColor Gray
-    Write-Host "    RASTATIME-LIQUIDSOAP : port 8001  (DJ harbor - /main + /show share it), telnet 1234 (localhost)" -ForegroundColor Gray
+    # 8001 is only open when stream.harbor is configured (rastatime.conf).
+    $harbor = Get-NetTCPConnection -State Listen -LocalPort 8001 -ErrorAction SilentlyContinue
+    if ($harbor) {
+        Write-Host "    RASTATIME-LIQUIDSOAP : port 8001  (DJ harbor - /main + /show share it), telnet 1234 (localhost)" -ForegroundColor Gray
+    } else {
+        Write-Host "    RASTATIME-LIQUIDSOAP : telnet 1234 (localhost); DJ harbor 8001 not listening (no stream.harbor configured)" -ForegroundColor Gray
+    }
+    Write-Host "    RASTATIME-STANDBY    : no port (feeds the Icecast -standby mounts)" -ForegroundColor Gray
     Write-Host "    RabbitMQ             : port 5672 (managed externally)" -ForegroundColor Gray
     Write-Host "    PostgreSQL           : port 5432 (managed externally)" -ForegroundColor Gray
     Write-Host ""

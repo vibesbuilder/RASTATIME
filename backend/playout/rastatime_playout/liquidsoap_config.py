@@ -215,6 +215,9 @@ DEFAULT_HARBOR_TIMEOUT_SECONDS = 5.0
 # static harbor password from rastatime.conf is the only check then.
 DEFAULT_DJ_AUTH_URL = "http://127.0.0.1:8770/dj-auth"
 DEFAULT_DJ_AUTH_TIMEOUT_SECONDS = 3.0
+# RASTATIME 2026-11-02 - output.icecast connect / error reports.  None
+# renders plain outputs without callbacks (the standby script does that).
+DEFAULT_STREAM_STATUS_URL = "http://127.0.0.1:8770/stream-event"
 
 
 # ---------------------------------------------------------------------
@@ -682,9 +685,21 @@ def _render_icecast_block(
     *,
     station_name: str = DEFAULT_STATION_NAME,
     icy_song: Optional[str] = "icy_song_title",
+    index: Optional[int] = None,
+    status_url: Optional[str] = None,
 ) -> str:
     """
     Render one output.icecast(...) block from a stream_output_N dict.
+
+    RASTATIME 2026-11-02 - with ``index`` (the N of ``stream_output_N``)
+    and ``status_url`` the output is bound to ``rt_stream_N`` and reports
+    its connection state to PLAYOUT (``/stream-event``): ``on_connect``
+    posts ``ok``, ``on_error`` posts the error text and keeps the stdlib
+    retry (``restart_in(3.)``).  PLAYOUT forwards it to the web
+    application, which shows it under Settings -> Streams instead of the
+    bare "Icecast is running" (fresh-machine rehearsal: an empty mount /
+    password produced ``401 Authentication Required`` every 3 s for half
+    an hour while the page looked fine).
 
     Required keys (silently skipped if missing): type, host, port,
     mount, pass.  Optional: user, name, description, genre, url,
@@ -764,8 +779,9 @@ def _render_icecast_block(
     # custom 5 s back-off if operator wants tighter control.)
     # The trailing comment names the mount so operator-side grep
     # against the rendered .liq is easy.
-    return (
-        "output.icecast(\n"
+    bind = f"rt_stream_{int(index)} = " if index is not None and status_url else ""
+    block = (
+        f"{bind}output.icecast(\n"
         f"  {encoder},\n"
         f'  host="{host}",\n'
         f"  port={port},\n"
@@ -779,6 +795,46 @@ def _render_icecast_block(
         "  bus,\n"
         f")  # mount {mount} type={stream_type} {bitrate}k\n"
     )
+    if not bind:
+        return block
+    n = int(index)
+    return block + (
+        f"# RASTATIME 2026-11-02 - stream {n} reports its state to PLAYOUT\n"
+        "# (Settings -> Streams shows the last Liquidsoap message).\n"
+        f"rt_stream_{n}.on_connect(synchronous=false, fun () ->\n"
+        f'  rastatime_stream_event({n}, "ok", "connected"))\n'
+        f"rt_stream_{n}.on_error(synchronous=false, fun (~restart_in, err) ->\n"
+        "  begin\n"
+        f'    rastatime_stream_event({n}, "error", "#{{err}}")\n'
+        "    restart_in(3.)\n"
+        "  end)\n"
+    )
+
+
+def _render_stream_event_function(url: str, timeout_seconds: float = 2.0) -> str:
+    """
+    Render ``rastatime_stream_event(n, status, message)``: POST the
+    state of output.icecast number ``n`` to PLAYOUT from a detached
+    task (a slow or absent listener must never stall the output's
+    error handler).  Failures are logged, never raised.
+    """
+    target = _escape_liq_string(url)
+    timeout = _format_crossfade_duration(timeout_seconds)
+    return (
+        "# RASTATIME 2026-11-02 - output.icecast connect / error -> PLAYOUT\n"
+        "# /stream-event -> web application (Settings -> Streams status box).\n"
+        "def rastatime_stream_event(n, status, message) =\n"
+        "  thread.run(fun () ->\n"
+        "    try\n"
+        f'      ignore(http.post(timeout={timeout}, data="",\n'
+        f'        "{target}?stream=#{{n}}&status=#{{status}}"\n'
+        '          ^ "&message=#{url.encode(message)}"))\n'
+        "    catch err do\n"
+        '      log(level=3, label="rastatime.stream_event",\n'
+        '        "POST stream #{n}/#{status} failed: #{err}")\n'
+        "    end)\n"
+        "end\n"
+    )
 
 
 def _render_icecast_outputs(
@@ -786,6 +842,7 @@ def _render_icecast_outputs(
     *,
     station_name: str = DEFAULT_STATION_NAME,
     icy_song: Optional[str] = "icy_song_title",
+    status_url: Optional[str] = None,
 ) -> str:
     """
     Render all output.icecast(...) blocks back-to-back, separated by
@@ -799,10 +856,25 @@ def _render_icecast_outputs(
             "Liquidsoap will run idle.  Pypo logs a warning at "
             "startup.)\n"
         )
-    blocks = [
-        _render_icecast_block(s, station_name=station_name, icy_song=icy_song)
-        for s in stream_outputs
-    ]
+    blocks = []
+    if status_url:
+        blocks.append(_render_stream_event_function(status_url))
+    for position, s in enumerate(stream_outputs, start=1):
+        # The N of stream_output_N when the caller numbered the dicts
+        # (``_read_stream_outputs(numbered=True)``), else the position.
+        try:
+            index = int(s.get("stream_id") or position)
+        except (TypeError, ValueError):
+            index = position
+        blocks.append(
+            _render_icecast_block(
+                s,
+                station_name=station_name,
+                icy_song=icy_song,
+                index=index if status_url else None,
+                status_url=status_url,
+            )
+        )
     return "\n".join(blocks)
 
 
@@ -1041,7 +1113,16 @@ def _render_local_output_block(
             + '  mksafe(id="portaudio_safe", bus_for_portaudio),\n'
             ")\n"
         )
-    return "# (local output disabled via RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false)\n"
+    # RASTATIME 2026-11-02 - no output.portaudio at all: Main Output "Off"
+    # (Settings -> Local Machine, stored id "none") or the machine variable.
+    # The marker line is read by the Settings page (check.php) so it shows
+    # "off (stream only)" as the active monitor.
+    why = (
+        "Main Output set to Off (stream only) in Settings -> Local Machine"
+        if endpoint_id == "none"
+        else "RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT=false"
+    )
+    return f"# rastatime-main-output: none\n# (local output disabled: {why})\n"
 
 
 def _render_harbor_inputs_block(
@@ -1057,6 +1138,7 @@ def _render_harbor_inputs_block(
     source_event_timeout_seconds: float = DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS,
     timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
     dj_auth_url: Optional[str] = DEFAULT_DJ_AUTH_URL,
+    stream_status_url: Optional[str] = DEFAULT_STREAM_STATUS_URL,
 ) -> str:
     """
     Render the Liquidsoap ``input.harbor`` block(s) for the DJ-Master
@@ -1129,6 +1211,12 @@ def _render_harbor_inputs_block(
         return (
             "# (no DJ-source harbor enabled — stream.harbor.{main,show}_password\n"
             "#  are unset in rastatime.conf; bus stays on the scheduled queue)\n"
+            "# RASTATIME 2026-11-02 - tell PLAYOUT's reconciler that this is a\n"
+            "# setting, not an older render: it then logs once at INFO instead\n"
+            '# of warning "no harbor source events (older render)" forever.\n'
+            'server.register(namespace="rastatime", '
+            'description="Harbor source events rendered (option d)",\n'
+            '  "source_events", fun (_) -> "none")\n'
         )
     if source_event_url:
         parts.append(
@@ -1633,18 +1721,19 @@ def _render_linein_input_block(
         '  "",\n'
         ")\n"
         "\n"
-        "# audio_to_stereo fixes the content type to audio=pcm(stereo).\n"
+        "# stereo() fixes the content type to audio=pcm(stereo)\n"
+        "# (2026-11-02: was audio_to_stereo, deprecated in 2.4.6).\n"
         "# input.ffmpeg returns a polymorphic source('a) (audio+video\n"
         "# capable); without this the switch() below rejects the arm\n"
         "# with a type mismatch against the other (audio-only) sources.\n"
-        "linein_dshow = audio_to_stereo(linein_raw)\n"
+        "linein_dshow = stereo(linein_raw)\n"
         "\n"
         "# input.ffmpeg does NOT auto-register its runtime controls as\n"
         "# telnet commands (unlike input.http).  Register them manually\n"
         '# under the "linein" namespace so Pypo can drive the dshow\n'
         "# device at show-start/-end.  Commands act on linein_raw (the\n"
         "# input.ffmpeg source that has set_url/start/stop/status; the\n"
-        "# audio_to_stereo wrapper doesn't expose them).  Spike-verified\n"
+        "# stereo wrapper doesn't expose them).  Spike-verified\n"
         "# 2026-05-30.\n"
         "server.register(\n"
         '  namespace="linein", description="Set the dshow input spec",\n'
@@ -1692,7 +1781,7 @@ def _render_linein_input_block(
         'linein_http_drain_name = ref("")\n'
         'linein_http_raw = source.dynamic(id="linein_http", self_sync=false,\n'
         "  track_sensitive=false, {linein_http_current()})\n"
-        "linein_http = audio_to_stereo(linein_http_raw)\n"
+        "linein_http = stereo(linein_http_raw)\n"
         "\n"
         "def linein_http_arm(s, name) =\n"
         "  linein_http_current.set(s)\n"
@@ -2426,6 +2515,7 @@ def render_rastatime_liq(
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     harbor_timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
     dj_auth_url: Optional[str] = DEFAULT_DJ_AUTH_URL,
+    stream_status_url: Optional[str] = DEFAULT_STREAM_STATUS_URL,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -2488,6 +2578,7 @@ def render_rastatime_liq(
     icecast_blocks = _render_icecast_outputs(
         stream_outputs,
         station_name=icy_station_name,
+        status_url=stream_status_url,
     )
     icy_block = _render_icy_metadata_block(
         icy_label_format,
@@ -2607,6 +2698,7 @@ def write_rastatime_liq(
     source_event_url: Optional[str] = DEFAULT_SOURCE_EVENT_URL,
     harbor_timeout_seconds: float = DEFAULT_HARBOR_TIMEOUT_SECONDS,
     dj_auth_url: Optional[str] = DEFAULT_DJ_AUTH_URL,
+    stream_status_url: Optional[str] = DEFAULT_STREAM_STATUS_URL,
     webstream_enabled: bool = DEFAULT_WEBSTREAM_ENABLED,
     webstream_max_buffer_seconds: float = DEFAULT_WEBSTREAM_MAX_BUFFER_SECONDS,
     webstream_timeout_seconds: float = DEFAULT_WEBSTREAM_TIMEOUT_SECONDS,
@@ -2671,6 +2763,7 @@ def write_rastatime_liq(
         source_event_url=source_event_url,
         harbor_timeout_seconds=harbor_timeout_seconds,
         dj_auth_url=dj_auth_url,
+        stream_status_url=stream_status_url,
         webstream_enabled=webstream_enabled,
         webstream_max_buffer_seconds=webstream_max_buffer_seconds,
         webstream_timeout_seconds=webstream_timeout_seconds,

@@ -212,6 +212,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Install-Probe: 14 Produktbefunde behoben** (2026-11-02, Operator-Go je Befund; Liste in
+  `docs/operator/INSTALL_PROBE.md` §5 und BACKLOG „Phase 5 Produktbefunde“).  Neu dabei:
+  - **Settings → Local Machine → Main Output „Off - stream only“**: rendert keinen `output.portaudio`
+    (Marker `# rastatime-main-output: none`); für kopflose oder virtuelle Maschinen, auf denen ein
+    Unterlauf des Monitor-Ausgangs die ganze Engine beendete (Befund 3; `output.portaudio` hat in 2.4.6
+    kein `on_error`, `settings.clock.allow_streaming_errors` gibt es nicht mehr).
+  - **Settings → Streams zeigt die Liquidsoap-Meldung**: jeder `output.icecast` ist an `rt_stream_N`
+    gebunden und meldet `on_connect` / `on_error` an PLAYOUT `/stream-event`; PLAYOUT reicht den Text an
+    `api/update-liquidsoap-status` weiter (einmal je Änderung, `stream_status.py`), die Seite zeigt ihn
+    statt „Icecast is running. Start RASTATIME-PLAYOUT …“, solange der Mount fehlt; Speichern löscht die
+    gespeicherten Meldungen (Befund 6).
+  - **Pflichtfelder für aktivierte Streams**: Mount, Port 1-65535 und Quell-Passwort (gepostet oder
+    gespeichert); bei Verstoß wird nichts gespeichert, die Meldungen bleiben stehen (die Seite lud bisher
+    bei jedem Fehler neu, `valid` war der String `'false'`).
+  - **`status.ps1`**: RASTATIME-STANDBY als achter Dienst, Prozess- und Kind-Prozess-Uptime je Dienst mit
+    `[WARN] restarted n s ago` (Crash-Schleifen sichtbar), Alter der Log-Schwänze, UTF-8, Port 8001 nur wenn
+    etwas lauscht, WORKER als optional (Befund 8).
+  - **`bootstrap.ps1`** prüft `httpd -t` und die acht PHP-Erweiterungen aus INSTALL_APACHE §3 (Befund 10;
+    auf der Studio-Maschine fehlt `extension=zip`, siehe Known Issues).
+  - Rendered `rastatime.liq` ohne DJ-Harbor registriert `rastatime.source_events` mit Antwort `none`,
+    PLAYOUT loggt einmal INFO statt der Warnung „older render“ (Befund 11).
 - **GitHub Phase 5 vorbereitet: Install-Probe auf frischer Windows-VM** (2026-11-01).  Neues Protokoll
   `docs/operator/INSTALL_PROBE.md` (Regeln, Download-Liste mit den Versionen der Studio-Maschine, Zeile je
   INSTALL-Abschnitt mit Ergebnis/Minuten/Abweichung, Abnahme aus TEST_PLAN, Fazit für v1.0.0).  Vorab gegen die
@@ -848,6 +869,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Settings → Streams speicherte auf frischer Datenbank nicht** (2026-11-02, Install-Probe Befund 1):
+  ohne `stream_label_format` war kein „Stream Label“-Radio vorgewählt (`0 == ''` ist unter PHP 8 falsch),
+  der Browser schickte kein `streamFormat`, `setStreamPreferences` warf HTTP 500.  Jetzt Default `'0'` im
+  Modell, Vergleich als Integer in der Ansicht, `?? '0'` im Controller.
+- **Stille Station nach ungeplantem Liquidsoap-Neustart** (2026-11-02, Befund 2): die Neustart-Erkennung
+  (Prozesstabelle / uptime) setzte Gates und Sentinel zurück, vergaß aber den laufenden Titel nicht - die
+  frische Instanz blieb auf `silence_fallback`.  Jetzt werden `_playing_key` / `_current_event` /
+  Vorwärmung geleert und der Refresh-Durchlauf armiert den Titel als Catch-up am Offset, wie beim
+  PLAYOUT-Start.  Zusätzlich loggt `_on_file_start` eine unerwartete Ausnahme des Timer-Threads statt sie
+  stumm nach stderr zu verlieren.  Die Ursache des in der Probe beobachteten Hängers nach
+  `Liquidsoap stop (deferred up to 0.5s)` ist offen (VM-Log angefordert).
+- **Web-Anwendung legt `storage.path` an** statt mit „does not exists!“ jede Seite zu verweigern
+  (Befund 7); `install-icecast.ps1` verweigert eine fehlende `icecast.xml` oder eine mit `CHANGEME`
+  (Befund 5, Icecast hing sonst stumm bei „Running“) und nennt sich nicht mehr `[OPTIONAL]`;
+  `install-api.ps1` bindet standardmäßig auf 127.0.0.1 (Befund 4); PLAYOUT prüft vor `nssm restart`, ob
+  RASTATIME-LIQUIDSOAP registriert ist (Befund 9, drei ERROR-Zeilen je Neuinstallation); die Installer
+  pollen bis 30 s auf Running statt nach 4 s zu warnen, INSTALL 9d/9h nutzen `Start-Service` (Befund 14);
+  `stereo()` statt des veralteten `audio_to_stereo`, keine doppelte `flush_and_skip`-Registrierung
+  (Befund 12); Worker nennt sich Platzhalter-Dienst (Befund 13).
 - **Analyzer: Cue-Punkte wurden seit Mai nie berechnet** (2026-11-01, Befund beim Anpassen der Analyzer-Testsuite,
   Commit `686ad377`).  Neuere ffmpeg-Builds melden den Filter als `[Parsed_silencedetect_N @ ...]`, der
   LibreTime-Parser erwartete `[silencedetect @ ...]`; `compute_silences()` lieferte darum eine leere Liste,

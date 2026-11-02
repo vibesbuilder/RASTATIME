@@ -14,7 +14,7 @@
     Service properties (see docs/architecture/SERVICE_TOPOLOGY.md §2.1):
         NSSM name  : RASTATIME-API
         Executable : python.exe  (from the install-root venv)
-        Arguments  : -m rastatime_api.waitress_serve --host 0.0.0.0 --port 8765 --threads 8
+        Arguments  : -m rastatime_api.waitress_serve --host 127.0.0.1 --port 8765 --threads 8
         Port       : 8765  (HTTP, Waitress)
         Logs       : C:\rastatime\logs\api-stdout.log
                      C:\rastatime\logs\api-stderr.log
@@ -32,8 +32,10 @@
     Default: <InstallRoot>\config\rastatime.conf
 
 .PARAMETER ApiHost
-    IP address for Waitress to bind on.
-    Default: 0.0.0.0
+    IP address for Waitress to bind on.  The API is reached through
+    Apache's local proxy, so the default keeps port 8765 on loopback
+    (TEST_PLAN A1.5).  Pass 0.0.0.0 only for a deliberately LAN-exposed API.
+    Default: 127.0.0.1  (was 0.0.0.0 before 2026-11-02)
 
 .PARAMETER ApiPort
     TCP port for the Waitress WSGI server.
@@ -73,7 +75,7 @@
 param(
     [string] $InstallRoot = "C:\rastatime",
     [string] $ConfigFile  = "",
-    [string] $ApiHost     = "0.0.0.0",
+    [string] $ApiHost     = "127.0.0.1",
     [int]    $ApiPort     = 8765,
     [int]    $ApiThreads  = 8,
     [string] $NssmExe     = "",
@@ -257,9 +259,17 @@ Write-OK "Environment variables set."
 if ($StartService) {
     Write-Step "Starting '$ServiceName'..."
     & $nssm start $ServiceName
-    Start-Sleep -Seconds 4
+    # Poll up to 30 s (every 2 s): the service sits in StartPending while
+    # Python boots and is usually Running after 10-20 s.
+    $svc = $null
+    $waited = 0
+    while ($waited -lt 30) {
+        Start-Sleep -Seconds 2
+        $waited += 2
+        $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+        if ($svc -and $svc.Status -eq 'Running') { break }
+    }
 
-    $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
     if ($svc -and $svc.Status -eq 'Running') {
         Write-OK "$ServiceName is Running."
     } else {

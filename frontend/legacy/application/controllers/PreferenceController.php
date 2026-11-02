@@ -1023,7 +1023,23 @@ class PreferenceController extends Zend_Controller_Action
                 $values[$v[0]] = $v[1];
             }
 
-            if ($form->isValid($values)) {
+            // RASTATIME 2026-11-02 - an enabled stream needs a mount point, a
+            // valid port and a source password (posted or already stored);
+            // Liquidsoap otherwise connects to mount "/" without a password
+            // and gets 401 forever while the status box still says "Icecast is
+            // running" (install rehearsal).  Nothing is saved on a violation.
+            $streamErrors = $this->validateEnabledStreams($values);
+            $formValid = $form->isValid($values);
+
+            if ($formValid && !empty($streamErrors)) {
+                $items = '';
+                foreach ($streamErrors as $error) {
+                    $items .= '<li>' . htmlspecialchars($error, ENT_QUOTES) . '</li>';
+                }
+                $this->view->statusMsg = "<div class='errors' style='height: auto'><ul style='margin: 4px 0; list-style: none'>" . $items . '</ul></div>';
+            }
+
+            if ($formValid && empty($streamErrors)) {
                 // this goes into cc_pref table
                 $this->setStreamPreferences($values);
 
@@ -1067,6 +1083,9 @@ class PreferenceController extends Zend_Controller_Action
 
                 // store stream update timestamp
                 Application_Model_Preference::SetStreamUpdateTimestamp();
+                // RASTATIME 2026-11-02 - a stale Liquidsoap connection error must
+                // not outlive the configuration it belonged to.
+                Application_Model_Preference::clearLiquidsoapErrors();
 
                 $this->view->statusMsg = "<div class='success'>" . _('Stream Setting Updated.') . '</div>';
             }
@@ -1077,15 +1096,56 @@ class PreferenceController extends Zend_Controller_Action
         $this->view->form = $form;
 
         if ($request->isPost()) {
-            if ($form->isValid($values)) {
-                $this->_helper->json->sendJson([
-                    'valid' => 'true',
-                    'html' => $this->view->render('preference/stream-setting.phtml'),
-                ]);
-            } else {
-                $this->_helper->json->sendJson(['valid' => 'false', 'html' => $this->view->render('preference/stream-setting.phtml')]);
+            // RASTATIME 2026-11-02 - real booleans: streamsetting.js reloaded the
+            // page on the string 'false' too (truthy), so an error message never
+            // stayed on screen.
+            $this->_helper->json->sendJson([
+                'valid' => $formValid && empty($streamErrors),
+                'html' => $this->view->render('preference/stream-setting.phtml'),
+            ]);
+        }
+    }
+
+    /**
+     * RASTATIME 2026-11-02 - plausibility of the enabled output streams
+     * before anything is saved (see streamSettingAction).
+     *
+     * @param array $values the flattened POST values (s{N}_data[field] => value)
+     *
+     * @return string[] one translated message per problem, empty when all is well
+     */
+    private function validateEnabledStreams(array $values): array
+    {
+        $errors = [];
+        for ($i = 1; $i <= 3; ++$i) {
+            $ns = "s{$i}_data";
+            $rawEnable = $values["{$ns}[enable]"] ?? '0';
+            if ($rawEnable !== '1' && $rawEnable !== 'true') {
+                continue;
+            }
+
+            $mount = ltrim(trim((string) ($values["{$ns}[mount]"] ?? '')), '/');
+            if ($mount === '') {
+                $errors[] = sprintf(_('Stream %d: mount point is required when the stream is enabled.'), $i);
+            }
+
+            $port = trim((string) ($values["{$ns}[port]"] ?? '8000'));
+            if (!ctype_digit($port) || (int) $port < 1 || (int) $port > 65535) {
+                $errors[] = sprintf(_('Stream %d: port must be a number between 1 and 65535.'), $i);
+            }
+
+            // A blank password field keeps the stored one (setStreamPreferences).
+            $pass = (string) ($values["{$ns}[pass]"] ?? '');
+            if ($pass === '') {
+                $existing = Application_Model_Preference::GetStreamOutput($i);
+                $pass = (string) ($existing['pass'] ?? '');
+            }
+            if ($pass === '') {
+                $errors[] = sprintf(_('Stream %d: source password is required when the stream is enabled.'), $i);
             }
         }
+
+        return $errors;
     }
 
     /**
@@ -1258,7 +1318,9 @@ class PreferenceController extends Zend_Controller_Action
     private function setStreamPreferences($values)
     {
         Application_Model_Preference::setOffAirMeta($values['offAirMeta']);
-        Application_Model_Preference::SetStreamLabelFormat($values['streamFormat']);
+        // RASTATIME 2026-11-02 - no radio checked (fresh database) means no key posted;
+        // option 0 ("Artist - Title") is the default instead of an undefined-key 500.
+        Application_Model_Preference::SetStreamLabelFormat($values['streamFormat'] ?? '0');
         Application_Model_Preference::SetLiveStreamMasterUsername($values['master_username']);
         Application_Model_Preference::SetLiveStreamMasterPassword($values['master_password']);
         Application_Model_Preference::SetDefaultTransitionFade($values['transition_fade']);
@@ -1439,6 +1501,18 @@ class PreferenceController extends Zend_Controller_Action
                 } else {
                     // Icecast not reachable — service not running or wrong host/port
                     $status = 'waiting';
+                }
+
+                // RASTATIME 2026-11-02 - Icecast is up but the mount is missing:
+                // if the playout reported why Liquidsoap cannot connect (e.g.
+                // "Connection failed: 401, Authentication Required", posted to
+                // api/update-liquidsoap-status), show that instead of the
+                // misleading "start the playout" hint.  "OK" and '' mean no error.
+                if ($status === 'inactive') {
+                    $liqError = trim((string) Application_Model_Preference::getLiquidsoapError($i));
+                    if ($liqError !== '' && $liqError !== 'OK') {
+                        $status = $liqError;
+                    }
                 }
             }
             $out[] = ['id' => $i, 'status' => $status];

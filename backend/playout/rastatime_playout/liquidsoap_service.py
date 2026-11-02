@@ -126,6 +126,51 @@ def boot_restart_enabled() -> bool:
 MAIN_OUTPUT_BY_NAME = "name"  # output.portaudio(device_name=...) - index-independent
 MAIN_OUTPUT_BY_INDEX = "index"  # output.portaudio(device_id=N) - valid for one device list only
 MAIN_OUTPUT_DEFAULT = "default"  # no device argument - OS default endpoint
+# RASTATIME 2026-11-02 - Settings -> Local Machine -> Main Output "Off":
+# no output.portaudio at all (stream only; headless or virtual machines,
+# where a PortAudio underflow of the monitor killed the whole engine).
+MAIN_OUTPUT_OFF = "off"
+MAIN_OUTPUT_OFF_ID = "none"  # the stored main_output_id meaning "Off"
+
+
+def liquidsoap_service_installed(
+    *,
+    nssm_exe: str = NSSM_EXE,
+    service: str = LIQUIDSOAP_SERVICE,
+    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+) -> Optional[bool]:
+    """
+    Is the Liquidsoap NSSM service registered?  ``nssm status`` exits 0
+    for a known service and 3 ("Can't open service!") for an unknown
+    one.  Returns None when the question could not be answered (NSSM
+    missing, runner raised, unexpected exit) - callers then proceed as
+    before.
+
+    RASTATIME 2026-11-02 (fresh-machine rehearsal): on a new install
+    PLAYOUT renders rastatime.liq before INSTALL Step 9h registers the
+    service and tried three times to restart it - three ERROR lines
+    ``nssm restart RASTATIME-LIQUIDSOAP exited 3: Can't open service!``
+    on every fresh install.
+    """
+    if not os.path.exists(nssm_exe):
+        return None
+    try:
+        proc = runner(
+            [nssm_exe, "status", service],
+            capture_output=True,
+            text=True,
+            timeout=RESTART_TIMEOUT_SECONDS,
+            check=False,
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.debug("nssm status %s raised: %s", service, exc)
+        return None
+    if proc.returncode == 0:
+        return True
+    detail = ((proc.stdout or "") + (proc.stderr or "")).replace("\x00", "")
+    if proc.returncode == 3 or "Can't open service" in detail:
+        return False
+    return None
 
 
 def restart_liquidsoap_service(
@@ -162,6 +207,18 @@ def restart_liquidsoap_service(
             service,
             reason,
             nssm_exe,
+        )
+        return False
+
+    # RASTATIME 2026-11-02 - a service that is not registered yet (fresh
+    # install between INSTALL Step 9d and 9h) is not an error: say so once
+    # at INFO and leave the fresh render for the service's first start.
+    if liquidsoap_service_installed(nssm_exe=nssm_exe, service=service, runner=runner) is False:
+        logger.info(
+            "%s is not installed yet (%s) - nothing to restart; the service "
+            "loads the current rastatime.liq when INSTALL Step 9h starts it.",
+            service,
+            reason,
         )
         return False
 

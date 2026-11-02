@@ -277,6 +277,10 @@ class _EventHandler(BaseHTTPRequestHandler):
     # RASTATIME 2026-10-22 - /reload-schedule answers at once and hands the
     # refresh to this coalescing runner (set by start_listener).
     reload_runner: Optional["_CoalescingRunner"] = None
+    # RASTATIME 2026-11-02 - /stream-event: output.icecast connect / error
+    # reports from rastatime.liq, forwarded to Settings -> Streams
+    # (stream_status.StreamStatusReporter).
+    stream_status: Optional[object] = None
 
     # Silence the default access log line on stderr; route via our logger.
     def log_message(self, format: str, *args) -> None:  # noqa: A002
@@ -303,6 +307,8 @@ class _EventHandler(BaseHTTPRequestHandler):
                 self._handle_dj_auth_unblock(parsed)
             elif parsed.path == "/live-text":
                 self._handle_live_text()
+            elif parsed.path == "/stream-event":
+                self._handle_stream_event(parsed)
             else:
                 self._send(404, "not found")
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -571,6 +577,33 @@ class _EventHandler(BaseHTTPRequestHandler):
             return
         self._send(200, "ok")
 
+    def _handle_stream_event(self, parsed) -> None:
+        """
+        RASTATIME 2026-11-02 - ``/stream-event?stream=N&status=ok|error
+        &message=<text>`` from the ``rt_stream_N`` callbacks in
+        rastatime.liq.  Replies ``ok`` (200) when accepted or repeated,
+        ``bad request`` (400) for an unusable query, ``error`` (503) when
+        no reporter is wired.
+        """
+        qs = parse_qs(parsed.query)
+        stream = (qs.get("stream", [""])[0] or "").strip()
+        status = (qs.get("status", [""])[0] or "").strip().lower()
+        message = qs.get("message", [""])[0] or ""
+        if not stream.isdigit() or status not in ("ok", "error"):
+            self._send(400, "bad request")
+            return
+        reporter = _EventHandler.stream_status
+        if reporter is None:
+            self._send(503, "error")
+            return
+        try:
+            reporter.report(int(stream), status, message)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("stream-event: report failed: %s", exc)
+            self._send(500, "error")
+            return
+        self._send(200, "ok")
+
     def _handle_reload_schedule(self) -> None:
         """
         Trigger an immediate schedule refresh.
@@ -753,10 +786,24 @@ def _source_events_present(client) -> bool:
     ``on``; an older render replies ``ERROR: unknown command``.  Raises
     whatever the telnet client raises.
     """
+    return _probe_source_events(client) in ("on", "none")
+
+
+def _probe_source_events(client) -> str:
+    """
+    Normalised reply of ``rastatime.source_events``: ``"on"`` (harbors
+    rendered with callbacks), ``"none"`` (no DJ harbor rendered at all -
+    ``stream.harbor`` unset, nothing to verify; since 2026-11-02),
+    ``"absent"`` (older render without the marker command) or whatever
+    else the script answered.
+    """
     reply = client.send_command(SOURCE_EVENTS_PROBE).strip()
     if reply.startswith("ERROR"):
-        return False
-    return reply.lower().startswith("on")
+        return "absent"
+    lowered = reply.lower()
+    if lowered.startswith("on"):
+        return "on"
+    return lowered
 
 
 def _liquidsoap_state_poll_loop(
@@ -834,8 +881,19 @@ def _liquidsoap_state_poll_loop(
     while max_ticks is None or ticks < max_ticks:
         try:
             if events_present is not True:
-                probed = _source_events_present(client)
-                if probed and events_present is not None:
+                state = _probe_source_events(client)
+                probed = state in ("on", "none")
+                if state == "none":
+                    # RASTATIME 2026-11-02 - no DJ harbor is configured
+                    # (stream.harbor unset): that is a setting, not an
+                    # older render; nothing to verify.
+                    logger.info(
+                        "SourceSwitcher: the loaded rastatime.liq has no DJ harbor "
+                        "(stream.harbor unset in rastatime.conf) - nothing to verify; "
+                        "checking again every %.0fs",
+                        interval_s,
+                    )
+                elif probed and events_present is not None:
                     logger.info(
                         "SourceSwitcher: the loaded rastatime.liq posts harbor "
                         "events - verifying every %.0fs from now on",
@@ -881,6 +939,7 @@ def start_listener(
     reconcile_interval_s: float = DEFAULT_RECONCILE_INTERVAL_S,
     dj_auth: Optional[object] = None,
     live_text: Optional[object] = None,
+    stream_status: Optional[object] = None,
 ) -> ThreadingHTTPServer:
     """
     Start the HTTP listener for the internal RASTATIME endpoints:
@@ -929,6 +988,7 @@ def start_listener(
     )
     _EventHandler.dj_auth = dj_auth  # /dj-auth (RASTATIME 2026-09-10)
     _EventHandler.live_text = live_text  # /live-text (RASTATIME 2026-09-28)
+    _EventHandler.stream_status = stream_status  # /stream-event (RASTATIME 2026-11-02)
     server = ThreadingHTTPServer((host, port), _EventHandler)
     thread = threading.Thread(
         target=server.serve_forever,
@@ -939,7 +999,7 @@ def start_listener(
     logger.info(
         "Playout HTTP listener bound to http://%s:%d "
         "(/source-event, /source-state, /reload-schedule, "
-        "/disconnect-source, /set-audio-output, /dj-auth)",
+        "/disconnect-source, /set-audio-output, /dj-auth, /live-text, /stream-event)",
         host,
         port,
     )

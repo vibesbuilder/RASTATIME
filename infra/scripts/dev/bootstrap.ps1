@@ -17,9 +17,16 @@
         - RabbitMQ (Windows service or rabbitmq-server on PATH) §2.4
         - NSSM        C:\Tools\nssm\nssm.exe                  §2.5
         - Apache      C:\Tools\Apache24\bin\httpd.exe         §2.6
+          + httpd -t must print "Syntax OK"          INSTALL_APACHE §2
         - PHP         C:\Tools\PHP\php.exe                    §2.6
+          + php -m must list curl fileinfo gettext mbstring openssl
+            pdo_pgsql sockets zip                    INSTALL_APACHE §3
         - Icecast     C:\Tools\Icecast\bin\icecast.exe        §2.7
         - FFmpeg      C:\ffmpeg\bin\ffmpeg.exe + ffprobe.exe  §2.8
+
+    The two configuration checks (2026-11-02) skip with [SKIP] when the
+    tool itself is missing; the fresh-machine rehearsal was green with a
+    broken httpd.conf and a php.ini that loaded no extension.
 
     Optional (reported, never fatal):
         - Composer    C:\Tools\composer\composer.phar (needed for a git
@@ -272,6 +279,90 @@ function Test-Tool {
 }
 
 
+function Resolve-ToolPath {
+    <#
+    The path Test-Tool would accept: the production path first, then PATH.
+    Returns $null when neither exists (the configuration checks then skip).
+    #>
+    param(
+        [Parameter(Mandatory)] [string] $ExpectedPath,
+        [string] $PathCommand = ''
+    )
+    if (Test-Path $ExpectedPath) { return $ExpectedPath }
+    if ($PathCommand) {
+        $cmd = Get-Command $PathCommand -ErrorAction SilentlyContinue
+        if ($cmd) { return $cmd.Source }
+    }
+    return $null
+}
+
+
+function Test-ApacheSyntax {
+    <#
+    httpd -t must print "Syntax OK" (RASTATIME 2026-11-02): the rehearsal
+    VM had a FcgidMaxRequestLen line Apache could not parse and this
+    script was still green.  httpd writes the verdict to stderr; cmd /c
+    merges both streams so PowerShell 5.1 does not wrap the lines in
+    ErrorRecords.  Returns $true / $false, or $null when httpd.exe is
+    missing (the Apache check above already failed then).
+    #>
+    param([string] $HttpdExe)
+    $tag = 'Apache config syntax (httpd -t)  [INSTALL_APACHE §2]'
+    if (-not $HttpdExe) {
+        Write-Skip $tag 'httpd.exe not found - see the Apache check above'
+        return $null
+    }
+    $out = @()
+    try {
+        $out = @(& cmd /c "`"$HttpdExe`" -t 2>&1")
+    } catch {
+        $out = @("$($_.Exception.Message)")
+    }
+    if (@($out | Where-Object { "$_" -match 'Syntax OK' }).Count -gt 0) {
+        Write-Pass $tag "$HttpdExe -t: Syntax OK"
+        return $true
+    }
+    $firstError = @($out | Where-Object { "$_" -match '\S' } | Select-Object -First 1)
+    $detail = if ($firstError.Count -gt 0) { "$($firstError[0])" } else { 'no output from httpd -t' }
+    Write-Fail $tag $detail
+    Write-Info 'Fix httpd.conf per INSTALL_APACHE §2, then re-run httpd -t.'
+    return $false
+}
+
+
+function Test-PhpExtensions {
+    <#
+    php -m must list the extensions the frontend needs (RASTATIME
+    2026-11-02): composer.lock requires mbstring and sockets, the code
+    uses PDO pgsql, curl, gettext, fileinfo, openssl and zip.  A stock
+    php.ini-production has every extension= line commented out, so a
+    fresh php.exe -v passes while the web application cannot start.
+    Returns $true / $false, or $null when php.exe is missing.
+    #>
+    param([string] $PhpExe)
+    $required = @('curl', 'fileinfo', 'gettext', 'mbstring', 'openssl', 'pdo_pgsql', 'sockets', 'zip')
+    $tag = 'PHP extensions (php -m)  [INSTALL_APACHE §3]'
+    if (-not $PhpExe) {
+        Write-Skip $tag 'php.exe not found - see the PHP check above'
+        return $null
+    }
+    $loaded = @()
+    try {
+        $loaded = @(& cmd /c "`"$PhpExe`" -m 2>&1" | ForEach-Object { "$_".Trim().ToLower() })
+    } catch {
+        $loaded = @()
+    }
+    $missing = @($required | Where-Object { $loaded -notcontains $_ })
+    if ($missing.Count -eq 0) {
+        Write-Pass $tag ($required -join ' ')
+        return $true
+    }
+    Write-Fail $tag "missing: $($missing -join ' ')"
+    Write-Info 'INSTALL_APACHE §3 (extension_dir + extension= lines in php.ini).'
+    return $false
+}
+
+
 function Test-ComposerPhar {
     <#
     Composer is a .phar run through PHP, so the version probe needs php.exe.
@@ -324,6 +415,10 @@ $apacheOk    = Test-Tool -Label 'Apache httpd 2.4' -Section '2.6' `
 $phpOk       = Test-Tool -Label 'PHP 8.x' -Section '2.6' `
     -ExpectedPath (Join-Path $TOOLS 'PHP\php.exe') -PathCommand 'php' -VersionArgs @('-v') `
     -Hint 'PHP NTS x64 zip to C:\Tools\PHP (INSTALL_APACHE.md).'
+# Configuration checks (2026-11-02): a present binary with a broken config
+# is not a working frontend.
+$apacheSyntaxOk = Test-ApacheSyntax -HttpdExe (Resolve-ToolPath -ExpectedPath (Join-Path $TOOLS 'Apache24\bin\httpd.exe') -PathCommand 'httpd')
+$phpExtOk       = Test-PhpExtensions -PhpExe (Resolve-ToolPath -ExpectedPath (Join-Path $TOOLS 'PHP\php.exe') -PathCommand 'php')
 $icecastOk   = Test-Tool -Label 'Icecast 2.5' -Section '2.7' `
     -ExpectedPath (Join-Path $TOOLS 'Icecast\bin\icecast.exe') -PathCommand 'icecast' -VersionArgs @('-v') `
     -Hint 'Icecast win64 build to C:\Tools\Icecast\ so that bin\icecast.exe exists.'
@@ -357,6 +452,9 @@ if (-not $rabbitOk)     { $failed += "RabbitMQ" }
 if (-not $nssmOk)       { $failed += "NSSM" }
 if (-not $apacheOk)     { $failed += "Apache httpd" }
 if (-not $phpOk)        { $failed += "PHP" }
+# $null = skipped because the tool is missing (already counted above)
+if ($apacheSyntaxOk -eq $false) { $failed += "Apache config syntax (httpd -t)" }
+if ($phpExtOk -eq $false)       { $failed += "PHP extensions (php -m)" }
 if (-not $icecastOk)    { $failed += "Icecast" }
 if (-not $ffmpegOk)     { $failed += "FFmpeg" }
 if (-not $ffprobeOk)    { $failed += "FFprobe" }

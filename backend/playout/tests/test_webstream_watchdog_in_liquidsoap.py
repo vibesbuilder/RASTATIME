@@ -52,7 +52,8 @@ def test_default_render_carries_the_in_process_watchdog():
     ) < liq.index("bus.on_frame(")
     # ... and before the outputs that consume the bus (line start: the
     # template's header comment also mentions output.icecast)
-    assert liq.index("bus.on_frame(") < liq.index("\noutput.icecast(")
+    # (2026-11-02: the outputs are bound to rt_stream_N for the status callbacks)
+    assert liq.index("bus.on_frame(") < liq.index("\nrt_stream_1 = output.icecast(")
 
 
 def test_dropped_inputs_are_remembered_and_reaped():

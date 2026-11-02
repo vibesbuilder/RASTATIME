@@ -1107,8 +1107,10 @@ def test_full_render_default_includes_linein_input_block():
     assert "self_sync=false" in active
     # Empty initial input spec (Pypo sets it via linein.set_url before start)
     assert '  "",' in active
-    # audio_to_stereo fixes the polymorphic input.ffmpeg type for the switch
-    assert "linein_dshow = audio_to_stereo(linein_raw)" in active
+    # stereo() fixes the polymorphic input.ffmpeg type for the switch
+    # (2026-11-02: audio_to_stereo is deprecated in Liquidsoap 2.4.6)
+    assert "linein_dshow = stereo(linein_raw)" in active
+    assert "audio_to_stereo(" not in active
     # input.ffmpeg does NOT auto-register commands → manual server.register
     assert "server.register(" in active
     assert 'namespace="linein"' in active
@@ -1125,7 +1127,7 @@ def test_full_render_default_includes_linein_input_block():
     assert 'linein_http_raw = source.dynamic(id="linein_http", self_sync=false,' in active
     assert 's = input.http(id="linein_http_in_#{n}", start=true, self_sync=false,' in active
     assert '    "http://127.0.0.1:8000/linein-capture")' in active
-    assert "linein_http = audio_to_stereo(linein_http_raw)" in active
+    assert "linein_http = stereo(linein_http_raw)" in active
     assert (
         'server.register(namespace="linein_http", description="Open a fresh input for the /linein-capture mount",'
         in active

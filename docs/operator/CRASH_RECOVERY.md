@@ -18,7 +18,7 @@ the planned outage procedures in `docs\operator\RESTART_ORDER.md`.
 powershell -ExecutionPolicy Bypass -File C:\rastatime\infra\nssm\status.ps1
 ```
 
-The output of `status.ps1` covers all seven RASTATIME services — SCM
+The output of `status.ps1` covers all eight RASTATIME services — SCM
 status plus live HTTP probes for the API (8765), Apache (80) and
 Icecast (8000).  Use it to determine which recovery path applies.
 
@@ -82,6 +82,10 @@ If the service restarts successfully, monitor for 60 seconds:
 ```powershell
 powershell -File C:\rastatime\infra\nssm\install-api.ps1 -StartService
 ```
+
+> `install-api.ps1` binds the API to 127.0.0.1 by default (since
+> 2026-11-02; Apache proxies to it locally).  `-ApiHost 0.0.0.0` is only
+> for a deliberately LAN-exposed API.
 
 See `docs\operator\RESTART_ORDER.md` §5 for per-service recovery details.
 
@@ -329,6 +333,9 @@ Remove-Item Env:\PGPASSWORD
 ```powershell
 cd C:\rastatime
 python -m venv .venv
+# A fresh Windows has execution policy Restricted - allow scripts for
+# this window only, or Activate.ps1 is refused:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .venv\Scripts\Activate.ps1
 # Full dependency sequence per INSTALL.md §4 Step 4:
 pip install -r requirements.txt

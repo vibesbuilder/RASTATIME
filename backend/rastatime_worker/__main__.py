@@ -5,8 +5,11 @@ Usage:
     python -m rastatime_worker           # from repo root with PYTHONPATH set
     python -m rastatime_worker --help
 
-In dev mode this runs a stub loop that logs "idle" every IDLE_INTERVAL seconds.
-A real JobRunner implementation (APScheduler-based) will replace this in Phase 8.
+The worker is a placeholder service: it keeps the RASTATIME-WORKER service
+slot (install scripts, status.ps1, RESTART_ORDER) and logs "idle" every
+IDLE_INTERVAL seconds, but no background job is defined yet.  A real
+JobRunner implementation replaces this loop once there is work for it;
+until then the service is optional (fresh-machine rehearsal 2026-11-02).
 """
 
 import argparse
@@ -25,7 +28,7 @@ IDLE_INTERVAL = 5  # seconds between idle heartbeat log lines
 def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m rastatime_worker",
-        description="RASTATIME background worker (dev stub)",
+        description="RASTATIME background worker (placeholder - no jobs defined yet)",
     )
     parser.add_argument(
         "--idle-interval",
@@ -48,8 +51,11 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     logger.info("RASTATIME worker starting")
-    logger.info("Mode      : dev stub (no real handlers registered)")
-    logger.info("Runner    : none (JobRunner ABC not yet instantiated)")
+    # RASTATIME 2026-11-02 - say what this service is: a placeholder that
+    # keeps the service slot (install scripts, status.ps1) until background
+    # jobs exist.  It does no work; status.ps1 lists it as optional.
+    logger.info("Mode      : placeholder service - no background jobs are defined yet")
+    logger.info("Runner    : none (the JobRunner interface is not instantiated)")
     logger.info("Interface : rastatime_worker.interface.JobRunner loaded OK")
     logger.info("idle")  # V: must appear within 2s of start
 

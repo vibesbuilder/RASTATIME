@@ -290,10 +290,22 @@ class Config
         $values['general']['allowed_cors_origins'][] = strval($values['general']['public_url_raw']->withPath(''));
 
         // Storage path
-        if (!is_dir($values['storage']['path'])) {
-            echo "the configured storage.path '{$values['storage']['path']}' does not exists!";
+        // RASTATIME 2026-11-02 - create a missing library folder instead of
+        // refusing every page (a fresh install has none yet); fail only when
+        // that is impossible.  The @ alone is not enough once airtime-boot's
+        // error handler is active, hence the try/catch.
+        $storagePath = $values['storage']['path'];
+        if (!is_dir($storagePath)) {
+            try {
+                $created = @mkdir($storagePath, 0775, true);
+            } catch (Throwable $e) {
+                $created = false;
+            }
+            if (!$created && !is_dir($storagePath)) {
+                echo "the configured storage.path '{$storagePath}' does not exist and could not be created - create it or fix storage.path in rastatime.conf";
 
-            exit;
+                exit;
+            }
         }
         if (!is_writable($values['storage']['path'])) {
             echo "the configured storage.path '{$values['storage']['path']}' is not writable!";

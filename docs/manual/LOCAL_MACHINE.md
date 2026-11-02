@@ -120,6 +120,18 @@ the default audio output. Useful when:
 > audio output module with the device ID set per output. See
 > ARCHITECTURE §9.
 
+### "Off - stream only" (since 2026-11-02)
+
+The **Main Output** list has a permanent entry **Off - stream only (no
+local monitor output)**. Choose it on a machine without a usable sound
+device - a virtual machine, a headless server, a studio that monitors
+the Icecast stream instead: the playout engine then renders no local
+output at all. Why it matters: a buffer underflow of a local output can
+stop the whole engine, streams included (seen twice on a virtual sound
+card during the fresh-machine rehearsal). Apply it like any other Main
+Output change ("Apply now" below); the status line then reads
+**off (stream only)**.
+
 ### Applying a change — "Apply now"
 
 > **Since 2026-09-16 this happens by itself.** After Save the playout

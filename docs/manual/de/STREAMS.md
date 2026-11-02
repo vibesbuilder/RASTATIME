@@ -197,6 +197,18 @@ Der Badge rechts neben dem Namen jedes aktivierten Streams:
 Der Badge aktualisiert sich alle 5 Sekunden über den
 Endpunkt `/api/v2/streams`.
 
+> **Seit 2026-11-02.** Antwortet Icecast, fehlt aber der Mount, zeigt
+> der Statuskasten die letzte Meldung der Playout-Engine selbst
+> (z. B. „Liquidsoap reports: Connection failed: 401, Authentication
+> Required“ bei falschem Quell-Passwort) statt des allgemeinen
+> Hinweises „Icecast is running“; Speichern der Seite löscht sie.
+> Speichern verweigert außerdem einen **aktivierten** Stream ohne
+> Mountpoint, mit Port außerhalb 1-65535 oder ohne Quell-Passwort
+> (eingegeben oder bereits gespeichert) - die Probleme stehen rot über
+> dem Formular, bis sie behoben sind, wird nichts gespeichert. Auf einer
+> frischen Datenbank wählen Sie ein **Stream Label**, falls keines
+> markiert ist; das erste ist der Standard.
+
 > **Operator-Tipp.** Ein roter Badge auf Stream 1
 > bedeutet, dass Hörer nichts hören. Prüfen Sie Icecast
 > (`Get-Service icecast2`), verifizieren Sie

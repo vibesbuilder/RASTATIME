@@ -6473,61 +6473,68 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   **Noch offene Doku-Nachzügler** (gleiche Fehler außerhalb der Probe, klein): UPGRADE.md:131
   `pip install --upgrade pip` → `python -m pip`; `Activate.ps1` ohne Policy-Zeile in UPGRADE.md / CRASH_RECOVERY.md;
   CRASH_RECOVERY.md / RESTART_ORDER.md installieren die API ohne `-ApiHost 127.0.0.1` nach.
-- 🟡 **Phase 5 Produktbefunde (14), Operator-Go je Punkt offen** — Empfehlung der Probe-Sitzung: (1)–(3) vor
-  v1.0.0 beheben, dann den Stream-Teil der Abnahme auf der VM wiederholen; der Rest nach Belieben.
+- ✅ **Phase 5 Produktbefunde (14) - Operator-Go je Befund 2026-11-02, alle 14 gebaut am selben Tag** (Details
+  CHANGELOG 2026-11-02).  **Offen danach:** PLAYOUT-Neustart (Python-Änderungen, neuer Render mit
+  `rt_stream_N`-Callbacks) und F5 im Browser; Browser-Abnahme Settings → Streams (leerer Mount → rote Liste,
+  Liquidsoap-Meldung im Status-Kasten) und Local Machine → Main Output „Off“; Befund 2 Teil 2 - der Hänger nach
+  `Liquidsoap stop (deferred up to 0.5s)` ist ohne das VM-Log (`playout-stdout.log` 02:28-02:35) nicht
+  erklärbar, Log angefordert; `extension=zip` in `C:\Tools\PHP\php.ini` der Studio-Maschine aktivieren
+  (Apache stop/start, Befund von `bootstrap.ps1`); Stream-Teil der Abnahme auf dem VM-Snapshot `03-installed`
+  wiederholen; Manual-Übersetzungen (.po) für sechs neue UI-Strings.
   **Hoch:**
-  1. 🟡 **Settings → Streams speichert auf frischer Datenbank nicht** — `cc_pref` hat kein `stream_label_format`,
+  1. ✅ **Settings → Streams speichert auf frischer Datenbank nicht** — `cc_pref` hat kein `stream_label_format`,
      `preference/stream-setting.phtml` prüft das Radio mit `$i == $value`, unter PHP 8 ist `0 == ''` falsch, kein
      „Stream Label“ vorgewählt, der Browser sendet kein `streamFormat`, `PreferenceController.php:1261` wirft
      `Undefined array key "streamFormat"` → POST 500, der Stream bleibt deaktiviert.  Trifft jede Neuinstallation
      (Studio hat den Schlüssel).  Fix: Default im Formular/Modell (`StreamSetting.php` Radio `streamFormat`) oder
      `$values['streamFormat'] ?? 0`; Workaround steht in INSTALL Schritt 9.
-  2. 🟡 **Stille Station nach Liquidsoap-Neustart** — kommt Liquidsoap einige Sekunden nach PLAYOUTs Start-Catch-up
+  2. ✅ **Stille Station nach Liquidsoap-Neustart** — kommt Liquidsoap einige Sekunden nach PLAYOUTs Start-Catch-up
      zurück, landet der Catch-up im alten Prozess, der neue fällt auf `silence_fallback`, PLAYOUT verbindet neu,
      schiebt den laufenden Titel aber nicht nach; der nächste Zyklus loggt `Catch-up ... entering at +657.9 s` und
      `Liquidsoap stop (deferred up to 0.5s)`, dann nichts mehr (kein `Liquidsoap play`), Telnet antwortet.  Erst ein
      PLAYOUT-Neustart hilft.  Die dokumentierte Folge PLAYOUT → LIQUIDSOAP ist damit zeitabhängig.  Fix-Richtung:
      nach einem Telnet-Reconnect den laufenden Titel erneut übergeben und den Stop-Pfad gegen Hängen absichern
      (`__main__.py`, Catch-up/Reconnect).  Studio-Relevanz: jeder Einstellungs-/geplante Neustart.
-  3. 🟡 **Portaudio-Unterlauf tötet die Engine** — `Fatal error: exception Failure("Portaudio error in write_stream:
+  3. ✅ **Portaudio-Unterlauf tötet die Engine** — `Fatal error: exception Failure("Portaudio error in write_stream:
      Output underflowed")`, Exit 2, zweimal in der VM (VirtualBox HD Audio, `Latency is too high: we must catchup`);
      NSSM startet nach 5 s neu, aber alle Icecast-Ausgänge fallen mit, `status.ps1` meldet weiter Running.  Fix-
      Richtung: Monitor-Ausgang in `output.portaudio` fehlertolerant (`fallible`/`on_error`, eigener Clock oder
      Puffer) oder abschaltbar machen; Preflight-Warnung bei wiederholten Unterläufen.  Studio: Tascam-Kette ist
      stabil (seit 2026-09-14), aber derselbe Pfad.
   **Mittel:**
-  4. 🟡 `infra/nssm/install-api.ps1` Standard `-ApiHost 0.0.0.0` (Zeile 76) → `127.0.0.1`; CRASH_RECOVERY /
+  4. ✅ `infra/nssm/install-api.ps1` Standard `-ApiHost 0.0.0.0` (Zeile 76) → `127.0.0.1`; CRASH_RECOVERY /
      RESTART_ORDER rufen ohne Parameter.
-  5. 🟡 `install-icecast.ps1` prüft `icecast.xml` nicht (Icecast hängt stumm in Sitzung 0, kein Port, kein Log, NSSM
+  5. ✅ `install-icecast.ps1` prüft `icecast.xml` nicht (Icecast hängt stumm in Sitzung 0, kein Port, kein Log, NSSM
      „Running“) und nennt sich `[OPTIONAL]`, obwohl INSTALL Icecast als Teil des Stacks führt → Datei-Prüfung mit
      Abbruch, Banner anpassen.
-  6. 🟡 Settings → Streams nimmt einen aktivierten Stream mit leerem Mount/Passwort an (gerendert `mount="/"`,
+  6. ✅ Settings → Streams nimmt einen aktivierten Stream mit leerem Mount/Passwort an (gerendert `mount="/"`,
      Liquidsoap `401 Authentication Required` alle 3–4 s); die Statuszeile sagt nur „Start RASTATIME-PLAYOUT and
      schedule content“ → Pflichtfelder validieren, 401 aus `liquidsoap-stdout.log` oder Icecast-Status anzeigen.
-  7. 🟡 Web-Anwendung legt `storage.path` nicht an (`conf.php:294`, jede Seite antwortet mit dem 66-Byte-Text „does
+  7. ✅ Web-Anwendung legt `storage.path` nicht an (`conf.php:294`, jede Seite antwortet mit dem 66-Byte-Text „does
      not exists!“) → Ordner anlegen oder den Fix in der Meldung nennen, Grammatik.
-  8. 🟡 `infra/nssm/status.ps1`: kennt RASTATIME-STANDBY nicht; `PropertyNotFoundStrict` bei `$content.Count` auf
+  8. ✅ `infra/nssm/status.ps1`: kennt RASTATIME-STANDBY nicht; `PropertyNotFoundStrict` bei `$content.Count` auf
      einzeiligen Logs (StrictMode, Zeile 209); stderr-Schwänze ohne Alter (zeigen alte Fehler); Logs als ANSI gelesen
      (`â€¦`); Port 8001 gelistet, auch wenn kein Harbor konfiguriert ist; eine Liquidsoap-Crash-Schleife liest sich als
      Running (NSSM-Neustarts/Uptime anzeigen).
-  9. 🟡 PLAYOUT versucht dreimal, einen noch nicht installierten Liquidsoap-Dienst neu zu starten (`nssm restart
+  9. ✅ PLAYOUT versucht dreimal, einen noch nicht installierten Liquidsoap-Dienst neu zu starten (`nssm restart
      RASTATIME-LIQUIDSOAP exited 3: Can't open service!`, drei ERROR-Zeilen bei jeder Neuinstallation zwischen 9d
      und 9h) → Dienst-Existenz vorher prüfen, INFO statt ERROR.
-  10. 🟡 `bootstrap.ps1` prüft weder `httpd -t` noch die PHP-Erweiterungen (war vor den 2.6-Fixes trotzdem grün) →
+  10. ✅ `bootstrap.ps1` prüft weder `httpd -t` noch die PHP-Erweiterungen (war vor den 2.6-Fixes trotzdem grün) →
       `httpd.exe -t` und `php.exe -m` gegen die Liste aus INSTALL_APACHE §3.
   **Niedrig:**
-  11. 💡 PLAYOUT-Warnung „the loaded rastatime.liq has no harbor source events (older render)“ erscheint auch, wenn
+  11. ✅ PLAYOUT-Warnung „the loaded rastatime.liq has no harbor source events (older render)“ erscheint auch, wenn
       schlicht kein `stream.harbor` konfiguriert ist (`source_switcher.py:847`) → Wortlaut unterscheiden.
-  12. 💡 Gerenderte `rastatime.liq`: zwei `lang.deprecated`-Warnungen für `audio_to_stereo` (Line-In-Block,
+  12. ✅ Gerenderte `rastatime.liq`: zwei `lang.deprecated`-Warnungen für `audio_to_stereo` (Line-In-Block,
       `liquidsoap_config.py:1640/1695`), `scheduled.flush_and_skip` doppelt registriert („already registered!
       Previous definition replaced“).
-  13. 💡 RASTATIME-WORKER läuft als `dev stub (no real handlers registered)`, `Runner : none`, `idle` alle 5 s
+  13. ✅ RASTATIME-WORKER läuft als `dev stub (no real handlers registered)`, `Runner : none`, `idle` alle 5 s
       (`backend/rastatime_worker/__main__.py`) — Pflichtdienst ohne Aufgabe; klären, ob er bleibt.
-  14. 💡 `install-worker.ps1` / `install-analyzer.ps1` prüfen den Status zu früh (`[WARN] ... StartPending`, Running
+  14. ✅ `install-worker.ps1` / `install-analyzer.ps1` prüfen den Status zu früh (`[WARN] ... StartPending`, Running
       ≈ 20 s später); `nssm start` meldet `Unexpected status SERVICE_START_PENDING` mit Exit 1 (9d, 9h) — Wartezeit
       oder Running-Poll bis 30 s.
-- 🟢 **Phase 6 Release v1.0.0: noch nicht** — Vorbedingung (1)–(3) oben + Wiederholung des Stream-Teils der Abnahme
-  auf der VM (Snapshot `03-installed`).
+- 🟢 **Phase 6 Release v1.0.0: nach der Abnahme** — (1)–(3) sind gebaut (2026-11-02); Vorbedingung bleibt die
+  Wiederholung des Stream-Teils der Abnahme auf der VM (Snapshot `03-installed`, Branch mit den Fixes) und die
+  Browser-Abnahme der Streams-/Local-Machine-Änderungen im Studio.
 - ✅ **`bootstrap.ps1` modernisiert 2026-11-01** (Operator-Go vor der Probe): alle §2-Komponenten Pflicht mit
   Versionsausgabe (generische `Test-Tool`-Prüfung: Produktionspfad, sonst PATH), Composer/Git optional, VLC raus;
   INSTALL Schritt 2 und INSTALL_PROBE angepasst.  Studio-Maschine: 10/10 grün.

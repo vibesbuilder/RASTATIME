@@ -152,10 +152,11 @@ function checkLiquidsoapStatus() {
         keepPolling = true;
         pollDelay   = 5000;   // check every 5 s to detect stream coming up
       } else {
-        // Unexpected error string returned by the server
+        // RASTATIME 2026-11-02: Liquidsoap's connection error as reported by
+        // the playout (e.g. "Connection failed: 401, Authentication Required")
         html = '<div class="stream-status status-error"><p>' +
-               $.i18n._("Cannot connect to the streaming server") +
-               "</p><p>" + status + "</p></div>";
+               $.i18n._("Liquidsoap reports:") +
+               "</p><p>" + $("<div>").text(status).html() + "</p></div>";
         keepPolling = true;
         pollDelay   = 5000;
       }
@@ -473,7 +474,9 @@ $(document).ready(function () {
 
       $.post(url, { format: "json", data: data }, function (json) {
         $("#content").empty().append(json.html);
-        if (json.valid) {
+        // RASTATIME 2026-11-02: the server sends a real boolean now; the old
+        // string 'false' was truthy and reloaded the page over every error.
+        if (json.valid === true || json.valid === "true") {
           window.location.reload();
         }
         setupEventListeners();
