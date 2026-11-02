@@ -6676,6 +6676,30 @@ Geplanter Schnitt (Empfehlung Go in Stufen, Risiko niedrig fuer den Betrieb):
 4. Apple/Spotify: ueber den CBA-Podcast-Feed, einmalige Einreichung, kein Code.
 Gesamt ~2.000-2.500 Zeilen, ~8 Arbeitstage plus Wartezeit auf CBA.
 
+**Befund 2026-11-02 aus dem AURA-Code (gitlab.servus.at/aura/battery,
+packages/cba_integration + aura_common/apis/cba_api.py):** Der Upload laeuft
+ueber EINEN Aufruf `POST https://cba.media/wp-json/cba/v1/zipupload`
+(multipart: Feld `meta` = JSON, Feld `file` = ZIP mit `audio.<ext>` und
+optional `image.<ext>`), Anmeldung HTTP Basic mit CBA-Benutzername und
+Passwort (Anwendungspasswort), optional Query-Parameter `api_key`, Timeout
+5 min, Antwort `{success, post_id, attachment_ids}` bzw. `{success:false,
+message}`.  `meta`-Felder: `title`, `content`, `teaser`, `languages`
+(Sprachcodes, max. 3), `production_date`, `broadcast_date`,
+`publication_date`, `category_id` (= Thema, Liste via `wp/v2/categories`),
+`series_id` (= Podcast-ID), `status` (private | unlisted | publish | future),
+`license` (Schluessel: copyright, cc by-nc-nd, cc by-nd, cc by-nc, cc by-sa,
+cc by, cc zero, pd), `tags` (kommagetrennt), `editors` (kommagetrennte
+Namen = Redakteur:innen), `contains_copyright` (= AKM-Material),
+`remove_copyright_regions`, `regions` (Abschnitte start/end/type music|
+spokenword/license/title/author/description aus dem Playlog),
+`image_license`, `image_caption`.  AURA verhindert Doppel-Uploads ueber die
+gespeicherte Post-ID und sperrt je Episode.  Damit ist Stufe 0 weitgehend
+geklaert; bei CBA bleibt zu fragen: Erlaubnis/Testpodcast, Rate-Limits,
+ob `api_key` noetig ist.  Operator-Klarstellung 2026-11-02: Automatik =
+Upload UND Veroeffentlichung (status publish) einige Minuten nach dem Ende
+jeder Instanz, Redaktionsteam an der (wiederholenden) Sendung; manuell =
+Kontextmenue einer gelaufenen Instanz im Kalender.  Weiterhin kein Go.
+
 ### 💡 Segmente fuers 7-Days-Back-Archiv: Beschreibungen je Abschnitt einer Sendung (Operator 2026-11-02: vorerst Backlog)
 
 Operator-Notiz: Medienbeschreibung fuer Cue-Punkt-Abschnitte (oder ueber den
