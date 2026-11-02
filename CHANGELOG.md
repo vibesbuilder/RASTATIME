@@ -52,6 +52,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   used“ geschlossen, Update im BACKLOG.  Suiten api 195, playout 865, unit 739, shared 36,
   analyzer 358 grün; `composer audit` sauber.  Wirksam nach Neustart von API, PLAYOUT,
   ANALYZER und WORKER.
+- **GitHub Actions auf Node 24 (2026-11-02, Operator-Go)** — die CI warnte „Node.js 20 is
+  deprecated“; sechs gepinnte Actions auf aktuelle Hauptversionen (SHAs gegen die
+  offiziellen Tags geprüft): checkout 4.4.0 → 7.0.1, setup-python 5.6.0 → 7.1.0, cache
+  4.3.0 → 6.1.0, upload-artifact 4.6.2 → 7.0.2, download-artifact 4.3.0 → 8.0.2,
+  action-gh-release 2.6.2 → 3.0.3 (Dependabot-PRs #1–#3 lokal übernommen, die drei
+  übrigen hielt Dependabots Limit zurück).  Keine der Brüche trifft uns (kein
+  `pull_request_target`, kein Download per Artefakt-ID, keine `pip-install`-Option).
+  Härtungen: `persist-credentials: false` bei allen Checkouts (kein Job pusht), ein
+  Release ohne Wheels oder Frontend-ZIP scheitert jetzt statt leer zu erscheinen
+  (`fail_on_unmatched_files: true` + Liste der Dateien), und der manuelle Start des
+  Release-Workflows hat einen Probelauf `dry_run` (baut, sammelt, listet, veröffentlicht
+  nichts).  Das Frontend-ZIP heißt beim manuellen Start nach dem Tag statt nach dem Zweig.
 
 ## [1.0.0] - 2026-11-02
 

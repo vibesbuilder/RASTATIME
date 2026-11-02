@@ -365,9 +365,11 @@ RASTATIME follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
    - Zips the legacy PHP frontend with `vendor/` included.
    - Creates the GitHub release with `docs/releases/vX.Y.Z.md` as the
      body and attaches all wheels + the frontend zip as downloadable
-     assets.
+     assets; a release without them fails instead of appearing empty.
 7. Verify the release page on GitHub.  If anything is off, re-run the
    release workflow manually from *Actions -> release -> Run workflow*.
+   With *dry_run* ticked the workflow builds and lists the files but
+   publishes nothing - the check after updating the pinned actions.
 
 ---
 
