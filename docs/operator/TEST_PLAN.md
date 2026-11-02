@@ -64,10 +64,11 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | A4.1 | Three mounts | `https://radio.example.org/stream/rastatime`, `-aac`, `-ogg` from a mobile network | 200, audio, ICY title |
 | A4.2 | UI from outside | login, Calendar, Library (API page) | works with the padlock; `http://` redirects |
 | A4.3 | LAN | `http://192.168.1.64/` and `https://radio.example.org/` from a LAN PC | both work (gateway resolves the name) |
-| A4.4 | Icecast internals hidden | `https://.../stream/status-json.xsl`, `/stream/admin/...` | 403 |
+| A4.4 | Icecast internals hidden | `https://.../stream/`, `/stream/status-json.xsl`, `/stream/admin/...`, `/stream/<mount>.m3u` | 403 (the mounts themselves: 200) |
 | A4.5 | Certificate | `openssl s_client` or the browser | Let's Encrypt, > 30 days left; renewal log `logs\cert-renewal.log` after 2026-11-29 |
 | A4.6 | Widgets | `https://.../embed/player`, `embed/weekly-program` | render, stream URLs carry the https name |
 | A4.7 | Sensitive paths | `/.git/config`, `/.env`, `/config/rastatime.conf` over https | login redirect, never content |
+| A4.8 | Public pages quiet | `curl -sD - https://.../login` and `/`, `/embed/player` | headers `Server: Apache` only, no `X-Powered-By`, `X-Robots-Tag: noindex, nofollow`; the login page names neither the product nor shows (`TEASER_SHOWS`, `TRACKTYPES` absent) |
 
 ### A5 Protection
 

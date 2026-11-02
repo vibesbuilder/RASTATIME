@@ -68,11 +68,11 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
     .pl-playing .pl-btn .pl-ico-stop { display: block; }
     .pl-btn.pl-busy { opacity: 0.6; }
 
-    /* RASTATIME 2026-09-18 (W4.1) — cover art.  Hidden by default and
+    <?php /* RASTATIME 2026-09-18 (W4.1) — cover art.  Hidden by default and
        only revealed for a track that actually HAS artwork: the artwork
        endpoint answers a cover-less track with a 0-byte 200, which would
        leave the <img> hanging forever.  Hidden = display:none, so the
-       text lines move left while a cover-less track plays. */
+       text lines move left while a cover-less track plays. */ ?>
     .pl-cover { flex: 0 0 auto; display: none; }
     .pl-cover.pl-cover-on { display: block; }
     .pl-cover img { display: block; object-fit: cover; border-radius: 4px; }
@@ -107,9 +107,9 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
 
     /* ───── bar layout (station homepage bottom bar) ───── */
     body.pl-layout-bar { background: var(--pl-bar-bg); color: var(--pl-bar-fg); }
-    /* RASTATIME 2026-10-08 - the bar fills the height its iframe gives it
+    <?php /* RASTATIME 2026-10-08 - the bar fills the height its iframe gives it
        (the station homepage's bottom bar is taller than 56 px), content
-       stays vertically centred; 56 px remains the minimum. */
+       stays vertically centred; 56 px remains the minimum. */ ?>
     html:has(body.pl-layout-bar), body.pl-layout-bar { height: 100%; }
     .pl-bar {
         display: flex; align-items: center; gap: 14px;
@@ -317,15 +317,15 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
         metaTimer = setTimeout(refreshMeta, ms);
     }
 
-    // W4.1 — show the cover only for a track that has one; never point
-    // the <img> at a cover-less id (0-byte 200 = hanging image).
-    // RASTATIME 2026-09-30 — without a track cover the show's image is
-    // the cover (webstream, line-in, cover-less track); a show whose
-    // image file is gone answers with the station logo, never 0 bytes.
-    // RASTATIME 2026-10-01 — the picture follows the Stream Label: with
-    // "Station - Show" (2) the listener is not told the track, so the
-    // show's image comes first and the track's cover never; the default
-    // cover (Settings → Widgets → Player) closes every chain.
+    <?php /* W4.1 — show the cover only for a track that has one; never point
+       the <img> at a cover-less id (0-byte 200 = hanging image).
+       RASTATIME 2026-09-30 — without a track cover the show's image is
+       the cover (webstream, line-in, cover-less track); a show whose
+       image file is gone answers with the station logo, never 0 bytes.
+       RASTATIME 2026-10-01 — the picture follows the Stream Label: with
+       "Station - Show" (2) the listener is not told the track, so the
+       show's image comes first and the track's cover never; the default
+       cover (Settings → Widgets → Player) closes every chain. */ ?>
     var showLevel = CFG.streamLabelFormat === 2;
     function paintCover(track, show) {
         if (!elCover || !elCoverImg || !CFG.art) { return; }
@@ -360,8 +360,8 @@ $cfg = $this->playerConfigJson;   // pre-encoded JSON (controller)
                 var show = d.show || {};
                 if (!elTrack.classList.contains("pl-err")) {
                     if (track.current) {
-                        // RASTATIME 2026-10-01 — "Station - Show": the
-                        // headline is the show, the track is not named
+                        <?php /* RASTATIME 2026-10-01 — "Station - Show": the
+                           headline is the show, the track is not named */ ?>
                         elTrack.textContent = showLevel
                             ? (show.current ? show.current.name : CFG.labels.onAir)
                             : (track.current.artist

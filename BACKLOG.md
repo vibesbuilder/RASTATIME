@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Öffentliche Studio-Instanz führt zum Betreiber (neu 2026-11-02, Operator: Defer)
+### 🟡 Öffentliche Studio-Instanz führt zum Betreiber (neu 2026-11-02; Paket 1 gebaut 2026-11-02, Mounts offen)
 
 Die Weboberfläche der Studio-Instanz ist aus dem Internet erreichbar und zeigt im Login, im
 Seitentitel, im Favicon und in Widgets/Embeds das RASTATIME-Branding; die öffentliche Subdomain
@@ -97,6 +97,25 @@ Zertifikat, Stream- und DJ-Einwahl-URLs, Widgets auf der Sender-Website).
 **Vorbedingungen:** Evaluierung nach Konvention (inkl. Risiko-Punkt); Bestandsaufnahme, wo der
 Produktname nach außen sichtbar ist; für (d) Abstimmung mit DJs und Website sowie ein ruhiges
 Sendefenster.
+
+**Stand 2026-11-02 (Bestandsaufnahme von außen, Evaluierung, Operator-Go Paket 1 Variante A):**
+- Gefunden: Login-Fußzeile mit Produktname und Link aufs GitHub-Repo; Login-Kopf mit
+  `PRODUCT_NAME`/`COMPANY_NAME`, `TRACKTYPES` und `TEASER_SHOWS` (alle Sendungen mit Sendezeiten)
+  für anonyme Besucher; Icecast-Statusseite `/stream/` öffentlich (Mounts, Off-Air-Text mit
+  Produktname); Entwickler-Kommentare im HTML von Startseite und Player-Widget; genaue Versionen
+  in `Server`/`X-Powered-By`; Mount-Namen = Produktname.  Unauffällig: Seitentitel, ICY-Name und
+  -Beschreibung, `/api/v2/info`, übrige Widgets.
+- ✅ Paket 1 gebaut (siehe CHANGELOG): (a) `X-Robots-Tag: noindex, nofollow`, (b) Login ohne
+  Fußzeile - Lizenz/Quellcode nur noch unter Help → About hinter dem Login (Variante A; Variante B
+  wäre ein neutraler Hinweis mit `/source`-ZIP der laufenden Version, falls die AGPL-§13-Grauzone
+  stört), (c) Globals/Kommentare/Statusseite/Versions-Header.  Off-Air-Text ohne Produktname setzt
+  der Operator in Settings → Streams (erledigt 2026-11-02).
+- 🟡 Mounts umbenennen: macht der Operator selbst (Settings → Streams, `icecast.xml`,
+  Sender-Website, Verzeichnisse; alte URLs per Icecast-`<alias>` erhalten).
+- 🔴 (d) Subdomain: No-Go - hoher Aufwand, der alte Name bleibt in den CT-Logs, die Ähnlichkeit
+  ist schwach.
+- Grenze: Wer mit dem System arbeitet (DJs, Team), kennt den Produktnamen; Scanner-Datenbanken
+  haben die alten Seiten seit dem HTTPS-Start vermutlich erfasst.
 
 ### 🟡 Auto DJ füllt auch die laufende Sendung (neu 2026-10-26, Operator: Defer 2026-10-27)
 

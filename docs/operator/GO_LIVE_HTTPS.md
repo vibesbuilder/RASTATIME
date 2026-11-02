@@ -106,7 +106,8 @@ Off-air for ~30–60 s (Icecast and Liquidsoap restart) — quiet window.
    (2026-10-04: 17:12:54 → 17:15:52, prolonged by a running webstream
    slot; ~40 s when done in a quiet moment).
 6. Check: `logs/playout-stdout.log` → `Liquidsoap config ... changed`
-   and a Liquidsoap restart; Icecast status page lists the three mounts
+   and a Liquidsoap restart; Icecast status page (`http://localhost:8000/`,
+   not public behind the proxy) lists the three mounts
    with the standby fallbacks; `logs/liquidsoap-stdout.log` has no
    `401`/`Unauthorized`; a Line-In show (or `ffmpeg_linein_capture`
    health check) still mounts `/linein-capture`; listener stats keep
@@ -199,7 +200,10 @@ URL and the two Apache includes below.
   (stage 2) validates through it.
 - **TLS virtual host** `infra/apache/rastatime-https.conf` (443, TLS 1.2/
   1.3, HTTP/2, HSTS, `X-Forwarded-Proto`, the same proxies, http → https
-  redirect for the public name only, LAN by IP untouched).  Include it in
+  redirect for the public name only, LAN by IP untouched; since
+  2026-11-02 also `X-Robots-Tag: noindex, nofollow`, `ServerTokens Prod`
+  and no `X-Powered-By` - the studio interface stays out of search
+  engines and names no versions).  Include it in
   stage 2 once the certificate files exist (`C:\RASTATIME\certs\
   radio.example.org-chain.pem` / `-key.pem`) and `mod_ssl`,
   `mod_socache_shmcb`, `mod_http2` are loaded.

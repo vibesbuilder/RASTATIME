@@ -76,7 +76,8 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         $baseUrl = Config::getBasePath();
 
         $view->headScript()->appendScript("var baseUrl = '{$baseUrl}';");
-        $this->_initTranslationGlobals($view);
+        // RASTATIME 2026-11-02 - _initTranslationGlobals() is called once by
+        // routeShutdown(); the second call here wrote every global twice.
 
         $user = Application_Model_User::GetCurrentUser();
         if (!is_null($user)) {
@@ -141,11 +142,19 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
     private function _initTranslationGlobals()
     {
         $view = $this->_bootstrap->getResource('view');
-        $view->headScript()->appendScript("var PRODUCT_NAME = '" . PRODUCT_NAME . "';");
         $view->headScript()->appendScript("var USER_MANUAL_URL = '" . USER_MANUAL_URL . "';");
-        $view->headScript()->appendScript("var COMPANY_NAME = '" . COMPANY_NAME . "';");
         // Each page refresh or tab open has uniqID, not to be used for security
         $view->headScript()->appendScript("var UNIQID = '" . uniqid() . "';");
+
+        // RASTATIME 2026-11-02 - the rest only for a signed-in user: the
+        // login page is public and handed every visitor the product name,
+        // the track types and the list of shows with their air times
+        // (TEASER_SHOWS).  Only pages behind the login read these.
+        if (!Zend_Auth::getInstance()->hasIdentity()) {
+            return;
+        }
+        $view->headScript()->appendScript("var PRODUCT_NAME = '" . PRODUCT_NAME . "';");
+        $view->headScript()->appendScript("var COMPANY_NAME = '" . COMPANY_NAME . "';");
 
         $track_type_options = [];
         $track_types = Application_Model_Tracktype::getTracktypes();
@@ -260,11 +269,15 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendFile(Assets::url('js/airtime/common/audioplaytest.js'), 'text/javascript');
 
         // include wavesurfer.js for waveform display
-        $view->headScript()->appendFile(Assets::url('js/wavesurfer/wavesurfer.min.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/wavesurfer/timeline.min.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/wavesurfer/regions.min.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/wavesurfer/cursor.min.js'), 'text/javascript')
-            ->appendFile(Assets::url('js/wavesurfer/rastatime.js'), 'text/javascript');
+        // RASTATIME 2026-11-02 - signed-in pages only (track editor); the
+        // public login page needs no waveforms.
+        if (Zend_Auth::getInstance()->hasIdentity()) {
+            $view->headScript()->appendFile(Assets::url('js/wavesurfer/wavesurfer.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/wavesurfer/timeline.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/wavesurfer/regions.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/wavesurfer/cursor.min.js'), 'text/javascript')
+                ->appendFile(Assets::url('js/wavesurfer/rastatime.js'), 'text/javascript');
+        }
 
         $user = Application_Model_User::getCurrentUser();
         if (!is_null($user)) {

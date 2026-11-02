@@ -73,10 +73,10 @@
                 </div>
             </div>
 
-            <!-- RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3): a native
+            <?php /* RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3): a native
                  <audio> engine replaces the jPlayer mount. The jPlayer-style GUI
                  (#jp_container_1 below) is kept and driven by the vanilla player
-                 object in the script block further down. -->
+                 object in the script block further down. */ ?>
             <audio id="podcast_audio_el" class="jp-player" style="width:0;height:0;" preload="none">
             </audio>
             <div class="podcast_bck">
@@ -217,9 +217,9 @@
 
                 } //buildPlaylist
 
-                // RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3):
-                // vanilla native-<audio> playlist player driving the existing
-                // jPlayer-style GUI (#jp_container_1). Replaces jPlayerPlaylist.
+                <?php /* RASTATIME 2026-06-01 (JS-modernization, jPlayer part 3/3):
+                   vanilla native-<audio> playlist player driving the existing
+                   jPlayer-style GUI (#jp_container_1). Replaces jPlayerPlaylist. */ ?>
                 var _podcastPlayer = (function () {
                     var audio = null;       // the native <audio> element
                     var $root = null;       // #jp_container_1 (GUI ancestor)
@@ -407,18 +407,18 @@
 
 
 
-        // RASTATIME 2026-09-18 (player widget v2) — the old block here
-        // reached INTO the player iframe (.contents().find('.bottom_bar'))
-        // to inject page-tab buttons (schedule / optional RSS) and to
-        // stop a jPlayer on bar-play.  Removed: jQuery 3 dropped
-        // .load(fn) (the block has been throwing since the migrate net
-        // left, 2026-09-17), the v2 player has no .bottom_bar to inject
-        // into, and the jPlayer is long gone.  If the station podcast
-        // ever goes public again (displayRssTab), the podcast tab needs
-        // a PAGE-level nav link instead of an in-player button — see
-        // BACKLOG.
+        <?php /* RASTATIME 2026-09-18 (player widget v2) — the old block here
+           reached INTO the player iframe (.contents().find('.bottom_bar'))
+           to inject page-tab buttons (schedule / optional RSS) and to
+           stop a jPlayer on bar-play.  Removed: jQuery 3 dropped
+           .load(fn) (the block has been throwing since the migrate net
+           left, 2026-09-17), the v2 player has no .bottom_bar to inject
+           into, and the jPlayer is long gone.  If the station podcast
+           ever goes public again (displayRssTab), the podcast tab needs
+           a PAGE-level nav link instead of an in-player button — see
+           BACKLOG. */ ?>
 
-        // RASTATIME 2026-10-07 - bottom bar buttons switch the page tabs
+        <?php /* RASTATIME 2026-10-07 - bottom bar buttons switch the page tabs */ ?>
         $('.bottom_nav .nav_btn').on('click', function(e) {
             e.preventDefault();
             var tab = $(this).attr('data-tab');

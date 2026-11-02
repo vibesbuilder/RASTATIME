@@ -24,6 +24,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `softprops/action-gh-release` sind Fremd-Actions, letztere mit Schreibrecht im
   Release-Job), `permissions: contents: read` ausdrücklich in `php.yml` und
   `python.yml`, neues `.github/dependabot.yml` hält die Pins wöchentlich aktuell.
+- **Öffentliche Seiten verraten weder Produkt noch Interna (2026-11-02, Operator-Go
+  Paket 1, Variante A)** — Anlass: Solange es eine einzige Installation gibt, führt jede
+  im Netz sichtbare RASTATIME-Instanz zum Betreiber und umgekehrt.  Die Login-Seite
+  hat keine Fußzeile mehr (Produkt, Lizenz- und Quellcode-Hinweis stehen weiter unter
+  Help → About hinter dem Login).  Anonyme Besucher bekommen die JS-Globals
+  `PRODUCT_NAME`, `COMPANY_NAME`, `TRACKTYPES` und `TEASER_SHOWS` (Liste aller
+  Sendungen mit Sendezeiten) sowie die Wavesurfer-Skripte nicht mehr; angemeldet
+  unverändert, die Globals stehen nur noch einmal statt doppelt im Kopf
+  (`PageLayoutInitPlugin`).  Entwickler-Kommentare der Startseite und des
+  Player-Widgets sind PHP-Kommentare und werden nicht mehr ausgeliefert.  Apache:
+  `/stream/` (Icecast-2.5-Statusseite mit Mounts und Titeln), `assets/`, `favicon.ico`
+  und alle `.xsl`/`.xslt` hinter dem Proxy gesperrt; `ServerTokens Prod`,
+  kein `X-Powered-By`, kein Icecast-Versions-Banner, `X-Robots-Tag: noindex, nofollow`
+  auf dem TLS-Host.  Apache-Teil wirksam nach dem Apache-Neustart.
 
 ## [1.0.0] - 2026-11-02
 
