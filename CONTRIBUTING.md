@@ -345,22 +345,28 @@ RASTATIME follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
    `## [X.Y.Z] - YYYY-MM-DD` heading.  Add a fresh empty `[Unreleased]`
    on top.
 2. Update the comparison link at the bottom of `CHANGELOG.md`.
-3. Commit:
+3. Write curated English release notes in `docs/releases/vX.Y.Z.md`
+   (the GitHub release body; the German `CHANGELOG.md` section is the
+   fallback when the file is missing).  Bump `version` in the five
+   `backend/*/setup.py` and `RASTATIME_VERSION` in
+   `frontend/legacy/application/configs/constants.php`.
+4. Commit:
    ```
    git commit -am "release: vX.Y.Z"
    ```
-4. Tag and push:
+5. Tag and push:
    ```
    git tag vX.Y.Z
-   git push origin main vX.Y.Z
+   git push origin master vX.Y.Z
    ```
-5. The `release` workflow (`.github/workflows/release.yml`) takes over:
-   - Builds wheels for every package in `backend/`.
+6. The `release` workflow (`.github/workflows/release.yml`) takes over:
+   - Builds wheels for the five packages in `backend/` that have a
+     `setup.py`.
    - Zips the legacy PHP frontend with `vendor/` included.
-   - Creates the GitHub release, pulling the matching `CHANGELOG.md`
-     section as release notes, and attaches all wheels + the frontend
-     zip as downloadable assets.
-6. Verify the release page on GitHub.  If anything is off, re-run the
+   - Creates the GitHub release with `docs/releases/vX.Y.Z.md` as the
+     body and attaches all wheels + the frontend zip as downloadable
+     assets.
+7. Verify the release page on GitHub.  If anything is off, re-run the
    release workflow manually from *Actions -> release -> Run workflow*.
 
 ---

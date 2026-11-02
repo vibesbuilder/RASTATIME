@@ -6552,9 +6552,13 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   14. ✅ `install-worker.ps1` / `install-analyzer.ps1` prüfen den Status zu früh (`[WARN] ... StartPending`, Running
       ≈ 20 s später); `nssm start` meldet `Unexpected status SERVICE_START_PENDING` mit Exit 1 (9d, 9h) — Wartezeit
       oder Running-Poll bis 30 s.
-- 🟢 **Phase 6 Release v1.0.0: nach der Abnahme** — (1)–(3) sind gebaut (2026-11-02); Vorbedingung bleibt die
-  Wiederholung des Stream-Teils der Abnahme auf der VM (Snapshot `03-installed`, Branch mit den Fixes) und die
-  Browser-Abnahme der Streams-/Local-Machine-Änderungen im Studio.
+- ✅ **Phase 6 Release v1.0.0 - 2026-11-02** (Operator-Go nach der VM-Wiederholung des Stream-Teils, Punkte 3-6 +
+  Reboot bestanden): Versionen `1.0.0` in den fünf `setup.py` (statt des LibreTime-Erbes 4.5.0) und
+  `RASTATIME_VERSION` (statt 0.5); CHANGELOG `[Unreleased]` → `[1.0.0]`, kuratierte englische Release-Notes
+  `docs/releases/v1.0.0.md` (der Release-Workflow nimmt diese Datei, sonst den CHANGELOG-Abschnitt, der mit 10.000
+  Zeilen zu groß für den GitHub-Body wäre); `release.yml` ohne das nicht paketierte `worker`; CONTRIBUTING
+  `master` statt `main`.  Tag `v1.0.0`, Release-Workflow baut fünf Wheels + Frontend-Zip.  Die Studio-Dienste
+  melden `1.0.0` erst nach `pip install -e` der Pakete + API-Neustart (nicht eilig).
 - ✅ **`bootstrap.ps1` modernisiert 2026-11-01** (Operator-Go vor der Probe): alle §2-Komponenten Pflicht mit
   Versionsausgabe (generische `Test-Tool`-Prüfung: Produktionspfad, sonst PATH), Composer/Git optional, VLC raus;
   INSTALL Schritt 2 und INSTALL_PROBE angepasst.  Studio-Maschine: 10/10 grün.

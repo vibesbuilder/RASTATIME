@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Noch nichts._
+
+## [1.0.0] - 2026-11-02
+
+Erstes Release (GitHub Phase 6).  Kurzfassung in Englisch: `docs/releases/v1.0.0.md`
+(Release-Notes auf GitHub).  Der Abschnitt darunter ist die vollständige Historie seit dem
+Fork im April 2026.
+
 ### Security
 
 - **Passwörter als bcrypt statt ungesalzenem MD5 (2026-10-27, Operator-Go
@@ -10146,4 +10154,5 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v0.0.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/vibesbuilder/RASTATIME/releases/tag/v1.0.0

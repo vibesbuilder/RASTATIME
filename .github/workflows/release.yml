@@ -32,8 +32,9 @@ permissions:
 
 jobs:
   # ------------------------------------------------------------------
-  # Build all six backend Python wheels in parallel.  Each wheel is
-  # uploaded as an artifact so the release job can collect them.
+  # Build the five backend Python wheels in parallel (the worker is a
+  # placeholder without a setup.py).  Each wheel is uploaded as an
+  # artifact so the release job can collect them.
   # ------------------------------------------------------------------
   wheels:
     name: build wheel (${{ matrix.package }})
@@ -41,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [analyzer, api, api-client, playout, shared, worker]
+        package: [analyzer, api, api-client, playout, shared]
     steps:
       - uses: actions/checkout@v4
 
@@ -119,12 +120,20 @@ jobs:
             echo "name=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Extract release notes from CHANGELOG.md
+      - name: Extract release notes (docs/releases/<tag>.md, else CHANGELOG.md)
         id: notes
         run: |
+          tag="${{ steps.tag.outputs.name }}"
+          # Curated notes win: the CHANGELOG section of a big release is far
+          # too long for a GitHub release body (v1.0.0 carries the whole
+          # history since the fork).
+          if [ -s "docs/releases/${tag}.md" ]; then
+            cp "docs/releases/${tag}.md" release-notes.md
+            echo "Using docs/releases/${tag}.md"
+            exit 0
+          fi
           # Strip the leading "v" so the heading matches "## [0.1.0] - ..."
-          version="${{ steps.tag.outputs.name }}"
-          version="${version#v}"
+          version="${tag#v}"
           # Pull everything from "## [<version>]" up to the next "## ["
           awk -v v="$version" '
             $0 ~ "^## \\[" v "\\]" { found=1; print; next }
