@@ -56,11 +56,18 @@ class StreamStatusReporter:
         *,
         post: Optional[Callable[[str, str, Optional[str]], object]] = None,
         threaded: bool = True,
+        on_reconnect: Optional[Callable[[int], object]] = None,
     ) -> None:
         if post is None and client is not None:
             post = client.update_liquidsoap_status
         self._post = post
         self._threaded = threaded
+        # RASTATIME 2026-11-02 - an output that (re)connects is the earliest
+        # sign of a fresh Liquidsoap instance: the scheduler refreshes at
+        # once instead of noticing the restart at its next 120-s poll
+        # (studio probe 12:10: 68 s of silence between the restart and the
+        # re-armed webstream).
+        self._on_reconnect = on_reconnect
         self._lock = threading.Lock()
         self._last: dict[int, str] = {}
 
@@ -90,6 +97,11 @@ class StreamStatusReporter:
             self._last[n] = stored
         if status == STATUS_OK:
             logger.info("Stream %d: Liquidsoap connected to Icecast.", n)
+            if self._on_reconnect is not None:
+                try:
+                    self._on_reconnect(n)
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    logger.debug("stream-event: reconnect hook raised: %s", exc)
         else:
             logger.warning("Stream %d: Liquidsoap output error: %s", n, stored)
         if self._post is None:

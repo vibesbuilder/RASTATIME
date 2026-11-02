@@ -1617,7 +1617,12 @@ def main() -> None:
         live_text=live_text_writer,
         # RASTATIME 2026-11-02 - /stream-event: output.icecast connect / error
         # reports go to the web application (Settings -> Streams status box).
-        stream_status=StreamStatusReporter(api_client_v1),
+        # A (re)connected output is the first sign of a fresh Liquidsoap:
+        # refresh in 2 s so the restart detection re-arms the running item.
+        stream_status=StreamStatusReporter(
+            api_client_v1,
+            on_reconnect=lambda n: scheduler.request_refresh_soon(f"stream {n} reconnected"),
+        ),
     )
     logger.info(
         "DJ logins are checked against the web application at %s.",

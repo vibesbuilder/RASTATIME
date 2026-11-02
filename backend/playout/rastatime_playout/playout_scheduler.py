@@ -358,6 +358,10 @@ class PlayoutScheduler:
         self._live_text = live_text
         self._live_text_pushed: Optional[tuple[bool, int]] = None
         self._icy_pushed: Optional[object] = None
+        # RASTATIME 2026-11-02 - one pending early refresh at a time
+        # (_schedule_refresh_soon / request_refresh_soon).
+        self._refresh_soon_lock = threading.Lock()
+        self._refresh_soon_pending = False
         self._bus_show_pushed: Optional[str] = None
 
         # RASTATIME 2026-05-12 — Phase B Line-In capture.
@@ -1310,11 +1314,36 @@ class PlayoutScheduler:
         of waiting for the next poll: after a planned Liquidsoap restart
         the running item is re-armed within a second, not within 120 s
         (the rehearsal's station was silent for the whole interval).
+        Coalescing: while one such refresh is pending, further requests
+        (the three outputs reconnect within a second) are folded into it.
         """
+        with self._refresh_soon_lock:
+            if self._refresh_soon_pending:
+                return
+            self._refresh_soon_pending = True
         logger.info("%s: refreshing the schedule in %.0f s to re-arm the running item.", why, delay)
-        t = threading.Timer(delay, self.refresh)
+
+        def _run() -> None:
+            with self._refresh_soon_lock:
+                self._refresh_soon_pending = False
+            try:
+                self.refresh()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.warning("%s: the early refresh failed: %s", why, exc)
+
+        t = threading.Timer(delay, _run)
         t.daemon = True
         t.start()
+
+    def request_refresh_soon(self, why: str, delay: float = 2.0) -> None:
+        """
+        RASTATIME 2026-11-02 - public entry for the stream-status reporter:
+        an ``output.icecast`` that (re)connects is the first sign of a fresh
+        Liquidsoap instance, so the restart detection at the top of
+        ``refresh()`` runs seconds after the restart instead of at the next
+        poll (studio probe 12:10: 68 s of silence until the 120-s cycle).
+        """
+        self._schedule_refresh_soon(why, delay)
 
     def _maybe_reinit_after_liquidsoap_restart(self) -> None:
         """

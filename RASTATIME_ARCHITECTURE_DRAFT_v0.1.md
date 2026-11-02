@@ -8349,7 +8349,10 @@ the deferred-stop idempotency shortcut ("re-issue, keeping current
 track") without pushing.  `LiquidsoapPlayoutEngine.forget_playback_state()`
 now drops that mirror on both restart paths (planned and detected), and
 `_schedule_refresh_soon()` re-arms the running item one second after a
-planned restart instead of at the next 120-s poll.  The Settings ->
+planned restart instead of at the next 120-s poll; for an UNPLANNED
+restart the first `/stream-event ok` of a reconnected output calls
+`request_refresh_soon()` (coalesced, 2 s), so the detection no longer waits
+for the poll (studio probe 12:10: 68 s of silence before this).  The Settings ->
 Streams page re-populates its sub-forms from the posted values after a
 refused save (`isValid()` cannot map the flat `sN_data[field]` keys onto
 `elementsBelongTo`, so the fields came back empty and looked deleted).

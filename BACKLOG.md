@@ -6483,7 +6483,17 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   einem Neustart (Zustandsspiegel nicht geleert) → `forget_playback_state()` + sofortiger Refresh gebaut.
   `extension=zip` aktiviert (Operator).  **Noch offen:** Stream-Teil der Abnahme auf dem VM-Snapshot
   `03-installed` wiederholen; Manual-Übersetzungen (.po) für sechs neue UI-Strings; PLAYOUT-Neustart für den
-  Engine-Fix.
+  Engine-Fix.  **Studio-Probe 2026-11-02 12:10** (LIQUIDSOAP-Neustart im Webstream): Erkennung + Catch-up ok,
+  Lücke 68 s (Poll) → Reconnect-Auslöser gebaut (`request_refresh_soon`), Übersetzungen erledigt (ca892169).
+- 🟡 **ICY-Titel bleibt „Off Air“ nach Webstream → Datei** (Befund Studio 2026-11-02 12:15, Operator-Go offen):
+  beim Slot-Wechsel schließt PLAYOUT das Webstream-Gate 50 ms vor dem Push, die Bus-Arm-Transition
+  `bus_arm_scheduled` sieht `scheduled_q` noch nicht bereit und setzt `off_air` auf die Transitionsquelle - das
+  Paket überholt die Titel-Metadaten der Datei, der Stream zeigt bis zum nächsten Titel „RASTATIME back on air
+  soon“ (Hörer-ICY geprüft 12:34, Icecast status-json identisch).  Vorschlag: in `bus_arm_scheduled` die
+  Off-Air-Markierung 0,5 s verzögert (`thread.run`) und nur dann, wenn `scheduled_q` dann noch leer ist, auf
+  `silence_fallback` statt auf die Transitionsquelle setzen; Probe mit `C:/Temp/optd/run_e2e_icy.py`.  Risiko
+  gering (nur Metadaten), Aufwand ~1 h inkl. Replikat.  Unabhängig von den Neustart-Fixes (Reihenfolge Gate →
+  Push besteht seit 2026-09-04).
   **Hoch:**
   1. ✅ **Settings → Streams speichert auf frischer Datenbank nicht** — `cc_pref` hat kein `stream_label_format`,
      `preference/stream-setting.phtml` prüft das Radio mit `$i == $value`, unter PHP 8 ist `0 == ''` falsch, kein

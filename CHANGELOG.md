@@ -886,7 +886,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Engine (`_current_uri` / PLAYING).  Der Catch-up zwei Minuten später rief `stop()` + `play(<dieselbe
   Datei>)`, und `play()` nahm die Idempotenz-Abkürzung „re-issue, keeping current track“ ohne Push.  Jetzt
   `forget_playback_state()` der Engine auf beiden Neustart-Pfaden und ein Refresh eine Sekunde nach dem
-  geplanten Neustart statt erst beim nächsten 120-s-Poll.
+  geplanten Neustart statt erst beim nächsten 120-s-Poll.  **Studio-Probe 12:10** (Operator: `nssm restart
+  RASTATIME-LIQUIDSOAP` während eines Webstreams): Erkennung und Catch-up funktionierten, aber erst beim
+  nächsten Poll 68 s später; seitdem löst das erste „Stream N: Liquidsoap connected“ einen Refresh nach 2 s
+  aus (`request_refresh_soon`, zusammengefasst über die drei Ausgänge), die Lücke sinkt auf wenige Sekunden.
 - **Streams-Seite nach verweigertem Speichern** (2026-11-02, Studio-Abnahme): die neu gerenderte Seite zeigte
   alle Stream-Felder leer, als wären die Mounts gelöscht - `isValid()` kann die flachen `sN_data[feld]`-Schlüssel
   nicht auf die Sub-Formulare abbilden (`elementsBelongTo`); die Datenbank war unberührt.  Die Elemente werden

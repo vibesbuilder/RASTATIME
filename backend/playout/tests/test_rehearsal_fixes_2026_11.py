@@ -327,3 +327,39 @@ def test_restart_paths_drop_the_engine_mirror(sched, monkeypatch):
     s._after_liquidsoap_restart(attempts=1, delay=0.0)
     engine.forget_playback_state.assert_called_once()
     assert refreshed == ["Planned Liquidsoap restart"]
+
+
+def test_reconnect_hook_fires_once_per_connect_and_refreshes_soon():
+    """Studio probe 12:10: the outputs reconnected 68 s before the poll noticed."""
+    hooked = []
+    rep = StreamStatusReporter(post=lambda *_a: None, threaded=False, on_reconnect=hooked.append)
+    assert rep.report(1, "ok", "") is True
+    assert rep.report(1, "ok", "") is False  # repeat: no second hook
+    assert rep.report(1, "error", "401") is True
+    assert rep.report(1, "ok", "") is True  # reconnect after an error
+    assert hooked == [1, 1]
+
+
+def test_request_refresh_soon_coalesces_and_runs_refresh(sched, monkeypatch):
+    s, _engine, _table = sched
+    runs = []
+    monkeypatch.setattr(s, "refresh", lambda: runs.append(1))
+    timers = []
+
+    class FakeTimer:
+        def __init__(self, delay, fn):
+            timers.append((delay, fn))
+            self.daemon = False
+
+        def start(self):
+            pass
+
+    monkeypatch.setattr(ps.threading, "Timer", FakeTimer)
+    s.request_refresh_soon("stream 1 reconnected")
+    s.request_refresh_soon("stream 2 reconnected")  # folded into the pending one
+    s.request_refresh_soon("stream 3 reconnected")
+    assert len(timers) == 1 and timers[0][0] == 2.0
+    timers[0][1]()  # the timer fires
+    assert runs == [1]
+    s.request_refresh_soon("again")  # a new one is accepted afterwards
+    assert len(timers) == 2
