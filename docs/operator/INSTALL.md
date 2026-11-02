@@ -903,8 +903,12 @@ nssm start RASTATIME-PLAYOUT
 nssm start RASTATIME-ANALYZER
 nssm start RASTATIME-APACHE
 nssm start RASTATIME-ICECAST
-# If the playout/Liquidsoap templates changed, re-render first:
-#   python -m rastatime_playout.liquidsoap_config render --out C:/Tools/liquidsoap/rastatime.liq
+# RASTATIME-PLAYOUT re-renders rastatime.liq and standby.liq at its start,
+# also after a template change: before starting Liquidsoap, wait until
+# playout-stdout.log shows "Rendered C:\Tools\liquidsoap\rastatime.liq" or
+# "already up-to-date".  Do not run the manual CLI render instead - it does
+# not read stream.harbor and would strip the DJ harbor inputs (note under
+# §4 Step 9).
 nssm start RASTATIME-LIQUIDSOAP
 # Last: the standby source (needs Icecast and the standby.liq PLAYOUT
 # rendered at its start)
