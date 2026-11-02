@@ -233,6 +233,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     auf der Studio-Maschine fehlt `extension=zip`, siehe Known Issues).
   - Rendered `rastatime.liq` ohne DJ-Harbor registriert `rastatime.source_events` mit Antwort `none`,
     PLAYOUT loggt einmal INFO statt der Warnung „older render“ (Befund 11).
+  - Die sechs neuen UI-Strings (Stream-Validierung, „Liquidsoap reports:“, Main Output „Off“) sind in
+    DE/FR/ES übersetzt (`.po` + `.mo` per po2mo, 2026-11-02; Apache-Neustart lädt die Kataloge).
 - **GitHub Phase 5 vorbereitet: Install-Probe auf frischer Windows-VM** (2026-11-01).  Neues Protokoll
   `docs/operator/INSTALL_PROBE.md` (Regeln, Download-Liste mit den Versionen der Studio-Maschine, Zeile je
   INSTALL-Abschnitt mit Ergebnis/Minuten/Abweichung, Abnahme aus TEST_PLAN, Fazit für v1.0.0).  Vorab gegen die

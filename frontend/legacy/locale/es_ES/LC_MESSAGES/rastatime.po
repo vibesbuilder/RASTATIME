@@ -6912,3 +6912,27 @@ msgstr "este programa"
 msgid "Undo"
 msgstr "Deshacer"
 
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Stream %d: mount point is required when the stream is enabled."
+msgstr "Stream %d: se requiere un mountpoint cuando el stream está habilitado."
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Stream %d: source password is required when the stream is enabled."
+msgstr "Stream %d: se requiere una contraseña de fuente cuando el stream está habilitado."
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Stream %d: port must be a number between 1 and 65535."
+msgstr "Stream %d: el puerto debe ser un número entre 1 y 65535."
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Liquidsoap reports:"
+msgstr "Liquidsoap informa:"
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Off - stream only (no local monitor output)"
+msgstr "Apagado - solo stream (sin salida de monitor local)"
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "off (stream only)"
+msgstr "apagado (solo stream)"

@@ -7076,3 +7076,27 @@ msgstr "cette émission"
 msgid "Undo"
 msgstr "Annuler"
 
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Stream %d: mount point is required when the stream is enabled."
+msgstr "Stream %d : un mountpoint est requis quand le stream est activé."
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Stream %d: source password is required when the stream is enabled."
+msgstr "Stream %d : un mot de passe source est requis quand le stream est activé."
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Stream %d: port must be a number between 1 and 65535."
+msgstr "Stream %d : le port doit être un nombre entre 1 et 65535."
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Liquidsoap reports:"
+msgstr "Liquidsoap signale :"
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "Off - stream only (no local monitor output)"
+msgstr "Désactivé - stream seul (pas de sortie moniteur locale)"
+
+#: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
+msgid "off (stream only)"
+msgstr "désactivé (stream seul)"

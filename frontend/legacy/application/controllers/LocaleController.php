@@ -249,6 +249,8 @@ final class LocaleController extends Zend_Controller_Action
             'Connected to the streaming server' => _('Connected to the streaming server'),
             'The stream is disabled' => _('The stream is disabled'),
             'Getting information from the server...' => _('Getting information from the server...'),
+            // RASTATIME 2026-11-02 - Settings -> Streams shows the engine's own message
+            'Liquidsoap reports:' => _('Liquidsoap reports:'),
             'Can not connect to the streaming server' => _('Can not connect to the streaming server'),
             "If %s is behind a router or firewall, you may need to configure port forwarding and this field information will be incorrect. In this case you will need to manually update this field so it shows the correct host/port/mount that your DJ's need to connect to. The allowed range is between 1024 and 49151." => _("If %s is behind a router or firewall, you may need to configure port forwarding and this field information will be incorrect. In this case you will need to manually update this field so it shows the correct host/port/mount that your DJ's need to connect to. The allowed range is between 1024 and 49151."),
             'For more details, please read the %s%s Manual%s' => _('For more details, please read the %s%s Manual%s'),
