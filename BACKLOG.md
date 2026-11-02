@@ -6636,3 +6636,51 @@ kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (40
 
 **Empfehlung (bei Wiederaufnahme):** Stufen 0-2 in dieser Reihenfolge, Stufe 3 danach.  Ohne die Install-Probe auf einer
 frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an Schritt 1.
+
+## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
+
+### 🟡 CBA-Anbindung: automatische Veroeffentlichung von Episoden auf cba.media - DEFER (evaluiert 2026-11-01, noch kein Go)
+
+Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
+hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
+automatisch als CBA-Beitrag veroeffentlichen (spaeter Apple/Spotify ueber den
+CBA-Feed).  Recherche: cba.media ist ein WordPress mit offener REST-API
+(`wp/v2/posts` mit Taxonomien `language`, `editor`, `tags`, Meta `station_id`;
+Inhaltstypen `series` = Podcast, `station`, `channel`; Medien-Upload
+`wp/v2/media`; Anmeldung per Anwendungspasswort; undokumentiert
+`cba/v1/zipupload`, `media/v1/ingest`).  Die CBA-eigenen Pflichtfelder (Lizenz
+kommerziell/Bearbeitung, AKM, Produktionsdatum, Erstausstrahlung, Thema,
+Podcast-Zuordnung) sind im Index nicht beschrieben.  AURA (gitlab.servus.at/
+aura, AGPL) macht das Gewuenschte mit dem Dienst "battery": CBA-ID je Sendung,
+Zugangsdaten je Sendung oder je Benutzer, automatischer Upload nach der
+Ausstrahlung ohne ungeplanten Fallback, Lizenz-Zuordnungstabelle,
+"Number of people involved" fuer die RTR-Statistik.
+
+Geplanter Schnitt (Empfehlung Go in Stufen, Risiko niedrig fuer den Betrieb):
+0. Klaerung mit CBA (office@cba.media) oder AURA-Code: API-Nutzung erlaubt,
+   Felder fuer Lizenz/AKM/Produktionsdatum/Podcast-Zuordnung, Testpodcast,
+   Rate-Limits.  **Vorbedingung fuer Stufe 2-3.**
+1. Autor:innen/Redaktions-Profile (Settings, eigene Tabellen, N:M zu Sendungen),
+   Sendungs-Metadaten fuer CBA (Edit Show -> "Veroeffentlichung": CBA-Podcast-ID,
+   Automatik, Lizenzvorgaben, Thema, Sprache, Schlagworte, Teaser-Vorlage),
+   Teilnehmerzahl je Sendung mit Instanz-Override + Jahresstatistik.  ~2 Tage,
+   unabhaengig von CBA.
+2. CBA-Upload manuell aus dem Kalender (Kontextmenue der gelaufenen Instanz:
+   "Publish to CBA", "Link existing CBA post"), Auftragstabelle + Python-Worker
+   (nicht Playout, nicht PHP-Webrequest), Sichtbarkeit waehlbar (Privat/
+   Ungelistet/Oeffentlich), Status im Instanz-Dialog.  ~3 Tage.
+3. Automatik: nach dem Import der Aufzeichnung (§23.66) Beitrag anlegen und
+   veroeffentlichen, Bedingungen: kein ungeplanter Fallback, mindestens ein
+   Autor:innen-Profil, Pflichtfelder gesetzt; Wiederholungen (§23.65) nicht
+   erneut veroeffentlichen, sondern als Wiederholung verknuepfen.  ~1 Tag.
+4. Apple/Spotify: ueber den CBA-Podcast-Feed, einmalige Einreichung, kein Code.
+Gesamt ~2.000-2.500 Zeilen, ~8 Arbeitstage plus Wartezeit auf CBA.
+
+### 💡 Segmente fuers 7-Days-Back-Archiv: Beschreibungen je Abschnitt einer Sendung (Operator 2026-11-02: vorerst Backlog)
+
+Operator-Notiz: Medienbeschreibung fuer Cue-Punkt-Abschnitte (oder ueber den
+Sendeverlauf editierbar), damit das Catch-up-Archiv Segmente innerhalb einer
+Sendung darstellen kann.  Skizze: eigene Tabelle (Instanz, Von, Bis, Titel,
+Text), aus cc_playout_history vorbefuellt, im Kalender editierbar, Ausgabe im
+Catch-up-Widget und optional als Kapitelmarken im Feed.  ~500 Zeilen, 2 Tage.
+Siehe auch "Record-per-Hour (Vorstufe fuer 7-Tage-Catchup)" oben.
