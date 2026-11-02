@@ -672,11 +672,31 @@ Get-Service RASTATIME-STANDBY   # Running
 > `stream_output_N`, maintained via Settings → Streams) — not from
 > `rastatime.conf`.  After any stream-setting change:
 > `nssm restart RASTATIME-PLAYOUT` (re-renders the `.liq` at startup,
-> incl. harbor credentials), then `nssm restart RASTATIME-LIQUIDSOAP`.
+> incl. harbor credentials), then `nssm restart RASTATIME-LIQUIDSOAP`
+> and `Restart-Service RASTATIME-STANDBY` (9i).
 > Avoid the manual CLI render
 > (`python -m rastatime_playout.liquidsoap_config render`) on a
 > configured system — it does not read `stream.harbor` and would strip
 > the DJ harbor inputs from the rendered script.
+
+> **First stream output** (fresh database, nothing configured): under
+> Settings → Streams, Stream 1, set
+> - **Mount** `rastatime` - the `/rastatime` block of `icecast.xml` with
+>   its `/rastatime-standby` fallback (`rastatime-aac` / `rastatime-ogg`
+>   for streams 2 and 3)
+> - **Username** `source`, **Password** = `<source-password>` of
+>   `C:\rastatime\config\icecast.xml` (Step 9g)
+> - **Admin user** `admin`, **Admin password** = `<admin-password>` of
+>   `icecast.xml` (listener statistics)
+>
+> then enable, save and restart the three services as above.  The page
+> saves an enabled stream with an empty mount and password; Liquidsoap
+> then gets `Connection failed: 401, Authentication Required` on mount
+> `/` (`liquidsoap-stdout.log`) while the page only says "Start
+> RASTATIME-PLAYOUT and schedule content".  On a fresh database also
+> pick a **Stream Label** option explicitly before saving - none is
+> pre-selected, and the save fails with HTTP 500 otherwise (found
+> 2026-11-02 in the fresh-machine rehearsal, INSTALL_PROBE.md).
 
 ### Step 10 — Verify the installation
 
