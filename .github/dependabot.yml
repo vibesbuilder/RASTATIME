@@ -1,0 +1,12 @@
+# Keeps the SHA-pinned GitHub Actions in .github/workflows current: one
+# pull request per week at most, the version comment next to each pin is
+# updated with it.  Security updates for the Python and PHP dependencies
+# come from the repository's Dependabot security updates setting, not
+# from version updates here.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3

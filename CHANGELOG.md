@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Noch nichts._
+### Security
+
+- **GitHub-Workflows gehärtet (2026-11-02, Vorbereitung öffentliches Repo)** — alle
+  Actions auf Commit-SHAs gepinnt (Version als Kommentar; `shivammathur/setup-php` und
+  `softprops/action-gh-release` sind Fremd-Actions, letztere mit Schreibrecht im
+  Release-Job), `permissions: contents: read` ausdrücklich in `php.yml` und
+  `python.yml`, neues `.github/dependabot.yml` hält die Pins wöchentlich aktuell.
 
 ## [1.0.0] - 2026-11-02
 
