@@ -6552,6 +6552,13 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   14. ✅ `install-worker.ps1` / `install-analyzer.ps1` prüfen den Status zu früh (`[WARN] ... StartPending`, Running
       ≈ 20 s später); `nssm start` meldet `Unexpected status SERVICE_START_PENDING` mit Exit 1 (9d, 9h) — Wartezeit
       oder Running-Poll bis 30 s.
+- 💡 **Catch-up nach fehlgeschlagenem Push bleibt liegen** (Befund Studio 2026-11-02 14:23, bei der
+  Paket-Neuinstallation): PLAYOUT startete, während Liquidsoap noch 90 s weg war; der Start-Catch-up schlug fehl
+  („Liquidsoap play failed … Cannot connect“), die Engine ging auf ERROR, der Scheduler behielt aber `_playing_key`.
+  Als Liquidsoap um 14:23:58 kam, löste der Reconnect-Auslöser den Refresh aus, der Titel wurde jedoch nicht neu
+  armiert (Schlüssel galt als spielend) - 11 s Stille bis zum nächsten Titel.  Vorschlag: im Refresh einen
+  Engine-Zustand ERROR wie „nichts auf Sendung“ behandeln (Schlüssel vergessen → Catch-up).  Klein, kein Live-Risiko;
+  tritt nur auf, wenn PLAYOUT vor Liquidsoap läuft.
 - ✅ **Phase 6 Release v1.0.0 - 2026-11-02** (Operator-Go nach der VM-Wiederholung des Stream-Teils, Punkte 3-6 +
   Reboot bestanden): Versionen `1.0.0` in den fünf `setup.py` (statt des LibreTime-Erbes 4.5.0) und
   `RASTATIME_VERSION` (statt 0.5); CHANGELOG `[Unreleased]` → `[1.0.0]`, kuratierte englische Release-Notes
