@@ -805,7 +805,7 @@ def _render_icecast_block(
         f'  rastatime_stream_event({n}, "ok", "connected"))\n'
         f"rt_stream_{n}.on_error(synchronous=false, fun (~restart_in, err) ->\n"
         "  begin\n"
-        f'    rastatime_stream_event({n}, "error", "#{{err}}")\n'
+        f'    rastatime_stream_event({n}, "error", error.message(err))\n'
         "    restart_in(3.)\n"
         "  end)\n"
     )
@@ -2417,9 +2417,16 @@ def _render_bus_source_block(
             if has_dj
             else f"  s = {faded}(old, new)\n"
         )
-        + "  # queue empty: the silence arm goes on air -> Off Air Metadata\n"
+        + "  # queue empty: the silence arm goes on air -> Off Air Metadata.\n"
+        "  # RASTATIME 2026-11-02: checked again 0.5 s later, on the silence\n"
+        "  # arm itself.  PLAYOUT closes the previous arm's gate a few ms before\n"
+        "  # it pushes the next track, so the queue is momentarily empty at this\n"
+        "  # transition; the immediate mark on the transition source overtook\n"
+        "  # the track's own title (studio 12:15: 'back on air soon' for a\n"
+        "  # whole track after a webstream).\n"
         "  if not source.is_ready(scheduled_q) then\n"
-        '    s.insert_metadata([("off_air", "true"), ("title", offair_text())])\n'
+        "    thread.run(delay=0.5, fun () ->\n"
+        "      if not source.is_ready(scheduled_q) then offair_mark() end)\n"
         "  end\n"
         "  s\n"
         "end\n"

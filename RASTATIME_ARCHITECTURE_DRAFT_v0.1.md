@@ -8293,7 +8293,8 @@ the architecture.
 `output.icecast` is now bound to `rt_stream_N` (N = the slot of
 `stream_output_N`, carried as `stream_id` by `_read_stream_outputs(numbered=True)`)
 and registers two callbacks: `on_connect` posts `ok`, `on_error` posts
-the error text (`"#{err}"`, the 2.4.6 `error` type is opaque) and keeps
+the error text (`error.message(err)`; the record form `"#{err}"` carried
+the OCaml source positions into the UI) and keeps
 the stdlib retry with `restart_in(3.)`.  Both go through
 `rastatime_stream_event(n, status, message)`, an `http.post` from a
 detached `thread.run` to PLAYOUT's listener
@@ -8356,6 +8357,14 @@ for the poll (studio probe 12:10: 68 s of silence before this).  The Settings ->
 Streams page re-populates its sub-forms from the posted values after a
 refused save (`isValid()` cannot map the flat `sN_data[field]` keys onto
 `elementsBelongTo`, so the fields came back empty and looked deleted).
+
+**Off-air mark after a gate switch (studio finding 12:15).**  The bus-arm
+transition `bus_arm_scheduled` marked off-air at once when `scheduled_q`
+was not ready; PLAYOUT closes the previous arm's gate a few ms before it
+pushes the next track (webstream -> file), so the mark overtook the
+track's title and listeners saw the off-air text for a whole track.  The
+check now repeats 0.5 s later (`thread.run(delay=0.5)`) and marks the
+silence arm itself (`offair_mark()`) only if the queue is still empty.
 
 **Smaller changes.**  `restart_liquidsoap_service` asks `nssm status`
 first and logs INFO for a service that is not registered yet (fresh

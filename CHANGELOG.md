@@ -890,6 +890,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   RASTATIME-LIQUIDSOAP` während eines Webstreams): Erkennung und Catch-up funktionierten, aber erst beim
   nächsten Poll 68 s später; seitdem löst das erste „Stream N: Liquidsoap connected“ einen Refresh nach 2 s
   aus (`request_refresh_soon`, zusammengefasst über die drei Ausgänge), die Lücke sinkt auf wenige Sekunden.
+- **ICY-Titel blieb nach Webstream → Datei auf dem Off-Air-Text** (2026-11-02 12:15, Studio-Befund, Operator-Go):
+  beim Slot-Wechsel schließt PLAYOUT das Webstream-Gate wenige Millisekunden vor dem Push; die
+  Bus-Arm-Transition `bus_arm_scheduled` sah die Queue leer und setzte die Off-Air-Markierung sofort auf die
+  Transitionsquelle, dieses Paket überholte die Titel-Metadaten der Datei (Hörer-ICY „RASTATIME back on air
+  soon“ für den ganzen Titel).  Die Markierung wird jetzt 0,5 s später erneut geprüft und nur dann, wenn die
+  Queue dann noch leer ist, auf den Stille-Arm gesetzt (`thread.run(delay=0.5)` + `offair_mark()`).  Wirksam
+  nach dem nächsten Liquidsoap-Neustart (geplanter Neustart rendert neu).
+- **Streams-Statusbox zeigt nur den Fehlertext** (2026-11-02, VM-Abnahme Punkt 4): die Rückmeldung an PLAYOUT
+  trug mit `"#{err}"` den ganzen Fehler-Record samt OCaml-Quellpositionen; jetzt `error.message(err)`, also
+  „401, Authentication Required (HTTP/1.1)“.
+- **INSTALL §7 (Update) kennt RASTATIME-STANDBY** und lässt PLAYOUT rendern statt der manuellen CLI (zwei
+  Doku-Fixes der VM-Sitzung beim Zurücksetzen der VM, ohne Attributions-Trailer übernommen; CONTRIBUTING nennt
+  die Trailer-Regel jetzt ausdrücklich).
 - **Streams-Seite nach verweigertem Speichern** (2026-11-02, Studio-Abnahme): die neu gerenderte Seite zeigte
   alle Stream-Felder leer, als wären die Mounts gelöscht - `isValid()` kann die flachen `sN_data[feld]`-Schlüssel
   nicht auf die Sub-Formulare abbilden (`elementsBelongTo`); die Datenbank war unberührt.  Die Elemente werden

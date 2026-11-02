@@ -153,7 +153,11 @@ def test_bus_block_wraps_every_arm():
     assert out.count('  s.insert_metadata([("show_name", bus_show())])') == 4
     assert "def bus_arm_scheduled(old, new) =" in out
     assert "  if not source.is_ready(scheduled_q) then" in out
-    assert '    s.insert_metadata([("off_air", "true"), ("title", offair_text())])' in out
+    # 2026-11-02: the mark is re-checked 0.5 s later on the silence arm, so a
+    # push that follows the gate switch by a few ms keeps its own title
+    assert "    thread.run(delay=0.5, fun () ->" in out
+    assert "      if not source.is_ready(scheduled_q) then offair_mark() end)" in out
+    assert 's.insert_metadata([("off_air", "true")' not in out
     assert (
         "transitions=[\n    bus_arm_master,\n    bus_arm_show,\n    bus_arm_webstream,\n    bus_arm_linein,\n    bus_arm_scheduled,\n  ]"
         in out

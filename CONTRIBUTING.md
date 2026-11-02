@@ -389,6 +389,9 @@ Fix sc query service check in check.php
 - First line: <= 72 characters, no trailing period.
 - Optional body after a blank line explaining *why*, not *what*.
 - Reference the task or backlog item when applicable.
+- No trailers: no `Co-Authored-By`, `Signed-off-by` or "generated with"
+  lines.  The maintainer is the sole author of every commit; a commit
+  that arrives with such a trailer is reworded before it is merged.
 
 ---
 

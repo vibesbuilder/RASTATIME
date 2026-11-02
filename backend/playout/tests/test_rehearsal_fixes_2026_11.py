@@ -64,7 +64,9 @@ def test_icecast_outputs_are_bound_and_report_to_playout():
         in out
     )
     assert "rt_stream_2.on_error(synchronous=false, fun (~restart_in, err) ->" in out
-    assert 'rastatime_stream_event(2, "error", "#{err}")' in out
+    # error.message(err): the record form "#{err}" carried the OCaml source
+    # positions into the Settings page (VM acceptance 2026-11-02)
+    assert 'rastatime_stream_event(2, "error", error.message(err))' in out
     assert "restart_in(3.)" in out
     assert "rt_stream_2 = output.icecast(" in out and "rt_stream_1 = output.icecast(" not in out
     assert "rt_stream_2.on_error" in out

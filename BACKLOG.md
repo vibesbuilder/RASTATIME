@@ -6485,7 +6485,14 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
   `03-installed` wiederholen; Manual-Übersetzungen (.po) für sechs neue UI-Strings; PLAYOUT-Neustart für den
   Engine-Fix.  **Studio-Probe 2026-11-02 12:10** (LIQUIDSOAP-Neustart im Webstream): Erkennung + Catch-up ok,
   Lücke 68 s (Poll) → Reconnect-Auslöser gebaut (`request_refresh_soon`), Übersetzungen erledigt (ca892169).
-- 🟡 **ICY-Titel bleibt „Off Air“ nach Webstream → Datei** (Befund Studio 2026-11-02 12:15, Operator-Go offen):
+  **VM-Wiederholung des Stream-Teils 2026-11-02 (frische DB statt Snapshot):** Punkt 3 Save ok, Punkt 4 Meldung
+  sichtbar (Text nun ohne OCaml-Positionen, `error.message`), Punkt 5 Neustart im laufenden Titel → Catch-up
+  +490 s innerhalb einer Sekunde (Log 13:28:09-10), Punkt 6 Off gesetzt (Abnahme über Marker + Log), Reboot ok.
+  Die VM-Sitzung pushte zwei INSTALL-§7-Fixes auf `docs/install-7-standby` mit Attributions-Trailer → auf master
+  ohne Trailer übernommen (7041d491, b5568f47), Branch löscht der Operator; Regel steht jetzt in CONTRIBUTING.
+- ✅ **ICY-Titel bleibt „Off Air“ nach Webstream → Datei** (Befund Studio 2026-11-02 12:15, Operator-Go + gebaut
+  2026-11-02 nachmittags: verzögerte Markierung wie vorgeschlagen; wirksam nach dem nächsten Liquidsoap-Neustart,
+  Abnahme = Hörer-ICY nach einem Webstream → Datei-Wechsel zeigt den Titel; ursprünglicher Befund:)
   beim Slot-Wechsel schließt PLAYOUT das Webstream-Gate 50 ms vor dem Push, die Bus-Arm-Transition
   `bus_arm_scheduled` sieht `scheduled_q` noch nicht bereit und setzt `off_air` auf die Transitionsquelle - das
   Paket überholt die Titel-Metadaten der Datei, der Stream zeigt bis zum nächsten Titel „RASTATIME back on air
