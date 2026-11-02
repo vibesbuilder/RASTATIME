@@ -864,7 +864,10 @@ After completing §4, verify each item:
 To update RASTATIME to a new version:
 
 ```powershell
-# 1. Stop services in reverse order
+# 1. Stop services in reverse order.  RASTATIME-STANDBY (9i) first: it
+#    depends on RASTATIME-ICECAST, and Windows refuses to stop Icecast
+#    while a dependent service runs.
+nssm stop RASTATIME-STANDBY    confirm
 nssm stop RASTATIME-LIQUIDSOAP confirm
 nssm stop RASTATIME-ICECAST    confirm
 nssm stop RASTATIME-APACHE     confirm
@@ -903,6 +906,9 @@ nssm start RASTATIME-ICECAST
 # If the playout/Liquidsoap templates changed, re-render first:
 #   python -m rastatime_playout.liquidsoap_config render --out C:/Tools/liquidsoap/rastatime.liq
 nssm start RASTATIME-LIQUIDSOAP
+# Last: the standby source (needs Icecast and the standby.liq PLAYOUT
+# rendered at its start)
+nssm start RASTATIME-STANDBY
 
 # 6. Verify
 powershell -File C:\rastatime\infra\nssm\status.ps1
