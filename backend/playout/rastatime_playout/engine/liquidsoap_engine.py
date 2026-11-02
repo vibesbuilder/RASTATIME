@@ -541,6 +541,42 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         self._current_uri = None
         self._current_request_id = None
 
+    def forget_playback_state(self, why: str = "Liquidsoap restarted") -> None:
+        """
+        RASTATIME 2026-11-02 - a fresh Liquidsoap instance plays nothing:
+        drop this engine's mirror of "what is on air" so the next play()
+        of the SAME file pushes it again instead of taking the deferred-stop
+        idempotency shortcut.
+
+        Fresh-machine rehearsal 2026-11-02 02:28-02:34: the planned
+        restart at the playout start raced the start catch-up; the push
+        landed in the dying instance, the scheduler's bookkeeping was
+        cleared by ``_after_liquidsoap_restart`` but this mirror still
+        said PLAYING <file>.  The next cycle's catch-up ran stop() +
+        play(<same file>) and play() returned without pushing ("idempotent
+        re-issue ... keeping current track") - six minutes of silence until
+        the operator restarted PLAYOUT.
+        """
+        with self._stop_lock:
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
+            self._stop_requested = False
+            had = self._current_uri
+            self._state = PlayoutState.STOPPED
+            self._current_uri = None
+            self._current_request_id = None
+            self._queued_uri = None
+            self._queued_request_id = None
+            self._cross_mode = None
+        if had is not None:
+            logger.info(
+                "%s: forgetting the playback state (%s was believed on air) - "
+                "the next play() pushes afresh.",
+                why,
+                self._redact(had),
+            )
+
     def get_state(self) -> PlayoutState:
         """
         Return cached state.  Liquidsoap's telnet

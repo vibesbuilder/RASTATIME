@@ -878,8 +878,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   frische Instanz blieb auf `silence_fallback`.  Jetzt werden `_playing_key` / `_current_event` /
   Vorwärmung geleert und der Refresh-Durchlauf armiert den Titel als Catch-up am Offset, wie beim
   PLAYOUT-Start.  Zusätzlich loggt `_on_file_start` eine unerwartete Ausnahme des Timer-Threads statt sie
-  stumm nach stderr zu verlieren.  Die Ursache des in der Probe beobachteten Hängers nach
-  `Liquidsoap stop (deferred up to 0.5s)` ist offen (VM-Log angefordert).
+  stumm nach stderr zu verlieren.  **Ursache aus dem VM-Log** (Operator, 2026-11-02): kein Hänger - der
+  geplante Neustart am PLAYOUT-Start lief parallel zum Start-Catch-up, der Push landete in der sterbenden
+  Instanz; `_after_liquidsoap_restart` leerte die Scheduler-Buchführung, nicht aber den Zustandsspiegel der
+  Engine (`_current_uri` / PLAYING).  Der Catch-up zwei Minuten später rief `stop()` + `play(<dieselbe
+  Datei>)`, und `play()` nahm die Idempotenz-Abkürzung „re-issue, keeping current track“ ohne Push.  Jetzt
+  `forget_playback_state()` der Engine auf beiden Neustart-Pfaden und ein Refresh eine Sekunde nach dem
+  geplanten Neustart statt erst beim nächsten 120-s-Poll.
+- **Streams-Seite nach verweigertem Speichern** (2026-11-02, Studio-Abnahme): die neu gerenderte Seite zeigte
+  alle Stream-Felder leer, als wären die Mounts gelöscht - `isValid()` kann die flachen `sN_data[feld]`-Schlüssel
+  nicht auf die Sub-Formulare abbilden (`elementsBelongTo`); die Datenbank war unberührt.  Die Elemente werden
+  jetzt aus den gesendeten Werten wieder befüllt (Passwörter ausgenommen).
 - **Web-Anwendung legt `storage.path` an** statt mit „does not exists!“ jede Seite zu verweigern
   (Befund 7); `install-icecast.ps1` verweigert eine fehlende `icecast.xml` oder eine mit `CHANGEME`
   (Befund 5, Icecast hing sonst stumm bei „Running“) und nennt sich nicht mehr `[OPTIONAL]`;

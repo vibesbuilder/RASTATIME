@@ -1037,6 +1037,12 @@ class PreferenceController extends Zend_Controller_Action
                     $items .= '<li>' . htmlspecialchars($error, ENT_QUOTES) . '</li>';
                 }
                 $this->view->statusMsg = "<div class='errors' style='height: auto'><ul style='margin: 4px 0; list-style: none'>" . $items . '</ul></div>';
+                // The re-rendered form must show what the operator typed:
+                // isValid() cannot map the flat "sN_data[field]" keys onto the
+                // sub-forms (elementsBelongTo), so every stream field came back
+                // empty and looked deleted (studio acceptance 2026-11-02; the
+                // database was untouched).
+                $this->repopulateStreamSubforms($form, $values);
             }
 
             if ($formValid && empty($streamErrors)) {
@@ -1103,6 +1109,30 @@ class PreferenceController extends Zend_Controller_Action
                 'valid' => $formValid && empty($streamErrors),
                 'html' => $this->view->render('preference/stream-setting.phtml'),
             ]);
+        }
+    }
+
+    /**
+     * RASTATIME 2026-11-02 - after a refused save, put the posted stream
+     * values back into the sub-form elements so the re-rendered page shows
+     * them (passwords excepted: they are never echoed).
+     *
+     * @param array $values the flattened POST values (s{N}_data[field] => value)
+     */
+    private function repopulateStreamSubforms(Zend_Form $form, array $values): void
+    {
+        foreach ($values as $key => $value) {
+            if (!preg_match('/^s([1-3])_data\[([a-z_]+)\]$/', (string) $key, $m)) {
+                continue;
+            }
+            if ($m[2] === 'pass' || $m[2] === 'admin_pass') {
+                continue;
+            }
+            $subform = $form->getSubForm('s' . $m[1] . '_subform');
+            $element = $subform ? $subform->getElement($m[2]) : null;
+            if ($element !== null) {
+                $element->setValue($value);
+            }
         }
     }
 

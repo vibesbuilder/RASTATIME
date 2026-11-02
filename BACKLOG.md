@@ -6476,11 +6476,14 @@ C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator)
 - ✅ **Phase 5 Produktbefunde (14) - Operator-Go je Befund 2026-11-02, alle 14 gebaut am selben Tag** (Details
   CHANGELOG 2026-11-02).  **Offen danach:** PLAYOUT-Neustart (Python-Änderungen, neuer Render mit
   `rt_stream_N`-Callbacks) und F5 im Browser; Browser-Abnahme Settings → Streams (leerer Mount → rote Liste,
-  Liquidsoap-Meldung im Status-Kasten) und Local Machine → Main Output „Off“; Befund 2 Teil 2 - der Hänger nach
-  `Liquidsoap stop (deferred up to 0.5s)` ist ohne das VM-Log (`playout-stdout.log` 02:28-02:35) nicht
-  erklärbar, Log angefordert; `extension=zip` in `C:\Tools\PHP\php.ini` der Studio-Maschine aktivieren
-  (Apache stop/start, Befund von `bootstrap.ps1`); Stream-Teil der Abnahme auf dem VM-Snapshot `03-installed`
-  wiederholen; Manual-Übersetzungen (.po) für sechs neue UI-Strings.
+  Liquidsoap-Meldung im Status-Kasten) und Local Machine → Main Output „Off“ - **erledigt 2026-11-02** (PLAYOUT
+  neu gestartet, drei Mounts online, `Stream N: Liquidsoap connected` im Log, rote Liste sichtbar, Off-Option
+  da; Nachbefund: die Seite zeigte nach dem verweigerten Speichern leere Felder → Wiederbefüllung gebaut).
+  Befund 2 Teil 2 **aus dem VM-Log geklärt**: kein Hänger, sondern die Idempotenz-Abkürzung der Engine nach
+  einem Neustart (Zustandsspiegel nicht geleert) → `forget_playback_state()` + sofortiger Refresh gebaut.
+  `extension=zip` aktiviert (Operator).  **Noch offen:** Stream-Teil der Abnahme auf dem VM-Snapshot
+  `03-installed` wiederholen; Manual-Übersetzungen (.po) für sechs neue UI-Strings; PLAYOUT-Neustart für den
+  Engine-Fix.
   **Hoch:**
   1. ✅ **Settings → Streams speichert auf frischer Datenbank nicht** — `cc_pref` hat kein `stream_label_format`,
      `preference/stream-setting.phtml` prüft das Radio mit `$i == $value`, unter PHP 8 ist `0 == ''` falsch, kein

@@ -1164,9 +1164,16 @@ class PlayoutScheduler:
             self._queued_ahead_prev = None
             self._current_started_at = None
             self._current_clip_seconds = None
+        # RASTATIME 2026-11-02 - the engine's own "on air" mirror must go
+        # too, or the catch-up of the same file takes the idempotent
+        # shortcut and never pushes (rehearsal 02:30:57, silent station).
+        self._forget_engine_playback_state("Planned Liquidsoap restart")
         if self._retry_initial_liquidsoap_state(attempts, delay, sleep=time.sleep):
             logger.info("Nightly restart: Liquidsoap is back, sentinel stopped, gates reset.")
             self._request_source_reconcile()
+            # RASTATIME 2026-11-02 - re-arm the running item now, not at the
+            # next 120-s poll (the rehearsal waited 2 min for the catch-up).
+            self._schedule_refresh_soon("Planned Liquidsoap restart")
         else:
             logger.error(
                 "Nightly restart: Liquidsoap telnet did not come back within %d attempts.",
@@ -1281,6 +1288,33 @@ class PlayoutScheduler:
                 why,
                 getattr(current, "track_title", None) or getattr(current, "uri", None) or current,
             )
+        self._forget_engine_playback_state(why)
+
+    def _forget_engine_playback_state(self, why: str) -> None:
+        """
+        RASTATIME 2026-11-02 - drop the engine's "what is on air" mirror
+        after a Liquidsoap restart (see ``LiquidsoapPlayoutEngine.
+        forget_playback_state``); a catch-up of the same file must push
+        again instead of taking the deferred-stop idempotency shortcut.
+        """
+        forget = getattr(self._engine, "forget_playback_state", None)
+        if callable(forget):
+            try:
+                forget(why)
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.debug("%s: engine state reset raised: %s", why, exc)
+
+    def _schedule_refresh_soon(self, why: str, delay: float = 1.0) -> None:
+        """
+        RASTATIME 2026-11-02 - run ``refresh()`` on a daemon Timer instead
+        of waiting for the next poll: after a planned Liquidsoap restart
+        the running item is re-armed within a second, not within 120 s
+        (the rehearsal's station was silent for the whole interval).
+        """
+        logger.info("%s: refreshing the schedule in %.0f s to re-arm the running item.", why, delay)
+        t = threading.Timer(delay, self.refresh)
+        t.daemon = True
+        t.start()
 
     def _maybe_reinit_after_liquidsoap_restart(self) -> None:
         """

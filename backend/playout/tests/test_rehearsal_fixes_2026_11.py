@@ -279,3 +279,51 @@ def test_file_start_logs_an_unexpected_error_instead_of_dying_silently(sched, ca
         "PLAY  row-9 failed with an unexpected error" in r.getMessage() for r in caplog.records
     )
     assert "row-9" not in s._starting
+
+
+# ---- finding 2, root cause from the VM log: the engine's state mirror -------------------
+
+
+def _engine_with_telnet():
+    telnet = MagicMock()
+    telnet.request_queue_push.return_value = "12"
+    telnet.request_queue_skip.return_value = "OK"
+    telnet.request_queue_flush.return_value = "OK"
+    telnet.var_set.return_value = "OK"
+    return LiquidsoapPlayoutEngine(telnet_client=telnet), telnet
+
+
+def test_engine_forget_playback_state_defeats_the_idempotent_shortcut():
+    """
+    02:28:41 push -> dying instance; 02:30:57 catch-up stop()+play(same
+    file) returned without a push ("idempotent re-issue").  After the
+    restart the mirror is dropped and the same file is pushed again.
+    """
+    engine, telnet = _engine_with_telnet()
+    engine.play("C:/m/a.mp3", cue_in=520.9)
+    assert telnet.request_queue_push.call_count == 1
+    engine.stop()
+    engine.play("C:/m/a.mp3", cue_in=657.9)  # the old behaviour: shortcut, no push
+    assert telnet.request_queue_push.call_count == 1
+    engine.forget_playback_state("Liquidsoap restarted")
+    assert engine.get_state() == PlayoutState.STOPPED
+    engine.stop()
+    engine.play("C:/m/a.mp3", cue_in=700.0)
+    assert telnet.request_queue_push.call_count == 2  # pushed afresh
+
+
+def test_restart_paths_drop_the_engine_mirror(sched, monkeypatch):
+    s, engine, table = sched
+    # unplanned (process table)
+    table["infos"] = [lh.ProcessInfo(14516, 100.0, 300.0, MAIN_SCRIPT)]
+    s._maybe_reinit_after_liquidsoap_restart()
+    table["infos"] = [lh.ProcessInfo(15000, 100.0, 12.0, MAIN_SCRIPT)]
+    s._maybe_reinit_after_liquidsoap_restart()
+    engine.forget_playback_state.assert_called_once()
+    # planned
+    engine.forget_playback_state.reset_mock()
+    refreshed = []
+    monkeypatch.setattr(s, "_schedule_refresh_soon", lambda why, delay=1.0: refreshed.append(why))
+    s._after_liquidsoap_restart(attempts=1, delay=0.0)
+    engine.forget_playback_state.assert_called_once()
+    assert refreshed == ["Planned Liquidsoap restart"]

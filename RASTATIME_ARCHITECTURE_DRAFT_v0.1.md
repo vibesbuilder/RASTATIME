@@ -8338,9 +8338,21 @@ planned-restart path clears (`_after_liquidsoap_restart`), and because the
 detector runs at the top of `refresh()`, the same pass re-arms the item
 through the existing catch-up (`Catch-up: in-progress event ... entering
 at +N s`).  `_on_file_start` additionally logs an unexpected exception of
-its Timer thread instead of losing it to stderr.  Still open: the hang
-after `Liquidsoap stop (deferred up to 0.5s)` seen once in the rehearsal
-needs the VM's log to be explained.
+its Timer thread instead of losing it to stderr.  The VM's log then
+explained the "hang" after `Liquidsoap stop (deferred up to 0.5s)`: the
+planned restart at the PLAYOUT start ran concurrently with the start
+catch-up (Timer thread), the push landed in the dying instance, and
+`_after_liquidsoap_restart` cleared the scheduler's bookkeeping but not
+the engine's own mirror (`_current_uri`, `PLAYING`).  The catch-up two
+minutes later called `stop()` + `play(<same file>)`, and `play()` took
+the deferred-stop idempotency shortcut ("re-issue, keeping current
+track") without pushing.  `LiquidsoapPlayoutEngine.forget_playback_state()`
+now drops that mirror on both restart paths (planned and detected), and
+`_schedule_refresh_soon()` re-arms the running item one second after a
+planned restart instead of at the next 120-s poll.  The Settings ->
+Streams page re-populates its sub-forms from the posted values after a
+refused save (`isValid()` cannot map the flat `sN_data[field]` keys onto
+`elementsBelongTo`, so the fields came back empty and looked deleted).
 
 **Smaller changes.**  `restart_liquidsoap_service` asks `nssm status`
 first and logs INFO for a service that is not registered yet (fresh
@@ -8359,9 +8371,10 @@ service and child-process uptime with a restart warning, the age of each
 log tail, reads UTF-8 and marks WORKER optional; `bootstrap.ps1` runs
 `httpd -t` and checks the eight PHP extensions.
 
-**Verification.**  playout suite 861 passed (new
+**Verification.**  playout suite 863 passed (new
 `test_rehearsal_fixes_2026_11.py`: callbacks, Off marker, probe `none`,
-`/stream-event`, reporter dedup, restart re-arm, Timer-thread logging;
+`/stream-event`, reporter dedup, restart re-arm, engine mirror reset,
+Timer-thread logging;
 service probe tests), ruff clean, two rendered scripts (`harbor + line-in
 + webstream`, `no harbor + Off`) type-check with `liquidsoap --check`
 2.4.6, `php -l` on six files, `status.ps1` and `bootstrap.ps1` run on the
