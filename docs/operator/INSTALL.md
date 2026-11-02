@@ -635,9 +635,10 @@ powershell -ExecutionPolicy Bypass `
     -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe' `
     -StartService
 Invoke-WebRequest http://127.0.0.1:8000/status-json.xsl -UseBasicParsing
-# Expected: StatusCode 200.  Until 9i the Icecast error.log warns
-# "unable to open file .../rastatime-standby" (fallback mounts without
-# a source yet) - expected.
+# Expected: StatusCode 200.  Until stream outputs exist (Settings ->
+# Streams, then 9i's restart note) the Icecast error.log warns at every
+# start "unable to open file .../rastatime-standby" (fallback mounts
+# without a source) - expected.
 
 # 9h — Install and start the Liquidsoap service.
 # The production script C:\Tools\liquidsoap\rastatime.liq was already
@@ -660,6 +661,11 @@ nssm start RASTATIME-LIQUIDSOAP
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\backend\playout\config\nssm-install-standby.ps1
 Get-Service RASTATIME-STANDBY   # Running
+# On a fresh install there are no stream outputs yet: standby.liq has no
+# output, STANDBY runs idle (standby-stdout.log: "Warning 4: Unused
+# variable bus") and the -standby mounts answer 404.  Once the outputs
+# exist (Settings -> Streams): nssm restart RASTATIME-PLAYOUT (re-renders
+# standby.liq), then Restart-Service RASTATIME-STANDBY.
 ```
 
 > Stream outputs are rendered from the **database** (`cc_pref` rows
