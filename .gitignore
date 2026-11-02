@@ -156,3 +156,6 @@ frontend/legacy/public/live/now-playing.txt*
 /config/icecast.xml
 # backups of it made at upgrades (2026-10-24: icecast.xml.2.4.4-backup)
 /config/icecast.xml.*-backup
+
+# RASTATIME 2026-11-02 - station-specific Apache values (template: .example)
+/config/apache-site.conf

@@ -1,0 +1,7 @@
+# Station-specific values of the public TLS host, read by
+# infra/apache/rastatime-https.conf.  Copy this file to apache-site.conf
+# (git-ignored, saved by the backup with the rest of config/)
+# and set your public host name; win-acme writes the certificate files as
+# <host>-chain.pem and <host>-key.pem into RT_CERT_DIR.
+Define RT_PUBLIC_HOST radio.example.org
+Define RT_CERT_DIR "C:/RASTATIME/certs"

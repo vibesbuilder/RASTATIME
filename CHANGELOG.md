@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Vorbereitung des öffentlichen Repos: keine Betreiberdaten mehr im Code (2026-11-02,
+  Operator)** — Sendername, Domains, öffentliche und LAN-Adressen, Windows-Benutzer,
+  Rechnername, Provider, Sendungs- und Podcast-Namen und Logins in Tests, Kommentaren,
+  Handbuch und Betriebs-Doku durch neutrale Beispiele ersetzt (`example.org`,
+  `192.168.1.x`, „Example Radio“ …); dieselben Regeln laufen anschließend über die
+  ganze Historie.  Der öffentliche Hostname des TLS-Hosts steht nicht mehr in
+  `infra/apache/rastatime-https.conf`, sondern in der git-ignorierten
+  `config/apache-site.conf` (Vorlage `config/apache-site.conf.example`, im Backup-ZIP
+  enthalten); `httpd -t` geprüft, wirksam beim nächsten Apache-Neustart ohne
+  Verhaltensänderung.  Suiten playout, api und unit grün.
 - **GitHub-Workflows gehärtet (2026-11-02, Vorbereitung öffentliches Repo)** — alle
   Actions auf Commit-SHAs gepinnt (Version als Kommentar; `shivammathur/setup-php` und
   `softprops/action-gh-release` sind Fremd-Actions, letztere mit Schreibrecht im
