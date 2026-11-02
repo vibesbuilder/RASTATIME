@@ -80,6 +80,24 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Öffentliche Studio-Instanz führt zum Betreiber (neu 2026-11-02, Operator: Defer)
+
+Die Weboberfläche der Studio-Instanz ist aus dem Internet erreichbar und zeigt im Login, im
+Seitentitel, im Favicon und in Widgets/Embeds das RASTATIME-Branding; die öffentliche Subdomain
+ähnelt zudem dem Produktnamen und steht in den Zertifikats-Transparenz-Logs.  Sobald das Repo
+öffentlich ist, führt der Produktname (Suchmaschine, Internet-Scanner, CT-Logs) zum Sender und
+damit zum Betreiber - und umgekehrt.  Repo und Historie selbst sind seit 2026-11-02 frei von
+Betreiberdaten (lokale Commit-Sperre außerhalb des Repos).
+
+Mögliche Hebel (zu evaluieren): (a) `X-Robots-Tag: noindex` bzw. `robots.txt` für die
+Weboberfläche; (b) Login-Seite mit Sender- statt Produkt-Branding; (c) Produktname aus öffentlich
+ausgelieferten Widgets, Embeds, HTTP-Headern und Meta-Tags nehmen; (d) Subdomain umbenennen (DNS,
+Zertifikat, Stream- und DJ-Einwahl-URLs, Widgets auf der Sender-Website).
+
+**Vorbedingungen:** Evaluierung nach Konvention (inkl. Risiko-Punkt); Bestandsaufnahme, wo der
+Produktname nach außen sichtbar ist; für (d) Abstimmung mit DJs und Website sowie ein ruhiges
+Sendefenster.
+
 ### 🟡 Auto DJ füllt auch die laufende Sendung (neu 2026-10-26, Operator: Defer 2026-10-27)
 
 **Anlass 26.10.:** Operator-Testsendung „rock hour" (Instanz 30685, 22:15–23:08)
