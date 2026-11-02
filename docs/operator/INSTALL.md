@@ -673,7 +673,14 @@ Get-Service RASTATIME-STANDBY   # Running
 > `rastatime.conf`.  After any stream-setting change:
 > `nssm restart RASTATIME-PLAYOUT` (re-renders the `.liq` at startup,
 > incl. harbor credentials), then `nssm restart RASTATIME-LIQUIDSOAP`
-> and `Restart-Service RASTATIME-STANDBY` (9i).
+> and `Restart-Service RASTATIME-STANDBY` (9i).  Then check the mount
+> while something is scheduled: `http://127.0.0.1:8000/status-json.xsl`
+> must show the show's title, not the off-air text.  If it shows the
+> off-air text, restart RASTATIME-PLAYOUT once more: when Liquidsoap
+> comes back a few seconds after PLAYOUT's start catch-up, PLAYOUT does
+> not hand the running item over again and the station stays silent
+> (found 2026-11-02 in the fresh-machine rehearsal, INSTALL_PROBE.md;
+> BACKLOG).
 > Avoid the manual CLI render
 > (`python -m rastatime_playout.liquidsoap_config render`) on a
 > configured system — it does not read `stream.harbor` and would strip
