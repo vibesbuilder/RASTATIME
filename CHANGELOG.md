@@ -220,6 +220,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `admin`/`admin` mit Passwortwechsel steht in der Checkliste, der seit 2026-10-25 tote Schlüssel
   `stream.internal_listener` ist aus der Geheimnis-Tabelle und dem HTTPS-Runbook raus, das Konfig-Beispiel hat
   einen kommentierten `playout:`-Block.
+- **GitHub Phase 5 durchgeführt: Install-Probe auf frischer Windows-11-VM** (2026-11-01 23:16 bis 2026-11-02
+  02:56, Branch `probe/vm-2026-11`, in master übernommen).  Der Operator installierte die §2-Voraussetzungen auf
+  einer VirtualBox-VM (NAT), eine coding assistant-Sitzung in der VM ging INSTALL §4 Schritt 1 bis §6 nach dem Buchstaben
+  durch; Gesamtdauer etwa 5 h 10 min (INSTALL §1 schätzt 2–4 h).  Ergebnis: die Maschine sendet, Reboot ohne
+  Hand, A1.1/A1.3/A1.5, Upload-Rundlauf und Sendung auf dem Mount bestanden.  **15 Doku-Korrekturen** in INSTALL,
+  INSTALL_APACHE, COMPONENTS: Apache kennt keine Zeilenend-Kommentare (`FcgidMaxRequestLen`), `Define SRVROOT`
+  statt `ServerRoot`, `ExecCGI` + `DirectoryIndex index.php` (sonst 403 bzw. Verzeichnisliste), `php.ini` aus
+  `php.ini-production` mit `extension_dir` und acht Erweiterungen, Execution-Policy vor `Activate.ps1`,
+  `where.exe`, `python -m pip`, 52 statt 99 Composer-Pakete, kryptografischer Geheimnis-Generator (≥ 50 Zeichen),
+  RabbitMQ `sbin` auf den PATH + Erlang-Cookie + Loopback-Bind auf 127.0.0.1 und ::1, PostgreSQL
+  `listen_addresses = 'localhost'`, `-ApiHost 127.0.0.1`, Schritt 8 legt `media` an, Schritt 9g erzeugt
+  `icecast.xml` aus dem Beispiel, neuer Schritt 9i RASTATIME-STANDBY (acht Dienste), Hinweis „Erster
+  Stream-Ausgang“ (Mount, `source`-Passwort, Stream-Label), Mount-Prüfung nach der Neustart-Folge.  **14
+  Produktbefunde** (BACKLOG, Abschnitt GitHub): drei hoch (Settings → Streams speichert auf frischer Datenbank nicht,
+  stille Station nach Liquidsoap-Neustart, Portaudio-Unterlauf tötet die Engine), sieben mittel, vier niedrig.
+  Fazit für v1.0.0: noch nicht, erst (1)–(3).
 - **`bootstrap.ps1` prüft die ganze Voraussetzungsliste** (2026-11-01, Operator-Go): der Checker aus INSTALL
   Schritt 2 kannte Python, PostgreSQL, RabbitMQ und VLC; VLC ist raus, dafür sind Liquidsoap, NSSM, Apache, PHP,
   Icecast, FFmpeg und FFprobe an den Produktionspfaden aus §3 (oder auf dem PATH) Pflicht mit Versionsausgabe,
