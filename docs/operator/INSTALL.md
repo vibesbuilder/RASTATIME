@@ -528,13 +528,17 @@ python manage.py migrate
 > There is no `collectstatic` step — the prod settings define no
 > `STATIC_ROOT` and none is needed.
 
-### Step 8 — Create the log directory
+### Step 8 — Create the log and media directories
 
-The NSSM install scripts create this automatically, but you can create it
-now to verify filesystem permissions:
+The NSSM install scripts create the log directory automatically, but you
+can create it now to verify filesystem permissions.  The media directory
+(`storage.path` of Step 5) is created by nothing else, and the web
+application refuses every page without it (`the configured storage.path
+'C:/rastatime/media/' does not exists!`):
 
 ```powershell
 New-Item -ItemType Directory -Path C:\rastatime\logs -Force
+New-Item -ItemType Directory -Path C:\rastatime\media -Force
 ```
 
 ### Step 9 — Install the Windows services

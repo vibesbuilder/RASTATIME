@@ -81,7 +81,7 @@ down.)
 ```apache
 DocumentRoot "C:/RASTATIME/frontend/legacy/public"
 <Directory "C:/RASTATIME/frontend/legacy/public">
-    Options Indexes FollowSymLinks
+    Options Indexes FollowSymLinks ExecCGI
     AllowOverride All
     Require all granted
 
@@ -103,6 +103,19 @@ DocumentRoot "C:/RASTATIME/frontend/legacy/public"
 The `HTTP_AUTHORIZATION` line is not optional: without it the
 frontend appears to work, but every endpoint relying on HTTP Basic
 auth silently receives no credentials.
+
+Two more lines the stock `httpd.conf` does not have (found 2026-11-02 in
+the fresh-machine rehearsal, INSTALL_PROBE.md):
+
+- `ExecCGI` in the `Options` above: mod_fcgid runs a `fcgid-script`
+  only where it is set; without it every PHP URL answers **403
+  Forbidden** and nothing reaches `error_log`, not even at `LogLevel
+  info`.
+- `DirectoryIndex index.php index.html` in the stock
+  `<IfModule dir_module>` block (stock: `index.html`): `/` is an
+  existing directory, so the rewrite above passes it through, and
+  without `index.php` Apache shows a directory listing instead of the
+  login page.
 
 ### mod_fcgid + PHP
 
