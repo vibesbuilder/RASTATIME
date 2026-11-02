@@ -38,6 +38,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   und alle `.xsl`/`.xslt` hinter dem Proxy gesperrt; `ServerTokens Prod`,
   kein `X-Powered-By`, kein Icecast-Versions-Banner, `X-Robots-Tag: noindex, nofollow`
   auf dem TLS-Host.  Apache-Teil wirksam nach dem Apache-Neustart.
+- **Abhängigkeiten nach GitHub-Sicherheitswarnungen (2026-11-02, Operator-Go)** — von
+  elf Dependabot-Warnungen traf uns nur Django REST Framework: der anonyme
+  Liedwunsch-Endpunkt `POST /api/v2/song-requests` ließ sich über einen präparierten
+  Zeichensatz im `Content-Type` zu ~100 MB Speicher je Mini-Request aufblähen und umging
+  `DATA_UPLOAD_MAX_MEMORY_SIZE`.  DRF 3.16.1 → 3.18.3 (`>=3.18.2,<3.19`; verlangt Django
+  ≥ 5.2, vorhanden 5.2.18; das 2,5-MB-Limit trifft keinen internen Aufrufer), dazu
+  requests 2.32.5 → 2.34.2 (`>=2.33.0,<2.35` in API, Playout, API-Client, Analyzer) und
+  symfony/yaml 5.4.53 → 5.4.54 (beide nicht ausnutzbar: kein `extract_zipped_paths()`,
+  YAML nur aus der eigenen Konfiguration; trotzdem billig).  lxml (XXE nur über
+  `iterparse()`/`ETCompatXMLParser()`, wir nutzen `fromstring` mit
+  `resolve_entities=False`) bleibt auf 5.4 — Warnung auf GitHub als „vulnerable code not
+  used“ geschlossen, Update im BACKLOG.  Suiten api 195, playout 865, unit 739, shared 36,
+  analyzer 358 grün; `composer audit` sauber.  Wirksam nach Neustart von API, PLAYOUT,
+  ANALYZER und WORKER.
 
 ## [1.0.0] - 2026-11-02
 

@@ -23,7 +23,7 @@ setup(
     install_requires=[
         "mutagen>=1.45.1,<1.48",
         "pika>=1.0.0,<1.4",
-        "requests>=2.32.2,<2.33",
+        "requests>=2.33.0,<2.35",
         "typing_extensions",
     ],
     extras_require={

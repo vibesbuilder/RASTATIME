@@ -117,6 +117,19 @@ Sendefenster.
 - Grenze: Wer mit dem System arbeitet (DJs, Team), kennt den Produktnamen; Scanner-Datenbanken
   haben die alten Seiten seit dem HTTPS-Start vermutlich erfasst.
 
+### 🟡 lxml 5.4 → 6.1 (neu 2026-11-02, Operator: Defer)
+
+Dependabot-Warnung GHSA-vfmq-68hx-4jfw (XXE über `iterparse()` und `ETCompatXMLParser()` in
+der Standardeinstellung).  Uns betrifft sie nicht: das Playout liest nur die lokale
+Icecast-Statistik mit `etree.fromstring(..., parser=etree.XMLParser(resolve_entities=False))`
+(`history/stats.py`); die Warnung ist auf GitHub als „vulnerable code not used“ geschlossen.
+Das Update ist ein Major-Sprung (Pin `lxml>=4.5.0,<6.0.0` in `backend/playout/setup.py`), und
+die kompilierte lxml-Bibliothek lässt sich unter Windows nur bei gestopptem PLAYOUT ersetzen.
+
+**Vorbedingungen:** nächste Komponentenrunde oder ein neuer lxml-Fund, der uns betrifft;
+Probelauf in einer Wegwerf-venv (`stats_test` + Playout-Suite); Austausch bei gestopptem
+PLAYOUT in einem ruhigen Moment, danach Hörerstatistik (`history.stats`) prüfen.
+
 ### 🟡 Auto DJ füllt auch die laufende Sendung (neu 2026-10-26, Operator: Defer 2026-10-27)
 
 **Anlass 26.10.:** Operator-Testsendung „rock hour" (Instanz 30685, 22:15–23:08)

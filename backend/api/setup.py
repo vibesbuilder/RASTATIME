@@ -29,9 +29,9 @@ setup(
         "django-cors-headers>=4.4.0,<5",
         "django-filter>=25.1,<26",
         "django>=5.2,<5.3",
-        "djangorestframework>=3.16,<3.17",
+        "djangorestframework>=3.18.2,<3.19",
         "drf-spectacular>=0.22.1,<0.29",
-        "requests>=2.32.2,<2.33",
+        "requests>=2.33.0,<2.35",
         "waitress>=3.0.0,<4",
     ],
     extras_require={

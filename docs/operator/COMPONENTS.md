@@ -26,7 +26,7 @@ window.
 | PostgreSQL | C | 17.7 | EDB installer; feed: endoflife.date/postgresql (17 until 2029-11) | minor releases via installer in the window, with a fresh backup; major upgrades (18) are a project (dump/restore, `MIGRATION.md`) | backup restore |
 | Python | C | 3.13.14 | python.org; feed: endoflife.date/python | patch releases: install over, `.venv` keeps working; minor (3.14) = rebuild the venv | previous installer |
 | Django | C | 5.2.18 (since 2026-10-10) | PyPI; feed: endoflife.date/django (5.2 LTS until 2028-04) | pin in `backend\api\requirements.txt`, `pip install -r`, restart API + PLAYOUT (both import the ORM) | `pip install` the previous pin |
-| DRF 3.16, django-filter 25, django-cors-headers, waitress, psycopg2-binary, requests, urllib3, PyYAML, mutagen, bcrypt 5.0 (password hashes since 2026-10-27, `setup.py` of the API) | C | see `update_check.py` | PyPI | same as Django, within the pinned lines; `pip-audit` monthly | same |
+| DRF 3.18 (3.18.3 since 2026-11-02, security update from 3.16), django-filter 25, django-cors-headers, waitress, psycopg2-binary, requests 2.34 (since 2026-11-02), urllib3, PyYAML, mutagen, bcrypt 5.0 (password hashes since 2026-10-27, `setup.py` of the API) | C | see `update_check.py` | PyPI | same as Django, within the pinned lines; `pip-audit` monthly | same |
 | Legacy PHP packages (zf1s Zend 1, Propel 1, getID3, SimplePie, Symfony 5.4 yaml/config, phpseclib …) | C | `frontend\legacy\composer.lock` (52 packages); Composer 2.10.3 at `C:\Tools\composer\composer.phar` (`php C:\Tools\composer\composer.phar audit` in `frontend\legacy`); first audit 2026-10-10: phpseclib and symfony/yaml updated the same day, audit clean. CAUTION: most vendor folders are git-sourced checkouts owned by another Windows user (`vendor/<pkg>/.git`); composer cannot update them in place (`git show-ref` fails and the whole batch aborts, UI 500). Before updating such a package: delete its vendor folder, then `composer install --prefer-dist`; afterwards check `C:\Tools\Apache24\logs\error_log` for `PHP Fatal` (2026-10-10: the app answered 500 for 40 minutes while composer worked) | Packagist; `composer audit` | `composer update <pkg>` in a worktree, PHP lint + TEST_PLAN UI checks, commit the lock file | `git checkout composer.lock` + `composer install` |
 | Icecast | B | 2.5.0 (win64, since 2026-10-24 14:02) in `C:\Tools\Icecast-2.5.0`; service RASTATIME-ICECAST points at it (NSSM Application + AppDirectory), config `config/icecast.xml` (git-ignored) with `<charset>UTF-8</charset>` on every output mount (the Windows build sends empty ICY titles without it) and an absolute `<mime-types>` | icecast.org / xiph.org downloads (SHA512SUMS.txt), installer unsigned - verify the hash | install beside into a new folder, test on port 8010 with `C:/Temp/optd/icecast25/ice25_test.py`, then `nssm set` Application/AppDirectory + `Restart-Service` (stop RASTATIME-STANDBY first, it depends on Icecast) | 2.4.4 kept in `C:\Tools\Icecast` + `config/icecast.xml.2.4.4-backup`: point the two NSSM values back, restore the file, restart |
 | Liquidsoap | B | 2.4.6 on RASTATIME-LIQUIDSOAP (`C:\Tools\liquidsoap-v2.4.6`, since 2026-10-10) and on RASTATIME-STANDBY (same binary, since 2026-10-21); 2.4.4 stays in `C:\Tools\liquidsoap` as the fallback and the home of the scripts (`rastatime.liq`, `standby.liq`) | GitHub savonet/liquidsoap, asset `liquidsoap-<ver>-win64.zip` (official build, OCaml 4.14, stereotool/portaudio/ffmpeg inside) | bench on a second instance first (`liquidsoap --check`, 40 s run with Stereo Tool, memory, shutdown), then swap `C:\Tools\liquidsoap` in a quiet moment with the standby instance up | rename the previous folder back |
@@ -105,3 +105,16 @@ previous pin, restart, then investigate.
   The pins live in `backend\api\setup.py`; `requirements.txt` is generated
   from it (edit both, then `pip install --no-deps -e backend\api` so the
   editable metadata follows).
+- A pure-Python library (DRF, requests) can be updated while the services
+  run: `pip install --no-deps <pkg>==<version>` into `.venv`, then restart
+  the services that import it.  Re-installing the editable packages fails
+  while `RASTATIME-ANALYZER` runs (its `rastatime-analyzer.exe` is locked);
+  `pip check` then reports the old ranges from
+  `site-packages\rastatime_*-1.0.0.dist-info\METADATA` - harmless at runtime
+  (the services start via `python -m` or a launcher without requirement
+  checks); adjust the `Requires-Dist` lines or re-install with the services
+  stopped (2026-11-02).  Libraries with compiled parts (lxml, psycopg2,
+  charset-normalizer) need the importing services stopped.
+- Dependabot pull requests are never merged on GitHub: a merge there adds a
+  commit by `dependabot[bot]` and bypasses the local publication guard.
+  Apply the update locally and push; Dependabot closes its PR by itself.
