@@ -473,7 +473,7 @@ reachable from the public internet:
 |---|---|---|
 | `general.api_key` | `rastatime.conf` | Authenticates inter-service API calls and the v1 legacy notify hook. |
 | `general.secret_key` | `rastatime.conf` | Django session / CSRF signing key. Must be at least 50 random chars. |
-| `<source-password>` | `C:\rastatime\config\icecast.xml` | Icecast admin / relay / source password. Default value is `admin`. Replace with a long random string. |
+| `<source-password>` etc. | `C:\rastatime\config\icecast.xml` (Step 9g) | Icecast source / relay / admin / master passwords. `icecast.xml.example` has `CHANGEME` in all four. Replace each with its own long random string. |
 | Master DJ password | `cc_pref` row `live_stream_master_password` (set via Settings → Streams in the frontend) | Authenticates the master-source DJ at `/main`. |
 
 Generate strong values e.g. with PowerShell (cryptographic random, 48
@@ -621,12 +621,23 @@ powershell -ExecutionPolicy Bypass `
     -ApacheRoot C:\Tools\Apache24 `
     -StartService
 
-# 9g — Icecast (streaming; note the explicit exe path)
+# 9g — Icecast (streaming; note the explicit exe path).  First the config:
+# the script does not check it, and without the file icecast.exe hangs
+# silently (no port, no log) while NSSM reports Running.
+Copy-Item C:\rastatime\config\icecast.xml.example C:\rastatime\config\icecast.xml
+# In icecast.xml: replace the four CHANGEME (source-, relay-, admin-,
+# master-password), each with its own value from the Step 5 command, and
+# set <hostname> to this machine's address (the example has 192.168.1.64).
+# The paths (C:/rastatime/logs, C:/Tools/Icecast/web and admin) fit §2.7.
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-icecast.ps1 `
     -InstallRoot C:\rastatime `
     -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe' `
     -StartService
+Invoke-WebRequest http://127.0.0.1:8000/status-json.xsl -UseBasicParsing
+# Expected: StatusCode 200.  Until 9i the Icecast error.log warns
+# "unable to open file .../rastatime-standby" (fallback mounts without
+# a source yet) - expected.
 
 # 9h — Install and start the Liquidsoap service.
 # The production script C:\Tools\liquidsoap\rastatime.liq was already
