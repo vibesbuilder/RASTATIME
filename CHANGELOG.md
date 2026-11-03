@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ausgeschnittene Archiv zeigte am eigenen Inhalt vorbei.  Pythons Leser verzeiht das
   (darum blieb es in den Tests unbemerkt), PHPs ZipArchive auf cba.media nicht — der erste
   echte Upload scheiterte mit HTTP 400.  Das ZIP entsteht jetzt als eigene Datei und wird
-  in den Inhalt kopiert; der Test prüft die Positionen byte-genau.  Commit `<hash>`.
+  in den Inhalt kopiert; der Test prüft die Positionen byte-genau.  Commit `19be7886`.
 
 ### Security
 
