@@ -72,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Sendung geht der **Name der Sendung** als Text an cba.media (vorher wartete die Episode;
   Hinweis unter „Archive automatically“ entsprechend).  Wirksam: Legacy sofort, Texte
   DE/FR/ES nach Apache-Neustart, Beschreibungsregel im Worker nach WORKER-Neustart.
-  Commit `<hash>`.
+  Commit `3cc8fb35`.
 - **„Publishing“ heißt „Archiving“ (2026-11-03, Operator)** — „Publish“ gehört in RASTATIME
   zu My Podcast; Abschnitt, Menütexte, Handbuch-Kapitel (`ARCHIVING.md`), Routen
   (`archiving/*`) und die Tabelle `cc_show_archiving` folgen dem neuen Namen.  Die
