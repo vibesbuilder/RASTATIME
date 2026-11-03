@@ -8609,5 +8609,10 @@ unchanged / cleared by a linked post, nothing left afterwards.
 `C:/Temp/optd/archive_auto_ui_probe.php 1 534 <instance> --write`: form,
 validation, `autoState()` cases, `auto_since` set / kept / cleared,
 waiting time stored and clamped, restored.  The stage 1/2 probe (75
-checks) still passes.  Rollback: untick the switch (nothing new is
-queued) or stop RASTATIME-WORKER; `git revert`; the columns stay.
+checks) still passes.  Live: accepted 2026-11-03 by the operator - a test
+show with the switch, a recording and a waiting time of 5 min; the episode
+first waited with its reason (no description on the episode or the show),
+the next scan after the description was added queued it (trigger `auto`)
+and the job runner archived it publicly in one attempt.  Rollback: untick
+the switch (nothing new is queued) or stop RASTATIME-WORKER; `git revert`;
+the columns stay.

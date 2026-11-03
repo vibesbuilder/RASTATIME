@@ -6690,7 +6690,7 @@ frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an 
 
 ## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
 
-### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 abgenommen, Stufe 3 gebaut 2026-11-03 (evaluiert 2026-11-01)
+### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 + 3 abgenommen 2026-11-03 (evaluiert 2026-11-01)
 
 Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
 hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
@@ -6854,9 +6854,23 @@ Meldung fehlgeschlagener Automatik-Uploads.
 Architektur §23.81, Migration 0076 live): Schalter "Archive automatically"
 je Sendung, Wartezeit unter Settings -> CBA Accounts (30 min), Worker prueft
 alle 5 Minuten, ueberspringt nach 24 h mit Grund, Warnhinweis
-`archive_failed` 7 Tage.  Offen: Neustart RASTATIME-WORKER + Apache durch
-den Operator, Abnahme mit einer Testsendung (Schalter an, Sichtbarkeit
-privat).
+`archive_failed` 7 Tage.
+
+**Stufe 3 abgenommen 2026-11-03** (WORKER + Apache 17:01 neu gestartet):
+Testsendung mit Schalter, Aufzeichnung und Wartezeit 5 min.  Ab Faelligkeit
+wartete die Episode mit Grund ("neither the episode nor the show has a
+description", Log + Episode-Dialog); nach dem Nachtragen der Beschreibung
+legte der naechste Durchlauf den Auftrag selbst an (Trigger `auto`),
+Upload 36 MB in 85 s, Beitrag oeffentlich, Episode verknuepft.  Rest:
+Wartezeit wieder auf den gewuenschten Wert stellen (Operator).
+
+### 💡 Hinweis "Sendung ohne Beschreibung" beim Einschalten der Automatik (Operator 2026-11-03: offen)
+
+Das Sendungsformular prueft bei "Archive automatically" Konto, Thema,
+Sprache und Lizenz, nicht die Beschreibung (sie kann je Episode kommen).
+Bei der Abnahme wartete die erste Episode deshalb auf eine Beschreibung.
+Idee: ein Hinweis (keine Sperre) im Abschnitt Archiving, wenn die Sendung
+keine Beschreibung hat.  Aufwand ~1 h, nur Legacy, kein Neustart.
 
 ### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
 
