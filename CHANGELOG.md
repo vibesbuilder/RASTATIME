@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   20/h je Kanal, Unterdrückung 180 s bei geplanten Neustarts), Playout-Monitor,
   API-Wächter. Manual SETTINGS §6 ×4, ARCHITECTURE §23.84, 28 Tests.
   Wirksam nach PLAYOUT- und API-Neustart (Apache für die Übersetzungen).
-  Commit `TBD`.
+  Commit `a5bdc4da`.
 
 - **Jahresbericht: Sendeminuten der Eigenproduktionen + Teilnehmende auf einer Seite (2026-11-03, Go 2026-11-03)** —
   Häkchen „Own production“ in Edit Show → What (Vorlagen und Import/Export
