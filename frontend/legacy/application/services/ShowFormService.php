@@ -29,6 +29,8 @@ class Application_Service_ShowFormService
         $formRecord = new Application_Form_AddShowRR();
         $formAbsoluteRebroadcast = new Application_Form_AddShowAbsoluteRebroadcastDates();
         $formRebroadcast = new Application_Form_AddShowRebroadcastDates();
+        // RASTATIME 2026-11-03 - publishing stage 1 (editorial team, CBA defaults)
+        $formPublishing = new Application_Form_AddShowPublishing();
 
         $formWhat->removeDecorator('DtDdWrapper');
         $formAutoPlaylist->removeDecorator('DtDdWrapper');
@@ -40,6 +42,7 @@ class Application_Service_ShowFormService
         $formRecord->removeDecorator('DtDdWrapper');
         $formAbsoluteRebroadcast->removeDecorator('DtDdWrapper');
         $formRebroadcast->removeDecorator('DtDdWrapper');
+        $formPublishing->removeDecorator('DtDdWrapper');
 
         $forms = [];
         $forms['what'] = $formWhat;
@@ -52,6 +55,7 @@ class Application_Service_ShowFormService
         $forms['record'] = $formRecord;
         $forms['abs_rebroadcast'] = $formAbsoluteRebroadcast;
         $forms['rebroadcast'] = $formRebroadcast;
+        $forms['publishing'] = $formPublishing;
 
         return $forms;
     }
@@ -115,6 +119,9 @@ class Application_Service_ShowFormService
         $forms['record']->disable();
         $forms['rebroadcast']->disable();
         $forms['abs_rebroadcast']->disable();
+        // RASTATIME 2026-11-03 - show-level, not rendered for an instance
+        // (episode data lives in the calendar's Episode... dialog)
+        $forms['publishing']->disable();
     }
 
     /**
@@ -136,6 +143,8 @@ class Application_Service_ShowFormService
         $this->populateFormRecord($forms['record']);
         $this->populateFormRebroadcastRelative($forms['rebroadcast']);
         $this->populateFormRebroadcastAbsolute($forms['abs_rebroadcast']);
+        // RASTATIME 2026-11-03 - publishing stage 1
+        $forms['publishing']->populateFromShow((int) $this->ccShow->getDbId());
     }
 
     private function populateFormWhat($form)
@@ -639,6 +648,17 @@ class Application_Service_ShowFormService
         $live = $forms['live']->isValid($formData);
         $record = $forms['record']->isValid($formData);
         $who = $forms['who']->isValid($formData);
+        // RASTATIME 2026-11-03 - publishing stage 1: the section is only
+        // rendered for a whole show (not Edit Instance), so it is checked
+        // only when its fields came along; populate() keeps the input when
+        // another section refuses the save
+        $publishing = true;
+        if (array_key_exists('add_show_participants', $formData)) {
+            $forms['publishing']->populate($formData);
+            $publishing = $forms['publishing']->applyErrors(
+                Application_Service_PublishingService::validateShowData($formData)
+            );
+        }
 
         /*
          * hack to prevent validating the file upload field since it
@@ -702,7 +722,7 @@ class Application_Service_ShowFormService
         // was the problem.  Log the individual results + the offending
         // field messages so the root cause is greppable.
         $result = $what && $autoplaylist && $live && $record && $who && $style && $when
-            && $repeats && $absRebroadcast && $rebroadcast;
+            && $repeats && $absRebroadcast && $rebroadcast && $publishing;
         if (!$result) {
             $bits = [
                 'what'           => $what ? '1' : '0',
@@ -715,6 +735,7 @@ class Application_Service_ShowFormService
                 'repeats'        => $repeats ? '1' : '0',
                 'absRebroadcast' => $absRebroadcast ? '1' : '0',
                 'rebroadcast'    => $rebroadcast ? '1' : '0',
+                'publishing'     => $publishing ? '1' : '0',
             ];
             $summary = '';
             foreach ($bits as $name => $val) {
@@ -723,7 +744,7 @@ class Application_Service_ShowFormService
             Logging::warn('validateShowForms FALSE: ' . trim($summary));
             // Dump the offending form's error messages.
             foreach (['what', 'autoplaylist', 'live', 'record', 'who',
-                      'style', 'repeats'] as $fkey) {
+                      'style', 'repeats', 'publishing'] as $fkey) {
                 if (isset($forms[$fkey]) && method_exists($forms[$fkey], 'getMessages')) {
                     $msgs = $forms[$fkey]->getMessages();
                     if (!empty($msgs)) {

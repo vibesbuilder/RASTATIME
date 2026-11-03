@@ -150,6 +150,10 @@ final class LocaleController extends Zend_Controller_Action
             'Removed.' => _('Removed.'),
             'Linked.' => _('Linked.'),
             'No jingle announces this show yet.' => _('No jingle announces this show yet.'),
+            // RASTATIME 2026-11-03 - publishing stage 1 (calendar "Episode..." dialog)
+            'Episode' => _('Episode'),
+            'Saved.' => _('Saved.'),
+            'Uploading...' => _('Uploading...'),
             // RASTATIME 2026-10-08 - preflight warning: failed podcast download
             'Podcast download failed:' => _('Podcast download failed:'),
             '%s attempt(s), last %s' => _('%s attempt(s), last %s'),

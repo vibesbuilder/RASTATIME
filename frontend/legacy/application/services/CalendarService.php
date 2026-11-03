@@ -65,6 +65,7 @@ class Application_Service_CalendarService
                     'url' => $baseUrl . 'schedule/teaser-dialog',
                 ];
             }
+            $this->addEpisodeItem($menu, $baseUrl, $isAdminOrPM || $isHostOfShow);
         } else {
             // Show content can be modified from the calendar if:
             // the user is admin or hosting the show.
@@ -99,6 +100,7 @@ class Application_Service_CalendarService
                     'url' => $baseUrl . 'schedule/teaser-dialog',
                 ];
             }
+            $this->addEpisodeItem($menu, $baseUrl, $isAdminOrPM || $isHostOfShow);
 
             // user can remove all content if the show has not started
             if ($now < $start && ($isAdminOrPM || $isHostOfShow)) {
@@ -232,6 +234,24 @@ class Application_Service_CalendarService
      * @param int      $deltaDay delta days show moved
      * @param int      $deltaMin delta minutes show moved
      */
+    /**
+     * RASTATIME 2026-11-03 - publishing stage 1: "Episode..." (title, teaser,
+     * image, people involved of this instance) for admins, program managers
+     * and the hosts of the show, before and after it aired; not for the
+     * legacy rebroadcast instances (they repeat another instance).
+     */
+    private function addEpisodeItem(array &$menu, $baseUrl, $mayEdit)
+    {
+        if (!$mayEdit || $this->ccShowInstance->isRebroadcast()) {
+            return;
+        }
+        $menu['episode'] = [
+            'name' => _('Episode...'),
+            'icon' => 'episode',
+            'url' => $baseUrl . 'schedule/episode-dialog',
+        ];
+    }
+
     public static function addDeltas($dateTime, $deltaDay, $deltaMin)
     {
         $newDateTime = clone $dateTime;

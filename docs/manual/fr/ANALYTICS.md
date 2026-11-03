@@ -7,7 +7,7 @@
 > le **rétroviseur** — ce qui est réellement passé à l'antenne, et
 > combien de personnes écoutaient pendant ce temps.
 
-Le menu **Analytics** de la barre de navigation regroupe quatre
+Le menu **Analytics** de la barre de navigation regroupe cinq
 pages :
 
 | Page | Question à laquelle elle répond |
@@ -16,6 +16,7 @@ pages :
 | **History Templates** | Quelles colonnes le journal de diffusion doit-il enregistrer et exporter ? |
 | **Listener Stats** | Combien d'auditeurs étaient connectés à chaque flux, au fil du temps ? |
 | **Show Listener Stats** | Quelle audience chaque *émission* a-t-elle réalisée ? |
+| **Participants** | Combien de personnes ont fait les émissions d'une année ? Voir [Publication](./PUBLISHING.md) § 4 (depuis le 2026-11-03). |
 
 Les deux premières existent pour la **traçabilité** — déclarations
 de droits d'auteur, journaux réglementaires, appels du type « quel

@@ -19,6 +19,8 @@ class ScheduleController extends Zend_Controller_Action
             ->addActionContext('show-content-dialog', 'json')
             // RASTATIME 2026-10-16 - teaser automation stage 2
             ->addActionContext('teaser-dialog', 'json')
+            // RASTATIME 2026-11-03 - publishing stage 1
+            ->addActionContext('episode-dialog', 'json')
             ->addActionContext('clear-show', 'json')
             ->addActionContext('get-current-playlist', 'json')
             ->addActionContext('remove-group', 'json')
@@ -552,6 +554,147 @@ class ScheduleController extends Zend_Controller_Action
         $this->_helper->json->sendJson(['ok' => true, 'files' => SecurityHelper::htmlescape_recursive($rows)]);
     }
 
+    /**
+     * RASTATIME 2026-11-03 - publishing stage 1: the "Episode..." dialog of a
+     * show instance (GET id).  Title, teaser, description, image and people
+     * involved of this one episode; the show's defaults show as
+     * placeholders.  Admins, program managers and the show's hosts.
+     */
+    public function episodeDialogAction()
+    {
+        $instanceId = (int) $this->_getParam('id');
+        $episode = Application_Service_PublishingService::episode($instanceId);
+        if ($episode === null) {
+            $this->view->show_error = true;
+
+            return;
+        }
+        $ns = new Zend_Session_Namespace('csrf_namespace');
+        if (empty($ns->authtoken)) {
+            $ns->authtoken = sha1(uniqid((string) mt_rand(), true));
+        }
+        $this->view->csrf = $ns->authtoken;
+        $this->view->episode = $episode;
+        $this->view->canEdit = $this->episodeMayEdit($episode['show_id']);
+        $this->view->ready = Application_Service_PublishingService::tablesReady();
+        $this->view->hasImage = Application_Service_PublishingService::episodeImageFile($instanceId) !== null;
+        $this->view->licenses = Application_Service_PublishingService::licenseOptions();
+        $this->view->dialog = $this->view->render('schedule/episode-dialog.phtml');
+        $this->view->showTitle = $episode['show_name'];   // plain text, see showContentDialogAction
+        $this->view->startsLocal = $episode['starts_local'];
+        unset($this->view->episode, $this->view->licenses, $this->view->hasImage);
+    }
+
+    private function episodeMayEdit($showId)
+    {
+        $user = Application_Model_User::getCurrentUser();
+
+        return $user->isAdminOrPM() || $user->isHostOfShow((int) $showId);
+    }
+
+    /**
+     * Admin / PM / host of the instance's show, POST, CSRF; the instance id
+     * in "id".  Returns the instance id, or 0 after sending the refusal.
+     */
+    private function episodeMutationAllowed()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+
+            return 0;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+
+            return 0;
+        }
+        $instanceId = (int) $this->_getParam('id');
+        $showId = (int) Propel::getConnection()->query('SELECT show_id FROM cc_show_instances WHERE id = ' . $instanceId)->fetchColumn();
+        if (!$showId) {
+            $this->getResponse()->setHttpResponseCode(404);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => _('The show instance does not exist any more.')]);
+
+            return 0;
+        }
+        if (!$this->episodeMayEdit($showId)) {
+            $this->getResponse()->setHttpResponseCode(403);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'forbidden']);
+
+            return 0;
+        }
+
+        return $instanceId;
+    }
+
+    public function episodeSaveAction()
+    {
+        if (!($instanceId = $this->episodeMutationAllowed())) {
+            return;
+        }
+        $error = Application_Service_PublishingService::saveEpisode($instanceId, [
+            'title' => $this->_getParam('title', ''),
+            'teaser' => $this->_getParam('teaser', ''),
+            'description' => $this->_getParam('description', ''),
+            'image_license' => $this->_getParam('image_license', ''),
+            'image_caption' => $this->_getParam('image_caption', ''),
+            'participants' => $this->_getParam('participants', ''),
+        ]);
+        $this->_helper->json->sendJson(['ok' => $error === null, 'error' => $error]);
+    }
+
+    /** POST multipart: "file" = JPG/PNG, replaces the episode image. */
+    public function episodeImageUploadAction()
+    {
+        if (!($instanceId = $this->episodeMutationAllowed())) {
+            return;
+        }
+        $file = $_FILES['file'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => _('The image did not arrive - please try again.')]);
+
+            return;
+        }
+
+        try {
+            $error = Application_Service_PublishingService::setEpisodeImage($instanceId, $file['tmp_name'], (int) $file['size']);
+        } catch (Exception $e) {
+            Logging::warn('episode image ' . $instanceId . ': ' . $e->getMessage());
+            $error = _('The image could not be stored.');
+        }
+        $this->_helper->json->sendJson(['ok' => $error === null, 'error' => $error]);
+    }
+
+    public function episodeImageDeleteAction()
+    {
+        if (!($instanceId = $this->episodeMutationAllowed())) {
+            return;
+        }
+        Application_Service_PublishingService::removeEpisodeImage($instanceId);
+        $this->_helper->json->sendJson(['ok' => true]);
+    }
+
+    /** GET id: the episode image itself (preview in the dialog), 404 without one. */
+    public function episodeImageAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $path = Application_Service_PublishingService::episodeImageFile((int) $this->_getParam('id'));
+        if ($path === null) {
+            $this->getResponse()->setHttpResponseCode(404);
+
+            return;
+        }
+        $type = strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'png' ? 'image/png' : 'image/jpeg';
+        $this->getResponse()
+            ->setHeader('Content-Type', $type, true)
+            ->setHeader('Content-Length', (string) filesize($path), true)
+            ->setHeader('Cache-Control', 'private, max-age=0', true)
+            ->setBody(file_get_contents($path));
+    }
+
     public function populateRepeatingShowInstanceFormAction()
     {
         $showId = $this->_getParam('showId');
@@ -686,6 +829,8 @@ class ScheduleController extends Zend_Controller_Action
         $data['add_show_day_check'] = $this->_getParam('days');
         // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
         $data['add_show_month_check'] = $this->_getParam('months', []);
+        // RASTATIME 2026-11-03 - Publishing: the editorial team boxes travel like the hosts
+        $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', []);
 
         if ($data['add_show_day_check'] == '') {
             $data['add_show_day_check'] = null;
@@ -713,6 +858,7 @@ class ScheduleController extends Zend_Controller_Action
         )) {
             // Get the show ID from the show service to pass as a parameter to the RESTful ShowImageController
             $this->view->showId = $service_show->addUpdateShow($data);
+            $this->savePublishing($this->view->showId, $data);
 
             $this->view->addNewShow = true;
             $this->view->newForm = $this->view->render('schedule/add-show-form.phtml');
@@ -750,6 +896,8 @@ class ScheduleController extends Zend_Controller_Action
         $data['add_show_day_check'] = $this->_getParam('days');
         // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
         $data['add_show_month_check'] = $this->_getParam('months', []);
+        // RASTATIME 2026-11-03 - Publishing: the editorial team boxes travel like the hosts
+        $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', []);
 
         if ($data['add_show_day_check'] == '') {
             $data['add_show_day_check'] = null;
@@ -780,6 +928,7 @@ class ScheduleController extends Zend_Controller_Action
         if ($service_showForm->validateShowForms($forms, $data)) {
             // Get the show ID from the show service to pass as a parameter to the RESTful ShowImageController
             $this->view->showId = $service_show->addUpdateShow($data);
+            $this->savePublishing($this->view->showId, $data);
 
             // send new show forms to the user
             $this->createShowFormAction(true);
@@ -789,6 +938,24 @@ class ScheduleController extends Zend_Controller_Action
         } else {
             $this->view->form = $this->view->render('schedule/add-show-form.phtml');
             Logging::debug('Show creation failed');
+        }
+    }
+
+    /**
+     * RASTATIME 2026-11-03 - publishing stage 1: store the Publishing section
+     * of a whole show (absent in Edit Instance).  A failure here is logged
+     * and does not undo the show save.
+     */
+    private function savePublishing($showId, array $data)
+    {
+        if (!$showId || !array_key_exists('add_show_participants', $data)) {
+            return;
+        }
+
+        try {
+            Application_Service_PublishingService::saveShow((int) $showId, $data);
+        } catch (Exception $e) {
+            Logging::warn('publishing: show ' . $showId . ' not saved: ' . $e->getMessage());
         }
     }
 
@@ -817,6 +984,7 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->rebroadcast = $forms['rebroadcast'];
         $this->view->who = $forms['who'];
         $this->view->style = $forms['style'];
+        $this->view->publishing = $forms['publishing'];
 
         return $forms;
     }

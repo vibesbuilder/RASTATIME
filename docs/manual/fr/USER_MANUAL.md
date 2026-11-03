@@ -137,6 +137,7 @@ qu'ils supposent tous.
 | [Tableau de bord](./DASHBOARD.md) | Widget En cours, état de source, surcharge manuelle, mettre la station en direct depuis un microphone. |
 | [Calendrier](./CALENDAR.md) | Créer des émissions, modifier, glisser-déposer, émissions récurrentes, répétitions, animateurs. |
 | [Modèles d'émission](./SHOW_TEMPLATES.md) | Réutiliser les paramètres d'émission sans les retaper chaque semaine. |
+| [Publication](./PUBLISHING.md) | Profils de l'équipe de rédaction, réglages de publication d'une émission (podcast CBA, licence, langues), titre, accroche et image par épisode, et la vue annuelle des participants. Préparation de la publication sur cba.media. |
 | [Import / Export](./IMPORT_EXPORT.md) | Exporter utilisateurs, émissions, playlists, smart blocks, webstreams et abonnements podcast en CSV/JSON, les tenir dans un tableur et les réimporter avec aperçu. |
 | [Démarrage différé d'émission](./DELAYED_START.md) | Laisser une émission inscrite commencer en retard quand l'émission qui la précède a dépassé, au lieu de rogner cette émission. Le retard se propage à travers les émissions inscrites consécutives jusqu'à la première ancre à heure fixe. |
 

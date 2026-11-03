@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.109
-Date: 2026-11-01
+Draft version: 0.110
+Date: 2026-11-03
 
 > **Revision history**
+> - **0.110 (2026-11-03)** - **Publishing, stage 1** (§23.79): editorial team profiles, per-show
+>   publishing defaults, per-episode title / teaser / image (calendar "Episode..."), Analytics ->
+>   Participants; legacy migration 0074 (four tables), nothing uploaded yet.
 > - **0.109 (2026-11-02)** - **Fresh-machine rehearsal fixes** (§23.78): output.icecast state reported
 >   to Settings -> Streams via PLAYOUT `/stream-event`, Main Output "Off" (no portaudio), unplanned
 >   Liquidsoap restart re-arms the running item, installer / status script hardening.
@@ -8392,3 +8395,74 @@ service probe tests), ruff clean, two rendered scripts (`harbor + line-in
 2.4.6, `php -l` on six files, `status.ps1` and `bootstrap.ps1` run on the
 studio machine.  Rollback: `git revert` of the commit + PLAYOUT restart;
 no migration, no nssm change.
+
+### 23.79 Publishing, Stage 1: Editorial Team, Episode Data, Participants (2026-11-03)
+
+**Why.**  The operator publishes every show on cba.media (the Austrian
+community-radio archive) by hand and reports the people involved in the
+programme once a year.  Stage 1 of the CBA publishing plan (BACKLOG "CBA-
+Anbindung", operator go 2026-11-03) stores what a published episode and
+the yearly count need; nothing is uploaded yet.  Stage 2 adds the upload
+(RASTATIME-WORKER as job runner, CBA credentials under Settings), stage 3
+the automatic upload after the recording import (§23.66).
+
+**Model (legacy migration 0074, target 74).**  Four tables, raw SQL in
+the legacy frontend (no Propel classes), every reader tolerates their
+absence (`PublishingService::tablesReady()`):
+`cc_editor_profile` (name, optional email, optional `subjs_id` -> cc_subjs
+SET NULL, active), `cc_show_editor_profile` (N:M, both CASCADE),
+`cc_show_publishing` (one row per show, created on the first save:
+participants 0-999, CBA series id, licence key, CBA category id, up to
+three language codes, tags, default teaser, contains_copyright) and
+`cc_episode` (one row per instance, CASCADE with the instance: title,
+teaser, image path relative to the storage root, image licence and
+caption, participants override).  The episode description is the
+existing `cc_show_instances.description` ("Instance Description").
+Licence keys are those of the CBA zipupload (`copyright`, `cc by-nc-nd`
+... `pd`).
+
+**Show form.**  `Application_Form_AddShowPublishing` is a sixth subform
+(`ShowFormService::createShowForms()['publishing']`), rendered as section
+"Publishing" between Who and Style, not in Edit Instance (the section
+is show-level).  The editorial-team boxes travel as a separate
+`editorProfiles` parameter like the hosts (a multi-checkbox collapses in
+the controller's flat name/value list).  `validateShowForms()` checks the
+section only when its fields came along, `ScheduleController::
+savePublishing()` stores it after `addUpdateShow()`; a failure there is
+logged and does not undo the show save.
+
+**Episode dialog.**  Calendar context menu "Episode..." (CalendarService
+`addEpisodeItem`, past and future instances, not legacy rebroadcasts,
+admins / PMs / hosts of the show) -> `schedule/episode-dialog` (JSON,
+view `episode-dialog.phtml` with inline script, dialog built by
+`buildEpisodeDialog` in schedule.js).  Writes are POST + CSRF + role
+check (`episodeMutationAllowed`): `episode-save`,
+`episode-image-upload` (JPG/PNG by finfo MIME, at most 10 MiB, stored as
+`<storage root>/imported/episode-images/<instance>/<stamp>-<rand>.<ext>`,
+the previous file is deleted), `episode-image-delete`; `episode-image`
+serves the file for the preview.  Episode images sit in the media mirror
+of the backup.  Future instances that the calendar recreates after a
+change of the repeat pattern lose their episode row (CASCADE) - the
+manual tells operators to enter episode data close to the broadcast.
+
+**Pages.**  `PublishingController` (ACL resource `publishing`, Program
+Managers and Admins): Settings -> Editorial Team (`editors`, classic
+POST + redirect, CSRF by the Acl plugin) and Analytics -> Participants
+(`participants`, `participants-csv`).  The overview counts instances of
+the year in station time that ended, are not deleted
+(`modified_instance`) and are no legacy rebroadcast; per show the show
+value, the number of episode overrides and the sum of the effective
+values (participations); totals: shows, episodes, sum of the show
+values, participations, distinct profiles of the aired shows, shows
+without a value.  "Repeat of show" shows (§23.65) carry a tag.
+
+**Verification.**  `C:/Temp/optd/publishing_probe.php <admin> <test show>
+[--write]`: show form renders the section (order Who < Publishing <
+Style, nine help icons, absent in Edit Instance), validation, context
+menu entry, episode dialog (editable and read-only), both pages; with
+`--write` profile / show settings / episode / image round trip on the
+test show, everything removed again.  API suite 195 passed (test
+database migrated through 0074).  Unauthenticated curl on the new routes
+302 to the login.  Rollback: `git revert`; the four tables stay unused
+(or `DROP TABLE cc_episode, cc_show_publishing, cc_show_editor_profile,
+cc_editor_profile` and schema_version 73).

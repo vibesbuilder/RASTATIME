@@ -1,0 +1,158 @@
+<?php
+// RASTATIME 2026-11-03 - publishing stage 1: the "Episode..." dialog of a
+// show instance (calendar context menu).  Title, teaser, description, image
+// and people involved of this one episode; empty fields fall back to the
+// show's defaults (Edit Show → Publishing), shown as placeholders.  The
+// Save button of the dialog (schedule.js buildEpisodeDialog) submits the
+// form; the image is uploaded / removed at once.
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
+$baseUrl = Config::getBasePath();
+$e = $this->episode;
+$show = $e['show_settings'];
+$dis = $this->canEdit ? '' : ' disabled';
+$tip = function ($text) use ($h) {
+    return '<span class="help_icon" data-rt-tip="' . $h($text) . '"></span>';
+};
+?>
+<div id="episode_dialog" class="rt-episode-dialog" data-id="<?php echo (int) $e['instance_id']; ?>"
+     data-csrf="<?php echo $h($this->csrf); ?>" data-can-edit="<?php echo $this->canEdit ? '1' : '0'; ?>">
+<?php if (!$this->ready): ?>
+    <p class="rt-episode-note"><?php echo _("The publishing tables are missing - run the database migration 0074 first."); ?></p>
+<?php else: ?>
+    <p class="rt-episode-note">
+        <?php echo $h($e['starts_local']); ?> &middot;
+        <?php echo $e['aired'] ? _("aired") : _("upcoming"); ?> &middot;
+        <?php echo $e['recording_file_id'] ? _("recording in the library") : _("no recording in the library"); ?>
+    </p>
+    <form id="episode_form" class="rt-episode-form" onsubmit="return false;">
+        <div class="rt-episode-main">
+            <label for="episode_title"><?php echo _("Title"); ?></label>
+            <input type="text" id="episode_title" class="input_text" maxlength="255" value="<?php echo $h($e['title']); ?>"
+                   placeholder="<?php echo $h($e['default_title']); ?>"<?php echo $dis; ?> />
+
+            <label for="episode_teaser"><?php echo _("Teaser"); ?><?php echo $tip(_("A short summary. Empty: the default teaser of the show.")); ?></label>
+            <textarea id="episode_teaser" class="input_text_area" rows="2" maxlength="2048"
+                      placeholder="<?php echo $h($e['default_teaser']); ?>"<?php echo $dis; ?>><?php echo $h($e['teaser']); ?></textarea>
+
+            <label for="episode_description"><?php echo _("Description"); ?><?php echo $tip(_("The text of this episode - the same field as the instance description of the show form.")); ?></label>
+            <textarea id="episode_description" class="input_text_area" rows="5" maxlength="8192"<?php echo $dis; ?>><?php echo $h($e['description']); ?></textarea>
+
+            <label for="episode_participants"><?php echo _("People involved"); ?><?php echo $tip(_("Only when this episode differs from the show, e.g. with guests. Counts in Analytics → Participants.")); ?></label>
+            <input type="text" id="episode_participants" class="input_text rt-episode-short" maxlength="3" value="<?php echo $e['participants'] === null ? '' : (int) $e['participants']; ?>"
+                   placeholder="<?php echo $e['show_participants'] === null ? '' : (int) $e['show_participants']; ?>"<?php echo $dis; ?> />
+            <span class="rt-episode-hint"><?php echo $e['show_participants'] === null
+                ? _("The show has no value yet.")
+                : sprintf(_("Show: %s"), (int) $e['show_participants']); ?></span>
+        </div>
+        <div class="rt-episode-side">
+            <label><?php echo _("Episode image"); ?><?php echo $tip(_("Optional, JPG or PNG up to 10 MB. Without one, cba.media shows the image of the podcast.")); ?></label>
+            <div class="rt-episode-image">
+                <img id="episode_image_preview" alt=""<?php echo $this->hasImage ? '' : ' style="display:none"'; ?>
+                     src="<?php echo $this->hasImage ? $h($baseUrl . 'schedule/episode-image?id=' . (int) $e['instance_id'] . '&t=' . time()) : ''; ?>" />
+                <span id="episode_image_none"<?php echo $this->hasImage ? ' style="display:none"' : ''; ?>><?php echo _("No image"); ?></span>
+            </div>
+            <?php if ($this->canEdit): ?>
+                <input type="file" id="episode_image_file" accept="image/jpeg,image/png" />
+                <a href="#" id="episode_image_remove"<?php echo $this->hasImage ? '' : ' style="display:none"'; ?>><?php echo _("Remove image"); ?></a>
+            <?php endif; ?>
+
+            <label for="episode_image_license"><?php echo _("Image licence"); ?></label>
+            <select id="episode_image_license" class="input_select"<?php echo $dis; ?>>
+                <?php foreach ($this->licenses as $value => $label): ?>
+                    <option value="<?php echo $h($value); ?>"<?php echo $e['image_license'] === (string) $value ? ' selected' : ''; ?>><?php echo $h($label); ?></option>
+                <?php endforeach; ?>
+            </select>
+
+            <label for="episode_image_caption"><?php echo _("Image caption"); ?><?php echo $tip(_("Credit or short description of the image, e.g. the photographer.")); ?></label>
+            <input type="text" id="episode_image_caption" class="input_text" maxlength="255" value="<?php echo $h($e['image_caption']); ?>"<?php echo $dis; ?> />
+
+            <div class="rt-episode-show">
+                <strong><?php echo _("From the show"); ?></strong>
+                <?php echo _("Editorial team"); ?>:
+                <?php echo $e['profiles'] ? $h(implode(', ', array_column($e['profiles'], 'name'))) : '&ndash;'; ?><br />
+                <?php echo _("CBA podcast ID"); ?>:
+                <?php echo $show['cba_series_id'] ? (int) $show['cba_series_id'] : '&ndash;'; ?><br />
+                <?php echo _("Licence"); ?>:
+                <?php echo $show['license'] !== '' ? $h($this->licenses[$show['license']] ?? $show['license']) : '&ndash;'; ?>
+                <div class="rt-episode-hint"><?php echo _("Set in Edit Show → Publishing."); ?></div>
+            </div>
+        </div>
+    </form>
+    <p id="episode_msg" class="rt-episode-msg"></p>
+<?php endif; ?>
+<script>
+(function ($) {
+  var $d = $("#episode_dialog").last();
+  var id = $d.data("id"), csrf = $d.data("csrf");
+  var base = "<?php echo $h($baseUrl); ?>";
+  function msg(text, ok) {
+    $d.find("#episode_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f");
+  }
+  // the server sends a translated sentence, or a code (csrf, forbidden, ...)
+  function fail(json) {
+    var e = json && json.error;
+    msg(e && !/^[a-z-]+$/.test(e) ? e : $.i18n._("Could not save."), false);
+  }
+  $d.find("[data-rt-tip]").each(function () {
+    $(this).rtTooltip({
+      content: { text: $("<div>").text($(this).attr("data-rt-tip")).html() },
+      placement: "right",
+      interactive: true,
+    });
+  });
+  function showImage(has) {
+    var $img = $d.find("#episode_image_preview");
+    if (has) {
+      $img.attr("src", base + "schedule/episode-image?id=" + id + "&t=" + Date.now()).show();
+    } else {
+      $img.attr("src", "").hide();
+    }
+    $d.find("#episode_image_none").toggle(!has);
+    $d.find("#episode_image_remove").toggle(has);
+  }
+  // Save (dialog button, schedule.js)
+  $d.on("rt-episode-save", function () {
+    $.post(base + "schedule/episode-save", {
+      csrf_token: csrf,
+      id: id,
+      title: $d.find("#episode_title").val(),
+      teaser: $d.find("#episode_teaser").val(),
+      description: $d.find("#episode_description").val(),
+      participants: $.trim($d.find("#episode_participants").val()),
+      image_license: $d.find("#episode_image_license").val(),
+      image_caption: $d.find("#episode_image_caption").val(),
+    }, function (json) {
+      if (json && json.ok) { msg($.i18n._("Saved."), true); } else { fail(json); }
+    }, "json").fail(function (xhr) { fail(xhr.responseJSON); });
+  });
+  // image: upload at once
+  $d.find("#episode_image_file").on("change", function () {
+    var file = this.files && this.files[0];
+    if (!file) { return; }
+    var data = new FormData();
+    data.append("csrf_token", csrf);
+    data.append("id", id);
+    data.append("file", file);
+    msg($.i18n._("Uploading..."), true);
+    $.ajax({
+      url: base + "schedule/episode-image-upload",
+      type: "POST",
+      data: data,
+      cache: false,
+      contentType: false,
+      processData: false,
+      dataType: "json",
+    }).done(function (json) {
+      if (json && json.ok) { showImage(true); msg($.i18n._("Saved."), true); } else { fail(json); }
+    }).fail(function (xhr) { fail(xhr.responseJSON); });
+    $(this).val("");
+  });
+  $d.find("#episode_image_remove").on("click", function (ev) {
+    ev.preventDefault();
+    $.post(base + "schedule/episode-image-delete", { csrf_token: csrf, id: id }, function (json) {
+      if (json && json.ok) { showImage(false); msg($.i18n._("Removed."), true); } else { fail(json); }
+    }, "json").fail(function (xhr) { fail(xhr.responseJSON); });
+  });
+})(jQuery);
+</script>
+</div>

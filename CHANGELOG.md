@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Veröffentlichung Stufe 1: Redaktionsteam, Episodendaten, Teilnehmende (2026-11-03,
+  Operator-Go Stufe 1 der CBA-Anbindung)** — Vorbereitung dafür, jede Episode ohne
+  Hochladen von Hand auf cba.media zu veröffentlichen, und für die jährliche Zählung der
+  Mitwirkenden; hochgeladen wird noch nichts (Stufe 2).  Neu: **Settings → Editorial
+  Team** (Profile mit Name, optional E-Mail und Login, aktiv/inaktiv), Abschnitt
+  **Publishing** im Sendungsformular (Redaktionsteam, Teilnehmende, CBA-Podcast-ID,
+  Lizenz, CBA-Themen-ID, Sprachen, Schlagworte, Standard-Teaser, AKM-Musik),
+  Kalender-Kontextmenü **Episode...** auch für gelaufene Instanzen (Titel, Teaser,
+  Beschreibung, Teilnehmende, optionales Episodenbild JPG/PNG bis 10 MB mit Lizenz und
+  Bildunterschrift; Admins, Programm-Manager, Hosts der Sendung) und **Analytics →
+  Participants** (je Sendung und Jahr, Summen, „nur ohne Wert“, CSV).  Migration 0074
+  (vier neue Tabellen, bestehende unverändert), Handbuch-Kapitel „Publishing“ in vier
+  Sprachen, Architektur §23.79.
+
 ### Security
 
 - **Vorbereitung des öffentlichen Repos: keine Betreiberdaten mehr im Code (2026-11-02,

@@ -1,0 +1,57 @@
+<?php
+// RASTATIME 2026-11-03 - publishing stage 1: "Publishing" section of the
+// show form (Application_Form_AddShowPublishing).  Labels above their field,
+// help icons right of the label (tooltip convention), errors below.
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
+$f = $this->element;
+$tips = [
+    'add_show_editor_profiles' => _('The people behind this show. They are sent to cba.media as editors with every episode. Profiles are managed under Settings → Editorial Team.'),
+    'add_show_participants' => _('How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Episode... in the calendar.'),
+    'add_show_cba_series_id' => _('The number of the podcast (series) on cba.media that the episodes of this show belong to.'),
+    'add_show_cba_license' => _('Default licence of the episodes on cba.media.'),
+    'add_show_cba_category_id' => _('The number of the topic (category) on cba.media.'),
+    'add_show_cba_languages' => _('Up to three language codes such as "de, en".'),
+    'add_show_cba_tags' => _('Comma-separated tags for cba.media.'),
+    'add_show_cba_teaser' => _('Used for every episode that has no teaser of its own.'),
+    'add_show_cba_contains_copyright' => _('The episodes usually contain music that is subject to copyright (AKM).'),
+];
+$row = function ($name, $wide = true) use ($f, $h, $tips) {
+    $el = $f->getElement($name);
+    $id = $name . '_label';
+    echo '<dt id="' . $id . '" class="rt-publishing-label"><label for="' . $name . '">' . $h($el->getLabel()) . '</label>';
+    echo '<span class="help_icon" data-rt-tip="' . $h($tips[$name]) . '"></span></dt>';
+    echo '<dd id="' . $name . '-element"' . ($wide ? ' class="rt-publishing-field"' : '') . '>' . $el;
+    if ($errs = $el->getMessages()) {
+        echo '<ul class="errors">';
+        foreach ($errs as $e) {
+            echo '<li>' . $h($e) . '</li>';
+        }
+        echo '</ul>';
+    }
+    echo '</dd>';
+};
+?>
+<fieldset class="rt-publishing">
+    <dl>
+        <?php if (!Application_Service_PublishingService::tablesReady()): ?>
+            <p class="rt-publishing-note"><?php echo _("The publishing tables are missing - run the database migration 0074 first."); ?></p>
+        <?php else: ?>
+            <?php $row('add_show_editor_profiles'); ?>
+            <?php if (!$f->getElement('add_show_editor_profiles')->getMultiOptions()): ?>
+                <p class="rt-publishing-note"><?php echo _("No profile yet - add the people under Settings → Editorial Team."); ?></p>
+            <?php endif; ?>
+            <?php $row('add_show_participants'); ?>
+            <?php $row('add_show_cba_series_id'); ?>
+            <?php $row('add_show_cba_license'); ?>
+            <?php $row('add_show_cba_category_id'); ?>
+            <?php $row('add_show_cba_languages'); ?>
+            <?php $row('add_show_cba_tags'); ?>
+            <?php $row('add_show_cba_teaser'); ?>
+            <dt id="add_show_cba_contains_copyright_label" class="rt-publishing-label rt-publishing-check">
+                <?php echo $f->getElement('add_show_cba_contains_copyright'); ?>
+                <label for="add_show_cba_contains_copyright"><?php echo $h($f->getElement('add_show_cba_contains_copyright')->getLabel()); ?></label>
+                <span class="help_icon" data-rt-tip="<?php echo $h($tips['add_show_cba_contains_copyright']); ?>"></span>
+            </dt>
+        <?php endif; ?>
+    </dl>
+</fieldset>

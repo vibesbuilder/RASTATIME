@@ -7,7 +7,7 @@
 > **espejo retrovisor** — qué salió realmente al aire y cuántas
 > personas escuchaban mientras tanto.
 
-El menú **Analytics** de la barra de navegación agrupa cuatro
+El menú **Analytics** de la barra de navegación agrupa cinco
 páginas:
 
 | Página | Pregunta que responde |
@@ -16,6 +16,7 @@ páginas:
 | **History Templates** | ¿Qué columnas debe registrar y exportar el registro de emisión? |
 | **Listener Stats** | ¿Cuántos oyentes estaban conectados a cada flujo, a lo largo del tiempo? |
 | **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
+| **Participants** (Participantes) | ¿Cuántas personas hicieron los programas de un año? Véase [Publicación](./PUBLISHING.md) § 4 (desde el 2026-11-03). |
 
 Las dos primeras existen para la **rendición de cuentas** —
 informes de derechos de autor, registros para el regulador,

@@ -874,6 +874,14 @@ function setAddShowEvents(form) {
       })
       .get();
 
+    // RASTATIME 2026-11-03 - Publishing: the editorial team boxes travel
+    // like the hosts (a multi-checkbox collapses in the flat name/value list)
+    var editorProfiles = $("#add_show_editor_profiles-element input")
+      .map(function () {
+        return $(this).prop("checked") ? $(this).val() : undefined;
+      })
+      .get();
+
     var start_date = $("#add_show_start_date").val(),
       end_date = $("#add_show_end_date").val(),
       action =
@@ -891,7 +899,14 @@ function setAddShowEvents(form) {
 
     $.ajax({
       url: action,
-      data: { format: "json", data: data, hosts: hosts, days: days, months: months },
+      data: {
+        format: "json",
+        data: data,
+        hosts: hosts,
+        days: days,
+        months: months,
+        editorProfiles: editorProfiles,
+      },
       success: function (json) {
         if (json.showId && image) {
           // Successfully added the show, and it contains an image to upload

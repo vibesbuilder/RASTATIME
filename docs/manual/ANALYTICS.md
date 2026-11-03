@@ -7,7 +7,7 @@
 > **rear-view mirror** — what actually went on air, and how many
 > people were listening while it did.
 
-The **Analytics** menu in the top navigation bundles four pages:
+The **Analytics** menu in the top navigation bundles five pages:
 
 | Page | Question it answers |
 |---|---|
@@ -15,6 +15,7 @@ The **Analytics** menu in the top navigation bundles four pages:
 | **History Templates** | Which columns should the history log record and export? |
 | **Listener Stats** | How many listeners were connected to each stream, over time? |
 | **Show Listener Stats** | How did each *show* perform in listener numbers? |
+| **Participants** | How many people made the shows of a year? See [Publishing](./PUBLISHING.md) § 4 (since 2026-11-03). |
 
 The first two exist for **accountability** — royalty reporting,
 regulator log sheets, "what was that track at 14:32?" phone calls.

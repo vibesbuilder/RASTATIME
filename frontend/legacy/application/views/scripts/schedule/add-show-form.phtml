@@ -123,6 +123,16 @@
     <div id="schedule-show-who" class="collapsible-content">
         <?php echo $this->who; ?>
     </div>
+    <?php /* RASTATIME 2026-11-03 - publishing stage 1: editorial team,
+           people involved and the CBA defaults of the show.  Show-level,
+           so not in Edit Instance; the data of a single episode is edited
+           in the calendar's "Episode..." dialog. */ ?>
+    <?php if (!$isEditInstance && isset($this->publishing)): ?>
+        <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("Publishing") ?></h3>
+        <div id="schedule-show-publishing" class="collapsible-content">
+            <?php echo $this->publishing; ?>
+        </div>
+    <?php endif; ?>
     <h3 class="collapsible-header"><span class="arrow-icon"></span><?php echo _("Style") ?></h3>
     <div id="schedule-show-style" class="collapsible-content">
         <?php echo $this->style; ?>

@@ -6936,3 +6936,403 @@ msgstr "Apagado - solo stream (sin salida de monitor local)"
 #: RASTATIME 2026-11-02 install rehearsal fixes (Streams validation, Main Output Off)
 msgid "off (stream only)"
 msgstr "apagado (solo stream)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "(not set)"
+msgstr "(sin definir)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "All rights reserved"
+msgstr "Todos los derechos reservados"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Public domain"
+msgstr "Dominio público"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Please enter a name."
+msgstr "Introduzca un nombre."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The name is too long (255 characters at most)."
+msgstr "El nombre es demasiado largo (255 caracteres como máximo)."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Please enter a valid email address or leave the field empty."
+msgstr "Introduzca un correo electrónico válido o deje el campo vacío."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The chosen user does not exist any more."
+msgstr "El usuario elegido ya no existe."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The profile does not exist any more."
+msgstr "El perfil ya no existe."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "%s (inactive)"
+msgstr "%s (inactivo)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Please enter a whole number between 0 and 999."
+msgstr "Introduzca un número entero entre 0 y 999."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Please enter the number shown on cba.media, or leave the field empty."
+msgstr "Introduzca el número que aparece en cba.media o deje el campo vacío."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Up to three language codes such as \"de, en\"."
+msgstr "Hasta tres códigos de idioma, p. ej. «de, en»."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Unknown licence."
+msgstr "Licencia desconocida."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The tags are too long (512 characters at most)."
+msgstr "Las etiquetas son demasiado largas (512 caracteres como máximo)."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The teaser is too long (2048 characters at most)."
+msgstr "El teaser es demasiado largo (2048 caracteres como máximo)."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The publishing tables are missing - run the database migration 0074 first."
+msgstr "Faltan las tablas de publicación: ejecute primero la migración 0074 de la base de datos."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Title and image caption take 255 characters at most."
+msgstr "El título y el pie de imagen admiten 255 caracteres como máximo."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The description is too long (8192 characters at most)."
+msgstr "La descripción es demasiado larga (8192 caracteres como máximo)."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The show instance does not exist any more."
+msgstr "Esta emisión ya no existe."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The image must not be larger than 10 MB."
+msgstr "La imagen no puede superar los 10 MB."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Please choose a JPG or PNG image."
+msgstr "Elija una imagen JPG o PNG."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The image folder could not be created."
+msgstr "No se pudo crear la carpeta de imágenes."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The image could not be stored."
+msgstr "No se pudo guardar la imagen."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Editorial team"
+msgstr "Equipo de redacción"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "People involved"
+msgstr "Participantes"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "CBA podcast ID"
+msgstr "ID del pódcast en CBA"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Licence"
+msgstr "Licencia"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "CBA topic ID"
+msgstr "ID del tema en CBA"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Languages"
+msgstr "Idiomas"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Tags"
+msgstr "Etiquetas"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Default teaser"
+msgstr "Teaser predeterminado"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Contains copyrighted music (AKM)"
+msgstr "Contiene música protegida (AKM)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The people behind this show. They are sent to cba.media as editors with every episode. Profiles are managed under Settings → Editorial Team."
+msgstr "Las personas detrás de este programa. Se envían a cba.media como redactores con cada episodio. Los perfiles se gestionan en Ajustes → Equipo de redacción."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Episode... in the calendar."
+msgstr "Cuántas personas participan normalmente en un episodio, para la estadística anual (Estadísticas → Participantes). Un episodio puede variar: Episodio... en el calendario."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The number of the podcast (series) on cba.media that the episodes of this show belong to."
+msgstr "El número del pódcast (serie) en cba.media al que pertenecen los episodios de este programa."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Default licence of the episodes on cba.media."
+msgstr "Licencia predeterminada de los episodios en cba.media."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The number of the topic (category) on cba.media."
+msgstr "El número del tema (categoría) en cba.media."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Comma-separated tags for cba.media."
+msgstr "Etiquetas para cba.media, separadas por comas."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Used for every episode that has no teaser of its own."
+msgstr "Se usa en cada episodio sin teaser propio."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The episodes usually contain music that is subject to copyright (AKM)."
+msgstr "Los episodios suelen contener música protegida por derechos de autor (AKM)."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "No profile yet - add the people under Settings → Editorial Team."
+msgstr "Todavía no hay perfiles: añada las personas en Ajustes → Equipo de redacción."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "aired"
+msgstr "emitido"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "upcoming"
+msgstr "próximo"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "recording in the library"
+msgstr "grabación en la biblioteca"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "no recording in the library"
+msgstr "sin grabación en la biblioteca"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "A short summary. Empty: the default teaser of the show."
+msgstr "Un breve resumen. Vacío: el teaser predeterminado del programa."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The text of this episode - the same field as the instance description of the show form."
+msgstr "El texto de este episodio: el mismo campo que la descripción de instancia del formulario del programa."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Only when this episode differs from the show, e.g. with guests. Counts in Analytics → Participants."
+msgstr "Solo si este episodio difiere del programa, p. ej. con invitados. Cuenta en Estadísticas → Participantes."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The show has no value yet."
+msgstr "El programa aún no tiene valor."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Show: %s"
+msgstr "Programa: %s"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Episode image"
+msgstr "Imagen del episodio"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Optional, JPG or PNG up to 10 MB. Without one, cba.media shows the image of the podcast."
+msgstr "Opcional, JPG o PNG de hasta 10 MB. Sin imagen, cba.media muestra la del pódcast."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "No image"
+msgstr "Sin imagen"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Remove image"
+msgstr "Quitar imagen"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Image licence"
+msgstr "Licencia de la imagen"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Image caption"
+msgstr "Pie de imagen"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Credit or short description of the image, e.g. the photographer."
+msgstr "Crédito o breve descripción de la imagen, p. ej. la persona que la fotografió."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "From the show"
+msgstr "Del programa"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Set in Edit Show → Publishing."
+msgstr "Se ajusta en Editar programa → Publicación."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Uploading..."
+msgstr "Subiendo..."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Profile deleted."
+msgstr "Perfil eliminado."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Profile saved."
+msgstr "Perfil guardado."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Profile added."
+msgstr "Perfil añadido."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Show name"
+msgstr "Programa"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Episodes aired"
+msgstr "Episodios emitidos"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Episodes with own value"
+msgstr "Episodios con valor propio"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Participations"
+msgstr "Participaciones"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "yes"
+msgstr "sí"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Total"
+msgstr "Total"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "%d profiles"
+msgstr "%d perfiles"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Editorial Team"
+msgstr "Equipo de redacción"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The people behind the shows. Choose a show's team under Edit Show → Publishing; the names are sent to cba.media as editors and the team appears in Analytics → Participants. A profile needs no login."
+msgstr "Las personas detrás de los programas. El equipo de un programa se elige en Editar programa → Publicación; los nombres se envían a cba.media como redactores y el equipo aparece en Estadísticas → Participantes. Un perfil no necesita cuenta."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Edit profile"
+msgstr "Editar perfil"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Add a profile"
+msgstr "Añadir un perfil"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Email (optional)"
+msgstr "Correo electrónico (opcional)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "User (optional)"
+msgstr "Usuario (opcional)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "- no login -"
+msgstr "- sin cuenta -"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Active (offered in the show form)"
+msgstr "Activo (se ofrece en el formulario del programa)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "New profile"
+msgstr "Nuevo perfil"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "No profile yet."
+msgstr "Todavía no hay perfiles."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "User"
+msgstr "Usuario"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Active"
+msgstr "Activo"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "no"
+msgstr "no"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Delete the profile \"%s\"? It is removed from the editorial team of every show."
+msgstr "¿Eliminar el perfil «%s»? Se quitará del equipo de redacción de cada programa."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Participants"
+msgstr "Participantes"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Publishing) and can differ for a single episode (Episode... in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."
+msgstr "Participantes en los programas, para la estadística anual. El valor se fija por programa (Editar programa → Publicación) y puede variar en un episodio (Episodio... en el calendario). Cuentan los episodios emitidos; las antiguas retransmisiones quedan fuera."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Only shows without a value"
+msgstr "Solo programas sin valor"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Download CSV"
+msgstr "Descargar CSV"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "%d so far (up to %s)."
+msgstr "%d hasta ahora (hasta el %s)."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Shows aired"
+msgstr "Programas emitidos"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "People involved (sum over the shows)"
+msgstr "Participantes (suma de los programas)"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Editorial team profiles"
+msgstr "Perfiles de redacción"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Shows without a value"
+msgstr "Programas sin valor"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "A person in several shows counts once per show in \"People involved\"; the editorial team profiles count each person once. Participations add up the people of every episode."
+msgstr "Una persona en varios programas cuenta una vez por programa en «Participantes»; los perfiles de redacción cuentan a cada persona una sola vez. Las participaciones suman los participantes de cada episodio."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Every show of this year has a value."
+msgstr "Todos los programas de este año tienen valor."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "No show aired in this year."
+msgstr "Ningún programa se emitió este año."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "The image did not arrive - please try again."
+msgstr "La imagen no llegó; inténtelo de nuevo."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Episode..."
+msgstr "Episodio..."
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Publishing"
+msgstr "Publicación"
+
+#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
+msgid "Episode"
+msgstr "Episodio"

@@ -311,6 +311,63 @@ function buildTeaserDialog(json) {
   dialog.dialog("open");
 }
 
+// RASTATIME 2026-11-03 - publishing stage 1: the "Episode..." dialog of a show
+// instance (schedule/episode-dialog); the view's inline script saves on the
+// "rt-episode-save" event and uploads the image itself.
+function buildEpisodeDialog(json) {
+  if (typeof json === "string") {
+    try {
+      json = JSON.parse(json);
+    } catch (e) {
+      alert("Episode: unexpected response - " + json.substring(0, 160));
+      return;
+    }
+  }
+  if (!json || json.show_error == true) {
+    alertShowErrorAndReload();
+    return;
+  }
+  if (!json.dialog) {
+    alert("Episode: the server sent no dialog - " + JSON.stringify(json).substring(0, 160));
+    return;
+  }
+  var dialog = $(json.dialog),
+    viewport = findViewportDimensions(),
+    width = Math.min(760, (viewport.width * 9) / 10),
+    buttons = [];
+
+  if (dialog.data("can-edit") == 1 && dialog.find("#episode_form").length) {
+    buttons.push({
+      text: $.i18n._("Save"),
+      class: "btn btn-new",
+      click: function () {
+        dialog.trigger("rt-episode-save");
+      },
+    });
+  }
+  buttons.push({
+    text: $.i18n._("Close"),
+    class: "btn",
+    click: function () {
+      dialog.remove();
+    },
+  });
+
+  dialog.dialog({
+    autoOpen: false,
+    title:
+      $.i18n._("Episode") + " '" + json.showTitle + "' " + (json.startsLocal || ""),
+    width: width,
+    height: "auto",
+    modal: true,
+    classes: { "ui-dialog": "schedule-tracks-dialog" },
+    open: markScheduleDialogOverlay,
+    close: closeDialogCalendar,
+    buttons: buttons,
+  });
+  dialog.dialog("open");
+}
+
 function buildContentDialog(json) {
   var dialog = $(json.dialog),
     viewport = findViewportDimensions(),
@@ -520,6 +577,20 @@ $(document).ready(function () {
             );
           };
           oItems.teasers.callback = callback;
+        }
+
+        // RASTATIME 2026-11-03 - publishing stage 1: "Episode..." dialog
+        if (oItems.episode !== undefined) {
+          callback = function () {
+            $.get(
+              oItems.episode.url,
+              { format: "json", id: data.id },
+              function (json) {
+                buildEpisodeDialog(json);
+              },
+            );
+          };
+          oItems.episode.callback = callback;
         }
 
         //define a cancel recorded show callback.

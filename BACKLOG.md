@@ -6689,7 +6689,7 @@ frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an 
 
 ## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
 
-### 🟡 CBA-Anbindung: automatische Veroeffentlichung von Episoden auf cba.media - DEFER (evaluiert 2026-11-01, noch kein Go)
+### 🟢 CBA-Anbindung: automatische Veroeffentlichung von Episoden auf cba.media - Stufe 1 gebaut 2026-11-03, Stufe 2 wartet auf CBA (evaluiert 2026-11-01)
 
 Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
 hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
@@ -6753,7 +6753,65 @@ Operator 2026-11-03: zusaetzlich ein **Bild je Episode/Instanz** (optional,
 neben dem Bild der Sendung/des Podcasts) - der zipupload traegt es als
 `image.<ext>` im ZIP mit `image_license`/`image_caption`; Ablage z.B. im
 Instanz-Dialog (Edit Instance) oder beim manuellen Upload waehlbar.
-Das Thema wird in einer eigenen Sitzung (Opus 5.5) bearbeitet.
+
+**Entscheidungen 2026-11-03 (Operator):** Go fuer Stufe 1 mit den
+Empfehlungen; Anfrage an CBA (Stufe 0) verschickt der Operator selbst.
+- E1 Upload laeuft im Worker-Dienst (RASTATIME-WORKER wird vom Platzhalter
+  zum Job-Runner), nicht im API-Prozess (der liefert dem Playout den
+  Sendeplan) und nicht in PHP.
+- E2 CBA-Zugangsdaten unter Settings, Passwortfeld nur setzbar (nicht
+  auslesbar), ein Stationskonto; Konten je Sendung erst bei Bedarf.
+- E3 Redaktionsteam = eigene Profile (Name, optional mit Benutzer
+  verknuepft), N:M zur Sendung.
+- E4 Episodenbild optional, JPG/PNG, Ablage wie Sendungsbilder
+  (`imported/episode-images/<Instanz>/`), mit Bildlizenz und
+  Bildunterschrift; ohne Episodenbild wird KEIN Bild mitgeschickt (CBA
+  zeigt das Podcast-Bild - am Testpodcast pruefen).
+- E5 Die Automatik laedt immer die Aufzeichnung hoch.  Offen vor Stufe 2:
+  beim manuellen Upload wahlweise eine andere Library-Datei?
+- Episodendaten liegen in einem eigenen Dialog "Episode..." im
+  Kalender-Kontextmenue (auch fuer gelaufene Instanzen; das
+  Sendungsformular oeffnet keine vergangenen Instanzen), die
+  Sendungs-Vorgaben im Abschnitt "Publishing" des Sendungsformulars.
+- Teilnehmerzahl: Wert je Sendung, Override je Episode, Uebersicht unter
+  Analytics -> Participants (Jahr waehlbar, je Sendung, Summen, fehlende
+  Werte, CSV).
+- Stufe 4 (Apple/Spotify ueber den CBA-Feed) gilt fuer oesterreichische
+  Stationen; die direkte Anbindung fuer internationale Stationen steht als
+  eigene Idee unten.  Die `regions` (Musik/Wort fuer AKM) bleiben Idee.
+
+**Stand 2026-11-03: Stufe 1 gebaut** (Architektur §23.79, Migration 0074,
+Handbuch "Publishing"): Settings -> Editorial Team, Abschnitt Publishing im
+Sendungsformular, Kalender "Episode..." (auch gelaufene Instanzen, Bild
+JPG/PNG <= 10 MB), Analytics -> Participants mit CSV.  Probe
+`C:/Temp/optd/publishing_probe.php` gruen.  Offen: Browser-Abnahme durch den
+Operator (Formular, Dialog mit Bild-Upload, beide Seiten).  Vor Stufe 2:
+Antwort von CBA (Mail-Entwurf 2026-11-03), Entscheidung "manueller Upload
+mit anderer Library-Datei?", Auswahllisten fuer CBA-Podcast/-Thema statt
+Nummern (wp/v2/series, wp/v2/categories).
+
+### 💡 Apple Podcasts / Spotify direkt fuer internationale Stationen (Operator 2026-11-03: Backlog)
+
+Oesterreichische Stationen erreichen Apple/Spotify ueber den CBA-Podcast-Feed
+(CBA-Anbindung Stufe 4, kein Code).  Stationen ausserhalb Oesterreichs haben
+keine CBA; fuer sie braeuchte RASTATIME einen eigenen oeffentlichen
+Podcast-Feed je Sendung (RSS 2.0 mit iTunes-Namensraum: Episoden aus den
+Aufzeichnungen, Episodenbild/-text aus der CBA-Stufe 1, Enclosure-URLs
+oeffentlich erreichbar) und die einmalige Einreichung bei Apple/Spotify.
+Vorbedingungen: CBA-Anbindung Stufe 1-2 (Episodendaten), Entscheidung ueber
+oeffentliches Hosting der Audiodateien (Bandbreite, Speicher, Reverse Proxy;
+siehe "Oeffentliche Studio-Instanz").  Die bestehende Station-Podcast-Seite
+("My Podcast") waere der naheliegende Ausgangspunkt.
+
+### 💡 CBA: Musik- und Wortabschnitte als `regions` mitschicken (Operator 2026-11-03: Backlog)
+
+Der zipupload nimmt `regions` (start/end/type music|spokenword, Titel,
+Interpret, Lizenz) sowie `contains_copyright` und
+`remove_copyright_regions`.  Die Abschnitte liessen sich aus dem
+Sendeverlauf (cc_playout_history) der Instanz bilden, Line-In/Webstream als
+Wort.  Vorbedingung: Antwort von CBA, was mit den Angaben geschieht (wird
+AKM-Musik aus der oeffentlichen Fassung entfernt?), und CBA-Stufe 2.
+~1 Tag.
 
 ### 💡 Segmente fuers 7-Days-Back-Archiv: Beschreibungen je Abschnitt einer Sendung (Operator 2026-11-02: vorerst Backlog)
 

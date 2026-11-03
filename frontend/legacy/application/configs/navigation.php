@@ -173,6 +173,15 @@ $pages[] = [
             'privilege' => 'show-templates',
         ],
         [
+            // RASTATIME 2026-11-03 - publishing stage 1: editorial team
+            // profiles (Program Managers and Admins)
+            'label' => 'Editorial Team',
+            'module' => 'default',
+            'controller' => 'publishing',
+            'action' => 'editors',
+            'resource' => 'publishing',
+        ],
+        [
             // RASTATIME 2026-05-21 — Auto-DJ settings page
             // (Section 23.20).  Master switch + filler-playlist
             // selection + default show name / logo for automatic
@@ -277,6 +286,15 @@ $pages[] = [
             'controller' => 'listenerstat',
             'action' => 'show',
             'resource' => 'showlistenerstat',
+        ],
+        [
+            // RASTATIME 2026-11-03 - publishing stage 1: people involved per
+            // show and year (Program Managers and Admins)
+            'label' => 'Participants',
+            'module' => 'default',
+            'controller' => 'publishing',
+            'action' => 'participants',
+            'resource' => 'publishing',
         ],
     ],
 ];

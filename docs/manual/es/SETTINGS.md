@@ -25,6 +25,7 @@ Navegación izquierda → **Ajustes** abre el submenú:
 | **Usuarios** | Crear, editar y eliminar usuarios y definir su tipo. | Admin | [Usuarios y roles](./USERS_AND_ROLES.md) §3 |
 | **Tipos de pista** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream. | Admin | [Biblioteca](./LIBRARY.md) |
 | **Show Templates** | Resumen de las plantillas de programa guardadas: renombrar, eliminar. | Program Manager, Admin | [Plantillas de programa](./SHOW_TEMPLATES.md) |
+| **Editorial Team** (Equipo de redacción) | Perfiles de las personas detrás de los programas (nombre, cuenta opcional), elegidos por programa en Publicación. | Program Manager, Admin | [Publicación](./PUBLISHING.md) |
 | **Auto DJ** | Relleno de huecos y completado de programas incompletos. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Streams de salida (bitrate, punto de montaje, códec), entradas para conexiones en directo, credencial Master. | Admin | [Streams](./STREAMS.md) |
 | **Máquina local** | Tarjeta de sonido, carpeta y formato de importación, carpeta y formato de grabación, ubicación de la biblioteca. | Admin | [Máquina local](./LOCAL_MACHINE.md) |

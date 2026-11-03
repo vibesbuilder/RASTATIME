@@ -5643,3 +5643,197 @@ div.dt-button-collection .dt-button > span {
 .bulk-md-form p.description {
     color: #999999;
 }
+/* RASTATIME 2026-11-03 - calendar "Episode..." dialog (publishing stage 1):
+   text fields left, image and the show's defaults right; one column on
+   narrow screens */
+.rt-episode-dialog .rt-episode-note {
+    margin: 0 0 10px 0;
+    color: #bbb;
+    font-size: 12px;
+}
+.rt-episode-dialog .rt-episode-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+.rt-episode-dialog .rt-episode-main {
+    flex: 3 1 300px;
+    min-width: 0;
+}
+.rt-episode-dialog .rt-episode-side {
+    flex: 2 1 220px;
+    min-width: 0;
+}
+.rt-episode-dialog label {
+    display: block;
+    margin: 10px 0 4px;
+}
+.rt-episode-dialog label:first-child {
+    margin-top: 0;
+}
+.rt-episode-dialog label .help_icon {
+    margin-left: 6px;
+    vertical-align: middle;
+    top: 0;
+}
+.rt-episode-dialog .input_text,
+.rt-episode-dialog .input_text_area,
+.rt-episode-dialog .input_select {
+    width: 100%;
+    box-sizing: border-box;
+}
+.rt-episode-dialog .rt-episode-short {
+    width: 5em;
+}
+.rt-episode-dialog .rt-episode-hint {
+    margin-left: 8px;
+    color: #999;
+    font-size: 12px;
+}
+.rt-episode-dialog .rt-episode-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 90px;
+    margin-bottom: 6px;
+    border: 1px dashed #666;
+    color: #999;
+}
+.rt-episode-dialog .rt-episode-image img {
+    display: block;
+    max-width: 100%;
+    max-height: 180px;
+}
+.rt-episode-dialog #episode_image_file {
+    max-width: 100%;
+}
+.rt-episode-dialog #episode_image_remove {
+    display: inline-block;
+    margin-top: 4px;
+}
+.rt-episode-dialog .rt-episode-show {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #444;
+    line-height: 1.6;
+}
+.rt-episode-dialog .rt-episode-show strong {
+    display: block;
+}
+.rt-episode-dialog .rt-episode-show .rt-episode-hint {
+    margin-left: 0;
+}
+.rt-episode-dialog .rt-episode-msg {
+    min-height: 1.2em;
+    margin: 10px 0 0;
+}
+/* RASTATIME 2026-11-03 - Settings -> Editorial Team and Analytics ->
+   Participants (publishing stage 1) */
+.rt-editors-note,
+.rt-participants-note {
+    margin: 0 0 1em;
+    color: #888;
+    max-width: 60em;
+}
+.rt-editors-ok {
+    color: #5cb85c;
+}
+.rt-editors-error,
+.rt-participants-warn {
+    color: #d9534f;
+}
+.rt-editors-form {
+    max-width: 30em;
+    margin-bottom: 1.5em;
+    padding: 1em;
+    background: #2a2a2a;
+    border-radius: 4px;
+}
+.rt-editors-form h3 {
+    margin: 0 0 0.6em;
+}
+.rt-editors-row {
+    margin-bottom: 0.7em;
+}
+.rt-editors-row > label {
+    display: block;
+    margin-bottom: 4px;
+}
+.rt-editors-row .input_text,
+.rt-editors-row .input_select {
+    width: 100%;
+    box-sizing: border-box;
+}
+.rt-editors-check input {
+    margin: 0 6px 0 0;
+    vertical-align: middle;
+}
+.rt-editors-table,
+.rt-participants-table {
+    width: 100%;
+    max-width: 70em;
+}
+.rt-editors-table td,
+.rt-editors-table th,
+.rt-participants-table td,
+.rt-participants-table th {
+    padding: 6px;
+    text-align: left;
+    vertical-align: middle;
+}
+.rt-editors-inactive td {
+    color: #888;
+}
+.rt-editors-actions a {
+    margin-right: 10px;
+}
+.rt-editor-delete-form {
+    display: inline;
+}
+.rt-participants-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-bottom: 1em;
+}
+.rt-participants-check input {
+    margin: 0 6px 0 0;
+    vertical-align: middle;
+}
+.rt-participants-totals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 0.6em;
+}
+.rt-participants-totals > div {
+    min-width: 9em;
+    padding: 8px 12px;
+    background: #2a2a2a;
+    border-radius: 4px;
+}
+.rt-participants-totals strong {
+    display: block;
+    font-size: 20px;
+}
+.rt-participants-totals span {
+    color: #aaa;
+    font-size: 12px;
+}
+.rt-participants-table th.num,
+.rt-participants-table td.num {
+    text-align: right;
+}
+.rt-participants-missing,
+.rt-participants-totals .rt-participants-missing strong {
+    color: #e0a040;
+}
+.rt-participants-tag {
+    margin-left: 6px;
+    padding: 0 5px;
+    border: 1px solid #666;
+    border-radius: 3px;
+    color: #aaa;
+    font-size: 11px;
+}
