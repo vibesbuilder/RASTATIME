@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Episode...** zeigt, was die Automatik vorhat; gescheiterte, unklare oder übersprungene
   automatische Uploads erscheinen sieben Tage lang als Warnhinweis.  Ein Ersatzprogramm
   statt einer Live-Sendung wird nicht erkannt (Operator: Automatik nur für verlässliche
-  Sendungen).  Migration 0076.  Commit `<hash>`.
+  Sendungen).  Migration 0076.  Commit `a82b14aa`.
 - **Archivierung Stufe 2: Episoden von Hand auf cba.media archivieren (2026-11-03,
   Operator-Go)** — Nach der Antwort der CBA wird jede Sendung unter einem eigenen
   CBA-Benutzer archiviert (HTTP Basic mit Benutzername und WordPress-Anwendungspasswort).
