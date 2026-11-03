@@ -151,6 +151,7 @@ valeurs par défaut.
 | **Quand** | Date / heure de début, durée, date de fin, répétitions, **Autoriser le démarrage différé** (laisser cette émission commencer en retard quand la précédente a dépassé — voir [Démarrage différé d'émission](./DELAYED_START.md)). |
 | **Entrée Live Stream** | Permettre aux animateurs distants de prendre l'émission via Show DJ (nom d'utilisateur + mot de passe par émission). |
 | **Enregistrement** | Cocher pour enregistrer la sortie à l'antenne de l'émission dans un fichier. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md). |
+| **Own production** (production propre) | Cocher pour les productions propres de la station : les minutes diffusées de l'émission comptent dans Analytics → [Rapport annuel](./ANALYTICS.md) (depuis le 2026-11-03). |
 | **Autoloading Playlist** | Attacher une playlist pour remplir chaque instance automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Qui** | Animateurs supplémentaires au-delà du principal défini sous Quoi. |
 | **Archivage** | Équipe de rédaction, participants, compte CBA, réglages cba.media et archivage automatique de l'émission (pas dans Modifier l'occurrence). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |

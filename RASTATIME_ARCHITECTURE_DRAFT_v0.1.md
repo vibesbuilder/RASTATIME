@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.113
+Draft version: 0.114
 Date: 2026-11-03
 
 > **Revision history**
+> - **0.114 (2026-11-03)** - **Yearly report** (§23.83): programme minutes of the own
+>   productions (`cc_show.own_production`, migration 0077) and the participants overview
+>   on one page, Analytics -> Yearly Report.
 > - **0.113 (2026-11-03)** - **Archiving, finishing touches** (§23.82): one settings page
 >   "Archiving" (teams + CBA accounts), one editorial team per show, the show name as the last
 >   description fallback, "Episode..." renamed "Archive Online".
@@ -8666,3 +8669,38 @@ messages in four languages), `archive_team_probe.php` (dropdown value,
 `archive_auto_ui_probe.php`, `archive_auto_probe.py`; JS parsed in the
 browser.  Rollback: `git revert` (legacy live at once; worker restart for
 the fallback).
+
+### 23.83 Yearly Report: Programme Minutes of Own Productions (2026-11-03)
+
+**Why.**  Community stations report to the authorities how many minutes
+of their own programme they broadcast per year; the operator wanted that
+figure prepared, next to the participants overview of the archiving
+module (§23.79 ff.), on one page with one year selector.
+
+**Model.**  `cc_show.own_production BOOLEAN NOT NULL DEFAULT FALSE`
+(migration 0077), a checkbox in the "What" section of the show form
+(`AddShowWhat`, `ShowFormService::populateFormWhat`,
+`ShowService::setCcShow` raw SQL), carried by show templates
+(`ShowTemplateService::FIELDS_TO_CAPTURE`, add-show.js apply) and by
+Import/Export (column `own_production`).  Propel is not regenerated; the
+readers use `to_jsonb(cc_show) ->> 'own_production'`, which is NULL until
+the migration ran, so form, export and report work before and after it
+(`Application_Service_YearlyReportService::columnReady()` only gates the
+write and the warning on the page).
+
+**Report.**  `YearlyReportService::minutesReport($year)` counts, like the
+participants report, the instances that aired in the year in station
+time (`modified_instance = FALSE`, `rebroadcast = 0`, `starts` in the
+year, `ends <= now`) with their scheduled duration (`ends - starts`),
+rounded to minutes per show (`ROUND(SUM(secs) / 60)`) and per month
+(`EXTRACT(MONTH FROM starts AT TIME ZONE 'UTC' AT TIME ZONE <station tz>)`).
+Shows with `repeat_of_show_id` (§23.65) are reported as repeats; the
+totals carry first broadcasts, repeats, their sum, and the minutes of
+unflagged shows for reference.  `YearlyreportController` (ACL resource
+`yearlyreport`, Program Managers and Admins; navigation entry "Yearly
+Report" replaces "Participants", whose page stays reachable for the
+"shows without a value" filter) renders both reports and the CSV
+`minutes-csv` (per show, totals, per month; UTF-8 BOM).
+
+**Verification.**  `C:/Temp/optd/yearly_probe.php <year>` (service,
+view render, What form); route check `curl -I /yearlyreport`.

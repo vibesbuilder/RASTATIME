@@ -17,6 +17,7 @@ páginas:
 | **Listener Stats** | ¿Cuántos oyentes estaban conectados a cada flujo, a lo largo del tiempo? |
 | **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
 | **Participants** (Participantes) | ¿Cuántas personas hicieron los programas de un año? Véase [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03). |
+| **Yearly Report** (informe anual) | Minutos de programa de las producciones propias y resumen de participantes, un año cada vez, CSV. Véase § 5 (desde 2026-11-03). |
 
 Las dos primeras existen para la **rendición de cuentas** —
 informes de derechos de autor, registros para el regulador,
@@ -161,3 +162,29 @@ misma franja.
 > playout detenido) muestra ceros — la agregación solo puede
 > plegar los puntos de datos que existan en `cc_listener_count`
 > para la ventana horaria del programa.
+
+## 5. Informe anual (desde 2026-11-03)
+
+**Analytics → Yearly Report** reúne en una página las cifras del informe
+anual a las autoridades, con un selector de año (hora de la emisora; el
+año en curso hasta hoy).
+
+**Minutos de programa.**  Marque **Own production** (producción propia)
+en un programa (Edit Show → What; único o recurrente; las plantillas y
+el Import/Export lo llevan como `own_production`).  La página cuenta los
+episodios de los programas marcados emitidos en el año - terminados, no
+borrados, sin retransmisión antigua - con su duración **programada**,
+redondeada a minutos por programa y mes.  Los programas configurados
+como [Repetición de otro programa](./CALENDAR.md) tienen su propia
+columna (primeras emisiones frente a repeticiones), porque la mayoría de
+las autoridades los declaran por separado.  Los programas sin la casilla
+aparecen en gris con sus minutos bajo «otros programas (no contados)»
+para ver qué queda fuera.  Una tabla por mes y **Download CSV (minutes)**
+(por programa, totales, por mes) completan la sección.
+
+**Participantes.**  Las mismas cifras que [Archivado](./ARCHIVING.md)
+§ 6 (personas implicadas por programa, episodios con valor propio,
+participaciones, equipos editoriales), con enlaces al filtro «programas
+sin valor» y al CSV de participantes.
+
+Program Managers y Admins abren esta página.

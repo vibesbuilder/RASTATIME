@@ -17,6 +17,7 @@ pages :
 | **Listener Stats** | Combien d'auditeurs étaient connectés à chaque flux, au fil du temps ? |
 | **Show Listener Stats** | Quelle audience chaque *émission* a-t-elle réalisée ? |
 | **Participants** | Combien de personnes ont fait les émissions d'une année ? Voir [Archivage](./ARCHIVING.md) § 6 (depuis le 2026-11-03). |
+| **Yearly Report** (rapport annuel) | Minutes de programme des productions propres et aperçu des participants, une année à la fois, CSV. Voir § 5 (depuis le 2026-11-03). |
 
 Les deux premières existent pour la **traçabilité** — déclarations
 de droits d'auteur, journaux réglementaires, appels du type « quel
@@ -165,3 +166,30 @@ sur le même créneau.
 > arrêt du playout) affiche des zéros — l'agrégation ne peut
 > replier que les points de données existant dans
 > `cc_listener_count` pour la fenêtre horaire de l'émission.
+
+## 5. Rapport annuel (depuis le 2026-11-03)
+
+**Analytics → Yearly Report** rassemble sur une page les chiffres de la
+déclaration annuelle aux autorités, avec un sélecteur d'année (heure de
+la station ; l'année en cours jusqu'à aujourd'hui).
+
+**Minutes de programme.**  Cochez **Own production** (production propre)
+dans une émission (Edit Show → What ; unique ou récurrente, les modèles
+et l'Import/Export la portent comme `own_production`).  La page compte
+les épisodes des émissions cochées diffusés dans l'année - terminés, non
+supprimés, sans ancienne rediffusion - avec leur durée **planifiée**,
+arrondie en minutes par émission et par mois.  Les émissions configurées
+comme [Rediffusion d'une autre émission](./CALENDAR.md) ont leur propre
+colonne (premières diffusions / rediffusions), car la plupart des
+autorités les déclarent séparément.  Les émissions sans la case
+apparaissent grisées avec leurs minutes sous « autres émissions (non
+comptées) », pour voir ce qui manque.  Un tableau par mois et
+**Download CSV (minutes)** (par émission, totaux, par mois) complètent la
+section.
+
+**Participants.**  Les mêmes chiffres que [Archivage](./ARCHIVING.md)
+§ 6 (personnes impliquées par émission, épisodes avec valeur propre,
+participations, équipes éditoriales), avec des liens vers le filtre
+« émissions sans valeur » et le CSV des participants.
+
+Les Program Managers et les Admins ouvrent cette page.

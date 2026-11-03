@@ -7438,8 +7438,8 @@ msgid "Shows without a value"
 msgstr "Émissions sans valeur"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "A person in several shows counts once per show in \"People involved\"; the editorial teams count each team once. Participations add up the people of every episode."
-msgstr "Une personne présente dans plusieurs émissions compte une fois par émission dans « Participants » ; les équipes de rédaction comptent chaque équipe une seule fois. Les participations additionnent les participants de chaque épisode."
+msgid "A person in several shows counts once per show in \"People involved\". Participations add up the people of every episode."
+msgstr "Une personne présente dans plusieurs émissions compte une fois par émission dans « Participants ». Les participations additionnent les participants de chaque épisode."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Every show of this year has a value."
@@ -7948,3 +7948,69 @@ msgstr "L'émission n'a pas de description - un épisode sans la sienne (« Arch
 #: RASTATIME 2026-11-03 archiving cosmetics (Archive Online, Settings → Archiving, one team)
 msgid "For a post that is on cba.media already, e.g. uploaded there by hand or after an unclear upload. Enter its number or address and click the button: RASTATIME marks the episode as archived and uploads nothing."
 msgstr "Pour un article déjà présent sur cba.media, par exemple téléversé là-bas à la main ou après un envoi incertain. Saisissez son numéro ou son adresse et cliquez sur le bouton : RASTATIME marque l'épisode comme archivé et n'envoie rien."
+
+msgid "Own production:"
+msgstr "Production propre :"
+
+msgid "Yearly Report"
+msgstr "Rapport annuel"
+
+msgid "Programme minutes"
+msgstr "Minutes de programme"
+
+msgid "Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows set up as \"Repeat of another show\" are listed in the repeats column."
+msgstr "Minutes des productions propres de la station, pour la déclaration aux autorités. Cochez \"Production propre\" dans l'émission (Edit Show → What) ; sont comptés les épisodes diffusés dans l'année avec leur durée planifiée. Les émissions configurées comme \"Rediffusion d'une autre émission\" figurent dans la colonne des rediffusions."
+
+msgid "The column for \"Own production\" is missing - run the database migration 0077 first. Until then every show counts as \"other\"."
+msgstr "La colonne \"Production propre\" manque - exécutez d'abord la migration 0077. D'ici là, chaque émission compte comme \"autre\"."
+
+msgid "Download CSV (minutes)"
+msgstr "Télécharger le CSV (minutes)"
+
+msgid "Minutes, own productions, first broadcasts"
+msgstr "Minutes, productions propres, premières diffusions"
+
+msgid "Minutes, own productions, repeats"
+msgstr "Minutes, productions propres, rediffusions"
+
+msgid "Minutes, own productions, total"
+msgstr "Minutes, productions propres, total"
+
+msgid "Episodes, own productions"
+msgstr "Épisodes, productions propres"
+
+msgid "Shows with \"Own production\""
+msgstr "Émissions avec \"Production propre\""
+
+msgid "Minutes, other shows (not counted)"
+msgstr "Minutes, autres émissions (non comptées)"
+
+msgid "Minutes, first broadcasts"
+msgstr "Minutes, premières diffusions"
+
+msgid "Minutes, repeats"
+msgstr "Minutes, rediffusions"
+
+msgid "Own production"
+msgstr "Production propre"
+
+msgid "Minutes"
+msgstr "Minutes"
+
+msgid "People involved in the shows. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Archive Online in the calendar). A person in several shows counts once per show in \"People involved\"; Participations add up the people of every episode."
+msgstr "Personnes impliquées dans les émissions. La valeur se règle par émission (Edit Show → Archiving) et peut différer pour un épisode (Archive Online dans le calendrier). Une personne dans plusieurs émissions compte une fois par émission dans \"People involved\" ; Participations additionne les personnes de chaque épisode."
+
+msgid "Download CSV (participants)"
+msgstr "Télécharger le CSV (participants)"
+
+msgid "Total own productions, first broadcasts"
+msgstr "Total productions propres, premières diffusions"
+
+msgid "Total own productions, repeats"
+msgstr "Total productions propres, rediffusions"
+
+msgid "Total own productions"
+msgstr "Total productions propres"
+
+msgid "Total other shows"
+msgstr "Total autres émissions"

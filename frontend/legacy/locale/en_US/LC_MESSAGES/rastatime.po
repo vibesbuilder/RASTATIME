@@ -397,7 +397,7 @@ msgid "Shows without a value"
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "A person in several shows counts once per show in \"People involved\"; the editorial teams count each team once. Participations add up the people of every episode."
+msgid "A person in several shows counts once per show in \"People involved\". Participations add up the people of every episode."
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
@@ -906,4 +906,73 @@ msgstr ""
 
 #: RASTATIME 2026-11-03 archiving cosmetics (Archive Online, Settings → Archiving, one team)
 msgid "For a post that is on cba.media already, e.g. uploaded there by hand or after an unclear upload. Enter its number or address and click the button: RASTATIME marks the episode as archived and uploads nothing."
+msgstr ""
+
+msgid "Own production:"
+msgstr ""
+
+msgid "Yearly Report"
+msgstr ""
+
+msgid "Programme minutes"
+msgstr ""
+
+msgid "Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows set up as \"Repeat of another show\" are listed in the repeats column."
+msgstr ""
+
+msgid "The column for \"Own production\" is missing - run the database migration 0077 first. Until then every show counts as \"other\"."
+msgstr ""
+
+msgid "Download CSV (minutes)"
+msgstr ""
+
+msgid "Minutes, own productions, first broadcasts"
+msgstr ""
+
+msgid "Minutes, own productions, repeats"
+msgstr ""
+
+msgid "Minutes, own productions, total"
+msgstr ""
+
+msgid "Episodes, own productions"
+msgstr ""
+
+msgid "Shows with \"Own production\""
+msgstr ""
+
+msgid "Minutes, other shows (not counted)"
+msgstr ""
+
+msgid "Month"
+msgstr ""
+
+msgid "Minutes, first broadcasts"
+msgstr ""
+
+msgid "Minutes, repeats"
+msgstr ""
+
+msgid "Own production"
+msgstr ""
+
+msgid "Minutes"
+msgstr ""
+
+msgid "People involved in the shows. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Archive Online in the calendar). A person in several shows counts once per show in \"People involved\"; Participations add up the people of every episode."
+msgstr ""
+
+msgid "Download CSV (participants)"
+msgstr ""
+
+msgid "Total own productions, first broadcasts"
+msgstr ""
+
+msgid "Total own productions, repeats"
+msgstr ""
+
+msgid "Total own productions"
+msgstr ""
+
+msgid "Total other shows"
 msgstr ""

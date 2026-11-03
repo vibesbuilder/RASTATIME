@@ -136,6 +136,7 @@ The form is divided into collapsible sections. **What** and
 | **When** | Start date / time, duration, end date, repeats, **Allow delayed start** (let this show begin late when the previous one overran — see [Delayed Show Start](./DELAYED_START.md)). |
 | **Live Stream Input** | Allow remote hosts to take the show via Show DJ (per-show username + password). |
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
+| **Own production** | Tick for the station's own productions: the show's aired minutes count in Analytics → [Yearly Report](./ANALYTICS.md) (since 2026-11-03). |
 | **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Who** | Additional hosts beyond the primary one set under What. |
 | **Archiving** | Editorial team, people involved, CBA account, the cba.media defaults and automatic archiving of the show (not in Edit Instance). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |

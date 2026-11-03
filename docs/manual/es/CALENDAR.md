@@ -103,6 +103,7 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Cuándo** | Fecha / hora de inicio, duración, fecha de fin, repeticiones, **¿Permitir inicio diferido?** (dejar que este programa empiece tarde cuando el anterior se sobrepasó — vea [Inicio diferido de programa](./DELAYED_START.md)). |
 | **Entrada Live Stream** | Permitir a presentadores remotos tomar el programa vía Show DJ. |
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
+| **Own production** (producción propia) | Marcar en las producciones propias de la emisora: los minutos emitidos del programa cuentan en Analytics → [Informe anual](./ANALYTICS.md) (desde 2026-11-03). |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |
 | **Quién** | Presentadores adicionales. |
 | **Archivo** | Equipo de redacción, participantes, cuenta de CBA, valores de cba.media y archivo automático del programa (no en Editar emisión). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |

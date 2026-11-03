@@ -17,6 +17,7 @@ Seiten:
 | **Listener Stats** | Wie viele Hörer waren je Stream verbunden, im Zeitverlauf? |
 | **Show Listener Stats** | Wie hat jede *Sendung* bei den Hörerzahlen abgeschnitten? |
 | **Participants** (Teilnehmende) | Wie viele Menschen haben die Sendungen eines Jahres gemacht? Siehe [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03). |
+| **Yearly Report** (Jahresbericht) | Sendeminuten der Eigenproduktionen und die Übersicht der Teilnehmenden, je ein Jahr, CSV. Siehe § 5 (seit 2026-11-03). |
 
 Die ersten beiden existieren für die **Rechenschaftspflicht** —
 Tantiemen-Meldungen, Sendeprotokolle für Behörden, Anrufe der Art
@@ -160,3 +161,30 @@ selben Sendeplatz.
 > war), zeigt Nullen — die Aggregation kann nur Datenpunkte
 > falten, die für das Zeitfenster der Sendung in
 > `cc_listener_count` existieren.
+
+## 5. Jahresbericht (seit 2026-11-03)
+
+**Analytics → Yearly Report** sammelt die Zahlen für die jährliche
+Meldung an die Behörden auf einer Seite, mit einer Jahresauswahl
+(Senderzeit; das laufende Jahr bis heute).
+
+**Sendeminuten.**  Kreuzen Sie **Own production** (Eigenproduktion) in
+einer Sendung an (Edit Show → What; einmalig oder wiederholend, Vorlagen
+und Import/Export tragen es als `own_production`).  Die Seite zählt die
+Episoden markierter Sendungen, die im Jahr gesendet wurden - beendet,
+nicht gelöscht, keine alte Rebroadcast-Instanz - mit ihrer **geplanten**
+Dauer, je Sendung und Monat auf Minuten gerundet.  Sendungen, die als
+[Wiederholung einer anderen Sendung](./CALENDAR.md) angelegt sind,
+stehen in einer eigenen Spalte (Erstausstrahlungen gegenüber
+Wiederholungen), weil die meisten Behörden sie getrennt abfragen.
+Sendungen ohne Häkchen erscheinen ausgegraut mit ihren Minuten unter
+„andere Sendungen (nicht gezählt)", damit sichtbar bleibt, was fehlt.
+Eine Monatstabelle und **Download CSV (minutes)** (je Sendung, Summen,
+je Monat) runden den Abschnitt ab.
+
+**Teilnehmende.**  Dieselben Zahlen wie [Archivierung](./ARCHIVING.md)
+§ 6 (Beteiligte je Sendung, Episoden mit eigenem Wert, Beteiligungen,
+Redaktionsteams), mit Links zum Filter „Sendungen ohne Wert" und zum
+Teilnehmenden-CSV.
+
+Program Managers und Admins öffnen diese Seite.

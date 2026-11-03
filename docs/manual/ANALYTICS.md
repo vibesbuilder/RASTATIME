@@ -16,6 +16,7 @@ The **Analytics** menu in the top navigation bundles five pages:
 | **Listener Stats** | How many listeners were connected to each stream, over time? |
 | **Show Listener Stats** | How did each *show* perform in listener numbers? |
 | **Participants** | How many people made the shows of a year? See [Archiving](./ARCHIVING.md) § 6 (since 2026-11-03). |
+| **Yearly Report** | Programme minutes of the station's own productions and the participants overview, one year at a time, CSV. See § 5 (since 2026-11-03). |
 
 The first two exist for **accountability** — royalty reporting,
 regulator log sheets, "what was that track at 14:32?" phone calls.
@@ -144,3 +145,28 @@ numbers across weeks, or two shows in the same slot.
 > collection started (or while playout was down) shows zeros — the
 > aggregation can only fold data points that exist in
 > `cc_listener_count` for the show's time window.
+
+## 5. Yearly Report (since 2026-11-03)
+
+**Analytics → Yearly Report** gathers the figures for the yearly reporting
+to the authorities on one page, with one year selector (station time;
+the current year up to today).
+
+**Programme minutes.**  Tick **Own production** in a show (Edit Show →
+What; one-off or recurring, templates and Import/Export carry it as
+`own_production`).  The page counts the episodes of flagged shows that
+aired in the year - ended, not deleted, no legacy rebroadcast - with
+their **scheduled** duration, rounded to minutes per show and month.
+Shows set up as [Repeat of another show](./CALENDAR.md) are kept in a
+column of their own (first broadcasts vs. repeats), because most
+authorities report them separately.  Shows without the flag appear
+greyed with their minutes under "other shows (not counted)" so you can
+see what is left out.  A table per month and **Download CSV (minutes)**
+(per show, totals, per month) complete the section.
+
+**Participants.**  The same figures as [Archiving](./ARCHIVING.md) § 6
+(People involved per show, episodes with their own value,
+participations, editorial teams), with links to the "shows without a
+value" filter and the participants CSV.
+
+Program Managers and Admins open this page.

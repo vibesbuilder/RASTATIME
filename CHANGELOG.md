@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Jahresbericht: Sendeminuten der Eigenproduktionen + Teilnehmende auf einer Seite (2026-11-03, Go 2026-11-03)** —
+  Häkchen „Own production“ in Edit Show → What (Vorlagen und Import/Export
+  tragen `own_production`), Migration 0077 (`cc_show.own_production`, Leser
+  tolerant über `to_jsonb`). Analytics → „Yearly Report“ (ersetzt den
+  Menüpunkt Participants, die Seite bleibt erreichbar): Minuten der
+  markierten Sendungen je Jahr, Erstausstrahlungen und Wiederholungen
+  („Repeat of show“) getrennt, Monatstabelle, nicht markierte Sendungen
+  ausgegraut als Kontrolle, CSV; darunter die Teilnehmenden-Übersicht der
+  Archivierung mit Links. Geplante Dauer der gesendeten Instanzen
+  (Senderzeit, beendet, nicht gelöscht, keine alte Rebroadcast-Instanz).
+  Manual ANALYTICS / CALENDAR / IMPORT_EXPORT ×4, ARCHITECTURE §23.83.
+  Migration offen (Operator-Backup + Go). Commit `05f74cc3`.
+
 - **Archivierung: Hinweis „Sendung ohne Beschreibung“ (2026-11-03, Operator-Wunsch nach der
   Abnahme)** — Ist im Abschnitt **Archiving** der Sendung **Archive automatically** angehakt
   und hat die Sendung keine Beschreibung, steht darunter ein Hinweis: Jede Episode braucht

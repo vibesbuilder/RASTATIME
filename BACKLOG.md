@@ -6916,3 +6916,32 @@ Sendung darstellen kann.  Skizze: eigene Tabelle (Instanz, Von, Bis, Titel,
 Text), aus cc_playout_history vorbefuellt, im Kalender editierbar, Ausgabe im
 Catch-up-Widget und optional als Kapitelmarken im Feed.  ~500 Zeilen, 2 Tage.
 Siehe auch "Record-per-Hour (Vorstufe fuer 7-Tage-Catchup)" oben.
+
+## Operator-Punkte 2026-11-03 (Jahresbericht, Alarme, Instanz-Autoloading)
+
+### ✅ Jahresbericht: Sendeminuten „Eigenproduktion“ + Teilnehmende - gebaut 2026-11-03 (Go 2026-11-03, Architektur §23.83)
+
+Häkchen „Own production“ je Sendung (einmalig oder wiederholend), Analytics →
+Yearly Report mit Jahresauswahl: Minuten der markierten Sendungen (geplante
+Dauer der gesendeten Instanzen), Erstausstrahlungen und Wiederholungen
+getrennt, Monatstabelle, CSV; Teilnehmenden-Übersicht darunter.  Antwort auf
+die Participants-Frage: der Sendungswert gilt je Episode, ein Episodenwert
+ersetzt ihn nur für diese Episode in „Participations“; „People involved“
+bleibt der Sendungswert.  Migration 0077 offen (Backup + Go).
+
+### 🟢 Alarme per SMTP-Mail und Telegram bei Dead Air und Ausfällen - GO 2026-11-03, nur Stufe 1
+
+Kanäle: SMTP mit Anmeldung/TLS (PHP mail() ohne Anmeldung reicht nicht) und
+Telegram-Bot; Auslöser Stille-Ersatzquelle, Dienste, Preflight-Warnungen,
+Archiv-Fehler; Entprellung, Unterdrückung bei geplanten Neustarts, Entwarnung,
+Testknopf, Settings → Alerts.  Signal/WhatsApp/SMS abgelehnt bzw. später.
+
+### 🟢 Edit Instance: Autoloading-Playlists je Instanz - GO 2026-11-03 mit Regel „nur vor der Befüllung“
+
+Vier Instanzspalten (leer = Vorgabe der Sendung), Abschnitt im Instanz-Formular,
+Befüllung löst Instanz → Sendung auf; nach der Befüllung nur Hinweis.
+
+### 🟡 Archiv-Status-Seite (laufende Uploads, Historie, CSV) - in der Archivierungs-Sitzung bauen (Operator 2026-11-03)
+
+Daten in cc_cba_upload vorhanden; Seite mit Fortschritt, Wiederholen/Abbrechen,
+Historie und Filtern.  ~300 Zeilen, 1 Tag.

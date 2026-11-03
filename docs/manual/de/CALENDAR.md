@@ -149,6 +149,7 @@ Standardwerten bleiben.
 | **Wann** | Startdatum / Uhrzeit, Dauer, Enddatum, Wiederholungen, **Verzögerten Start erlauben** (diese Sendung später beginnen lassen, wenn die vorige überzogen hat — siehe [Verzögerter Sendungsstart](./DELAYED_START.md)). |
 | **Live-Stream-Eingabe** | Remote-Hosts erlauben, die Sendung via Show DJ zu übernehmen (Pro-Sendung-Benutzername + Passwort). |
 | **Aufnahme** | Ankreuzen, um den On-Air-Output der Sendung in eine Datei aufzuzeichnen. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
+| **Own production** (Eigenproduktion) | Ankreuzen bei Eigenproduktionen des Senders: die gesendeten Minuten der Sendung zählen in Analytics → [Jahresbericht](./ANALYTICS.md) (seit 2026-11-03). |
 | **Autoloading Playlist** | Eine Playlist anhängen, um jede Instanz automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Wer** | Zusätzliche Hosts über den primären unter Was gesetzten hinaus. |
 | **Archivierung** | Redaktionsteam, Teilnehmende, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (nicht in Instanz bearbeiten). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
