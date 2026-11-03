@@ -1,11 +1,11 @@
-# Archivage : équipe de rédaction, épisodes, archive en ligne, participants
+# Archivage : équipes de rédaction, épisodes, archive en ligne, participants
 
-> **Où vous en êtes dans le manuel.** Paramètres → **Équipe de
-> rédaction** et **Comptes CBA** ; Calendrier → formulaire de
+> **Où vous en êtes dans le manuel.** Paramètres → **Archivage**
+> (équipes de rédaction, comptes CBA) ; Calendrier → formulaire de
 > l'émission, section **Archivage** ; Calendrier → clic droit sur une
-> occurrence → **Épisode...** ; Statistiques → **Participants** (dans
-> l'interface anglaise : Settings → Editorial Team / CBA Accounts,
-> Archiving, Episode..., Analytics → Participants).  Lisez d'abord
+> occurrence → **Archiver en ligne** ; Statistiques → **Participants**
+> (dans l'interface anglaise : Settings → Archiving, Archiving, Archive
+> Online, Analytics → Participants).  Lisez d'abord
 > [Calendrier](./CALENDAR.md) et
 > [Enregistrement par émission](./RECORD_PER_SHOW.md) - le son d'un
 > épisode archivé est l'enregistrement de l'émission.
@@ -33,32 +33,34 @@ le suivant.
 
 ---
 
-## 1. Profils de l'équipe de rédaction
+## 1. Équipes de rédaction
 
-**Paramètres → Équipe de rédaction** liste les personnes derrière les
-émissions.
+**Paramètres → Archivage** liste dans sa partie supérieure, **Équipes
+de rédaction**, les équipes derrière les émissions.  Chaque émission
+choisit une équipe (§3).
 
 | Champ | Signification |
 |---|---|
-| **Nom** | Tel qu'il doit apparaître sur cba.media et dans les statistiques. |
+| **Nom** | Tel qu'il doit apparaître sur cba.media (comme rédaction) et dans les statistiques. |
 | **E-mail (facultatif)** | Pour votre propre usage. |
-| **Utilisateur (facultatif)** | Relie le profil à un compte RASTATIME. Un profil n'a pas besoin de compte - la plupart des rédacteurs ne se connectent jamais. |
-| **Actif** | Seuls les profils actifs sont proposés dans le formulaire de l'émission.  Un profil désactivé reste dans les émissions auxquelles il appartient déjà. |
+| **Utilisateur (facultatif)** | Relie l'équipe à un compte RASTATIME, p. ex. celui de la personne responsable. Une équipe n'a pas besoin de compte. |
+| **Actif** | Seules les équipes actives sont proposées dans le formulaire de l'émission.  Une équipe désactivée reste dans les émissions qui l'ont déjà. |
 
-**Edition** charge le profil dans le formulaire au-dessus du tableau ;
-**Supprimer** retire le profil de l'équipe de chaque émission après
-confirmation.  La colonne **Émissions** compte les émissions d'un
-profil.
+**Edition** charge l'équipe dans le formulaire au-dessus du tableau ;
+**Supprimer** retire l'équipe de chaque émission après confirmation.
+La colonne **Émissions** compte les émissions d'une équipe.
 
-Les Program Managers et les Admins ouvrent cette page.
+Les Program Managers et les Admins ouvrent cette page ; les Program
+Managers ne voient que cette partie.
 
 ---
 
 ## 2. Comptes CBA
 
 Chaque émission est archivée sous un utilisateur cba.media - les
-épisodes apparaissent sous son nom.  **Paramètres → Comptes CBA**
-contient ces utilisateurs ; seuls les Admins ouvrent la page.
+épisodes apparaissent sous son nom.  La partie inférieure de
+**Paramètres → Archivage**, **Comptes CBA**, contient ces utilisateurs ;
+seuls les Admins la voient.
 
 | Champ | Signification |
 |---|---|
@@ -86,13 +88,14 @@ contient ces utilisateurs ; seuls les Admins ouvrent la page.
 
 Modifiez une émission (calendrier → clic droit → **Modifier
 l'émission**, ou une nouvelle émission) et ouvrez la section
-**Archivage**, entre **Who** et **Style**.  Les valeurs valent pour
-chaque épisode de l'émission tant qu'un épisode ne définit pas les
+**Archivage**, entre **Who** et **Style** - comme les autres sections,
+elle s'affiche repliée ; cliquez sur son titre.  Les valeurs valent
+pour chaque épisode de l'émission tant qu'un épisode ne définit pas les
 siennes.
 
 | Champ | Signification |
 |---|---|
-| **Équipe de rédaction** | Cochez les profils des personnes derrière l'émission. Elles sont transmises à cba.media comme rédacteurs et apparaissent dans la vue Participants. |
+| **Équipe de rédaction** | L'équipe derrière l'émission, choisie dans la liste (une par émission, §1). Son nom est transmis à cba.media comme rédaction et apparaît dans la vue Participants. |
 | **Participants** | Combien de personnes participent habituellement à un épisode (0-999). Compte dans Statistiques → Participants. |
 | **Compte CBA** | L'utilisateur CBA sous lequel les épisodes sont archivés (§2). |
 | **Visibilité sur cba.media** | *Public* (répertorié), *Non répertorié* (accessible seulement par son adresse) ou *Privé* (visible seulement par l'utilisateur CBA). |
@@ -102,8 +105,8 @@ siennes.
 | **Langues** | Jusqu'à trois codes de langue connus de la CBA, p. ex. `de, en`. |
 | **Mots-clés** | Mots-clés pour cba.media, séparés par des virgules. |
 | **Accroche par défaut** | Utilisée pour chaque épisode sans accroche propre. |
-| **Contient de la musique protégée (AKM)** | Les épisodes contiennent habituellement de la musique protégée ; cba.media restreint alors le téléchargement. |
-| **Archiver automatiquement** | Archiver chaque nouvel épisode sur cba.media tout seul (§5, *Automatiquement*). Nécessite un compte CBA, un thème, une langue et une licence ; à côté de la case : depuis quand elle est activée. Si l'émission n'a pas de description, une remarque sous la case indique que chaque épisode a alors besoin de la sienne. |
+| **Contient de la musique protégée** | Les épisodes contiennent habituellement de la musique protégée (AKM) ; cba.media restreint alors le téléchargement. |
+| **Archiver automatiquement** | Archiver chaque nouvel épisode sur cba.media tout seul (§5, *Automatiquement*). Nécessite un compte CBA, un thème, une langue et une licence ; à côté de la case : depuis quand elle est activée. Si l'émission n'a pas de description, une remarque sous la case indique qu'un épisode sans la sienne reçoit alors le nom de l'émission comme texte. |
 
 **Quelle licence ?**  Le formulaire web de la CBA pose trois questions ;
 la licence y répond :
@@ -123,7 +126,7 @@ droit.
 
 La section n'apparaît pas dans **Modifier l'occurrence** : elle
 appartient à l'émission entière.  Les données d'un seul épisode se
-modifient dans **Épisode...** (§4).
+modifient dans **Archiver en ligne** (§4).
 
 > **D'où vient le numéro du podcast ?**  Ouvrez le podcast sur
 > cba.media ; le numéro figure dans son adresse ou sur sa page (la CBA
@@ -131,18 +134,19 @@ modifient dans **Épisode...** (§4).
 
 ---
 
-## 4. Données de l'épisode : « Épisode... »
+## 4. Données de l'épisode : « Archiver en ligne »
 
-Clic droit sur une occurrence dans le calendrier → **Épisode...**.
-L'entrée est disponible avant et après la diffusion - l'image peut être
-ajoutée après l'émission - pour les Admins, les Program Managers et les
-animateurs de l'émission.
+Clic droit sur une occurrence dans le calendrier → **Archiver en
+ligne** (jusqu'au 2026-11-03 *Épisode...*).  L'entrée est disponible
+avant et après la diffusion - l'image peut être ajoutée après
+l'émission - pour les Admins, les Program Managers et les animateurs de
+l'émission.
 
 | Champ | Signification |
 |---|---|
 | **Titre** | Vide : le nom de l'émission et la date, affichés en gris comme suggestion. |
 | **Accroche** | Un court résumé. Vide : l'accroche par défaut de l'émission. |
-| **Description** | Le texte de l'épisode, sur cba.media le texte de l'article. Vide : la description de l'émission. C'est le seul endroit pour la modifier (Modifier l'occurrence ne l'affiche plus). |
+| **Description** | Le texte de l'épisode, sur cba.media le texte de l'article. Vide : la description de l'émission ou, si elle n'en a pas, le nom de l'émission (affiché en gris). C'est le seul endroit pour la modifier (Modifier l'occurrence ne l'affiche plus). |
 | **Participants** | Seulement si cet épisode diffère de l'émission, p. ex. avec des invités. La valeur de l'émission apparaît en gris. |
 | **Date de production** | Exigée par cba.media. Vide : le jour de la diffusion. À renseigner si l'épisode a été produit plus tôt. |
 | **Ne pas archiver cet épisode automatiquement** | Pour les tests, les épisodes annulés ou les problèmes de droits. S'applique avec l'archivage automatique (§5) ; l'archivage manuel reste possible. |
@@ -169,14 +173,16 @@ et font partie du miroir des médias de la [Sauvegarde](./BACKUP.md).
 
 ## 5. Archiver en ligne
 
-Le bloc du bas de **Épisode...** - **Archive en ligne (cba.media)** -
-montre l'état de l'épisode sur cba.media.  Les Admins et les Program
-Managers archivent d'ici ; les animateurs voient l'état.
+Le bloc du bas de **Archiver en ligne** - **Archive en ligne
+(cba.media)** - montre l'état de l'épisode sur cba.media.  Les Admins
+et les Program Managers archivent d'ici ; les animateurs voient l'état.
 
 1. Complétez ce que le bloc liste sous *Avant de pouvoir archiver cet
    épisode* - en général le compte CBA, le thème, la langue et la
-   licence de l'émission et une description.
-2. Cliquez **Archiver en ligne...** et choisissez le son :
+   licence de l'émission.  Une description n'est pas obligatoire : sans
+   description sur l'épisode ni sur l'émission, le nom de l'émission
+   devient le texte de l'article.
+2. Cliquez **Archiver en ligne maintenant** et choisissez le son :
    * **L'enregistrement de cet épisode** - la copie que
      [Enregistrement par émission](./RECORD_PER_SHOW.md) a mise dans la
      bibliothèque ;
@@ -198,13 +204,15 @@ modifier ni de remplacer un article.
 | *Envoi vers cba.media : n %* | En cours, limité à la limite d'envoi (§2). |
 | *Archivé sur cba.media comme article n* | Terminé ; le numéro mène à l'article. |
 | *En attente d'une nouvelle tentative* | cba.media était injoignable ou occupé ; RASTATIME réessaie après 2, 5, 15, 30 minutes ... pendant 24 heures au plus. |
-| *L'envoi a échoué : raison* | Données manquantes, ou cba.media a refusé (p. ex. mauvais mot de passe d'application, thème inconnu). Corrigez la cause et **Archiver en ligne...** à nouveau. |
+| *L'envoi a échoué : raison* | Données manquantes, ou cba.media a refusé (p. ex. mauvais mot de passe d'application, thème inconnu). Corrigez la cause et **Archiver en ligne maintenant** à nouveau. |
 | *Impossible de savoir si l'article a été créé* | La connexion s'est coupée pendant l'envoi. L'article existe peut-être - vérifiez sur cba.media, puis **Lier un article existant** ou archivez à nouveau. RASTATIME ne répète jamais ce cas tout seul, pour qu'aucun épisode n'apparaisse deux fois. |
 
-**Lier un article existant** prend le numéro d'un article sur cba.media
-(ou son adresse avec `?p=<numéro>`), p. ex. pour un épisode téléversé
-autrefois à la main ; un champ vide retire le lien.  Un épisode lié
-compte comme archivé.
+**Lier un article existant** sert pour un article déjà présent sur
+cba.media - téléversé là-bas à la main, ou après un envoi *incertain*.
+Saisissez son numéro (ou son adresse avec `?p=<numéro>`) et cliquez sur
+le bouton : RASTATIME marque l'épisode comme archivé et n'envoie rien.
+Un champ vide retire le lien.  L'icône d'aide à côté du bouton dit la
+même chose.
 
 > **Arrêter le worker** ne fait que suspendre les envois ; la diffusion
 > n'est pas touchée.  Une tâche en cours est vérifiée après le
@@ -221,11 +229,11 @@ toujours avec l'enregistrement :
    place l'enregistrement dans la bibliothèque en quelques secondes
    (l'émission doit enregistrer, et *Copy Show Recordings into Library*
    doit être activé sous Paramètres → Local Machine).
-2. Après le délai d'attente (Paramètres → Comptes CBA, 30 minutes par
+2. Après le délai d'attente (Paramètres → Archivage, 30 minutes par
    défaut), le service d'arrière-plan vérifie l'épisode et met l'envoi
    en file, avec la visibilité de l'émission.
-3. S'il manque encore quelque chose (une description, l'enregistrement
-   ...), l'épisode attend et est revérifié toutes les cinq minutes,
+3. S'il manque encore quelque chose (l'enregistrement, un thème ...),
+   l'épisode attend et est revérifié toutes les cinq minutes,
    jusqu'à 24 heures.  Ensuite l'archivage abandonne ; la boîte de
    dialogue affiche *L'archivage automatique a abandonné* avec la
    raison.
@@ -243,7 +251,7 @@ Jamais archivés automatiquement :
 * les épisodes dont l'enregistrement couvre moins de la moitié de
   l'émission (p. ex. un enregistrement interrompu).
 
-**Épisode...** indique dans le bloc *Archive en ligne* ce que
+**Archiver en ligne** indique dans le bloc *Archive en ligne* ce que
 l'archivage automatique prévoit pour l'épisode, p. ex. *Archivé
 automatiquement à partir du 2026-11-10 14:30, dès qu'il ne manque plus
 rien ci-dessous*.
@@ -287,12 +295,12 @@ l'original.
 | **Participants** | La valeur de l'émission ; le total additionne les valeurs de toutes les émissions. |
 | **Épisodes avec valeur propre** | Épisodes dont la boîte de dialogue fixe un autre nombre. |
 | **Participations** | Les participants de chaque épisode additionnés (un épisode avec sa propre valeur compte avec celle-ci). |
-| **Profils de rédaction** (total) | Profils distincts dans les équipes des émissions diffusées - chaque personne une fois. |
+| **Équipes de rédaction** (total) | Équipes distinctes des émissions diffusées - chaque équipe une fois. |
 | **Émissions sans valeur** (total) | En orange tant qu'il y en a. |
 
 Une personne présente dans plusieurs émissions compte une fois par
-émission dans **Participants** ; le total des profils compte chaque
-personne une seule fois.
+émission dans **Participants** ; le total des équipes compte chaque
+équipe une seule fois.
 
 Les Program Managers et les Admins ouvrent cette page.
 
@@ -300,7 +308,7 @@ Les Program Managers et les Admins ouvrent cette page.
 
 ## 7. Questions fréquentes
 
-### « Archiver en ligne... manque. »
+### « Archiver en ligne maintenant manque. »
 
 Le bouton apparaît pour les Admins et les Program Managers, et
 seulement tant que l'épisode n'est ni archivé ni en attente d'envoi.
@@ -322,7 +330,7 @@ n'ait tourné, le champ prend le numéro.
 L'interface de téléversement de la CBA n'a pas de réglage pour cela ;
 le réglage par défaut de l'utilisateur CBA s'applique.
 
-### « J'ai coché des profils, mais ils n'apparaissent pas dans la vue. »
+### « J'ai choisi une équipe, mais l'émission n'apparaît pas dans la vue. »
 
 La vue ne liste que les émissions **diffusées** dans l'année choisie.
 Une nouvelle émission apparaît dès que son premier épisode est terminé.
@@ -330,16 +338,23 @@ Une nouvelle émission apparaît dès que son premier épisode est terminé.
 ### « La section Archivage manque ou est grisée. »
 
 Elle manque dans **Modifier l'occurrence** - la section appartient à
-l'émission entière ; pour un épisode, utilisez **Épisode...**.  Elle est
-grisée si vous n'êtes ni Program Manager ni Admin.
+l'émission entière ; pour un épisode, utilisez **Archiver en ligne**.
+Elle est grisée si vous n'êtes ni Program Manager ni Admin.
 
 ### « Un épisode n'a pas été archivé automatiquement. »
 
-Ouvrez **Épisode...** : le bloc *Archive en ligne* indique pourquoi -
-l'interrupteur est désactivé, *Ne pas archiver automatiquement* est
-coché, l'épisode s'est terminé avant l'activation, il attend encore
-quelque chose, ou l'archivage a abandonné et pourquoi.  Archivez-le à
-la main depuis là.
+Ouvrez **Archiver en ligne** : le bloc *Archive en ligne* indique
+pourquoi - l'interrupteur est désactivé, *Ne pas archiver
+automatiquement* est coché, l'épisode s'est terminé avant l'activation,
+il attend encore quelque chose, ou l'archivage a abandonné et pourquoi.
+Archivez-le à la main depuis là.
+
+### « Où sont Équipe de rédaction et Comptes CBA ? »
+
+Depuis le 2026-11-03, les deux se trouvent sur une seule page,
+**Paramètres → Archivage** : les équipes de rédaction en haut, les
+comptes CBA avec la limite d'envoi et le délai d'attente en dessous
+(Admins seulement).
 
 ---
 

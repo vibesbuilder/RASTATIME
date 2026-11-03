@@ -104,9 +104,10 @@ def build_meta(ep: Episode) -> tuple[dict[str, Any], list[str]]:
         missing.append(f"the episode is archived already (post {ep.already_post_id})")
     if not ep.username or not ep.password:
         missing.append("the show has no CBA account with an application password")
-    description = ep.description.strip() or ep.show_description.strip()
+    # the CBA needs a text: the episode's, else the show's, else the show name (operator 2026-11-03)
+    description = ep.description.strip() or ep.show_description.strip() or ep.show_name.strip()
     if not description:
-        missing.append("neither the episode nor the show has a description")
+        missing.append("the episode has no description and the show no name")
     languages = [c for c in (ep.languages or "").split(",") if c]
     if not languages or any(c not in LANGUAGES for c in languages) or len(languages) > 3:
         missing.append("the show has no valid language")

@@ -1,25 +1,26 @@
 <?php
-// RASTATIME 2026-11-03 - archiving stage 1: Settings → Editorial Team.
-// The people a show's editorial team is chosen from (Edit Show ->
-// Archiving).  A profile needs no login; linking a user is optional.
+// RASTATIME 2026-11-03 - archiving: the editorial teams, first section of
+// Settings → Archiving (settings.phtml).  A show chooses one team (Edit Show
+// -> Archiving).  A team needs no login; linking a user is optional.
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
-$e = $this->edit;
+$form = $this->teamForm;
+$e = $form['edit'];
 ?>
-<div class="ui-widget prefpanel clearfix padded-strong rt-editors">
-    <h2><?php echo _("Editorial Team"); ?></h2>
+<div class="ui-widget prefpanel clearfix padded-strong rt-editors" id="editorial-teams">
+    <h2><?php echo _("Editorial Teams"); ?></h2>
     <p class="rt-editors-note">
-        <?php echo _("The people behind the shows. Choose a show's team under Edit Show → Archiving; the names are sent to cba.media as editors and the team appears in Analytics → Participants. A profile needs no login."); ?>
+        <?php echo _("The editorial teams behind the shows. Each show chooses its team under Edit Show → Archiving; the team name is sent to cba.media as editor and appears in Analytics → Participants. A team needs no login."); ?>
     </p>
     <?php if (!$this->ready): ?>
         <p class="rt-editors-error"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
     <?php else: ?>
-        <?php if ($this->message): ?><p class="rt-editors-ok"><?php echo $h($this->message); ?></p><?php endif; ?>
-        <?php if ($this->error): ?><p class="rt-editors-error"><?php echo $h($this->error); ?></p><?php endif; ?>
+        <?php if ($form['message']): ?><p class="rt-editors-ok"><?php echo $h($form['message']); ?></p><?php endif; ?>
+        <?php if ($form['error']): ?><p class="rt-editors-error"><?php echo $h($form['error']); ?></p><?php endif; ?>
 
         <form method="post" action="<?php echo $h(Config::getBasePath() . 'archiving/editors'); ?>" class="rt-editors-form" id="rt_editor_form">
             <input type="hidden" name="csrf" value="<?php echo $h($this->csrf); ?>" />
             <input type="hidden" name="id" id="rt_editor_id" value="<?php echo (int) $e['id']; ?>" />
-            <h3 id="rt_editor_heading"><?php echo $e['id'] ? _("Edit profile") : _("Add a profile"); ?></h3>
+            <h3 id="rt_editor_heading"><?php echo $e['id'] ? _("Edit team") : _("Add a team"); ?></h3>
             <div class="rt-editors-row">
                 <label for="rt_editor_name"><?php echo _("Name"); ?></label>
                 <input type="text" name="name" id="rt_editor_name" class="input_text" maxlength="255" required value="<?php echo $h($e['name']); ?>" />
@@ -45,12 +46,12 @@ $e = $this->edit;
             </div>
             <div class="rt-editors-row">
                 <button type="submit" class="btn btn-new"><?php echo _("Save"); ?></button>
-                <button type="button" class="btn" id="rt_editor_new"<?php echo $e['id'] ? '' : ' style="display:none"'; ?>><?php echo _("New profile"); ?></button>
+                <button type="button" class="btn" id="rt_editor_new"<?php echo $e['id'] ? '' : ' style="display:none"'; ?>><?php echo _("New team"); ?></button>
             </div>
         </form>
 
         <?php if (empty($this->profiles)): ?>
-            <p class="rt-editors-empty"><?php echo _("No profile yet."); ?></p>
+            <p class="rt-editors-empty"><?php echo _("No team yet."); ?></p>
         <?php else: ?>
             <table class="datatable rt-editors-table">
                 <thead>
@@ -92,8 +93,8 @@ $e = $this->edit;
 </div>
 <script>
 (function ($) {
-  var addTitle = <?php echo json_encode(_("Add a profile")); ?>, editTitle = <?php echo json_encode(_("Edit profile")); ?>;
-  var confirmText = <?php echo json_encode(_("Delete the profile \"%s\"? It is removed from the editorial team of every show.")); ?>;
+  var addTitle = <?php echo json_encode(_("Add a team")); ?>, editTitle = <?php echo json_encode(_("Edit team")); ?>;
+  var confirmText = <?php echo json_encode(_("Delete the team \"%s\"? It is removed from every show.")); ?>;
   function fill(id, name, email, user, active) {
     $("#rt_editor_id").val(id);
     $("#rt_editor_name").val(name);

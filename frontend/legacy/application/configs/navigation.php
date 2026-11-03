@@ -173,24 +173,15 @@ $pages[] = [
             'privilege' => 'show-templates',
         ],
         [
-            // RASTATIME 2026-11-03 - archiving stage 1: editorial team
-            // profiles (Program Managers and Admins)
-            'label' => 'Editorial Team',
+            // RASTATIME 2026-11-03 - archiving: the editorial teams (Program
+            // Managers and Admins) and, for admins, the CBA accounts on one
+            // page (operator 2026-11-03, before: two entries)
+            'label' => 'Archiving',
             'module' => 'default',
             'controller' => 'archiving',
-            'action' => 'editors',
+            'action' => 'settings',
             'resource' => 'archiving',
-            'privilege' => 'editors',
-        ],
-        [
-            // RASTATIME 2026-11-03 - archiving stage 2: the CBA users the
-            // shows are archived under (admins only, ACL privilege)
-            'label' => 'CBA Accounts',
-            'module' => 'default',
-            'controller' => 'archiving',
-            'action' => 'accounts',
-            'resource' => 'archiving',
-            'privilege' => 'accounts',
+            'privilege' => 'settings',
         ],
         [
             // RASTATIME 2026-05-21 — Auto-DJ settings page

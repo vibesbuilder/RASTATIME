@@ -1,12 +1,12 @@
 <?php
-// RASTATIME 2026-11-03 - archiving: the "Episode..." dialog of a show
+// RASTATIME 2026-11-03 - archiving: the "Archive Online" dialog of a show
 // instance (calendar context menu).  Stage 1: title, teaser, description,
 // image and people involved of this one episode; empty fields fall back to
 // the show's defaults (Edit Show → Archiving), shown as placeholders.  The
 // Save button of the dialog (schedule.js buildEpisodeDialog) submits the
 // form; the image is uploaded / removed at once.  Stage 2: production
 // date, "do not archive", and the "Online archive" block (state of the
-// upload to cba.media, "Archive online..." with the audio choice, link an
+// upload to cba.media, "Archive online now" with the audio choice, link an
 // existing post) for admins and program managers; the upload itself runs
 // in RASTATIME-WORKER, the block polls its state.  Stage 3: one line on
 // what the automatic archiving does with the episode (autoState()).
@@ -70,9 +70,9 @@ $T = [
             <textarea id="episode_teaser" class="input_text_area" rows="2" maxlength="2048"
                       placeholder="<?php echo $h($e['default_teaser']); ?>"<?php echo $dis; ?>><?php echo $h($e['teaser']); ?></textarea>
 
-            <label for="episode_description"><?php echo _("Description"); ?><?php echo $tip(_("The text of this episode; on cba.media it is the text of the post. Empty: the description of the show.")); ?></label>
+            <label for="episode_description"><?php echo _("Description"); ?><?php echo $tip(_("The text of this episode; on cba.media it is the text of the post. Empty: the description of the show, or the show name when the show has none.")); ?></label>
             <textarea id="episode_description" class="input_text_area" rows="5" maxlength="8192"
-                      placeholder="<?php echo $h(mb_substr($e['show_description'], 0, 300)); ?>"<?php echo $dis; ?>><?php echo $h($e['description']); ?></textarea>
+                      placeholder="<?php echo $h(mb_substr(trim($e['show_description']) !== '' ? $e['show_description'] : $e['show_name'], 0, 300)); ?>"<?php echo $dis; ?>><?php echo $h($e['description']); ?></textarea>
 
             <div class="rt-episode-pair">
                 <div>
@@ -143,11 +143,12 @@ $T = [
         <ul id="episode_archive_missing" class="rt-episode-archive-missing"></ul>
         <?php if ($this->canArchive): ?>
             <div class="rt-episode-archive-actions">
-                <button type="button" class="btn" id="episode_archive_open"><?php echo _("Archive online..."); ?></button>
+                <button type="button" class="btn" id="episode_archive_open"><?php echo _("Archive online now"); ?></button>
                 <span class="rt-episode-archive-link">
                     <input type="text" id="episode_archive_post" class="input_text" placeholder="<?php echo $h(_("Post number or address")); ?>"
                            value="<?php echo $e['cba_post_id'] ? (int) $e['cba_post_id'] : ''; ?>" />
                     <button type="button" class="btn" id="episode_archive_linkbtn"><?php echo _("Link existing post"); ?></button>
+                    <?php echo $tip(_("For a post that is on cba.media already, e.g. uploaded there by hand or after an unclear upload. Enter its number or address and click the button: RASTATIME marks the episode as archived and uploads nothing.")); ?>
                 </span>
             </div>
             <div id="episode_archive_panel" class="rt-episode-archive-panel" style="display:none">

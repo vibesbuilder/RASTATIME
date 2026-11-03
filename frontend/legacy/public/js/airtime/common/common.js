@@ -693,8 +693,8 @@ function loadPreflightWarnings() {
           $li.append(
             document.createTextNode(
               ". " + (detail.status === "unclear"
-                ? $.i18n._("Look on cba.media first, then link the post or archive again under Episode... in the calendar.")
-                : $.i18n._("Archive it by hand under Episode... in the calendar."))
+                ? $.i18n._("Look on cba.media first, then link the post or archive again under Archive Online in the calendar.")
+                : $.i18n._("Archive it by hand under Archive Online in the calendar."))
             )
           );
         } else if (w.warning_type === "podcast_download_failed") {

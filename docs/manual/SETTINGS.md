@@ -7,7 +7,8 @@
 
 The Settings menu is the station's configuration surface.  Most pages
 belong to **Admins**; a **Program Manager** sees
-*My Profile*, *Show Templates* and *Auto DJ*; Guests and DJs see *My
+*My Profile*, *Show Templates*, *Auto DJ* and the editorial teams of
+*Archiving*; Guests and DJs see *My
 Profile* only.  See [Users and Roles](./USERS_AND_ROLES.md) §2 for the
 full permission matrix.
 
@@ -24,8 +25,7 @@ Left navigation → **Settings** opens the sub-menu:
 | **Users** | Create, edit and delete users and set their user type. | Admin | [Users and Roles](./USERS_AND_ROLES.md) §3 |
 | **Track Types** | Track types with their crossfade, crossover and stream-metadata presets. | Admin | [Library](./LIBRARY.md) |
 | **Show Templates** | Overview of the saved show templates: rename, delete. | Program Manager, Admin | [Show Templates](./SHOW_TEMPLATES.md) |
-| **Editorial Team** | Profiles of the people behind the shows (name, optional login), chosen per show under Archiving. | Program Manager, Admin | [Archiving](./ARCHIVING.md) |
-| **CBA Accounts** | The cba.media users the shows are archived under (user name, application password), connection test, upload limit, waiting time of the automatic archiving. | Admin | [Archiving](./ARCHIVING.md) |
+| **Archiving** | Editorial teams behind the shows (name, optional login; one per show, chosen under Archiving); for Admins below them the cba.media users the shows are archived under (user name, application password), connection test, upload limit, waiting time of the automatic archiving. Until 2026-11-03 two entries, *Editorial Team* and *CBA Accounts*. | Program Manager (teams), Admin | [Archiving](./ARCHIVING.md) |
 | **Auto DJ** | Gap filler and top-up of incomplete shows. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Output streams (bitrate, mount, codec), live dial-in inputs, Master login. | Admin | [Streams](./STREAMS.md) |
 | **Local Machine** | Sound card, import folder and format, recording folder and format, library location. | Admin | [Local Machine](./LOCAL_MACHINE.md) |
@@ -223,7 +223,8 @@ control as it is.
 
 ### "Which settings can a Program Manager open?"
 
-*My Profile*, *Show Templates* and *Auto DJ*.  Everything else under
+*My Profile*, *Show Templates*, *Auto DJ* and the editorial teams of
+*Archiving*.  Everything else under
 Settings belongs to Admins.  See [Users and Roles](./USERS_AND_ROLES.md) §1-§2.
 
 ---

@@ -7130,8 +7130,8 @@ msgid "The chosen user does not exist any more."
 msgstr "L'utilisateur choisi n'existe plus."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The profile does not exist any more."
-msgstr "Le profil n'existe plus."
+msgid "The team does not exist any more."
+msgstr "L'équipe n'existe plus."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "%s (inactive)"
@@ -7214,16 +7214,16 @@ msgid "Default teaser"
 msgstr "Accroche par défaut"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Contains copyrighted music (AKM)"
-msgstr "Contient de la musique protégée (AKM)"
+msgid "Contains copyrighted music"
+msgstr "Contient de la musique protégée"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The people behind this show. They are sent to cba.media as editors with every episode. Profiles are managed under Settings → Editorial Team."
-msgstr "Les personnes derrière cette émission. Elles sont transmises à cba.media comme rédacteurs avec chaque épisode. Les profils se gèrent sous Paramètres → Équipe de rédaction."
+msgid "The editorial team behind this show. Its name is sent to cba.media as editor with every episode. Teams are managed under Settings → Archiving."
+msgstr "L'équipe de rédaction derrière cette émission. Son nom est transmis à cba.media comme rédaction avec chaque épisode. Les équipes se gèrent sous Paramètres → Archivage."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Episode... in the calendar."
-msgstr "Combien de personnes participent habituellement à un épisode, pour les statistiques annuelles (Statistiques → Participants). Un épisode peut différer : Épisode... dans le calendrier."
+msgid "How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Archive Online in the calendar."
+msgstr "Combien de personnes participent habituellement à un épisode, pour les statistiques annuelles (Statistiques → Participants). Un épisode peut différer : « Archiver en ligne » dans le calendrier."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "The number of the podcast (series) on cba.media that the episodes of this show belong to."
@@ -7242,8 +7242,8 @@ msgid "The episodes usually contain music that is subject to copyright (AKM)."
 msgstr "Les épisodes contiennent habituellement de la musique protégée par le droit d'auteur (AKM)."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "No profile yet - add the people under Settings → Editorial Team."
-msgstr "Aucun profil pour le moment - ajoutez les personnes sous Paramètres → Équipe de rédaction."
+msgid "No editorial team yet - add one under Settings → Archiving."
+msgstr "Aucune équipe de rédaction pour le moment - ajoutez-en une sous Paramètres → Archivage."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "aired"
@@ -7314,16 +7314,16 @@ msgid "Uploading..."
 msgstr "Envoi en cours..."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Profile deleted."
-msgstr "Profil supprimé."
+msgid "Team deleted."
+msgstr "Équipe supprimée."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Profile saved."
-msgstr "Profil enregistré."
+msgid "Team saved."
+msgstr "Équipe enregistrée."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Profile added."
-msgstr "Profil ajouté."
+msgid "Team added."
+msgstr "Équipe ajoutée."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Show name"
@@ -7350,20 +7350,20 @@ msgid "Total"
 msgstr "Total"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "%d profiles"
-msgstr "%d profils"
+msgid "%d teams"
+msgstr "%d équipes"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Editorial Team"
-msgstr "Équipe de rédaction"
+msgid "Editorial Teams"
+msgstr "Équipes de rédaction"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Edit profile"
-msgstr "Modifier le profil"
+msgid "Edit team"
+msgstr "Modifier l'équipe"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Add a profile"
-msgstr "Ajouter un profil"
+msgid "Add a team"
+msgstr "Ajouter une équipe"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Email (optional)"
@@ -7382,12 +7382,12 @@ msgid "Active (offered in the show form)"
 msgstr "Actif (proposé dans le formulaire de l'émission)"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "New profile"
-msgstr "Nouveau profil"
+msgid "New team"
+msgstr "Nouvelle équipe"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "No profile yet."
-msgstr "Aucun profil pour le moment."
+msgid "No team yet."
+msgstr "Aucune équipe pour le moment."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "User"
@@ -7402,8 +7402,8 @@ msgid "no"
 msgstr "non"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Delete the profile \"%s\"? It is removed from the editorial team of every show."
-msgstr "Supprimer le profil « %s » ? Il est retiré de l’équipe de rédaction de chaque émission."
+msgid "Delete the team \"%s\"? It is removed from every show."
+msgstr "Supprimer l'équipe « %s » ? Elle est retirée de chaque émission."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Participants"
@@ -7430,16 +7430,16 @@ msgid "People involved (sum over the shows)"
 msgstr "Participants (somme des émissions)"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Editorial team profiles"
-msgstr "Profils de rédaction"
+msgid "Editorial teams"
+msgstr "Équipes de rédaction"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Shows without a value"
 msgstr "Émissions sans valeur"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "A person in several shows counts once per show in \"People involved\"; the editorial team profiles count each person once. Participations add up the people of every episode."
-msgstr "Une personne présente dans plusieurs émissions compte une fois par émission dans « Participants » ; les profils de rédaction comptent chaque personne une seule fois. Les participations additionnent les participants de chaque épisode."
+msgid "A person in several shows counts once per show in \"People involved\"; the editorial teams count each team once. Participations add up the people of every episode."
+msgstr "Une personne présente dans plusieurs émissions compte une fois par émission dans « Participants » ; les équipes de rédaction comptent chaque équipe une seule fois. Les participations additionnent les participants de chaque épisode."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Every show of this year has a value."
@@ -7454,8 +7454,8 @@ msgid "The image did not arrive - please try again."
 msgstr "L'image n'est pas arrivée - veuillez réessayer."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Episode..."
-msgstr "Épisode..."
+msgid "Archive Online"
+msgstr "Archiver en ligne"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Publishing"
@@ -7570,8 +7570,8 @@ msgid "The show has no CBA account (Edit Show → Archiving)."
 msgstr "L'émission n'a pas de compte CBA (Édition de l'émission → Archivage)."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "The CBA account of the show has no application password (Settings → CBA Accounts)."
-msgstr "Le compte CBA de l'émission n'a pas de mot de passe d'application (Paramètres → Comptes CBA)."
+msgid "The CBA account of the show has no application password (Settings → Archiving)."
+msgstr "Le compte CBA de l'émission n'a pas de mot de passe d'application (Paramètres → Archivage)."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "The show has no CBA topic (Edit Show → Archiving)."
@@ -7626,8 +7626,8 @@ msgid "CBA topic"
 msgstr "Thème CBA"
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "The CBA user the episodes are archived under. Accounts are managed by admins under Settings → CBA Accounts."
-msgstr "L'utilisateur CBA sous lequel les épisodes sont archivés. Les comptes sont gérés par les admins sous Paramètres → Comptes CBA."
+msgid "The CBA user the episodes are archived under. Accounts are managed by admins under Settings → Archiving."
+msgstr "L'utilisateur CBA sous lequel les épisodes sont archivés. Les comptes sont gérés par les admins sous Paramètres → Archivage."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "Public: listed on cba.media. Unlisted: reachable by its address only. Private: visible to the CBA user only."
@@ -7642,8 +7642,8 @@ msgid "The number of the topic (category) on cba.media. The list appears once th
 msgstr "Le numéro du thème (catégorie) sur cba.media. La liste apparaît dès que le service en arrière-plan l’a récupérée."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "No CBA account yet - an admin adds them under Settings → CBA Accounts."
-msgstr "Aucun compte CBA pour le moment - un admin les ajoute sous Paramètres → Comptes CBA."
+msgid "No CBA account yet - an admin adds them under Settings → Archiving."
+msgstr "Aucun compte CBA pour le moment - un admin les ajoute sous Paramètres → Archivage."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "Not archived yet."
@@ -7702,8 +7702,8 @@ msgid "Link removed."
 msgstr "Lien retiré."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "The text of this episode; on cba.media it is the text of the post. Empty: the description of the show."
-msgstr "Le texte de cet épisode ; sur cba.media, c'est le texte de l'article. Vide : la description de l'émission."
+msgid "The text of this episode; on cba.media it is the text of the post. Empty: the description of the show, or the show name when the show has none."
+msgstr "Le texte de cet épisode ; sur cba.media, c'est le texte de l'article. Vide : la description de l'émission ou, si elle n'en a pas, le nom de l'émission."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "Production date"
@@ -7734,8 +7734,8 @@ msgid "Online archive (cba.media)"
 msgstr "Archive en ligne (cba.media)"
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "Archive online..."
-msgstr "Archiver en ligne..."
+msgid "Archive online now"
+msgstr "Archiver en ligne maintenant"
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "Post number or address"
@@ -7766,12 +7766,12 @@ msgid "Account added."
 msgstr "Compte ajouté."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "The people behind the shows. Choose a show's team under Edit Show → Archiving; the names are sent to cba.media as editors and the team appears in Analytics → Participants. A profile needs no login."
-msgstr "Les personnes derrière les émissions. L'équipe d'une émission se choisit dans Édition de l'émission → Archivage ; les noms sont transmis à cba.media comme rédacteurs et l'équipe apparaît dans Statistiques → Participants. Un profil n'a pas besoin de compte."
+msgid "The editorial teams behind the shows. Each show chooses its team under Edit Show → Archiving; the team name is sent to cba.media as editor and appears in Analytics → Participants. A team needs no login."
+msgstr "Les équipes de rédaction derrière les émissions. Chaque émission choisit son équipe dans Édition de l'émission → Archivage ; le nom de l'équipe est transmis à cba.media comme rédaction et apparaît dans Statistiques → Participants. Une équipe n'a pas besoin de compte."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Episode... in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."
-msgstr "Les participants aux émissions, pour les statistiques annuelles. La valeur se règle par émission (Édition de l'émission → Archivage) et peut différer pour un épisode (Épisode... dans le calendrier). Seuls les épisodes diffusés comptent ; les anciennes rediffusions sont exclues."
+msgid "People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Archive Online in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."
+msgstr "Les participants aux émissions, pour les statistiques annuelles. La valeur se règle par émission (Édition de l'émission → Archivage) et peut différer pour un épisode (« Archiver en ligne » dans le calendrier). Seuls les épisodes diffusés comptent ; les anciennes rediffusions sont exclues."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "CBA Accounts"
@@ -7858,8 +7858,8 @@ msgid "on since %s"
 msgstr "activé depuis le %s"
 
 #: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
-msgid "Every new episode is archived on cba.media with the recording, as set above, once the waiting time after its end has passed (Settings → CBA Accounts). Not for rebroadcasts or episodes marked \"Do not archive this episode automatically\"; episodes that ended before switching on are not caught up."
-msgstr "Chaque nouvel épisode est archivé sur cba.media avec l'enregistrement, selon les réglages ci-dessus, une fois écoulé le délai après sa fin (Settings → Comptes CBA). Pas pour les rediffusions ni pour les épisodes marqués « Ne pas archiver cet épisode automatiquement » ; les épisodes terminés avant l'activation ne sont pas rattrapés."
+msgid "Every new episode is archived on cba.media with the recording, as set above, once the waiting time after its end has passed (Settings → Archiving). Not for rebroadcasts or episodes marked \"Do not archive this episode automatically\"; episodes that ended before switching on are not caught up."
+msgstr "Chaque nouvel épisode est archivé sur cba.media avec l'enregistrement, selon les réglages ci-dessus, une fois écoulé le délai après sa fin (Paramètres → Archivage). Pas pour les rediffusions ni pour les épisodes marqués « Ne pas archiver cet épisode automatiquement » ; les épisodes terminés avant l'activation ne sont pas rattrapés."
 
 #: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
 msgid "Automatic archiving needs a CBA account, a topic, a language and a licence."
@@ -7934,13 +7934,17 @@ msgid "Automatic archiving on cba.media gave up on"
 msgstr "L'archivage automatique sur cba.media a abandonné"
 
 #: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
-msgid "Look on cba.media first, then link the post or archive again under Episode... in the calendar."
-msgstr "Vérifiez d'abord sur cba.media, puis liez l'article ou archivez à nouveau sous Épisode... dans le calendrier."
+msgid "Look on cba.media first, then link the post or archive again under Archive Online in the calendar."
+msgstr "Vérifiez d'abord sur cba.media, puis liez l'article ou archivez à nouveau sous « Archiver en ligne » dans le calendrier."
 
 #: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
-msgid "Archive it by hand under Episode... in the calendar."
-msgstr "Archivez-le à la main sous Épisode... dans le calendrier."
+msgid "Archive it by hand under Archive Online in the calendar."
+msgstr "Archivez-le à la main sous « Archiver en ligne » dans le calendrier."
 
 #: RASTATIME 2026-11-03 archiving stage 3 (show without a description)
-msgid "The show has no description - each episode then needs its own (Episode... in the calendar), otherwise automatic archiving waits for it."
-msgstr "L'émission n'a pas de description - chaque épisode a alors besoin de la sienne (Épisode... dans le calendrier), sinon l'archivage automatique l'attend."
+msgid "The show has no description - an episode without its own (Archive Online in the calendar) gets the show name as its text on cba.media."
+msgstr "L'émission n'a pas de description - un épisode sans la sienne (« Archiver en ligne » dans le calendrier) reçoit le nom de l'émission comme texte sur cba.media."
+
+#: RASTATIME 2026-11-03 archiving cosmetics (Archive Online, Settings → Archiving, one team)
+msgid "For a post that is on cba.media already, e.g. uploaded there by hand or after an unclear upload. Enter its number or address and click the button: RASTATIME marks the episode as archived and uploads nothing."
+msgstr "Pour un article déjà présent sur cba.media, par exemple téléversé là-bas à la main ou après un envoi incertain. Saisissez son numéro ou son adresse et cliquez sur le bouton : RASTATIME marque l'épisode comme archivé et n'envoie rien."

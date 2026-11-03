@@ -90,7 +90,7 @@ $ccAcl->allow('G', 'index')
     ->allow('P', 'rest:podcast')
     ->allow('P', 'rest:podcast-episodes')
     ->allow('P', 'podcast')
-    ->allow('P', 'archiving', ['editors', 'participants', 'participants-csv'])  // RASTATIME 2026-11-03 — archiving
+    ->allow('P', 'archiving', ['settings', 'editors', 'participants', 'participants-csv'])  // RASTATIME 2026-11-03 — archiving
     ->allow('A', 'archiving')  // RASTATIME 2026-11-03 — CBA accounts: admins only
     ->allow('P', 'webstream')
     ->allow('P', 'linein')

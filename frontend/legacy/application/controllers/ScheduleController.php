@@ -555,7 +555,7 @@ class ScheduleController extends Zend_Controller_Action
     }
 
     /**
-     * RASTATIME 2026-11-03 - archiving stage 1: the "Episode..." dialog of a
+     * RASTATIME 2026-11-03 - archiving stage 1: the "Archive Online" dialog of a
      * show instance (GET id).  Title, teaser, description, image and people
      * involved of this one episode; the show's defaults show as
      * placeholders.  Admins, program managers and the show's hosts.
@@ -949,8 +949,9 @@ class ScheduleController extends Zend_Controller_Action
         $data['add_show_day_check'] = $this->_getParam('days');
         // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
         $data['add_show_month_check'] = $this->_getParam('months', []);
-        // RASTATIME 2026-11-03 - Archiving: the editorial team boxes travel like the hosts
-        $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', []);
+        // RASTATIME 2026-11-03 - Archiving: the editorial team is one dropdown in
+        // the form data now; "editorProfiles" only from a page loaded before that
+        $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', $data['add_show_editor_profiles'] ?? []);
 
         if ($data['add_show_day_check'] == '') {
             $data['add_show_day_check'] = null;
@@ -1016,8 +1017,9 @@ class ScheduleController extends Zend_Controller_Action
         $data['add_show_day_check'] = $this->_getParam('days');
         // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
         $data['add_show_month_check'] = $this->_getParam('months', []);
-        // RASTATIME 2026-11-03 - Archiving: the editorial team boxes travel like the hosts
-        $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', []);
+        // RASTATIME 2026-11-03 - Archiving: the editorial team is one dropdown in
+        // the form data now; "editorProfiles" only from a page loaded before that
+        $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', $data['add_show_editor_profiles'] ?? []);
 
         if ($data['add_show_day_check'] == '') {
             $data['add_show_day_check'] = null;

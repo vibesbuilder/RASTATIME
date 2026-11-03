@@ -8,10 +8,10 @@
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
 $f = $this->element;
 $tips = [
-    'add_show_editor_profiles' => _('The people behind this show. They are sent to cba.media as editors with every episode. Profiles are managed under Settings → Editorial Team.'),
-    'add_show_participants' => _('How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Episode... in the calendar.'),
+    'add_show_editor_profiles' => _('The editorial team behind this show. Its name is sent to cba.media as editor with every episode. Teams are managed under Settings → Archiving.'),
+    'add_show_participants' => _('How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Archive Online in the calendar.'),
     'add_show_cba_series_id' => _('The number of the podcast (series) on cba.media that the episodes of this show belong to.'),
-    'add_show_cba_account' => _('The CBA user the episodes are archived under. Accounts are managed by admins under Settings → CBA Accounts.'),
+    'add_show_cba_account' => _('The CBA user the episodes are archived under. Accounts are managed by admins under Settings → Archiving.'),
     'add_show_cba_status' => _('Public: listed on cba.media. Unlisted: reachable by its address only. Private: visible to the CBA user only.'),
     'add_show_cba_category_id' => $f->getElement('add_show_cba_category_id') instanceof Zend_Form_Element_Select
         ? _('The topic (category) on cba.media.')
@@ -20,7 +20,7 @@ $tips = [
     'add_show_cba_tags' => _('Comma-separated tags for cba.media.'),
     'add_show_cba_teaser' => _('Used for every episode that has no teaser of its own.'),
     'add_show_cba_contains_copyright' => _('The episodes usually contain music that is subject to copyright (AKM).'),
-    'add_show_cba_auto' => _('Every new episode is archived on cba.media with the recording, as set above, once the waiting time after its end has passed (Settings → CBA Accounts). Not for rebroadcasts or episodes marked "Do not archive this episode automatically"; episodes that ended before switching on are not caught up.'),
+    'add_show_cba_auto' => _('Every new episode is archived on cba.media with the recording, as set above, once the waiting time after its end has passed (Settings → Archiving). Not for rebroadcasts or episodes marked "Do not archive this episode automatically"; episodes that ended before switching on are not caught up.'),
 ];
 $row = function ($name, $wide = true) use ($f, $h, $tips) {
     $el = $f->getElement($name);
@@ -49,13 +49,13 @@ $row = function ($name, $wide = true) use ($f, $h, $tips) {
             <p class="rt-archiving-note"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
         <?php else: ?>
             <?php $row('add_show_editor_profiles'); ?>
-            <?php if (!$f->getElement('add_show_editor_profiles')->getMultiOptions()): ?>
-                <p class="rt-archiving-note"><?php echo _("No profile yet - add the people under Settings → Editorial Team."); ?></p>
+            <?php if (count($f->getElement('add_show_editor_profiles')->getMultiOptions()) < 2): ?>
+                <p class="rt-archiving-note"><?php echo _("No editorial team yet - add one under Settings → Archiving."); ?></p>
             <?php endif; ?>
             <?php $row('add_show_participants'); ?>
             <?php $row('add_show_cba_account'); ?>
             <?php if (count($f->getElement('add_show_cba_account')->getMultiOptions()) < 2): ?>
-                <p class="rt-archiving-note"><?php echo _("No CBA account yet - an admin adds them under Settings → CBA Accounts."); ?></p>
+                <p class="rt-archiving-note"><?php echo _("No CBA account yet - an admin adds them under Settings → Archiving."); ?></p>
             <?php endif; ?>
             <?php $row('add_show_cba_status'); ?>
             <?php $row('add_show_cba_series_id'); ?>
@@ -80,7 +80,7 @@ $row = function ($name, $wide = true) use ($f, $h, $tips) {
                     <ul class="errors"><?php foreach ($errs as $e): ?><li><?php echo $h($e); ?></li><?php endforeach; ?></ul>
                 <?php endif; ?>
                 <?php // shown by add-show.js while the switch is on and the show has no description ?>
-                <p id="add_show_cba_auto_nodesc" class="rt-archiving-note" style="display: none"><?php echo $h(_('The show has no description - each episode then needs its own (Episode... in the calendar), otherwise automatic archiving waits for it.')); ?></p>
+                <p id="add_show_cba_auto_nodesc" class="rt-archiving-note" style="display: none"><?php echo $h(_('The show has no description - an episode without its own (Archive Online in the calendar) gets the show name as its text on cba.media.')); ?></p>
             </dt>
         <?php endif; ?>
     </dl>

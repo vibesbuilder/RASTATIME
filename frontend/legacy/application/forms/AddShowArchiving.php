@@ -20,9 +20,10 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
             ['ViewScript', ['viewScript' => 'form/add-show-archiving.phtml']],
         ]);
 
-        $profiles = new Zend_Form_Element_MultiCheckbox('add_show_editor_profiles');
+        // one team per show (operator 2026-11-03); the table still allows several
+        $profiles = new Zend_Form_Element_Select('add_show_editor_profiles');
         $profiles->setLabel(_('Editorial team'))
-            ->setMultiOptions(Application_Service_ArchivingService::profileOptions())
+            ->setMultiOptions([0 => _('- none -')] + Application_Service_ArchivingService::profileOptions())
             ->setRegisterInArrayValidator(false)
             ->setDecorators(['ViewHelper']);
         $this->addElement($profiles);
@@ -93,7 +94,7 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
             'decorators' => ['ViewHelper'],
         ]);
         $this->addElement('checkbox', 'add_show_cba_contains_copyright', [
-            'label' => _('Contains copyrighted music (AKM)'),
+            'label' => _('Contains copyrighted music'),
             'class' => 'input_text',
             'decorators' => ['ViewHelper'],
         ]);
@@ -108,13 +109,11 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
     public function populateFromShow(int $showId)
     {
         $this->getElement('add_show_editor_profiles')
-            ->setMultiOptions(Application_Service_ArchivingService::profileOptions($showId));
+            ->setMultiOptions([0 => _('- none -')] + Application_Service_ArchivingService::profileOptions($showId));
         $s = Application_Service_ArchivingService::showSettings($showId);
+        $teams = Application_Service_ArchivingService::showProfiles($showId);
         $this->populate([
-            'add_show_editor_profiles' => array_map(
-                fn ($p) => (int) $p['id'],
-                Application_Service_ArchivingService::showProfiles($showId)
-            ),
+            'add_show_editor_profiles' => $teams ? (int) $teams[0]['id'] : 0,
             'add_show_participants' => $s['participants'],
             'add_show_cba_series_id' => $s['cba_series_id'],
             'add_show_cba_license' => $s['license'],

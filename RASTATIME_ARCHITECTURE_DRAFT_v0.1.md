@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.112
+Draft version: 0.113
 Date: 2026-11-03
 
 > **Revision history**
+> - **0.113 (2026-11-03)** - **Archiving, finishing touches** (§23.82): one settings page
+>   "Archiving" (teams + CBA accounts), one editorial team per show, the show name as the last
+>   description fallback, "Episode..." renamed "Archive Online".
 > - **0.112 (2026-11-03)** - **Archiving, stage 3** (§23.81): "Archive automatically" per show; the
 >   worker queues each new episode a waiting time after its end (recording, data complete, no
 >   rebroadcast, nothing caught up), gives up after 24 h and warns on the dashboard; migration 0076.
@@ -8620,3 +8623,46 @@ the next scan after the description was added queued it (trigger `auto`)
 and the job runner archived it publicly in one attempt.  Rollback: untick
 the switch (nothing new is queued) or stop RASTATIME-WORKER; `git revert`;
 the columns stay.
+
+### 23.82 Archiving: Finishing Touches after the Acceptance (2026-11-03)
+
+**Operator wishes after stage 3**, no migration.
+
+- **One settings page.**  `archiving/settings` replaces the menu entries
+  "Editorial Team" (`archiving/editors`) and "CBA Accounts"
+  (`archiving/accounts`): the view `settings.phtml` renders `editors.phtml`
+  and, for admins (`isUserType(A)`), `accounts.phtml` as sections.  The
+  forms still post to `editors` / `accounts`, so the ACL keeps the split
+  (privilege `settings` and `editors` for program managers, `accounts`
+  admins only); both redirect back with a `?done=` code (account forms
+  with `#cba-accounts`) or render the page through `renderSettings()`
+  with their state (`teamForm` / `accountForm`: a failed form, the
+  connection test).  A GET on the old routes redirects to the page.
+- **One team per show.**  The profiles of §23.79 are editorial *teams*
+  now; the show form offers them as a dropdown (`- none -` first) instead
+  of a multi-checkbox.  `cc_show_editor_profile` stays a link table (no
+  migration; no show had more than one); `saveShow()` takes the scalar
+  through its `(array)` cast, the controller reads it from the form data
+  (the separate `editorProfiles` parameter only from a page loaded
+  earlier).  The worker still joins all linked names as `editors`.
+- **Description fallback.**  `cba.build_meta()`: episode description,
+  else the show's, else the **show name** - the CBA needs a text, and the
+  first automatic episode of the acceptance waited for one.  The legacy
+  precheck no longer lists a missing description; the dialog shows the
+  show name as the placeholder; the note of §23.81 below the switch now
+  explains the fallback.
+- **Wording.**  Context menu "Episode..." → "Archive Online" (key
+  `episode` unchanged, icon `icon-archive-online`, a cloud with an
+  arrow), dialog button "Archive online now", a tooltip on "Link existing
+  post", "Contains copyrighted music" without "(AKM)"; the Archiving
+  section of the show form starts collapsed (`collapseAddShowSections`,
+  opened by `showErrorSections` on an error).
+
+**Verification.**  Worker suite 136 (new: show-name fallback), unit
+suite 787.  CLI probes: `C:/Temp/optd/archive_settings_probe.php` (the
+action as admin and as program manager: sections, form targets, `done`
+messages in four languages), `archive_team_probe.php` (dropdown value,
+`- none -`, restore), `archiving_probe.php` (stages 1 and 2),
+`archive_auto_ui_probe.php`, `archive_auto_probe.py`; JS parsed in the
+browser.  Rollback: `git revert` (legacy live at once; worker restart for
+the fallback).

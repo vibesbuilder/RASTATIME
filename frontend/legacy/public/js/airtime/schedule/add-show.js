@@ -22,6 +22,8 @@ function collapseAddShowSections() {
   $("#schedule-record-rebroadcast").hide();
   $("#schedule-show-who").hide();
   $("#schedule-show-style").hide();
+  // RASTATIME 2026-11-03 - Archiving comes up collapsed too (operator)
+  $("#schedule-show-archiving").hide();
 }
 
 function openAddShowForm(nowOrFuture) {
@@ -892,14 +894,6 @@ function setAddShowEvents(form) {
       })
       .get();
 
-    // RASTATIME 2026-11-03 - Archiving: the editorial team boxes travel
-    // like the hosts (a multi-checkbox collapses in the flat name/value list)
-    var editorProfiles = $("#add_show_editor_profiles-element input")
-      .map(function () {
-        return $(this).prop("checked") ? $(this).val() : undefined;
-      })
-      .get();
-
     var start_date = $("#add_show_start_date").val(),
       end_date = $("#add_show_end_date").val(),
       action =
@@ -923,7 +917,6 @@ function setAddShowEvents(form) {
         hosts: hosts,
         days: days,
         months: months,
-        editorProfiles: editorProfiles,
       },
       success: function (json) {
         if (json.showId && image) {
@@ -1562,6 +1555,9 @@ function showErrorSections() {
   }
   if ($("#schedule-show-auto .errors").length > 0) {
     $("#schedule-show-auto").show();
+  }
+  if ($("#schedule-show-archiving .errors").length > 0) {
+    $("#schedule-show-archiving").show();
   }
   if ($("#add_show_rebroadcast_relative .errors").length > 0) {
     $("#schedule-record-rebroadcast").show();

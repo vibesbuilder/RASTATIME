@@ -311,7 +311,7 @@ function buildTeaserDialog(json) {
   dialog.dialog("open");
 }
 
-// RASTATIME 2026-11-03 - archiving stage 1: the "Episode..." dialog of a show
+// RASTATIME 2026-11-03 - archiving stage 1: the "Archive Online" dialog of a show
 // instance (schedule/episode-dialog); the view's inline script saves on the
 // "rt-episode-save" event and uploads the image itself.
 function buildEpisodeDialog(json) {
@@ -356,7 +356,7 @@ function buildEpisodeDialog(json) {
   dialog.dialog({
     autoOpen: false,
     title:
-      $.i18n._("Episode") + " '" + json.showTitle + "' " + (json.startsLocal || ""),
+      $.i18n._("Archive Online") + " '" + json.showTitle + "' " + (json.startsLocal || ""),
     width: width,
     height: "auto",
     modal: true,
@@ -579,7 +579,7 @@ $(document).ready(function () {
           oItems.teasers.callback = callback;
         }
 
-        // RASTATIME 2026-11-03 - archiving stage 1: "Episode..." dialog
+        // RASTATIME 2026-11-03 - archiving stage 1: "Archive Online" dialog
         if (oItems.episode !== undefined) {
           callback = function () {
             $.get(

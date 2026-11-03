@@ -7,7 +7,8 @@
 
 Das Einstellungs-Menü ist die Konfigurationsoberfläche der Station.  Die
 meisten Seiten gehören den **Admins**; ein
-**Program Manager** sieht *Mein Profil*, *Show Templates* und *Auto DJ*;
+**Program Manager** sieht *Mein Profil*, *Show Templates*, *Auto DJ* und die
+Redaktionsteams unter *Archivierung*;
 Gäste und DJs sehen nur *Mein Profil*.  Siehe
 [Benutzer und Rollen](./USERS_AND_ROLES.md) §2 für die vollständige
 Berechtigungsmatrix.
@@ -25,8 +26,7 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 | **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
 | **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten. | Admin | [Bibliothek](./LIBRARY.md) |
 | **Show Templates** | Übersicht der gespeicherten Show-Vorlagen: umbenennen, löschen. | Program Manager, Admin | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
-| **Editorial Team** (Redaktionsteam) | Profile der Menschen hinter den Sendungen (Name, optional Login), je Sendung unter Archivierung gewählt. | Program Manager, Admin | [Archivierung](./ARCHIVING.md) |
-| **CBA Accounts** (CBA-Konten) | Die cba.media-Benutzer, unter denen die Sendungen archiviert werden (Benutzername, Anwendungspasswort), Verbindungstest, Upload-Grenze, Wartezeit des automatischen Archivierens. | Admin | [Archivierung](./ARCHIVING.md) |
+| **Archivierung** | Redaktionsteams hinter den Sendungen (Name, optional Login; eines je Sendung, unter Archivierung gewählt); für Admins darunter die cba.media-Benutzer, unter denen die Sendungen archiviert werden (Benutzername, Anwendungspasswort), Verbindungstest, Upload-Grenze, Wartezeit des automatischen Archivierens. Bis 2026-11-03 zwei Einträge, *Redaktionsteam* und *CBA-Konten*. | Program Manager (Teams), Admin | [Archivierung](./ARCHIVING.md) |
 | **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Ausgabe-Streams (Bitrate, Mount, Codec), Eingänge für Live-Einwahlen, Master-Login. | Admin | [Streams](./STREAMS.md) |
 | **Lokale Maschine** | Soundkarte, Import-Ordner und -Format, Aufnahme-Ordner und -Format, Speicherort der Bibliothek. | Admin | [Lokale Maschine](./LOCAL_MACHINE.md) |
@@ -229,7 +229,8 @@ legen Sie die Datei nie unverändert in eine Versionsverwaltung.
 
 ### „Welche Einstellungen kann ein Program Manager öffnen?“
 
-*Mein Profil*, *Show Templates* und *Auto DJ*.  Alles andere unter
+*Mein Profil*, *Show Templates*, *Auto DJ* und die Redaktionsteams unter
+*Archivierung*.  Alles andere unter
 Einstellungen gehört den Admins.  Siehe [Benutzer und Rollen](./USERS_AND_ROLES.md) §1-§2.
 
 ---

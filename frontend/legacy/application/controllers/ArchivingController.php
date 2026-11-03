@@ -1,12 +1,16 @@
 <?php
 
 /**
- * RASTATIME 2026-11-03 - archiving stage 1 (CBA archiving, migrations 0074 and 0075):
- *   Settings  → Editorial Team  (archiving/editors): the profiles a show's
- *                                 editorial team is chosen from
+ * RASTATIME 2026-11-03 - archiving (CBA archiving, migrations 0074-0076):
+ *   Settings  → Archiving       (archiving/settings): the editorial teams a
+ *                                 show chooses from and, for admins, the CBA
+ *                                 accounts, the upload limit and the waiting
+ *                                 time of the automatic archiving; the forms
+ *                                 post to archiving/editors (program managers
+ *                                 and admins) and archiving/accounts (admins)
  *   Analytics → Participants    (archiving/participants, .../participants-csv):
  *                                 people involved per show and year
- * ACL resource "archiving" = program managers and admins.
+ * ACL resource "archiving" = program managers and admins; "accounts" admins only.
  */
 class ArchivingController extends Zend_Controller_Action
 {
@@ -28,9 +32,9 @@ class ArchivingController extends Zend_Controller_Action
     private function doneMessage(): ?string
     {
         $messages = [
-            'profile-added' => _('Profile added.'),
-            'profile-saved' => _('Profile saved.'),
-            'profile-deleted' => _('Profile deleted.'),
+            'team-added' => _('Team added.'),
+            'team-saved' => _('Team saved.'),
+            'team-deleted' => _('Team deleted.'),
             'account-added' => _('Account added.'),
             'account-saved' => _('Account saved.'),
             'account-deleted' => _('Account deleted.'),
@@ -41,125 +45,148 @@ class ArchivingController extends Zend_Controller_Action
         return $messages[(string) $this->getRequest()->getParam('done', '')] ?? null;
     }
 
-    public function editorsAction()
+    /**
+     * Settings → Archiving (operator 2026-11-03: one page instead of
+     * "Editorial Team" and "CBA Accounts").  $teamForm / $accountForm carry
+     * a message or a failed form back from editorsAction / accountsAction.
+     */
+    private function renderSettings(array $teamForm = [], array $accountForm = []): void
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
-        $request = $this->getRequest();
-        $this->view->message = $this->doneMessage();
-        $this->view->error = null;
-        $edit = ['id' => 0, 'name' => '', 'email' => '', 'subjs_id' => 0, 'active' => true];
-
-        if ($request->isPost() && Application_Service_ArchivingService::tablesReady()) {
-            // the Acl plugin has checked the CSRF token of every legacy POST
-            $op = (string) $request->getPost('op', 'save');
-            $id = (int) $request->getPost('id', 0);
-            if ($op === 'delete') {
-                Application_Service_ArchivingService::deleteProfile($id);
-                $this->_redirect('archiving/editors?done=profile-deleted');
-
-                return;
-            }
-            [$savedId, $error] = Application_Service_ArchivingService::saveProfile(
-                $id,
-                (string) $request->getPost('name', ''),
-                (string) $request->getPost('email', ''),
-                (int) $request->getPost('subjs_id', 0),
-                (bool) $request->getPost('active', false)
-            );
-            if ($error === null) {
-                $this->_redirect('archiving/editors?done=' . ($id > 0 ? 'profile-saved' : 'profile-added'));
-
-                return;
-            }
-            $this->view->error = $error;
-            $edit = [
-                'id' => $id,
-                'name' => (string) $request->getPost('name', ''),
-                'email' => (string) $request->getPost('email', ''),
-                'subjs_id' => (int) $request->getPost('subjs_id', 0),
-                'active' => (bool) $request->getPost('active', false),
-            ];
-        }
-
+        $message = $this->doneMessage();
+        $forTeams = strpos((string) $this->getRequest()->getParam('done', ''), 'team-') === 0;
+        $this->view->teamForm = $teamForm + [
+            'message' => $forTeams ? $message : null,
+            'error' => null,
+            'edit' => ['id' => 0, 'name' => '', 'email' => '', 'subjs_id' => 0, 'active' => true],
+        ];
+        $this->view->accountForm = $accountForm + [
+            'message' => $forTeams ? null : $message,
+            'messageOk' => true,
+            'error' => null,
+            'edit' => ['id' => 0, 'label' => '', 'username' => ''],
+        ];
         $this->view->ready = Application_Service_ArchivingService::tablesReady();
         $this->view->profiles = Application_Service_ArchivingService::profiles();
-        $this->view->edit = $edit;
         $this->view->users = Propel::getConnection()->query(
             "SELECT id, login, trim(coalesce(first_name, '') || ' ' || coalesce(last_name, '')) AS full_name
                FROM cc_subjs ORDER BY lower(login)"
         )->fetchAll(PDO::FETCH_ASSOC);
+        // the CBA accounts are for admins (ACL privilege "accounts")
+        $this->view->showAccounts = Application_Model_User::getCurrentUser()->isUserType([UTYPE_SUPERADMIN, UTYPE_ADMIN]);
+        if ($this->view->showAccounts) {
+            $this->view->accounts = Application_Service_ArchivingService::accounts();
+            $this->view->mbit = Application_Service_ArchivingService::uploadKbit() / 1000;
+            $this->view->autoDelay = Application_Service_ArchivingService::autoDelayMin();
+        }
         $this->view->csrf = $this->csrfToken();
+        $this->_helper->viewRenderer->setScriptAction('settings');
+    }
+
+    public function settingsAction()
+    {
+        $this->renderSettings();
+    }
+
+    /** The editorial teams (form of Settings → Archiving); a GET goes to the page. */
+    public function editorsAction()
+    {
+        $request = $this->getRequest();
+        if (!$request->isPost() || !Application_Service_ArchivingService::tablesReady()) {
+            $this->_redirect('archiving/settings');
+
+            return;
+        }
+        // the Acl plugin has checked the CSRF token of every legacy POST
+        $op = (string) $request->getPost('op', 'save');
+        $id = (int) $request->getPost('id', 0);
+        if ($op === 'delete') {
+            Application_Service_ArchivingService::deleteProfile($id);
+            $this->_redirect('archiving/settings?done=team-deleted');
+
+            return;
+        }
+        $edit = [
+            'id' => $id,
+            'name' => (string) $request->getPost('name', ''),
+            'email' => (string) $request->getPost('email', ''),
+            'subjs_id' => (int) $request->getPost('subjs_id', 0),
+            'active' => (bool) $request->getPost('active', false),
+        ];
+        [$savedId, $error] = Application_Service_ArchivingService::saveProfile(
+            $id,
+            $edit['name'],
+            $edit['email'],
+            $edit['subjs_id'],
+            $edit['active']
+        );
+        if ($error === null) {
+            $this->_redirect('archiving/settings?done=' . ($id > 0 ? 'team-saved' : 'team-added'));
+
+            return;
+        }
+        $this->renderSettings(['error' => $error, 'edit' => $edit]);
     }
 
     /**
-     * Settings → CBA Accounts (archiving stage 2, admins only by ACL): the
-     * CBA users the shows are archived under, the connection test and the
-     * upload bandwidth limit.  The application password is write-only.
+     * The CBA accounts, the connection test, the upload limit and the waiting
+     * time (admins only by ACL); a GET goes to the page.  The application
+     * password is write-only.
      */
     public function accountsAction()
     {
-        Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
         $request = $this->getRequest();
-        $this->view->message = $this->doneMessage();
-        $this->view->messageOk = true;
-        $this->view->error = null;
-        $edit = ['id' => 0, 'label' => '', 'username' => ''];
+        if (!$request->isPost() || !Application_Service_ArchivingService::tablesReady()) {
+            $this->_redirect('archiving/settings#cba-accounts');
 
-        if ($request->isPost() && Application_Service_ArchivingService::tablesReady()) {
-            // the Acl plugin has checked the CSRF token of every legacy POST
-            $op = (string) $request->getPost('op', 'save');
-            $id = (int) $request->getPost('id', 0);
-            if ($op === 'delete') {
-                Application_Service_ArchivingService::deleteAccount($id);
-                $this->_redirect('archiving/accounts?done=account-deleted');
-
-                return;
-            }
-            if ($op === 'bandwidth') {
-                $mbit = (float) str_replace(',', '.', (string) $request->getPost('mbit', '4'));
-                Application_Service_ArchivingService::setUploadKbit((int) round($mbit * 1000));
-                $this->_redirect('archiving/accounts?done=bandwidth');
-
-                return;
-            }
-            if ($op === 'auto_delay') {
-                Application_Service_ArchivingService::setAutoDelayMin((int) $request->getPost('minutes', 30));
-                $this->_redirect('archiving/accounts?done=auto-delay');
-
-                return;
-            }
-            if ($op === 'test') {
-                // shown right away (no redirect); the answer names the CBA user
-                [$ok, $text] = Application_Service_ArchivingService::testAccount($id);
-                $this->view->message = $text;
-                $this->view->messageOk = $ok;
-            } else {
-                [$savedId, $error] = Application_Service_ArchivingService::saveAccount(
-                    $id,
-                    (string) $request->getPost('label', ''),
-                    (string) $request->getPost('username', ''),
-                    (string) $request->getPost('app_password', '')
-                );
-                if ($error === null) {
-                    $this->_redirect('archiving/accounts?done=' . ($id > 0 ? 'account-saved' : 'account-added'));
-
-                    return;
-                }
-                $this->view->error = $error;
-                $edit = [
-                    'id' => $id,
-                    'label' => (string) $request->getPost('label', ''),
-                    'username' => (string) $request->getPost('username', ''),
-                ];
-            }
+            return;
         }
+        // the Acl plugin has checked the CSRF token of every legacy POST
+        $op = (string) $request->getPost('op', 'save');
+        $id = (int) $request->getPost('id', 0);
+        if ($op === 'delete') {
+            Application_Service_ArchivingService::deleteAccount($id);
+            $this->_redirect('archiving/settings?done=account-deleted#cba-accounts');
 
-        $this->view->ready = Application_Service_ArchivingService::tablesReady();
-        $this->view->accounts = Application_Service_ArchivingService::accounts();
-        $this->view->edit = $edit;
-        $this->view->mbit = Application_Service_ArchivingService::uploadKbit() / 1000;
-        $this->view->autoDelay = Application_Service_ArchivingService::autoDelayMin();
-        $this->view->csrf = $this->csrfToken();
+            return;
+        }
+        if ($op === 'bandwidth') {
+            $mbit = (float) str_replace(',', '.', (string) $request->getPost('mbit', '4'));
+            Application_Service_ArchivingService::setUploadKbit((int) round($mbit * 1000));
+            $this->_redirect('archiving/settings?done=bandwidth#cba-accounts');
+
+            return;
+        }
+        if ($op === 'auto_delay') {
+            Application_Service_ArchivingService::setAutoDelayMin((int) $request->getPost('minutes', 30));
+            $this->_redirect('archiving/settings?done=auto-delay#cba-accounts');
+
+            return;
+        }
+        if ($op === 'test') {
+            // shown right away (no redirect); the answer names the CBA user
+            [$ok, $text] = Application_Service_ArchivingService::testAccount($id);
+            $this->renderSettings([], ['message' => $text, 'messageOk' => $ok]);
+
+            return;
+        }
+        $edit = [
+            'id' => $id,
+            'label' => (string) $request->getPost('label', ''),
+            'username' => (string) $request->getPost('username', ''),
+        ];
+        [$savedId, $error] = Application_Service_ArchivingService::saveAccount(
+            $id,
+            $edit['label'],
+            $edit['username'],
+            (string) $request->getPost('app_password', '')
+        );
+        if ($error === null) {
+            $this->_redirect('archiving/settings?done=' . ($id > 0 ? 'account-saved' : 'account-added') . '#cba-accounts');
+
+            return;
+        }
+        $this->renderSettings([], ['error' => $error, 'edit' => $edit]);
     }
 
     public function participantsAction()
@@ -200,7 +227,7 @@ class ArchivingController extends Zend_Controller_Action
         }
         $t = $report['totals'];
         fputcsv($out, [_('Total'), $t['episodes'], $t['participants'], '', $t['person_episodes'], '',
-            sprintf(_('%d profiles'), $t['profiles'])], ',', '"', '');
+            sprintf(_('%d teams'), $t['profiles'])], ',', '"', '');
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);

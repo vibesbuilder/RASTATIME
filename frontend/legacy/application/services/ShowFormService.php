@@ -109,7 +109,7 @@ class Application_Service_ShowFormService
          */
         $forms['what']->makeReadonly();
         // RASTATIME 2026-11-03 - archiving stage 2 (operator): the episode
-        // description is edited in the calendar's "Episode..." dialog only;
+        // description is edited in the calendar's "Archive Online" dialog only;
         // ShowService keeps the stored text when the field is absent
         $forms['what']->removeElement('add_show_instance_description');
         $forms['autoplaylist']->disable();
@@ -123,7 +123,7 @@ class Application_Service_ShowFormService
         $forms['rebroadcast']->disable();
         $forms['abs_rebroadcast']->disable();
         // RASTATIME 2026-11-03 - show-level, not rendered for an instance
-        // (episode data lives in the calendar's Episode... dialog)
+        // (episode data lives in the calendar's "Archive Online" dialog)
         $forms['archiving']->disable();
     }
 

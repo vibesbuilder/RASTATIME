@@ -162,7 +162,7 @@ class Application_Service_ShowService
 
             $ccShowInstance->updateDbTimeFilled($con);
             // RASTATIME 2026-11-03 - archiving stage 2: the description is
-            // edited in the calendar's "Episode..." dialog, the instance form
+            // edited in the calendar's "Archive Online" dialog, the instance form
             // no longer carries it - the new instance keeps the original's
             $description = array_key_exists('add_show_instance_description', $showData)
                 ? $showData['add_show_instance_description']

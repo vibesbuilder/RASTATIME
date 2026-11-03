@@ -1,11 +1,11 @@
-# Archivierung: Redaktionsteam, Episoden, Online-Archiv, Teilnehmende
+# Archivierung: Redaktionsteams, Episoden, Online-Archiv, Teilnehmende
 
 > **Wo Sie sich im Handbuch befinden.** Einstellungen →
-> **Redaktionsteam** und **CBA-Konten**; Kalender → Sendungsformular,
-> Abschnitt **Archivierung**; Kalender → Rechtsklick auf eine Instanz →
-> **Episode...**; Statistiken → **Teilnehmende** (in der englischen
-> Oberfläche Settings → Editorial Team / CBA Accounts, Archiving,
-> Episode..., Analytics → Participants).  Lesen Sie zuerst
+> **Archivierung** (Redaktionsteams, CBA-Konten); Kalender →
+> Sendungsformular, Abschnitt **Archivierung**; Kalender → Rechtsklick
+> auf eine Instanz → **Online archivieren**; Statistiken →
+> **Teilnehmende** (in der englischen Oberfläche Settings → Archiving,
+> Archiving, Archive Online, Analytics → Participants).  Lesen Sie zuerst
 > [Kalender](./CALENDAR.md) und [Aufnahme pro Sendung](./RECORD_PER_SHOW.md)
 > - der Ton einer archivierten Episode ist die Aufzeichnung der Sendung.
 >
@@ -33,32 +33,34 @@ darauf die nächste.
 
 ---
 
-## 1. Profile des Redaktionsteams
+## 1. Redaktionsteams
 
-**Einstellungen → Redaktionsteam** listet die Menschen hinter den
-Sendungen.
+**Einstellungen → Archivierung** listet im oberen Teil,
+**Redaktionsteams**, die Teams hinter den Sendungen.  Jede Sendung
+wählt ein Team (§3).
 
 | Feld | Bedeutung |
 |---|---|
-| **Name** | So, wie er auf cba.media und in der Statistik erscheinen soll. |
+| **Name** | So, wie er auf cba.media (als Redaktion) und in der Statistik erscheinen soll. |
 | **E-Mail (optional)** | Für Ihre eigene Übersicht. |
-| **Benutzer (optional)** | Verknüpft das Profil mit einem RASTATIME-Login. Ein Profil braucht kein Login - die meisten Redakteur:innen melden sich nie an. |
-| **Aktiv** | Nur aktive Profile werden im Sendungsformular angeboten.  Ein abgeschaltetes Profil bleibt in den Sendungen, zu denen es schon gehört. |
+| **Benutzer (optional)** | Verknüpft das Team mit einem RASTATIME-Login, z. B. dem der verantwortlichen Person. Ein Team braucht kein Login. |
+| **Aktiv** | Nur aktive Teams werden im Sendungsformular angeboten.  Ein abgeschaltetes Team bleibt in den Sendungen, die es schon haben. |
 
-**Ändern** lädt das Profil in das Formular über der Tabelle;
-**Löschen** entfernt das Profil nach einer Rückfrage aus dem Team jeder
-Sendung.  Die Spalte **Sendungen** zählt, zu wie vielen Sendungen ein
-Profil gehört.
+**Ändern** lädt das Team in das Formular über der Tabelle; **Löschen**
+entfernt das Team nach einer Rückfrage aus jeder Sendung.  Die Spalte
+**Sendungen** zählt die Sendungen eines Teams.
 
-Programm-Manager und Admins öffnen diese Seite.
+Programm-Manager und Admins öffnen diese Seite; Programm-Manager sehen
+nur diesen Teil.
 
 ---
 
 ## 2. CBA-Konten
 
 Jede Sendung wird unter einem cba.media-Benutzer archiviert - die
-Episoden erscheinen unter dessen Namen.  **Einstellungen → CBA-Konten**
-hält diese Benutzer; nur Admins öffnen die Seite.
+Episoden erscheinen unter dessen Namen.  Der untere Teil von
+**Einstellungen → Archivierung**, **CBA-Konten**, hält diese Benutzer;
+nur Admins sehen ihn.
 
 | Feld | Bedeutung |
 |---|---|
@@ -87,12 +89,14 @@ hält diese Benutzer; nur Admins öffnen die Seite.
 
 Bearbeiten Sie eine Sendung (Kalender → Rechtsklick → **Sendung
 bearbeiten**, oder eine neue Sendung) und öffnen Sie den Abschnitt
-**Archivierung** zwischen **Who** und **Style**.  Die Werte gelten für
-jede Episode der Sendung, solange eine Episode keine eigenen setzt.
+**Archivierung** zwischen **Who** und **Style** - wie die anderen
+Abschnitte ist er zunächst zugeklappt; klicken Sie auf seine
+Überschrift.  Die Werte gelten für jede Episode der Sendung, solange
+eine Episode keine eigenen setzt.
 
 | Feld | Bedeutung |
 |---|---|
-| **Redaktionsteam** | Die Profile der Menschen hinter der Sendung ankreuzen. Sie gehen als Redakteur:innen an cba.media und erscheinen in der Übersicht Teilnehmende. |
+| **Redaktionsteam** | Das Team hinter der Sendung, aus der Liste gewählt (eines je Sendung, §1). Sein Name geht als Redaktion an cba.media und erscheint in der Übersicht Teilnehmende. |
 | **Teilnehmende** | Wie viele Menschen üblicherweise an einer Episode mitwirken (0-999). Zählt in Statistiken → Teilnehmende. |
 | **CBA-Konto** | Der CBA-Benutzer, unter dem die Episoden archiviert werden (§2). |
 | **Sichtbarkeit auf cba.media** | *Öffentlich* (gelistet), *Ungelistet* (nur über die Adresse erreichbar) oder *Privat* (nur für den CBA-Benutzer sichtbar). |
@@ -102,8 +106,8 @@ jede Episode der Sendung, solange eine Episode keine eigenen setzt.
 | **Sprachen** | Bis zu drei Sprachcodes, die die CBA kennt, z. B. `de, en`. |
 | **Schlagworte** | Schlagworte für cba.media, durch Komma getrennt. |
 | **Standard-Teaser** | Gilt für jede Episode ohne eigenen Teaser. |
-| **Enthält urheberrechtlich geschützte Musik (AKM)** | Die Episoden enthalten üblicherweise geschützte Musik; cba.media schränkt dann den Download ein. |
-| **Automatisch archivieren** | Jede neue Episode von selbst auf cba.media archivieren (§5, *Automatisch*). Braucht CBA-Konto, Thema, Sprache und Lizenz; neben dem Kästchen steht, seit wann es eingeschaltet ist. Hat die Sendung keine Beschreibung, weist ein Hinweis unter dem Kästchen darauf hin, dass dann jede Episode eine eigene braucht. |
+| **Enthält urheberrechtlich geschützte Musik** | Die Episoden enthalten üblicherweise geschützte Musik (AKM); cba.media schränkt dann den Download ein. |
+| **Automatisch archivieren** | Jede neue Episode von selbst auf cba.media archivieren (§5, *Automatisch*). Braucht CBA-Konto, Thema, Sprache und Lizenz; neben dem Kästchen steht, seit wann es eingeschaltet ist. Hat die Sendung keine Beschreibung, weist ein Hinweis unter dem Kästchen darauf hin, dass eine Episode ohne eigene dann den Namen der Sendung als Text bekommt. |
 
 **Welche Lizenz?**  Das CBA-Webformular stellt drei Fragen; die Lizenz
 beantwortet sie:
@@ -122,7 +126,7 @@ nicht-kommerziell; *Gemeinfrei* behält keinerlei Rechte.
 
 In **Instanz bearbeiten** fehlt der Abschnitt: er gehört zur ganzen
 Sendung.  Die Daten einer einzelnen Episode bearbeiten Sie unter
-**Episode...** (§4).
+**Online archivieren** (§4).
 
 > **Woher kommt die Podcast-Nummer?**  Öffnen Sie den Podcast auf
 > cba.media; die Nummer steht in der Adresse oder auf der Seite (die
@@ -130,18 +134,18 @@ Sendung.  Die Daten einer einzelnen Episode bearbeiten Sie unter
 
 ---
 
-## 4. Episodendaten: „Episode..."
+## 4. Episodendaten: „Online archivieren"
 
-Rechtsklick auf eine Instanz im Kalender → **Episode...**.  Der Eintrag
-steht vor und nach der Sendung zur Verfügung - das Bild können Sie auch
-nach der Ausstrahlung setzen - für Admins, Programm-Manager und die
-Hosts der Sendung.
+Rechtsklick auf eine Instanz im Kalender → **Online archivieren** (bis
+2026-11-03 *Episode...*).  Der Eintrag steht vor und nach der Sendung
+zur Verfügung - das Bild können Sie auch nach der Ausstrahlung setzen -
+für Admins, Programm-Manager und die Hosts der Sendung.
 
 | Feld | Bedeutung |
 |---|---|
 | **Titel** | Leer: Name der Sendung und Datum, grau als Vorschlag angezeigt. |
 | **Teaser** | Eine kurze Zusammenfassung. Leer: der Standard-Teaser der Sendung. |
-| **Beschreibung** | Der Text der Episode, auf cba.media der Text des Beitrags. Leer: die Beschreibung der Sendung. Hier ist die einzige Stelle dafür (Instanz bearbeiten zeigt das Feld nicht mehr). |
+| **Beschreibung** | Der Text der Episode, auf cba.media der Text des Beitrags. Leer: die Beschreibung der Sendung oder, wenn die Sendung keine hat, der Name der Sendung (grau angezeigt). Hier ist die einzige Stelle dafür (Instanz bearbeiten zeigt das Feld nicht mehr). |
 | **Teilnehmende** | Nur wenn diese Episode von der Sendung abweicht, z. B. mit Gästen. Der Wert der Sendung steht grau im Feld. |
 | **Produktionsdatum** | Von cba.media verlangt. Leer: der Sendetag. Setzen Sie es, wenn die Episode früher produziert wurde. |
 | **Diese Episode nicht automatisch archivieren** | Für Tests, ausgefallene Episoden oder Rechteprobleme. Wirkt mit der automatischen Archivierung (§5); von Hand archivieren bleibt möglich. |
@@ -168,14 +172,16 @@ Sie es wählen.  Episodenbilder liegen im Library-Ordner unter
 
 ## 5. Online archivieren
 
-Der untere Block von **Episode...** - **Online-Archiv (cba.media)** -
-zeigt den Stand der Episode auf cba.media.  Admins und Programm-Manager
-archivieren von hier aus; Hosts sehen den Stand.
+Der untere Block von **Online archivieren** - **Online-Archiv
+(cba.media)** - zeigt den Stand der Episode auf cba.media.  Admins und
+Programm-Manager archivieren von hier aus; Hosts sehen den Stand.
 
 1. Ergänzen Sie, was der Block unter *Bevor diese Episode archiviert
    werden kann* auflistet - meist CBA-Konto, Thema, Sprache und Lizenz
-   der Sendung und eine Beschreibung.
-2. Klicken Sie **Online archivieren...** und wählen Sie den Ton:
+   der Sendung.  Eine Beschreibung ist nicht nötig: Fehlt sie bei der
+   Episode und der Sendung, wird der Name der Sendung zum Text des
+   Beitrags.
+2. Klicken Sie **Jetzt online archivieren** und wählen Sie den Ton:
    * **Die Aufzeichnung dieser Episode** - die Kopie, die
      [Aufnahme pro Sendung](./RECORD_PER_SHOW.md) in die Library gelegt
      hat;
@@ -197,13 +203,15 @@ noch ersetzen.
 | *Wird auf cba.media hochgeladen: n %* | Läuft, gebremst auf die Upload-Grenze (§2). |
 | *Auf cba.media archiviert als Beitrag n* | Fertig; die Nummer verlinkt den Beitrag. |
 | *Wartet auf einen weiteren Versuch* | cba.media war nicht erreichbar oder ausgelastet; RASTATIME versucht es nach 2, 5, 15, 30 Minuten ... bis zu 24 Stunden lang erneut. |
-| *Der Upload ist gescheitert: Grund* | Fehlende Daten, oder cba.media hat abgelehnt (z. B. falsches Anwendungspasswort, unbekanntes Thema). Ursache beheben und erneut **Online archivieren...**. |
+| *Der Upload ist gescheitert: Grund* | Fehlende Daten, oder cba.media hat abgelehnt (z. B. falsches Anwendungspasswort, unbekanntes Thema). Ursache beheben und erneut **Jetzt online archivieren**. |
 | *Unklar, ob der Beitrag angelegt wurde* | Die Verbindung brach während des Uploads ab. Der Beitrag existiert vielleicht - auf cba.media nachsehen, dann **Bestehenden Beitrag verknüpfen** oder erneut archivieren. RASTATIME wiederholt diesen Fall nie von selbst, damit keine Episode doppelt erscheint. |
 
-**Bestehenden Beitrag verknüpfen** nimmt die Nummer eines Beitrags auf
-cba.media (oder seine Adresse mit `?p=<Nummer>`), z. B. für eine Episode,
-die Sie früher von Hand hochgeladen haben; ein leeres Feld entfernt die
-Verknüpfung.  Eine verknüpfte Episode gilt als archiviert.
+**Bestehenden Beitrag verknüpfen** ist für einen Beitrag, der schon auf
+cba.media liegt - dort von Hand hochgeladen oder nach einem *unklaren*
+Upload.  Tragen Sie seine Nummer (oder seine Adresse mit `?p=<Nummer>`)
+ein und klicken Sie den Knopf: RASTATIME markiert die Episode als
+archiviert und lädt nichts hoch.  Ein leeres Feld entfernt die
+Verknüpfung.  Das Hilfe-Symbol neben dem Knopf sagt dasselbe.
 
 > **Den Worker stoppen** hält nur die Uploads an; die Sendung merkt
 > davon nichts.  Ein Auftrag, der gerade lief, wird nach dem Neustart
@@ -220,10 +228,10 @@ selbst, immer mit der Aufzeichnung:
    die Aufzeichnung binnen Sekunden in die Library (die Sendung muss
    aufzeichnen, und *Copy Show Recordings into Library* muss unter
    Einstellungen → Local Machine eingeschaltet sein).
-2. Nach der Wartezeit (Einstellungen → CBA-Konten, Standard 30 Minuten)
+2. Nach der Wartezeit (Einstellungen → Archivierung, Standard 30 Minuten)
    prüft der Hintergrunddienst die Episode und stellt den Upload in die
    Warteschlange, mit der Sichtbarkeit der Sendung.
-3. Fehlt noch etwas (eine Beschreibung, die Aufzeichnung ...), wartet die
+3. Fehlt noch etwas (die Aufzeichnung, ein Thema ...), wartet die
    Episode und wird alle fünf Minuten erneut geprüft, bis zu 24 Stunden.
    Danach gibt der Lauf auf; der Dialog zeigt *Das automatische
    Archivieren hat aufgegeben* mit dem Grund.
@@ -240,9 +248,9 @@ Nie automatisch archiviert werden:
 * Episoden, deren Aufzeichnung weniger als die halbe Sendung umfasst
   (z. B. eine abgebrochene Aufzeichnung).
 
-**Episode...** zeigt im Block *Online-Archiv*, was der automatische Lauf
-mit der Episode vorhat, z. B. *Wird ab 2026-11-10 14:30 automatisch
-archiviert, sobald unten nichts mehr fehlt*.
+**Online archivieren** zeigt im Block *Online-Archiv*, was der
+automatische Lauf mit der Episode vorhat, z. B. *Wird ab 2026-11-10
+14:30 automatisch archiviert, sobald unten nichts mehr fehlt*.
 
 Scheitert ein automatischer Upload, bleibt er unklar oder wird
 aufgegeben, nennt der Warnhinweis oben auf der Seite die Episode sieben
@@ -279,11 +287,11 @@ zählen.
 | **Teilnehmende** | Der Wert der Sendung; die Summe addiert die Werte aller Sendungen. |
 | **Episoden mit eigenem Wert** | Episoden, deren Dialog eine andere Zahl setzt. |
 | **Teilnahmen** | Die Teilnehmenden jeder Episode zusammengezählt (eine Episode mit eigenem Wert zählt mit diesem Wert). |
-| **Redaktions-Profile** (Summe) | Verschiedene Profile in den Teams der gesendeten Sendungen - jede Person einmal. |
+| **Redaktionsteams** (Summe) | Verschiedene Teams der gesendeten Sendungen - jedes Team einmal. |
 | **Sendungen ohne Wert** (Summe) | Orange, solange es welche gibt. |
 
 Wer in mehreren Sendungen mitwirkt, zählt bei **Teilnehmende** einmal
-je Sendung; die Profil-Summe zählt jede Person einmal.
+je Sendung; die Team-Summe zählt jedes Team einmal.
 
 Programm-Manager und Admins öffnen diese Seite.
 
@@ -291,7 +299,7 @@ Programm-Manager und Admins öffnen diese Seite.
 
 ## 7. Häufige Fragen
 
-### „Online archivieren... fehlt."
+### „Jetzt online archivieren fehlt."
 
 Der Knopf erscheint für Admins und Programm-Manager, und nur solange
 die Episode weder archiviert ist noch auf einen Upload wartet.
@@ -313,7 +321,7 @@ Nummer.
 Die CBA-Upload-Schnittstelle hat dafür keine Einstellung; es gilt die
 Voreinstellung des CBA-Benutzers.
 
-### „Ich habe Profile angekreuzt, aber sie erscheinen nicht in der Übersicht."
+### „Ich habe ein Team gewählt, aber die Sendung erscheint nicht in der Übersicht."
 
 Die Übersicht listet nur Sendungen, die im gewählten Jahr **gesendet**
 wurden.  Eine neue Sendung erscheint, sobald ihre erste Episode zu Ende
@@ -322,15 +330,22 @@ ist.
 ### „Der Abschnitt Archivierung fehlt oder ist grau."
 
 In **Instanz bearbeiten** fehlt er - der Abschnitt gehört zur ganzen
-Sendung; für eine Episode nehmen Sie **Episode...**.  Grau ist er, wenn
-Sie nicht Programm-Manager oder Admin sind.
+Sendung; für eine Episode nehmen Sie **Online archivieren**.  Grau ist
+er, wenn Sie nicht Programm-Manager oder Admin sind.
 
 ### „Eine Episode wurde nicht automatisch archiviert."
 
-Öffnen Sie **Episode...**: Der Block *Online-Archiv* nennt den Grund -
-der Schalter ist aus, *Nicht automatisch archivieren* ist angehakt, die
-Episode endete vor dem Einschalten, sie wartet noch auf etwas, oder der
-Lauf hat aufgegeben und warum.  Archivieren Sie sie dort von Hand.
+Öffnen Sie **Online archivieren**: Der Block *Online-Archiv* nennt den
+Grund - der Schalter ist aus, *Nicht automatisch archivieren* ist
+angehakt, die Episode endete vor dem Einschalten, sie wartet noch auf
+etwas, oder der Lauf hat aufgegeben und warum.  Archivieren Sie sie dort
+von Hand.
+
+### „Wo sind Redaktionsteam und CBA-Konten?"
+
+Seit 2026-11-03 liegen beide auf einer Seite, **Einstellungen →
+Archivierung**: oben die Redaktionsteams, darunter die CBA-Konten mit
+der Upload-Grenze und der Wartezeit (nur Admins).
 
 ---
 

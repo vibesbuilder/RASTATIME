@@ -59,6 +59,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Archivierung: Feinschliff nach der Abnahme (2026-11-03, Operator)** — Kalender:
+  „Episode...“ heißt **Archive Online** (eigenes Wolken-Icon), der Knopf im Dialog
+  **Archive online now**, „Link existing post“ hat einen Tooltip.  Sendungsformular: der
+  Abschnitt **Archiving** ist wie die anderen anfangs zugeklappt, das Redaktionsteam ist
+  ein Dropdown (ein Team je Sendung statt mehrerer angehakter Profile; Tabelle
+  unverändert, keine Sendung hatte mehr als eines), „Contains copyrighted music (AKM)“ →
+  **Contains copyrighted music**.  Settings: **Editorial Team** und **CBA Accounts** sind
+  eine Seite **Archiving** (oben die Redaktionsteams für Programm-Manager und Admins,
+  darunter die CBA-Konten mit Upload-Grenze und Wartezeit nur für Admins); „Profil“ heißt
+  überall „Team“, auch in Analytics → Participants.  Ohne Beschreibung an Episode und
+  Sendung geht der **Name der Sendung** als Text an cba.media (vorher wartete die Episode;
+  Hinweis unter „Archive automatically“ entsprechend).  Wirksam: Legacy sofort, Texte
+  DE/FR/ES nach Apache-Neustart, Beschreibungsregel im Worker nach WORKER-Neustart.
+  Commit `<hash>`.
 - **„Publishing“ heißt „Archiving“ (2026-11-03, Operator)** — „Publish“ gehört in RASTATIME
   zu My Podcast; Abschnitt, Menütexte, Handbuch-Kapitel (`ARCHIVING.md`), Routen
   (`archiving/*`) und die Tabelle `cc_show_archiving` folgen dem neuen Namen.  Die

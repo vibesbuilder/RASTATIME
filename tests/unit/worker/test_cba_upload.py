@@ -70,6 +70,12 @@ def test_meta_falls_back_to_the_show(tmp_path):
     assert meta["teaser"] == "Show teaser"
 
 
+def test_meta_falls_back_to_the_show_name(tmp_path):
+    meta, missing = cba.build_meta(_episode(tmp_path, description="", show_description="  "))
+    assert missing == []
+    assert meta["content"] == "<p>Morning Show</p>"
+
+
 def test_meta_own_values_win(tmp_path):
     ep = _episode(tmp_path, title="Special", production_date="2026-10-30", series_id=None)
     meta, _ = cba.build_meta(ep)
@@ -92,7 +98,7 @@ def test_meta_image_fields_only_with_an_image(tmp_path):
     ("change", "fragment"),
     [
         ({"password": ""}, "CBA account"),
-        ({"description": "", "show_description": ""}, "description"),
+        ({"description": "", "show_description": "", "show_name": ""}, "description"),
         ({"languages": ""}, "language"),
         ({"languages": "de,xx"}, "language"),
         ({"languages": "de,en,fr,it"}, "language"),

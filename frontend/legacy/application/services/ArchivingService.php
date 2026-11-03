@@ -165,7 +165,7 @@ class Application_Service_ArchivingService
         if ($id > 0) {
             $params[] = $id;
             if (!self::exec('UPDATE cc_editor_profile SET name = ?, email = ?, subjs_id = ?, active = ? WHERE id = ?', $params)) {
-                return [0, _('The profile does not exist any more.')];
+                return [0, _('The team does not exist any more.')];
             }
 
             return [$id, null];
@@ -382,7 +382,7 @@ class Application_Service_ArchivingService
     }
 
     // ------------------------------------------------------------------
-    // Episodes (calendar context menu → Episode...)
+    // Episodes (calendar context menu → Archive Online)
     // ------------------------------------------------------------------
 
     /**
@@ -459,7 +459,7 @@ class Application_Service_ArchivingService
         return $d->format('Y-m-d H:i');
     }
 
-    /** Minutes between the end of an episode and its automatic upload (Settings → CBA Accounts). */
+    /** Minutes between the end of an episode and its automatic upload (Settings → Archiving). */
     public static function autoDelayMin(): int
     {
         $v = self::pref('cba_auto_delay_min');
@@ -710,7 +710,7 @@ class Application_Service_ArchivingService
     }
 
     // ------------------------------------------------------------------
-    // CBA accounts (Settings → CBA Accounts, admins only)
+    // CBA accounts (Settings → Archiving, admins only)
     // ------------------------------------------------------------------
 
     /** All accounts without their password; has_password tells whether one is set. */
@@ -836,7 +836,7 @@ class Application_Service_ArchivingService
         return $row ? $row[0]['valstr'] : null;
     }
 
-    /** Upload bandwidth limit in kbit/s (Settings → CBA Accounts). */
+    /** Upload bandwidth limit in kbit/s (Settings → Archiving). */
     public static function uploadKbit(): int
     {
         $v = (int) self::pref('cba_upload_kbit');
@@ -923,7 +923,7 @@ class Application_Service_ArchivingService
         if (!$show['cba_account_id']) {
             $missing[] = _('The show has no CBA account (Edit Show → Archiving).');
         } elseif (!(self::query("SELECT app_password <> '' AS ok FROM cc_cba_account WHERE id = ?", [$show['cba_account_id']])[0]['ok'] ?? false)) {
-            $missing[] = _('The CBA account of the show has no application password (Settings → CBA Accounts).');
+            $missing[] = _('The CBA account of the show has no application password (Settings → Archiving).');
         }
         if (!$show['category_id']) {
             $missing[] = _('The show has no CBA topic (Edit Show → Archiving).');
@@ -935,9 +935,7 @@ class Application_Service_ArchivingService
         if ($show['license'] === '') {
             $missing[] = _('The show has no licence (Edit Show → Archiving).');
         }
-        if (trim($ep['description']) === '' && trim($ep['show_description']) === '') {
-            $missing[] = _('Neither the episode nor the show has a description - the CBA needs a text.');
-        }
+        // no description on the episode or the show: the show name is the text (operator 2026-11-03)
         $production = $ep['production_date'] !== '' ? $ep['production_date'] : $ep['broadcast_date'];
         $tz = new DateTimeZone(Application_Model_Preference::GetTimezone());
         if ($production > (new DateTime('now', $tz))->format('Y-m-d')) {

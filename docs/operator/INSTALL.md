@@ -565,7 +565,7 @@ Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 Get-NetTCPConnection -State Listen -LocalPort 8765   # 127.0.0.1 only
 
 # 9b — Worker.  Uploads the episodes archived on cba.media (Calendar ->
-# Episode... -> Archive online) and fetches the CBA topic list once a
+# Archive Online -> Archive online now) and fetches the CBA topic list once a
 # day; the broadcast does not depend on it (since 2026-11-03).
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-worker.ps1 `

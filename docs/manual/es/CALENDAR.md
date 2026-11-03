@@ -133,7 +133,7 @@ acción.
 | **Guardar como plantilla** | Guardar la configuración actual como nueva plantilla. | Siempre |
 | **Ver** | Vista de solo lectura de los metadatos + programación del programa. *Start* y *Length* de cada fila son la fila de programación tal como queda colocada (Length = cue-out menos cue-in, como en el show builder; desde el 2026-10-23); los totales de abajo son la longitud colocada del contenido (con puntos de cue y solapes de crossfade) frente a la duración del programa. | Siempre |
 | **Teasers** | Los jingles que anuncian este programa: cambiar tipos, desvincular, vincular más; véase [Automatización de teasers](./TEASERS.md). Desde 2026-10-16. | Admin / PM |
-| **Episodio...** | Título, teaser, descripción, imagen y participantes de este episodio, antes o después de emitirse, y «Archivar en línea» en cba.media; véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. | Admin / PM / presentadores del programa (archivar: Admin / PM) |
+| **Archivar en línea** | Título, teaser, descripción, imagen y participantes de este episodio, antes o después de emitirse, y «Archivar en línea ahora» en cba.media; véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03 (primero llamado *Episodio...*). | Admin / PM / presentadores del programa (archivar: Admin / PM) |
 | **Editar programa** | Editar la definición de programa. | Programas futuros o actuales |
 | **Editar instancia** | Editar solo esta ocurrencia de un programa recurrente. | Programas recurrentes solamente |
 | **Cancelar programa** | Terminar el programa *ahora*. | Programa actual solamente |

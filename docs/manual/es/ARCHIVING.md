@@ -1,11 +1,11 @@
-# Archivo: equipo de redacción, episodios, archivo en línea, participantes
+# Archivo: equipos de redacción, episodios, archivo en línea, participantes
 
-> **Dónde está en el manual.** Ajustes → **Equipo de redacción** y
-> **Cuentas de CBA**; Calendario → formulario del programa, sección
-> **Archivo**; Calendario → clic derecho en una emisión →
-> **Episodio...**; Estadísticas → **Participantes** (en la interfaz en
-> inglés: Settings → Editorial Team / CBA Accounts, Archiving,
-> Episode..., Analytics → Participants).  Lea primero
+> **Dónde está en el manual.** Ajustes → **Archivo** (equipos de
+> redacción, cuentas de CBA); Calendario → formulario del programa,
+> sección **Archivo**; Calendario → clic derecho en una emisión →
+> **Archivar en línea**; Estadísticas → **Participantes** (en la
+> interfaz en inglés: Settings → Archiving, Archiving, Archive Online,
+> Analytics → Participants).  Lea primero
 > [Calendario](./CALENDAR.md) y
 > [Grabación por programa](./RECORD_PER_SHOW.md): el audio de un
 > episodio archivado es la grabación del programa.
@@ -33,32 +33,33 @@ el siguiente.
 
 ---
 
-## 1. Perfiles del equipo de redacción
+## 1. Equipos de redacción
 
-**Ajustes → Equipo de redacción** lista las personas detrás de los
-programas.
+**Ajustes → Archivo** lista en su parte superior, **Equipos de
+redacción**, los equipos detrás de los programas.  Cada programa elige
+un equipo (§3).
 
 | Campo | Significado |
 |---|---|
-| **Nombre** | Tal como debe aparecer en cba.media y en la estadística. |
+| **Nombre** | Tal como debe aparecer en cba.media (como redacción) y en la estadística. |
 | **Correo electrónico (opcional)** | Para su propia referencia. |
-| **Usuario (opcional)** | Vincula el perfil con una cuenta de RASTATIME. Un perfil no necesita cuenta: la mayoría de los redactores nunca inicia sesión. |
-| **Activo** | Solo los perfiles activos se ofrecen en el formulario del programa.  Un perfil desactivado sigue en los programas a los que ya pertenece. |
+| **Usuario (opcional)** | Vincula el equipo con una cuenta de RASTATIME, p. ej. la de la persona responsable. Un equipo no necesita cuenta. |
+| **Activo** | Solo los equipos activos se ofrecen en el formulario del programa.  Un equipo desactivado sigue en los programas que ya lo tienen. |
 
-**Editar** carga el perfil en el formulario sobre la tabla;
-**Eliminar** quita el perfil del equipo de cada programa tras una
-confirmación.  La columna **Programas** cuenta los programas de un
-perfil.
+**Editar** carga el equipo en el formulario sobre la tabla; **Eliminar**
+quita el equipo de cada programa tras una confirmación.  La columna
+**Programas** cuenta los programas de un equipo.
 
-Los Program Managers y los Admins abren esta página.
+Los Program Managers y los Admins abren esta página; los Program
+Managers solo ven esta parte.
 
 ---
 
 ## 2. Cuentas de CBA
 
 Cada programa se archiva con un usuario de cba.media: los episodios
-aparecen con su nombre.  **Ajustes → Cuentas de CBA** guarda estos
-usuarios; solo los Admins abren la página.
+aparecen con su nombre.  La parte inferior de **Ajustes → Archivo**,
+**Cuentas de CBA**, guarda estos usuarios; solo los Admins la ven.
 
 | Campo | Significado |
 |---|---|
@@ -86,12 +87,13 @@ usuarios; solo los Admins abren la página.
 
 Edite un programa (calendario → clic derecho → **Editar programa**, o
 un programa nuevo) y abra la sección **Archivo**, entre **Who** y
-**Style**.  Los valores valen para cada episodio del programa mientras
-un episodio no fije los suyos.
+**Style**: como las demás secciones, aparece plegada; haga clic en su
+título.  Los valores valen para cada episodio del programa mientras un
+episodio no fije los suyos.
 
 | Campo | Significado |
 |---|---|
-| **Equipo de redacción** | Marque los perfiles de las personas detrás del programa. Se envían a cba.media como redactores y aparecen en la vista Participantes. |
+| **Equipo de redacción** | El equipo detrás del programa, elegido de la lista (uno por programa, §1). Su nombre se envía a cba.media como redacción y aparece en la vista Participantes. |
 | **Participantes** | Cuántas personas participan normalmente en un episodio (0-999). Cuenta en Estadísticas → Participantes. |
 | **Cuenta de CBA** | El usuario de CBA con el que se archivan los episodios (§2). |
 | **Visibilidad en cba.media** | *Público* (listado), *No listado* (accesible solo por su dirección) o *Privado* (visible solo para el usuario de CBA). |
@@ -101,8 +103,8 @@ un episodio no fije los suyos.
 | **Idiomas** | Hasta tres códigos de idioma que conoce la CBA, p. ej. `de, en`. |
 | **Etiquetas** | Etiquetas para cba.media, separadas por comas. |
 | **Teaser predeterminado** | Se usa en cada episodio sin teaser propio. |
-| **Contiene música protegida (AKM)** | Los episodios suelen contener música protegida; cba.media restringe entonces la descarga. |
-| **Archivar automáticamente** | Archivar cada episodio nuevo en cba.media por sí solo (§5, *Automáticamente*). Necesita cuenta de CBA, tema, idioma y licencia; junto a la casilla: desde cuándo está activado. Si el programa no tiene descripción, una nota bajo la casilla indica que cada episodio necesita entonces la suya. |
+| **Contiene música protegida** | Los episodios suelen contener música protegida (AKM); cba.media restringe entonces la descarga. |
+| **Archivar automáticamente** | Archivar cada episodio nuevo en cba.media por sí solo (§5, *Automáticamente*). Necesita cuenta de CBA, tema, idioma y licencia; junto a la casilla: desde cuándo está activado. Si el programa no tiene descripción, una nota bajo la casilla indica que un episodio sin la suya recibe entonces el nombre del programa como texto. |
 
 **¿Qué licencia?**  El formulario web de la CBA hace tres preguntas; la
 licencia las responde:
@@ -120,8 +122,8 @@ licencia las responde:
 fines comerciales; *Dominio público* no conserva ningún derecho.
 
 La sección no aparece en **Editar emisión**: pertenece al programa
-completo.  Los datos de un solo episodio se editan en **Episodio...**
-(§4).
+completo.  Los datos de un solo episodio se editan en **Archivar en
+línea** (§4).
 
 > **¿De dónde sale el número del pódcast?**  Abra el pódcast en
 > cba.media; el número aparece en su dirección o en su página (la CBA
@@ -130,18 +132,18 @@ completo.  Los datos de un solo episodio se editan en **Episodio...**
 
 ---
 
-## 4. Datos del episodio: «Episodio...»
+## 4. Datos del episodio: «Archivar en línea»
 
-Clic derecho en una emisión del calendario → **Episodio...**.  La
-entrada está disponible antes y después de la emisión - la imagen se
-puede añadir después - para Admins, Program Managers y los
-presentadores del programa.
+Clic derecho en una emisión del calendario → **Archivar en línea**
+(hasta el 2026-11-03 *Episodio...*).  La entrada está disponible antes
+y después de la emisión - la imagen se puede añadir después - para
+Admins, Program Managers y los presentadores del programa.
 
 | Campo | Significado |
 |---|---|
 | **Título** | Vacío: el nombre del programa y la fecha, en gris como sugerencia. |
 | **Teaser** | Un breve resumen. Vacío: el teaser predeterminado del programa. |
-| **Descripción** | El texto del episodio, en cba.media el texto de la entrada. Vacío: la descripción del programa. Es el único lugar para editarla (Editar emisión ya no la muestra). |
+| **Descripción** | El texto del episodio, en cba.media el texto de la entrada. Vacío: la descripción del programa o, si no tiene, el nombre del programa (en gris). Es el único lugar para editarla (Editar emisión ya no la muestra). |
 | **Participantes** | Solo si este episodio difiere del programa, p. ej. con invitados. El valor del programa aparece en gris. |
 | **Fecha de producción** | La exige cba.media. Vacía: el día de la emisión. Indíquela si el episodio se produjo antes. |
 | **No archivar este episodio automáticamente** | Para pruebas, episodios cancelados o problemas de derechos. Se aplica con el archivo automático (§5); archivar a mano sigue siendo posible. |
@@ -168,14 +170,17 @@ espejo de medios de la [Copia de seguridad](./BACKUP.md).
 
 ## 5. Archivar en línea
 
-El bloque inferior de **Episodio...** - **Archivo en línea (cba.media)**
-- muestra el estado del episodio en cba.media.  Los Admins y los
-Program Managers archivan desde aquí; los presentadores ven el estado.
+El bloque inferior de **Archivar en línea** - **Archivo en línea
+(cba.media)** - muestra el estado del episodio en cba.media.  Los Admins
+y los Program Managers archivan desde aquí; los presentadores ven el
+estado.
 
 1. Complete lo que el bloque lista en *Antes de poder archivar este
    episodio*: normalmente la cuenta de CBA, el tema, el idioma y la
-   licencia del programa y una descripción.
-2. Pulse **Archivar en línea...** y elija el audio:
+   licencia del programa.  No hace falta una descripción: si no la
+   tienen ni el episodio ni el programa, el nombre del programa se
+   convierte en el texto de la entrada.
+2. Pulse **Archivar en línea ahora** y elija el audio:
    * **La grabación de este episodio**: la copia que
      [Grabación por programa](./RECORD_PER_SHOW.md) puso en la
      biblioteca;
@@ -197,13 +202,14 @@ modificar ni sustituir una entrada.
 | *Subiendo a cba.media: n %* | En curso, limitada al límite de subida (§2). |
 | *Archivado en cba.media como entrada n* | Terminado; el número enlaza la entrada. |
 | *Esperando otro intento* | cba.media no estaba disponible u ocupado; RASTATIME vuelve a intentarlo tras 2, 5, 15, 30 minutos ... durante 24 horas como máximo. |
-| *La subida falló: motivo* | Faltan datos, o cba.media la rechazó (p. ej. contraseña de aplicación incorrecta, tema desconocido). Corrija la causa y **Archivar en línea...** de nuevo. |
+| *La subida falló: motivo* | Faltan datos, o cba.media la rechazó (p. ej. contraseña de aplicación incorrecta, tema desconocido). Corrija la causa y **Archivar en línea ahora** de nuevo. |
 | *No está claro si se creó la entrada* | La conexión se cortó durante la subida. La entrada quizá exista: compruébelo en cba.media y luego **Vincular una entrada existente** o vuelva a archivar. RASTATIME nunca repite este caso por sí mismo, para que ningún episodio aparezca dos veces. |
 
-**Vincular una entrada existente** admite el número de una entrada en
-cba.media (o su dirección con `?p=<número>`), p. ej. para un episodio
-que subió antes a mano; un campo vacío quita el vínculo.  Un episodio
-vinculado cuenta como archivado.
+**Vincular una entrada existente** sirve para una entrada que ya está en
+cba.media: subida allí a mano o tras una subida *dudosa*.  Escriba su
+número (o su dirección con `?p=<número>`) y pulse el botón: RASTATIME
+marca el episodio como archivado y no sube nada.  Un campo vacío quita
+el vínculo.  El icono de ayuda junto al botón dice lo mismo.
 
 > **Detener el worker** solo pausa las subidas; la emisión no se ve
 > afectada.  Una tarea que estaba en curso se comprueba tras el
@@ -220,10 +226,10 @@ siempre con la grabación:
    deja la grabación en la biblioteca en segundos (el programa debe
    grabar y *Copy Show Recordings into Library* debe estar activado en
    Ajustes → Local Machine).
-2. Tras el tiempo de espera (Ajustes → Cuentas de CBA, 30 minutos por
+2. Tras el tiempo de espera (Ajustes → Archivo, 30 minutos por
    defecto), el servicio en segundo plano comprueba el episodio y pone la
    subida en cola, con la visibilidad del programa.
-3. Si aún falta algo (una descripción, la grabación ...), el episodio
+3. Si aún falta algo (la grabación, un tema ...), el episodio
    espera y se vuelve a comprobar cada cinco minutos, hasta 24 horas.
    Después el proceso se da por vencido; el diálogo muestra *El archivo
    automático se dio por vencido* con el motivo.
@@ -240,7 +246,7 @@ Nunca se archivan automáticamente:
 * los episodios cuya grabación cubre menos de la mitad del programa
   (p. ej. una grabación interrumpida).
 
-**Episodio...** muestra en el bloque *Archivo en línea* lo que el
+**Archivar en línea** muestra en el bloque *Archivo en línea* lo que el
 archivo automático prevé para el episodio, p. ej. *Se archiva
 automáticamente a partir del 2026-11-10 14:30, en cuanto no falte nada
 de lo de abajo*.
@@ -280,12 +286,11 @@ valor en `0` si sus personas ya cuentan en el original.
 | **Participantes** | El valor del programa; el total suma los valores de todos los programas. |
 | **Episodios con valor propio** | Episodios cuyo diálogo fija otro número. |
 | **Participaciones** | Los participantes de cada episodio sumados (un episodio con valor propio cuenta con ese valor). |
-| **Perfiles de redacción** (total) | Perfiles distintos en los equipos de los programas emitidos: cada persona una vez. |
+| **Equipos de redacción** (total) | Equipos distintos de los programas emitidos: cada equipo una vez. |
 | **Programas sin valor** (total) | En naranja mientras haya alguno. |
 
 Una persona en varios programas cuenta una vez por programa en
-**Participantes**; el total de perfiles cuenta a cada persona una sola
-vez.
+**Participantes**; el total de equipos cuenta cada equipo una sola vez.
 
 Los Program Managers y los Admins abren esta página.
 
@@ -293,7 +298,7 @@ Los Program Managers y los Admins abren esta página.
 
 ## 7. Preguntas frecuentes
 
-### «Falta Archivar en línea...»
+### «Falta Archivar en línea ahora.»
 
 El botón aparece para Admins y Program Managers, y solo mientras el
 episodio no esté archivado ni esperando una subida.
@@ -315,7 +320,7 @@ ejecutado, el campo admite el número.
 La interfaz de subida de la CBA no tiene ajuste para ello; se aplica el
 valor predeterminado del usuario de CBA.
 
-### «Marqué perfiles, pero no aparecen en la vista.»
+### «Elegí un equipo, pero el programa no aparece en la vista.»
 
 La vista solo lista los programas **emitidos** en el año elegido.  Un
 programa nuevo aparece en cuanto termina su primer episodio.
@@ -323,15 +328,21 @@ programa nuevo aparece en cuanto termina su primer episodio.
 ### «La sección Archivo falta o está en gris.»
 
 Falta en **Editar emisión**: la sección pertenece al programa completo;
-para un episodio use **Episodio...**.  Está en gris si usted no es
-Program Manager ni Admin.
+para un episodio use **Archivar en línea**.  Está en gris si usted no
+es Program Manager ni Admin.
 
 ### «Un episodio no se archivó automáticamente.»
 
-Abra **Episodio...**: el bloque *Archivo en línea* indica el motivo - el
-interruptor está desactivado, *No archivar automáticamente* está
-marcado, el episodio terminó antes de activarlo, espera algo, o el
+Abra **Archivar en línea**: el bloque *Archivo en línea* indica el
+motivo - el interruptor está desactivado, *No archivar automáticamente*
+está marcado, el episodio terminó antes de activarlo, espera algo, o el
 proceso se dio por vencido y por qué.  Archívelo a mano desde allí.
+
+### «¿Dónde están Equipo de redacción y Cuentas de CBA?»
+
+Desde el 2026-11-03 ambos están en una sola página, **Ajustes →
+Archivo**: los equipos de redacción arriba, las cuentas de CBA con el
+límite de subida y el tiempo de espera debajo (solo Admins).
 
 ---
 

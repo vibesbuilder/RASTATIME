@@ -325,7 +325,7 @@ label.wrapp-label input[type="checkbox"] {
 
 /* RASTATIME 2026-11-03 - Archiving section (editorial team, CBA defaults):
    label above the field like the other sections, help icon right of the
-   label, the profile boxes in a scrolling list like the DJs of "Who". */
+   label; the editorial team is a dropdown (one team per show). */
 #schedule-add-show dt.rt-archiving-label {
     display: block;
     padding: 8px 0 0;
@@ -346,24 +346,6 @@ label.wrapp-label input[type="checkbox"] {
 
 #schedule-add-show .rt-archiving-field input.input_text {
     width: 96%;
-}
-
-#add_show_editor_profiles-element {
-    max-height: 120px;
-    overflow-y: auto;
-}
-
-#add_show_editor_profiles-element > label {
-    display: flex;
-    align-items: flex-end;
-}
-
-#add_show_editor_profiles-element input {
-    margin-right: 6px;
-}
-
-#add_show_editor_profiles-element br {
-    display: none;
 }
 
 .rt-archiving-note {

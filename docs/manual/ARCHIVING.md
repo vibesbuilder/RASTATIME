@@ -1,8 +1,8 @@
-# Archiving: Editorial Team, Episodes, Online Archive, Participants
+# Archiving: Editorial Teams, Episodes, Online Archive, Participants
 
-> **Where you are in the manual.** Settings → **Editorial Team** and
-> **CBA Accounts**; Calendar → show form, section **Archiving**;
-> Calendar → right-click an instance → **Episode...**; Analytics →
+> **Where you are in the manual.** Settings → **Archiving** (editorial
+> teams, CBA accounts); Calendar → show form, section **Archiving**;
+> Calendar → right-click an instance → **Archive Online**; Analytics →
 > **Participants**.  Read [Calendar](./CALENDAR.md) and
 > [Record-per-Show](./RECORD_PER_SHOW.md) first - the audio of an
 > archived episode is the show's recording.
@@ -29,30 +29,32 @@ An *episode* is one instance of a show in the calendar: next Monday's
 
 ---
 
-## 1. Editorial team profiles
+## 1. Editorial teams
 
-**Settings → Editorial Team** lists the people behind the shows.
+**Settings → Archiving** lists in its upper part, **Editorial Teams**,
+the teams behind the shows.  Each show chooses one team (§3).
 
 | Field | Meaning |
 |---|---|
-| **Name** | As it should appear on cba.media and in the statistics. |
+| **Name** | As it should appear on cba.media (as editor) and in the statistics. |
 | **Email (optional)** | For your own reference. |
-| **User (optional)** | Links the profile to a RASTATIME login. A profile needs no login - most editors never sign in. |
-| **Active** | Only active profiles are offered in the show form.  Switching a profile off keeps it in the shows it already belongs to. |
+| **User (optional)** | Links the team to a RASTATIME login, e.g. of the person in charge. A team needs no login. |
+| **Active** | Only active teams are offered in the show form.  Switching a team off keeps it in the shows that have it already. |
 
-**Edit** fills the form above the table with the profile; **Delete**
-removes the profile from every show's team after a confirmation.  The
-column **Shows** counts the shows a profile belongs to.
+**Edit** fills the form above the table with the team; **Delete**
+removes the team from every show after a confirmation.  The column
+**Shows** counts the shows of a team.
 
-Program Managers and Admins open this page.
+Program Managers and Admins open this page; Program Managers see only
+this part.
 
 ---
 
 ## 2. CBA accounts
 
 Every show is archived under a cba.media user - the episodes appear
-under that user's name.  **Settings → CBA Accounts** holds these users;
-only Admins open the page.
+under that user's name.  The lower part of **Settings → Archiving**,
+**CBA Accounts**, holds these users; only Admins see it.
 
 | Field | Meaning |
 |---|---|
@@ -78,13 +80,13 @@ only Admins open the page.
 ## 3. Show defaults: section "Archiving"
 
 Edit a show (calendar → right-click → **Edit Show**, or a new show) and
-open the section **Archiving**, between **Who** and **Style**.  The
-values apply to every episode of the show unless an episode sets its
-own.
+open the section **Archiving**, between **Who** and **Style** - like
+the other sections it comes up collapsed; click its heading.  The values
+apply to every episode of the show unless an episode sets its own.
 
 | Field | Meaning |
 |---|---|
-| **Editorial team** | Tick the profiles of the people behind the show. They are sent to cba.media as editors and appear in the Participants overview. |
+| **Editorial team** | The team behind the show, chosen from the list (one per show, §1). Its name is sent to cba.media as editor and appears in the Participants overview. |
 | **People involved** | How many people usually take part in an episode (0-999). Counts in Analytics → Participants. |
 | **CBA account** | The CBA user the episodes are archived under (§2). |
 | **Visibility on cba.media** | *Public* (listed), *Unlisted* (reachable by its address only) or *Private* (visible to the CBA user only). |
@@ -94,8 +96,8 @@ own.
 | **Languages** | Up to three language codes the CBA knows, e.g. `de, en`. |
 | **Tags** | Comma-separated tags for cba.media. |
 | **Default teaser** | Used for every episode without a teaser of its own. |
-| **Contains copyrighted music (AKM)** | The episodes usually contain music subject to copyright; cba.media then restricts the download. |
-| **Archive automatically** | Archive every new episode on cba.media by itself (§5, *Automatically*). Needs a CBA account, topic, language and licence; next to the box: since when it is on. If the show has no description, a note below the box says that each episode then needs its own. |
+| **Contains copyrighted music** | The episodes usually contain music subject to copyright (AKM); cba.media then restricts the download. |
+| **Archive automatically** | Archive every new episode on cba.media by itself (§5, *Automatically*). Needs a CBA account, topic, language and licence; next to the box: since when it is on. If the show has no description, a note below the box says that an episode without its own then gets the show name as its text. |
 
 **Which licence?**  The CBA web form asks three questions; the licence
 answers them:
@@ -113,7 +115,7 @@ lets others reuse samples, the whole work only non-commercially;
 *Public domain* keeps no rights at all.
 
 The section is not shown in **Edit Instance**: it belongs to the whole
-show.  The data of a single episode is edited in **Episode...** (§4).
+show.  The data of a single episode is edited in **Archive Online** (§4).
 
 > **Where does the podcast number come from?**  Open the podcast on
 > cba.media; the number is part of its address or listed on its page
@@ -121,9 +123,10 @@ show.  The data of a single episode is edited in **Episode...** (§4).
 
 ---
 
-## 4. Episode data: "Episode..."
+## 4. Episode data: "Archive Online"
 
-Right-click an instance in the calendar → **Episode...**.  The entry is
+Right-click an instance in the calendar → **Archive Online** (until
+2026-11-03 *Episode...*).  The entry is
 there before and after the show aired - you can add the image after the
 broadcast - for Admins, Program Managers and the hosts of the show.
 
@@ -131,7 +134,7 @@ broadcast - for Admins, Program Managers and the hosts of the show.
 |---|---|
 | **Title** | Empty: the show's name and the date, shown greyed as a suggestion. |
 | **Teaser** | A short summary. Empty: the show's default teaser. |
-| **Description** | The text of the episode, on cba.media the text of the post. Empty: the description of the show. This is the only place to edit it (Edit Instance no longer shows it). |
+| **Description** | The text of the episode, on cba.media the text of the post. Empty: the description of the show, or the show name when the show has none (shown greyed). This is the only place to edit it (Edit Instance no longer shows it). |
 | **People involved** | Only when this episode differs from the show, e.g. with guests. The show's value is shown greyed. |
 | **Production date** | Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier. |
 | **Do not archive this episode automatically** | For tests, cancelled episodes or rights problems. Takes effect with automatic archiving (§5); archiving by hand stays possible. |
@@ -158,14 +161,15 @@ of the [Backup](./BACKUP.md).
 
 ## 5. Archive online
 
-The bottom block of **Episode...** - **Online archive (cba.media)** -
+The bottom block of **Archive Online** - **Online archive (cba.media)** -
 shows the state of the episode on cba.media.  Admins and Program
 Managers archive from here; hosts see the state.
 
 1. Fill in what the block lists under *Before this episode can be
    archived* - typically the CBA account, topic, language and licence of
-   the show and a description.
-2. Click **Archive online...**, choose the audio:
+   the show.  A description is not required: without one on the episode
+   or the show, the show name becomes the text of the post.
+2. Click **Archive online now**, choose the audio:
    * **The recording of this episode** - the copy that
      [Record-per-Show](./RECORD_PER_SHOW.md) put into the library;
    * **A library file** - search by title or creator, e.g. the
@@ -185,13 +189,14 @@ the CBA interface has no way to change or replace a post.
 | *Uploading to cba.media: n %* | Running, limited to the upload limit (§2). |
 | *Archived on cba.media as post n* | Done; the number links to the post. |
 | *Waiting for another attempt* | cba.media could not be reached or was busy; RASTATIME tries again after 2, 5, 15, 30 minutes ... for up to 24 hours. |
-| *The upload failed: reason* | Missing data, or cba.media refused (e.g. wrong application password, unknown topic). Fix the cause and **Archive online...** again. |
+| *The upload failed: reason* | Missing data, or cba.media refused (e.g. wrong application password, unknown topic). Fix the cause and **Archive online now** again. |
 | *Unclear whether the post was created* | The connection broke off during the upload. The post may exist - look on cba.media, then **Link existing post** or archive again. RASTATIME never repeats this case by itself, so no episode appears twice. |
 
-**Link existing post** takes the number of a post on cba.media (or its
-address with `?p=<number>`), e.g. for an episode you uploaded by hand
-before; an empty field removes the link.  A linked episode counts as
-archived.
+**Link existing post** is for a post that is on cba.media already -
+uploaded there by hand, or after an *unclear* upload.  Enter its number
+(or its address with `?p=<number>`) and click the button: RASTATIME
+marks the episode as archived and uploads nothing.  An empty field
+removes the link.  The help icon next to the button says the same.
 
 > **Stopping the worker** only pauses the uploads; the broadcast is not
 > affected.  A job that was running is checked after the restart: if no
@@ -207,10 +212,10 @@ the recording:
    recording into the library within seconds (the show must record, and
    *Copy Show Recordings into Library* must be on under Settings → Local
    Machine).
-2. After the waiting time (Settings → CBA Accounts, default 30 minutes)
+2. After the waiting time (Settings → Archiving, default 30 minutes)
    the background service checks the episode and queues the upload,
    with the visibility of the show.
-3. If something is still missing (a description, the recording ...), the
+3. If something is still missing (the recording, a topic ...), the
    episode waits and is checked again every five minutes, for up to 24
    hours.  Then the run gives up; the dialog shows *The automatic
    archiving gave up* with the reason.
@@ -226,7 +231,7 @@ Never archived automatically:
 * episodes whose recording covers less than half of the show (e.g. a
   recording that broke off).
 
-**Episode...** shows in the block *Online archive* what the automatic
+**Archive Online** shows in the block *Online archive* what the automatic
 run plans for the episode, e.g. *Archived automatically from
 2026-11-10 14:30, once nothing below is missing*.
 
@@ -264,11 +269,11 @@ in the original.
 | **People involved** | The show's value; the total adds the values of all shows. |
 | **Episodes with own value** | Episodes whose dialog sets a different number. |
 | **Participations** | The people of every episode added up (an episode with its own value counts with that value). |
-| **Editorial team profiles** (total) | Distinct profiles in the teams of the shows that aired - every person once. |
+| **Editorial teams** (total) | Distinct teams of the shows that aired - every team once. |
 | **Shows without a value** (total) | Shown in orange while there are any. |
 
 A person in several shows counts once per show in **People involved**;
-the profile total counts each person once.
+the team total counts each team once.
 
 Program Managers and Admins open this page.
 
@@ -276,7 +281,7 @@ Program Managers and Admins open this page.
 
 ## 7. Frequently asked
 
-### "Archive online... is missing."
+### "Archive online now is missing."
 
 The button is shown to Admins and Program Managers, and only while the
 episode is neither archived nor waiting for an upload.
@@ -297,7 +302,7 @@ installation or before RASTATIME-WORKER ran, the field takes the number.
 The CBA upload interface has no setting for comments; the default of the
 CBA user applies.
 
-### "I ticked profiles but they do not appear in the overview."
+### "I chose a team but the show does not appear in the overview."
 
 The overview only lists shows that **aired** in the chosen year.  A new
 show appears after its first episode has ended.
@@ -305,15 +310,21 @@ show appears after its first episode has ended.
 ### "The Archiving section is missing or greyed out."
 
 It is missing in **Edit Instance** - the section belongs to the whole
-show; use **Episode...** for one episode.  It is greyed out when you are
+show; use **Archive Online** for one episode.  It is greyed out when you are
 not a Program Manager or Admin.
 
 ### "An episode was not archived automatically."
 
-Open **Episode...**: the block *Online archive* says why - the switch is
+Open **Archive Online**: the block *Online archive* says why - the switch is
 off, the box *Do not archive* is ticked, the episode ended before the
 switch was turned on, it waits for something, or the run gave up and
 why.  Archive it by hand from there.
+
+### "Where are Editorial Team and CBA Accounts?"
+
+Since 2026-11-03 both are on one page, **Settings → Archiving**: the
+editorial teams on top, the CBA accounts with the upload limit and the
+waiting time below (Admins only).
 
 ---
 

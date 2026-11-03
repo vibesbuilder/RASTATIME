@@ -6864,6 +6864,12 @@ legte der naechste Durchlauf den Auftrag selbst an (Trigger `auto`),
 Upload 36 MB in 85 s, Beitrag oeffentlich, Episode verknuepft.  Rest:
 Wartezeit wieder auf den gewuenschten Wert stellen (Operator).
 
+Nachtrag 2026-11-03 (Operator, Feinschliff §23.82): Settings "Archiving"
+als eine Seite (Teams + CBA-Konten), ein Redaktionsteam je Sendung
+(Dropdown), Kalender "Archive Online", ohne Beschreibung geht der
+Sendungsname als Text an cba.media.  Offen: Apache- + WORKER-Neustart,
+Sichtprobe durch den Operator.
+
 Nachtrag 2026-11-03 (Operator-Go): Hinweis "Sendung ohne Beschreibung"
 unter dem Schalter gebaut - das Formular prueft die Beschreibung nicht (sie
 kann je Episode kommen), bei der Abnahme wartete die erste Episode genau

@@ -7,7 +7,8 @@
 
 El menú Ajustes es la superficie de configuración de la emisora.  La
 mayoría de las páginas pertenecen a los **Admins**;
-un **Program Manager** ve *Mi Perfil*, *Show Templates* y *Auto DJ*; los
+un **Program Manager** ve *Mi Perfil*, *Show Templates*, *Auto DJ* y los equipos de
+redacción en *Archivo*; los
 invitados y los DJ solo ven *Mi Perfil*.  Vea
 [Usuarios y roles](./USERS_AND_ROLES.md) §2 para la matriz completa de
 permisos.
@@ -25,8 +26,7 @@ Navegación izquierda → **Ajustes** abre el submenú:
 | **Usuarios** | Crear, editar y eliminar usuarios y definir su tipo. | Admin | [Usuarios y roles](./USERS_AND_ROLES.md) §3 |
 | **Tipos de pista** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream. | Admin | [Biblioteca](./LIBRARY.md) |
 | **Show Templates** | Resumen de las plantillas de programa guardadas: renombrar, eliminar. | Program Manager, Admin | [Plantillas de programa](./SHOW_TEMPLATES.md) |
-| **Editorial Team** (Equipo de redacción) | Perfiles de las personas detrás de los programas (nombre, cuenta opcional), elegidos por programa en Archivo. | Program Manager, Admin | [Archivo](./ARCHIVING.md) |
-| **CBA Accounts** (Cuentas de CBA) | Los usuarios de cba.media con los que se archivan los programas (usuario, contraseña de aplicación), prueba de conexión, límite de subida, tiempo de espera del archivo automático. | Admin | [Archivo](./ARCHIVING.md) |
+| **Archivo** | Equipos de redacción detrás de los programas (nombre, cuenta opcional; uno por programa, elegido en Archivo); para los Admins, debajo, los usuarios de cba.media con los que se archivan los programas (usuario, contraseña de aplicación), prueba de conexión, límite de subida, tiempo de espera del archivo automático. Hasta el 2026-11-03, dos entradas, *Equipo de redacción* y *Cuentas de CBA*. | Program Manager (equipos), Admin | [Archivo](./ARCHIVING.md) |
 | **Auto DJ** | Relleno de huecos y completado de programas incompletos. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Streams de salida (bitrate, punto de montaje, códec), entradas para conexiones en directo, credencial Master. | Admin | [Streams](./STREAMS.md) |
 | **Máquina local** | Tarjeta de sonido, carpeta y formato de importación, carpeta y formato de grabación, ubicación de la biblioteca. | Admin | [Máquina local](./LOCAL_MACHINE.md) |
@@ -228,7 +228,8 @@ en un control de versiones.
 
 ### «¿Qué configuraciones puede abrir un Program Manager?»
 
-*Mi Perfil*, *Show Templates* y *Auto DJ*.  Todo lo demás en Ajustes
+*Mi Perfil*, *Show Templates*, *Auto DJ* y los equipos de redacción en
+*Archivo*.  Todo lo demás en Ajustes
 pertenece a los Admins.  Vea [Usuarios y roles](./USERS_AND_ROLES.md) §1-§2.
 
 ---

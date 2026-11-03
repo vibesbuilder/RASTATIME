@@ -12,7 +12,7 @@ $rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['participant
 <div class="ui-widget prefpanel clearfix padded-strong rt-participants">
     <h2><?php echo _("Participants"); ?></h2>
     <p class="rt-participants-note">
-        <?php echo _("People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Episode... in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."); ?>
+        <?php echo _("People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Archive Online in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."); ?>
     </p>
     <?php if (!$this->ready): ?>
         <p class="rt-participants-warn"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
@@ -37,11 +37,11 @@ $rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['participant
         <div><strong><?php echo (int) $t['episodes']; ?></strong><span><?php echo _("Episodes aired"); ?></span></div>
         <div><strong><?php echo (int) $t['participants']; ?></strong><span><?php echo _("People involved (sum over the shows)"); ?></span></div>
         <div><strong><?php echo (int) $t['person_episodes']; ?></strong><span><?php echo _("Participations"); ?></span></div>
-        <div><strong><?php echo (int) $t['profiles']; ?></strong><span><?php echo _("Editorial team profiles"); ?></span></div>
+        <div><strong><?php echo (int) $t['profiles']; ?></strong><span><?php echo _("Editorial teams"); ?></span></div>
         <div class="<?php echo $t['missing'] ? 'rt-participants-missing' : ''; ?>"><strong><?php echo (int) $t['missing']; ?></strong><span><?php echo _("Shows without a value"); ?></span></div>
     </div>
     <p class="rt-participants-note">
-        <?php echo _("A person in several shows counts once per show in \"People involved\"; the editorial team profiles count each person once. Participations add up the people of every episode."); ?>
+        <?php echo _("A person in several shows counts once per show in \"People involved\"; the editorial teams count each team once. Participations add up the people of every episode."); ?>
     </p>
 
     <?php if (empty($rows)): ?>

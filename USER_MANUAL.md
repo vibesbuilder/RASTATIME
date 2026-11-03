@@ -117,7 +117,7 @@ master document above is the only thing they all assume.
 | [Dashboard](./docs/manual/DASHBOARD.md) | Now-Playing widget, source state, manual override, taking the station live from a microphone. |
 | [Calendar](./docs/manual/CALENDAR.md) | Creating shows, editing, drag-and-drop, recurring shows, repeats, hosts. |
 | [Show Templates](./docs/manual/SHOW_TEMPLATES.md) | Reusing show settings without re-typing them every week. |
-| [Archiving](./docs/manual/ARCHIVING.md) | Archiving episodes on cba.media: editorial team, CBA accounts, the archiving defaults of a show, per-episode title, teaser and image, "Archive online" from the calendar, and the yearly participants overview. |
+| [Archiving](./docs/manual/ARCHIVING.md) | Archiving episodes on cba.media: editorial teams and CBA accounts (Settings → Archiving), the archiving defaults of a show, per-episode title, teaser and image, "Archive Online" from the calendar, and the yearly participants overview. |
 | [Import / Export](./docs/manual/IMPORT_EXPORT.md) | Exporting users, shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, keeping them in a spreadsheet and importing them again with a preview. |
 | [Delayed Show Start](./docs/manual/DELAYED_START.md) | Letting an opted-in show start late when the show before it overran, instead of trimming that show. The delay ripples across consecutive opted-in shows up to the first fixed-time anchor. |
 
