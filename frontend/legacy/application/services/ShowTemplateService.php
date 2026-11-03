@@ -47,6 +47,7 @@ class Application_Service_ShowTemplateService
         'add_show_url',
         'add_show_genre',
         'add_show_description',
+        'add_show_own_production',    // RASTATIME 2026-11-03 - yearly report
         // "When" form (duration + repeat shape only — no start_date/time)
         'add_show_duration',
         'add_show_repeats',

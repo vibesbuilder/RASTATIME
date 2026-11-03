@@ -163,6 +163,8 @@ class Application_Service_ShowFormService
                 'add_show_genre' => $this->ccShow->getDbGenre(),
                 'add_show_description' => $this->ccShow->getDbDescription(),
                 'add_show_instance_description' => $ccShowInstance->getDbDescription(),
+                // RASTATIME 2026-11-03 - yearly report
+                'add_show_own_production' => Application_Service_YearlyReportService::ownProduction($this->ccShow->getDbId()) ? 1 : 0,
             ]
         );
     }

@@ -1,0 +1,138 @@
+<?php
+// RASTATIME 2026-11-03 - Analytics → Yearly Report: programme minutes of the
+// own productions (cc_show.own_production, migration 0077) and the
+// participants overview of the archiving module, one year selector.
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$base = Config::getBasePath();
+$m = $this->minutes;
+$mt = $m['totals'];
+$p = $this->participants;
+$pt = $p['totals'];
+$fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
+?>
+<div class="ui-widget prefpanel clearfix padded-strong rt-participants rt-yearly">
+    <h2><?php echo _("Yearly Report"); ?></h2>
+    <form method="get" action="<?php echo $h($base . 'yearlyreport'); ?>" class="rt-participants-filter">
+        <label for="rt_yearly_year"><?php echo _("Year"); ?></label>
+        <select name="year" id="rt_yearly_year" class="input_select" onchange="this.form.submit()">
+            <?php foreach ($this->years as $y): ?>
+                <option value="<?php echo (int) $y; ?>"<?php echo $y === $this->year ? ' selected' : ''; ?>><?php echo (int) $y; ?></option>
+            <?php endforeach; ?>
+        </select>
+        <?php if ($this->isCurrentYear): ?>
+            <span class="rt-participants-note"><?php echo sprintf(_("%d so far (up to %s)."), (int) $this->year, $h($this->today)); ?></span>
+        <?php endif; ?>
+    </form>
+
+    <h3><?php echo _("Programme minutes"); ?></h3>
+    <p class="rt-participants-note">
+        <?php echo _("Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows set up as \"Repeat of another show\" are listed in the repeats column."); ?>
+    </p>
+    <?php if (!$this->columnReady): ?>
+        <p class="rt-participants-warn"><?php echo _("The column for \"Own production\" is missing - run the database migration 0077 first. Until then every show counts as \"other\"."); ?></p>
+    <?php endif; ?>
+    <p>
+        <a class="btn" href="<?php echo $h($base . 'yearlyreport/minutes-csv?year=' . (int) $this->year); ?>"><?php echo _("Download CSV (minutes)"); ?></a>
+    </p>
+    <div class="rt-participants-totals">
+        <div><strong><?php echo $fmt($mt['minutes_first']); ?></strong><span><?php echo _("Minutes, own productions, first broadcasts"); ?></span></div>
+        <div><strong><?php echo $fmt($mt['minutes_repeat']); ?></strong><span><?php echo _("Minutes, own productions, repeats"); ?></span></div>
+        <div><strong><?php echo $fmt($mt['minutes_own']); ?></strong><span><?php echo _("Minutes, own productions, total"); ?></span></div>
+        <div><strong><?php echo $fmt($mt['episodes_own']); ?></strong><span><?php echo _("Episodes, own productions"); ?></span></div>
+        <div><strong><?php echo $fmt($mt['shows_own']); ?></strong><span><?php echo _("Shows with \"Own production\""); ?></span></div>
+        <div><strong><?php echo $fmt($mt['minutes_other']); ?></strong><span><?php echo _("Minutes, other shows (not counted)"); ?></span></div>
+    </div>
+
+    <table class="datatable rt-participants-table rt-yearly-months">
+        <thead>
+            <tr>
+                <th><?php echo _("Month"); ?></th>
+                <th class="num"><?php echo _("Episodes aired"); ?></th>
+                <th class="num"><?php echo _("Minutes, first broadcasts"); ?></th>
+                <th class="num"><?php echo _("Minutes, repeats"); ?></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php $i = 0; foreach ($m['months'] as $mon => $row): ?>
+                <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
+                    <td><?php echo $h($this->monthNames[$mon]); ?></td>
+                    <td class="num"><?php echo $row['episodes'] ?: ''; ?></td>
+                    <td class="num"><?php echo $row['minutes_first'] ? $fmt($row['minutes_first']) : ''; ?></td>
+                    <td class="num"><?php echo $row['minutes_repeat'] ? $fmt($row['minutes_repeat']) : ''; ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <?php if (empty($m['rows'])): ?>
+        <p class="rt-participants-empty"><?php echo _("No show aired in this year."); ?></p>
+    <?php else: ?>
+        <table class="datatable rt-participants-table rt-yearly-shows">
+            <thead>
+                <tr>
+                    <th><?php echo _("Show name"); ?></th>
+                    <th><?php echo _("Own production"); ?></th>
+                    <th class="num"><?php echo _("Episodes aired"); ?></th>
+                    <th class="num"><?php echo _("Minutes"); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i = 0; foreach ($m['rows'] as $row): ?>
+                    <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?><?php echo $row['own_production'] ? '' : ' rt-yearly-other'; ?>">
+                        <td><?php echo $h($row['name']); ?><?php if ($row['is_repeat']): ?> <span class="rt-participants-tag"><?php echo _("Repeat"); ?></span><?php endif; ?></td>
+                        <td><?php echo $row['own_production'] ? _("yes") : '&ndash;'; ?></td>
+                        <td class="num"><?php echo (int) $row['episodes']; ?></td>
+                        <td class="num"><?php echo $fmt($row['minutes']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+
+    <h3><?php echo _("Participants"); ?></h3>
+    <p class="rt-participants-note">
+        <?php echo _("People involved in the shows. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Archive Online in the calendar). A person in several shows counts once per show in \"People involved\"; Participations add up the people of every episode."); ?>
+        <a href="<?php echo $h($base . 'archiving/participants?year=' . (int) $this->year . '&missing=1'); ?>"><?php echo _("Shows without a value"); ?></a>
+        &middot;
+        <a href="<?php echo $h($base . 'archiving/participants-csv?year=' . (int) $this->year); ?>"><?php echo _("Download CSV (participants)"); ?></a>
+    </p>
+    <?php if (!$this->archivingReady): ?>
+        <p class="rt-participants-warn"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
+    <?php endif; ?>
+    <div class="rt-participants-totals">
+        <div><strong><?php echo (int) $pt['shows']; ?></strong><span><?php echo _("Shows aired"); ?></span></div>
+        <div><strong><?php echo (int) $pt['episodes']; ?></strong><span><?php echo _("Episodes aired"); ?></span></div>
+        <div><strong><?php echo (int) $pt['participants']; ?></strong><span><?php echo _("People involved (sum over the shows)"); ?></span></div>
+        <div><strong><?php echo (int) $pt['person_episodes']; ?></strong><span><?php echo _("Participations"); ?></span></div>
+        <div><strong><?php echo (int) $pt['profiles']; ?></strong><span><?php echo _("Editorial teams"); ?></span></div>
+        <div class="<?php echo $pt['missing'] ? 'rt-participants-missing' : ''; ?>"><strong><?php echo (int) $pt['missing']; ?></strong><span><?php echo _("Shows without a value"); ?></span></div>
+    </div>
+    <?php if (empty($p['rows'])): ?>
+        <p class="rt-participants-empty"><?php echo _("No show aired in this year."); ?></p>
+    <?php else: ?>
+        <table class="datatable rt-participants-table">
+            <thead>
+                <tr>
+                    <th><?php echo _("Show name"); ?></th>
+                    <th class="num"><?php echo _("Episodes aired"); ?></th>
+                    <th class="num"><?php echo _("People involved"); ?></th>
+                    <th class="num"><?php echo _("Episodes with own value"); ?></th>
+                    <th class="num"><?php echo _("Participations"); ?></th>
+                    <th><?php echo _("Editorial team"); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i = 0; foreach ($p['rows'] as $row): ?>
+                    <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
+                        <td><?php echo $h($row['name']); ?><?php if ($row['is_repeat']): ?> <span class="rt-participants-tag"><?php echo _("Repeat"); ?></span><?php endif; ?></td>
+                        <td class="num"><?php echo (int) $row['episodes']; ?></td>
+                        <td class="num<?php echo $row['participants'] === null ? ' rt-participants-missing' : ''; ?>"><?php echo $row['participants'] === null ? '&ndash;' : (int) $row['participants']; ?></td>
+                        <td class="num"><?php echo $row['overrides'] ?: ''; ?></td>
+                        <td class="num"><?php echo $row['person_episodes'] === null ? '&ndash;' : (int) $row['person_episodes']; ?></td>
+                        <td><?php echo $h($row['team']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</div>

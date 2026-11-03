@@ -5919,3 +5919,16 @@ div.dt-button-collection .dt-button > span {
     width: 100%;
     margin-top: 6px;
 }
+
+/* RASTATIME 2026-11-03 - Analytics -> Yearly Report (programme minutes +
+   participants, same look as .rt-participants) */
+.rt-yearly h3 {
+    margin: 1.4em 0 0.4em;
+}
+.rt-yearly .rt-yearly-months {
+    max-width: 640px;
+    margin-bottom: 1em;
+}
+.rt-yearly tr.rt-yearly-other td {
+    color: #8a8a8a;
+}

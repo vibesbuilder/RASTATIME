@@ -1835,6 +1835,12 @@ SQL;
             'execute'
         );
 
+        // RASTATIME 2026-11-03 - yearly report: "Own production" (raw SQL, migration 0077)
+        Application_Service_YearlyReportService::setOwnProduction(
+            $ccShow->getDbId(),
+            !empty($showData['add_show_own_production'])
+        );
+
         // RASTATIME 2026-10-18 - "Repeat of show" (raw SQL, migration 0071)
         Application_Service_RepeatFillService::setRepeatOf(
             $ccShow->getDbId(),

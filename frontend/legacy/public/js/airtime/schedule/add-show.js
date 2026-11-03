@@ -1381,6 +1381,7 @@ function applyShowTemplate(form, td) {
   // record state and does not clobber an explicit linked=true from a
   // record=false template).
   setCheck("add_show_record", td.add_show_record);
+  setCheck("add_show_own_production", td.add_show_own_production); // RASTATIME 2026-11-03
 
   // Autoloading Playlist
   setCheck("add_show_has_autoplaylist", td.add_show_has_autoplaylist);

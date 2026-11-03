@@ -46,7 +46,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
     public function columns(): array
     {
         return ['name', 'url', 'genre', 'description', 'start_date', 'start_time', 'end_date', 'end_time', 'timezone',
-            'allow_delayed_start', 'repeats', 'repeat_type', 'days', 'months', 'repeat_end_date', 'no_end', 'linked', 'record',
+            'allow_delayed_start', 'own_production', 'repeats', 'repeat_type', 'days', 'months', 'repeat_end_date', 'no_end', 'linked', 'record',
             'content', 'content_repeat', 'intro_playlist', 'outro_playlist', 'repeat_of', 'rastatime_auth', 'custom_auth', 'custom_username',
             'djs', 'background_color', 'text_color', 'logo', ];
     }
@@ -60,6 +60,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'end_date, end_time' => 'end of that broadcast; end_date may be empty (same day, or next day when end_time <= start_time)',
             'timezone' => 'IANA name, e.g. Europe/Berlin; empty = station default',
             'allow_delayed_start' => 'yes/no',
+            'own_production' => "yes/no - the station's own production, counted in Analytics -> Yearly Report (programme minutes)",
             'repeats' => 'yes/no; repeat_type: none | weekly | biweekly | every_3_weeks | every_4_weeks | monthly_date | monthly_weekday',
             'days' => 'for weekly types: Mon,Tue,Wed,Thu,Fri,Sat,Sun (also Mo,Di,Mi,Do,Fr,Sa,So); empty = weekday of start_date',
             'months' => 'for monthly types: Jan,Feb,...,Dec or 1..12 (German short names work too); empty = every month',
@@ -91,7 +92,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
         return [[
             'name' => 'Morning Show', 'url' => 'https://example.org/morning', 'genre' => 'Talk', 'description' => 'Wake-up programme',
             'start_date' => $monday, 'start_time' => '07:00', 'end_date' => '', 'end_time' => '09:00', 'timezone' => '',
-            'allow_delayed_start' => 'no', 'repeats' => 'yes', 'repeat_type' => 'weekly', 'days' => 'Mon,Tue,Wed,Thu,Fri',
+            'allow_delayed_start' => 'no', 'own_production' => 'yes', 'repeats' => 'yes', 'repeat_type' => 'weekly', 'days' => 'Mon,Tue,Wed,Thu,Fri',
             'repeat_end_date' => '', 'no_end' => 'yes', 'linked' => 'no', 'record' => 'no',
             'content' => 'Morning Show', 'content_repeat' => 'yes', 'intro_playlist' => '', 'outro_playlist' => '', 'repeat_of' => '',
             'rastatime_auth' => 'yes', 'custom_auth' => 'no', 'custom_username' => '', 'djs' => 'dj1',
@@ -248,7 +249,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
                 $rec['_errors'][] = _('repeat_end_date must be YYYY-MM-DD');
             }
             $rec['no_end'] = $rec['repeats'] && ($rec['repeat_end_date'] === null || self::toBool($g('no_end')));
-            foreach (['allow_delayed_start', 'linked', 'record', 'content_repeat', 'rastatime_auth', 'custom_auth'] as $b) {
+            foreach (['allow_delayed_start', 'own_production', 'linked', 'record', 'content_repeat', 'rastatime_auth', 'custom_auth'] as $b) {
                 $rec[$b] = self::toBool($g($b));
             }
             if ($g('rastatime_auth') === '' && $g('custom_auth') === '') {
@@ -387,6 +388,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'add_show_duration' => $h . 'h ' . $m . 'm',
             'add_show_timezone' => $record['timezone'],
             'add_show_allow_delayed_start' => $record['allow_delayed_start'] ? 1 : 0,
+            'add_show_own_production' => $record['own_production'] ? 1 : 0,  // RASTATIME 2026-11-03
             'add_show_repeats' => $record['repeats'] ? 1 : 0,
             'add_show_repeat_type' => $record['repeats'] ? (string) (in_array($repeatCode, [2, 3], true) ? 2 : $repeatCode) : '0',
             'add_show_monthly_repeat_type' => (string) ($repeatCode === 3 ? 3 : 2),
@@ -536,6 +538,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
                    s.linked, s.image_path, s.has_autoplaylist, s.autoplaylist_id, s.autoplaylist_repeat,
                    s.override_intro_playlist, s.intro_playlist_id, s.override_outro_playlist, s.outro_playlist_id,
                    s.allow_delayed_start,
+                   (to_jsonb(s) ->> 'own_production') AS own_production,
                    (SELECT min(i.starts) FROM cc_show_instances i WHERE i.show_id = s.id AND i.ends > now() AT TIME ZONE 'UTC' AND i.modified_instance = false) AS next_start
               FROM cc_show s
              WHERE EXISTS (SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.ends > now() AT TIME ZONE 'UTC' AND i.modified_instance = false)
@@ -615,6 +618,7 @@ SQL;
                 'end_time' => $endLocal->format('H:i'),
                 'timezone' => $tz,
                 'allow_delayed_start' => self::boolOut($pg($s['allow_delayed_start'])),
+                'own_production' => self::boolOut(in_array($s['own_production'], ['true', 't', '1'], true)),
                 'repeats' => self::boolOut($repeat !== -1),
                 'repeat_type' => self::REPEAT_OUT[$repeat] ?? 'none',
                 'days' => implode(',', array_unique($dayNames)),

@@ -290,14 +290,15 @@ $pages[] = [
             'resource' => 'showlistenerstat',
         ],
         [
-            // RASTATIME 2026-11-03 - archiving stage 1: people involved per
-            // show and year (Program Managers and Admins)
-            'label' => 'Participants',
+            // RASTATIME 2026-11-03 - yearly report: programme minutes of the own
+            // productions + the participants overview of the archiving module
+            // (Program Managers and Admins); archiving/participants stays
+            // reachable for the "shows without a value" filter
+            'label' => 'Yearly Report',
             'module' => 'default',
-            'controller' => 'archiving',
-            'action' => 'participants',
-            'resource' => 'archiving',
-            'privilege' => 'participants',
+            'controller' => 'yearlyreport',
+            'action' => 'index',
+            'resource' => 'yearlyreport',
         ],
     ],
 ];

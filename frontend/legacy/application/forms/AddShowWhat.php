@@ -49,6 +49,13 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
             'validators' => [['StringLength', false, [0, $maxLens['genre']]]],
         ]);
 
+        // RASTATIME 2026-11-03 - yearly report: the station's own production
+        // (counted in Analytics -> Yearly Report -> Programme minutes)
+        $this->addElement('checkbox', 'add_show_own_production', [
+            'label' => _('Own production:'),
+            'required' => false,
+        ]);
+
         // Add the description element
         $this->addElement('textarea', 'add_show_description', [
             'label' => _('Description:'),
