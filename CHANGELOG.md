@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   „Account saved.“ und die Redaktionsteam-Seite).  Die Weiterleitung trägt jetzt einen
   festen Code, das Testergebnis erscheint direkt.  cba.media meldet die Rolle als
   `station_manager`, die API-Beschreibung schreibt `stationmanager`; der Vergleich
-  ignoriert jetzt Unterstriche.  Commit `<hash>`.
+  ignoriert jetzt Unterstriche.  Commit `79c66ccd`.
 
 ### Security
 
