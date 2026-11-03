@@ -7583,3 +7583,7 @@ msgstr "Zuerst auf cba.media nachsehen, dann im Kalender unter Episode... den Be
 #: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
 msgid "Archive it by hand under Episode... in the calendar."
 msgstr "Im Kalender unter Episode... von Hand archivieren."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (show without a description)
+msgid "The show has no description - each episode then needs its own (Episode... in the calendar), otherwise automatic archiving waits for it."
+msgstr "Die Sendung hat keine Beschreibung - dann braucht jede Episode eine eigene (Episode... im Kalender), sonst wartet das automatische Archivieren darauf."

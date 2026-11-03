@@ -363,6 +363,15 @@ function setAddShowEvents(form) {
     form.find("#add_show_autoplaylist_repeat").toggle();
   });
 
+  // RASTATIME 2026-11-03 - archiving stage 3: automatic archiving waits for
+  // a description; say so while the switch is on and the show has none.
+  form
+    .find("#add_show_cba_auto, #add_show_description")
+    .on("change input", function () {
+      syncArchiveDescriptionHint(form);
+    });
+  syncArchiveDescriptionHint(form);
+
   form.find("#add_show_repeats").click(function () {
     $(this).blur();
     form.find("#schedule-show-when > fieldset:last").toggle();
@@ -1511,6 +1520,19 @@ function syncDependentVisibility(form) {
   } else {
     form.find("#add_show_end_date").show();
   }
+
+  syncArchiveDescriptionHint(form);
+}
+
+/**
+ * RASTATIME 2026-11-03 - archiving stage 3: the note below "Archive
+ * automatically" while the switch is on and the show has no description
+ * (each episode then needs its own, or the automatic run waits).
+ */
+function syncArchiveDescriptionHint(form) {
+  var auto = !!form.find("#add_show_cba_auto").prop("checked");
+  var desc = $.trim(form.find("#add_show_description").val() || "");
+  form.find("#add_show_cba_auto_nodesc").toggle(auto && desc === "");
 }
 
 function showErrorSections() {

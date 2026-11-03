@@ -95,7 +95,7 @@ own.
 | **Tags** | Comma-separated tags for cba.media. |
 | **Default teaser** | Used for every episode without a teaser of its own. |
 | **Contains copyrighted music (AKM)** | The episodes usually contain music subject to copyright; cba.media then restricts the download. |
-| **Archive automatically** | Archive every new episode on cba.media by itself (§5, *Automatically*). Needs a CBA account, topic, language and licence; next to the box: since when it is on. |
+| **Archive automatically** | Archive every new episode on cba.media by itself (§5, *Automatically*). Needs a CBA account, topic, language and licence; next to the box: since when it is on. If the show has no description, a note below the box says that each episode then needs its own. |
 
 **Which licence?**  The CBA web form asks three questions; the licence
 answers them:

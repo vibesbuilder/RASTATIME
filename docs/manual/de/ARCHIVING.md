@@ -103,7 +103,7 @@ jede Episode der Sendung, solange eine Episode keine eigenen setzt.
 | **Schlagworte** | Schlagworte für cba.media, durch Komma getrennt. |
 | **Standard-Teaser** | Gilt für jede Episode ohne eigenen Teaser. |
 | **Enthält urheberrechtlich geschützte Musik (AKM)** | Die Episoden enthalten üblicherweise geschützte Musik; cba.media schränkt dann den Download ein. |
-| **Automatisch archivieren** | Jede neue Episode von selbst auf cba.media archivieren (§5, *Automatisch*). Braucht CBA-Konto, Thema, Sprache und Lizenz; neben dem Kästchen steht, seit wann es eingeschaltet ist. |
+| **Automatisch archivieren** | Jede neue Episode von selbst auf cba.media archivieren (§5, *Automatisch*). Braucht CBA-Konto, Thema, Sprache und Lizenz; neben dem Kästchen steht, seit wann es eingeschaltet ist. Hat die Sendung keine Beschreibung, weist ein Hinweis unter dem Kästchen darauf hin, dass dann jede Episode eine eigene braucht. |
 
 **Welche Lizenz?**  Das CBA-Webformular stellt drei Fragen; die Lizenz
 beantwortet sie:

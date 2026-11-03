@@ -103,7 +103,7 @@ siennes.
 | **Mots-clés** | Mots-clés pour cba.media, séparés par des virgules. |
 | **Accroche par défaut** | Utilisée pour chaque épisode sans accroche propre. |
 | **Contient de la musique protégée (AKM)** | Les épisodes contiennent habituellement de la musique protégée ; cba.media restreint alors le téléchargement. |
-| **Archiver automatiquement** | Archiver chaque nouvel épisode sur cba.media tout seul (§5, *Automatiquement*). Nécessite un compte CBA, un thème, une langue et une licence ; à côté de la case : depuis quand elle est activée. |
+| **Archiver automatiquement** | Archiver chaque nouvel épisode sur cba.media tout seul (§5, *Automatiquement*). Nécessite un compte CBA, un thème, une langue et une licence ; à côté de la case : depuis quand elle est activée. Si l'émission n'a pas de description, une remarque sous la case indique que chaque épisode a alors besoin de la sienne. |
 
 **Quelle licence ?**  Le formulaire web de la CBA pose trois questions ;
 la licence y répond :

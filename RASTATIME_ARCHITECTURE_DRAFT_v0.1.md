@@ -8595,7 +8595,11 @@ Episode... .
 **Legacy.**  Archiving section: "Archive automatically" with "on since"
 (station time); validation requires account, topic, language and licence
 when it is ticked; `saveShow()` keeps `auto_since` in the upsert (`CASE`
-on the old row).  Settings → CBA Accounts: waiting time (0-1440 min).
+on the old row).  A description is not required there (an episode may
+bring its own); a note below the switch says so while the switch is on and
+the show's description is empty (`syncArchiveDescriptionHint()` in
+`add-show.js`, added after the acceptance, where the first episode waited
+for exactly that).  Settings → CBA Accounts: waiting time (0-1440 min).
 Episode dialog: one line from `autoState()` (off / archived / job /
 never / excluded / before / scheduled with the due time / waiting with
 the give-up time and a short-recording note) and the state `skipped`.

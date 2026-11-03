@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Archivierung: Hinweis „Sendung ohne Beschreibung“ (2026-11-03, Operator-Wunsch nach der
+  Abnahme)** — Ist im Abschnitt **Archiving** der Sendung **Archive automatically** angehakt
+  und hat die Sendung keine Beschreibung, steht darunter ein Hinweis: Jede Episode braucht
+  dann eine eigene (Episode... im Kalender), sonst wartet die Automatik darauf.  Bei der
+  Abnahme wartete die erste automatische Episode genau deshalb.  Nur ein Hinweis, keine
+  Sperre; er folgt dem Kästchen und dem Beschreibungsfeld ohne Neuladen.  Commit `<hash>`.
 - **Archivierung Stufe 3: automatisch archivieren (2026-11-03, Operator-Go)** — Im
   Abschnitt **Archiving** der Sendung neu **Archive automatically** (ab Werk aus): Der
   Worker stellt jede neue Episode nach einer Wartezeit (Settings → CBA Accounts, Standard

@@ -7940,3 +7940,7 @@ msgstr "Vérifiez d'abord sur cba.media, puis liez l'article ou archivez à nouv
 #: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
 msgid "Archive it by hand under Episode... in the calendar."
 msgstr "Archivez-le à la main sous Épisode... dans le calendrier."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (show without a description)
+msgid "The show has no description - each episode then needs its own (Episode... in the calendar), otherwise automatic archiving waits for it."
+msgstr "L'émission n'a pas de description - chaque épisode a alors besoin de la sienne (Épisode... dans le calendrier), sinon l'archivage automatique l'attend."

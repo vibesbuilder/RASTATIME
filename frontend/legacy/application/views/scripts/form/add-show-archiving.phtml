@@ -79,6 +79,8 @@ $row = function ($name, $wide = true) use ($f, $h, $tips) {
                 <?php if ($errs = $f->getElement('add_show_cba_auto')->getMessages()): ?>
                     <ul class="errors"><?php foreach ($errs as $e): ?><li><?php echo $h($e); ?></li><?php endforeach; ?></ul>
                 <?php endif; ?>
+                <?php // shown by add-show.js while the switch is on and the show has no description ?>
+                <p id="add_show_cba_auto_nodesc" class="rt-archiving-note" style="display: none"><?php echo $h(_('The show has no description - each episode then needs its own (Episode... in the calendar), otherwise automatic archiving waits for it.')); ?></p>
             </dt>
         <?php endif; ?>
     </dl>

@@ -102,7 +102,7 @@ un episodio no fije los suyos.
 | **Etiquetas** | Etiquetas para cba.media, separadas por comas. |
 | **Teaser predeterminado** | Se usa en cada episodio sin teaser propio. |
 | **Contiene música protegida (AKM)** | Los episodios suelen contener música protegida; cba.media restringe entonces la descarga. |
-| **Archivar automáticamente** | Archivar cada episodio nuevo en cba.media por sí solo (§5, *Automáticamente*). Necesita cuenta de CBA, tema, idioma y licencia; junto a la casilla: desde cuándo está activado. |
+| **Archivar automáticamente** | Archivar cada episodio nuevo en cba.media por sí solo (§5, *Automáticamente*). Necesita cuenta de CBA, tema, idioma y licencia; junto a la casilla: desde cuándo está activado. Si el programa no tiene descripción, una nota bajo la casilla indica que cada episodio necesita entonces la suya. |
 
 **¿Qué licencia?**  El formulario web de la CBA hace tres preguntas; la
 licencia las responde:

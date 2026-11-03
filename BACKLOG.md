@@ -6864,13 +6864,10 @@ legte der naechste Durchlauf den Auftrag selbst an (Trigger `auto`),
 Upload 36 MB in 85 s, Beitrag oeffentlich, Episode verknuepft.  Rest:
 Wartezeit wieder auf den gewuenschten Wert stellen (Operator).
 
-### 💡 Hinweis "Sendung ohne Beschreibung" beim Einschalten der Automatik (Operator 2026-11-03: offen)
-
-Das Sendungsformular prueft bei "Archive automatically" Konto, Thema,
-Sprache und Lizenz, nicht die Beschreibung (sie kann je Episode kommen).
-Bei der Abnahme wartete die erste Episode deshalb auf eine Beschreibung.
-Idee: ein Hinweis (keine Sperre) im Abschnitt Archiving, wenn die Sendung
-keine Beschreibung hat.  Aufwand ~1 h, nur Legacy, kein Neustart.
+Nachtrag 2026-11-03 (Operator-Go): Hinweis "Sendung ohne Beschreibung"
+unter dem Schalter gebaut - das Formular prueft die Beschreibung nicht (sie
+kann je Episode kommen), bei der Abnahme wartete die erste Episode genau
+darauf.  Nur Hinweis, keine Sperre; neue Texte nach Apache-Neustart.
 
 ### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
 
