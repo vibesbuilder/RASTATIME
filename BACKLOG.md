@@ -6749,6 +6749,11 @@ ob `api_key` noetig ist.  Operator-Klarstellung 2026-11-02: Automatik =
 Upload UND Veroeffentlichung (status publish) einige Minuten nach dem Ende
 jeder Instanz, Redaktionsteam an der (wiederholenden) Sendung; manuell =
 Kontextmenue einer gelaufenen Instanz im Kalender.  Weiterhin kein Go.
+Operator 2026-11-03: zusaetzlich ein **Bild je Episode/Instanz** (optional,
+neben dem Bild der Sendung/des Podcasts) - der zipupload traegt es als
+`image.<ext>` im ZIP mit `image_license`/`image_caption`; Ablage z.B. im
+Instanz-Dialog (Edit Instance) oder beim manuellen Upload waehlbar.
+Das Thema wird in einer eigenen Sitzung (Opus 5.5) bearbeitet.
 
 ### 💡 Segmente fuers 7-Days-Back-Archiv: Beschreibungen je Abschnitt einer Sendung (Operator 2026-11-02: vorerst Backlog)
 
