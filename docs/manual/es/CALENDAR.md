@@ -105,7 +105,7 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |
 | **Quién** | Presentadores adicionales. |
-| **Publicación** | Equipo de redacción, participantes y valores de cba.media del programa (no en Editar emisión). Véase [Publicación](./PUBLISHING.md). Desde el 2026-11-03. |
+| **Archivo** | Equipo de redacción, participantes, cuenta de CBA y valores de cba.media del programa (no en Editar emisión). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
 | **Estilo** | Color de fondo, color de texto, imagen de programa. |
 
 ### Por qué el formulario rechaza su guardado
@@ -133,7 +133,7 @@ acción.
 | **Guardar como plantilla** | Guardar la configuración actual como nueva plantilla. | Siempre |
 | **Ver** | Vista de solo lectura de los metadatos + programación del programa. *Start* y *Length* de cada fila son la fila de programación tal como queda colocada (Length = cue-out menos cue-in, como en el show builder; desde el 2026-10-23); los totales de abajo son la longitud colocada del contenido (con puntos de cue y solapes de crossfade) frente a la duración del programa. | Siempre |
 | **Teasers** | Los jingles que anuncian este programa: cambiar tipos, desvincular, vincular más; véase [Automatización de teasers](./TEASERS.md). Desde 2026-10-16. | Admin / PM |
-| **Episodio...** | Título, teaser, descripción, imagen y participantes de este episodio, antes o después de emitirse; véase [Publicación](./PUBLISHING.md). Desde el 2026-11-03. | Admin / PM / presentadores del programa |
+| **Episodio...** | Título, teaser, descripción, imagen y participantes de este episodio, antes o después de emitirse, y «Archivar en línea» en cba.media; véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. | Admin / PM / presentadores del programa (archivar: Admin / PM) |
 | **Editar programa** | Editar la definición de programa. | Programas futuros o actuales |
 | **Editar instancia** | Editar solo esta ocurrencia de un programa recurrente. | Programas recurrentes solamente |
 | **Cancelar programa** | Terminar el programa *ahora*. | Programa actual solamente |

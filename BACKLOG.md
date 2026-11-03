@@ -503,7 +503,8 @@ ruhiges Fenster):** Dienste stoppen, `rastatime-analyzer` neu installieren (EXE 
 entfernen (überbrücken bis dahin die laufenden Prozesse), nssm-Parameter API/PLAYOUT/ANALYZER/WORKER,
 `libretime.conf` löschen (Kopie `rastatime.conf` liegt), Dienste starten.  **Phase 2 ab 2026-11-01/02:** Stubs,
 Finder, Legacy-Präfix, zweite Entry-Points, PHP-Fallbacks, `.gitignore`-Zeile `config/libretime.conf` entfernen.
-**Umgeschaltet 2026-10-29 14:12–14:16:** die vier Python-Dienste laufen mit `rastatime_*`-Modulen, `rastatime-analyzer.exe` und `RASTATIME_CONFIG_FILEPATH=…astatime.conf`; Junctions entfernt, `libretime.conf` gelöscht (hash-gleich).  Liquidsoap startete planmäßig am Titelende neu (gerendertes Skript änderte nur Kommentarzeilen, Aufhol-Seek +119,9 s); `standby.liq` ebenso nur Kommentare, STANDBY-Neustart nicht nötig.  Das Skript brach zweimal ab (TimeSpan-Literal `00:00:60`; natives stderr unter `2>&1` wird in PowerShell 5.1 zum Abbruchfehler), Schritte 2a–4 von Hand; Skript als Protokoll korrigiert.
+**Umgeschaltet 2026-10-29 14:12–14:16:** die vier Python-Dienste laufen mit `rastatime_*`-Modulen, `rastatime-analyzer.exe` und `RASTATIME_CONFIG_FILEPATH=…
+astatime.conf`; Junctions entfernt, `libretime.conf` gelöscht (hash-gleich).  Liquidsoap startete planmäßig am Titelende neu (gerendertes Skript änderte nur Kommentarzeilen, Aufhol-Seek +119,9 s); `standby.liq` ebenso nur Kommentare, STANDBY-Neustart nicht nötig.  Das Skript brach zweimal ab (TimeSpan-Literal `00:00:60`; natives stderr unter `2>&1` wird in PowerShell 5.1 zum Abbruchfehler), Schritte 2a–4 von Hand; Skript als Protokoll korrigiert.
 **Inventur + Instrumentierung 2026-10-29 nachmittags (Operator-Go):** kein geplanter Task, keine
 Umgebungsvariable, keine Apache-Direktive, kein weiterer Dienst zeigt auf alte Namen; Analyzer-Retry-Queue
 leer; 25 Probe-Werkzeuge in `C:\Temp\optd` auf neue Namen gezogen (Sicherung `_pre_stage_b_sweep/`).
@@ -6689,7 +6690,7 @@ frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an 
 
 ## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
 
-### 🟢 CBA-Anbindung: automatische Veroeffentlichung von Episoden auf cba.media - Stufe 1 gebaut 2026-11-03, Stufe 2 wartet auf CBA (evaluiert 2026-11-01)
+### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 gebaut 2026-11-03, Stufe 3 offen (evaluiert 2026-11-01)
 
 Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
 hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
@@ -6824,6 +6825,21 @@ ein Bild (jpg, gif, png).  Kein Endpunkt zum nachtraeglichen Aendern;
   Import (Vorschlag 30 min), Wiederholen bis 24 h, danach Grund im Dialog.
 - Manueller Upload darf statt der Aufzeichnung eine andere Library-Datei
   nehmen (nur Formate, die CBA annimmt).
+
+**Stand 2026-11-03 abends: Stufe 2 gebaut** (Operator-Go, Architektur §23.80,
+Migration 0075).  Operator: das Feature heisst **"Archiving"** ("Publish"
+gehoert zu My Podcast), Knopf "Archive online..." (DE "Online archivieren...");
+Upload nur Admins + PMs, Bremse 4 Mbit/s.  Gebaut: Settings -> CBA Accounts
+(Admins, Verbindungstest, Upload-Grenze), Archiving-Abschnitt mit Konto,
+Sichtbarkeit, Themenliste, Lizenz-Matrix-Tooltip; Episode-Dialog mit
+Produktionsdatum, "nicht automatisch archivieren", Block "Online archive"
+(Vorab-Pruefung, Audio-Wahl, Status, Link existing post); RASTATIME-WORKER
+als Job-Runner (gebremster Datenstrom, Wiederholen nur bei sicher nicht
+angekommen, "unklar" nie automatisch).  Zusaetzlich: Lizenz ist Pflicht
+(sonst CC BY bei CBA), Edit Instance verlor Episodendaten (behoben).
+Offen: Neustart RASTATIME-WORKER + Apache durch den Operator, erster echter
+Upload (Sichtbarkeit privat) in einen Podcast nach Wahl, danach Stufe 3
+(Automatik, ~1 Tag).
 
 ### 💡 Apple Podcasts / Spotify direkt fuer internationale Stationen (Operator 2026-11-03: Backlog)
 

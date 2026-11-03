@@ -122,7 +122,7 @@
 .context-menu-item.icon-error { background-image: url(images/icon_alert_cal_alt.png); }
 /* RASTATIME 2026-10-23 - calendar "Teasers" entry (operator wanted its own icon, not the "View" eye) */
 .context-menu-item.icon-teaser { background-image: url(images/icon_teaser_cm.svg); background-size: 16px 16px; }
-/* RASTATIME 2026-11-03 - calendar "Episode..." entry (episode data for publishing) */
+/* RASTATIME 2026-11-03 - calendar "Episode..." entry (episode data for archiving) */
 .context-menu-item.icon-episode { background-image: url(images/icon_episode_cm.svg); background-size: 16px 16px; }
 
 /* vertically align inside labels */

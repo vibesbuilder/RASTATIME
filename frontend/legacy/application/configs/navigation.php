@@ -173,13 +173,24 @@ $pages[] = [
             'privilege' => 'show-templates',
         ],
         [
-            // RASTATIME 2026-11-03 - publishing stage 1: editorial team
+            // RASTATIME 2026-11-03 - archiving stage 1: editorial team
             // profiles (Program Managers and Admins)
             'label' => 'Editorial Team',
             'module' => 'default',
-            'controller' => 'publishing',
+            'controller' => 'archiving',
             'action' => 'editors',
-            'resource' => 'publishing',
+            'resource' => 'archiving',
+            'privilege' => 'editors',
+        ],
+        [
+            // RASTATIME 2026-11-03 - archiving stage 2: the CBA users the
+            // shows are archived under (admins only, ACL privilege)
+            'label' => 'CBA Accounts',
+            'module' => 'default',
+            'controller' => 'archiving',
+            'action' => 'accounts',
+            'resource' => 'archiving',
+            'privilege' => 'accounts',
         ],
         [
             // RASTATIME 2026-05-21 — Auto-DJ settings page
@@ -288,13 +299,14 @@ $pages[] = [
             'resource' => 'showlistenerstat',
         ],
         [
-            // RASTATIME 2026-11-03 - publishing stage 1: people involved per
+            // RASTATIME 2026-11-03 - archiving stage 1: people involved per
             // show and year (Program Managers and Admins)
             'label' => 'Participants',
             'module' => 'default',
-            'controller' => 'publishing',
+            'controller' => 'archiving',
             'action' => 'participants',
-            'resource' => 'publishing',
+            'resource' => 'archiving',
+            'privilege' => 'participants',
         ],
     ],
 ];

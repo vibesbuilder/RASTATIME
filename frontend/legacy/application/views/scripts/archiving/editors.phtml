@@ -1,22 +1,22 @@
 <?php
-// RASTATIME 2026-11-03 - publishing stage 1: Settings → Editorial Team.
+// RASTATIME 2026-11-03 - archiving stage 1: Settings → Editorial Team.
 // The people a show's editorial team is chosen from (Edit Show ->
-// Publishing).  A profile needs no login; linking a user is optional.
+// Archiving).  A profile needs no login; linking a user is optional.
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $e = $this->edit;
 ?>
 <div class="ui-widget prefpanel clearfix padded-strong rt-editors">
     <h2><?php echo _("Editorial Team"); ?></h2>
     <p class="rt-editors-note">
-        <?php echo _("The people behind the shows. Choose a show's team under Edit Show → Publishing; the names are sent to cba.media as editors and the team appears in Analytics → Participants. A profile needs no login."); ?>
+        <?php echo _("The people behind the shows. Choose a show's team under Edit Show → Archiving; the names are sent to cba.media as editors and the team appears in Analytics → Participants. A profile needs no login."); ?>
     </p>
     <?php if (!$this->ready): ?>
-        <p class="rt-editors-error"><?php echo _("The publishing tables are missing - run the database migration 0074 first."); ?></p>
+        <p class="rt-editors-error"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
     <?php else: ?>
         <?php if ($this->message): ?><p class="rt-editors-ok"><?php echo $h($this->message); ?></p><?php endif; ?>
         <?php if ($this->error): ?><p class="rt-editors-error"><?php echo $h($this->error); ?></p><?php endif; ?>
 
-        <form method="post" action="<?php echo $h(Config::getBasePath() . 'publishing/editors'); ?>" class="rt-editors-form" id="rt_editor_form">
+        <form method="post" action="<?php echo $h(Config::getBasePath() . 'archiving/editors'); ?>" class="rt-editors-form" id="rt_editor_form">
             <input type="hidden" name="csrf" value="<?php echo $h($this->csrf); ?>" />
             <input type="hidden" name="id" id="rt_editor_id" value="<?php echo (int) $e['id']; ?>" />
             <h3 id="rt_editor_heading"><?php echo $e['id'] ? _("Edit profile") : _("Add a profile"); ?></h3>
@@ -76,7 +76,7 @@ $e = $this->edit;
                             <td><?php echo $p['active'] ? _("yes") : _("no"); ?></td>
                             <td class="rt-editors-actions">
                                 <a href="#" class="rt-editor-edit"><?php echo _("Edit"); ?></a>
-                                <form method="post" action="<?php echo $h(Config::getBasePath() . 'publishing/editors'); ?>" class="rt-editor-delete-form">
+                                <form method="post" action="<?php echo $h(Config::getBasePath() . 'archiving/editors'); ?>" class="rt-editor-delete-form">
                                     <input type="hidden" name="csrf" value="<?php echo $h($this->csrf); ?>" />
                                     <input type="hidden" name="op" value="delete" />
                                     <input type="hidden" name="id" value="<?php echo (int) $p['id']; ?>" />

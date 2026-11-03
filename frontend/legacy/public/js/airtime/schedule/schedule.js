@@ -311,7 +311,7 @@ function buildTeaserDialog(json) {
   dialog.dialog("open");
 }
 
-// RASTATIME 2026-11-03 - publishing stage 1: the "Episode..." dialog of a show
+// RASTATIME 2026-11-03 - archiving stage 1: the "Episode..." dialog of a show
 // instance (schedule/episode-dialog); the view's inline script saves on the
 // "rt-episode-save" event and uploads the image itself.
 function buildEpisodeDialog(json) {
@@ -579,7 +579,7 @@ $(document).ready(function () {
           oItems.teasers.callback = callback;
         }
 
-        // RASTATIME 2026-11-03 - publishing stage 1: "Episode..." dialog
+        // RASTATIME 2026-11-03 - archiving stage 1: "Episode..." dialog
         if (oItems.episode !== undefined) {
           callback = function () {
             $.get(

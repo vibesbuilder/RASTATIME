@@ -153,7 +153,7 @@ valeurs par défaut.
 | **Enregistrement** | Cocher pour enregistrer la sortie à l'antenne de l'émission dans un fichier. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Attacher une playlist pour remplir chaque instance automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Qui** | Animateurs supplémentaires au-delà du principal défini sous Quoi. |
-| **Publication** | Équipe de rédaction, participants et réglages cba.media de l'émission (pas dans Modifier l'occurrence). Voir [Publication](./PUBLISHING.md). Depuis le 2026-11-03. |
+| **Archivage** | Équipe de rédaction, participants, compte CBA et réglages cba.media de l'émission (pas dans Modifier l'occurrence). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
 | **Style** | Couleur de fond, couleur de texte, image d'émission (visible seulement ici pour les émissions ponctuelles ; pour les émissions récurrentes, celles-ci restent constantes à travers les instances). |
 
 > **Conseil opérateur.** Si vous êtes sur le point de
@@ -200,7 +200,7 @@ action.
 | **Enregistrer comme modèle** | Enregistrer les paramètres actuels de l'émission comme nouveau modèle. | Toujours |
 | **Voir** | Vue en lecture seule des métadonnées + planning de l'émission. *Start* et *Length* de chaque ligne sont la ligne de planning telle que posée (Length = cue-out moins cue-in, comme dans le show builder ; depuis le 2026-10-23) ; les totaux en bas sont la longueur posée du contenu (points de cue et chevauchements de crossfade compris) face à la durée de l'émission. | Toujours |
 | **Teasers** | Les jingles qui annoncent cette émission - changer le type, retirer, en lier d'autres ; voir [Automatisation des teasers](./TEASERS.md). Depuis le 2026-10-16. | Admin / PM |
-| **Épisode...** | Titre, accroche, description, image et participants de cet épisode, avant ou après sa diffusion ; voir [Publication](./PUBLISHING.md). Depuis le 2026-11-03. | Admin / PM / animateurs de l'émission |
+| **Épisode...** | Titre, accroche, description, image et participants de cet épisode, avant ou après sa diffusion, et « Archiver en ligne » sur cba.media ; voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. | Admin / PM / animateurs de l'émission (archiver : Admin / PM) |
 | **Modifier l'émission** | Modifier la définition d'émission (nom, heure, répétitions, etc.). | Émissions futures ou actuelles |
 | **Modifier l'instance** | Modifier seulement cette occurrence d'une émission récurrente. | Émissions récurrentes seulement |
 | **Annuler l'émission** | Terminer l'émission *maintenant* — sensé seulement pour l'émission actuellement en cours. | Émission actuelle seulement |

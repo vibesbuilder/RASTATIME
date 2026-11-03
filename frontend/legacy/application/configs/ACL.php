@@ -47,7 +47,7 @@ $ccAcl->add(new Zend_Acl_Resource('library'))
     ->add(new Zend_Acl_Resource('feeds'))
     ->add(new Zend_Acl_Resource('linein'))  // T14.2 — Line-In source management
     ->add(new Zend_Acl_Resource('manual'))  // RASTATIME 2026-10-01 — in-app user manual
-    ->add(new Zend_Acl_Resource('publishing'));  // RASTATIME 2026-11-03 — editorial team, participants
+    ->add(new Zend_Acl_Resource('archiving'));  // RASTATIME 2026-11-03 — editorial team, participants
 
 // Creating permissions
 $ccAcl->allow('G', 'index')
@@ -90,7 +90,8 @@ $ccAcl->allow('G', 'index')
     ->allow('P', 'rest:podcast')
     ->allow('P', 'rest:podcast-episodes')
     ->allow('P', 'podcast')
-    ->allow('P', 'publishing')  // RASTATIME 2026-11-03 — publishing stage 1
+    ->allow('P', 'archiving', ['editors', 'participants', 'participants-csv'])  // RASTATIME 2026-11-03 — archiving
+    ->allow('A', 'archiving')  // RASTATIME 2026-11-03 — CBA accounts: admins only
     ->allow('P', 'webstream')
     ->allow('P', 'linein')
     // RASTATIME 2026-10-25 (operator) - Program Managers run the Auto DJ and

@@ -1,5 +1,5 @@
 <?php
-// RASTATIME 2026-11-03 - publishing stage 1: Analytics → Participants.
+// RASTATIME 2026-11-03 - archiving stage 1: Analytics → Participants.
 // People involved per show for one year (station time): episodes that
 // aired (ended, not deleted, no legacy rebroadcast), the show's value, how
 // many episodes have their own value, and the sum over the episodes.
@@ -12,12 +12,12 @@ $rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['participant
 <div class="ui-widget prefpanel clearfix padded-strong rt-participants">
     <h2><?php echo _("Participants"); ?></h2>
     <p class="rt-participants-note">
-        <?php echo _("People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Publishing) and can differ for a single episode (Episode... in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."); ?>
+        <?php echo _("People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Episode... in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."); ?>
     </p>
     <?php if (!$this->ready): ?>
-        <p class="rt-participants-warn"><?php echo _("The publishing tables are missing - run the database migration 0074 first."); ?></p>
+        <p class="rt-participants-warn"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
     <?php endif; ?>
-    <form method="get" action="<?php echo $h($base . 'publishing/participants'); ?>" class="rt-participants-filter">
+    <form method="get" action="<?php echo $h($base . 'archiving/participants'); ?>" class="rt-participants-filter">
         <label for="rt_participants_year"><?php echo _("Year"); ?></label>
         <select name="year" id="rt_participants_year" class="input_select" onchange="this.form.submit()">
             <?php foreach ($this->years as $y): ?>
@@ -26,7 +26,7 @@ $rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['participant
         </select>
         <label class="rt-participants-check"><input type="checkbox" name="missing" value="1"<?php echo $this->missingOnly ? ' checked' : ''; ?> onchange="this.form.submit()" />
             <?php echo _("Only shows without a value"); ?></label>
-        <a class="btn" href="<?php echo $h($base . 'publishing/participants-csv?year=' . (int) $r['year']); ?>"><?php echo _("Download CSV"); ?></a>
+        <a class="btn" href="<?php echo $h($base . 'archiving/participants-csv?year=' . (int) $r['year']); ?>"><?php echo _("Download CSV"); ?></a>
     </form>
     <?php if ($this->isCurrentYear): ?>
         <p class="rt-participants-note"><?php echo sprintf(_("%d so far (up to %s)."), (int) $r['year'], $h($this->today)); ?></p>

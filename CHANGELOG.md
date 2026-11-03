@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Archivierung Stufe 2: Episoden von Hand auf cba.media archivieren (2026-11-03,
+  Operator-Go)** — Nach der Antwort der CBA wird jede Sendung unter einem eigenen
+  CBA-Benutzer archiviert (HTTP Basic mit Benutzername und WordPress-Anwendungspasswort).
+  Neu: **Settings → CBA Accounts** (nur Admins: Konten, Passwort nur setzbar,
+  „Test connection“, Upload-Grenze Standard 4 Mbit/s, weil die Leitung auch die
+  Hörer-Streams trägt); im Abschnitt **Archiving** der Sendung CBA-Konto, Sichtbarkeit,
+  Thema als Liste (täglich von cba.media geholt) und die Lizenz-Matrix als Tooltip;
+  im Dialog **Episode...** Produktionsdatum, „Nicht automatisch archivieren“ und der Block
+  **Online archive** mit Vorab-Prüfung, **Archive online...** (Aufzeichnung oder eine
+  Library-Datei MP3/OGG/Opus), Fortschritt, Link zum Beitrag und „Link existing post“
+  (Admins und Programm-Manager).  **RASTATIME-WORKER** ist kein Platzhalter mehr: er lädt
+  die Aufträge gebremst hoch, wiederholt nur, wenn sicher nichts angekommen ist (bis
+  24 h), und wiederholt einen unklaren Upload nie von selbst, damit keine Episode doppelt
+  erscheint.  Migration 0075, Handbuch-Kapitel „Archiving“ in vier Sprachen, Architektur
+  §23.80.
+
 - **Veröffentlichung Stufe 1: Redaktionsteam, Episodendaten, Teilnehmende (2026-11-03,
   Operator-Go Stufe 1 der CBA-Anbindung)** — Vorbereitung dafür, jede Episode ohne
   Hochladen von Hand auf cba.media zu veröffentlichen, und für die jährliche Zählung der
@@ -22,6 +38,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Participants** (je Sendung und Jahr, Summen, „nur ohne Wert“, CSV).  Migration 0074
   (vier neue Tabellen, bestehende unverändert), Handbuch-Kapitel „Publishing“ in vier
   Sprachen, Architektur §23.79.  Commit `f23747c5`.
+
+### Changed
+
+- **„Publishing“ heißt „Archiving“ (2026-11-03, Operator)** — „Publish“ gehört in RASTATIME
+  zu My Podcast; Abschnitt, Menütexte, Handbuch-Kapitel (`ARCHIVING.md`), Routen
+  (`archiving/*`) und die Tabelle `cc_show_archiving` folgen dem neuen Namen.  Die
+  Lizenzliste folgt der CBA-Spezifikation (ohne CC BY-SA, mit CC Sampling+), Sprachen
+  nur noch aus der CBA-Liste.  „Edit Instance“ zeigt die Instanz-Beschreibung nicht mehr;
+  sie wird nur noch im Dialog „Episode...“ bearbeitet.
+
+### Fixed
+
+- **„Edit Instance“ verlor die Episodendaten (2026-11-03)** — „Edit Instance“ legt intern
+  eine neue Instanz an und blendet die alte aus; Titel, Bild und Teilnehmende aus
+  „Episode...“ blieben an der ausgeblendeten Instanz hängen.  Sie wandern jetzt mit, die
+  Beschreibung bleibt erhalten.
 
 ### Security
 

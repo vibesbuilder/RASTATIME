@@ -5643,7 +5643,7 @@ div.dt-button-collection .dt-button > span {
 .bulk-md-form p.description {
     color: #999999;
 }
-/* RASTATIME 2026-11-03 - calendar "Episode..." dialog (publishing stage 1):
+/* RASTATIME 2026-11-03 - calendar "Episode..." dialog (archiving stage 1):
    text fields left, image and the show's defaults right; one column on
    narrow screens */
 .rt-episode-dialog .rt-episode-note {
@@ -5728,7 +5728,7 @@ div.dt-button-collection .dt-button > span {
     margin: 10px 0 0;
 }
 /* RASTATIME 2026-11-03 - Settings -> Editorial Team and Analytics ->
-   Participants (publishing stage 1) */
+   Participants (archiving stage 1) */
 .rt-editors-note,
 .rt-participants-note {
     margin: 0 0 1em;
@@ -5836,4 +5836,76 @@ div.dt-button-collection .dt-button > span {
     border-radius: 3px;
     color: #aaa;
     font-size: 11px;
+}
+/* RASTATIME 2026-11-03 - licence matrix in the tooltip of the licence
+   choice (Archiving section, Episode dialog) */
+.rt-license-matrix {
+    border-collapse: collapse;
+    margin: 2px 0 6px;
+}
+.rt-license-matrix th,
+.rt-license-matrix td {
+    padding: 2px 8px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+    text-align: left;
+    white-space: nowrap;
+}
+/* RASTATIME 2026-11-03 - archiving stage 2: production date, "do not
+   archive", the "Online archive" block of the Episode dialog */
+.rt-episode-dialog .rt-episode-pair {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 24px;
+}
+.rt-episode-dialog .rt-episode-date {
+    width: 11em;
+}
+.rt-episode-dialog label.rt-episode-check {
+    display: block;
+    margin: 10px 0 0;
+}
+.rt-episode-dialog label.rt-episode-check input {
+    margin: 0 6px 0 0;
+    vertical-align: middle;
+}
+.rt-episode-dialog .rt-episode-archive {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #444;
+}
+.rt-episode-dialog .rt-episode-archive h4 {
+    margin: 0 0 6px;
+}
+.rt-episode-dialog .rt-episode-archive-status {
+    margin: 0 0 6px;
+}
+.rt-episode-dialog .rt-episode-archive-missing {
+    margin: 0 0 8px 18px;
+    padding: 0;
+    color: #e0a040;
+}
+.rt-episode-dialog .rt-episode-archive-missing .rt-episode-archive-head {
+    list-style: none;
+    margin-left: -18px;
+    color: inherit;
+}
+.rt-episode-dialog .rt-episode-archive-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+}
+.rt-episode-dialog .rt-episode-archive-link .input_text {
+    width: 12em;
+    margin-right: 6px;
+}
+.rt-episode-dialog .rt-episode-archive-panel {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(128, 128, 128, 0.12);
+    border-radius: 4px;
+}
+.rt-episode-dialog #episode_archive_files {
+    width: 100%;
+    margin-top: 6px;
 }

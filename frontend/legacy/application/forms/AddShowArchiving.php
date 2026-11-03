@@ -1,22 +1,24 @@
 <?php
 
 /**
- * RASTATIME 2026-11-03 - publishing stage 1: the "Publishing" section of
+ * RASTATIME 2026-11-03 - archiving stage 1: the "Archiving" section of
  * the show form (editorial team, participants, CBA defaults).  Stored by
- * Application_Service_PublishingService::saveShow() in cc_show_publishing /
- * cc_show_editor_profile (migration 0074), not in cc_show.
+ * Application_Service_ArchivingService::saveShow() in cc_show_archiving /
+ * cc_show_editor_profile (migration 0074), not in cc_show.  Stage 2
+ * (migration 0075): the CBA account the episodes are archived under, their
+ * visibility, the topic as a list (when the worker has fetched it).
  */
-class Application_Form_AddShowPublishing extends Zend_Form_SubForm
+class Application_Form_AddShowArchiving extends Zend_Form_SubForm
 {
     public function init()
     {
         $this->setDecorators([
-            ['ViewScript', ['viewScript' => 'form/add-show-publishing.phtml']],
+            ['ViewScript', ['viewScript' => 'form/add-show-archiving.phtml']],
         ]);
 
         $profiles = new Zend_Form_Element_MultiCheckbox('add_show_editor_profiles');
         $profiles->setLabel(_('Editorial team'))
-            ->setMultiOptions(Application_Service_PublishingService::profileOptions())
+            ->setMultiOptions(Application_Service_ArchivingService::profileOptions())
             ->setRegisterInArrayValidator(false)
             ->setDecorators(['ViewHelper']);
         $this->addElement($profiles);
@@ -26,6 +28,20 @@ class Application_Form_AddShowPublishing extends Zend_Form_SubForm
             'class' => 'input_text',
             'decorators' => ['ViewHelper'],
         ]);
+        $account = new Zend_Form_Element_Select('add_show_cba_account');
+        $account->setLabel(_('CBA account'))
+            ->setMultiOptions(Application_Service_ArchivingService::accountOptions())
+            ->setRegisterInArrayValidator(false)
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($account);
+
+        $status = new Zend_Form_Element_Select('add_show_cba_status');
+        $status->setLabel(_('Visibility on cba.media'))
+            ->setMultiOptions(Application_Service_ArchivingService::statusOptions())
+            ->setRegisterInArrayValidator(false)
+            ->setDecorators(['ViewHelper']);
+        $this->addElement($status);
+
         $this->addElement('text', 'add_show_cba_series_id', [
             'label' => _('CBA podcast ID'),
             'class' => 'input_text',
@@ -34,16 +50,27 @@ class Application_Form_AddShowPublishing extends Zend_Form_SubForm
 
         $license = new Zend_Form_Element_Select('add_show_cba_license');
         $license->setLabel(_('Licence'))
-            ->setMultiOptions(Application_Service_PublishingService::licenseOptions())
+            ->setMultiOptions(Application_Service_ArchivingService::licenseOptions())
             ->setRegisterInArrayValidator(false)
             ->setDecorators(['ViewHelper']);
         $this->addElement($license);
 
-        $this->addElement('text', 'add_show_cba_category_id', [
-            'label' => _('CBA topic ID'),
-            'class' => 'input_text',
-            'decorators' => ['ViewHelper'],
-        ]);
+        // the topic list once the worker has fetched it, the number before
+        $topics = Application_Service_ArchivingService::categoryOptions();
+        if ($topics) {
+            $topic = new Zend_Form_Element_Select('add_show_cba_category_id');
+            $topic->setLabel(_('CBA topic'))
+                ->setMultiOptions(['' => _('(not set)')] + $topics)
+                ->setRegisterInArrayValidator(false)
+                ->setDecorators(['ViewHelper']);
+            $this->addElement($topic);
+        } else {
+            $this->addElement('text', 'add_show_cba_category_id', [
+                'label' => _('CBA topic ID'),
+                'class' => 'input_text',
+                'decorators' => ['ViewHelper'],
+            ]);
+        }
         $this->addElement('text', 'add_show_cba_languages', [
             'label' => _('Languages'),
             'class' => 'input_text',
@@ -72,12 +99,12 @@ class Application_Form_AddShowPublishing extends Zend_Form_SubForm
     public function populateFromShow(int $showId)
     {
         $this->getElement('add_show_editor_profiles')
-            ->setMultiOptions(Application_Service_PublishingService::profileOptions($showId));
-        $s = Application_Service_PublishingService::showSettings($showId);
+            ->setMultiOptions(Application_Service_ArchivingService::profileOptions($showId));
+        $s = Application_Service_ArchivingService::showSettings($showId);
         $this->populate([
             'add_show_editor_profiles' => array_map(
                 fn ($p) => (int) $p['id'],
-                Application_Service_PublishingService::showProfiles($showId)
+                Application_Service_ArchivingService::showProfiles($showId)
             ),
             'add_show_participants' => $s['participants'],
             'add_show_cba_series_id' => $s['cba_series_id'],
@@ -87,10 +114,12 @@ class Application_Form_AddShowPublishing extends Zend_Form_SubForm
             'add_show_cba_tags' => $s['tags'],
             'add_show_cba_teaser' => $s['teaser'],
             'add_show_cba_contains_copyright' => $s['contains_copyright'] ? 1 : 0,
+            'add_show_cba_account' => (int) $s['cba_account_id'],
+            'add_show_cba_status' => $s['cba_status'],
         ]);
     }
 
-    /** Attach the messages of PublishingService::validateShowData(); false when there were any. */
+    /** Attach the messages of ArchivingService::validateShowData(); false when there were any. */
     public function applyErrors(array $errors): bool
     {
         foreach ($errors as $field => $message) {

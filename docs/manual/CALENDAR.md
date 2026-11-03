@@ -138,7 +138,7 @@ The form is divided into collapsible sections. **What** and
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Who** | Additional hosts beyond the primary one set under What. |
-| **Publishing** | Editorial team, people involved and the cba.media defaults of the show (not in Edit Instance). See [Publishing](./PUBLISHING.md). Since 2026-11-03. |
+| **Archiving** | Editorial team, people involved, CBA account and the cba.media defaults of the show (not in Edit Instance). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
 | **Style** | Background colour, text colour, show image (visible only here for one-off shows; for recurring shows these stay constant across instances). |
 
 > **Operator tip.** If you are about to fill in the same name,
@@ -181,7 +181,7 @@ Click the show → context menu → choose an action.
 | **Save as Template** | Save the current show settings as a new template. | Always |
 | **View** | Read-only view of the show's metadata + schedule. Each row's *Start* and *Length* are the laid-out schedule row (Length = cue-out minus cue-in, as in the show builder; since 2026-10-23); the totals at the bottom are the laid-out content length (incl. cue points and crossfade overlaps) against the show's duration. | Always |
 | **Teasers** | The jingles that announce this show - change types, unlink, link more; see [Teaser Automation](./TEASERS.md). Since 2026-10-16. | Admin / PM |
-| **Episode...** | Title, teaser, description, image and people involved of this one episode, before or after it aired; see [Publishing](./PUBLISHING.md). Since 2026-11-03. | Admin / PM / hosts of the show |
+| **Episode...** | Title, teaser, description, image and people involved of this one episode, before or after it aired, and "Archive online" to cba.media; see [Archiving](./ARCHIVING.md). Since 2026-11-03. | Admin / PM / hosts of the show (archiving: Admin / PM) |
 | **Edit Show** | Edit the show definition (name, time, repeats, etc.). | Future or current shows |
 | **Edit Instance** | Edit only this one occurrence of a recurring show. | Recurring shows only |
 | **Cancel Show** | End the show *now* — only meaningful for the currently-playing show. | Current show only |

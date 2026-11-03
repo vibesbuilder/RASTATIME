@@ -24,7 +24,8 @@ Left navigation → **Settings** opens the sub-menu:
 | **Users** | Create, edit and delete users and set their user type. | Admin | [Users and Roles](./USERS_AND_ROLES.md) §3 |
 | **Track Types** | Track types with their crossfade, crossover and stream-metadata presets. | Admin | [Library](./LIBRARY.md) |
 | **Show Templates** | Overview of the saved show templates: rename, delete. | Program Manager, Admin | [Show Templates](./SHOW_TEMPLATES.md) |
-| **Editorial Team** | Profiles of the people behind the shows (name, optional login), chosen per show under Publishing. | Program Manager, Admin | [Publishing](./PUBLISHING.md) |
+| **Editorial Team** | Profiles of the people behind the shows (name, optional login), chosen per show under Archiving. | Program Manager, Admin | [Archiving](./ARCHIVING.md) |
+| **CBA Accounts** | The cba.media users the shows are archived under (user name, application password), connection test, upload limit. | Admin | [Archiving](./ARCHIVING.md) |
 | **Auto DJ** | Gap filler and top-up of incomplete shows. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Output streams (bitrate, mount, codec), live dial-in inputs, Master login. | Admin | [Streams](./STREAMS.md) |
 | **Local Machine** | Sound card, import folder and format, recording folder and format, library location. | Admin | [Local Machine](./LOCAL_MACHINE.md) |

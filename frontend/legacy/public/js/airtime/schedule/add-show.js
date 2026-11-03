@@ -612,6 +612,15 @@ function setAddShowEvents(form) {
       interactive: true,
     });
   });
+  // RASTATIME 2026-11-03 - tooltips the server built as HTML (escaped
+  // there), e.g. the licence matrix of the Archiving section
+  form.find("[data-rt-tip-html]").each(function () {
+    $(this).rtTooltip({
+      content: { text: $(this).attr("data-rt-tip-html") },
+      placement: "right",
+      interactive: true,
+    });
+  });
 
   form.find(".airtime_auth_help_icon").rtTooltip({
     content: {
@@ -874,7 +883,7 @@ function setAddShowEvents(form) {
       })
       .get();
 
-    // RASTATIME 2026-11-03 - Publishing: the editorial team boxes travel
+    // RASTATIME 2026-11-03 - Archiving: the editorial team boxes travel
     // like the hosts (a multi-checkbox collapses in the flat name/value list)
     var editorProfiles = $("#add_show_editor_profiles-element input")
       .map(function () {

@@ -105,10 +105,6 @@ msgid "Please enter the number shown on cba.media, or leave the field empty."
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Up to three language codes such as \"de, en\"."
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Unknown licence."
 msgstr ""
 
@@ -118,14 +114,6 @@ msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "The teaser is too long (2048 characters at most)."
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The publishing tables are missing - run the database migration 0074 first."
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Title and image caption take 255 characters at most."
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
@@ -201,14 +189,6 @@ msgid "The number of the podcast (series) on cba.media that the episodes of this
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Default licence of the episodes on cba.media."
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The number of the topic (category) on cba.media."
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Comma-separated tags for cba.media."
 msgstr ""
 
@@ -242,10 +222,6 @@ msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "A short summary. Empty: the default teaser of the show."
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The text of this episode - the same field as the instance description of the show form."
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
@@ -290,10 +266,6 @@ msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "From the show"
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Set in Edit Show → Publishing."
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
@@ -342,10 +314,6 @@ msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Editorial Team"
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The people behind the shows. Choose a show's team under Edit Show → Publishing; the names are sent to cba.media as editors and the team appears in Analytics → Participants. A profile needs no login."
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
@@ -398,10 +366,6 @@ msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Participants"
-msgstr ""
-
-#: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Publishing) and can differ for a single episode (Episode... in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."
 msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
@@ -458,4 +422,388 @@ msgstr ""
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Episode"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Credit the author?"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Commercial use?"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Adaptations?"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "All rights reserved: none of it is allowed without asking. CC Sampling+: samples may be reused, the whole work only non-commercially. Public domain: no rights at all."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Unlisted"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Up to three language codes the CBA knows, such as \"de, en\"."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The chosen CBA account does not exist any more."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Unknown visibility."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The archiving tables are missing - run the database migrations 0074 and 0075 first."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The title takes 255 characters at most."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The image caption takes 500 characters at most."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Please enter the production date as YYYY-MM-DD, or leave it empty."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "- none -"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Please enter a label and the CBA user name."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Label, user name and password take 255 characters at most."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The account does not exist any more."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Please enter the application password of the CBA user."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "No application password is stored for this account."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "cba.media could not be reached: %s"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "cba.media refused the user name or the application password."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "cba.media answered with HTTP %d."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Signed in as %s, but the role (%s) may not upload."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Signed in as %s."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The episode has not aired yet."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The episode is archived already."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The show has no CBA account (Edit Show → Archiving)."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The CBA account of the show has no application password (Settings → CBA Accounts)."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The show has no CBA topic (Edit Show → Archiving)."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The show has no language (Edit Show → Archiving)."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The show has no licence (Edit Show → Archiving)."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Neither the episode nor the show has a description - the CBA needs a text."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The production date lies in the future."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "There is no recording of this episode in the library - choose a library file."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The audio file is missing or not imported yet."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The CBA takes MP3, OGG and Opus, not %s."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "An upload of this episode is already waiting or running."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Please enter the number of the post (or an address with ?p=<number>)."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "CBA account"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Visibility on cba.media"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "CBA topic"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The CBA user the episodes are archived under. Accounts are managed by admins under Settings → CBA Accounts."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Public: listed on cba.media. Unlisted: reachable by its address only. Private: visible to the CBA user only."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The topic (category) on cba.media."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The number of the topic (category) on cba.media. The list appears once the background service has fetched it."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "No CBA account yet - an admin adds them under Settings → CBA Accounts."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Not archived yet."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Archived on cba.media as post %s."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Waiting for the upload (queued %s)."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Uploading to cba.media: %s."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Waiting for another attempt at %s (attempt %s): %s"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The upload failed: %s"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Unclear whether the post was created: %s - look on cba.media, then link the post or archive again."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The upload was cancelled."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Before this episode can be archived:"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The recording of this episode"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The recording of this episode (none in the library)"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "A library file (MP3, OGG, Opus)"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Queued - the background service uploads it within a minute."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Link removed."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The text of this episode; on cba.media it is the text of the post. Empty: the description of the show."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Production date"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier, e.g. recorded on Friday."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Broadcast: %s"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Do not archive this episode automatically"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "For tests, cancelled episodes or rights problems. Applies once automatic archiving is switched on for the show; archiving by hand stays possible."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Set in Edit Show → Archiving."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Online archive (cba.media)"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Archive online..."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Post number or address"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Link existing post"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Title, teaser, description, image and the show's defaults are read when the upload starts. Changes after the upload are made on cba.media."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Account deleted."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Upload limit saved."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Account saved."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Account added."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The people behind the shows. Choose a show's team under Edit Show → Archiving; the names are sent to cba.media as editors and the team appears in Analytics → Participants. A profile needs no login."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Episode... in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "CBA Accounts"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The cba.media users the shows are archived under. Each show chooses its account under Edit Show → Archiving. The application password is created in the profile of the user on cba.media; RASTATIME stores it but never shows it again."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Edit account"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Add an account"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "e.g. the name of the person or the station"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "CBA user name"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Application password"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "unchanged - type to replace"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "New account"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "No account yet."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "set"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "missing"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Test connection"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Upload limit"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "The upload to cba.media shares the internet line with the listener streams. RASTATIME sends at most this rate; one hour of 320 kbit/s audio takes about five minutes at 4 Mbit/s."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Mbit/s"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Delete the account \"%s\"? %d show(s) use it and will have no CBA account any more."
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Archiving"
+msgstr ""
+
+#: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
+msgid "Account name"
 msgstr ""

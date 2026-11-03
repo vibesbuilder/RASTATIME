@@ -150,7 +150,7 @@ final class LocaleController extends Zend_Controller_Action
             'Removed.' => _('Removed.'),
             'Linked.' => _('Linked.'),
             'No jingle announces this show yet.' => _('No jingle announces this show yet.'),
-            // RASTATIME 2026-11-03 - publishing stage 1 (calendar "Episode..." dialog)
+            // RASTATIME 2026-11-03 - archiving stage 1 (calendar "Episode..." dialog)
             'Episode' => _('Episode'),
             'Saved.' => _('Saved.'),
             'Uploading...' => _('Uploading...'),

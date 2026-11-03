@@ -16,7 +16,7 @@ páginas:
 | **History Templates** | ¿Qué columnas debe registrar y exportar el registro de emisión? |
 | **Listener Stats** | ¿Cuántos oyentes estaban conectados a cada flujo, a lo largo del tiempo? |
 | **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
-| **Participants** (Participantes) | ¿Cuántas personas hicieron los programas de un año? Véase [Publicación](./PUBLISHING.md) § 4 (desde el 2026-11-03). |
+| **Participants** (Participantes) | ¿Cuántas personas hicieron los programas de un año? Véase [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03). |
 
 Las dos primeras existen para la **rendición de cuentas** —
 informes de derechos de autor, registros para el regulador,

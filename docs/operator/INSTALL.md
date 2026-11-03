@@ -564,9 +564,9 @@ Invoke-WebRequest http://127.0.0.1:8765/health -UseBasicParsing
 # Expected: StatusCode 200
 Get-NetTCPConnection -State Listen -LocalPort 8765   # 127.0.0.1 only
 
-# 9b — Worker.  A placeholder service without jobs yet (it runs an idle
-# loop - "dev stub (no real handlers registered)"); status.ps1 lists it
-# as optional.
+# 9b — Worker.  Uploads the episodes archived on cba.media (Calendar ->
+# Episode... -> Archive online) and fetches the CBA topic list once a
+# day; the broadcast does not depend on it (since 2026-11-03).
 powershell -ExecutionPolicy Bypass `
     -File C:\rastatime\infra\nssm\install-worker.ps1 `
     -InstallRoot C:\rastatime `
@@ -716,10 +716,10 @@ powershell -ExecutionPolicy Bypass `
 ```
 
 Expected output (all eight services; HTTP probes for API, Apache and
-Icecast; the worker is listed as optional - placeholder service, 9b):
+Icecast):
 ```
               RASTATIME-API         Running    HTTP 200 healthy
-  [optional]  RASTATIME-WORKER      Running
+              RASTATIME-WORKER      Running
               RASTATIME-PLAYOUT     Running
               RASTATIME-ANALYZER    Running
               RASTATIME-APACHE      Running    HTTP 200 healthy

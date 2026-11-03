@@ -16,7 +16,7 @@ Seiten:
 | **History Templates** | Welche Spalten soll das Sendeprotokoll aufzeichnen und exportieren? |
 | **Listener Stats** | Wie viele Hörer waren je Stream verbunden, im Zeitverlauf? |
 | **Show Listener Stats** | Wie hat jede *Sendung* bei den Hörerzahlen abgeschnitten? |
-| **Participants** (Teilnehmende) | Wie viele Menschen haben die Sendungen eines Jahres gemacht? Siehe [Veröffentlichung](./PUBLISHING.md) § 4 (seit 2026-11-03). |
+| **Participants** (Teilnehmende) | Wie viele Menschen haben die Sendungen eines Jahres gemacht? Siehe [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03). |
 
 Die ersten beiden existieren für die **Rechenschaftspflicht** —
 Tantiemen-Meldungen, Sendeprotokolle für Behörden, Anrufe der Art

@@ -25,7 +25,8 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 | **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
 | **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten. | Admin | [Bibliothek](./LIBRARY.md) |
 | **Show Templates** | Übersicht der gespeicherten Show-Vorlagen: umbenennen, löschen. | Program Manager, Admin | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
-| **Editorial Team** (Redaktionsteam) | Profile der Menschen hinter den Sendungen (Name, optional Login), je Sendung unter Veröffentlichung gewählt. | Program Manager, Admin | [Veröffentlichung](./PUBLISHING.md) |
+| **Editorial Team** (Redaktionsteam) | Profile der Menschen hinter den Sendungen (Name, optional Login), je Sendung unter Archivierung gewählt. | Program Manager, Admin | [Archivierung](./ARCHIVING.md) |
+| **CBA Accounts** (CBA-Konten) | Die cba.media-Benutzer, unter denen die Sendungen archiviert werden (Benutzername, Anwendungspasswort), Verbindungstest, Upload-Grenze. | Admin | [Archivierung](./ARCHIVING.md) |
 | **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Ausgabe-Streams (Bitrate, Mount, Codec), Eingänge für Live-Einwahlen, Master-Login. | Admin | [Streams](./STREAMS.md) |
 | **Lokale Maschine** | Soundkarte, Import-Ordner und -Format, Aufnahme-Ordner und -Format, Speicherort der Bibliothek. | Admin | [Lokale Maschine](./LOCAL_MACHINE.md) |

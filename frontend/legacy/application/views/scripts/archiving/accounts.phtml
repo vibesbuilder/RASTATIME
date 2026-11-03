@@ -1,0 +1,138 @@
+<?php
+// RASTATIME 2026-11-03 - archiving stage 2: Settings → CBA Accounts (admins).
+// Every show is archived under a CBA user (operator, after the answer of
+// the CBA); the user name and the WordPress application password of that
+// user live here, the show picks the account (Edit Show → Archiving).  The
+// password is never shown again; an empty field keeps it.
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$e = $this->edit;
+$action = $h(Config::getBasePath() . 'archiving/accounts');
+?>
+<div class="ui-widget prefpanel clearfix padded-strong rt-editors rt-cba-accounts">
+    <h2><?php echo _("CBA Accounts"); ?></h2>
+    <p class="rt-editors-note">
+        <?php echo _("The cba.media users the shows are archived under. Each show chooses its account under Edit Show → Archiving. The application password is created in the profile of the user on cba.media; RASTATIME stores it but never shows it again."); ?>
+    </p>
+    <?php if (!$this->ready): ?>
+        <p class="rt-editors-error"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
+    <?php else: ?>
+        <?php if ($this->message): ?><p class="<?php echo $this->messageOk ? 'rt-editors-ok' : 'rt-editors-error'; ?>"><?php echo $h($this->message); ?></p><?php endif; ?>
+        <?php if ($this->error): ?><p class="rt-editors-error"><?php echo $h($this->error); ?></p><?php endif; ?>
+
+        <form method="post" action="<?php echo $action; ?>" class="rt-editors-form" id="rt_account_form" autocomplete="off">
+            <input type="hidden" name="csrf" value="<?php echo $h($this->csrf); ?>" />
+            <input type="hidden" name="id" id="rt_account_id" value="<?php echo (int) $e['id']; ?>" />
+            <h3 id="rt_account_heading"><?php echo $e['id'] ? _("Edit account") : _("Add an account"); ?></h3>
+            <div class="rt-editors-row">
+                <label for="rt_account_label"><?php echo _("Account name"); ?></label>
+                <input type="text" name="label" id="rt_account_label" class="input_text" maxlength="255" required
+                       placeholder="<?php echo $h(_("e.g. the name of the person or the station")); ?>" value="<?php echo $h($e['label']); ?>" />
+            </div>
+            <div class="rt-editors-row">
+                <label for="rt_account_username"><?php echo _("CBA user name"); ?></label>
+                <input type="text" name="username" id="rt_account_username" class="input_text" maxlength="255" required
+                       autocomplete="off" value="<?php echo $h($e['username']); ?>" />
+            </div>
+            <div class="rt-editors-row">
+                <label for="rt_account_password"><?php echo _("Application password"); ?></label>
+                <input type="password" name="app_password" id="rt_account_password" class="input_text" maxlength="255"
+                       autocomplete="new-password" placeholder="<?php echo $h($e['id'] ? _("unchanged - type to replace") : ''); ?>" />
+            </div>
+            <div class="rt-editors-row">
+                <button type="submit" class="btn btn-new"><?php echo _("Save"); ?></button>
+                <button type="button" class="btn" id="rt_account_new"<?php echo $e['id'] ? '' : ' style="display:none"'; ?>><?php echo _("New account"); ?></button>
+            </div>
+        </form>
+
+        <?php if (empty($this->accounts)): ?>
+            <p class="rt-editors-empty"><?php echo _("No account yet."); ?></p>
+        <?php else: ?>
+            <table class="datatable rt-editors-table">
+                <thead>
+                    <tr>
+                        <th><?php echo _("Account name"); ?></th>
+                        <th><?php echo _("CBA user name"); ?></th>
+                        <th><?php echo _("Password"); ?></th>
+                        <th><?php echo _("Shows"); ?></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($this->accounts as $i => $a): ?>
+                        <tr class="<?php echo $i & 1 ? 'even' : 'odd'; ?>" data-id="<?php echo (int) $a['id']; ?>"
+                            data-label="<?php echo $h($a['label']); ?>" data-username="<?php echo $h($a['username']); ?>">
+                            <td><?php echo $h($a['label']); ?></td>
+                            <td><?php echo $h($a['username']); ?></td>
+                            <td><?php echo $a['has_password'] ? _("set") : '<span class="rt-editors-error">' . _("missing") . '</span>'; ?></td>
+                            <td><?php echo (int) $a['shows']; ?></td>
+                            <td class="rt-editors-actions">
+                                <a href="#" class="rt-account-edit"><?php echo _("Edit"); ?></a>
+                                <form method="post" action="<?php echo $action; ?>" class="rt-editor-delete-form">
+                                    <input type="hidden" name="csrf" value="<?php echo $h($this->csrf); ?>" />
+                                    <input type="hidden" name="op" value="test" />
+                                    <input type="hidden" name="id" value="<?php echo (int) $a['id']; ?>" />
+                                    <a href="#" class="rt-account-submit"><?php echo _("Test connection"); ?></a>
+                                </form>
+                                <form method="post" action="<?php echo $action; ?>" class="rt-editor-delete-form">
+                                    <input type="hidden" name="csrf" value="<?php echo $h($this->csrf); ?>" />
+                                    <input type="hidden" name="op" value="delete" />
+                                    <input type="hidden" name="id" value="<?php echo (int) $a['id']; ?>" />
+                                    <a href="#" class="rt-account-delete" data-shows="<?php echo (int) $a['shows']; ?>"><?php echo _("Delete"); ?></a>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <form method="post" action="<?php echo $action; ?>" class="rt-editors-form rt-cba-bandwidth">
+            <input type="hidden" name="csrf" value="<?php echo $h($this->csrf); ?>" />
+            <input type="hidden" name="op" value="bandwidth" />
+            <h3><?php echo _("Upload limit"); ?></h3>
+            <p class="rt-editors-note"><?php echo _("The upload to cba.media shares the internet line with the listener streams. RASTATIME sends at most this rate; one hour of 320 kbit/s audio takes about five minutes at 4 Mbit/s."); ?></p>
+            <div class="rt-editors-row">
+                <label for="rt_cba_mbit"><?php echo _("Mbit/s"); ?></label>
+                <input type="number" name="mbit" id="rt_cba_mbit" class="input_text" min="0.256" max="1000" step="0.5"
+                       value="<?php echo $h(rtrim(rtrim(number_format($this->mbit, 3, '.', ''), '0'), '.')); ?>" />
+            </div>
+            <button type="submit" class="btn"><?php echo _("Save"); ?></button>
+        </form>
+    <?php endif; ?>
+</div>
+<script>
+(function ($) {
+  var addTitle = <?php echo json_encode(_("Add an account")); ?>, editTitle = <?php echo json_encode(_("Edit account")); ?>;
+  var keep = <?php echo json_encode(_("unchanged - type to replace")); ?>;
+  var confirmText = <?php echo json_encode(_("Delete the account \"%s\"? %d show(s) use it and will have no CBA account any more.")); ?>;
+  function fill(id, label, username) {
+    $("#rt_account_id").val(id);
+    $("#rt_account_label").val(label);
+    $("#rt_account_username").val(username);
+    $("#rt_account_password").val("").attr("placeholder", id ? keep : "");
+    $("#rt_account_heading").text(id ? editTitle : addTitle);
+    $("#rt_account_new").toggle(!!id);
+  }
+  $(".rt-account-edit").on("click", function (ev) {
+    ev.preventDefault();
+    var $tr = $(this).closest("tr");
+    fill($tr.data("id"), $tr.data("label"), $tr.data("username"));
+    $("#rt_account_label").focus();
+  });
+  $("#rt_account_new").on("click", function () {
+    fill(0, "", "");
+    $("#rt_account_label").focus();
+  });
+  $(".rt-account-submit").on("click", function (ev) {
+    ev.preventDefault();
+    $(this).closest("form").trigger("submit");
+  });
+  $(".rt-account-delete").on("click", function (ev) {
+    ev.preventDefault();
+    var label = $(this).closest("tr").data("label");
+    if (confirm(confirmText.replace("%s", label).replace("%d", $(this).data("shows")))) {
+      $(this).closest("form").trigger("submit");
+    }
+  });
+})(jQuery);
+</script>

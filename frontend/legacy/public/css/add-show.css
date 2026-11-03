@@ -323,28 +323,28 @@ label.wrapp-label input[type="checkbox"] {
 }
 
 
-/* RASTATIME 2026-11-03 - Publishing section (editorial team, CBA defaults):
+/* RASTATIME 2026-11-03 - Archiving section (editorial team, CBA defaults):
    label above the field like the other sections, help icon right of the
    label, the profile boxes in a scrolling list like the DJs of "Who". */
-#schedule-add-show dt.rt-publishing-label {
+#schedule-add-show dt.rt-archiving-label {
     display: block;
     padding: 8px 0 0;
     margin-bottom: 6px;
     color: inherit;
 }
 
-#schedule-add-show dt.rt-publishing-label .help_icon {
+#schedule-add-show dt.rt-archiving-label .help_icon {
     margin-left: 6px;
     vertical-align: middle;
     top: 0;
 }
 
-#schedule-add-show dt.rt-publishing-check input {
+#schedule-add-show dt.rt-archiving-check input {
     margin: 0 6px 0 0;
     vertical-align: middle;
 }
 
-#schedule-add-show .rt-publishing-field input.input_text {
+#schedule-add-show .rt-archiving-field input.input_text {
     width: 96%;
 }
 
@@ -366,7 +366,7 @@ label.wrapp-label input[type="checkbox"] {
     display: none;
 }
 
-.rt-publishing-note {
+.rt-archiving-note {
     margin: 4px 0 8px;
     color: #888;
 }

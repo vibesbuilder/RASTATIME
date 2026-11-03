@@ -1,10 +1,14 @@
 <?php
-// RASTATIME 2026-11-03 - publishing stage 1: the "Episode..." dialog of a
-// show instance (calendar context menu).  Title, teaser, description, image
-// and people involved of this one episode; empty fields fall back to the
-// show's defaults (Edit Show → Publishing), shown as placeholders.  The
+// RASTATIME 2026-11-03 - archiving: the "Episode..." dialog of a show
+// instance (calendar context menu).  Stage 1: title, teaser, description,
+// image and people involved of this one episode; empty fields fall back to
+// the show's defaults (Edit Show → Archiving), shown as placeholders.  The
 // Save button of the dialog (schedule.js buildEpisodeDialog) submits the
-// form; the image is uploaded / removed at once.
+// form; the image is uploaded / removed at once.  Stage 2: production
+// date, "do not archive", and the "Online archive" block (state of the
+// upload to cba.media, "Archive online..." with the audio choice, link an
+// existing post) for admins and program managers; the upload itself runs
+// in RASTATIME-WORKER, the block polls its state.
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
 $baseUrl = Config::getBasePath();
 $e = $this->episode;
@@ -13,11 +17,32 @@ $dis = $this->canEdit ? '' : ' disabled';
 $tip = function ($text) use ($h) {
     return '<span class="help_icon" data-rt-tip="' . $h($text) . '"></span>';
 };
+$T = [
+    'notArchived' => _('Not archived yet.'),
+    'archived' => _('Archived on cba.media as post %s.'),
+    'queued' => _('Waiting for the upload (queued %s).'),
+    'running' => _('Uploading to cba.media: %s.'),
+    'retry' => _('Waiting for another attempt at %s (attempt %s): %s'),
+    'failed' => _('The upload failed: %s'),
+    'unclear' => _('Unclear whether the post was created: %s - look on cba.media, then link the post or archive again.'),
+    'cancelled' => _('The upload was cancelled.'),
+    'missing' => _('Before this episode can be archived:'),
+    'start' => _('Start upload'),
+    'recording' => _('The recording of this episode'),
+    'noRecording' => _('The recording of this episode (none in the library)'),
+    'libraryFile' => _('A library file (MP3, OGG, Opus)'),
+    'search' => _('Title or creator (2 characters at least)'),
+    'queuedOk' => _('Queued - the background service uploads it within a minute.'),
+    'linked' => _('Linked.'),
+    'unlinked' => _('Link removed.'),
+    'file' => _('File: %s'),
+    'saved' => _('Saved.'),
+];
 ?>
 <div id="episode_dialog" class="rt-episode-dialog" data-id="<?php echo (int) $e['instance_id']; ?>"
      data-csrf="<?php echo $h($this->csrf); ?>" data-can-edit="<?php echo $this->canEdit ? '1' : '0'; ?>">
 <?php if (!$this->ready): ?>
-    <p class="rt-episode-note"><?php echo _("The publishing tables are missing - run the database migration 0074 first."); ?></p>
+    <p class="rt-episode-note"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
 <?php else: ?>
     <p class="rt-episode-note">
         <?php echo $h($e['starts_local']); ?> &middot;
@@ -34,15 +59,31 @@ $tip = function ($text) use ($h) {
             <textarea id="episode_teaser" class="input_text_area" rows="2" maxlength="2048"
                       placeholder="<?php echo $h($e['default_teaser']); ?>"<?php echo $dis; ?>><?php echo $h($e['teaser']); ?></textarea>
 
-            <label for="episode_description"><?php echo _("Description"); ?><?php echo $tip(_("The text of this episode - the same field as the instance description of the show form.")); ?></label>
-            <textarea id="episode_description" class="input_text_area" rows="5" maxlength="8192"<?php echo $dis; ?>><?php echo $h($e['description']); ?></textarea>
+            <label for="episode_description"><?php echo _("Description"); ?><?php echo $tip(_("The text of this episode; on cba.media it is the text of the post. Empty: the description of the show.")); ?></label>
+            <textarea id="episode_description" class="input_text_area" rows="5" maxlength="8192"
+                      placeholder="<?php echo $h(mb_substr($e['show_description'], 0, 300)); ?>"<?php echo $dis; ?>><?php echo $h($e['description']); ?></textarea>
 
-            <label for="episode_participants"><?php echo _("People involved"); ?><?php echo $tip(_("Only when this episode differs from the show, e.g. with guests. Counts in Analytics → Participants.")); ?></label>
-            <input type="text" id="episode_participants" class="input_text rt-episode-short" maxlength="3" value="<?php echo $e['participants'] === null ? '' : (int) $e['participants']; ?>"
-                   placeholder="<?php echo $e['show_participants'] === null ? '' : (int) $e['show_participants']; ?>"<?php echo $dis; ?> />
-            <span class="rt-episode-hint"><?php echo $e['show_participants'] === null
-                ? _("The show has no value yet.")
-                : sprintf(_("Show: %s"), (int) $e['show_participants']); ?></span>
+            <div class="rt-episode-pair">
+                <div>
+                    <label for="episode_participants"><?php echo _("People involved"); ?><?php echo $tip(_("Only when this episode differs from the show, e.g. with guests. Counts in Analytics → Participants.")); ?></label>
+                    <input type="text" id="episode_participants" class="input_text rt-episode-short" maxlength="3" value="<?php echo $e['participants'] === null ? '' : (int) $e['participants']; ?>"
+                           placeholder="<?php echo $e['show_participants'] === null ? '' : (int) $e['show_participants']; ?>"<?php echo $dis; ?> />
+                    <span class="rt-episode-hint"><?php echo $e['show_participants'] === null
+                        ? _("The show has no value yet.")
+                        : sprintf(_("Show: %s"), (int) $e['show_participants']); ?></span>
+                </div>
+                <div>
+                    <label for="episode_production_date"><?php echo _("Production date"); ?><?php echo $tip(_("Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier, e.g. recorded on Friday.")); ?></label>
+                    <input type="date" id="episode_production_date" class="input_text rt-episode-date" value="<?php echo $h($e['production_date']); ?>"
+                           max="<?php echo $h($e['broadcast_date']); ?>"<?php echo $dis; ?> />
+                    <span class="rt-episode-hint"><?php echo $h(sprintf(_("Broadcast: %s"), $e['broadcast_date'])); ?></span>
+                </div>
+            </div>
+
+            <label class="rt-episode-check">
+                <input type="checkbox" id="episode_no_archive" value="1"<?php echo $e['no_archive'] ? ' checked' : ''; ?><?php echo $dis; ?> />
+                <?php echo _("Do not archive this episode automatically"); ?><?php echo $tip(_("For tests, cancelled episodes or rights problems. Applies once automatic archiving is switched on for the show; archiving by hand stays possible.")); ?>
+            </label>
         </div>
         <div class="rt-episode-side">
             <label><?php echo _("Episode image"); ?><?php echo $tip(_("Optional, JPG or PNG up to 10 MB. Without one, cba.media shows the image of the podcast.")); ?></label>
@@ -56,7 +97,7 @@ $tip = function ($text) use ($h) {
                 <a href="#" id="episode_image_remove"<?php echo $this->hasImage ? '' : ' style="display:none"'; ?>><?php echo _("Remove image"); ?></a>
             <?php endif; ?>
 
-            <label for="episode_image_license"><?php echo _("Image licence"); ?></label>
+            <label for="episode_image_license"><?php echo _("Image licence"); ?><span class="help_icon" data-rt-tip-html="<?php echo $h(Application_Service_ArchivingService::licenseMatrixHtml()); ?>"></span></label>
             <select id="episode_image_license" class="input_select"<?php echo $dis; ?>>
                 <?php foreach ($this->licenses as $value => $label): ?>
                     <option value="<?php echo $h($value); ?>"<?php echo $e['image_license'] === (string) $value ? ' selected' : ''; ?>><?php echo $h($label); ?></option>
@@ -64,27 +105,60 @@ $tip = function ($text) use ($h) {
             </select>
 
             <label for="episode_image_caption"><?php echo _("Image caption"); ?><?php echo $tip(_("Credit or short description of the image, e.g. the photographer.")); ?></label>
-            <input type="text" id="episode_image_caption" class="input_text" maxlength="255" value="<?php echo $h($e['image_caption']); ?>"<?php echo $dis; ?> />
+            <input type="text" id="episode_image_caption" class="input_text" maxlength="500" value="<?php echo $h($e['image_caption']); ?>"<?php echo $dis; ?> />
 
             <div class="rt-episode-show">
                 <strong><?php echo _("From the show"); ?></strong>
                 <?php echo _("Editorial team"); ?>:
                 <?php echo $e['profiles'] ? $h(implode(', ', array_column($e['profiles'], 'name'))) : '&ndash;'; ?><br />
+                <?php echo _("CBA account"); ?>:
+                <?php echo $e['account_label'] !== '' ? $h($e['account_label']) : '&ndash;'; ?><br />
                 <?php echo _("CBA podcast ID"); ?>:
                 <?php echo $show['cba_series_id'] ? (int) $show['cba_series_id'] : '&ndash;'; ?><br />
                 <?php echo _("Licence"); ?>:
-                <?php echo $show['license'] !== '' ? $h($this->licenses[$show['license']] ?? $show['license']) : '&ndash;'; ?>
-                <div class="rt-episode-hint"><?php echo _("Set in Edit Show → Publishing."); ?></div>
+                <?php echo $show['license'] !== '' ? $h($this->licenses[$show['license']] ?? $show['license']) : '&ndash;'; ?><br />
+                <?php echo _("Visibility on cba.media"); ?>:
+                <?php echo $h(Application_Service_ArchivingService::statusOptions()[$show['cba_status']] ?? $show['cba_status']); ?>
+                <div class="rt-episode-hint"><?php echo _("Set in Edit Show → Archiving."); ?></div>
             </div>
         </div>
     </form>
     <p id="episode_msg" class="rt-episode-msg"></p>
+
+    <div class="rt-episode-archive">
+        <h4><?php echo _("Online archive (cba.media)"); ?></h4>
+        <p id="episode_archive_status" class="rt-episode-archive-status"></p>
+        <ul id="episode_archive_missing" class="rt-episode-archive-missing"></ul>
+        <?php if ($this->canArchive): ?>
+            <div class="rt-episode-archive-actions">
+                <button type="button" class="btn" id="episode_archive_open"><?php echo _("Archive online..."); ?></button>
+                <span class="rt-episode-archive-link">
+                    <input type="text" id="episode_archive_post" class="input_text" placeholder="<?php echo $h(_("Post number or address")); ?>"
+                           value="<?php echo $e['cba_post_id'] ? (int) $e['cba_post_id'] : ''; ?>" />
+                    <button type="button" class="btn" id="episode_archive_linkbtn"><?php echo _("Link existing post"); ?></button>
+                </span>
+            </div>
+            <div id="episode_archive_panel" class="rt-episode-archive-panel" style="display:none">
+                <label class="rt-episode-check"><input type="radio" name="episode_archive_source" value="recording" /> <span id="episode_archive_rec_label"></span></label>
+                <label class="rt-episode-check"><input type="radio" name="episode_archive_source" value="file" /> <?php echo $h($T['libraryFile']); ?></label>
+                <div id="episode_archive_filepick" style="display:none">
+                    <input type="text" id="episode_archive_search" class="input_text" placeholder="<?php echo $h($T['search']); ?>" />
+                    <select id="episode_archive_files" class="input_select" size="5"></select>
+                </div>
+                <p class="rt-episode-hint"><?php echo _("Title, teaser, description, image and the show's defaults are read when the upload starts. Changes after the upload are made on cba.media."); ?></p>
+                <button type="button" class="btn btn-new" id="episode_archive_start"><?php echo $h($T['start']); ?></button>
+            </div>
+        <?php endif; ?>
+    </div>
 <?php endif; ?>
 <script>
 (function ($) {
   var $d = $("#episode_dialog").last();
   var id = $d.data("id"), csrf = $d.data("csrf");
   var base = "<?php echo $h($baseUrl); ?>";
+  var T = <?php echo json_encode($T, JSON_UNESCAPED_UNICODE); ?>;
+  var state = <?php echo json_encode($this->archiveState, JSON_UNESCAPED_UNICODE); ?>;
+  var timer = null;
   function msg(text, ok) {
     $d.find("#episode_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f");
   }
@@ -93,6 +167,13 @@ $tip = function ($text) use ($h) {
     var e = json && json.error;
     msg(e && !/^[a-z-]+$/.test(e) ? e : $.i18n._("Could not save."), false);
   }
+  function fmt(s) {
+    var a = Array.prototype.slice.call(arguments, 1), i = 0;
+    return s.replace(/%s/g, function () { return a[i++]; });
+  }
+  function local(utc) {
+    return utc ? new Date(utc.replace(" ", "T") + "Z").toLocaleString() : "";
+  }
   $d.find("[data-rt-tip]").each(function () {
     $(this).rtTooltip({
       content: { text: $("<div>").text($(this).attr("data-rt-tip")).html() },
@@ -100,6 +181,116 @@ $tip = function ($text) use ($h) {
       interactive: true,
     });
   });
+  $d.find("[data-rt-tip-html]").each(function () {
+    $(this).rtTooltip({ content: { text: $(this).attr("data-rt-tip-html") }, placement: "left", interactive: true });
+  });
+
+  // ---- Online archive block ----
+  function render() {
+    if (!state) { return; }
+    var $s = $d.find("#episode_archive_status").empty(), j = state.job, open = false;
+    if (state.post_id) {
+      var url = "https://cba.media/?p=" + state.post_id, parts = T.archived.split("%s");
+      $s.append(document.createTextNode(parts[0]))
+        .append($("<a target='_blank' rel='noopener'></a>").attr("href", url).text(state.post_id))
+        .append(document.createTextNode(parts[1] || ""));
+    } else if (j && j.status === "queued" && j.attempts > 0) {
+      $s.text(fmt(T.retry, local(j.next_attempt_utc), j.attempts + 1, j.error));
+      open = true;
+    } else if (j && j.status === "queued") {
+      $s.text(fmt(T.queued, local(j.created_utc)));
+      open = true;
+    } else if (j && j.status === "running") {
+      var pct = j.bytes_total > 0 ? Math.floor((100 * j.bytes_sent) / j.bytes_total) + " %" : "…";
+      $s.text(fmt(T.running, pct));
+      open = true;
+    } else if (j && j.status === "failed") {
+      $s.text(fmt(T.failed, j.error));
+    } else if (j && j.status === "unclear") {
+      $s.text(fmt(T.unclear, j.error));
+    } else if (j && j.status === "cancelled") {
+      $s.text(T.cancelled);
+    } else {
+      $s.text(T.notArchived);
+    }
+    if (j && j.file && !state.post_id) {
+      $s.append($("<span class='rt-episode-hint'></span>").text(" " + fmt(T.file, j.file)));
+    }
+    var $m = $d.find("#episode_archive_missing").empty();
+    if (!state.post_id && !open && state.missing && state.missing.length) {
+      $m.append($("<li class='rt-episode-archive-head'></li>").text(T.missing));
+      $.each(state.missing, function (i, t) { $m.append($("<li></li>").text(t)); });
+    }
+    $d.find("#episode_archive_open").toggle(!state.post_id && !open);
+    $d.find("#episode_archive_rec_label").text(state.recording ? T.recording : T.noRecording);
+    $d.find("input[name=episode_archive_source][value=recording]").prop("disabled", !state.recording);
+    clearTimeout(timer);
+    if (open) {
+      timer = setTimeout(poll, 5000);
+    }
+  }
+  function poll() {
+    if (!$.contains(document, $d[0])) { return; }   // dialog closed
+    $.getJSON(base + "schedule/episode-archive-state", { id: id }, function (json) {
+      if (json && json.ok) { state = json.state; render(); }
+    });
+  }
+  $d.find("#episode_archive_open").on("click", function () {
+    var $p = $d.find("#episode_archive_panel").toggle();
+    if ($p.is(":visible") && !$p.find("input[name=episode_archive_source]:checked").length) {
+      $p.find("input[name=episode_archive_source][value=" + (state.recording ? "recording" : "file") + "]")
+        .prop("checked", true).trigger("change");
+    }
+  });
+  $d.on("change", "input[name=episode_archive_source]", function () {
+    $d.find("#episode_archive_filepick").toggle($(this).val() === "file");
+  });
+  var searchTimer = null;
+  $d.find("#episode_archive_search").on("input", function () {
+    var q = $.trim($(this).val());
+    clearTimeout(searchTimer);
+    if (q.length < 2) { $d.find("#episode_archive_files").empty(); return; }
+    searchTimer = setTimeout(function () {
+      $.getJSON(base + "schedule/episode-archive-files", { q: q }, function (json) {
+        var $sel = $d.find("#episode_archive_files").empty();
+        $.each((json && json.files) || [], function (i, f) {
+          $sel.append($("<option></option>").attr("value", f.id)
+            .html(f.track_title + (f.artist_name ? " - " + f.artist_name : "") + " (" + String(f.ext).toUpperCase() + ")"));
+        });
+      });
+    }, 250);
+  });
+  $d.find("#episode_archive_start").on("click", function () {
+    var src = $d.find("input[name=episode_archive_source]:checked").val();
+    var fileId = src === "file" ? $d.find("#episode_archive_files").val() : 0;
+    if (src === "file" && !fileId) { return; }
+    $.post(base + "schedule/episode-archive", { csrf_token: csrf, id: id, file_id: fileId || 0 }, function (json) {
+      if (json && json.state) { state = json.state; }
+      if (json && json.ok) {
+        $d.find("#episode_archive_panel").hide();
+        msg(T.queuedOk, true);
+      } else if (json && json.errors && json.errors.length) {
+        msg(json.errors.join(" "), false);
+      } else {
+        fail(json);
+      }
+      render();
+    }, "json").fail(function (xhr) { fail(xhr.responseJSON); });
+  });
+  $d.find("#episode_archive_linkbtn").on("click", function () {
+    var val = $.trim($d.find("#episode_archive_post").val());
+    $.post(base + "schedule/episode-archive-link", { csrf_token: csrf, id: id, post: val }, function (json) {
+      if (json && json.ok) {
+        state = json.state;
+        msg(val ? T.linked : T.unlinked, true);
+        render();
+      } else {
+        fail(json);
+      }
+    }, "json").fail(function (xhr) { fail(xhr.responseJSON); });
+  });
+
+  // ---- image ----
   function showImage(has) {
     var $img = $d.find("#episode_image_preview");
     if (has) {
@@ -119,10 +310,17 @@ $tip = function ($text) use ($h) {
       teaser: $d.find("#episode_teaser").val(),
       description: $d.find("#episode_description").val(),
       participants: $.trim($d.find("#episode_participants").val()),
+      production_date: $d.find("#episode_production_date").val(),
+      no_archive: $d.find("#episode_no_archive").prop("checked") ? 1 : "",
       image_license: $d.find("#episode_image_license").val(),
       image_caption: $d.find("#episode_image_caption").val(),
     }, function (json) {
-      if (json && json.ok) { msg($.i18n._("Saved."), true); } else { fail(json); }
+      if (json && json.ok) {
+        msg(T.saved, true);
+        if (json.state) { state = json.state; render(); }
+      } else {
+        fail(json);
+      }
     }, "json").fail(function (xhr) { fail(xhr.responseJSON); });
   });
   // image: upload at once
@@ -143,7 +341,7 @@ $tip = function ($text) use ($h) {
       processData: false,
       dataType: "json",
     }).done(function (json) {
-      if (json && json.ok) { showImage(true); msg($.i18n._("Saved."), true); } else { fail(json); }
+      if (json && json.ok) { showImage(true); msg(T.saved, true); } else { fail(json); }
     }).fail(function (xhr) { fail(xhr.responseJSON); });
     $(this).val("");
   });
@@ -153,6 +351,7 @@ $tip = function ($text) use ($h) {
       if (json && json.ok) { showImage(false); msg($.i18n._("Removed."), true); } else { fail(json); }
     }, "json").fail(function (xhr) { fail(xhr.responseJSON); });
   });
+  render();
 })(jQuery);
 </script>
 </div>

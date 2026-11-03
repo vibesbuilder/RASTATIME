@@ -151,7 +151,7 @@ Standardwerten bleiben.
 | **Aufnahme** | Ankreuzen, um den On-Air-Output der Sendung in eine Datei aufzuzeichnen. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Eine Playlist anhängen, um jede Instanz automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Wer** | Zusätzliche Hosts über den primären unter Was gesetzten hinaus. |
-| **Veröffentlichung** | Redaktionsteam, Teilnehmende und die cba.media-Vorgaben der Sendung (nicht in Instanz bearbeiten). Siehe [Veröffentlichung](./PUBLISHING.md). Seit 2026-11-03. |
+| **Archivierung** | Redaktionsteam, Teilnehmende, CBA-Konto und die cba.media-Vorgaben der Sendung (nicht in Instanz bearbeiten). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
 | **Style** | Hintergrundfarbe, Textfarbe, Sendungs-Bild (sichtbar nur hier für einmalige Sendungen; für wiederkehrende Sendungen bleiben diese über Instanzen hinweg konstant). |
 
 > **Operator-Tipp.** Wenn Sie im Begriff sind, denselben
@@ -198,7 +198,7 @@ Aktion.
 | **Als Vorlage speichern** | Die aktuellen Sendungseinstellungen als neue Vorlage speichern. | Immer |
 | **Ansehen** | Lese-Ansicht der Metadaten der Sendung + Sendeplan. *Start* und *Length* je Zeile sind die ausgelegte Sendeplanzeile (Length = Cue-Out minus Cue-In, wie im Show Builder; seit 2026-10-23); die Summen unten sind die ausgelegte Inhaltslänge (inkl. Cue-Punkten und Crossfade-Überlappungen) gegenüber der Sendungsdauer. | Immer |
 | **Teaser** | Die Jingles, die diese Sendung ankündigen - Typ ändern, lösen, weitere verknüpfen; siehe [Teaser-Automatik](./TEASERS.md). Seit 2026-10-16. | Admin / PM |
-| **Episode...** | Titel, Teaser, Beschreibung, Bild und Teilnehmende dieser einen Episode, vor oder nach der Sendung; siehe [Veröffentlichung](./PUBLISHING.md). Seit 2026-11-03. | Admin / PM / Hosts der Sendung |
+| **Episode...** | Titel, Teaser, Beschreibung, Bild und Teilnehmende dieser einen Episode, vor oder nach der Sendung, und „Online archivieren“ auf cba.media; siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. | Admin / PM / Hosts der Sendung (archivieren: Admin / PM) |
 | **Sendung bearbeiten** | Die Sendungsdefinition bearbeiten (Name, Zeit, Wiederholungen usw.). | Zukünftige oder aktuelle Sendungen |
 | **Instanz bearbeiten** | Nur dieses eine Vorkommen einer wiederkehrenden Sendung bearbeiten. | Nur wiederkehrende Sendungen |
 | **Sendung abbrechen** | Die Sendung *jetzt* beenden — nur für die aktuell laufende Sendung sinnvoll. | Nur aktuelle Sendung |

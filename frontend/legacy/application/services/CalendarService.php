@@ -235,7 +235,7 @@ class Application_Service_CalendarService
      * @param int      $deltaMin delta minutes show moved
      */
     /**
-     * RASTATIME 2026-11-03 - publishing stage 1: "Episode..." (title, teaser,
+     * RASTATIME 2026-11-03 - archiving stage 1: "Episode..." (title, teaser,
      * image, people involved of this instance) for admins, program managers
      * and the hosts of the show, before and after it aired; not for the
      * legacy rebroadcast instances (they repeat another instance).

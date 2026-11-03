@@ -19,7 +19,7 @@ class ScheduleController extends Zend_Controller_Action
             ->addActionContext('show-content-dialog', 'json')
             // RASTATIME 2026-10-16 - teaser automation stage 2
             ->addActionContext('teaser-dialog', 'json')
-            // RASTATIME 2026-11-03 - publishing stage 1
+            // RASTATIME 2026-11-03 - archiving stage 1
             ->addActionContext('episode-dialog', 'json')
             ->addActionContext('clear-show', 'json')
             ->addActionContext('get-current-playlist', 'json')
@@ -555,7 +555,7 @@ class ScheduleController extends Zend_Controller_Action
     }
 
     /**
-     * RASTATIME 2026-11-03 - publishing stage 1: the "Episode..." dialog of a
+     * RASTATIME 2026-11-03 - archiving stage 1: the "Episode..." dialog of a
      * show instance (GET id).  Title, teaser, description, image and people
      * involved of this one episode; the show's defaults show as
      * placeholders.  Admins, program managers and the show's hosts.
@@ -563,7 +563,7 @@ class ScheduleController extends Zend_Controller_Action
     public function episodeDialogAction()
     {
         $instanceId = (int) $this->_getParam('id');
-        $episode = Application_Service_PublishingService::episode($instanceId);
+        $episode = Application_Service_ArchivingService::episode($instanceId);
         if ($episode === null) {
             $this->view->show_error = true;
 
@@ -576,13 +576,16 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->csrf = $ns->authtoken;
         $this->view->episode = $episode;
         $this->view->canEdit = $this->episodeMayEdit($episode['show_id']);
-        $this->view->ready = Application_Service_PublishingService::tablesReady();
-        $this->view->hasImage = Application_Service_PublishingService::episodeImageFile($instanceId) !== null;
-        $this->view->licenses = Application_Service_PublishingService::licenseOptions();
+        $this->view->ready = Application_Service_ArchivingService::tablesReady();
+        $this->view->hasImage = Application_Service_ArchivingService::episodeImageFile($instanceId) !== null;
+        $this->view->licenses = Application_Service_ArchivingService::licenseOptions();
+        // archiving stage 2: the "Online archive" block
+        $this->view->canArchive = Application_Model_User::getCurrentUser()->isAdminOrPM();
+        $this->view->archiveState = $this->view->ready ? $this->archiveState($instanceId) : null;
         $this->view->dialog = $this->view->render('schedule/episode-dialog.phtml');
         $this->view->showTitle = $episode['show_name'];   // plain text, see showContentDialogAction
         $this->view->startsLocal = $episode['starts_local'];
-        unset($this->view->episode, $this->view->licenses, $this->view->hasImage);
+        unset($this->view->episode, $this->view->licenses, $this->view->hasImage, $this->view->archiveState);
     }
 
     private function episodeMayEdit($showId)
@@ -634,15 +637,22 @@ class ScheduleController extends Zend_Controller_Action
         if (!($instanceId = $this->episodeMutationAllowed())) {
             return;
         }
-        $error = Application_Service_PublishingService::saveEpisode($instanceId, [
+        $error = Application_Service_ArchivingService::saveEpisode($instanceId, [
             'title' => $this->_getParam('title', ''),
             'teaser' => $this->_getParam('teaser', ''),
             'description' => $this->_getParam('description', ''),
             'image_license' => $this->_getParam('image_license', ''),
             'image_caption' => $this->_getParam('image_caption', ''),
             'participants' => $this->_getParam('participants', ''),
+            'production_date' => $this->_getParam('production_date', ''),
+            'no_archive' => $this->_getParam('no_archive', ''),
         ]);
-        $this->_helper->json->sendJson(['ok' => $error === null, 'error' => $error]);
+        $this->_helper->json->sendJson([
+            'ok' => $error === null,
+            'error' => $error,
+            // the missing items of the archive block may have changed
+            'state' => $error === null ? $this->archiveState($instanceId) : null,
+        ]);
     }
 
     /** POST multipart: "file" = JPG/PNG, replaces the episode image. */
@@ -659,7 +669,7 @@ class ScheduleController extends Zend_Controller_Action
         }
 
         try {
-            $error = Application_Service_PublishingService::setEpisodeImage($instanceId, $file['tmp_name'], (int) $file['size']);
+            $error = Application_Service_ArchivingService::setEpisodeImage($instanceId, $file['tmp_name'], (int) $file['size']);
         } catch (Exception $e) {
             Logging::warn('episode image ' . $instanceId . ': ' . $e->getMessage());
             $error = _('The image could not be stored.');
@@ -672,8 +682,116 @@ class ScheduleController extends Zend_Controller_Action
         if (!($instanceId = $this->episodeMutationAllowed())) {
             return;
         }
-        Application_Service_PublishingService::removeEpisodeImage($instanceId);
+        Application_Service_ArchivingService::removeEpisodeImage($instanceId);
         $this->_helper->json->sendJson(['ok' => true]);
+    }
+
+    /**
+     * RASTATIME 2026-11-03 - archiving stage 2: what the "Online archive"
+     * block of the episode dialog shows (also polled while an upload waits
+     * or runs).
+     */
+    private function archiveState($instanceId)
+    {
+        $ep = Application_Service_ArchivingService::episode((int) $instanceId);
+        if ($ep === null) {
+            return null;
+        }
+        $job = $ep['job'];
+
+        return [
+            'post_id' => $ep['cba_post_id'],
+            'archived_at' => $ep['cba_archived_at'],
+            'recording' => (bool) $ep['recording_file_id'],
+            'job' => $job === null ? null : [
+                'status' => $job['status'],
+                'trigger' => $job['trigger'],
+                'attempts' => (int) $job['attempts'],
+                'error' => (string) $job['last_error'],
+                'bytes_total' => (int) $job['bytes_total'],
+                'bytes_sent' => (int) $job['bytes_sent'],
+                'created_utc' => $job['created_utc'],
+                'next_attempt_utc' => $job['next_attempt_utc'],
+                'finished_utc' => $job['finished_utc'],
+                'file' => trim($job['track_title'] . ($job['artist_name'] ? ' - ' . $job['artist_name'] : '')),
+            ],
+            'missing' => $ep['cba_post_id'] ? [] : Application_Service_ArchivingService::precheck((int) $instanceId),
+        ];
+    }
+
+    /** Admins and program managers start uploads and link posts (operator 2026-11-03). */
+    private function archiveMutationAllowed()
+    {
+        if (!($instanceId = $this->episodeMutationAllowed())) {
+            return 0;
+        }
+        if (!Application_Model_User::getCurrentUser()->isAdminOrPM()) {
+            $this->getResponse()->setHttpResponseCode(403);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'forbidden']);
+
+            return 0;
+        }
+
+        return $instanceId;
+    }
+
+    /** GET id: the archive state of the episode (JSON). */
+    public function episodeArchiveStateAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $instanceId = (int) $this->_getParam('id');
+        $showId = (int) Propel::getConnection()->query('SELECT show_id FROM cc_show_instances WHERE id = ' . $instanceId)->fetchColumn();
+        if (!$showId || !$this->episodeMayEdit($showId)) {
+            $this->getResponse()->setHttpResponseCode($showId ? 403 : 404);
+            $this->_helper->json->sendJson(['ok' => false]);
+
+            return;
+        }
+        $this->_helper->json->sendJson(['ok' => true, 'state' => $this->archiveState($instanceId)]);
+    }
+
+    /** POST id, file_id (0 = the recording): queue the upload to cba.media. */
+    public function episodeArchiveAction()
+    {
+        if (!($instanceId = $this->archiveMutationAllowed())) {
+            return;
+        }
+        [$jobId, $reasons] = Application_Service_ArchivingService::enqueueUpload(
+            $instanceId,
+            (int) $this->_getParam('file_id', 0),
+            (int) Application_Model_User::getCurrentUser()->getId()
+        );
+        $this->_helper->json->sendJson([
+            'ok' => $jobId > 0,
+            'errors' => $reasons,
+            'state' => $this->archiveState($instanceId),
+        ]);
+    }
+
+    /** POST id, post (number or address; empty removes the link). */
+    public function episodeArchiveLinkAction()
+    {
+        if (!($instanceId = $this->archiveMutationAllowed())) {
+            return;
+        }
+        $error = Application_Service_ArchivingService::linkPost($instanceId, (string) $this->_getParam('post', ''));
+        $this->_helper->json->sendJson(['ok' => $error === null, 'error' => $error, 'state' => $this->archiveState($instanceId)]);
+    }
+
+    /** GET q: library files (MP3, OGG, Opus) that may be archived instead of the recording. */
+    public function episodeArchiveFilesAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if (!Application_Model_User::getCurrentUser()->isAdminOrPM()) {
+            $this->getResponse()->setHttpResponseCode(403);
+            $this->_helper->json->sendJson(['ok' => false]);
+
+            return;
+        }
+        $rows = Application_Service_ArchivingService::archiveFileSearch((string) $this->_getParam('q', ''));
+        $this->_helper->json->sendJson(['ok' => true, 'files' => SecurityHelper::htmlescape_recursive($rows)]);
     }
 
     /** GET id: the episode image itself (preview in the dialog), 404 without one. */
@@ -681,7 +799,7 @@ class ScheduleController extends Zend_Controller_Action
     {
         $this->view->layout()->disableLayout();
         $this->_helper->viewRenderer->setNoRender(true);
-        $path = Application_Service_PublishingService::episodeImageFile((int) $this->_getParam('id'));
+        $path = Application_Service_ArchivingService::episodeImageFile((int) $this->_getParam('id'));
         if ($path === null) {
             $this->getResponse()->setHttpResponseCode(404);
 
@@ -829,7 +947,7 @@ class ScheduleController extends Zend_Controller_Action
         $data['add_show_day_check'] = $this->_getParam('days');
         // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
         $data['add_show_month_check'] = $this->_getParam('months', []);
-        // RASTATIME 2026-11-03 - Publishing: the editorial team boxes travel like the hosts
+        // RASTATIME 2026-11-03 - Archiving: the editorial team boxes travel like the hosts
         $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', []);
 
         if ($data['add_show_day_check'] == '') {
@@ -858,7 +976,7 @@ class ScheduleController extends Zend_Controller_Action
         )) {
             // Get the show ID from the show service to pass as a parameter to the RESTful ShowImageController
             $this->view->showId = $service_show->addUpdateShow($data);
-            $this->savePublishing($this->view->showId, $data);
+            $this->saveArchiving($this->view->showId, $data);
 
             $this->view->addNewShow = true;
             $this->view->newForm = $this->view->render('schedule/add-show-form.phtml');
@@ -896,7 +1014,7 @@ class ScheduleController extends Zend_Controller_Action
         $data['add_show_day_check'] = $this->_getParam('days');
         // RASTATIME 2026-10-15 - month boxes of a monthly repeat (empty = every month)
         $data['add_show_month_check'] = $this->_getParam('months', []);
-        // RASTATIME 2026-11-03 - Publishing: the editorial team boxes travel like the hosts
+        // RASTATIME 2026-11-03 - Archiving: the editorial team boxes travel like the hosts
         $data['add_show_editor_profiles'] = $this->_getParam('editorProfiles', []);
 
         if ($data['add_show_day_check'] == '') {
@@ -928,7 +1046,7 @@ class ScheduleController extends Zend_Controller_Action
         if ($service_showForm->validateShowForms($forms, $data)) {
             // Get the show ID from the show service to pass as a parameter to the RESTful ShowImageController
             $this->view->showId = $service_show->addUpdateShow($data);
-            $this->savePublishing($this->view->showId, $data);
+            $this->saveArchiving($this->view->showId, $data);
 
             // send new show forms to the user
             $this->createShowFormAction(true);
@@ -942,20 +1060,20 @@ class ScheduleController extends Zend_Controller_Action
     }
 
     /**
-     * RASTATIME 2026-11-03 - publishing stage 1: store the Publishing section
+     * RASTATIME 2026-11-03 - archiving stage 1: store the Archiving section
      * of a whole show (absent in Edit Instance).  A failure here is logged
      * and does not undo the show save.
      */
-    private function savePublishing($showId, array $data)
+    private function saveArchiving($showId, array $data)
     {
         if (!$showId || !array_key_exists('add_show_participants', $data)) {
             return;
         }
 
         try {
-            Application_Service_PublishingService::saveShow((int) $showId, $data);
+            Application_Service_ArchivingService::saveShow((int) $showId, $data);
         } catch (Exception $e) {
-            Logging::warn('publishing: show ' . $showId . ' not saved: ' . $e->getMessage());
+            Logging::warn('archiving: show ' . $showId . ' not saved: ' . $e->getMessage());
         }
     }
 
@@ -984,7 +1102,7 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->rebroadcast = $forms['rebroadcast'];
         $this->view->who = $forms['who'];
         $this->view->style = $forms['style'];
-        $this->view->publishing = $forms['publishing'];
+        $this->view->archiving = $forms['archiving'];
 
         return $forms;
     }

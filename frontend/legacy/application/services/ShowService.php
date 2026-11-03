@@ -161,16 +161,27 @@ class Application_Service_ShowService
             BasePeer::doUpdate($selectCriteria, $updateCriteria, $con);
 
             $ccShowInstance->updateDbTimeFilled($con);
+            // RASTATIME 2026-11-03 - archiving stage 2: the description is
+            // edited in the calendar's "Episode..." dialog, the instance form
+            // no longer carries it - the new instance keeps the original's
+            $description = array_key_exists('add_show_instance_description', $showData)
+                ? $showData['add_show_instance_description']
+                : $ccShowInstanceOrig->getDbDescription();
             $ccShowInstance->updateScheduleStatus($con);
             $ccShowInstance
-                ->setDbDescription($showData['add_show_instance_description'])
+                ->setDbDescription($description)
                 ->save();
 
             // delete the edited instance from the repeating sequence
             $ccShowInstanceOrig
                 ->setDbModifiedInstance(true)
-                ->setDbDescription($showData['add_show_instance_description'])
+                ->setDbDescription($description)
                 ->save();
+            // ... and its episode data and archive jobs follow the new instance
+            Application_Service_ArchivingService::moveEpisode(
+                (int) $ccShowInstanceOrig->getDbId(),
+                (int) $ccShowInstance->getDbId()
+            );
 
             $con->commit();
             Application_Model_RabbitMq::PushSchedule();

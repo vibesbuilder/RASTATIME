@@ -108,14 +108,15 @@ $Services = @(
         InstallHint = "infra\nssm\install-api.ps1"
     },
     [PSCustomObject]@{
-        # Placeholder service: the worker registers no jobs yet (runs as
-        # "dev stub (no real handlers registered)", fresh-machine rehearsal
-        # 2026-11-02 finding 13) - optional until it does real work.
+        # Since 2026-11-03 (archiving stage 2) the worker uploads the
+        # episodes archived on cba.media and fetches the CBA topic list; it
+        # was an optional placeholder before.  Stopping it only pauses the
+        # uploads, the broadcast does not depend on it.
         Name        = "RASTATIME-WORKER"
         Logs        = @("$InstallRoot\logs\worker-stdout.log",
                         "$InstallRoot\logs\worker-stderr.log")
-        Optional    = $true
-        Note        = "placeholder service - no jobs registered yet (idle loop only)"
+        Optional    = $false
+        Note        = "archive uploads to cba.media"
         HttpUrl     = $null
         InstallHint = "infra\nssm\install-worker.ps1"
     },

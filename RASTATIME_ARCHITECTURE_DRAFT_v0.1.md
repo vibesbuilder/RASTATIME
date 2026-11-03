@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.110
+Draft version: 0.111
 Date: 2026-11-03
 
 > **Revision history**
+> - **0.111 (2026-11-03)** - **Archiving, stage 2** (§23.80): the feature is renamed "Archiving"; CBA
+>   accounts (admins), "Archive online" by hand from the Episode dialog, RASTATIME-WORKER uploads with
+>   a bandwidth limit and never repeats an unclear upload; migration 0075.
 > - **0.110 (2026-11-03)** - **Publishing, stage 1** (§23.79): editorial team profiles, per-show
 >   publishing defaults, per-episode title / teaser / image (calendar "Episode..."), Analytics ->
 >   Participants; legacy migration 0074 (four tables), nothing uploaded yet.
@@ -8466,3 +8469,81 @@ database migrated through 0074).  Unauthenticated curl on the new routes
 302 to the login.  Rollback: `git revert`; the four tables stay unused
 (or `DROP TABLE cc_episode, cc_show_publishing, cc_show_editor_profile,
 cc_editor_profile` and schema_version 73).
+
+### 23.80 Archiving, Stage 2: CBA Accounts, "Archive Online" by Hand, the Worker as Job Runner (2026-11-03)
+
+**Renamed.**  The operator renamed the feature of §23.79 "Archiving"
+("Publish" is My Podcast's word): UI section, menu texts, manual chapter
+`ARCHIVING.md`, and in the code `Application_Service_ArchivingService`,
+`Application_Form_AddShowArchiving`, `ArchivingController` (routes
+`archiving/*`, ACL resource `archiving`), table `cc_show_archiving`
+(migration 0075 renames `cc_show_publishing`).
+
+**CBA answer (2026-11-03).**  Upload = `POST cba.media/wp-json/cba/v1/
+zipupload`, HTTP Basic with the CBA user name and a WordPress application
+password; every show is archived under its own CBA user.  Required meta:
+title, content, languages (CBA list, max. 3), production_date (past),
+category_id; status defaults to private, licence to CC BY - so RASTATIME
+requires a licence.  No endpoint changes or deletes a post.
+
+**Model (migration 0075).**  `cc_cba_account` (label, user name,
+application password - write-only in the UI, admins only; never returned
+by `accounts()`), `cc_show_archiving.cba_account_id / cba_status`,
+`cc_episode.production_date / no_archive / cba_post_id / cba_archived_at`
+(caption widened to 500), `cc_cba_upload` (one row per job: status queued
+| running | done | failed | unclear | cancelled, attempts,
+next_attempt_at, give_up_at = +24 h, last_error, bytes_total/sent, a
+partial unique index allows one open job per instance), `cc_pref
+cba_upload_kbit` (4000).
+
+**Legacy.**  Settings → CBA Accounts (`archiving/accounts`: save, delete,
+test = `GET wp/v2/users/me?context=edit` with the stored credentials by
+curl, role check; upload limit).  The Archiving section gains the
+account, the visibility, the topic as a list (from `cc_pref
+cba_categories_json`, else the number field) and the licence matrix as an
+HTML tooltip (`data-rt-tip-html`, bound in add-show.js and the dialog);
+the licence list is the specification's (no `cc by-sa`, `cc sampling+`
+added).  The Episode dialog gains production date, "do not archive" and
+the "Online archive" block: state (polled every 5 s while a job is open),
+`precheck()` reasons, "Archive online..." with the audio choice
+(recording or a library MP3/OGG/Opus, `archiveFileSearch`), "Link
+existing post" (`linkPost`, number or `?p=` address); actions
+`episode-archive`, `episode-archive-link` (admins / PMs, POST + CSRF),
+`episode-archive-state`, `episode-archive-files`.  Edit Instance no
+longer carries the instance description (the dialog is the only place);
+`ShowService::editRepeatingShowInstance` keeps the stored text and moves
+the episode row and the jobs to the new instance (`moveEpisode`) - Edit
+Instance creates a new instance, the stage 1 data stayed on the hidden
+original before.
+
+**Worker.**  RASTATIME-WORKER stops being a placeholder (`__main__`):
+Django setup with the service's settings (retried every 60 s, tables
+checked), `recover_interrupted()` at start (running + no byte sent →
+queued, else unclear), every 15 s `refresh_categories()` (daily) and
+`run_once()` until no job is due.  `archive_jobs` reads with raw SQL,
+`cba.build_meta()` checks and builds the meta (title show + date,
+content = episode or show description as HTML paragraphs, teaser
+fallback, production date = broadcast day, broadcast date = instance
+start in station time, editors from the profiles, image fields only with
+an image), `cba.write_body()` writes the multipart body with the ZIP
+(`audio.<ext>`, `image.<ext>`, stored) into one temp file,
+`ThrottledReader` streams it with Content-Length at the upload limit and
+reports progress every 5 s.  Outcome: success → post id on the episode;
+connection refused / connect timeout / 429 / 503 → retry after 2, 5, 15,
+30, 60, 120, 240 min until give_up_at; 4xx and `success:false` → failed;
+5xx, read timeout, connection lost after the first byte → unclear (never
+retried automatically: the post may exist and the API cannot remove a
+duplicate).  Nothing is logged of the password.
+
+**Verification.**  `tests/unit/worker/test_cba_upload.py` (meta, missing
+items, body + ZIP, throttle with a fake clock, classification, upload
+outcomes with fake sessions, end-to-end against a local HTTP server:
+Content-Length, Basic auth, parts) - worker suite 123 passed.
+`C:/Temp/optd/archive_worker_probe.py 534`: the job paths on the live
+database with a stand-in session (done, duplicate refused, retry later,
+give up, no text, interrupted jobs), state restored.
+`C:/Temp/optd/archiving_probe.php 1 534 --write`: 75 checks incl.
+accounts (password never rendered or returned), precheck, queue, one open
+job, link / unlink, Edit Instance without the description.  Live with the
+CBA: first upload with visibility private by the operator.  Rollback:
+stop RASTATIME-WORKER (uploads pause), `git revert`; the tables stay.
