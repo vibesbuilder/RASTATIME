@@ -105,7 +105,7 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |
 | **Quién** | Presentadores adicionales. |
-| **Archivo** | Equipo de redacción, participantes, cuenta de CBA y valores de cba.media del programa (no en Editar emisión). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
+| **Archivo** | Equipo de redacción, participantes, cuenta de CBA, valores de cba.media y archivo automático del programa (no en Editar emisión). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
 | **Estilo** | Color de fondo, color de texto, imagen de programa. |
 
 ### Por qué el formulario rechaza su guardado

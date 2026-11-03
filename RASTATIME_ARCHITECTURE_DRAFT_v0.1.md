@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.111
+Draft version: 0.112
 Date: 2026-11-03
 
 > **Revision history**
+> - **0.112 (2026-11-03)** - **Archiving, stage 3** (§23.81): "Archive automatically" per show; the
+>   worker queues each new episode a waiting time after its end (recording, data complete, no
+>   rebroadcast, nothing caught up), gives up after 24 h and warns on the dashboard; migration 0076.
 > - **0.111 (2026-11-03)** - **Archiving, stage 2** (§23.80): the feature is renamed "Archiving"; CBA
 >   accounts (admins), "Archive online" by hand from the Episode dialog, RASTATIME-WORKER uploads with
 >   a bandwidth limit and never repeats an unclear upload; migration 0075.
@@ -8547,5 +8550,64 @@ give up, no text, interrupted jobs), state restored.
 `C:/Temp/optd/archiving_probe.php 1 534 --write`: 75 checks incl.
 accounts (password never rendered or returned), precheck, queue, one open
 job, link / unlink, Edit Instance without the description.  Live with the
-CBA: first upload with visibility private by the operator.  Rollback:
+CBA: accepted 2026-11-03 by the operator - three test episodes archived by
+hand (private and public, one post each); on the way the account page lost
+its messages (the legacy session is closed before the controller runs:
+redirects carry a fixed code now), the role check knew `stationmanager`
+only (cba.media says `station_manager`) and the ZIP fix above.  Rollback:
 stop RASTATIME-WORKER (uploads pause), `git revert`; the tables stay.
+
+### 23.81 Archiving, Stage 3: Archive Automatically (2026-11-03)
+
+**Decision (operator go 2026-11-03).**  The rules agreed before stage 2
+(BACKLOG), plus three answers: (A) a replacement programme that ran
+instead of a live show is not recognised - RASTATIME keeps no history of
+the on-air source per instance, and building one in the playout was
+deferred (the switch is per show and off by default; "only for shows that
+run reliably"); (B) the waiting time is one station setting next to the
+upload limit; (C) failed, unclear and given-up automatic uploads appear as
+a dashboard warning.
+
+**Model (migration 0076).**  `cc_show_archiving.auto_archive` (the
+switch) and `auto_since` (UTC like `cc_show_instances.ends`; set when the
+switch goes on, kept while it stays on, cleared when it goes off),
+`cc_cba_upload.status` + `skipped`, `cc_pref cba_auto_delay_min` (30).
+
+**Worker (`archive_auto`).**  Every 300 s, before the job loop:
+`candidates()` = instances of shows with the switch on that ended after
+`auto_since` and at least the waiting time ago, not hidden (modified),
+no rebroadcast, no "repeat of" show, no "do not archive", no post and
+**no job of any kind** - an upload started by hand keeps the automatic
+run out, and every instance is decided at most once.  Per candidate:
+the recording (`si.file_id`, imported, at least half of the slot), then
+`cba.build_meta()` on `load_episode()`.  Nothing missing → a job with
+trigger `auto` (the unique index catches a parallel manual job); still
+missing 24 h after it was due → a `skipped` row with the reasons; else it
+waits (logged once per process).  The job runner of §23.80 uploads it
+unchanged.  `refresh_warning()` writes `PreflightWarning` rows of type
+`archive_failed` directly through the Django model (the worker has the
+API's settings; no playout restart): automatic jobs failed / unclear /
+skipped in the last 7 days whose episode has no post and no later job,
+at most 10, rewritten only when the set of job ids changed; the dashboard
+banner (`common.js`) names the show and the reason and points to
+Episode... .
+
+**Legacy.**  Archiving section: "Archive automatically" with "on since"
+(station time); validation requires account, topic, language and licence
+when it is ticked; `saveShow()` keeps `auto_since` in the upsert (`CASE`
+on the old row).  Settings → CBA Accounts: waiting time (0-1440 min).
+Episode dialog: one line from `autoState()` (off / archived / job /
+never / excluded / before / scheduled with the due time / waiting with
+the give-up time and a short-recording note) and the state `skipped`.
+
+**Verification.**  `tests/unit/worker/test_archive_auto.py` (recording
+rules, decide, warning rows, delay clamp) - worker suite 135, unit suite
+786 passed.  `C:/Temp/optd/archive_auto_probe.py` on the live database in
+one rolled-back transaction: candidate selection, queue with the
+recording, wait and skip by time, no second decision, warning written /
+unchanged / cleared by a linked post, nothing left afterwards.
+`C:/Temp/optd/archive_auto_ui_probe.php 1 534 <instance> --write`: form,
+validation, `autoState()` cases, `auto_since` set / kept / cleared,
+waiting time stored and clamped, restored.  The stage 1/2 probe (75
+checks) still passes.  Rollback: untick the switch (nothing new is
+queued) or stop RASTATIME-WORKER; `git revert`; the columns stay.

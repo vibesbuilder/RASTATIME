@@ -3,7 +3,8 @@
 // show form (Application_Form_AddShowArchiving).  Labels above their field,
 // help icons right of the label (tooltip convention), errors below.
 // Stage 2: CBA account, visibility, topic list, the licence matrix as an
-// HTML tooltip (data-rt-tip-html, operator 2026-11-03).
+// HTML tooltip (data-rt-tip-html, operator 2026-11-03).  Stage 3: "Archive
+// automatically" with the time it was switched on.
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
 $f = $this->element;
 $tips = [
@@ -19,6 +20,7 @@ $tips = [
     'add_show_cba_tags' => _('Comma-separated tags for cba.media.'),
     'add_show_cba_teaser' => _('Used for every episode that has no teaser of its own.'),
     'add_show_cba_contains_copyright' => _('The episodes usually contain music that is subject to copyright (AKM).'),
+    'add_show_cba_auto' => _('Every new episode is archived on cba.media with the recording, as set above, once the waiting time after its end has passed (Settings → CBA Accounts). Not for rebroadcasts or episodes marked "Do not archive this episode automatically"; episodes that ended before switching on are not caught up.'),
 ];
 $row = function ($name, $wide = true) use ($f, $h, $tips) {
     $el = $f->getElement($name);
@@ -66,6 +68,17 @@ $row = function ($name, $wide = true) use ($f, $h, $tips) {
                 <?php echo $f->getElement('add_show_cba_contains_copyright'); ?>
                 <label for="add_show_cba_contains_copyright"><?php echo $h($f->getElement('add_show_cba_contains_copyright')->getLabel()); ?></label>
                 <span class="help_icon" data-rt-tip="<?php echo $h($tips['add_show_cba_contains_copyright']); ?>"></span>
+            </dt>
+            <dt id="add_show_cba_auto_label" class="rt-archiving-label rt-archiving-check">
+                <?php echo $f->getElement('add_show_cba_auto'); ?>
+                <label for="add_show_cba_auto"><?php echo $h($f->getElement('add_show_cba_auto')->getLabel()); ?></label>
+                <span class="help_icon" data-rt-tip="<?php echo $h($tips['add_show_cba_auto']); ?>"></span>
+                <?php if ($f->autoSinceLocal !== ''): ?>
+                    <span class="rt-archiving-hint"><?php echo $h(sprintf(_('on since %s'), $f->autoSinceLocal)); ?></span>
+                <?php endif; ?>
+                <?php if ($errs = $f->getElement('add_show_cba_auto')->getMessages()): ?>
+                    <ul class="errors"><?php foreach ($errs as $e): ?><li><?php echo $h($e); ?></li><?php endforeach; ?></ul>
+                <?php endif; ?>
             </dt>
         <?php endif; ?>
     </dl>

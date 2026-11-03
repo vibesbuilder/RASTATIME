@@ -82,7 +82,7 @@ _EXPECTED_LEAF_NODES: frozenset[tuple[str, str]] = frozenset(
     {
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("legacy", "0075_cba_archiving"),
+        ("legacy", "0076_cba_auto_archive"),
         ("linein", "0005_linein_input_gain_db"),
         ("playback", "0001_initial"),
         ("preflight", "0001_initial"),
@@ -92,15 +92,15 @@ _EXPECTED_LEAF_NODES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
-#: Total node count across the full migration graph (2026-11-03, legacy 0075:
-#: 0074 publishing / archiving stage 1, 0075 archiving stage 2):
-#: 74 legacy + 5 linein + 2 soundcard + playback, preflight and
+#: Total node count across the full migration graph (2026-11-03, legacy 0076:
+#: 0074 publishing / archiving stage 1, 0075 archiving stage 2, 0076 stage 3):
+#: 75 legacy + 5 linein + 2 soundcard + playback, preflight and
 #: song_request (1 each) + Django's own auth (12), contenttypes (2) and
 #: sessions (1).
-_EXPECTED_NODE_COUNT = 99
+_EXPECTED_NODE_COUNT = 100
 
-#: Number of legacy migrations (0001 … 0075 without 0002, see below).
-_EXPECTED_LEGACY_COUNT = 74
+#: Number of legacy migrations (0001 … 0076 without 0002, see below).
+_EXPECTED_LEGACY_COUNT = 75
 
 
 # ---------------------------------------------------------------------------

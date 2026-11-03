@@ -138,7 +138,7 @@ The form is divided into collapsible sections. **What** and
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Who** | Additional hosts beyond the primary one set under What. |
-| **Archiving** | Editorial team, people involved, CBA account and the cba.media defaults of the show (not in Edit Instance). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
+| **Archiving** | Editorial team, people involved, CBA account, the cba.media defaults and automatic archiving of the show (not in Edit Instance). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
 | **Style** | Background colour, text colour, show image (visible only here for one-off shows; for recurring shows these stay constant across instances). |
 
 > **Operator tip.** If you are about to fill in the same name,

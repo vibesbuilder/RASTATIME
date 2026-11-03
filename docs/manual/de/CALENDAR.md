@@ -151,7 +151,7 @@ Standardwerten bleiben.
 | **Aufnahme** | Ankreuzen, um den On-Air-Output der Sendung in eine Datei aufzuzeichnen. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Eine Playlist anhängen, um jede Instanz automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Wer** | Zusätzliche Hosts über den primären unter Was gesetzten hinaus. |
-| **Archivierung** | Redaktionsteam, Teilnehmende, CBA-Konto und die cba.media-Vorgaben der Sendung (nicht in Instanz bearbeiten). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
+| **Archivierung** | Redaktionsteam, Teilnehmende, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (nicht in Instanz bearbeiten). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
 | **Style** | Hintergrundfarbe, Textfarbe, Sendungs-Bild (sichtbar nur hier für einmalige Sendungen; für wiederkehrende Sendungen bleiben diese über Instanzen hinweg konstant). |
 
 > **Operator-Tipp.** Wenn Sie im Begriff sind, denselben

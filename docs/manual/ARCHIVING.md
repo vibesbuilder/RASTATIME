@@ -25,7 +25,7 @@ An *episode* is one instance of a show in the calendar: next Monday's
 |---|---|---|
 | 1 | Editorial team, show defaults, episode data, participants | since 2026-11-03 |
 | 2 | Archive an episode online by hand from the calendar | since 2026-11-03 |
-| 3 | Archive every episode automatically after the recording | planned |
+| 3 | Archive every episode automatically after the recording | since 2026-11-03 |
 
 ---
 
@@ -68,6 +68,10 @@ only Admins open the page.
 * **Upload limit** - the upload shares the internet line with the
   listener streams, so RASTATIME sends at most this rate (default
   4 Mbit/s: one hour of 320 kbit/s audio takes about five minutes).
+* **Automatic archiving** - how many minutes after the end of an episode
+  the shows with *Archive automatically* (§3) upload it (default 30):
+  time to complete the episode or to tick *Do not archive this episode
+  automatically*.
 
 ---
 
@@ -91,6 +95,7 @@ own.
 | **Tags** | Comma-separated tags for cba.media. |
 | **Default teaser** | Used for every episode without a teaser of its own. |
 | **Contains copyrighted music (AKM)** | The episodes usually contain music subject to copyright; cba.media then restricts the download. |
+| **Archive automatically** | Archive every new episode on cba.media by itself (§5, *Automatically*). Needs a CBA account, topic, language and licence; next to the box: since when it is on. |
 
 **Which licence?**  The CBA web form asks three questions; the licence
 answers them:
@@ -129,7 +134,7 @@ broadcast - for Admins, Program Managers and the hosts of the show.
 | **Description** | The text of the episode, on cba.media the text of the post. Empty: the description of the show. This is the only place to edit it (Edit Instance no longer shows it). |
 | **People involved** | Only when this episode differs from the show, e.g. with guests. The show's value is shown greyed. |
 | **Production date** | Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier. |
-| **Do not archive this episode automatically** | For tests, cancelled episodes or rights problems. Takes effect with automatic archiving (stage 3); archiving by hand stays possible. |
+| **Do not archive this episode automatically** | For tests, cancelled episodes or rights problems. Takes effect with automatic archiving (§5); archiving by hand stays possible. |
 | **Episode image** | Optional, JPG or PNG up to 10 MB. Choosing a file uploads it at once; **Remove image** deletes it. Without an image, cba.media shows the image of the podcast. |
 | **Image licence** / **Image caption** | Licence and credit of the image (e.g. the photographer), caption up to 500 characters. |
 
@@ -191,6 +196,48 @@ archived.
 > **Stopping the worker** only pauses the uploads; the broadcast is not
 > affected.  A job that was running is checked after the restart: if no
 > byte had left, it starts again, otherwise it ends as *unclear*.
+
+### Automatically
+
+With **Archive automatically** ticked in the section *Archiving* of the
+show (§3), RASTATIME archives every new episode by itself, always with
+the recording:
+
+1. The episode ends; [Record-per-Show](./RECORD_PER_SHOW.md) puts the
+   recording into the library within seconds (the show must record, and
+   *Copy Show Recordings into Library* must be on under Settings → Local
+   Machine).
+2. After the waiting time (Settings → CBA Accounts, default 30 minutes)
+   the background service checks the episode and queues the upload,
+   with the visibility of the show.
+3. If something is still missing (a description, the recording ...), the
+   episode waits and is checked again every five minutes, for up to 24
+   hours.  Then the run gives up; the dialog shows *The automatic
+   archiving gave up* with the reason.
+
+Never archived automatically:
+
+* episodes that ended **before** the box was ticked - nothing is caught
+  up; archive older episodes by hand;
+* rebroadcasts and shows set up as *Repeat of another show*;
+* episodes with **Do not archive this episode automatically** (§4);
+* episodes that are archived or linked already, or that someone started
+  by hand - the automatic run leaves those alone;
+* episodes whose recording covers less than half of the show (e.g. a
+  recording that broke off).
+
+**Episode...** shows in the block *Online archive* what the automatic
+run plans for the episode, e.g. *Archived automatically from
+2026-11-10 14:30, once nothing below is missing*.
+
+When an automatic upload fails, stays unclear or is given up, the
+warning banner at the top of the page lists the episode for seven days,
+until it is archived by hand or its post is linked.
+
+> **Not recognised:** a replacement programme that ran instead of a live
+> show (the presenter did not come) is archived like the show.  Switch
+> the automatic run on for shows that run reliably; when it happens,
+> delete the post on cba.media.
 
 ---
 
@@ -260,6 +307,13 @@ show appears after its first episode has ended.
 It is missing in **Edit Instance** - the section belongs to the whole
 show; use **Episode...** for one episode.  It is greyed out when you are
 not a Program Manager or Admin.
+
+### "An episode was not archived automatically."
+
+Open **Episode...**: the block *Online archive* says why - the switch is
+off, the box *Do not archive* is ticked, the episode ended before the
+switch was turned on, it waits for something, or the run gave up and
+why.  Archive it by hand from there.
 
 ---
 

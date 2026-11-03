@@ -231,6 +231,8 @@ class Application_Service_ArchivingService
             'contains_copyright' => false,
             'cba_account_id' => null,
             'cba_status' => 'publish',
+            'auto_archive' => false,
+            'auto_since' => null,
         ];
         if (!self::tablesReady() || $showId <= 0) {
             return $defaults;
@@ -252,6 +254,9 @@ class Application_Service_ArchivingService
             'tags' => (string) $r['tags'],
             'teaser' => (string) $r['teaser'],
             'contains_copyright' => (bool) $r['contains_copyright'],
+            // stage 3 (migration 0076); auto_since is UTC like cc_show_instances.ends
+            'auto_archive' => !empty($r['auto_archive']),
+            'auto_since' => $r['auto_since'] ?? null,
         ];
     }
 
@@ -303,6 +308,15 @@ class Application_Service_ArchivingService
         if (mb_strlen((string) ($data['add_show_cba_teaser'] ?? '')) > 2048) {
             $errors['add_show_cba_teaser'] = _('The teaser is too long (2048 characters at most).');
         }
+        // the automatic run cannot ask: what every episode needs must be set here
+        if (!empty($data['add_show_cba_auto']) && (
+            (int) ($data['add_show_cba_account'] ?? 0) <= 0
+            || trim((string) ($data['add_show_cba_category_id'] ?? '')) === ''
+            || trim((string) ($data['add_show_cba_languages'] ?? '')) === ''
+            || trim((string) ($data['add_show_cba_license'] ?? '')) === ''
+        )) {
+            $errors['add_show_cba_auto'] = _('Automatic archiving needs a CBA account, a topic, a language and a licence.');
+        }
 
         return $errors;
     }
@@ -320,14 +334,18 @@ class Application_Service_ArchivingService
             self::exec(
                 'INSERT INTO cc_show_archiving
                         (show_id, participants, cba_series_id, license, category_id, languages, tags, teaser, contains_copyright,
-                         cba_account_id, cba_status, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())
+                         cba_account_id, cba_status, auto_archive, auto_since, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? THEN now() AT TIME ZONE \'UTC\' END, now())
                  ON CONFLICT (show_id) DO UPDATE SET
                         participants = EXCLUDED.participants, cba_series_id = EXCLUDED.cba_series_id,
                         license = EXCLUDED.license, category_id = EXCLUDED.category_id,
                         languages = EXCLUDED.languages, tags = EXCLUDED.tags, teaser = EXCLUDED.teaser,
                         contains_copyright = EXCLUDED.contains_copyright, cba_account_id = EXCLUDED.cba_account_id,
-                        cba_status = EXCLUDED.cba_status, updated_at = now()',
+                        cba_status = EXCLUDED.cba_status, auto_archive = EXCLUDED.auto_archive,
+                        auto_since = CASE WHEN NOT EXCLUDED.auto_archive THEN NULL
+                                          WHEN cc_show_archiving.auto_archive THEN cc_show_archiving.auto_since
+                                          ELSE EXCLUDED.auto_since END,
+                        updated_at = now()',
                 [
                     $showId,
                     self::intOrNull($data['add_show_participants'] ?? ''),
@@ -341,6 +359,9 @@ class Application_Service_ArchivingService
                     (int) ($data['add_show_cba_account'] ?? 0) ?: null,
                     array_key_exists((string) ($data['add_show_cba_status'] ?? ''), self::statusOptions())
                         ? (string) $data['add_show_cba_status'] : 'publish',
+                    // switched on now: from now on; still on: unchanged (ON CONFLICT); off: forgotten
+                    empty($data['add_show_cba_auto']) ? 'f' : 't',
+                    empty($data['add_show_cba_auto']) ? 'f' : 't',
                 ]
             );
             self::exec('DELETE FROM cc_show_editor_profile WHERE show_id = ?', [$showId]);
@@ -373,7 +394,7 @@ class Application_Service_ArchivingService
     {
         $rows = self::query(
             'SELECT si.id, si.show_id, si.starts, si.ends, si.description, si.file_id, si.rebroadcast,
-                    s.name AS show_name
+                    s.name AS show_name, s.repeat_of_show_id
                FROM cc_show_instances si JOIN cc_show s ON s.id = si.show_id
               WHERE si.id = ?',
             [$instanceId]
@@ -423,6 +444,82 @@ class Application_Service_ArchivingService
                 ? (string) (self::query('SELECT label FROM cc_cba_account WHERE id = ?', [$show['cba_account_id']])[0]['label'] ?? '')
                 : '',
             'job' => self::latestJob($instanceId),
+            // archiving stage 3
+            'ends_utc' => $i['ends'],
+            'repeat_show' => $i['repeat_of_show_id'] !== null,
+        ];
+    }
+
+    /** "Y-m-d H:i" in station time for a UTC timestamp string from the database. */
+    public static function utcToLocal(string $utc): string
+    {
+        $d = new DateTime($utc, new DateTimeZone('UTC'));
+        $d->setTimezone(new DateTimeZone(Application_Model_Preference::GetTimezone()));
+
+        return $d->format('Y-m-d H:i');
+    }
+
+    /** Minutes between the end of an episode and its automatic upload (Settings → CBA Accounts). */
+    public static function autoDelayMin(): int
+    {
+        $v = self::pref('cba_auto_delay_min');
+
+        return $v === null || !is_numeric($v) ? 30 : max(0, min(1440, (int) $v));
+    }
+
+    public static function setAutoDelayMin(int $minutes): void
+    {
+        $minutes = (string) max(0, min(1440, $minutes));
+        if (!self::exec('UPDATE cc_pref SET valstr = ? WHERE keystr = ? AND subjid IS NULL', [$minutes, 'cba_auto_delay_min'])) {
+            self::exec('INSERT INTO cc_pref (keystr, valstr) VALUES (?, ?)', ['cba_auto_delay_min', $minutes]);
+        }
+    }
+
+    /**
+     * Archiving stage 3: what the automatic run does with this episode, for
+     * the episode dialog (the rules of rastatime_worker/archive_auto.py).
+     * state: off | archived | job | never | excluded | before | scheduled | waiting;
+     * scheduled: due_local; waiting: until_local and short_recording ("12 / 60" minutes).
+     */
+    public static function autoState(array $ep): array
+    {
+        $show = $ep['show_settings'];
+        if (!$show['auto_archive'] || $show['auto_since'] === null) {
+            return ['state' => 'off'];
+        }
+        if ($ep['cba_post_id']) {
+            return ['state' => 'archived'];
+        }
+        if ($ep['job']) {
+            return ['state' => 'job', 'trigger' => $ep['job']['trigger']];
+        }
+        if ($ep['rebroadcast'] || $ep['repeat_show']) {
+            return ['state' => 'never'];
+        }
+        if ($ep['no_archive']) {
+            return ['state' => 'excluded'];
+        }
+        $ends = strtotime($ep['ends_utc'] . ' UTC');
+        if ($ends < strtotime($show['auto_since'] . ' UTC')) {
+            return ['state' => 'before'];
+        }
+        $due = $ends + 60 * self::autoDelayMin();
+        if (time() < $due) {
+            return ['state' => 'scheduled', 'due_local' => self::utcToLocal(gmdate('Y-m-d H:i:s', $due))];
+        }
+        $short = null;
+        if ($ep['recording_file_id']) {
+            $secs = (float) (self::query('SELECT EXTRACT(EPOCH FROM length) AS s FROM cc_files WHERE id = ?', [$ep['recording_file_id']])[0]['s'] ?? 0);
+            $slot = $ends - strtotime($ep['starts_utc'] . ' UTC');
+            if ($slot > 0 && $secs < 0.5 * $slot) {
+                $short = round($secs / 60) . ' / ' . round($slot / 60);
+            }
+        }
+
+        return [
+            'state' => 'waiting',
+            'until_local' => self::utcToLocal(gmdate('Y-m-d H:i:s', $due + 86400)),
+            'short_recording' => $short,
         ];
     }
 

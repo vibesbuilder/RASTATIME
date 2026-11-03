@@ -7848,3 +7848,95 @@ msgstr "Archivage"
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "Account name"
 msgstr "Nom du compte"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Archive automatically"
+msgstr "Archiver automatiquement"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "on since %s"
+msgstr "activé depuis le %s"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Every new episode is archived on cba.media with the recording, as set above, once the waiting time after its end has passed (Settings → CBA Accounts). Not for rebroadcasts or episodes marked \"Do not archive this episode automatically\"; episodes that ended before switching on are not caught up."
+msgstr "Chaque nouvel épisode est archivé sur cba.media avec l'enregistrement, selon les réglages ci-dessus, une fois écoulé le délai après sa fin (Settings → Comptes CBA). Pas pour les rediffusions ni pour les épisodes marqués « Ne pas archiver cet épisode automatiquement » ; les épisodes terminés avant l'activation ne sont pas rattrapés."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Automatic archiving needs a CBA account, a topic, a language and a licence."
+msgstr "L'archivage automatique nécessite un compte CBA, un thème, une langue et une licence."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Waiting time saved."
+msgstr "Délai d'attente enregistré."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Automatic archiving"
+msgstr "Archivage automatique"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Shows with \"Archive automatically\" (Edit Show → Archiving) upload each new episode this many minutes after it ended: time to complete the episode or to tick \"Do not archive this episode automatically\". An episode still missing something waits up to 24 hours."
+msgstr "Les émissions avec « Archiver automatiquement » (Édition de l'émission → Archivage) envoient chaque nouvel épisode autant de minutes après sa fin : le temps de compléter l'épisode ou de cocher « Ne pas archiver cet épisode automatiquement ». Un épisode auquel il manque encore quelque chose attend jusqu'à 24 heures."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Minutes after the end"
+msgstr "Minutes après la fin"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "The automatic archiving gave up: %s"
+msgstr "L'archivage automatique a abandonné : %s"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Automatic archiving is off for this show."
+msgstr "L'archivage automatique est désactivé pour cette émission."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Started by the automatic archiving."
+msgstr "Lancé par l'archivage automatique."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "An upload was started by hand - the automatic archiving leaves this episode alone."
+msgstr "Un envoi a été lancé à la main - l'archivage automatique ne touche plus à cet épisode."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Not archived automatically: rebroadcasts and repeat shows are not archived."
+msgstr "Pas d'archivage automatique : les rediffusions ne sont pas archivées."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Not archived automatically: \"Do not archive this episode automatically\" is ticked."
+msgstr "Pas d'archivage automatique : « Ne pas archiver cet épisode automatiquement » est coché."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Not archived automatically: the episode ended before automatic archiving was switched on."
+msgstr "Pas d'archivage automatique : l'épisode s'est terminé avant l'activation de l'archivage automatique."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Archived automatically from %s, once nothing below is missing."
+msgstr "Archivé automatiquement à partir du %s, dès qu'il ne manque plus rien ci-dessous."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Automatic archiving waits for the points below, at the latest until %s."
+msgstr "L'archivage automatique attend les points ci-dessous, au plus tard jusqu'au %s."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "The recording covers %s minutes - less than half of the show is not archived automatically."
+msgstr "L'enregistrement couvre %s minutes - moins de la moitié de l'émission n'est pas archivé automatiquement."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Automatic archiving on cba.media failed for"
+msgstr "L'archivage automatique sur cba.media a échoué pour"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Automatic archiving on cba.media is unclear for"
+msgstr "L'archivage automatique sur cba.media est incertain pour"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Automatic archiving on cba.media gave up on"
+msgstr "L'archivage automatique sur cba.media a abandonné"
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Look on cba.media first, then link the post or archive again under Episode... in the calendar."
+msgstr "Vérifiez d'abord sur cba.media, puis liez l'article ou archivez à nouveau sous Épisode... dans le calendrier."
+
+#: RASTATIME 2026-11-03 archiving stage 3 (archive automatically)
+msgid "Archive it by hand under Episode... in the calendar."
+msgstr "Archivez-le à la main sous Épisode... dans le calendrier."

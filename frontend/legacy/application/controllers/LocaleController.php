@@ -154,6 +154,12 @@ final class LocaleController extends Zend_Controller_Action
             'Episode' => _('Episode'),
             'Saved.' => _('Saved.'),
             'Uploading...' => _('Uploading...'),
+            // RASTATIME 2026-11-03 - archiving stage 3 (preflight warning archive_failed)
+            'Automatic archiving on cba.media failed for' => _('Automatic archiving on cba.media failed for'),
+            'Automatic archiving on cba.media is unclear for' => _('Automatic archiving on cba.media is unclear for'),
+            'Automatic archiving on cba.media gave up on' => _('Automatic archiving on cba.media gave up on'),
+            'Look on cba.media first, then link the post or archive again under Episode... in the calendar.' => _('Look on cba.media first, then link the post or archive again under Episode... in the calendar.'),
+            'Archive it by hand under Episode... in the calendar.' => _('Archive it by hand under Episode... in the calendar.'),
             // RASTATIME 2026-10-08 - preflight warning: failed podcast download
             'Podcast download failed:' => _('Podcast download failed:'),
             '%s attempt(s), last %s' => _('%s attempt(s), last %s'),

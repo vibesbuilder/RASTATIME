@@ -6690,7 +6690,7 @@ frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an 
 
 ## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
 
-### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 gebaut und abgenommen 2026-11-03, Stufe 3 offen (evaluiert 2026-11-01)
+### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 abgenommen, Stufe 3 gebaut 2026-11-03 (evaluiert 2026-11-01)
 
 Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
 hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
@@ -6849,6 +6849,24 @@ im Upload hatte absolute Positionen - HTTP 400 "ZIP file couldn't be opened"
 (19be7886).  Offen vor Stufe 3: Erkennung "ungeplanter Fallback" (es gibt
 keinen gespeicherten Quellen-Verlauf je Instanz), Ort der Verzoegerung,
 Meldung fehlgeschlagener Automatik-Uploads.
+
+**Stufe 3 gebaut 2026-11-03** (Operator-Go mit A (a), B, C wie empfohlen;
+Architektur §23.81, Migration 0076 live): Schalter "Archive automatically"
+je Sendung, Wartezeit unter Settings -> CBA Accounts (30 min), Worker prueft
+alle 5 Minuten, ueberspringt nach 24 h mit Grund, Warnhinweis
+`archive_failed` 7 Tage.  Offen: Neustart RASTATIME-WORKER + Apache durch
+den Operator, Abnahme mit einer Testsendung (Schalter an, Sichtbarkeit
+privat).
+
+### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
+
+Die Automatik archiviert die Aufzeichnung auch dann, wenn statt einer
+Live-Sendung das Ersatzprogramm lief (Moderation kam nicht).  RASTATIME
+speichert keinen Verlauf, welche Quelle je Instanz on air war.  Idee: das
+Playout meldet je Instanz die Sekunden mit Ersatzprogramm (Quellen-
+Umschalter, Option d), die Automatik ueberspringt ab einer Schwelle.
+Aufwand ~1-2 Tage, braucht einen PLAYOUT-Neustart.  Vorbedingung: die
+Automatik hat sich bewaehrt und der Fall kommt tatsaechlich vor.
 
 ### 💡 Apple Podcasts / Spotify direkt fuer internationale Stationen (Operator 2026-11-03: Backlog)
 

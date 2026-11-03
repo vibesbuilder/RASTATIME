@@ -716,6 +716,8 @@ class ScheduleController extends Zend_Controller_Action
                 'file' => trim($job['track_title'] . ($job['artist_name'] ? ' - ' . $job['artist_name'] : '')),
             ],
             'missing' => $ep['cba_post_id'] ? [] : Application_Service_ArchivingService::precheck((int) $instanceId),
+            // archiving stage 3: what the automatic run does with the episode
+            'auto' => Application_Service_ArchivingService::autoState($ep),
         ];
     }
 

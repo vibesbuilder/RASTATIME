@@ -13,6 +13,10 @@ RASTATIME_CONFIG_FILEPATH and a PYTHONPATH with backend\\api); without them,
 or before migration 0075, it logs why and keeps idling instead of crash-
 looping, and tries again every SETUP_RETRY seconds.  Uploads never touch
 the playout: stopping this service only pauses them.
+
+RASTATIME 2026-11-03 - archiving stage 3: every AUTO_SCAN_INTERVAL seconds
+``archive_auto`` queues the due episodes of shows with "Archive
+automatically" and refreshes the dashboard warning ``archive_failed``.
 """
 
 import argparse
@@ -27,6 +31,7 @@ logger = logging.getLogger("rastatime_worker")
 
 IDLE_INTERVAL = 600  # seconds between heartbeat log lines
 POLL_INTERVAL = 15  # seconds between looks at the job table
+AUTO_SCAN_INTERVAL = 300  # seconds between looks for episodes to archive automatically
 SETUP_RETRY = 60  # seconds before trying Django / the tables again
 
 
@@ -78,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     logger.info("RASTATIME worker starting")
-    logger.info("Jobs      : archive uploads to cba.media, CBA topic list")
+    logger.info("Jobs      : archive uploads to cba.media (by hand and automatic), CBA topic list")
     logger.info("idle")  # V: must appear within 2s of start
 
     running = True
@@ -94,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     ready = False  # Django set up and the tables of migration 0075 present
     next_setup = time.monotonic()
     next_poll = time.monotonic()
+    next_auto = time.monotonic()
     next_beat = time.monotonic() + args.idle_interval
     done = 0
 
@@ -128,11 +134,15 @@ def main(argv: list[str] | None = None) -> int:
             next_poll = now + args.poll_interval
             from django.db import close_old_connections  # noqa: PLC0415
 
-            from . import archive_jobs  # noqa: PLC0415
+            from . import archive_auto, archive_jobs  # noqa: PLC0415
 
             close_old_connections()
             try:
                 archive_jobs.refresh_categories()
+                if now >= next_auto:
+                    next_auto = now + AUTO_SCAN_INTERVAL
+                    archive_auto.scan()
+                    archive_auto.refresh_warning()
                 while running:
                     state = archive_jobs.run_once()
                     if state is None:

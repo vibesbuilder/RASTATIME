@@ -29,7 +29,7 @@ le suivant.
 |---|---|---|
 | 1 | Équipe de rédaction, réglages de l'émission, données d'épisode, participants | depuis le 2026-11-03 |
 | 2 | Archiver un épisode en ligne à la main depuis le calendrier | depuis le 2026-11-03 |
-| 3 | Archiver chaque épisode automatiquement après l'enregistrement | prévu |
+| 3 | Archiver chaque épisode automatiquement après l'enregistrement | depuis le 2026-11-03 |
 
 ---
 
@@ -75,6 +75,10 @@ contient ces utilisateurs ; seuls les Admins ouvrent la page.
 * **Limite d'envoi** - l'envoi partage la ligne internet avec les flux
   des auditeurs ; RASTATIME envoie donc au plus à ce débit (par défaut
   4 Mbit/s : une heure d'audio à 320 kbit/s prend environ cinq minutes).
+* **Archivage automatique** - combien de minutes après la fin d'un
+  épisode les émissions avec *Archiver automatiquement* (§3) l'envoient
+  (par défaut 30) : le temps de compléter l'épisode ou de cocher *Ne pas
+  archiver cet épisode automatiquement*.
 
 ---
 
@@ -99,6 +103,7 @@ siennes.
 | **Mots-clés** | Mots-clés pour cba.media, séparés par des virgules. |
 | **Accroche par défaut** | Utilisée pour chaque épisode sans accroche propre. |
 | **Contient de la musique protégée (AKM)** | Les épisodes contiennent habituellement de la musique protégée ; cba.media restreint alors le téléchargement. |
+| **Archiver automatiquement** | Archiver chaque nouvel épisode sur cba.media tout seul (§5, *Automatiquement*). Nécessite un compte CBA, un thème, une langue et une licence ; à côté de la case : depuis quand elle est activée. |
 
 **Quelle licence ?**  Le formulaire web de la CBA pose trois questions ;
 la licence y répond :
@@ -140,7 +145,7 @@ animateurs de l'émission.
 | **Description** | Le texte de l'épisode, sur cba.media le texte de l'article. Vide : la description de l'émission. C'est le seul endroit pour la modifier (Modifier l'occurrence ne l'affiche plus). |
 | **Participants** | Seulement si cet épisode diffère de l'émission, p. ex. avec des invités. La valeur de l'émission apparaît en gris. |
 | **Date de production** | Exigée par cba.media. Vide : le jour de la diffusion. À renseigner si l'épisode a été produit plus tôt. |
-| **Ne pas archiver cet épisode automatiquement** | Pour les tests, les épisodes annulés ou les problèmes de droits. S'applique avec l'archivage automatique (étape 3) ; l'archivage manuel reste possible. |
+| **Ne pas archiver cet épisode automatiquement** | Pour les tests, les épisodes annulés ou les problèmes de droits. S'applique avec l'archivage automatique (§5) ; l'archivage manuel reste possible. |
 | **Image de l'épisode** | Facultative, JPG ou PNG jusqu'à 10 Mo. Choisir un fichier le téléverse aussitôt ; **Retirer l'image** le supprime. Sans image, cba.media affiche celle du podcast. |
 | **Licence de l'image** / **Légende** | Licence et crédit de l'image (p. ex. le photographe), légende jusqu'à 500 caractères. |
 
@@ -205,6 +210,54 @@ compte comme archivé.
 > n'est pas touchée.  Une tâche en cours est vérifiée après le
 > redémarrage : si aucun octet n'était parti, elle recommence, sinon
 > elle se termine comme *impossible de savoir*.
+
+### Automatiquement
+
+Si **Archiver automatiquement** est coché dans la section *Archivage*
+de l'émission (§3), RASTATIME archive tout seul chaque nouvel épisode,
+toujours avec l'enregistrement :
+
+1. L'épisode se termine ; [l'enregistrement par émission](./RECORD_PER_SHOW.md)
+   place l'enregistrement dans la bibliothèque en quelques secondes
+   (l'émission doit enregistrer, et *Copy Show Recordings into Library*
+   doit être activé sous Paramètres → Local Machine).
+2. Après le délai d'attente (Paramètres → Comptes CBA, 30 minutes par
+   défaut), le service d'arrière-plan vérifie l'épisode et met l'envoi
+   en file, avec la visibilité de l'émission.
+3. S'il manque encore quelque chose (une description, l'enregistrement
+   ...), l'épisode attend et est revérifié toutes les cinq minutes,
+   jusqu'à 24 heures.  Ensuite l'archivage abandonne ; la boîte de
+   dialogue affiche *L'archivage automatique a abandonné* avec la
+   raison.
+
+Jamais archivés automatiquement :
+
+* les épisodes terminés **avant** que la case soit cochée - rien n'est
+  rattrapé ; archivez les épisodes plus anciens à la main ;
+* les rediffusions et les émissions créées comme *Rediffusion d'une
+  autre émission* ;
+* les épisodes avec **Ne pas archiver cet épisode automatiquement**
+  (§4) ;
+* les épisodes déjà archivés ou liés, ou dont quelqu'un a lancé l'envoi
+  à la main - l'archivage automatique n'y touche pas ;
+* les épisodes dont l'enregistrement couvre moins de la moitié de
+  l'émission (p. ex. un enregistrement interrompu).
+
+**Épisode...** indique dans le bloc *Archive en ligne* ce que
+l'archivage automatique prévoit pour l'épisode, p. ex. *Archivé
+automatiquement à partir du 2026-11-10 14:30, dès qu'il ne manque plus
+rien ci-dessous*.
+
+Quand un envoi automatique échoue, reste incertain ou est abandonné, le
+bandeau d'avertissement en haut de la page cite l'épisode pendant sept
+jours, jusqu'à ce qu'il soit archivé à la main ou que son article soit
+lié.
+
+> **Non détecté :** un programme de remplacement diffusé à la place
+> d'une émission en direct (l'animateur n'est pas venu) est archivé comme
+> l'émission.  Activez l'archivage automatique pour les émissions qui
+> fonctionnent de façon fiable ; si cela arrive, supprimez l'article sur
+> cba.media.
 
 ---
 
@@ -279,6 +332,14 @@ Une nouvelle émission apparaît dès que son premier épisode est terminé.
 Elle manque dans **Modifier l'occurrence** - la section appartient à
 l'émission entière ; pour un épisode, utilisez **Épisode...**.  Elle est
 grisée si vous n'êtes ni Program Manager ni Admin.
+
+### « Un épisode n'a pas été archivé automatiquement. »
+
+Ouvrez **Épisode...** : le bloc *Archive en ligne* indique pourquoi -
+l'interrupteur est désactivé, *Ne pas archiver automatiquement* est
+coché, l'épisode s'est terminé avant l'activation, il attend encore
+quelque chose, ou l'archivage a abandonné et pourquoi.  Archivez-le à
+la main depuis là.
 
 ---
 

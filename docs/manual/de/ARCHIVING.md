@@ -29,7 +29,7 @@ darauf die nächste.
 |---|---|---|
 | 1 | Redaktionsteam, Vorgaben der Sendung, Episodendaten, Teilnehmende | seit 2026-11-03 |
 | 2 | Eine Episode von Hand aus dem Kalender online archivieren | seit 2026-11-03 |
-| 3 | Jede Episode nach der Aufzeichnung automatisch archivieren | geplant |
+| 3 | Jede Episode nach der Aufzeichnung automatisch archivieren | seit 2026-11-03 |
 
 ---
 
@@ -76,6 +76,10 @@ hält diese Benutzer; nur Admins öffnen die Seite.
   Hörer-Streams, deshalb sendet RASTATIME höchstens mit dieser Rate
   (Standard 4 Mbit/s: eine Stunde Audio mit 320 kbit/s braucht etwa
   fünf Minuten).
+* **Automatisches Archivieren** - wie viele Minuten nach dem Ende einer
+  Episode die Sendungen mit *Automatisch archivieren* (§3) sie hochladen
+  (Standard 30): Zeit, die Episode zu vervollständigen oder *Diese
+  Episode nicht automatisch archivieren* anzuhaken.
 
 ---
 
@@ -99,6 +103,7 @@ jede Episode der Sendung, solange eine Episode keine eigenen setzt.
 | **Schlagworte** | Schlagworte für cba.media, durch Komma getrennt. |
 | **Standard-Teaser** | Gilt für jede Episode ohne eigenen Teaser. |
 | **Enthält urheberrechtlich geschützte Musik (AKM)** | Die Episoden enthalten üblicherweise geschützte Musik; cba.media schränkt dann den Download ein. |
+| **Automatisch archivieren** | Jede neue Episode von selbst auf cba.media archivieren (§5, *Automatisch*). Braucht CBA-Konto, Thema, Sprache und Lizenz; neben dem Kästchen steht, seit wann es eingeschaltet ist. |
 
 **Welche Lizenz?**  Das CBA-Webformular stellt drei Fragen; die Lizenz
 beantwortet sie:
@@ -139,7 +144,7 @@ Hosts der Sendung.
 | **Beschreibung** | Der Text der Episode, auf cba.media der Text des Beitrags. Leer: die Beschreibung der Sendung. Hier ist die einzige Stelle dafür (Instanz bearbeiten zeigt das Feld nicht mehr). |
 | **Teilnehmende** | Nur wenn diese Episode von der Sendung abweicht, z. B. mit Gästen. Der Wert der Sendung steht grau im Feld. |
 | **Produktionsdatum** | Von cba.media verlangt. Leer: der Sendetag. Setzen Sie es, wenn die Episode früher produziert wurde. |
-| **Diese Episode nicht automatisch archivieren** | Für Tests, ausgefallene Episoden oder Rechteprobleme. Wirkt mit der automatischen Archivierung (Stufe 3); von Hand archivieren bleibt möglich. |
+| **Diese Episode nicht automatisch archivieren** | Für Tests, ausgefallene Episoden oder Rechteprobleme. Wirkt mit der automatischen Archivierung (§5); von Hand archivieren bleibt möglich. |
 | **Episodenbild** | Optional, JPG oder PNG bis 10 MB. Die Auswahl einer Datei lädt sie sofort hoch; **Bild entfernen** löscht sie. Ohne Bild zeigt cba.media das Bild des Podcasts. |
 | **Bildlizenz** / **Bildunterschrift** | Lizenz und Bildnachweis (z. B. wer fotografiert hat), Bildunterschrift bis 500 Zeichen. |
 
@@ -204,6 +209,49 @@ Verknüpfung.  Eine verknüpfte Episode gilt als archiviert.
 > davon nichts.  Ein Auftrag, der gerade lief, wird nach dem Neustart
 > geprüft: ging noch kein Byte hinaus, startet er erneut, sonst endet er
 > als *unklar*.
+
+### Automatisch
+
+Ist im Abschnitt *Archivierung* der Sendung (§3) **Automatisch
+archivieren** angehakt, archiviert RASTATIME jede neue Episode von
+selbst, immer mit der Aufzeichnung:
+
+1. Die Episode endet; [Aufnahme pro Sendung](./RECORD_PER_SHOW.md) legt
+   die Aufzeichnung binnen Sekunden in die Library (die Sendung muss
+   aufzeichnen, und *Copy Show Recordings into Library* muss unter
+   Einstellungen → Local Machine eingeschaltet sein).
+2. Nach der Wartezeit (Einstellungen → CBA-Konten, Standard 30 Minuten)
+   prüft der Hintergrunddienst die Episode und stellt den Upload in die
+   Warteschlange, mit der Sichtbarkeit der Sendung.
+3. Fehlt noch etwas (eine Beschreibung, die Aufzeichnung ...), wartet die
+   Episode und wird alle fünf Minuten erneut geprüft, bis zu 24 Stunden.
+   Danach gibt der Lauf auf; der Dialog zeigt *Das automatische
+   Archivieren hat aufgegeben* mit dem Grund.
+
+Nie automatisch archiviert werden:
+
+* Episoden, die **vor** dem Anhaken endeten - nichts wird nachgeholt;
+  ältere Episoden archivieren Sie von Hand;
+* Wiederholungen und Sendungen, die als *Wiederholung einer anderen
+  Sendung* angelegt sind;
+* Episoden mit **Diese Episode nicht automatisch archivieren** (§4);
+* Episoden, die schon archiviert oder verknüpft sind oder die jemand von
+  Hand gestartet hat - die lässt der automatische Lauf in Ruhe;
+* Episoden, deren Aufzeichnung weniger als die halbe Sendung umfasst
+  (z. B. eine abgebrochene Aufzeichnung).
+
+**Episode...** zeigt im Block *Online-Archiv*, was der automatische Lauf
+mit der Episode vorhat, z. B. *Wird ab 2026-11-10 14:30 automatisch
+archiviert, sobald unten nichts mehr fehlt*.
+
+Scheitert ein automatischer Upload, bleibt er unklar oder wird
+aufgegeben, nennt der Warnhinweis oben auf der Seite die Episode sieben
+Tage lang, bis sie von Hand archiviert oder ihr Beitrag verknüpft ist.
+
+> **Nicht erkannt:** Ein Ersatzprogramm, das statt einer Live-Sendung
+> lief (die Moderation kam nicht), wird wie die Sendung archiviert.
+> Schalten Sie die Automatik für Sendungen ein, die verlässlich laufen;
+> passiert es doch, löschen Sie den Beitrag auf cba.media.
 
 ---
 
@@ -276,6 +324,13 @@ ist.
 In **Instanz bearbeiten** fehlt er - der Abschnitt gehört zur ganzen
 Sendung; für eine Episode nehmen Sie **Episode...**.  Grau ist er, wenn
 Sie nicht Programm-Manager oder Admin sind.
+
+### „Eine Episode wurde nicht automatisch archiviert."
+
+Öffnen Sie **Episode...**: Der Block *Online-Archiv* nennt den Grund -
+der Schalter ist aus, *Nicht automatisch archivieren* ist angehakt, die
+Episode endete vor dem Einschalten, sie wartet noch auf etwas, oder der
+Lauf hat aufgegeben und warum.  Archivieren Sie sie dort von Hand.
 
 ---
 

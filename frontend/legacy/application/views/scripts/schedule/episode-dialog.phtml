@@ -8,7 +8,8 @@
 // date, "do not archive", and the "Online archive" block (state of the
 // upload to cba.media, "Archive online..." with the audio choice, link an
 // existing post) for admins and program managers; the upload itself runs
-// in RASTATIME-WORKER, the block polls its state.
+// in RASTATIME-WORKER, the block polls its state.  Stage 3: one line on
+// what the automatic archiving does with the episode (autoState()).
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
 $baseUrl = Config::getBasePath();
 $e = $this->episode;
@@ -26,6 +27,16 @@ $T = [
     'failed' => _('The upload failed: %s'),
     'unclear' => _('Unclear whether the post was created: %s - look on cba.media, then link the post or archive again.'),
     'cancelled' => _('The upload was cancelled.'),
+    'skipped' => _('The automatic archiving gave up: %s'),
+    'autoOff' => _('Automatic archiving is off for this show.'),
+    'autoJob' => _('Started by the automatic archiving.'),
+    'autoManual' => _('An upload was started by hand - the automatic archiving leaves this episode alone.'),
+    'autoNever' => _('Not archived automatically: rebroadcasts and repeat shows are not archived.'),
+    'autoExcluded' => _('Not archived automatically: "Do not archive this episode automatically" is ticked.'),
+    'autoBefore' => _('Not archived automatically: the episode ended before automatic archiving was switched on.'),
+    'autoScheduled' => _('Archived automatically from %s, once nothing below is missing.'),
+    'autoWaiting' => _('Automatic archiving waits for the points below, at the latest until %s.'),
+    'autoShort' => _('The recording covers %s minutes - less than half of the show is not archived automatically.'),
     'missing' => _('Before this episode can be archived:'),
     'start' => _('Start upload'),
     'recording' => _('The recording of this episode'),
@@ -128,6 +139,7 @@ $T = [
     <div class="rt-episode-archive">
         <h4><?php echo _("Online archive (cba.media)"); ?></h4>
         <p id="episode_archive_status" class="rt-episode-archive-status"></p>
+        <p id="episode_archive_auto" class="rt-episode-hint"></p>
         <ul id="episode_archive_missing" class="rt-episode-archive-missing"></ul>
         <?php if ($this->canArchive): ?>
             <div class="rt-episode-archive-actions">
@@ -210,12 +222,15 @@ $T = [
       $s.text(fmt(T.unclear, j.error));
     } else if (j && j.status === "cancelled") {
       $s.text(T.cancelled);
+    } else if (j && j.status === "skipped") {
+      $s.text(fmt(T.skipped, j.error));
     } else {
       $s.text(T.notArchived);
     }
-    if (j && j.file && !state.post_id) {
+    if (j && j.file && !state.post_id && j.status !== "skipped") {
       $s.append($("<span class='rt-episode-hint'></span>").text(" " + fmt(T.file, j.file)));
     }
+    renderAuto(state.auto || {}, j);
     var $m = $d.find("#episode_archive_missing").empty();
     if (!state.post_id && !open && state.missing && state.missing.length) {
       $m.append($("<li class='rt-episode-archive-head'></li>").text(T.missing));
@@ -228,6 +243,25 @@ $T = [
     if (open) {
       timer = setTimeout(poll, 5000);
     }
+  }
+  function renderAuto(a, j) {
+    var text = "";
+    if (a.state === "off") {
+      text = T.autoOff;
+    } else if (a.state === "archived" || a.state === "job") {
+      text = j && j.trigger === "auto" ? T.autoJob : (a.state === "job" ? T.autoManual : "");
+    } else if (a.state === "never") {
+      text = T.autoNever;
+    } else if (a.state === "excluded") {
+      text = T.autoExcluded;
+    } else if (a.state === "before") {
+      text = T.autoBefore;
+    } else if (a.state === "scheduled") {
+      text = fmt(T.autoScheduled, a.due_local);
+    } else if (a.state === "waiting") {
+      text = fmt(T.autoWaiting, a.until_local) + (a.short_recording ? " " + fmt(T.autoShort, a.short_recording) : "");
+    }
+    $d.find("#episode_archive_auto").text(text).toggle(text !== "");
   }
   function poll() {
     if (!$.contains(document, $d[0])) { return; }   // dialog closed

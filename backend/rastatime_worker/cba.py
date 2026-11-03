@@ -9,8 +9,8 @@ No Django in here, so the pieces are testable on their own:
   data the job runner collected, or the list of what is missing;
 * :func:`write_body` - the multipart body (``meta`` + ``file`` = ZIP with
   ``audio.<ext>`` and the optional ``image.<ext>``) written to ONE temp file,
-  the ZIP stored uncompressed straight into it, so a two-hour recording is
-  never held in memory or copied twice;
+  the ZIP stored uncompressed and copied into it in blocks, so a two-hour
+  recording is never held in memory;
 * :class:`ThrottledReader` - the body as a file object that requests streams,
   at most ``kbit`` per second (the uplink also carries the listener
   streams), counting what left the machine;

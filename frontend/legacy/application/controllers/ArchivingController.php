@@ -35,6 +35,7 @@ class ArchivingController extends Zend_Controller_Action
             'account-saved' => _('Account saved.'),
             'account-deleted' => _('Account deleted.'),
             'bandwidth' => _('Upload limit saved.'),
+            'auto-delay' => _('Waiting time saved.'),
         ];
 
         return $messages[(string) $this->getRequest()->getParam('done', '')] ?? null;
@@ -121,6 +122,12 @@ class ArchivingController extends Zend_Controller_Action
 
                 return;
             }
+            if ($op === 'auto_delay') {
+                Application_Service_ArchivingService::setAutoDelayMin((int) $request->getPost('minutes', 30));
+                $this->_redirect('archiving/accounts?done=auto-delay');
+
+                return;
+            }
             if ($op === 'test') {
                 // shown right away (no redirect); the answer names the CBA user
                 [$ok, $text] = Application_Service_ArchivingService::testAccount($id);
@@ -151,6 +158,7 @@ class ArchivingController extends Zend_Controller_Action
         $this->view->accounts = Application_Service_ArchivingService::accounts();
         $this->view->edit = $edit;
         $this->view->mbit = Application_Service_ArchivingService::uploadKbit() / 1000;
+        $this->view->autoDelay = Application_Service_ArchivingService::autoDelayMin();
         $this->view->csrf = $this->csrfToken();
     }
 

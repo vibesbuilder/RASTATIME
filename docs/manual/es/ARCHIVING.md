@@ -29,7 +29,7 @@ el siguiente.
 |---|---|---|
 | 1 | Equipo de redacción, valores del programa, datos del episodio, participantes | desde el 2026-11-03 |
 | 2 | Archivar un episodio en línea a mano desde el calendario | desde el 2026-11-03 |
-| 3 | Archivar cada episodio automáticamente tras la grabación | previsto |
+| 3 | Archivar cada episodio automáticamente tras la grabación | desde el 2026-11-03 |
 
 ---
 
@@ -75,6 +75,10 @@ usuarios; solo los Admins abren la página.
   streams de los oyentes, así que RASTATIME envía como máximo a esta
   velocidad (por defecto 4 Mbit/s: una hora de audio a 320 kbit/s tarda
   unos cinco minutos).
+* **Archivo automático**: cuántos minutos después del final de un
+  episodio lo suben los programas con *Archivar automáticamente* (§3)
+  (por defecto 30): tiempo para completar el episodio o marcar *No
+  archivar este episodio automáticamente*.
 
 ---
 
@@ -98,6 +102,7 @@ un episodio no fije los suyos.
 | **Etiquetas** | Etiquetas para cba.media, separadas por comas. |
 | **Teaser predeterminado** | Se usa en cada episodio sin teaser propio. |
 | **Contiene música protegida (AKM)** | Los episodios suelen contener música protegida; cba.media restringe entonces la descarga. |
+| **Archivar automáticamente** | Archivar cada episodio nuevo en cba.media por sí solo (§5, *Automáticamente*). Necesita cuenta de CBA, tema, idioma y licencia; junto a la casilla: desde cuándo está activado. |
 
 **¿Qué licencia?**  El formulario web de la CBA hace tres preguntas; la
 licencia las responde:
@@ -139,7 +144,7 @@ presentadores del programa.
 | **Descripción** | El texto del episodio, en cba.media el texto de la entrada. Vacío: la descripción del programa. Es el único lugar para editarla (Editar emisión ya no la muestra). |
 | **Participantes** | Solo si este episodio difiere del programa, p. ej. con invitados. El valor del programa aparece en gris. |
 | **Fecha de producción** | La exige cba.media. Vacía: el día de la emisión. Indíquela si el episodio se produjo antes. |
-| **No archivar este episodio automáticamente** | Para pruebas, episodios cancelados o problemas de derechos. Se aplica con el archivo automático (etapa 3); archivar a mano sigue siendo posible. |
+| **No archivar este episodio automáticamente** | Para pruebas, episodios cancelados o problemas de derechos. Se aplica con el archivo automático (§5); archivar a mano sigue siendo posible. |
 | **Imagen del episodio** | Opcional, JPG o PNG de hasta 10 MB. Elegir un archivo lo sube enseguida; **Quitar imagen** lo borra. Sin imagen, cba.media muestra la del pódcast. |
 | **Licencia de la imagen** / **Pie de imagen** | Licencia y crédito de la imagen (p. ej. quién la fotografió), pie de hasta 500 caracteres. |
 
@@ -204,6 +209,50 @@ vinculado cuenta como archivado.
 > afectada.  Una tarea que estaba en curso se comprueba tras el
 > reinicio: si no había salido ningún byte, empieza de nuevo; si no,
 > termina como *no está claro*.
+
+### Automáticamente
+
+Si en la sección *Archivo* del programa (§3) está marcado **Archivar
+automáticamente**, RASTATIME archiva por sí solo cada episodio nuevo,
+siempre con la grabación:
+
+1. El episodio termina; [la grabación por programa](./RECORD_PER_SHOW.md)
+   deja la grabación en la biblioteca en segundos (el programa debe
+   grabar y *Copy Show Recordings into Library* debe estar activado en
+   Ajustes → Local Machine).
+2. Tras el tiempo de espera (Ajustes → Cuentas de CBA, 30 minutos por
+   defecto), el servicio en segundo plano comprueba el episodio y pone la
+   subida en cola, con la visibilidad del programa.
+3. Si aún falta algo (una descripción, la grabación ...), el episodio
+   espera y se vuelve a comprobar cada cinco minutos, hasta 24 horas.
+   Después el proceso se da por vencido; el diálogo muestra *El archivo
+   automático se dio por vencido* con el motivo.
+
+Nunca se archivan automáticamente:
+
+* los episodios que terminaron **antes** de marcar la casilla - no se
+  recupera nada; archive a mano los episodios anteriores;
+* las retransmisiones y los programas creados como *Repetición de otro
+  programa*;
+* los episodios con **No archivar este episodio automáticamente** (§4);
+* los episodios ya archivados o vinculados, o cuya subida alguien inició
+  a mano - el archivo automático no los toca;
+* los episodios cuya grabación cubre menos de la mitad del programa
+  (p. ej. una grabación interrumpida).
+
+**Episodio...** muestra en el bloque *Archivo en línea* lo que el
+archivo automático prevé para el episodio, p. ej. *Se archiva
+automáticamente a partir del 2026-11-10 14:30, en cuanto no falte nada
+de lo de abajo*.
+
+Cuando una subida automática falla, queda sin aclarar o se abandona, el
+aviso en la parte superior de la página nombra el episodio durante siete
+días, hasta que se archiva a mano o se vincula su entrada.
+
+> **No se detecta:** un programa de sustitución emitido en lugar de un
+> programa en directo (no vino el presentador) se archiva como el
+> programa.  Active el archivo automático para programas que funcionan
+> de forma fiable; si ocurre, borre la entrada en cba.media.
 
 ---
 
@@ -276,6 +325,13 @@ programa nuevo aparece en cuanto termina su primer episodio.
 Falta en **Editar emisión**: la sección pertenece al programa completo;
 para un episodio use **Episodio...**.  Está en gris si usted no es
 Program Manager ni Admin.
+
+### «Un episodio no se archivó automáticamente.»
+
+Abra **Episodio...**: el bloque *Archivo en línea* indica el motivo - el
+interruptor está desactivado, *No archivar automáticamente* está
+marcado, el episodio terminó antes de activarlo, espera algo, o el
+proceso se dio por vencido y por qué.  Archívelo a mano desde allí.
 
 ---
 

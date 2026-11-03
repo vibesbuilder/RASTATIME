@@ -676,6 +676,27 @@ function loadPreflightWarnings() {
               + $.i18n._("Check the drive, then Settings → Local Machine.")
             )
           );
+        } else if (w.warning_type === "archive_failed") {
+          // RASTATIME 2026-11-03 (archiving stage 3): an automatic upload to
+          // cba.media failed, stayed unclear or was given up; the worker
+          // drops the line once the episode has a post (by hand or linked).
+          var head = detail.status === "unclear"
+            ? $.i18n._("Automatic archiving on cba.media is unclear for")
+            : (detail.status === "skipped"
+              ? $.i18n._("Automatic archiving on cba.media gave up on")
+              : $.i18n._("Automatic archiving on cba.media failed for"));
+          $li.append(document.createTextNode(" " + head + " "));
+          $li.append($("<em></em>").text(detail.show_name || $.i18n._("(untitled show)")));
+          if (detail.reason) {
+            $li.append(document.createTextNode(": " + detail.reason));
+          }
+          $li.append(
+            document.createTextNode(
+              ". " + (detail.status === "unclear"
+                ? $.i18n._("Look on cba.media first, then link the post or archive again under Episode... in the calendar.")
+                : $.i18n._("Archive it by hand under Episode... in the calendar."))
+            )
+          );
         } else if (w.warning_type === "podcast_download_failed") {
           // RASTATIME 2026-10-08: an automatic or manual episode download
           // failed (Application_Model_PodcastDownloadFailures); clears when

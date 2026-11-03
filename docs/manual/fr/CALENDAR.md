@@ -153,7 +153,7 @@ valeurs par défaut.
 | **Enregistrement** | Cocher pour enregistrer la sortie à l'antenne de l'émission dans un fichier. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md). |
 | **Autoloading Playlist** | Attacher une playlist pour remplir chaque instance automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Qui** | Animateurs supplémentaires au-delà du principal défini sous Quoi. |
-| **Archivage** | Équipe de rédaction, participants, compte CBA et réglages cba.media de l'émission (pas dans Modifier l'occurrence). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
+| **Archivage** | Équipe de rédaction, participants, compte CBA, réglages cba.media et archivage automatique de l'émission (pas dans Modifier l'occurrence). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
 | **Style** | Couleur de fond, couleur de texte, image d'émission (visible seulement ici pour les émissions ponctuelles ; pour les émissions récurrentes, celles-ci restent constantes à travers les instances). |
 
 > **Conseil opérateur.** Si vous êtes sur le point de

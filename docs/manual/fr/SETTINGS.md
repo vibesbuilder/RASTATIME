@@ -26,7 +26,7 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 | **Types de piste** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux. | Admin | [Bibliothèque](./LIBRARY.md) |
 | **Show Templates** | Aperçu des modèles d'émission enregistrés : renommer, supprimer. | Program Manager, Admin | [Modèles d'émission](./SHOW_TEMPLATES.md) |
 | **Editorial Team** (Équipe de rédaction) | Profils des personnes derrière les émissions (nom, compte facultatif), choisis par émission sous Archivage. | Program Manager, Admin | [Archivage](./ARCHIVING.md) |
-| **CBA Accounts** (Comptes CBA) | Les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi. | Admin | [Archivage](./ARCHIVING.md) |
+| **CBA Accounts** (Comptes CBA) | Les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi, délai de l'archivage automatique. | Admin | [Archivage](./ARCHIVING.md) |
 | **Auto DJ** | Remplissage des trous et complément des émissions incomplètes. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Flux** | Flux de sortie (débit, point de montage, codec), entrées pour les connexions en direct, identifiant Master. | Admin | [Flux](./STREAMS.md) |
 | **Machine locale** | Carte son, dossier et format d'import, dossier et format d'enregistrement, emplacement de la bibliothèque. | Admin | [Machine locale](./LOCAL_MACHINE.md) |

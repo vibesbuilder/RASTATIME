@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Archivierung Stufe 3: automatisch archivieren (2026-11-03, Operator-Go)** — Im
+  Abschnitt **Archiving** der Sendung neu **Archive automatically** (ab Werk aus): Der
+  Worker stellt jede neue Episode nach einer Wartezeit (Settings → CBA Accounts, Standard
+  30 Minuten nach dem Ende) mit der Aufzeichnung in die Upload-Warteschlange, mit der
+  Sichtbarkeit der Sendung.  Nie automatisch: Episoden vor dem Einschalten (nichts wird
+  nachgeholt), Wiederholungen, „Nicht automatisch archivieren“, schon archivierte oder von
+  Hand gestartete Episoden, Aufzeichnungen unter der halben Sendungslänge.  Fehlt etwas,
+  wartet die Episode bis zu 24 Stunden und wird dann mit Grund übersprungen.  Der Dialog
+  **Episode...** zeigt, was die Automatik vorhat; gescheiterte, unklare oder übersprungene
+  automatische Uploads erscheinen sieben Tage lang als Warnhinweis.  Ein Ersatzprogramm
+  statt einer Live-Sendung wird nicht erkannt (Operator: Automatik nur für verlässliche
+  Sendungen).  Migration 0076.  Commit `<hash>`.
 - **Archivierung Stufe 2: Episoden von Hand auf cba.media archivieren (2026-11-03,
   Operator-Go)** — Nach der Antwort der CBA wird jede Sendung unter einem eigenen
   CBA-Benutzer archiviert (HTTP Basic mit Benutzername und WordPress-Anwendungspasswort).

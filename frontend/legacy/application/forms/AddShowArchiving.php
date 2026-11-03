@@ -7,9 +7,13 @@
  * cc_show_editor_profile (migration 0074), not in cc_show.  Stage 2
  * (migration 0075): the CBA account the episodes are archived under, their
  * visibility, the topic as a list (when the worker has fetched it).
+ * Stage 3 (migration 0076): "Archive automatically".
  */
 class Application_Form_AddShowArchiving extends Zend_Form_SubForm
 {
+    /** "Y-m-d H:i" station time since when the show archives automatically, '' when off. */
+    public $autoSinceLocal = '';
+
     public function init()
     {
         $this->setDecorators([
@@ -93,6 +97,11 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
             'class' => 'input_text',
             'decorators' => ['ViewHelper'],
         ]);
+        $this->addElement('checkbox', 'add_show_cba_auto', [
+            'label' => _('Archive automatically'),
+            'class' => 'input_text',
+            'decorators' => ['ViewHelper'],
+        ]);
     }
 
     /** Fill from the stored values of a show (and offer its inactive profiles too). */
@@ -116,7 +125,11 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
             'add_show_cba_contains_copyright' => $s['contains_copyright'] ? 1 : 0,
             'add_show_cba_account' => (int) $s['cba_account_id'],
             'add_show_cba_status' => $s['cba_status'],
+            'add_show_cba_auto' => $s['auto_archive'] ? 1 : 0,
         ]);
+        $this->autoSinceLocal = $s['auto_archive'] && $s['auto_since'] !== null
+            ? Application_Service_ArchivingService::utcToLocal($s['auto_since'])
+            : '';
     }
 
     /** Attach the messages of ArchivingService::validateShowData(); false when there were any. */
