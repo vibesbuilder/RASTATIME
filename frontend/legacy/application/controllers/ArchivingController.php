@@ -226,8 +226,8 @@ class ArchivingController extends Zend_Controller_Action
                 $r['person_episodes'] ?? '', $r['is_repeat'] ? _('yes') : '', $r['team']], ',', '"', '');
         }
         $t = $report['totals'];
-        fputcsv($out, [_('Total'), $t['episodes'], $t['participants'], '', $t['person_episodes'], '',
-            sprintf(_('%d teams'), $t['profiles'])], ',', '"', '');
+        // the teams are not counted (operator 2026-11-03: only the people involved)
+        fputcsv($out, [_('Total'), $t['episodes'], $t['participants'], '', $t['person_episodes'], '', ''], ',', '"', '');
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
