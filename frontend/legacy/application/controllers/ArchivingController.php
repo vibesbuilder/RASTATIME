@@ -20,14 +20,32 @@ class ArchivingController extends Zend_Controller_Action
         return $ns->authtoken;
     }
 
+    /**
+     * The message after a redirect.  The legacy session is already closed for
+     * writing when a controller runs (PageLayoutInitPlugin), so a flash message
+     * kept in the session never survived; the redirect carries a fixed code.
+     */
+    private function doneMessage(): ?string
+    {
+        $messages = [
+            'profile-added' => _('Profile added.'),
+            'profile-saved' => _('Profile saved.'),
+            'profile-deleted' => _('Profile deleted.'),
+            'account-added' => _('Account added.'),
+            'account-saved' => _('Account saved.'),
+            'account-deleted' => _('Account deleted.'),
+            'bandwidth' => _('Upload limit saved.'),
+        ];
+
+        return $messages[(string) $this->getRequest()->getParam('done', '')] ?? null;
+    }
+
     public function editorsAction()
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
         $request = $this->getRequest();
-        $session = new Zend_Session_Namespace('rt_archiving');
-        $this->view->message = $session->message ?? null;
+        $this->view->message = $this->doneMessage();
         $this->view->error = null;
-        unset($session->message);
         $edit = ['id' => 0, 'name' => '', 'email' => '', 'subjs_id' => 0, 'active' => true];
 
         if ($request->isPost() && Application_Service_ArchivingService::tablesReady()) {
@@ -36,8 +54,7 @@ class ArchivingController extends Zend_Controller_Action
             $id = (int) $request->getPost('id', 0);
             if ($op === 'delete') {
                 Application_Service_ArchivingService::deleteProfile($id);
-                $session->message = _('Profile deleted.');
-                $this->_redirect('archiving/editors');
+                $this->_redirect('archiving/editors?done=profile-deleted');
 
                 return;
             }
@@ -49,8 +66,7 @@ class ArchivingController extends Zend_Controller_Action
                 (bool) $request->getPost('active', false)
             );
             if ($error === null) {
-                $session->message = $id > 0 ? _('Profile saved.') : _('Profile added.');
-                $this->_redirect('archiving/editors');
+                $this->_redirect('archiving/editors?done=' . ($id > 0 ? 'profile-saved' : 'profile-added'));
 
                 return;
             }
@@ -83,10 +99,8 @@ class ArchivingController extends Zend_Controller_Action
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
         $request = $this->getRequest();
-        $session = new Zend_Session_Namespace('rt_archiving');
-        $this->view->message = $session->message ?? null;
-        $this->view->messageOk = $session->messageOk ?? true;
-        unset($session->message, $session->messageOk);
+        $this->view->message = $this->doneMessage();
+        $this->view->messageOk = true;
         $this->view->error = null;
         $edit = ['id' => 0, 'label' => '', 'username' => ''];
 
@@ -96,45 +110,41 @@ class ArchivingController extends Zend_Controller_Action
             $id = (int) $request->getPost('id', 0);
             if ($op === 'delete') {
                 Application_Service_ArchivingService::deleteAccount($id);
-                $session->message = _('Account deleted.');
-                $this->_redirect('archiving/accounts');
-
-                return;
-            }
-            if ($op === 'test') {
-                [$ok, $text] = Application_Service_ArchivingService::testAccount($id);
-                $session->message = $text;
-                $session->messageOk = $ok;
-                $this->_redirect('archiving/accounts');
+                $this->_redirect('archiving/accounts?done=account-deleted');
 
                 return;
             }
             if ($op === 'bandwidth') {
                 $mbit = (float) str_replace(',', '.', (string) $request->getPost('mbit', '4'));
                 Application_Service_ArchivingService::setUploadKbit((int) round($mbit * 1000));
-                $session->message = _('Upload limit saved.');
-                $this->_redirect('archiving/accounts');
+                $this->_redirect('archiving/accounts?done=bandwidth');
 
                 return;
             }
-            [$savedId, $error] = Application_Service_ArchivingService::saveAccount(
-                $id,
-                (string) $request->getPost('label', ''),
-                (string) $request->getPost('username', ''),
-                (string) $request->getPost('app_password', '')
-            );
-            if ($error === null) {
-                $session->message = $id > 0 ? _('Account saved.') : _('Account added.');
-                $this->_redirect('archiving/accounts');
+            if ($op === 'test') {
+                // shown right away (no redirect); the answer names the CBA user
+                [$ok, $text] = Application_Service_ArchivingService::testAccount($id);
+                $this->view->message = $text;
+                $this->view->messageOk = $ok;
+            } else {
+                [$savedId, $error] = Application_Service_ArchivingService::saveAccount(
+                    $id,
+                    (string) $request->getPost('label', ''),
+                    (string) $request->getPost('username', ''),
+                    (string) $request->getPost('app_password', '')
+                );
+                if ($error === null) {
+                    $this->_redirect('archiving/accounts?done=' . ($id > 0 ? 'account-saved' : 'account-added'));
 
-                return;
+                    return;
+                }
+                $this->view->error = $error;
+                $edit = [
+                    'id' => $id,
+                    'label' => (string) $request->getPost('label', ''),
+                    'username' => (string) $request->getPost('username', ''),
+                ];
             }
-            $this->view->error = $error;
-            $edit = [
-                'id' => $id,
-                'label' => (string) $request->getPost('label', ''),
-                'username' => (string) $request->getPost('username', ''),
-            ];
         }
 
         $this->view->ready = Application_Service_ArchivingService::tablesReady();

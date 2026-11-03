@@ -718,7 +718,9 @@ class Application_Service_ArchivingService
             return [false, sprintf(_('cba.media answered with HTTP %d.'), $code)];
         }
         $roles = isset($json['roles']) && is_array($json['roles']) ? $json['roles'] : [];
-        $allowed = array_intersect($roles, ['administrator', 'admin', 'author', 'podcaster', 'stationmanager', 'channelmanager']);
+        // the API description writes "stationmanager", cba.media answers "station_manager"
+        $plain = array_map(fn ($r) => str_replace(['_', '-'], '', strtolower((string) $r)), $roles);
+        $allowed = array_intersect($plain, ['administrator', 'admin', 'author', 'podcaster', 'stationmanager', 'channelmanager']);
         $who = (string) ($json['name'] ?? $json['slug'] ?? $acc['username']);
         if ($roles && !$allowed) {
             return [false, sprintf(_('Signed in as %s, but the role (%s) may not upload.'), $who, implode(', ', $roles))];

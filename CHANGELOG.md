@@ -54,6 +54,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   eine neue Instanz an und blendet die alte aus; Titel, Bild und Teilnehmende aus
   „Episode...“ blieben an der ausgeblendeten Instanz hängen.  Sie wandern jetzt mit, die
   Beschreibung bleibt erhalten.
+- **CBA-Konten: „Test connection“ ohne Meldung, Rolle `station_manager` abgelehnt
+  (2026-11-03)** — die Legacy-Sitzung ist schon vor dem Controller schreibgeschützt
+  geschlossen, Meldungen in der Sitzung überlebten die Weiterleitung nie (auch
+  „Account saved.“ und die Redaktionsteam-Seite).  Die Weiterleitung trägt jetzt einen
+  festen Code, das Testergebnis erscheint direkt.  cba.media meldet die Rolle als
+  `station_manager`, die API-Beschreibung schreibt `stationmanager`; der Vergleich
+  ignoriert jetzt Unterstriche.  Commit `<hash>`.
 
 ### Security
 
