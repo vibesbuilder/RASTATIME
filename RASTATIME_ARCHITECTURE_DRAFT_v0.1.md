@@ -8525,8 +8525,10 @@ queued, else unclear), every 15 s `refresh_categories()` (daily) and
 content = episode or show description as HTML paragraphs, teaser
 fallback, production date = broadcast day, broadcast date = instance
 start in station time, editors from the profiles, image fields only with
-an image), `cba.write_body()` writes the multipart body with the ZIP
-(`audio.<ext>`, `image.<ext>`, stored) into one temp file,
+an image), `cba.write_body()` writes the ZIP (`audio.<ext>`,
+`image.<ext>`, stored) as its own file and copies it into the multipart
+body temp file (written straight into the body, `zipfile` keeps absolute
+positions - PHP's ZipArchive on cba.media refused that, fixed 2026-11-03),
 `ThrottledReader` streams it with Content-Length at the upload limit and
 reports progress every 5 s.  Outcome: success → post id on the episode;
 connection refused / connect timeout / 429 / 503 → retry after 2, 5, 15,
