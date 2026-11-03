@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Bildunterschrift; Admins, Programm-Manager, Hosts der Sendung) und **Analytics →
   Participants** (je Sendung und Jahr, Summen, „nur ohne Wert“, CSV).  Migration 0074
   (vier neue Tabellen, bestehende unverändert), Handbuch-Kapitel „Publishing“ in vier
-  Sprachen, Architektur §23.79.
+  Sprachen, Architektur §23.79.  Commit `f23747c5`.
 
 ### Security
 
