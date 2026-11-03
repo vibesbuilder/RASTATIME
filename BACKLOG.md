@@ -6791,6 +6791,40 @@ Stufe 2: Antwort von CBA, Entscheidung "manueller Upload mit anderer
 Library-Datei?", Auswahllisten fuer CBA-Podcast/-Thema statt Nummern
 (wp/v2/series, wp/v2/categories).
 
+**CBA-Antwort und Spezifikation 2026-11-03** (vom Operator, ZIP-Upload-API):
+Anmeldung per HTTP Basic mit CBA-Benutzername + WordPress-Anwendungspasswort
+("API-Key", im CBA-Profil anzulegen; kein `api_key`-Parameter), Upload nur
+fuer die Rollen admin/author/podcaster/stationmanager/channelmanager.  JEDE
+Sendung braucht einen CBA-User, unter dessen Namen sie erscheint.  Pflicht in
+`meta`: title, content (nicht leer), languages (max. 3 aus der CBA-Liste),
+production_date (YYYY-MM-DD, Vergangenheit), category_id; optional
+broadcast_date, publication_date, series_id (leer -> privat), status
+(Standard privat), license (copyright, cc by, cc by-nc, cc by-nd,
+cc by-nc-nd, cc sampling+, cc zero, pd - kein cc by-sa), tags, editors,
+contains_copyright, image_license (frei), image_caption (<= 500), regions.
+ZIP: genau eine Audio/Video-Datei (mp3, ogg, opus, webm, mp4) und hoechstens
+ein Bild (jpg, gif, png).  Kein Endpunkt zum nachtraeglichen Aendern;
+"Kommentare erlauben" ist nicht in der API (CBA-Voreinstellung gilt).
+
+**Entscheidungen 2026-11-03 (Operator), ersetzen E2 und klaeren E5:**
+- Zugang: eigene Liste **Settings -> CBA Accounts** (Bezeichnung, Benutzername,
+  Anwendungspasswort nur setzbar), nur Admins verwalten sie; jede Sendung
+  waehlt ihr Konto im Abschnitt Publishing.
+- Lizenz: Auswahlliste mit den CBA-Schluesseln bleibt, je Sendung; die
+  Matrix Nennung/kommerziell/Bearbeitung -> Lizenz steht als Hilfe im Tooltip.
+- Erstausstrahlung = Beginn der Instanz (Stationszeit); Produktionsdatum =
+  Sendetag, im Dialog "Episode..." ueberschreibbar.
+- "Instance Description" verschwindet aus Edit Instance; "Episode..." ist die
+  einzige Stelle fuer die Beschreibung.
+- Automatik (Stufe 3): Schalter je Sendung (aus); keine Uploads bei fehlendem
+  Konto/Thema/Sprache/Text, ohne brauchbare Aufzeichnung (< 50 % der
+  Sendungslaenge), bei Wiederholungen, bei vorhandener Post-ID, bei
+  "Nicht veroeffentlichen" im Episoden-Dialog; nur Episoden, die nach dem
+  Einschalten enden (keine Aufarbeitung); Start einstellbare Zeit nach dem
+  Import (Vorschlag 30 min), Wiederholen bis 24 h, danach Grund im Dialog.
+- Manueller Upload darf statt der Aufzeichnung eine andere Library-Datei
+  nehmen (nur Formate, die CBA annimmt).
+
 ### 💡 Apple Podcasts / Spotify direkt fuer internationale Stationen (Operator 2026-11-03: Backlog)
 
 Oesterreichische Stationen erreichen Apple/Spotify ueber den CBA-Podcast-Feed
