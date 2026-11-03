@@ -5646,6 +5646,16 @@ div.dt-button-collection .dt-button > span {
 /* RASTATIME 2026-11-03 - calendar "Episode..." dialog (archiving stage 1):
    text fields left, image and the show's defaults right; one column on
    narrow screens */
+/* RASTATIME 2026-11-03 - labels, the show column, "Online archive" and its
+   state sat in redmond's #222 on the dark frame (#2f2f2f, contrast 1.2:1;
+   operator: far too dark): light grey like the bulk editor's labels, links
+   in the light primary colour */
+.rt-episode-dialog {
+    color: #cccccc;
+}
+.rt-episode-dialog a {
+    color: var(--rt-accent-light);
+}
 .rt-episode-dialog .rt-episode-note {
     margin: 0 0 10px 0;
     color: #bbb;

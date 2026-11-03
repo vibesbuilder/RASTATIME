@@ -82,6 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dialog „Archive Online“ zu dunkel (2026-11-03, Operator)** — Beschriftungen, die Spalte
+  „From the show“, „Online archive“ und der Status standen in Redmonds #222 auf dem dunklen
+  Rahmen (#2f2f2f, Kontrast 1,2:1).  Jetzt Hellgrau #ccc wie im Stapel-Editor, Links in der
+  hellen Primärfarbe; gemessen im Nachbau mit den ausgelieferten Stylesheets: kein Text
+  mehr unter 4,7:1.  Commit `<hash>`.
+
 - **„Edit Instance“ verlor die Episodendaten (2026-11-03)** — „Edit Instance“ legt intern
   eine neue Instanz an und blendet die alte aus; Titel, Bild und Teilnehmende aus
   „Episode...“ blieben an der ausgeblendeten Instanz hängen.  Sie wandern jetzt mit, die
