@@ -2539,6 +2539,8 @@ def render_rastatime_liq(
     show_recording_format: str = DEFAULT_SHOW_RECORDING_FORMAT,
     show_recording_bitrate: int = DEFAULT_SHOW_RECORDING_BITRATE,
     show_recording_samplerate: int = DEFAULT_SAMPLERATE,
+    alert_blank_url: Optional[str] = None,
+    alert_dead_air_seconds: int = 30,
     icy_label_format: int = DEFAULT_ICY_FORMAT,
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
@@ -2674,6 +2676,7 @@ def render_rastatime_liq(
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
         .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
         .replace("${SHOW_RECORDING_ENCODER}", show_encoder)
+        .replace("${ALERT_BLANK_BLOCK}", _render_alert_blank_block(alert_blank_url, alert_dead_air_seconds))
     )
     return rendered
 
@@ -2722,6 +2725,8 @@ def write_rastatime_liq(
     show_recording_format: str = DEFAULT_SHOW_RECORDING_FORMAT,
     show_recording_bitrate: int = DEFAULT_SHOW_RECORDING_BITRATE,
     show_recording_samplerate: int = DEFAULT_SAMPLERATE,
+    alert_blank_url: Optional[str] = None,
+    alert_dead_air_seconds: int = 30,
     icy_label_format: int = DEFAULT_ICY_FORMAT,
     icy_offair_text: str = DEFAULT_OFFAIR_TEXT,
     icy_station_name: str = DEFAULT_STATION_NAME,
@@ -2787,6 +2792,8 @@ def write_rastatime_liq(
         show_recording_format=show_recording_format,
         show_recording_bitrate=show_recording_bitrate,
         show_recording_samplerate=show_recording_samplerate,
+        alert_blank_url=alert_blank_url,
+        alert_dead_air_seconds=alert_dead_air_seconds,
         icy_label_format=icy_label_format,
         icy_offair_text=icy_offair_text,
         icy_station_name=icy_station_name,
@@ -3048,6 +3055,30 @@ def read_hourly_recording_config_from_db() -> dict:
         "bitrate": bitrate,
         "retention_days": retention_days,
     }
+
+
+def _render_alert_blank_block(url: Optional[str], seconds: int) -> str:
+    """
+    RASTATIME 2026-11-03 - dead-air alert: ``blank.detect`` on the broadcast
+    bus posts ``/audio-event?state=blank`` to the playout after ``seconds``
+    of silence (below -50 dB, the silence fallback included) and
+    ``state=noise`` once at least 2 s of audio are back.  No url -> a
+    comment only.
+    """
+    if not url:
+        return "# (dead-air alert: no playout listener url at render time)\n"
+    try:
+        secs = max(5, min(3600, int(seconds)))
+    except (TypeError, ValueError):
+        secs = 30
+    u = _escape_liq_string(url)
+    return (
+        "# RASTATIME 2026-11-03 - dead-air alert (Settings -> Alerts): the playout is told\n"
+        f"# after {secs} s of silence on the bus and when audio is back.\n"
+        f'bus = blank.detect(id="dead_air", max_blank={secs}., min_noise=2., threshold=-50., track_sensitive=false, bus)\n'
+        f'bus.on_blank(synchronous=false, {{ignore(http.post(timeout=2.0, data="", "{u}?state=blank"))}})\n'
+        f'bus.on_noise(synchronous=false, {{ignore(http.post(timeout=2.0, data="", "{u}?state=noise"))}})\n'
+    )
 
 
 def read_show_recording_config_from_db() -> dict[str, object]:

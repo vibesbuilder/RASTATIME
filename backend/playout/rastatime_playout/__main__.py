@@ -778,6 +778,16 @@ def _harbor_timeout_seconds() -> float:
     return value
 
 
+def _alert_dead_air_seconds() -> int:
+    """Settings -> Alerts -> dead-air seconds (30 when unreadable)."""
+    try:
+        from rastatime_playout.alerts import read_alert_settings_from_db  # noqa: PLC0415
+
+        return int(read_alert_settings_from_db().dead_air_seconds)
+    except Exception:  # pylint: disable=broad-exception-caught
+        return 30
+
+
 def _render_rastatime_liq(stream_outputs: list[dict]) -> bool:
     """Compatibility wrapper: the ``changed`` flag of
     :func:`_render_rastatime_liq_outcome`."""
@@ -829,6 +839,7 @@ def _render_settings_fingerprint() -> Optional[str]:
     try:
         from rastatime_api.soundcard.models import SoundcardSettings  # noqa: PLC0415
 
+        from rastatime_playout.alerts import read_alert_settings_from_db  # noqa: PLC0415
         from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
             read_hourly_recording_config_from_db,
             read_show_recording_config_from_db,
@@ -838,6 +849,7 @@ def _render_settings_fingerprint() -> Optional[str]:
         payload = {
             "hourly": read_hourly_recording_config_from_db(),
             "show_recording": read_show_recording_config_from_db(),
+            "alerts_dead_air": read_alert_settings_from_db().dead_air_seconds,
             "main_output": [row.main_output_id or "", row.main_output_name or ""],
             "crossfade": _resolve_crossfade_seconds(),
             "show_crossfade": _resolve_show_crossfade_seconds(),
@@ -1098,6 +1110,9 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
             hourly_recording_bitrate=hourly["bitrate"],
             show_recording_format=show_rec["format"],
             show_recording_bitrate=show_rec["bitrate"],
+            # RASTATIME 2026-11-03 - dead-air alert (blank.detect -> /audio-event)
+            alert_blank_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/audio-event",
+            alert_dead_air_seconds=_alert_dead_air_seconds(),
             source_event_url=f"http://{_LISTENER_HOST}:{_LISTENER_PORT}/source-event",
             harbor_timeout_seconds=_harbor_timeout_seconds(),
             # RASTATIME 2026-09-10 - ports/mounts as shown in Settings -> Streams,
@@ -1585,6 +1600,12 @@ def main() -> None:
 
     preflight = PreflightChecker(api_client=api_client)
 
+    # RASTATIME 2026-11-03 - alerts stage 1 (dead air, services, pre-flight
+    # warnings by e-mail and Telegram); the listener feeds /audio-event
+    from rastatime_playout.alerts import PlayoutAlerts  # noqa: PLC0415
+
+    alerts = PlayoutAlerts(api_client=api_client)
+
     # 8b. Source switcher — Master DJ > Show DJ > Scheduled.  The HTTP
     # listener receives Icecast event-binding webhooks on
     # http://127.0.0.1:8770/source-event and drives the scheduler's
@@ -1604,6 +1625,7 @@ def main() -> None:
         switcher,
         scheduler=scheduler,  # /reload-schedule needs the scheduler too
         preflight=preflight,  # …and the preflight scanner for instant rescan
+        alerts=alerts,  # /audio-event + /alert-test (RASTATIME 2026-11-03)
         host=_LISTENER_HOST,
         port=_LISTENER_PORT,
         # Option d (2026-09-09): the harbor callbacks report DJ events;
@@ -1638,6 +1660,7 @@ def main() -> None:
     )
 
     scheduler.set_cue_writer(CueWriter(_read_247_cfg))
+    scheduler.set_alerts(alerts)  # planned restarts suppress dead-air raises
 
     # 9. Initial schedule fetch
     scheduler.refresh()
@@ -1653,6 +1676,10 @@ def main() -> None:
             "PreflightChecker failed to start (dashboard warnings won't appear): %s",
             exc,
         )
+    try:
+        alerts.start()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("alerts monitor failed to start: %s", exc)
 
     # 9c. RASTATIME 2026-06-05 — 24/7 recording retention.  Daemon thread
     # that prunes archive day-folders older than the operator-configured

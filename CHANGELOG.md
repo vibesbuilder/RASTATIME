@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Alarme per E-Mail (SMTP) und Telegram, Stufe 1 (2026-11-03, Go 2026-11-03)** —
+  Settings → Alerts (Admins): Hauptschalter, Dead-Air-Schwelle, Erinnerung,
+  Dienste, Preflight, SMTP (STARTTLS/SSL/keine, Anmeldung, Passwort nur
+  schreibbar), Telegram (Bot-Token nur schreibbar, Chat-IDs), Testknöpfe.
+  Dead Air: `blank.detect` auf dem Sendebus in rastatime.liq meldet
+  `/audio-event` ans Playout (Stille unter -50 dB länger als N s, Entwarnung
+  nach 2 s Ton); Dienste minütlich (API, Apache, Icecast per HTTP, Analyzer
+  und Worker per `sc query`, zwei Fehlversuche), Preflight-Warnungen je Typ;
+  der API-Dienst überwacht das Playout (`/source-state` oder `sc query`).
+  Gemeinsamer Kern `rastatime_shared.alerts` (Zustandsautomat, Erinnerung,
+  20/h je Kanal, Unterdrückung 180 s bei geplanten Neustarts), Playout-Monitor,
+  API-Wächter. Manual SETTINGS §6 ×4, ARCHITECTURE §23.84, 28 Tests.
+  Wirksam nach PLAYOUT- und API-Neustart (Apache für die Übersetzungen).
+  Commit `TBD`.
+
 - **Jahresbericht: Sendeminuten der Eigenproduktionen + Teilnehmende auf einer Seite (2026-11-03, Go 2026-11-03)** —
   Häkchen „Own production“ in Edit Show → What (Vorlagen und Import/Export
   tragen `own_production`), Migration 0077 (`cc_show.own_production`, Leser

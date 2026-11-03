@@ -184,6 +184,13 @@ def serve(
 
     from rastatime_api.wsgi import application  # noqa: PLC0415
 
+    # RASTATIME 2026-11-03 - alerts stage 1: the API watches the playout
+    try:
+        from rastatime_api.core.alert_watchdog import start_watchdog  # noqa: PLC0415
+
+        start_watchdog()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("alert watchdog not started: %s", exc)
     waitress.serve(application, host=host, port=port, threads=threads, **PROXY_OPTIONS)
 
 

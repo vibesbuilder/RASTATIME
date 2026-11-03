@@ -290,3 +290,30 @@ INFO __main__: Playout engine: Liquidsoap (telnet target 127.0.0.1:1234).
   página.
 * [`docs/operator/INSTALL.md`](../../operator/INSTALL.md) — los ajustes
   hechos durante la instalación.
+
+## 6. Alertas (desde 2026-11-03)
+
+Settings → **Alerts** (Admins).  RASTATIME envía un mensaje cuando la
+emisión queda en silencio, cuando un servicio deja de responder o cuando
+aparece un aviso de preflight, y un aviso de todo en orden cuando el
+problema desaparece.
+
+| Campo | Significado |
+|---|---|
+| **Send alerts** | Interruptor principal. |
+| **Dead air after (seconds)** | Silencio en el bus de emisión (bajo -50 dB, incluida la fuente de respaldo silenciosa) durante este tiempo dispara *Dead air*; 2 s de audio lo levantan.  De 5 a 3600, por defecto 30.  El umbral se compila en el motor de audio y se aplica con su próximo reinicio planificado. |
+| **Reminder every (minutes)** | Mientras un problema siga abierto; 0 = sin recordatorios.  Como máximo 20 mensajes por canal y hora. |
+| **Services** | Playout (vigilado por el servicio API), API, Apache, Icecast, Analyzer y Worker, comprobados cada minuto; dos fallos seguidos disparan una alerta. |
+| **Pre-flight warnings** | Cada tipo de aviso del banner dispara una alerta una vez y la levanta cuando desaparece. |
+| **E-mail (SMTP)** | Servidor, puerto, cifrado (STARTTLS, SSL/TLS, ninguno), usuario y contraseña (autenticación; la contraseña nunca se vuelve a mostrar), remitente, destinatarios separados por comas.  El correo de restablecimiento de contraseña de la página de acceso no se ve afectado. |
+| **Telegram** | Token del bot de @BotFather (solo escritura) e ids de chat separados por comas; el bot debe ser miembro del chat o grupo y haber recibido un mensaje.  Un id de grupo empieza con un menos. |
+| **Send test e-mail / message** | Tras guardar: un mensaje de prueba con los ajustes guardados, enviado por el servicio playout. |
+
+Los mensajes tienen la forma `[Emisora] ALERT: Dead air` con la hora,
+el detalle y el servicio que informa, `STILL OPEN` para recordatorios y
+`OK` para el fin de la alerta.  Los reinicios planificados del motor de
+audio (nocturno, ajustes) suspenden las alertas nuevas tres minutos.
+
+Aún no cubierto: un enlace caído (ningún canal sale del estudio), una
+interfaz web lenta en vez de caída, y Signal, WhatsApp o SMS (véase
+BACKLOG).

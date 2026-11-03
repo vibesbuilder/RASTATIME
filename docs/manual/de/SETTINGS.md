@@ -290,3 +290,29 @@ INFO __main__: Playout engine: Liquidsoap (telnet target 127.0.0.1:1234).
   darf.
 * [`docs/operator/INSTALL.md`](../../operator/INSTALL.md) — die bei der
   Installation vorgenommenen Einstellungen.
+
+## 6. Alarme (seit 2026-11-03)
+
+Settings → **Alerts** (Admins).  RASTATIME meldet, wenn die Sendung
+stumm wird, ein Dienst nicht mehr antwortet oder eine Preflight-Warnung
+erscheint, und gibt Entwarnung, sobald das Problem weg ist.
+
+| Feld | Bedeutung |
+|---|---|
+| **Send alerts** | Hauptschalter. |
+| **Dead air after (seconds)** | So lange Stille auf dem Sendebus (unter -50 dB, die Stille-Ersatzquelle eingeschlossen) löst *Dead air* aus; 2 s Ton geben Entwarnung.  5 bis 3600, Standard 30.  Die Schwelle steckt in der Audio-Engine und greift mit ihrem nächsten geplanten Neustart. |
+| **Reminder every (minutes)** | Solange ein Problem offen bleibt; 0 = keine Erinnerungen.  Höchstens 20 Nachrichten je Kanal und Stunde. |
+| **Services** | Playout (vom API-Dienst überwacht), API, Apache, Icecast, Analyzer und Worker, minütlich geprüft; zwei Fehlversuche hintereinander lösen einen Alarm aus. |
+| **Pre-flight warnings** | Jede Warnungsart des Dashboard-Banners löst einmal einen Alarm aus und gibt Entwarnung, wenn sie weg ist. |
+| **E-mail (SMTP)** | Server, Port, Verschlüsselung (STARTTLS, SSL/TLS, keine), Benutzername und Passwort (Anmeldung; das Passwort wird nie wieder angezeigt), Absender, Empfänger durch Komma getrennt.  Die Passwort-Zurücksetzen-Mail der Anmeldeseite ist davon unabhängig. |
+| **Telegram** | Bot-Token von @BotFather (nur schreibbar) und Chat-IDs durch Komma getrennt; der Bot muss Mitglied des Chats oder der Gruppe sein und eine Nachricht erhalten haben.  Eine Gruppen-ID beginnt mit Minus. |
+| **Send test e-mail / message** | Nach dem Speichern: eine Testnachricht mit den gespeicherten Einstellungen, gesendet vom Playout-Dienst. |
+
+Nachrichten sehen so aus: `[Sender] ALERT: Dead air` mit Zeit, Detail
+und meldendem Dienst, `STILL OPEN` für Erinnerungen und `OK` für die
+Entwarnung.  Geplante Neustarts der Audio-Engine (nächtlich,
+Einstellungen) unterdrücken neue Alarme drei Minuten lang.
+
+Noch nicht abgedeckt: ein toter Uplink (kein Kanal verlässt das
+Studio), eine langsame statt ausgefallene Weboberfläche sowie Signal,
+WhatsApp oder SMS (siehe BACKLOG).

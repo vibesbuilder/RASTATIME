@@ -7850,3 +7850,147 @@ msgstr "Total producciones propias"
 
 msgid "Total other shows"
 msgstr "Total otros programas"
+
+msgid "Alerts"
+msgstr "Alertas"
+
+msgid "RASTATIME sends a message when the broadcast goes silent (dead air), when a service stops answering or when a pre-flight warning appears, and an all-clear when the problem is gone. Channels: e-mail over SMTP and Telegram. The playout and the API service read these settings within 30 seconds; the dead-air threshold is applied with the next planned restart of the audio engine."
+msgstr "RASTATIME envía un mensaje cuando la emisión queda en silencio (dead air), cuando un servicio deja de responder o cuando aparece un aviso de preflight, y un aviso de todo en orden cuando el problema desaparece. Canales: correo por SMTP y Telegram. El playout y el servicio API leen estos ajustes en 30 segundos; el umbral de dead air se aplica con el próximo reinicio planificado del motor de audio."
+
+msgid "Nothing was saved - please correct the marked fields."
+msgstr "No se guardó nada: corrija los campos marcados."
+
+msgid "Send alerts"
+msgstr "Enviar alertas"
+
+msgid "Master switch. Off: nothing is sent, the state is still tracked."
+msgstr "Interruptor principal. Apagado: no se envía nada, el estado se sigue registrando."
+
+msgid "Dead air after (seconds)"
+msgstr "Dead air tras (segundos)"
+
+msgid "Silence on the broadcast bus (below -50 dB) for this long raises \"Dead air\"; 5 to 3600, default 30. Applied with the next planned restart of the audio engine."
+msgstr "Silencio en el bus de emisión (bajo -50 dB) durante este tiempo dispara \"Dead air\"; 5 a 3600, por defecto 30. Se aplica con el próximo reinicio planificado del motor de audio."
+
+msgid "Reminder every (minutes)"
+msgstr "Recordatorio cada (minutos)"
+
+msgid "While a problem stays open; 0 = no reminders. At most 20 messages per channel and hour."
+msgstr "Mientras un problema siga abierto; 0 = sin recordatorios. Como máximo 20 mensajes por canal y hora."
+
+msgid "Services"
+msgstr "Servicios"
+
+msgid "Playout, API, Apache, Icecast, Analyzer and Worker: two missed checks in a row (one per minute) raise an alert."
+msgstr "Playout, API, Apache, Icecast, Analyzer y Worker: dos comprobaciones fallidas seguidas (una por minuto) disparan una alerta."
+
+msgid "Pre-flight warnings"
+msgstr "Avisos de preflight"
+
+msgid "Every warning type of the dashboard banner (audio engine unreachable, memory, Line-In device, storage, Stereo Tool, missing autoloading playlist, failed imports) raises an alert once and clears when it is gone."
+msgstr "Cada tipo de aviso del banner (motor de audio inalcanzable, memoria, dispositivo Line-In, almacenamiento, Stereo Tool, lista de carga automática ausente, importaciones fallidas) dispara una alerta una vez y la levanta cuando desaparece."
+
+msgid "E-mail (SMTP)"
+msgstr "Correo (SMTP)"
+
+msgid "SMTP server"
+msgstr "Servidor SMTP"
+
+msgid "587 with STARTTLS, 465 with SSL, 25 without encryption."
+msgstr "587 con STARTTLS, 465 con SSL, 25 sin cifrado."
+
+msgid "Encryption"
+msgstr "Cifrado"
+
+msgid "none"
+msgstr "ninguno"
+
+msgid "User name"
+msgstr "Nombre de usuario"
+
+msgid "Empty = no login."
+msgstr "Vacío = sin inicio de sesión."
+
+msgid "A password is stored; leave empty to keep it."
+msgstr "Hay una contraseña guardada; déjelo vacío para conservarla."
+
+msgid "No password stored."
+msgstr "No hay contraseña guardada."
+
+msgid "Sender"
+msgstr "Remitente"
+
+msgid "Recipients"
+msgstr "Destinatarios"
+
+msgid "Comma-separated e-mail addresses."
+msgstr "Direcciones de correo separadas por comas."
+
+msgid "Send test e-mail"
+msgstr "Enviar correo de prueba"
+
+msgid "Telegram"
+msgstr "Telegram"
+
+msgid "Bot token"
+msgstr "Token del bot"
+
+msgid "A token is stored; leave empty to keep it."
+msgstr "Hay un token guardado; déjelo vacío para conservarlo."
+
+msgid "No token stored. Create a bot with @BotFather and paste its token here."
+msgstr "No hay token guardado. Cree un bot con @BotFather y pegue aquí su token."
+
+msgid "Chat ids"
+msgstr "Ids de chat"
+
+msgid "Comma-separated chat ids (a person or a group; the bot must be a member and have received one message). A group id starts with a minus."
+msgstr "Ids de chat separados por comas (una persona o un grupo; el bot debe ser miembro y haber recibido un mensaje). Un id de grupo empieza con un menos."
+
+msgid "Send test message"
+msgstr "Enviar mensaje de prueba"
+
+msgid "Save first, then test: the test uses the stored settings and goes through the playout service."
+msgstr "Guarde primero, luego pruebe: la prueba usa los ajustes guardados y pasa por el servicio playout."
+
+msgid "Sent."
+msgstr "Enviado."
+
+msgid "Failed."
+msgstr "Falló."
+
+msgid "Request failed."
+msgstr "La solicitud falló."
+
+msgid "The SMTP port must be a number between 1 and 65535."
+msgstr "El puerto SMTP debe ser un número entre 1 y 65535."
+
+msgid "The sender must be an e-mail address."
+msgstr "El remitente debe ser una dirección de correo."
+
+msgid "\"%s\" is not an e-mail address."
+msgstr "\"%s\" no es una dirección de correo."
+
+msgid "\"%s\" is not a Telegram chat id (digits, a group id starts with -)."
+msgstr "\"%s\" no es un id de chat de Telegram (dígitos, un id de grupo empieza con -)."
+
+msgid "Dead air: 5 to 3600 seconds."
+msgstr "Dead air: de 5 a 3600 segundos."
+
+msgid "Reminder: 0 (off) to 1440 minutes."
+msgstr "Recordatorio: de 0 (apagado) a 1440 minutos."
+
+msgid "At most 255 characters."
+msgstr "Como máximo 255 caracteres."
+
+msgid "Unknown channel."
+msgstr "Canal desconocido."
+
+msgid "The playout service did not answer (%s). Is RASTATIME-PLAYOUT running?"
+msgstr "El servicio playout no respondió (%s). ¿Está en marcha RASTATIME-PLAYOUT?"
+
+msgid "The playout service answered with HTTP %d."
+msgstr "El servicio playout respondió HTTP %d."
+
+msgid "The test message could not be sent."
+msgstr "No se pudo enviar el mensaje de prueba."

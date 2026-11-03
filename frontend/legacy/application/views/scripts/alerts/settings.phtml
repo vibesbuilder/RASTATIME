@@ -1,0 +1,142 @@
+<?php
+// RASTATIME 2026-11-03 - Settings → Alerts: e-mail (SMTP) and Telegram alerts
+// for dead air, services down and pre-flight warnings (stage 1).
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$v = $this->values;
+$e = $this->errors;
+$base = Config::getBasePath();
+$err = fn ($k) => isset($e[$k]) ? '<span class="rt-alerts-error">' . $h($e[$k]) . '</span>' : '';
+$on = fn ($k) => in_array($v[$k], ['true', '1', 't'], true) ? ' checked="checked"' : '';
+?>
+<div class="ui-widget prefpanel clearfix padded-strong rt-alerts">
+    <h2><?php echo _("Alerts"); ?></h2>
+    <p class="rt-alerts-note">
+        <?php echo _("RASTATIME sends a message when the broadcast goes silent (dead air), when a service stops answering or when a pre-flight warning appears, and an all-clear when the problem is gone. Channels: e-mail over SMTP and Telegram. The playout and the API service read these settings within 30 seconds; the dead-air threshold is applied with the next planned restart of the audio engine."); ?>
+    </p>
+    <?php if ($this->saved): ?>
+        <p class="rt-alerts-ok"><?php echo _("Saved."); ?></p>
+    <?php endif; ?>
+    <?php if ($e): ?>
+        <p class="rt-alerts-error"><?php echo _("Nothing was saved - please correct the marked fields."); ?></p>
+    <?php endif; ?>
+
+    <form method="post" action="<?php echo $h($base . 'alerts/settings'); ?>" id="rt_alerts_form" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="<?php echo $h($this->csrf); ?>" />
+
+        <fieldset class="padded stream-setting-global">
+            <legend><?php echo _("General"); ?></legend>
+            <dl class="zend_form">
+                <dt><label for="alerts_enabled"><?php echo _("Send alerts"); ?></label></dt>
+                <dd><input type="checkbox" id="alerts_enabled" name="alerts_enabled" value="1"<?php echo $on('alerts_enabled'); ?> />
+                    <span class="rt-alerts-hint"><?php echo _("Master switch. Off: nothing is sent, the state is still tracked."); ?></span></dd>
+
+                <dt><label for="alerts_dead_air_seconds"><?php echo _("Dead air after (seconds)"); ?></label></dt>
+                <dd><input type="text" id="alerts_dead_air_seconds" name="alerts_dead_air_seconds" class="input_text" style="width: 6em;" value="<?php echo $h($v['alerts_dead_air_seconds']); ?>" />
+                    <?php echo $err('alerts_dead_air_seconds'); ?>
+                    <span class="rt-alerts-hint"><?php echo _("Silence on the broadcast bus (below -50 dB) for this long raises \"Dead air\"; 5 to 3600, default 30. Applied with the next planned restart of the audio engine."); ?></span></dd>
+
+                <dt><label for="alerts_repeat_minutes"><?php echo _("Reminder every (minutes)"); ?></label></dt>
+                <dd><input type="text" id="alerts_repeat_minutes" name="alerts_repeat_minutes" class="input_text" style="width: 6em;" value="<?php echo $h($v['alerts_repeat_minutes']); ?>" />
+                    <?php echo $err('alerts_repeat_minutes'); ?>
+                    <span class="rt-alerts-hint"><?php echo _("While a problem stays open; 0 = no reminders. At most 20 messages per channel and hour."); ?></span></dd>
+
+                <dt><label for="alerts_services"><?php echo _("Services"); ?></label></dt>
+                <dd><input type="checkbox" id="alerts_services" name="alerts_services" value="1"<?php echo $on('alerts_services'); ?> />
+                    <span class="rt-alerts-hint"><?php echo _("Playout, API, Apache, Icecast, Analyzer and Worker: two missed checks in a row (one per minute) raise an alert."); ?></span></dd>
+
+                <dt><label for="alerts_preflight"><?php echo _("Pre-flight warnings"); ?></label></dt>
+                <dd><input type="checkbox" id="alerts_preflight" name="alerts_preflight" value="1"<?php echo $on('alerts_preflight'); ?> />
+                    <span class="rt-alerts-hint"><?php echo _("Every warning type of the dashboard banner (audio engine unreachable, memory, Line-In device, storage, Stereo Tool, missing autoloading playlist, failed imports) raises an alert once and clears when it is gone."); ?></span></dd>
+            </dl>
+        </fieldset>
+
+        <fieldset class="padded stream-setting-global">
+            <legend><?php echo _("E-mail (SMTP)"); ?></legend>
+            <dl class="zend_form">
+                <dt><label for="alerts_smtp_host"><?php echo _("SMTP server"); ?></label></dt>
+                <dd><input type="text" id="alerts_smtp_host" name="alerts_smtp_host" class="input_text" style="width: 20em;" value="<?php echo $h($v['alerts_smtp_host']); ?>" />
+                    <?php echo $err('alerts_smtp_host'); ?></dd>
+
+                <dt><label for="alerts_smtp_port"><?php echo _("Port"); ?></label></dt>
+                <dd><input type="text" id="alerts_smtp_port" name="alerts_smtp_port" class="input_text" style="width: 6em;" value="<?php echo $h($v['alerts_smtp_port']); ?>" />
+                    <?php echo $err('alerts_smtp_port'); ?>
+                    <span class="rt-alerts-hint"><?php echo _("587 with STARTTLS, 465 with SSL, 25 without encryption."); ?></span></dd>
+
+                <dt><label for="alerts_smtp_security"><?php echo _("Encryption"); ?></label></dt>
+                <dd><select id="alerts_smtp_security" name="alerts_smtp_security" class="input_select">
+                        <?php foreach (['starttls' => 'STARTTLS', 'ssl' => 'SSL/TLS', 'none' => _('none')] as $k => $label): ?>
+                            <option value="<?php echo $k; ?>"<?php echo $v['alerts_smtp_security'] === $k ? ' selected="selected"' : ''; ?>><?php echo $h($label); ?></option>
+                        <?php endforeach; ?>
+                    </select></dd>
+
+                <dt><label for="alerts_smtp_user"><?php echo _("User name"); ?></label></dt>
+                <dd><input type="text" id="alerts_smtp_user" name="alerts_smtp_user" class="input_text" style="width: 20em;" value="<?php echo $h($v['alerts_smtp_user']); ?>" autocomplete="off" />
+                    <span class="rt-alerts-hint"><?php echo _("Empty = no login."); ?></span></dd>
+
+                <dt><label for="alerts_smtp_password"><?php echo _("Password"); ?></label></dt>
+                <dd><input type="password" id="alerts_smtp_password" name="alerts_smtp_password" class="input_text" style="width: 20em;" value="" autocomplete="new-password" />
+                    <?php echo $err('alerts_smtp_password'); ?>
+                    <span class="rt-alerts-hint"><?php echo $v['alerts_smtp_password_stored'] ? _("A password is stored; leave empty to keep it.") : _("No password stored."); ?></span></dd>
+
+                <dt><label for="alerts_mail_from"><?php echo _("Sender"); ?></label></dt>
+                <dd><input type="text" id="alerts_mail_from" name="alerts_mail_from" class="input_text" style="width: 20em;" value="<?php echo $h($v['alerts_mail_from']); ?>" />
+                    <?php echo $err('alerts_mail_from'); ?></dd>
+
+                <dt><label for="alerts_mail_to"><?php echo _("Recipients"); ?></label></dt>
+                <dd><input type="text" id="alerts_mail_to" name="alerts_mail_to" class="input_text" style="width: 28em;" value="<?php echo $h($v['alerts_mail_to']); ?>" />
+                    <?php echo $err('alerts_mail_to'); ?>
+                    <span class="rt-alerts-hint"><?php echo _("Comma-separated e-mail addresses."); ?></span></dd>
+
+                <dt></dt>
+                <dd><button type="button" class="btn rt-alerts-test" data-channel="mail"><?php echo _("Send test e-mail"); ?></button>
+                    <span class="rt-alerts-test-msg" data-channel="mail"></span></dd>
+            </dl>
+        </fieldset>
+
+        <fieldset class="padded stream-setting-global">
+            <legend><?php echo _("Telegram"); ?></legend>
+            <dl class="zend_form">
+                <dt><label for="alerts_telegram_token"><?php echo _("Bot token"); ?></label></dt>
+                <dd><input type="password" id="alerts_telegram_token" name="alerts_telegram_token" class="input_text" style="width: 28em;" value="" autocomplete="new-password" />
+                    <?php echo $err('alerts_telegram_token'); ?>
+                    <span class="rt-alerts-hint"><?php echo $v['alerts_telegram_token_stored'] ? _("A token is stored; leave empty to keep it.") : _("No token stored. Create a bot with @BotFather and paste its token here."); ?></span></dd>
+
+                <dt><label for="alerts_telegram_chats"><?php echo _("Chat ids"); ?></label></dt>
+                <dd><input type="text" id="alerts_telegram_chats" name="alerts_telegram_chats" class="input_text" style="width: 28em;" value="<?php echo $h($v['alerts_telegram_chats']); ?>" />
+                    <?php echo $err('alerts_telegram_chats'); ?>
+                    <span class="rt-alerts-hint"><?php echo _("Comma-separated chat ids (a person or a group; the bot must be a member and have received one message). A group id starts with a minus."); ?></span></dd>
+
+                <dt></dt>
+                <dd><button type="button" class="btn rt-alerts-test" data-channel="telegram"><?php echo _("Send test message"); ?></button>
+                    <span class="rt-alerts-test-msg" data-channel="telegram"></span></dd>
+            </dl>
+        </fieldset>
+
+        <p class="rt-alerts-actions">
+            <button type="submit" class="btn btn-primary"><?php echo _("Save"); ?></button>
+            <span class="rt-alerts-hint"><?php echo _("Save first, then test: the test uses the stored settings and goes through the playout service."); ?></span>
+        </p>
+    </form>
+</div>
+<script>
+(function ($) {
+    $(".rt-alerts-test").on("click", function () {
+        var channel = $(this).data("channel");
+        var $msg = $(".rt-alerts-test-msg[data-channel='" + channel + "']");
+        $msg.text("…").removeClass("rt-alerts-error rt-alerts-ok");
+        $.post(<?php echo json_encode($base . 'alerts/test'); ?>, {
+            channel: channel,
+            csrf_token: <?php echo json_encode($this->csrf); ?>,
+            format: "json"
+        }, function (resp) {
+            if (resp && resp.ok) {
+                $msg.text(<?php echo json_encode(_("Sent.")); ?>).addClass("rt-alerts-ok");
+            } else {
+                $msg.text((resp && resp.error) || <?php echo json_encode(_("Failed.")); ?>).addClass("rt-alerts-error");
+            }
+        }, "json").fail(function () {
+            $msg.text(<?php echo json_encode(_("Request failed.")); ?>).addClass("rt-alerts-error");
+        });
+    });
+})(jQuery);
+</script>

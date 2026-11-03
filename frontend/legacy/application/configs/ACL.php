@@ -48,7 +48,8 @@ $ccAcl->add(new Zend_Acl_Resource('library'))
     ->add(new Zend_Acl_Resource('linein'))  // T14.2 — Line-In source management
     ->add(new Zend_Acl_Resource('manual'))  // RASTATIME 2026-10-01 — in-app user manual
     ->add(new Zend_Acl_Resource('archiving'))  // RASTATIME 2026-11-03 — editorial team, participants
-    ->add(new Zend_Acl_Resource('yearlyreport'));  // RASTATIME 2026-11-03 — programme minutes + participants
+    ->add(new Zend_Acl_Resource('yearlyreport'))  // RASTATIME 2026-11-03 — programme minutes + participants
+    ->add(new Zend_Acl_Resource('alerts'));  // RASTATIME 2026-11-03 — e-mail / Telegram alerts (admins)
 
 // Creating permissions
 $ccAcl->allow('G', 'index')
@@ -94,6 +95,7 @@ $ccAcl->allow('G', 'index')
     ->allow('P', 'archiving', ['settings', 'editors', 'participants', 'participants-csv'])  // RASTATIME 2026-11-03 — archiving
     ->allow('A', 'archiving')  // RASTATIME 2026-11-03 — CBA accounts: admins only
     ->allow('P', 'yearlyreport')  // RASTATIME 2026-11-03 — yearly report: Program Managers and Admins
+    ->allow('A', 'alerts')  // RASTATIME 2026-11-03 — alerts: admins only
     ->allow('P', 'webstream')
     ->allow('P', 'linein')
     // RASTATIME 2026-10-25 (operator) - Program Managers run the Auto DJ and

@@ -6929,12 +6929,23 @@ die Participants-Frage: der Sendungswert gilt je Episode, ein Episodenwert
 ersetzt ihn nur für diese Episode in „Participations“; „People involved“
 bleibt der Sendungswert.  Migration 0077 offen (Backup + Go).
 
-### 🟢 Alarme per SMTP-Mail und Telegram bei Dead Air und Ausfällen - GO 2026-11-03, nur Stufe 1
+### ✅ Alarme per SMTP-Mail und Telegram bei Dead Air und Ausfällen - gebaut 2026-11-03 (Go 2026-11-03, nur Stufe 1, Architektur §23.84)
 
 Kanäle: SMTP mit Anmeldung/TLS (PHP mail() ohne Anmeldung reicht nicht) und
 Telegram-Bot; Auslöser Stille-Ersatzquelle, Dienste, Preflight-Warnungen,
 Archiv-Fehler; Entprellung, Unterdrückung bei geplanten Neustarts, Entwarnung,
 Testknopf, Settings → Alerts.  Signal/WhatsApp/SMS abgelehnt bzw. später.
+Gebaut 2026-11-03: blank.detect auf dem Bus -> /audio-event, Playout-Monitor
+(Dienste, Preflight), API-Wächter für das Playout, Settings → Alerts mit
+Tests; OFFEN: PLAYOUT- und API-Neustart, Eintrag der Zugangsdaten durch den
+Operator, Abnahme mit einem echten Test (Stille erzeugen).
+
+### 🟡 Alarme Stufe 2: SMS (Gateway oder GSM-Stick für den Uplink-Ausfall), Signal, WhatsApp - DEFER (Operator 2026-11-03: nur Stufe 1)
+
+Internet-Kanäle schweigen bei totem Uplink; ein GSM-Stick (~30 EUR, AT-Befehle)
+wäre der einzige Kanal dafür.  Signal nur über signal-cli (Java, eigene
+Nummer), WhatsApp nur über Metas Cloud-API (Business-Konto, Vorlagen, Kosten
+je Nachricht).  Push-Apps (ntfy, Pushover) als billiger Zusatzkanal möglich.
 
 ### 🟢 Edit Instance: Autoloading-Playlists je Instanz - GO 2026-11-03 mit Regel „nur vor der Befüllung“
 

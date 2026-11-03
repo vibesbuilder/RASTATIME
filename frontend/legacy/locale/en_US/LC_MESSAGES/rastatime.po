@@ -976,3 +976,159 @@ msgstr ""
 
 msgid "Total other shows"
 msgstr ""
+
+msgid "Alerts"
+msgstr ""
+
+msgid "RASTATIME sends a message when the broadcast goes silent (dead air), when a service stops answering or when a pre-flight warning appears, and an all-clear when the problem is gone. Channels: e-mail over SMTP and Telegram. The playout and the API service read these settings within 30 seconds; the dead-air threshold is applied with the next planned restart of the audio engine."
+msgstr ""
+
+msgid "Saved."
+msgstr ""
+
+msgid "Nothing was saved - please correct the marked fields."
+msgstr ""
+
+msgid "General"
+msgstr ""
+
+msgid "Send alerts"
+msgstr ""
+
+msgid "Master switch. Off: nothing is sent, the state is still tracked."
+msgstr ""
+
+msgid "Dead air after (seconds)"
+msgstr ""
+
+msgid "Silence on the broadcast bus (below -50 dB) for this long raises \"Dead air\"; 5 to 3600, default 30. Applied with the next planned restart of the audio engine."
+msgstr ""
+
+msgid "Reminder every (minutes)"
+msgstr ""
+
+msgid "While a problem stays open; 0 = no reminders. At most 20 messages per channel and hour."
+msgstr ""
+
+msgid "Services"
+msgstr ""
+
+msgid "Playout, API, Apache, Icecast, Analyzer and Worker: two missed checks in a row (one per minute) raise an alert."
+msgstr ""
+
+msgid "Pre-flight warnings"
+msgstr ""
+
+msgid "Every warning type of the dashboard banner (audio engine unreachable, memory, Line-In device, storage, Stereo Tool, missing autoloading playlist, failed imports) raises an alert once and clears when it is gone."
+msgstr ""
+
+msgid "E-mail (SMTP)"
+msgstr ""
+
+msgid "SMTP server"
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "587 with STARTTLS, 465 with SSL, 25 without encryption."
+msgstr ""
+
+msgid "Encryption"
+msgstr ""
+
+msgid "none"
+msgstr ""
+
+msgid "User name"
+msgstr ""
+
+msgid "Empty = no login."
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "A password is stored; leave empty to keep it."
+msgstr ""
+
+msgid "No password stored."
+msgstr ""
+
+msgid "Sender"
+msgstr ""
+
+msgid "Recipients"
+msgstr ""
+
+msgid "Comma-separated e-mail addresses."
+msgstr ""
+
+msgid "Send test e-mail"
+msgstr ""
+
+msgid "Telegram"
+msgstr ""
+
+msgid "Bot token"
+msgstr ""
+
+msgid "A token is stored; leave empty to keep it."
+msgstr ""
+
+msgid "No token stored. Create a bot with @BotFather and paste its token here."
+msgstr ""
+
+msgid "Chat ids"
+msgstr ""
+
+msgid "Comma-separated chat ids (a person or a group; the bot must be a member and have received one message). A group id starts with a minus."
+msgstr ""
+
+msgid "Send test message"
+msgstr ""
+
+msgid "Save first, then test: the test uses the stored settings and goes through the playout service."
+msgstr ""
+
+msgid "Sent."
+msgstr ""
+
+msgid "Failed."
+msgstr ""
+
+msgid "Request failed."
+msgstr ""
+
+msgid "The SMTP port must be a number between 1 and 65535."
+msgstr ""
+
+msgid "The sender must be an e-mail address."
+msgstr ""
+
+msgid "\"%s\" is not an e-mail address."
+msgstr ""
+
+msgid "\"%s\" is not a Telegram chat id (digits, a group id starts with -)."
+msgstr ""
+
+msgid "Dead air: 5 to 3600 seconds."
+msgstr ""
+
+msgid "Reminder: 0 (off) to 1440 minutes."
+msgstr ""
+
+msgid "At most 255 characters."
+msgstr ""
+
+msgid "Unknown channel."
+msgstr ""
+
+msgid "The playout service did not answer (%s). Is RASTATIME-PLAYOUT running?"
+msgstr ""
+
+msgid "The playout service answered with HTTP %d."
+msgstr ""
+
+msgid "The test message could not be sent."
+msgstr ""

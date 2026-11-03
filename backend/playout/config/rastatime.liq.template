@@ -507,6 +507,8 @@ ${STEREOTOOL_BLOCK}
 bus.on_metadata(synchronous=true, livetext_report)
 bus = metadata.map(id="icy_rewrite", update=true, strip=false, insert_missing=false, icy_rewrite, bus)
 
+${ALERT_BLANK_BLOCK}
+
 ${WEBSTREAM_WATCHDOG_BLOCK}
 
 # ---------------------------------------------------------------------

@@ -231,6 +231,8 @@ class PlayoutScheduler:
         # format of the LAST render (not the setting of the moment), so the
         # file name always matches the encoder Liquidsoap is running with.
         self._recording_extension = recording_extension
+        # RASTATIME 2026-11-03 - alerts: planned restarts suppress raises
+        self._alerts: Optional[object] = None
         # RASTATIME 2026-10-19 - the recording Liquidsoap has open right now:
         # (instance_id, path) from _on_show_record_start, consumed by
         # _on_show_record_end, which reports the closed file to the legacy
@@ -965,6 +967,11 @@ class PlayoutScheduler:
         now_local = now_local or datetime.now()
         self._nightly_restart_done = now_local.date()
         self._planned_restart_attempted_at = now_local
+        if self._alerts is not None:
+            try:
+                self._alerts.suppress(180)  # the restart gap is no dead air
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
         policy = self._nightly_restart
         logger.warning(
             "Planned Liquidsoap restart (%s; window from %s): re-rendering "
@@ -3512,6 +3519,10 @@ class PlayoutScheduler:
             path,
             self._recording_settle_max_seconds,
         )
+
+    def set_alerts(self, alerts: Optional[object]) -> None:
+        """RASTATIME 2026-11-03 - the alert monitor (planned restarts suppress raises)."""
+        self._alerts = alerts
 
     def _recording_file_extension(self) -> str:
         """Extension of the rendered show-recording encoder (mp3 fallback)."""

@@ -2215,6 +2215,25 @@ class Application_Model_Preference
         self::setValue('autoplaylist_poll_lock', $value);
     }
 
+    // RASTATIME 2026-11-03 - Settings -> Alerts (keys alerts_*, read by the
+    // playout and the API service; secrets stay in the database only)
+    public static function getAlertSetting($key)
+    {
+        if (strpos((string) $key, 'alerts_') !== 0) {
+            return null;
+        }
+
+        return self::getValue($key);
+    }
+
+    public static function setAlertSetting($key, $value)
+    {
+        if (strpos((string) $key, 'alerts_') !== 0) {
+            return;
+        }
+        self::setValue($key, (string) $value);
+    }
+
     // RASTATIME 2026-10-18 - RepeatFillTask poll lock ("Repeat of show")
     public static function getRepeatFillPollLock()
     {

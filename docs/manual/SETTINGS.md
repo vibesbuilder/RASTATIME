@@ -275,6 +275,32 @@ INFO __main__: Playout engine: Liquidsoap (telnet target 127.0.0.1:1234).
 
 ---
 
+## 6. Alerts (since 2026-11-03)
+
+Settings → **Alerts** (Admins).  RASTATIME sends a message when the
+broadcast goes silent, when a service stops answering or when a
+pre-flight warning appears, and an all-clear when the problem is gone.
+
+| Field | Meaning |
+|---|---|
+| **Send alerts** | Master switch. |
+| **Dead air after (seconds)** | Silence on the broadcast bus (below -50 dB, the silence fallback included) for this long raises *Dead air*; audio back for 2 s clears it.  5 to 3600, default 30.  The threshold is compiled into the audio engine and applies with its next planned restart. |
+| **Reminder every (minutes)** | While a problem stays open; 0 = no reminders.  At most 20 messages per channel and hour. |
+| **Services** | Playout (watched by the API service), API, Apache, Icecast, Analyzer and Worker, checked once a minute; two misses in a row raise an alert. |
+| **Pre-flight warnings** | Every warning type of the dashboard banner raises an alert once and clears when it is gone. |
+| **E-mail (SMTP)** | Server, port, encryption (STARTTLS, SSL/TLS, none), user name and password (login with authentication; the password is write-only), sender, comma-separated recipients.  The password-reset mail of the login page is not affected. |
+| **Telegram** | Bot token from @BotFather (write-only) and comma-separated chat ids; the bot must be a member of the chat or group and have received one message.  A group id starts with a minus. |
+| **Send test e-mail / message** | After saving: a test message with the stored settings, sent by the playout service. |
+
+Messages look like `[Station] ALERT: Dead air` with the time, the
+detail and the reporting service, `STILL OPEN` for reminders and `OK`
+for the all-clear.  Planned restarts of the audio engine (nightly,
+settings) suppress new alerts for three minutes.
+
+What is not covered yet: a dead uplink (no channel can leave the
+studio), the web interface being slow rather than down, and Signal,
+WhatsApp or SMS (see BACKLOG).
+
 ## Where to go next
 
 * Follow the link in the table of §1 to the dedicated chapter of a

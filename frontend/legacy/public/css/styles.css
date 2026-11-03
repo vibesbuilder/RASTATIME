@@ -5932,3 +5932,33 @@ div.dt-button-collection .dt-button > span {
 .rt-yearly tr.rt-yearly-other td {
     color: #8a8a8a;
 }
+
+/* RASTATIME 2026-11-03 - Settings -> Alerts */
+.rt-alerts legend {
+    font-weight: bold;
+    padding: 0 6px;
+}
+.rt-alerts .zend_form dd {
+    margin-bottom: 8px;
+}
+.rt-alerts-hint {
+    display: block;
+    color: #8a8a8a;
+    font-size: 12px;
+    margin-top: 2px;
+}
+.rt-alerts-note {
+    max-width: 760px;
+}
+.rt-alerts-error {
+    color: #d9534f;
+    display: inline-block;
+    margin-left: 6px;
+}
+.rt-alerts-ok {
+    color: #5cb85c;
+    margin-left: 6px;
+}
+.rt-alerts-actions {
+    margin-top: 12px;
+}

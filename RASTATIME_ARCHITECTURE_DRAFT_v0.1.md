@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.114
+Draft version: 0.115
 Date: 2026-11-03
 
 > **Revision history**
+> - **0.115 (2026-11-03)** - **Alerts, stage 1** (§23.84): dead air, services down and
+>   pre-flight warnings by e-mail (SMTP) and Telegram; blank.detect on the bus,
+>   playout monitor, API watchdog, Settings -> Alerts.
 > - **0.114 (2026-11-03)** - **Yearly report** (§23.83): programme minutes of the own
 >   productions (`cc_show.own_production`, migration 0077) and the participants overview
 >   on one page, Analytics -> Yearly Report.
@@ -8704,3 +8707,59 @@ Report" replaces "Participants", whose page stays reachable for the
 
 **Verification.**  `C:/Temp/optd/yearly_probe.php <year>` (service,
 view render, What form); route check `curl -I /yearlyreport`.
+
+### 23.84 Alerts, Stage 1: Dead Air, Services, Pre-flight by E-mail and Telegram (2026-11-03)
+
+**Why.**  Dead air that nobody notices is the most expensive failure of
+a 24/7 station; the operator asked for push messages (go 2026-11-03,
+stage 1 = SMTP mail and Telegram; Signal, WhatsApp and SMS stay in the
+BACKLOG).  PHP's `mail()` cannot authenticate on Windows, so the alerts
+have their own SMTP client.
+
+**Shared core** (`rastatime_shared.alerts`, standard library only):
+`AlertSettings` from the `cc_pref` keys `alerts_*` (`settings_from_entries`,
+defaults in `DEFAULTS`), the senders `send_mail` (smtplib, STARTTLS /
+SSL / none, optional login) and `send_telegram` (Bot API `sendMessage`
+per chat id, urllib), and `AlertManager`: `raise_alert(key, title,
+detail)` sends once per open alert (and retries on the next `tick()`
+when no channel took it), `clear_alert` sends the all-clear only when the
+raise went out, `tick()` repeats open alerts every `repeat_minutes`,
+`suppress(seconds)` holds raises (clears still go) around planned
+restarts, `RATE_LIMIT_PER_HOUR` = 20 per channel.  Messages: `[Station]
+ALERT|STILL OPEN|OK|TEST: title`, time, detail, "Reported by".
+
+**Playout** (`rastatime_playout.alerts.PlayoutAlerts`, thread, 60 s):
+dead air from `blank.detect(id="dead_air", max_blank=<alerts_dead_air_seconds>,
+min_noise=2., threshold=-50., track_sensitive=false)` on the bus in
+rastatime.liq (`${ALERT_BLANK_BLOCK}`, rendered by
+`liquidsoap_config._render_alert_blank_block`; `on_blank` / `on_noise`
+post `/audio-event?state=blank|noise` to the listener, 127.0.0.1:8770);
+services (API `/api/v2/version`, Apache `/login`, Icecast
+`status-json.xsl` over HTTP, Analyzer and Worker via `sc query`, two
+misses raise, one hit clears); pre-flight warnings (`/api/v2/preflight/
+warnings`, one alert per `warning_type`, cleared when the type is gone).
+`/alert-test?channel=mail|telegram` (POST) sends a test with the stored
+settings.  The scheduler's `_perform_planned_restart` calls
+`suppress(180)`.  The dead-air threshold is part of the settings
+fingerprint, so a change re-renders and restarts in a quiet moment.
+Settings are re-read every 30 s (Django ORM, `Preference.site`).
+
+**API** (`rastatime_api.core.alert_watchdog.PlayoutWatchdog`, started by
+`waitress_serve.serve()` only; `RASTATIME_ALERT_WATCHDOG=0` disables): the
+playout cannot report its own death, so the API checks `/source-state`
+of the listener or `sc query RASTATIME-PLAYOUT` once a minute.
+
+**Legacy** (`AlertsController`, `Application_Service_AlertService`,
+`alerts/settings.phtml`, ACL resource `alerts` = admins, navigation
+Settings -> Alerts): validation (port, addresses, chat ids, 5-3600 s,
+0-1440 min), secrets write-only (empty field keeps the stored value),
+test buttons POST `alerts/test` which calls the playout listener.
+`Application_Model_Preference::getAlertSetting / setAlertSetting` are
+limited to the `alerts_` prefix.
+
+**Tests.**  `backend/shared/tests/alerts_test.py` (13: settings, state
+machine, rate limit, suppression, senders), `backend/playout/tests/
+test_alerts_playout.py` (10: monitor, listener, render),
+`backend/api/rastatime_api/tests/test_alert_watchdog.py` (5).
+Probe `C:/Temp/optd/alerts_probe.php` (service, view).  Rollback: `git
+revert`; the Liquidsoap block disappears with the next render.

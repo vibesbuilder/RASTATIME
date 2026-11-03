@@ -281,6 +281,9 @@ class _EventHandler(BaseHTTPRequestHandler):
     # reports from rastatime.liq, forwarded to Settings -> Streams
     # (stream_status.StreamStatusReporter).
     stream_status: Optional[object] = None
+    # RASTATIME 2026-11-03 - alerts stage 1: /audio-event (blank.detect in
+    # rastatime.liq) and /alert-test (Settings -> Alerts) -> PlayoutAlerts
+    alerts: Optional[object] = None
 
     # Silence the default access log line on stderr; route via our logger.
     def log_message(self, format: str, *args) -> None:  # noqa: A002
@@ -309,6 +312,10 @@ class _EventHandler(BaseHTTPRequestHandler):
                 self._handle_live_text()
             elif parsed.path == "/stream-event":
                 self._handle_stream_event(parsed)
+            elif parsed.path == "/audio-event":
+                self._handle_audio_event(parsed)
+            elif parsed.path == "/alert-test":
+                self._handle_alert_test(parsed)
             else:
                 self._send(404, "not found")
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -320,6 +327,48 @@ class _EventHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         self._dispatch()
+
+    def _handle_audio_event(self, parsed) -> None:
+        """
+        RASTATIME 2026-11-03 - ``/audio-event?state=blank|noise`` from the
+        ``blank.detect`` callbacks in rastatime.liq (dead-air alert).
+        """
+        qs = parse_qs(parsed.query)
+        state = (qs.get("state", [""])[0] or "").strip().lower()
+        if state not in ("blank", "noise"):
+            self._send(400, "bad request")
+            return
+        alerts = _EventHandler.alerts
+        if alerts is None:
+            self._send(503, "error")
+            return
+        try:
+            alerts.on_audio_event(state)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("audio-event: %s failed: %s", state, exc)
+        self._send(200, "ok")
+
+    def _handle_alert_test(self, parsed) -> None:
+        """
+        RASTATIME 2026-11-03 - ``/alert-test?channel=mail|telegram`` (POST,
+        Settings -> Alerts "Send test"): sends a test message with the
+        settings saved in the database; answers ``{"ok": true}`` or
+        ``{"ok": false, "error": "..."}``.
+        """
+        qs = parse_qs(parsed.query)
+        channel = (qs.get("channel", [""])[0] or "").strip().lower()
+        if channel not in ("mail", "telegram"):
+            self._send_json(400, {"ok": False, "error": "bad channel"})
+            return
+        alerts = _EventHandler.alerts
+        if alerts is None:
+            self._send_json(503, {"ok": False, "error": "alerts not running"})
+            return
+        try:
+            error = alerts.send_test(channel)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            error = str(exc)
+        self._send_json(200, {"ok": error == "", "error": error})
 
     def _handle_source_event(self, parsed) -> None:
         qs = parse_qs(parsed.query)
@@ -940,6 +989,7 @@ def start_listener(
     dj_auth: Optional[object] = None,
     live_text: Optional[object] = None,
     stream_status: Optional[object] = None,
+    alerts: Optional[object] = None,
 ) -> ThreadingHTTPServer:
     """
     Start the HTTP listener for the internal RASTATIME endpoints:
@@ -989,6 +1039,7 @@ def start_listener(
     _EventHandler.dj_auth = dj_auth  # /dj-auth (RASTATIME 2026-09-10)
     _EventHandler.live_text = live_text  # /live-text (RASTATIME 2026-09-28)
     _EventHandler.stream_status = stream_status  # /stream-event (RASTATIME 2026-11-02)
+    _EventHandler.alerts = alerts  # /audio-event, /alert-test (RASTATIME 2026-11-03)
     server = ThreadingHTTPServer((host, port), _EventHandler)
     thread = threading.Thread(
         target=server.serve_forever,
