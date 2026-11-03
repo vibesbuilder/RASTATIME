@@ -61,6 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   festen Code, das Testergebnis erscheint direkt.  cba.media meldet die Rolle als
   `station_manager`, die API-Beschreibung schreibt `stationmanager`; der Vergleich
   ignoriert jetzt Unterstriche.  Commit `79c66ccd`.
+- **Online archivieren: „ZIP file couldn't be opened“ (2026-11-03)** — der Worker schrieb
+  das ZIP direkt in den Upload-Inhalt; `zipfile` vermerkt dabei absolute Positionen, das
+  ausgeschnittene Archiv zeigte am eigenen Inhalt vorbei.  Pythons Leser verzeiht das
+  (darum blieb es in den Tests unbemerkt), PHPs ZipArchive auf cba.media nicht — der erste
+  echte Upload scheiterte mit HTTP 400.  Das ZIP entsteht jetzt als eigene Datei und wird
+  in den Inhalt kopiert; der Test prüft die Positionen byte-genau.  Commit `<hash>`.
 
 ### Security
 

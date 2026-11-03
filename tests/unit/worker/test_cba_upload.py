@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import io
 import json
+import struct
 import threading
 import zipfile
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -126,6 +127,25 @@ def _parts(body: bytes, content_type: str) -> dict[str, bytes]:
     return parts
 
 
+def _assert_offsets_exact(data: bytes) -> None:
+    """
+    The positions inside the archive count from its first byte.  Python's
+    reader forgives shifted positions, PHP's ZipArchive (cba.media) does
+    not: 2026-11-03 the first real upload failed with "ZIP file couldn't be
+    opened" because the archive had been written straight into the body.
+    """
+    eocd = data.rindex(b"PK\x05\x06")
+    entries, cd_size, cd_offset = struct.unpack("<HII", data[eocd + 10 : eocd + 20])
+    assert cd_offset + cd_size == eocd
+    pos = cd_offset
+    for _ in range(entries):
+        assert data[pos : pos + 4] == b"PK\x01\x02"
+        name_len, extra_len, comment_len = struct.unpack("<HHH", data[pos + 28 : pos + 34])
+        (local,) = struct.unpack("<I", data[pos + 42 : pos + 46])
+        assert data[local : local + 4] == b"PK\x03\x04"
+        pos += 46 + name_len + extra_len + comment_len
+
+
 def test_body_holds_meta_and_a_valid_zip(tmp_path):
     audio = tmp_path / "rec.mp3"
     audio.write_bytes(bytes(range(256)) * 400)
@@ -144,6 +164,8 @@ def test_body_holds_meta_and_a_valid_zip(tmp_path):
         assert zf.read("image.jpg") == img.read_bytes()
         assert all(i.compress_type == zipfile.ZIP_STORED for i in zf.infolist())
         assert zf.testzip() is None
+    _assert_offsets_exact(parts["file"])
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["body.bin", "pic.jpeg", "rec.mp3"]
 
 
 def test_body_without_image(tmp_path):
@@ -153,6 +175,7 @@ def test_body_without_image(tmp_path):
     parts = _parts((tmp_path / "b.bin").read_bytes(), content_type)
     with zipfile.ZipFile(io.BytesIO(parts["file"])) as zf:
         assert zf.namelist() == ["audio.ogg"]
+    _assert_offsets_exact(parts["file"])
 
 
 class _Clock:

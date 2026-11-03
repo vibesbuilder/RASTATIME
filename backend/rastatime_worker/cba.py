@@ -26,6 +26,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import shutil
 import time
 import uuid
 import zipfile
@@ -155,35 +156,47 @@ def write_body(
     """
     Write the multipart body to ``path``; returns (content type, size).
 
-    The ZIP goes straight into the body (stored, not deflated: MP3 and
-    images do not shrink); :mod:`zipfile` keeps its offsets relative to
-    where it started, so the archive is valid inside the body.
+    The ZIP is stored, not deflated (MP3 and images do not shrink).  It is
+    written to its own file first and then copied into the body:
+    :mod:`zipfile` records absolute file positions, so an archive written
+    straight into the body points past its own entries once the server
+    cuts it out (Python's reader forgives that, PHP's ZipArchive on
+    cba.media does not - "ZIP file couldn't be opened").
     """
     boundary = "rastatime-" + uuid.uuid4().hex
     audio_ext = os.path.splitext(audio_path)[1].lower().lstrip(".")
-    with open(path, "wb") as fh:
-        fh.write(
-            (
-                f"--{boundary}\r\n"
-                'Content-Disposition: form-data; name="meta"\r\n'
-                "Content-Type: application/json; charset=utf-8\r\n\r\n"
-            ).encode()
-        )
-        fh.write(json.dumps(meta, ensure_ascii=False).encode("utf-8"))
-        fh.write(
-            (
-                f"\r\n--{boundary}\r\n"
-                'Content-Disposition: form-data; name="file"; filename="episode.zip"\r\n'
-                "Content-Type: application/zip\r\n\r\n"
-            ).encode()
-        )
-        with zipfile.ZipFile(fh, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as zf:
+    zip_path = path + ".zip"
+    try:
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as zf:
             zf.write(audio_path, f"audio.{audio_ext}")
             if image_path:
                 image_ext = os.path.splitext(image_path)[1].lower().lstrip(".")
                 zf.write(image_path, f"image.{'jpg' if image_ext == 'jpeg' else image_ext}")
-        fh.write(f"\r\n--{boundary}--\r\n".encode())
-        size = fh.tell()
+        with open(path, "wb") as fh:
+            fh.write(
+                (
+                    f"--{boundary}\r\n"
+                    'Content-Disposition: form-data; name="meta"\r\n'
+                    "Content-Type: application/json; charset=utf-8\r\n\r\n"
+                ).encode()
+            )
+            fh.write(json.dumps(meta, ensure_ascii=False).encode("utf-8"))
+            fh.write(
+                (
+                    f"\r\n--{boundary}\r\n"
+                    'Content-Disposition: form-data; name="file"; filename="episode.zip"\r\n'
+                    "Content-Type: application/zip\r\n\r\n"
+                ).encode()
+            )
+            with open(zip_path, "rb") as zfh:
+                shutil.copyfileobj(zfh, fh, 1024 * 1024)
+            fh.write(f"\r\n--{boundary}--\r\n".encode())
+            size = fh.tell()
+    finally:
+        try:
+            os.remove(zip_path)
+        except OSError:
+            pass
     return f"multipart/form-data; boundary={boundary}", size
 
 
