@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die Aufträge gebremst hoch, wiederholt nur, wenn sicher nichts angekommen ist (bis
   24 h), und wiederholt einen unklaren Upload nie von selbst, damit keine Episode doppelt
   erscheint.  Migration 0075, Handbuch-Kapitel „Archiving“ in vier Sprachen, Architektur
-  §23.80.
+  §23.80.  Commit `75d03d1d`.
 
 - **Veröffentlichung Stufe 1: Redaktionsteam, Episodendaten, Teilnehmende (2026-11-03,
   Operator-Go Stufe 1 der CBA-Anbindung)** — Vorbereitung dafür, jede Episode ohne
