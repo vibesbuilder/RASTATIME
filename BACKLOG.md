@@ -6784,11 +6784,12 @@ Empfehlungen; Anfrage an CBA (Stufe 0) verschickt der Operator selbst.
 Handbuch "Publishing"): Settings -> Editorial Team, Abschnitt Publishing im
 Sendungsformular, Kalender "Episode..." (auch gelaufene Instanzen, Bild
 JPG/PNG <= 10 MB), Analytics -> Participants mit CSV.  Probe
-`C:/Temp/optd/publishing_probe.php` gruen.  Offen: Browser-Abnahme durch den
-Operator (Formular, Dialog mit Bild-Upload, beide Seiten).  Vor Stufe 2:
-Antwort von CBA (Mail-Entwurf 2026-11-03), Entscheidung "manueller Upload
-mit anderer Library-Datei?", Auswahllisten fuer CBA-Podcast/-Thema statt
-Nummern (wp/v2/series, wp/v2/categories).
+`C:/Temp/optd/publishing_probe.php` gruen.  Browser-Abnahme durch den
+Operator bestanden 2026-11-03 (Formular, Dialog mit Bild-Upload, beide
+Seiten).  Anfrage an CBA hat der Operator am 2026-11-03 verschickt.  Vor
+Stufe 2: Antwort von CBA, Entscheidung "manueller Upload mit anderer
+Library-Datei?", Auswahllisten fuer CBA-Podcast/-Thema statt Nummern
+(wp/v2/series, wp/v2/categories).
 
 ### 💡 Apple Podcasts / Spotify direkt fuer internationale Stationen (Operator 2026-11-03: Backlog)
 
