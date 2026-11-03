@@ -6690,7 +6690,7 @@ frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an 
 
 ## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
 
-### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 gebaut 2026-11-03, Stufe 3 offen (evaluiert 2026-11-01)
+### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 gebaut und abgenommen 2026-11-03, Stufe 3 offen (evaluiert 2026-11-01)
 
 Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
 hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
@@ -6840,6 +6840,15 @@ angekommen, "unklar" nie automatisch).  Zusaetzlich: Lizenz ist Pflicht
 Offen: Neustart RASTATIME-WORKER + Apache durch den Operator, erster echter
 Upload (Sichtbarkeit privat) in einen Podcast nach Wahl, danach Stufe 3
 (Automatik, ~1 Tag).
+
+**Abnahme Stufe 2 am 2026-11-03 bestanden:** drei Testsendungen von Hand
+archiviert (privat und oeffentlich, je eigener Beitrag im Testpodcast).
+Unterwegs behoben: Meldungen der Konten-Seite gingen verloren, Rolle
+`station_manager` (Spec: `stationmanager`) wurde abgelehnt (79c66ccd), das ZIP
+im Upload hatte absolute Positionen - HTTP 400 "ZIP file couldn't be opened"
+(19be7886).  Offen vor Stufe 3: Erkennung "ungeplanter Fallback" (es gibt
+keinen gespeicherten Quellen-Verlauf je Instanz), Ort der Verzoegerung,
+Meldung fehlgeschlagener Automatik-Uploads.
 
 ### 💡 Apple Podcasts / Spotify direkt fuer internationale Stationen (Operator 2026-11-03: Backlog)
 
