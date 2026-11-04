@@ -6950,8 +6950,8 @@ Archiv-Fehler; Entprellung, Unterdrückung bei geplanten Neustarts, Entwarnung,
 Testknopf, Settings → Alerts.  Signal/WhatsApp/SMS abgelehnt bzw. später.
 Gebaut 2026-11-03: blank.detect auf dem Bus -> /audio-event, Playout-Monitor
 (Dienste, Preflight), API-Wächter für das Playout, Settings → Alerts mit
-Tests; OFFEN: PLAYOUT- und API-Neustart, Eintrag der Zugangsdaten durch den
-Operator, Abnahme mit einem echten Test (Stille erzeugen).
+Tests.  Abnahme 2026-11-04: Dienste neu gestartet, Dead Air erzeugt, E-Mail
+angekommen; Telegram-Test durch den Operator noch offen.
 
 ### 🟡 Alarme Stufe 2: SMS (Gateway oder GSM-Stick für den Uplink-Ausfall), Signal, WhatsApp - DEFER (Operator 2026-11-03: nur Stufe 1)
 
@@ -6964,8 +6964,9 @@ je Nachricht).  Push-Apps (ntfy, Pushover) als billiger Zusatzkanal möglich.
 
 Instanzspalten (Migration 0078, leer = Vorgabe der Sendung), Häkchen im
 Instanz-Formular, Befüllung löst Instanz → Sendung auf; nach der Befüllung
-nur Hinweis.  Migration 0078 live 2026-11-04 08:36; OFFEN: Abnahme an einer
-Testepisode.
+nur Hinweis.  Migration 0078 live 2026-11-04 08:36; Abnahme 2026-11-04 an
+Route Rock 11:30 bestanden (nach dem Fix c08967ca: Werte auf die neue
+Instanzzeile).
 
 ### 🟡 Archiv-Status-Seite (laufende Uploads, Historie, CSV) - in der Archivierungs-Sitzung bauen (Operator 2026-11-03)
 

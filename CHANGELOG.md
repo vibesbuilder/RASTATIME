@@ -31,7 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `outro_playlist_id`), Leser tolerant über `to_jsonb`, die
   Befüllungs-Abfrage löst Instanz → Sendung auf. Manual CALENDAR §3 +
   AUTOLOADING_PLAYLISTS ×4, ARCHITECTURE §23.85. Migration 0078 live
-  2026-11-04 08:36 (Operator-Backup). Commit `c6a40677`.
+  2026-11-04 08:36 (Operator-Backup). Abnahme 2026-11-04 (Route Rock 11:30
+  mit eigener Playlist, nach dem Fix `c08967ca`). Commit `c6a40677`.
 
 - **Alarme per E-Mail (SMTP) und Telegram, Stufe 1 (2026-11-03, Go 2026-11-03)** —
   Settings → Alerts (Admins): Hauptschalter, Dead-Air-Schwelle, Erinnerung,
@@ -46,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   20/h je Kanal, Unterdrückung 180 s bei geplanten Neustarts), Playout-Monitor,
   API-Wächter. Manual SETTINGS §6 ×4, ARCHITECTURE §23.84, 28 Tests.
   Wirksam nach PLAYOUT- und API-Neustart (Apache für die Übersetzungen).
+  Abnahme 2026-11-04: Dead Air erzeugt, E-Mail angekommen; Telegram folgt.
   Commit `a5bdc4da`.
 
 - **Jahresbericht: Sendeminuten der Eigenproduktionen + Teilnehmende auf einer Seite (2026-11-03, Go 2026-11-03)** —
