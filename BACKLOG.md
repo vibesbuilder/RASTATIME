@@ -6885,8 +6885,11 @@ Nachtrag 2026-11-04 (Operator-Go): **Archiv-Status-Seite gebaut**
 (Analytics -> Archive Status, §23.86): laufend/wartend, was die Automatik
 in 7 Tagen vor sich hat, Probleme 30 Tage, Verlauf mit Filter + CSV;
 Abbrechen nur fuer wartende Auftraege, Erneut (nach "unklar" mit
-Rueckfrage), Beitrag verknuepfen; Link im Warnhinweis.  Offen:
-Apache-Neustart (Texte), Sichtprobe durch den Operator.
+Rueckfrage), Beitrag verknuepfen; Link im Warnhinweis.  Apache neu
+gestartet, Texte in allen Sprachen sichtbar (Operator 2026-11-04).  Der
+Block "Steht an" ist live erst mit einer Sendung mit "Archive
+automatically" in den naechsten 7 Tagen zu sehen (geprueft per
+Rollback-Probe).
 
 ### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
 
