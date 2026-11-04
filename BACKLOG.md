@@ -6986,3 +6986,18 @@ Instanzzeile).
 
 Daten in cc_cba_upload vorhanden; Seite mit Fortschritt, Wiederholen/Abbrechen,
 Historie und Filtern.  ~300 Zeilen, 1 Tag.
+
+## Verzögerter Start: Sichtbarkeit im Kalender (Befund 2026-11-04)
+
+### 💡 Kalender und Dialoge zeigen den verzögerten Start nicht erkennbar - IDEA (Operator-Befund 2026-11-04)
+
+Fall „Lebendige Stille" 1.11. 20:30 (Inhalt 30:32, Nachfolger mit „Allow
+delayed start"): Datenbank, Playout-Log, Playout History und Cue-Datei der
+Stundenaufnahme zeigen den Nachfolger ab 21:00:32, der Podcast lief
+vollständig.  Der Kalender rundet die Ereigniszeiten aber auf Minuten
+(„21:00 - 23:00"), darum sah es nach einem Schnitt aus.  Der Dialog „Show
+Content" liefert die Sekunden (Probe `C:/Temp/optd/show_content_probe.php
+<instance>`: 21:00:32, 21:05:03, …).  Idee: Kalender-Ereignis mit
+Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
+und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
+~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
