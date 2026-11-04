@@ -94,10 +94,6 @@ class Application_Service_ShowService
             $ccShowInstanceOrig = CcShowInstancesQuery::create()
                 ->findPk($showData['add_show_instance_id']);
 
-            // RASTATIME 2026-11-03 - autoloading per episode (migration 0078),
-            // ignored once the instance is filled
-            AutoPlaylistManager::saveInstanceOverride((int) $showData['add_show_instance_id'], $showData);
-
             // convert original start time into the show's local timezone
             $origLocalStartDateTime = $ccShowInstanceOrig->getLocalStartDateTime();
 
@@ -165,6 +161,17 @@ class Application_Service_ShowService
             BasePeer::doUpdate($selectCriteria, $updateCriteria, $con);
 
             $ccShowInstance->updateDbTimeFilled($con);
+
+            // RASTATIME 2026-11-04 - autoloading per episode (migration 0078):
+            // the form's settings land on the NEW instance row - the edited one
+            // is retired as "modified" below (acceptance 2026-11-04: the values
+            // were written to the old row and vanished).  A filled original
+            // passes its settings on unchanged (rule "only before the fill").
+            AutoPlaylistManager::carryInstanceOverride(
+                (int) $ccShowInstanceOrig->getDbId(),
+                (int) $ccShowInstance->getDbId(),
+                $showData
+            );
             // RASTATIME 2026-11-03 - archiving stage 2: the description is
             // edited in the calendar's "Archive Online" dialog, the instance form
             // no longer carries it - the new instance keeps the original's

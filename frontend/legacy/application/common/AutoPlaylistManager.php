@@ -1251,12 +1251,43 @@ class AutoPlaylistManager
     }
 
     /**
+     * An instance edit retires the edited row and creates a new one: carry the
+     * autoloading settings over.  A filled original keeps its settings as
+     * they are (the form was read-only, rule "only before the fill"); otherwise
+     * the form decides for the new row.  Returns true when something was written.
+     */
+    public static function carryInstanceOverride(int $oldInstanceId, int $newInstanceId, array $data): bool
+    {
+        if (!self::instanceColumnsReady() || $oldInstanceId === $newInstanceId) {
+            return false;
+        }
+        $old = self::instanceOverride($oldInstanceId);
+        if ($old !== null && $old['built']) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_show_instances n
+                    SET autoplaylist_override = o.autoplaylist_override, autoplaylist_id = o.autoplaylist_id,
+                        autoplaylist_repeat = o.autoplaylist_repeat, intro_playlist_id = o.intro_playlist_id,
+                        outro_playlist_id = o.outro_playlist_id
+                   FROM cc_show_instances o
+                  WHERE o.id = :old AND n.id = :new',
+                [':old' => $oldInstanceId, ':new' => $newInstanceId],
+                Application_Common_Database::EXECUTE
+            );
+            Logging::info("AutoPlaylistManager: instance {$oldInstanceId} is already filled - its autoloading settings carried to the new row {$newInstanceId}, the form ignored");
+
+            return true;
+        }
+
+        return self::saveInstanceOverride($newInstanceId, $data, true);
+    }
+
+    /**
      * Store the Edit-Instance form: inherit (= follow the show) or the
      * instance's own settings.  Nothing happens once the instance is built
      * (operator rule "only before the fill") or before migration 0078.
      * Returns true when something was written.
      */
-    public static function saveInstanceOverride(int $instanceId, array $data): bool
+    public static function saveInstanceOverride(int $instanceId, array $data, bool $force = false): bool
     {
         if (!self::instanceColumnsReady()) {
             return false;
@@ -1265,7 +1296,7 @@ class AutoPlaylistManager
         if ($ov === null) {
             return false;
         }
-        if ($ov['built']) {
+        if ($ov['built'] && !$force) {
             Logging::info("AutoPlaylistManager: instance {$instanceId} is already filled - autoloading settings of the form ignored");
 
             return false;
