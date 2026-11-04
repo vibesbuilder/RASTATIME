@@ -146,6 +146,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Alarme: Telegram scheiterte an einer fehlenden Wurzel im Windows-Zertifikatsspeicher (2026-11-04, Abnahme)** —
+  „Send test“ für Telegram meldete `CERTIFICATE_VERIFY_FAILED … self-signed
+  certificate in certificate chain`: api.telegram.org hängt an der
+  GoDaddy-Wurzel, die Windows erst bei Bedarf über seinen eigenen TLS-Stack
+  nachlädt; Python liest den Speicher nur so, wie er ist (31 Zertifikate,
+  Google ging, Telegram nicht). `rastatime_shared.alerts.tls_context()`
+  lädt zusätzlich das certifi-Bündel (Abhängigkeit von requests, jetzt
+  auch in rastatime-shared erklärt) und wird von SMTP (STARTTLS/SSL) und
+  Telegram benutzt. Wirksam nach PLAYOUT- und API-Neustart.
+  Commit `67a09305`.
+
 - **Autoloading je Episode: Werte landeten auf der alten Instanzzeile (2026-11-04, Abnahme)** —
   Das Bearbeiten einer Einzelinstanz legt eine neue Instanzzeile an und zieht
   die alte als „modified“ zurück; die Einstellungen des Formulars wurden vor
