@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-04
+
 ### Added
 
 - **Archivierung: Archiv-Status-Seite (2026-11-04, Go 2026-11-04)** — Analytics →
@@ -10422,5 +10424,6 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/vibesbuilder/RASTATIME/releases/tag/v1.0.0

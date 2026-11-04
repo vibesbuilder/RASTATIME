@@ -46,7 +46,7 @@ define('PRODUCT_SITE_URL', 'https://github.com/vibesbuilder/RASTATIME');
  * upstream-sync tracking).  Bump in lockstep with ARCHITECTURE.md
  * version-history entries.
  */
-define('RASTATIME_VERSION', '1.0.0');
+define('RASTATIME_VERSION', '1.1.0');
 
 define('SAAS_PRODUCT_BRANDING_NAME', 'RASTATIME');
 define('SAAS_LOGIN_REFERRER', 'https://github.com/vibesbuilder/RASTATIME');
