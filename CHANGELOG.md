@@ -47,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   20/h je Kanal, Unterdrückung 180 s bei geplanten Neustarts), Playout-Monitor,
   API-Wächter. Manual SETTINGS §6 ×4, ARCHITECTURE §23.84, 28 Tests.
   Wirksam nach PLAYOUT- und API-Neustart (Apache für die Übersetzungen).
-  Abnahme 2026-11-04: Dead Air erzeugt, E-Mail angekommen; Telegram folgt.
+  Abnahme 2026-11-04: Dead Air erzeugt, E-Mail angekommen; Telegram-Test
+  nach dem TLS-Fix `67a09305` erfolgreich.
   Commit `a5bdc4da`.
 
 - **Jahresbericht: Sendeminuten der Eigenproduktionen + Teilnehmende auf einer Seite (2026-11-03, Go 2026-11-03)** —
@@ -154,8 +155,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Google ging, Telegram nicht). `rastatime_shared.alerts.tls_context()`
   lädt zusätzlich das certifi-Bündel (Abhängigkeit von requests, jetzt
   auch in rastatime-shared erklärt) und wird von SMTP (STARTTLS/SSL) und
-  Telegram benutzt. Wirksam nach PLAYOUT- und API-Neustart.
-  Commit `67a09305`.
+  Telegram benutzt. Abnahme 2026-11-04 nach PLAYOUT- und API-Neustart:
+  Telegram-Test erfolgreich. Commit `67a09305`.
 
 - **Autoloading je Episode: Werte landeten auf der alten Instanzzeile (2026-11-04, Abnahme)** —
   Das Bearbeiten einer Einzelinstanz legt eine neue Instanzzeile an und zieht

@@ -6951,7 +6951,8 @@ Testknopf, Settings → Alerts.  Signal/WhatsApp/SMS abgelehnt bzw. später.
 Gebaut 2026-11-03: blank.detect auf dem Bus -> /audio-event, Playout-Monitor
 (Dienste, Preflight), API-Wächter für das Playout, Settings → Alerts mit
 Tests.  Abnahme 2026-11-04: Dienste neu gestartet, Dead Air erzeugt, E-Mail
-angekommen; Telegram-Test durch den Operator noch offen.
+angekommen; Telegram-Test nach dem TLS-Fix 67a09305 (certifi) erfolgreich.
+Stufe 1 komplett abgenommen.
 
 ### 🟡 Alarme Stufe 2: SMS (Gateway oder GSM-Stick für den Uplink-Ausfall), Signal, WhatsApp - DEFER (Operator 2026-11-03: nur Stufe 1)
 
