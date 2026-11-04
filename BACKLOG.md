@@ -6940,7 +6940,9 @@ Dauer der gesendeten Instanzen), Erstausstrahlungen und Wiederholungen
 getrennt, Monatstabelle, CSV; Teilnehmenden-Übersicht darunter.  Antwort auf
 die Participants-Frage: der Sendungswert gilt je Episode, ein Episodenwert
 ersetzt ihn nur für diese Episode in „Participations“; „People involved“
-bleibt der Sendungswert.  Migration 0077 live 2026-11-04 08:36; Abnahme durch den Operator offen.
+bleibt der Sendungswert.  Migration 0077 live 2026-11-04 08:36; Abnahme 2026-11-04
+bestanden (Häkchen gesetzt, Minuten korrekt).  Alle vier Operator-Punkte vom
+2026-11-03 sind damit abgenommen.
 
 ### ✅ Alarme per SMTP-Mail und Telegram bei Dead Air und Ausfällen - gebaut 2026-11-03 (Go 2026-11-03, nur Stufe 1, Architektur §23.84)
 

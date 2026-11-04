@@ -62,7 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Archivierung mit Links. Geplante Dauer der gesendeten Instanzen
   (Senderzeit, beendet, nicht gelöscht, keine alte Rebroadcast-Instanz).
   Manual ANALYTICS / CALENDAR / IMPORT_EXPORT ×4, ARCHITECTURE §23.83.
-  Migration 0077 live 2026-11-04 08:36 (Operator-Backup). Commit `05f74cc3`.
+  Migration 0077 live 2026-11-04 08:36 (Operator-Backup). Abnahme 2026-11-04:
+  Häkchen gesetzt, Jahresbericht zeigt die Minuten korrekt. Commit `05f74cc3`.
 
 - **Archivierung: Hinweis „Sendung ohne Beschreibung“ (2026-11-03, Operator-Wunsch nach der
   Abnahme)** — Ist im Abschnitt **Archiving** der Sendung **Archive automatically** angehakt
