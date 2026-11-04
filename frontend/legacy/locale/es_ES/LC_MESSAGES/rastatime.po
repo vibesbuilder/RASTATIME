@@ -6966,8 +6966,8 @@ msgid "The chosen user does not exist any more."
 msgstr "El usuario elegido ya no existe."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The team does not exist any more."
-msgstr "El equipo ya no existe."
+msgid "The producer does not exist any more."
+msgstr "El productor ya no existe."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "%s (inactive)"
@@ -7018,8 +7018,8 @@ msgid "The image could not be stored."
 msgstr "No se pudo guardar la imagen."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Editorial team"
-msgstr "Equipo de redacción"
+msgid "Producer"
+msgstr "Productor"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "People involved"
@@ -7054,8 +7054,8 @@ msgid "Contains copyrighted music"
 msgstr "Contiene música protegida"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The editorial team behind this show. Its name is sent to cba.media as editor with every episode. Teams are managed under Settings → Archiving."
-msgstr "El equipo de redacción detrás de este programa. Su nombre se envía a cba.media como redacción con cada episodio. Los equipos se gestionan en Ajustes → Archivo."
+msgid "Who makes this show - one person or a team. The name is sent to cba.media as editor with every episode. Producers are managed under Settings → Archiving."
+msgstr "Quién hace este programa: una persona o un equipo. El nombre se envía a cba.media como redacción con cada episodio. Los productores se gestionan en Ajustes → Archivo."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Archive Online in the calendar."
@@ -7078,8 +7078,8 @@ msgid "The episodes usually contain music that is subject to copyright (AKM)."
 msgstr "Los episodios suelen contener música protegida por derechos de autor (AKM)."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "No editorial team yet - add one under Settings → Archiving."
-msgstr "Todavía no hay equipos de redacción: añada uno en Ajustes → Archivo."
+msgid "No producer yet - add one under Settings → Archiving."
+msgstr "Todavía no hay productores: añada uno en Ajustes → Archivo."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "aired"
@@ -7150,16 +7150,16 @@ msgid "Uploading..."
 msgstr "Subiendo..."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Team deleted."
-msgstr "Equipo eliminado."
+msgid "Producer deleted."
+msgstr "Productor eliminado."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Team saved."
-msgstr "Equipo guardado."
+msgid "Producer saved."
+msgstr "Productor guardado."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Team added."
-msgstr "Equipo añadido."
+msgid "Producer added."
+msgstr "Productor añadido."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Show name"
@@ -7190,16 +7190,16 @@ msgid "%d teams"
 msgstr "%d equipos"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Editorial Teams"
-msgstr "Equipos de redacción"
+msgid "Producers"
+msgstr "Productores"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Edit team"
-msgstr "Editar equipo"
+msgid "Edit producer"
+msgstr "Editar productor"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Add a team"
-msgstr "Añadir un equipo"
+msgid "Add a producer"
+msgstr "Añadir un productor"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Email (optional)"
@@ -7218,12 +7218,12 @@ msgid "Active (offered in the show form)"
 msgstr "Activo (se ofrece en el formulario del programa)"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "New team"
-msgstr "Nuevo equipo"
+msgid "New producer"
+msgstr "Nuevo productor"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "No team yet."
-msgstr "Todavía no hay equipos."
+msgid "No producer yet."
+msgstr "Todavía no hay productores."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "User"
@@ -7238,8 +7238,8 @@ msgid "no"
 msgstr "no"
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "Delete the team \"%s\"? It is removed from every show."
-msgstr "¿Eliminar el equipo «%s»? Se quitará de cada programa."
+msgid "Delete \"%s\"? The producer is removed from every show."
+msgstr "¿Eliminar «%s»? El productor se quitará de cada programa."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "Participants"
@@ -7602,8 +7602,8 @@ msgid "Account added."
 msgstr "Cuenta añadida."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
-msgid "The editorial teams behind the shows. Each show chooses its team under Edit Show → Archiving; the team name is sent to cba.media as editor and appears in Analytics → Participants. A team needs no login."
-msgstr "Los equipos de redacción detrás de los programas. Cada programa elige su equipo en Editar programa → Archivo; el nombre del equipo se envía a cba.media como redacción y aparece en Estadísticas → Participantes. Un equipo no necesita cuenta."
+msgid "Who makes the shows - one person or a team each. Each show chooses its producer under Edit Show → Archiving; the name is sent to cba.media as editor and appears in Analytics → Participants. A producer needs no login."
+msgstr "Quién hace los programas: una persona o un equipo cada uno. Cada programa elige su productor en Editar programa → Archivo; el nombre se envía a cba.media como redacción y aparece en Estadísticas → Participantes. Un productor no necesita cuenta."
 
 #: RASTATIME 2026-11-03 archiving stage 2 (CBA accounts, online archive)
 msgid "People involved in the shows, for the yearly statistics. The value is set per show (Edit Show → Archiving) and can differ for a single episode (Archive Online in the calendar). Counted are episodes that aired; legacy rebroadcasts are left out."

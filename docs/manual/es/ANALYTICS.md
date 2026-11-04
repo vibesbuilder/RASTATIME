@@ -184,7 +184,7 @@ para ver qué queda fuera.  Una tabla por mes y **Download CSV (minutes)**
 
 **Participantes.**  Las mismas cifras que [Archivado](./ARCHIVING.md)
 § 6 (personas implicadas por programa, episodios con valor propio,
-participaciones, equipos editoriales), con enlaces al filtro «programas
+participaciones), con enlaces al filtro «programas
 sin valor» y al CSV de participantes.
 
 Program Managers y Admins abren esta página.

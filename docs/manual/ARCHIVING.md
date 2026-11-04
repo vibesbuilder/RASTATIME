@@ -1,7 +1,7 @@
-# Archiving: Editorial Teams, Episodes, Online Archive, Participants
+# Archiving: Producers, Episodes, Online Archive, Participants
 
-> **Where you are in the manual.** Settings → **Archiving** (editorial
-> teams, CBA accounts); Calendar → show form, section **Archiving**;
+> **Where you are in the manual.** Settings → **Archiving** (producers,
+> CBA accounts); Calendar → show form, section **Archiving**;
 > Calendar → right-click an instance → **Archive Online**; Analytics →
 > **Participants**.  Read [Calendar](./CALENDAR.md) and
 > [Record-per-Show](./RECORD_PER_SHOW.md) first - the audio of an
@@ -23,27 +23,29 @@ An *episode* is one instance of a show in the calendar: next Monday's
 
 | Stage | What | State |
 |---|---|---|
-| 1 | Editorial team, show defaults, episode data, participants | since 2026-11-03 |
+| 1 | Producer, show defaults, episode data, participants | since 2026-11-03 |
 | 2 | Archive an episode online by hand from the calendar | since 2026-11-03 |
 | 3 | Archive every episode automatically after the recording | since 2026-11-03 |
 
 ---
 
-## 1. Editorial teams
+## 1. Producers
 
-**Settings → Archiving** lists in its upper part, **Editorial Teams**,
-the teams behind the shows.  Each show chooses one team (§3).
+**Settings → Archiving** lists in its upper part, **Producers**, who
+makes the shows - one person or a team each.  Each show chooses one
+producer (§3).  (Until 2026-11-04 *Editorial Teams*; cba.media calls
+them *editors*.)
 
 | Field | Meaning |
 |---|---|
 | **Name** | As it should appear on cba.media (as editor) and in the statistics. |
 | **Email (optional)** | For your own reference. |
-| **User (optional)** | Links the team to a RASTATIME login, e.g. of the person in charge. A team needs no login. |
-| **Active** | Only active teams are offered in the show form.  Switching a team off keeps it in the shows that have it already. |
+| **User (optional)** | Links the producer to a RASTATIME login, e.g. of the person in charge. A producer needs no login. |
+| **Active** | Only active producers are offered in the show form.  Switching one off keeps it in the shows that have it already. |
 
-**Edit** fills the form above the table with the team; **Delete**
-removes the team from every show after a confirmation.  The column
-**Shows** counts the shows of a team.
+**Edit** fills the form above the table with the producer; **Delete**
+removes the producer from every show after a confirmation.  The column
+**Shows** counts the shows of a producer.
 
 Program Managers and Admins open this page; Program Managers see only
 this part.
@@ -86,7 +88,7 @@ apply to every episode of the show unless an episode sets its own.
 
 | Field | Meaning |
 |---|---|
-| **Editorial team** | The team behind the show, chosen from the list (one per show, §1). Its name is sent to cba.media as editor and appears in the Participants overview. |
+| **Producer** | Who makes the show - one person or a team, chosen from the list (one per show, §1). The name is sent to cba.media as editor and appears in the Participants overview. |
 | **People involved** | How many people usually take part in an episode (0-999). Counts in Analytics → Participants. |
 | **CBA account** | The CBA user the episodes are archived under (§2). |
 | **Visibility on cba.media** | *Public* (listed), *Unlisted* (reachable by its address only) or *Private* (visible to the CBA user only). |
@@ -141,8 +143,8 @@ broadcast - for Admins, Program Managers and the hosts of the show.
 | **Episode image** | Optional, JPG or PNG up to 10 MB. Choosing a file uploads it at once; **Remove image** deletes it. Without an image, cba.media shows the image of the podcast. |
 | **Image licence** / **Image caption** | Licence and credit of the image (e.g. the photographer), caption up to 500 characters. |
 
-The right column shows what the episode takes from the show (editorial
-team, CBA account, podcast, licence, visibility); the line at the top
+The right column shows what the episode takes from the show (producer,
+CBA account, podcast, licence, visibility); the line at the top
 tells whether the episode aired and whether its recording is in the
 library.
 
@@ -269,11 +271,11 @@ in the original.
 | **People involved** | The show's value; the total adds the values of all shows. |
 | **Episodes with own value** | Episodes whose dialog sets a different number. |
 | **Participations** | The people of every episode added up (an episode with its own value counts with that value). |
-| **Editorial teams** (total) | Distinct teams of the shows that aired - every team once. |
 | **Shows without a value** (total) | Shown in orange while there are any. |
 
-A person in several shows counts once per show in **People involved**;
-the team total counts each team once.
+A person in several shows counts once per show in **People involved**.
+The producers are not counted - the figure for the statistics is the
+number of people.
 
 Program Managers and Admins open this page.
 
@@ -302,7 +304,7 @@ installation or before RASTATIME-WORKER ran, the field takes the number.
 The CBA upload interface has no setting for comments; the default of the
 CBA user applies.
 
-### "I chose a team but the show does not appear in the overview."
+### "I chose a producer but the show does not appear in the overview."
 
 The overview only lists shows that **aired** in the chosen year.  A new
 show appears after its first episode has ended.
@@ -323,7 +325,7 @@ why.  Archive it by hand from there.
 ### "Where are Editorial Team and CBA Accounts?"
 
 Since 2026-11-03 both are on one page, **Settings → Archiving**: the
-editorial teams on top, the CBA accounts with the upload limit and the
+producers on top (until 2026-11-04 called *Editorial Teams*), the CBA accounts with the upload limit and the
 waiting time below (Admins only).
 
 ---

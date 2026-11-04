@@ -1,7 +1,7 @@
-# Archivierung: Redaktionsteams, Episoden, Online-Archiv, Teilnehmende
+# Archivierung: Produzenten, Episoden, Online-Archiv, Teilnehmende
 
 > **Wo Sie sich im Handbuch befinden.** Einstellungen →
-> **Archivierung** (Redaktionsteams, CBA-Konten); Kalender →
+> **Archivierung** (Produzenten, CBA-Konten); Kalender →
 > Sendungsformular, Abschnitt **Archivierung**; Kalender → Rechtsklick
 > auf eine Instanz → **Online archivieren**; Statistiken →
 > **Teilnehmende** (in der englischen Oberfläche Settings → Archiving,
@@ -27,28 +27,29 @@ darauf die nächste.
 
 | Stufe | Was | Stand |
 |---|---|---|
-| 1 | Redaktionsteam, Vorgaben der Sendung, Episodendaten, Teilnehmende | seit 2026-11-03 |
+| 1 | Produzent, Vorgaben der Sendung, Episodendaten, Teilnehmende | seit 2026-11-03 |
 | 2 | Eine Episode von Hand aus dem Kalender online archivieren | seit 2026-11-03 |
 | 3 | Jede Episode nach der Aufzeichnung automatisch archivieren | seit 2026-11-03 |
 
 ---
 
-## 1. Redaktionsteams
+## 1. Produzenten
 
 **Einstellungen → Archivierung** listet im oberen Teil,
-**Redaktionsteams**, die Teams hinter den Sendungen.  Jede Sendung
-wählt ein Team (§3).
+**Produzenten**, wer die Sendungen macht - je eine Person oder ein
+Team.  Jede Sendung wählt einen Produzenten (§3).  (Bis 2026-11-04
+*Redaktionsteams*; cba.media nennt sie *Redaktion*.)
 
 | Feld | Bedeutung |
 |---|---|
 | **Name** | So, wie er auf cba.media (als Redaktion) und in der Statistik erscheinen soll. |
 | **E-Mail (optional)** | Für Ihre eigene Übersicht. |
-| **Benutzer (optional)** | Verknüpft das Team mit einem RASTATIME-Login, z. B. dem der verantwortlichen Person. Ein Team braucht kein Login. |
-| **Aktiv** | Nur aktive Teams werden im Sendungsformular angeboten.  Ein abgeschaltetes Team bleibt in den Sendungen, die es schon haben. |
+| **Benutzer (optional)** | Verknüpft den Produzenten mit einem RASTATIME-Login, z. B. dem der verantwortlichen Person. Ein Produzent braucht kein Login. |
+| **Aktiv** | Nur aktive Produzenten werden im Sendungsformular angeboten.  Ein abgeschalteter bleibt in den Sendungen, die ihn schon haben. |
 
-**Ändern** lädt das Team in das Formular über der Tabelle; **Löschen**
-entfernt das Team nach einer Rückfrage aus jeder Sendung.  Die Spalte
-**Sendungen** zählt die Sendungen eines Teams.
+**Ändern** lädt den Produzenten in das Formular über der Tabelle;
+**Löschen** entfernt ihn nach einer Rückfrage aus jeder Sendung.  Die
+Spalte **Sendungen** zählt die Sendungen eines Produzenten.
 
 Programm-Manager und Admins öffnen diese Seite; Programm-Manager sehen
 nur diesen Teil.
@@ -96,7 +97,7 @@ eine Episode keine eigenen setzt.
 
 | Feld | Bedeutung |
 |---|---|
-| **Redaktionsteam** | Das Team hinter der Sendung, aus der Liste gewählt (eines je Sendung, §1). Sein Name geht als Redaktion an cba.media und erscheint in der Übersicht Teilnehmende. |
+| **Produzent** | Wer die Sendung macht - eine Person oder ein Team, aus der Liste gewählt (einer je Sendung, §1). Der Name geht als Redaktion an cba.media und erscheint in der Übersicht Teilnehmende. |
 | **Teilnehmende** | Wie viele Menschen üblicherweise an einer Episode mitwirken (0-999). Zählt in Statistiken → Teilnehmende. |
 | **CBA-Konto** | Der CBA-Benutzer, unter dem die Episoden archiviert werden (§2). |
 | **Sichtbarkeit auf cba.media** | *Öffentlich* (gelistet), *Ungelistet* (nur über die Adresse erreichbar) oder *Privat* (nur für den CBA-Benutzer sichtbar). |
@@ -153,7 +154,7 @@ für Admins, Programm-Manager und die Hosts der Sendung.
 | **Bildlizenz** / **Bildunterschrift** | Lizenz und Bildnachweis (z. B. wer fotografiert hat), Bildunterschrift bis 500 Zeichen. |
 
 Die rechte Spalte zeigt, was die Episode von der Sendung übernimmt
-(Redaktionsteam, CBA-Konto, Podcast, Lizenz, Sichtbarkeit); die Zeile
+(Produzent, CBA-Konto, Podcast, Lizenz, Sichtbarkeit); die Zeile
 oben sagt, ob die Episode gesendet wurde und ob ihre Aufzeichnung in
 der Library liegt.
 
@@ -287,11 +288,11 @@ zählen.
 | **Teilnehmende** | Der Wert der Sendung; die Summe addiert die Werte aller Sendungen. |
 | **Episoden mit eigenem Wert** | Episoden, deren Dialog eine andere Zahl setzt. |
 | **Teilnahmen** | Die Teilnehmenden jeder Episode zusammengezählt (eine Episode mit eigenem Wert zählt mit diesem Wert). |
-| **Redaktionsteams** (Summe) | Verschiedene Teams der gesendeten Sendungen - jedes Team einmal. |
 | **Sendungen ohne Wert** (Summe) | Orange, solange es welche gibt. |
 
 Wer in mehreren Sendungen mitwirkt, zählt bei **Teilnehmende** einmal
-je Sendung; die Team-Summe zählt jedes Team einmal.
+je Sendung.  Die Produzenten werden nicht gezählt - für die Statistik
+zählt die Zahl der Menschen.
 
 Programm-Manager und Admins öffnen diese Seite.
 
@@ -321,7 +322,7 @@ Nummer.
 Die CBA-Upload-Schnittstelle hat dafür keine Einstellung; es gilt die
 Voreinstellung des CBA-Benutzers.
 
-### „Ich habe ein Team gewählt, aber die Sendung erscheint nicht in der Übersicht."
+### „Ich habe einen Produzenten gewählt, aber die Sendung erscheint nicht in der Übersicht."
 
 Die Übersicht listet nur Sendungen, die im gewählten Jahr **gesendet**
 wurden.  Eine neue Sendung erscheint, sobald ihre erste Episode zu Ende
@@ -344,7 +345,7 @@ von Hand.
 ### „Wo sind Redaktionsteam und CBA-Konten?"
 
 Seit 2026-11-03 liegen beide auf einer Seite, **Einstellungen →
-Archivierung**: oben die Redaktionsteams, darunter die CBA-Konten mit
+Archivierung**: oben die Produzenten (bis 2026-11-04 *Redaktionsteams*), darunter die CBA-Konten mit
 der Upload-Grenze und der Wartezeit (nur Admins).
 
 ---

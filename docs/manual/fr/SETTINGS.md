@@ -7,8 +7,8 @@
 
 Le menu Paramètres est la surface de configuration de la station.  La
 plupart des pages appartiennent aux **Admins** ; un
-**Program Manager** voit *Mon profil*, *Show Templates*, *Auto DJ* et les équipes
-de rédaction sous *Archivage* ;
+**Program Manager** voit *Mon profil*, *Show Templates*, *Auto DJ* et les
+producteurs sous *Archivage* ;
 les invités et les DJ ne voient que *Mon profil*.  Voir
 [Utilisateurs et rôles](./USERS_AND_ROLES.md) §2 pour la matrice
 complète des permissions.
@@ -26,7 +26,7 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 | **Utilisateurs** | Créer, modifier et supprimer des utilisateurs, définir leur type. | Admin | [Utilisateurs et rôles](./USERS_AND_ROLES.md) §3 |
 | **Types de piste** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux. | Admin | [Bibliothèque](./LIBRARY.md) |
 | **Show Templates** | Aperçu des modèles d'émission enregistrés : renommer, supprimer. | Program Manager, Admin | [Modèles d'émission](./SHOW_TEMPLATES.md) |
-| **Archivage** | Équipes de rédaction derrière les émissions (nom, compte facultatif ; une par émission, choisie sous Archivage) ; pour les Admins, en dessous, les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi, délai de l'archivage automatique. Jusqu'au 2026-11-03, deux entrées, *Équipe de rédaction* et *Comptes CBA*. | Program Manager (équipes), Admin | [Archivage](./ARCHIVING.md) |
+| **Archivage** | Producteurs des émissions - une personne ou une équipe chacune (nom, compte facultatif ; un par émission, choisi sous Archivage) ; pour les Admins, en dessous, les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi, délai de l'archivage automatique. Jusqu'au 2026-11-03, deux entrées, *Équipe de rédaction* et *Comptes CBA*. | Program Manager (producteurs), Admin | [Archivage](./ARCHIVING.md) |
 | **Auto DJ** | Remplissage des trous et complément des émissions incomplètes. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Flux** | Flux de sortie (débit, point de montage, codec), entrées pour les connexions en direct, identifiant Master. | Admin | [Flux](./STREAMS.md) |
 | **Machine locale** | Carte son, dossier et format d'import, dossier et format d'enregistrement, emplacement de la bibliothèque. | Admin | [Machine locale](./LOCAL_MACHINE.md) |
@@ -230,7 +230,7 @@ passe - ne le placez jamais tel quel dans un gestionnaire de versions.
 
 ### « Quels paramètres un Program Manager peut-il ouvrir ? »
 
-*Mon profil*, *Show Templates*, *Auto DJ* et les équipes de rédaction
+*Mon profil*, *Show Templates*, *Auto DJ* et les producteurs
 sous *Archivage*.  Tout le reste sous
 Paramètres appartient aux Admins.  Voir [Utilisateurs et rôles](./USERS_AND_ROLES.md) §1-§2.
 

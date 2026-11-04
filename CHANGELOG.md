@@ -99,6 +99,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Archivierung: „Producers“ statt „Editorial Teams“, keine Team-Zahl mehr (2026-11-04,
+  Operator)** — Die meisten Sendungen macht eine einzelne Person, nur manche ein Team.
+  Oberfläche und Handbuch heißen jetzt **Producer / Producers** (DE Produzent /
+  Produzenten, FR Producteur, ES Productor): Settings → Archiving, Feld im Abschnitt
+  Archiving der Sendung, Dialog „Archive Online“, Spalte in Participants und
+  Jahresbericht, CSV.  An cba.media geht der Name unverändert als *editor*; Tabelle
+  `cc_editor_profile` und Routen bleiben.  Die Summe „Editorial teams“ entfällt in
+  Analytics → Participants, im CSV (Commit `be181126`) und im Jahresbericht — gezählt
+  werden nur die Menschen („People involved“).  Wirksam: Legacy sofort, Texte nach
+  Apache-Neustart.
 - **Archivierung: Feinschliff nach der Abnahme (2026-11-03, Operator)** — Kalender:
   „Episode...“ heißt **Archive Online** (eigenes Wolken-Icon), der Knopf im Dialog
   **Archive online now**, „Link existing post“ hat einen Tooltip.  Sendungsformular: der

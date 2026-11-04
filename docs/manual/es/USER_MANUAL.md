@@ -130,7 +130,7 @@ documento maestro arriba es lo único que todos asumen.
 | [Panel](./DASHBOARD.md) | Widget En reproducción, estado de fuente, anulación manual, poner la emisora en vivo desde un micrófono. |
 | [Calendario](./CALENDAR.md) | Crear programas, editar, arrastrar y soltar, programas recurrentes, repeticiones, presentadores. |
 | [Plantillas de programa](./SHOW_TEMPLATES.md) | Reutilizar configuración de programa sin reescribir cada semana. |
-| [Archivo](./ARCHIVING.md) | Archivar episodios en cba.media: equipos de redacción y cuentas de CBA (Ajustes → Archivo), valores de archivo de un programa, título, teaser e imagen por episodio, «Archivar en línea» desde el calendario y la vista anual de participantes. |
+| [Archivo](./ARCHIVING.md) | Archivar episodios en cba.media: productores y cuentas de CBA (Ajustes → Archivo), valores de archivo de un programa, título, teaser e imagen por episodio, «Archivar en línea» desde el calendario y la vista anual de participantes. |
 | [Importar / Exportar](./IMPORT_EXPORT.md) | Exportar usuarios, programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como CSV/JSON, mantenerlos en una hoja de cálculo y reimportarlos con vista previa. |
 | [Inicio diferido de programa](./DELAYED_START.md) | Dejar que un programa inscrito empiece tarde cuando el programa anterior se sobrepasó, en lugar de recortar ese programa. El retraso se propaga a través de programas inscritos consecutivos hasta la primera ancla a hora fija. |
 

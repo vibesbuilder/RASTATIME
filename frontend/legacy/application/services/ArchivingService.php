@@ -165,7 +165,7 @@ class Application_Service_ArchivingService
         if ($id > 0) {
             $params[] = $id;
             if (!self::exec('UPDATE cc_editor_profile SET name = ?, email = ?, subjs_id = ?, active = ? WHERE id = ?', $params)) {
-                return [0, _('The team does not exist any more.')];
+                return [0, _('The producer does not exist any more.')];
             }
 
             return [$id, null];
@@ -1074,8 +1074,8 @@ class Application_Service_ArchivingService
               ORDER BY lower(s.name), s.id",
             [$from, $to]
         );
-        $totals = ['shows' => 0, 'episodes' => 0, 'participants' => 0, 'person_episodes' => 0, 'missing' => 0, 'profiles' => 0];
-        $showIds = [];
+        // the producers are not counted (operator 2026-11-03: only the people involved)
+        $totals = ['shows' => 0, 'episodes' => 0, 'participants' => 0, 'person_episodes' => 0, 'missing' => 0];
         foreach ($rows as &$r) {
             $r['id'] = (int) $r['id'];
             $r['episodes'] = (int) $r['episodes'];
@@ -1090,16 +1090,8 @@ class Application_Service_ArchivingService
             $totals['participants'] += (int) $r['participants'];
             $totals['person_episodes'] += (int) $r['person_episodes'];
             $totals['missing'] += $r['participants'] === null ? 1 : 0;
-            $showIds[] = $r['id'];
         }
         unset($r);
-        if ($ready && $showIds) {
-            $in = implode(',', array_fill(0, count($showIds), '?'));
-            $totals['profiles'] = (int) self::query(
-                "SELECT count(DISTINCT profile_id) AS n FROM cc_show_editor_profile WHERE show_id IN ({$in})",
-                $showIds
-            )[0]['n'];
-        }
 
         return ['year' => $year, 'rows' => $rows, 'totals' => $totals];
     }

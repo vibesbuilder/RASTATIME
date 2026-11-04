@@ -154,7 +154,7 @@ valeurs par défaut.
 | **Own production** (production propre) | Cocher pour les productions propres de la station : les minutes diffusées de l'émission comptent dans Analytics → [Rapport annuel](./ANALYTICS.md) (depuis le 2026-11-03). |
 | **Autoloading Playlist** | Attacher une playlist pour remplir chaque instance automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Qui** | Animateurs supplémentaires au-delà du principal défini sous Quoi. |
-| **Archivage** | Équipe de rédaction, participants, compte CBA, réglages cba.media et archivage automatique de l'émission (pas dans Modifier l'occurrence). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
+| **Archivage** | Producteur, participants, compte CBA, réglages cba.media et archivage automatique de l'émission (pas dans Modifier l'occurrence). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
 | **Style** | Couleur de fond, couleur de texte, image d'émission (visible seulement ici pour les émissions ponctuelles ; pour les émissions récurrentes, celles-ci restent constantes à travers les instances). |
 
 > **Conseil opérateur.** Si vous êtes sur le point de

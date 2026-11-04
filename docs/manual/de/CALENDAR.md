@@ -152,7 +152,7 @@ Standardwerten bleiben.
 | **Own production** (Eigenproduktion) | Ankreuzen bei Eigenproduktionen des Senders: die gesendeten Minuten der Sendung zählen in Analytics → [Jahresbericht](./ANALYTICS.md) (seit 2026-11-03). |
 | **Autoloading Playlist** | Eine Playlist anhängen, um jede Instanz automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Wer** | Zusätzliche Hosts über den primären unter Was gesetzten hinaus. |
-| **Archivierung** | Redaktionsteam, Teilnehmende, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (nicht in Instanz bearbeiten). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
+| **Archivierung** | Produzent, Teilnehmende, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (nicht in Instanz bearbeiten). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
 | **Style** | Hintergrundfarbe, Textfarbe, Sendungs-Bild (sichtbar nur hier für einmalige Sendungen; für wiederkehrende Sendungen bleiben diese über Instanzen hinweg konstant). |
 
 > **Operator-Tipp.** Wenn Sie im Begriff sind, denselben

@@ -183,8 +183,8 @@ Eine Monatstabelle und **Download CSV (minutes)** (je Sendung, Summen,
 je Monat) runden den Abschnitt ab.
 
 **Teilnehmende.**  Dieselben Zahlen wie [Archivierung](./ARCHIVING.md)
-§ 6 (Beteiligte je Sendung, Episoden mit eigenem Wert, Beteiligungen,
-Redaktionsteams), mit Links zum Filter „Sendungen ohne Wert" und zum
+§ 6 (Beteiligte je Sendung, Episoden mit eigenem Wert, Beteiligungen),
+mit Links zum Filter „Sendungen ohne Wert" und zum
 Teilnehmenden-CSV.
 
 Program Managers und Admins öffnen diese Seite.

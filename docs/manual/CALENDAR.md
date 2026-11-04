@@ -139,7 +139,7 @@ The form is divided into collapsible sections. **What** and
 | **Own production** | Tick for the station's own productions: the show's aired minutes count in Analytics → [Yearly Report](./ANALYTICS.md) (since 2026-11-03). |
 | **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Who** | Additional hosts beyond the primary one set under What. |
-| **Archiving** | Editorial team, people involved, CBA account, the cba.media defaults and automatic archiving of the show (not in Edit Instance). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
+| **Archiving** | Producer, people involved, CBA account, the cba.media defaults and automatic archiving of the show (not in Edit Instance). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
 | **Style** | Background colour, text colour, show image (visible only here for one-off shows; for recurring shows these stay constant across instances). |
 
 > **Operator tip.** If you are about to fill in the same name,

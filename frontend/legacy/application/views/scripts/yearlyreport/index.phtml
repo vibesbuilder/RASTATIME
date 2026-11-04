@@ -104,7 +104,6 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
         <div><strong><?php echo (int) $pt['episodes']; ?></strong><span><?php echo _("Episodes aired"); ?></span></div>
         <div><strong><?php echo (int) $pt['participants']; ?></strong><span><?php echo _("People involved (sum over the shows)"); ?></span></div>
         <div><strong><?php echo (int) $pt['person_episodes']; ?></strong><span><?php echo _("Participations"); ?></span></div>
-        <div><strong><?php echo (int) $pt['profiles']; ?></strong><span><?php echo _("Editorial teams"); ?></span></div>
         <div class="<?php echo $pt['missing'] ? 'rt-participants-missing' : ''; ?>"><strong><?php echo (int) $pt['missing']; ?></strong><span><?php echo _("Shows without a value"); ?></span></div>
     </div>
     <?php if (empty($p['rows'])): ?>
@@ -118,7 +117,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
                     <th class="num"><?php echo _("People involved"); ?></th>
                     <th class="num"><?php echo _("Episodes with own value"); ?></th>
                     <th class="num"><?php echo _("Participations"); ?></th>
-                    <th><?php echo _("Editorial team"); ?></th>
+                    <th><?php echo _("Producer"); ?></th>
                 </tr>
             </thead>
             <tbody>

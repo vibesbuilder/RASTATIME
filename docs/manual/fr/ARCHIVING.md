@@ -1,7 +1,7 @@
-# Archivage : équipes de rédaction, épisodes, archive en ligne, participants
+# Archivage : producteurs, épisodes, archive en ligne, participants
 
 > **Où vous en êtes dans le manuel.** Paramètres → **Archivage**
-> (équipes de rédaction, comptes CBA) ; Calendrier → formulaire de
+> (producteurs, comptes CBA) ; Calendrier → formulaire de
 > l'émission, section **Archivage** ; Calendrier → clic droit sur une
 > occurrence → **Archiver en ligne** ; Statistiques → **Participants**
 > (dans l'interface anglaise : Settings → Archiving, Archiving, Archive
@@ -27,28 +27,30 @@ le suivant.
 
 | Étape | Quoi | État |
 |---|---|---|
-| 1 | Équipe de rédaction, réglages de l'émission, données d'épisode, participants | depuis le 2026-11-03 |
+| 1 | Producteur, réglages de l'émission, données d'épisode, participants | depuis le 2026-11-03 |
 | 2 | Archiver un épisode en ligne à la main depuis le calendrier | depuis le 2026-11-03 |
 | 3 | Archiver chaque épisode automatiquement après l'enregistrement | depuis le 2026-11-03 |
 
 ---
 
-## 1. Équipes de rédaction
+## 1. Producteurs
 
-**Paramètres → Archivage** liste dans sa partie supérieure, **Équipes
-de rédaction**, les équipes derrière les émissions.  Chaque émission
-choisit une équipe (§3).
+**Paramètres → Archivage** liste dans sa partie supérieure,
+**Producteurs**, qui fait les émissions - une personne ou une équipe
+chacune.  Chaque émission choisit un producteur (§3).  (Jusqu'au
+2026-11-04 *Équipes de rédaction* ; cba.media les appelle *rédaction*.)
 
 | Champ | Signification |
 |---|---|
 | **Nom** | Tel qu'il doit apparaître sur cba.media (comme rédaction) et dans les statistiques. |
 | **E-mail (facultatif)** | Pour votre propre usage. |
-| **Utilisateur (facultatif)** | Relie l'équipe à un compte RASTATIME, p. ex. celui de la personne responsable. Une équipe n'a pas besoin de compte. |
-| **Actif** | Seules les équipes actives sont proposées dans le formulaire de l'émission.  Une équipe désactivée reste dans les émissions qui l'ont déjà. |
+| **Utilisateur (facultatif)** | Relie le producteur à un compte RASTATIME, p. ex. celui de la personne responsable. Un producteur n'a pas besoin de compte. |
+| **Actif** | Seuls les producteurs actifs sont proposés dans le formulaire de l'émission.  Un producteur désactivé reste dans les émissions qui l'ont déjà. |
 
-**Edition** charge l'équipe dans le formulaire au-dessus du tableau ;
-**Supprimer** retire l'équipe de chaque émission après confirmation.
-La colonne **Émissions** compte les émissions d'une équipe.
+**Edition** charge le producteur dans le formulaire au-dessus du
+tableau ; **Supprimer** le retire de chaque émission après
+confirmation.  La colonne **Émissions** compte les émissions d'un
+producteur.
 
 Les Program Managers et les Admins ouvrent cette page ; les Program
 Managers ne voient que cette partie.
@@ -95,7 +97,7 @@ siennes.
 
 | Champ | Signification |
 |---|---|
-| **Équipe de rédaction** | L'équipe derrière l'émission, choisie dans la liste (une par émission, §1). Son nom est transmis à cba.media comme rédaction et apparaît dans la vue Participants. |
+| **Producteur** | Qui fait l'émission - une personne ou une équipe, choisi dans la liste (un par émission, §1). Le nom est transmis à cba.media comme rédaction et apparaît dans la vue Participants. |
 | **Participants** | Combien de personnes participent habituellement à un épisode (0-999). Compte dans Statistiques → Participants. |
 | **Compte CBA** | L'utilisateur CBA sous lequel les épisodes sont archivés (§2). |
 | **Visibilité sur cba.media** | *Public* (répertorié), *Non répertorié* (accessible seulement par son adresse) ou *Privé* (visible seulement par l'utilisateur CBA). |
@@ -154,7 +156,7 @@ l'émission.
 | **Licence de l'image** / **Légende** | Licence et crédit de l'image (p. ex. le photographe), légende jusqu'à 500 caractères. |
 
 La colonne de droite montre ce que l'épisode reprend de l'émission
-(équipe de rédaction, compte CBA, podcast, licence, visibilité) ; la
+(producteur, compte CBA, podcast, licence, visibilité) ; la
 ligne du haut indique si l'épisode a été diffusé et si son
 enregistrement est dans la bibliothèque.
 
@@ -295,12 +297,11 @@ l'original.
 | **Participants** | La valeur de l'émission ; le total additionne les valeurs de toutes les émissions. |
 | **Épisodes avec valeur propre** | Épisodes dont la boîte de dialogue fixe un autre nombre. |
 | **Participations** | Les participants de chaque épisode additionnés (un épisode avec sa propre valeur compte avec celle-ci). |
-| **Équipes de rédaction** (total) | Équipes distinctes des émissions diffusées - chaque équipe une fois. |
 | **Émissions sans valeur** (total) | En orange tant qu'il y en a. |
 
 Une personne présente dans plusieurs émissions compte une fois par
-émission dans **Participants** ; le total des équipes compte chaque
-équipe une seule fois.
+émission dans **Participants**.  Les producteurs ne sont pas comptés -
+pour les statistiques compte le nombre de personnes.
 
 Les Program Managers et les Admins ouvrent cette page.
 
@@ -330,7 +331,7 @@ n'ait tourné, le champ prend le numéro.
 L'interface de téléversement de la CBA n'a pas de réglage pour cela ;
 le réglage par défaut de l'utilisateur CBA s'applique.
 
-### « J'ai choisi une équipe, mais l'émission n'apparaît pas dans la vue. »
+### « J'ai choisi un producteur, mais l'émission n'apparaît pas dans la vue. »
 
 La vue ne liste que les émissions **diffusées** dans l'année choisie.
 Une nouvelle émission apparaît dès que son premier épisode est terminé.
@@ -352,7 +353,8 @@ Archivez-le à la main depuis là.
 ### « Où sont Équipe de rédaction et Comptes CBA ? »
 
 Depuis le 2026-11-03, les deux se trouvent sur une seule page,
-**Paramètres → Archivage** : les équipes de rédaction en haut, les
+**Paramètres → Archivage** : les producteurs en haut (jusqu'au
+2026-11-04 *Équipes de rédaction*), les
 comptes CBA avec la limite d'envoi et le délai d'attente en dessous
 (Admins seulement).
 

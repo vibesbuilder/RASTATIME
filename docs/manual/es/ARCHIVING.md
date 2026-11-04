@@ -1,7 +1,7 @@
-# Archivo: equipos de redacción, episodios, archivo en línea, participantes
+# Archivo: productores, episodios, archivo en línea, participantes
 
-> **Dónde está en el manual.** Ajustes → **Archivo** (equipos de
-> redacción, cuentas de CBA); Calendario → formulario del programa,
+> **Dónde está en el manual.** Ajustes → **Archivo** (productores,
+> cuentas de CBA); Calendario → formulario del programa,
 > sección **Archivo**; Calendario → clic derecho en una emisión →
 > **Archivar en línea**; Estadísticas → **Participantes** (en la
 > interfaz en inglés: Settings → Archiving, Archiving, Archive Online,
@@ -27,28 +27,29 @@ el siguiente.
 
 | Etapa | Qué | Estado |
 |---|---|---|
-| 1 | Equipo de redacción, valores del programa, datos del episodio, participantes | desde el 2026-11-03 |
+| 1 | Productor, valores del programa, datos del episodio, participantes | desde el 2026-11-03 |
 | 2 | Archivar un episodio en línea a mano desde el calendario | desde el 2026-11-03 |
 | 3 | Archivar cada episodio automáticamente tras la grabación | desde el 2026-11-03 |
 
 ---
 
-## 1. Equipos de redacción
+## 1. Productores
 
-**Ajustes → Archivo** lista en su parte superior, **Equipos de
-redacción**, los equipos detrás de los programas.  Cada programa elige
-un equipo (§3).
+**Ajustes → Archivo** lista en su parte superior, **Productores**,
+quién hace los programas: una persona o un equipo cada uno.  Cada
+programa elige un productor (§3).  (Hasta el 2026-11-04 *Equipos de
+redacción*; cba.media los llama *redacción*.)
 
 | Campo | Significado |
 |---|---|
 | **Nombre** | Tal como debe aparecer en cba.media (como redacción) y en la estadística. |
 | **Correo electrónico (opcional)** | Para su propia referencia. |
-| **Usuario (opcional)** | Vincula el equipo con una cuenta de RASTATIME, p. ej. la de la persona responsable. Un equipo no necesita cuenta. |
-| **Activo** | Solo los equipos activos se ofrecen en el formulario del programa.  Un equipo desactivado sigue en los programas que ya lo tienen. |
+| **Usuario (opcional)** | Vincula el productor con una cuenta de RASTATIME, p. ej. la de la persona responsable. Un productor no necesita cuenta. |
+| **Activo** | Solo los productores activos se ofrecen en el formulario del programa.  Un productor desactivado sigue en los programas que ya lo tienen. |
 
-**Editar** carga el equipo en el formulario sobre la tabla; **Eliminar**
-quita el equipo de cada programa tras una confirmación.  La columna
-**Programas** cuenta los programas de un equipo.
+**Editar** carga el productor en el formulario sobre la tabla;
+**Eliminar** lo quita de cada programa tras una confirmación.  La
+columna **Programas** cuenta los programas de un productor.
 
 Los Program Managers y los Admins abren esta página; los Program
 Managers solo ven esta parte.
@@ -93,7 +94,7 @@ episodio no fije los suyos.
 
 | Campo | Significado |
 |---|---|
-| **Equipo de redacción** | El equipo detrás del programa, elegido de la lista (uno por programa, §1). Su nombre se envía a cba.media como redacción y aparece en la vista Participantes. |
+| **Productor** | Quién hace el programa: una persona o un equipo, elegido de la lista (uno por programa, §1). El nombre se envía a cba.media como redacción y aparece en la vista Participantes. |
 | **Participantes** | Cuántas personas participan normalmente en un episodio (0-999). Cuenta en Estadísticas → Participantes. |
 | **Cuenta de CBA** | El usuario de CBA con el que se archivan los episodios (§2). |
 | **Visibilidad en cba.media** | *Público* (listado), *No listado* (accesible solo por su dirección) o *Privado* (visible solo para el usuario de CBA). |
@@ -150,8 +151,8 @@ Admins, Program Managers y los presentadores del programa.
 | **Imagen del episodio** | Opcional, JPG o PNG de hasta 10 MB. Elegir un archivo lo sube enseguida; **Quitar imagen** lo borra. Sin imagen, cba.media muestra la del pódcast. |
 | **Licencia de la imagen** / **Pie de imagen** | Licencia y crédito de la imagen (p. ej. quién la fotografió), pie de hasta 500 caracteres. |
 
-La columna derecha muestra lo que el episodio toma del programa (equipo
-de redacción, cuenta de CBA, pódcast, licencia, visibilidad); la línea
+La columna derecha muestra lo que el episodio toma del programa (productor,
+cuenta de CBA, pódcast, licencia, visibilidad); la línea
 superior indica si el episodio ya se emitió y si su grabación está en
 la biblioteca.
 
@@ -286,11 +287,11 @@ valor en `0` si sus personas ya cuentan en el original.
 | **Participantes** | El valor del programa; el total suma los valores de todos los programas. |
 | **Episodios con valor propio** | Episodios cuyo diálogo fija otro número. |
 | **Participaciones** | Los participantes de cada episodio sumados (un episodio con valor propio cuenta con ese valor). |
-| **Equipos de redacción** (total) | Equipos distintos de los programas emitidos: cada equipo una vez. |
 | **Programas sin valor** (total) | En naranja mientras haya alguno. |
 
 Una persona en varios programas cuenta una vez por programa en
-**Participantes**; el total de equipos cuenta cada equipo una sola vez.
+**Participantes**.  Los productores no se cuentan: para la estadística
+cuenta el número de personas.
 
 Los Program Managers y los Admins abren esta página.
 
@@ -320,7 +321,7 @@ ejecutado, el campo admite el número.
 La interfaz de subida de la CBA no tiene ajuste para ello; se aplica el
 valor predeterminado del usuario de CBA.
 
-### «Elegí un equipo, pero el programa no aparece en la vista.»
+### «Elegí un productor, pero el programa no aparece en la vista.»
 
 La vista solo lista los programas **emitidos** en el año elegido.  Un
 programa nuevo aparece en cuanto termina su primer episodio.
@@ -341,7 +342,8 @@ proceso se dio por vencido y por qué.  Archívelo a mano desde allí.
 ### «¿Dónde están Equipo de redacción y Cuentas de CBA?»
 
 Desde el 2026-11-03 ambos están en una sola página, **Ajustes →
-Archivo**: los equipos de redacción arriba, las cuentas de CBA con el
+Archivo**: los productores arriba (hasta el 2026-11-04 *Equipos de
+redacción*), las cuentas de CBA con el
 límite de subida y el tiempo de espera debajo (solo Admins).
 
 ---

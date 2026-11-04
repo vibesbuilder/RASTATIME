@@ -22,7 +22,7 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
 
         // one team per show (operator 2026-11-03); the table still allows several
         $profiles = new Zend_Form_Element_Select('add_show_editor_profiles');
-        $profiles->setLabel(_('Editorial team'))
+        $profiles->setLabel(_('Producer'))
             ->setMultiOptions([0 => _('- none -')] + Application_Service_ArchivingService::profileOptions())
             ->setRegisterInArrayValidator(false)
             ->setDecorators(['ViewHelper']);

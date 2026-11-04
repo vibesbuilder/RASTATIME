@@ -166,7 +166,7 @@ see what is left out.  A table per month and **Download CSV (minutes)**
 
 **Participants.**  The same figures as [Archiving](./ARCHIVING.md) § 6
 (People involved per show, episodes with their own value,
-participations, editorial teams), with links to the "shows without a
+participations), with links to the "shows without a
 value" filter and the participants CSV.
 
 Program Managers and Admins open this page.

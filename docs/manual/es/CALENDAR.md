@@ -106,7 +106,7 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Own production** (producción propia) | Marcar en las producciones propias de la emisora: los minutos emitidos del programa cuentan en Analytics → [Informe anual](./ANALYTICS.md) (desde 2026-11-03). |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |
 | **Quién** | Presentadores adicionales. |
-| **Archivo** | Equipo de redacción, participantes, cuenta de CBA, valores de cba.media y archivo automático del programa (no en Editar emisión). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
+| **Archivo** | Productor, participantes, cuenta de CBA, valores de cba.media y archivo automático del programa (no en Editar emisión). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
 | **Estilo** | Color de fondo, color de texto, imagen de programa. |
 
 ### Por qué el formulario rechaza su guardado

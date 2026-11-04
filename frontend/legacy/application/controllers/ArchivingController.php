@@ -32,9 +32,9 @@ class ArchivingController extends Zend_Controller_Action
     private function doneMessage(): ?string
     {
         $messages = [
-            'team-added' => _('Team added.'),
-            'team-saved' => _('Team saved.'),
-            'team-deleted' => _('Team deleted.'),
+            'team-added' => _('Producer added.'),
+            'team-saved' => _('Producer saved.'),
+            'team-deleted' => _('Producer deleted.'),
             'account-added' => _('Account added.'),
             'account-saved' => _('Account saved.'),
             'account-deleted' => _('Account deleted.'),
@@ -220,7 +220,7 @@ class ArchivingController extends Zend_Controller_Action
         $out = fopen('php://temp', 'w+');
         fwrite($out, "\xEF\xBB\xBF");
         fputcsv($out, [_('Show name'), _('Episodes aired'), _('People involved'), _('Episodes with own value'),
-            _('Participations'), _('Repeat'), _('Editorial team')], ',', '"', '');
+            _('Participations'), _('Repeat'), _('Producer')], ',', '"', '');
         foreach ($report['rows'] as $r) {
             fputcsv($out, [$r['name'], $r['episodes'], $r['participants'] ?? '', $r['overrides'],
                 $r['person_episodes'] ?? '', $r['is_repeat'] ? _('yes') : '', $r['team']], ',', '"', '');

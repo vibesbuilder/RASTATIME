@@ -189,7 +189,7 @@ section.
 
 **Participants.**  Les mêmes chiffres que [Archivage](./ARCHIVING.md)
 § 6 (personnes impliquées par émission, épisodes avec valeur propre,
-participations, équipes éditoriales), avec des liens vers le filtre
+participations), avec des liens vers le filtre
 « émissions sans valeur » et le CSV des participants.
 
 Les Program Managers et les Admins ouvrent cette page.

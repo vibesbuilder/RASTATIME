@@ -6875,6 +6875,13 @@ unter dem Schalter gebaut - das Formular prueft die Beschreibung nicht (sie
 kann je Episode kommen), bei der Abnahme wartete die erste Episode genau
 darauf.  Nur Hinweis, keine Sperre; neue Texte nach Apache-Neustart.
 
+Nachtrag 2026-11-04 (Operator): "Editorial Teams" heissen in RASTATIME
+**Producers** (DE Produzenten) - meist eine Person, manchmal ein Team; an
+cba.media weiter als *editor*.  Keine Team-Zahl mehr in Participants, CSV
+und Jahresbericht, nur "People involved".  "Link existing post" bleibt wie
+es ist.  Naechster Schritt: Archiv-Status-Seite (Operator-Go 2026-11-04,
+Analytics, Abbrechen nur fuer wartende Auftraege).
+
 ### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
 
 Die Automatik archiviert die Aufzeichnung auch dann, wenn statt einer
