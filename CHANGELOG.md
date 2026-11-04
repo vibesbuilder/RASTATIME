@@ -141,7 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die Leiste auf 16 px gedrückt).  Commit `fdde190b`.  Apache, PLAYOUT und API neu
   gestartet, Sichtprobe bestanden (Operator 2026-11-04).  Settings → **Alerts** steht
   seither unter **Local Machine** (vorher unter Archiving); Menütabelle in SETTINGS §1
-  ×4 ergänzt.  Commit `PENDING`.
+  ×4 ergänzt.  Commit `281d0498`.
 - **Archivierung: „Producers“ statt „Editorial Teams“, keine Team-Zahl mehr (2026-11-04,
   Operator)** — Die meisten Sendungen macht eine einzelne Person, nur manche ein Team.
   Oberfläche und Handbuch heißen jetzt **Producer / Producers** (DE Produzent /
