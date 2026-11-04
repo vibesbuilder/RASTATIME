@@ -6927,7 +6927,7 @@ Dauer der gesendeten Instanzen), Erstausstrahlungen und Wiederholungen
 getrennt, Monatstabelle, CSV; Teilnehmenden-Übersicht darunter.  Antwort auf
 die Participants-Frage: der Sendungswert gilt je Episode, ein Episodenwert
 ersetzt ihn nur für diese Episode in „Participations“; „People involved“
-bleibt der Sendungswert.  Migration 0077 offen (Backup + Go).
+bleibt der Sendungswert.  Migration 0077 live 2026-11-04 08:36; Abnahme durch den Operator offen.
 
 ### ✅ Alarme per SMTP-Mail und Telegram bei Dead Air und Ausfällen - gebaut 2026-11-03 (Go 2026-11-03, nur Stufe 1, Architektur §23.84)
 
@@ -6951,7 +6951,7 @@ je Nachricht).  Push-Apps (ntfy, Pushover) als billiger Zusatzkanal möglich.
 
 Instanzspalten (Migration 0078, leer = Vorgabe der Sendung), Häkchen im
 Instanz-Formular, Befüllung löst Instanz → Sendung auf; nach der Befüllung
-nur Hinweis.  OFFEN: Migration 0078 (Backup + Go) und Abnahme an einer
+nur Hinweis.  Migration 0078 live 2026-11-04 08:36; OFFEN: Abnahme an einer
 Testepisode.
 
 ### 🟡 Archiv-Status-Seite (laufende Uploads, Historie, CSV) - in der Archivierungs-Sitzung bauen (Operator 2026-11-03)

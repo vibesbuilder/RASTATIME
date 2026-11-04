@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `autoplaylist_id`, `autoplaylist_repeat`, `intro_playlist_id`,
   `outro_playlist_id`), Leser tolerant über `to_jsonb`, die
   Befüllungs-Abfrage löst Instanz → Sendung auf. Manual CALENDAR §3 +
-  AUTOLOADING_PLAYLISTS ×4, ARCHITECTURE §23.85. Migration offen
-  (Operator-Backup + Go). Commit `c6a40677`.
+  AUTOLOADING_PLAYLISTS ×4, ARCHITECTURE §23.85. Migration 0078 live
+  2026-11-04 08:36 (Operator-Backup). Commit `c6a40677`.
 
 - **Alarme per E-Mail (SMTP) und Telegram, Stufe 1 (2026-11-03, Go 2026-11-03)** —
   Settings → Alerts (Admins): Hauptschalter, Dead-Air-Schwelle, Erinnerung,
@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Archivierung mit Links. Geplante Dauer der gesendeten Instanzen
   (Senderzeit, beendet, nicht gelöscht, keine alte Rebroadcast-Instanz).
   Manual ANALYTICS / CALENDAR / IMPORT_EXPORT ×4, ARCHITECTURE §23.83.
-  Migration offen (Operator-Backup + Go). Commit `05f74cc3`.
+  Migration 0077 live 2026-11-04 08:36 (Operator-Backup). Commit `05f74cc3`.
 
 - **Archivierung: Hinweis „Sendung ohne Beschreibung“ (2026-11-03, Operator-Wunsch nach der
   Abnahme)** — Ist im Abschnitt **Archiving** der Sendung **Archive automatically** angehakt
