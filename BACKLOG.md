@@ -7008,8 +7008,8 @@ und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 
 Befund: der BBC-Slot startet den frischen input.http 10 s vor der Zeile
 (WEBSTREAM_PREPARE_LEAD_SECONDS), Tor öffnet zur Zeile.  Unsere eigene
-Verzögerung ist input.http max_buffer 10 s (hält den Burst des Servers,
-bis zur Kappe) + Clock-Brücke 5 s; dazu die Latenz der BBC selbst.  Ein
+Verzögerung ist der Burst des BBC-Servers (3,6 s, sitzt im Generator
+von input.http) + Clock-Brücke 5 s; dazu die Latenz der BBC selbst.  Ein
 GRÖSSERER Puffer verschiebt den gehörten Inhalt weiter in die
 Vergangenheit, also noch mehr Vorlauf vor der Moderation; nur ein
 KLEINERER Puffer lässt die Moderation früher erscheinen.  Der präzise
@@ -7027,3 +7027,47 @@ Vorbedingungen: (1) Messung unserer tatsächlichen Zusatzlatenz (Probe:
 BBC direkt + eigener Stream gleichzeitig mitschneiden, Kreuzkorrelation,
 ~1 h); (2) Planungs-Lösung reicht nicht oder Operator will generell
 weniger Latenz auf Webstreams.
+
+Operator 2026-11-04 abends: Planungs-Lösung scheidet aus - vor und nach
+dem BBC-Webstream läuft je ein 50-s-Dayteaser, ein späterer Einstieg
+ließe nach dem Webstream weniger als 50 s übrig.  Tendenz Go, gewünschte
+Werte Brücke 3 s (statt 5), Eingangspuffer 5 s (statt 10).  Noch kein Go.
+
+Messung 2026-11-04 22:05-22:16 (Testprozess liquidsoap.exe mit
+input.http -> buffer -> output.file, parallel Direktaufnahme der BBC
+per urllib; Kreuzkorrelation auf gemeinsamer Wanduhr-Achse;
+Werkzeuge C:/Temp/optd/wslat/{rec_stream,xcorr,run_probe}.py,
+test_bbc.liq.tmpl, venv C:/Temp/optd/venv-probe mit numpy):
+- BBC-Server (openresty, AAC 128 kbit/s, ICY): Burst beim Verbinden
+  57.536 B = 3,60 s, stabil über vier Verbindungen.
+- Verzug Liquidsoap-Ausgang gegenüber Server-Ausgabe der BBC:
+  | Variante | self_sync | max_buffer | Brücke/max | Verzug |
+  | A heute  | false     | 10         | 5/10       | 8,81 s |
+  | B        | false     | 1          | 5/10       | 9,01 s |
+  | D        | false     | 10         | 1/2        | 4,87 s |
+  | E Wunsch | false     | 10         | 3/5        | 6,93 s |
+  | C        | true      | 10         | 1/2        | 1,64 s |
+- max_buffer ist KEIN Hebel: der Generator wirft bei voller Kappe nichts
+  weg, er bremst nur das Lesen (A = B).  Verzug = Burst 3,6 s + Brücke
+  + ~0,2 s.  Die Brücke ist der einzige Hebel bei self_sync=false.
+- self_sync=true (im Bridge-Takt verbraucht der Eingang den Burst so
+  schnell wie er ankommt, die Brücke wirft den Überlauf über `max`
+  weg) liefert Live-Kante: Verzug ~= Brückenstand.  Neuer Pfad auf dem
+  Windows-Build, nur 28 s geprobt; Crossfade-Verträglichkeit bleibt,
+  weil buffer() die konsumierbare Quelle ist.
+- Grundsatz: Verzug = gepufferter Ton = Reserve bei Aussetzern.  Jede
+  Sekunde weniger Verzug ist eine Sekunde weniger Reserve.  Heute 8,6 s
+  Reserve (Burst + Brücke); Wächter-Ereignisse (webstream_watchdog) in
+  den Liquidsoap-Logs seit 2026-10-30: keine.
+- Folgerung für den Slot: Einstieg heute hört 8,8 s alten Inhalt,
+  Moderation ~5 s nach Einstieg, Ausstieg nach 304 s passt.  Wird der
+  Verzug um D verkürzt, rückt die Moderation um D an den Einstieg und
+  die Zeile darf um D kürzer werden (Ausstieg bleibt inhaltlich gleich):
+  Brücke 3/5 -> D ~= 1,9 s -> Zeile 5:02, Moderation ~3 s nach Einstieg;
+  Brücke 1/2 -> D ~= 3,9 s -> Zeile 5:00, Moderation ~1 s nach Einstieg;
+  self_sync=true + Brücke 3/4 -> D ~= 5,4 s -> Zeile 4:59, Moderation
+  am Einstieg, Reserve 3 s.
+- Produktionsmessung des 07:00-Slots am 2026-11-05 vorbereitet
+  (run_probe.py, Start 06:59:35, 450 s, BBC direkt + 127.0.0.1:8000/
+  rastatime, Fenster 07:01:30 und 07:04:00, Ausschnitte 07:00:50-07:01:30
+  als WAV zum Anhören; Bericht C:/Temp/optd/wslat/report-*.txt).
