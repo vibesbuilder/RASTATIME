@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (läuft er schon, bleibt er unberührt), **Archive again** (nach „unklar“ mit
   Rückfrage), **Link post…**.  Der Warnhinweis verlinkt auf die Seite.  Keine
   Migration, kein Neustart.  Manual ARCHIVING §7 + ANALYTICS ×4, ARCHITECTURE §23.86.
-  Wirksam: Legacy sofort, Texte DE/FR/ES nach Apache-Neustart.
+  Wirksam: Legacy sofort, Texte DE/FR/ES nach Apache-Neustart.  Commit `399360e8`.
 
 - **Edit Instance: Autoloading je Episode (2026-11-03, Go 2026-11-03, Regel „nur vor der Befüllung“)** —
   Der Abschnitt Autoloading Playlist ist im Instanz-Formular bearbeitbar:
