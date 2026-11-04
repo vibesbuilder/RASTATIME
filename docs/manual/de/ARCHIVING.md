@@ -4,8 +4,9 @@
 > **Archivierung** (Produzenten, CBA-Konten); Kalender →
 > Sendungsformular, Abschnitt **Archivierung**; Kalender → Rechtsklick
 > auf eine Instanz → **Online archivieren**; Statistiken →
-> **Teilnehmende** (in der englischen Oberfläche Settings → Archiving,
-> Archiving, Archive Online, Analytics → Participants).  Lesen Sie zuerst
+> **Teilnehmende** und **Archiv-Status** (in der englischen Oberfläche
+> Settings → Archiving, Archiving, Archive Online, Analytics →
+> Participants und Archive Status).  Lesen Sie zuerst
 > [Kalender](./CALENDAR.md) und [Aufnahme pro Sendung](./RECORD_PER_SHOW.md)
 > - der Ton einer archivierten Episode ist die Aufzeichnung der Sendung.
 >
@@ -255,7 +256,9 @@ automatische Lauf mit der Episode vorhat, z. B. *Wird ab 2026-11-10
 
 Scheitert ein automatischer Upload, bleibt er unklar oder wird
 aufgegeben, nennt der Warnhinweis oben auf der Seite die Episode sieben
-Tage lang, bis sie von Hand archiviert oder ihr Beitrag verknüpft ist.
+Tage lang, bis sie von Hand archiviert oder ihr Beitrag verknüpft ist;
+Programm-Manager und Admins finden dort einen Link zu **Statistiken →
+Archiv-Status** (§7).
 
 > **Nicht erkannt:** Ein Ersatzprogramm, das statt einer Live-Sendung
 > lief (die Moderation kam nicht), wird wie die Sendung archiviert.
@@ -298,7 +301,53 @@ Programm-Manager und Admins öffnen diese Seite.
 
 ---
 
-## 7. Häufige Fragen
+## 7. Archiv-Status
+
+**Statistiken → Archiv-Status** (seit 2026-11-04, englisch Analytics →
+Archive Status) zeigt auf einer Seite, ob die Episoden auf cba.media
+ankommen.  Programm-Manager und Admins öffnen sie; der Warnhinweis
+verlinkt dorthin.
+
+* **Läuft und wartet** - der laufende Upload (der gesendete Anteil, alle
+  paar Sekunden aktualisiert) und die wartenden: auf den
+  Hintergrunddienst oder nach einem Verbindungsproblem auf den nächsten
+  Versuch (Zeit und Grund).  **Abbrechen** stoppt einen wartenden
+  Upload.  Ein laufender Upload lässt sich nicht abbrechen - er gehört
+  bis zu seinem Ende dem Hintergrunddienst.
+* **Steht an (automatisches Archivieren)** - die Episoden der Sendungen
+  mit *Automatisch archivieren* aus den nächsten 7 Tagen und die
+  gesendeten, die noch nicht eingereiht sind, mit ihrer Fälligkeit:
+
+  | Status | Bedeutung |
+  |---|---|
+  | *Noch nicht gesendet - fällig ...* | Die Episode kommt erst. |
+  | *Gesendet - fällig ...* | Die Wartezeit (Einstellungen → Archivierung) läuft. |
+  | *Fällig - wird bei der nächsten Prüfung eingereiht* | Es fehlt nichts; der Hintergrunddienst reiht sie innerhalb von fünf Minuten ein. |
+  | *Wartet, längstens bis ...* | Etwas fehlt (Spalte **Fehlt**); danach gibt der automatische Lauf auf. |
+  | *Nicht automatisch archiviert: ...* | *Diese Episode nicht automatisch archivieren* ist angehakt. |
+
+  Schon vor der Sendung nennt **Fehlt**, was der Sendung fehlt
+  (CBA-Konto, Thema, Sprache, Lizenz) - Zeit, die Sendung zu ergänzen.
+* **Probleme (letzte 30 Tage)** - Uploads von Hand oder automatisch, die
+  gescheitert, unklar geblieben oder aufgegeben sind, solange die
+  Episode keinen Beitrag hat.  **Erneut archivieren** reiht dasselbe
+  Audio noch einmal ein (die Aufzeichnung, falls die Datei weg ist).
+  Nach einem *unklaren* Upload fragt die Seite zuerst nach, denn der
+  Beitrag existiert vielleicht: Sehen Sie auf cba.media nach und nehmen
+  Sie **Beitrag verknüpfen…** (Nummer oder Adresse), falls er dort ist.
+  Die Zeile verschwindet, sobald die Episode archiviert oder verknüpft
+  ist.
+* **Verlauf** - jeder Upload mit Zeit, Sendung, Episode, wer ihn
+  gestartet hat (*Automatisch* oder das Login), Status, Link zum
+  Beitrag, Audio, Größe, Dauer und Hinweis.  Filter nach Jahr, Monat,
+  Status, Gestartet von und Sendungsname; **CSV herunterladen** nimmt die
+  ganze gefilterte Liste (die Seite zeigt die neuesten 500).
+
+Die Seite lädt sich selbst neu, wenn ein Upload beginnt oder endet.
+
+---
+
+## 8. Häufige Fragen
 
 ### „Jetzt online archivieren fehlt."
 
@@ -340,7 +389,8 @@ er, wenn Sie nicht Programm-Manager oder Admin sind.
 Grund - der Schalter ist aus, *Nicht automatisch archivieren* ist
 angehakt, die Episode endete vor dem Einschalten, sie wartet noch auf
 etwas, oder der Lauf hat aufgegeben und warum.  Archivieren Sie sie dort
-von Hand.
+von Hand.  **Statistiken → Archiv-Status** (§7) zeigt alle solchen
+Episoden auf einmal.
 
 ### „Wo sind Redaktionsteam und CBA-Konten?"
 

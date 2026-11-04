@@ -7,7 +7,7 @@
 > **rear-view mirror** — what actually went on air, and how many
 > people were listening while it did.
 
-The **Analytics** menu in the top navigation bundles five pages:
+The **Analytics** menu in the top navigation bundles six pages:
 
 | Page | Question it answers |
 |---|---|
@@ -17,6 +17,7 @@ The **Analytics** menu in the top navigation bundles five pages:
 | **Show Listener Stats** | How did each *show* perform in listener numbers? |
 | **Participants** | How many people made the shows of a year? See [Archiving](./ARCHIVING.md) § 6 (since 2026-11-03). |
 | **Yearly Report** | Programme minutes of the station's own productions and the participants overview, one year at a time, CSV. See § 5 (since 2026-11-03). |
+| **Archive Status** | Did every episode reach cba.media? Uploads running and waiting, what the automatic archiving has ahead, problems, history, CSV. See [Archiving](./ARCHIVING.md) § 7 (since 2026-11-04). |
 
 The first two exist for **accountability** — royalty reporting,
 regulator log sheets, "what was that track at 14:32?" phone calls.

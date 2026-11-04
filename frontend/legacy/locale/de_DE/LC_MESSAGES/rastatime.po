@@ -7810,3 +7810,159 @@ msgstr "Diese Episode ist bereits befüllt; ihre Autoloading-Einstellungen lasse
 
 msgid "Ticked: this episode follows the show. Unticked: the fields below apply to this episode only, as long as it has not been filled yet (about an hour before it starts)."
 msgstr "Angekreuzt: diese Episode folgt der Sendung. Abgewählt: die Felder darunter gelten nur für diese Episode, solange sie noch nicht befüllt ist (etwa eine Stunde vor dem Start)."
+
+msgid "Archive Status"
+msgstr "Archiv-Status"
+
+msgid "Open Archive Status"
+msgstr "Archiv-Status öffnen"
+
+msgid "Uploads to cba.media: what runs and waits now, what the automatic archiving has ahead, open problems and every upload so far. The automatic archiving starts %d minutes after the end of an episode (Settings → Archiving); the background service checks every 5 minutes."
+msgstr "Uploads zu cba.media: was gerade läuft und wartet, was das automatische Archivieren vor sich hat, offene Probleme und alle bisherigen Uploads. Das automatische Archivieren beginnt %d Minuten nach dem Ende einer Episode (Einstellungen → Archivierung); der Hintergrunddienst prüft alle 5 Minuten."
+
+msgid "Running and waiting"
+msgstr "Läuft und wartet"
+
+msgid "No upload is running or waiting."
+msgstr "Kein Upload läuft oder wartet."
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "Started by"
+msgstr "Gestartet von"
+
+msgid "Queued"
+msgstr "Eingereiht"
+
+msgid "Next attempt at %s (attempt %d)"
+msgstr "Nächster Versuch um %s (Versuch %d)"
+
+msgid "Waiting for the background service"
+msgstr "Wartet auf den Hintergrunddienst"
+
+msgid "Ahead (automatic archiving)"
+msgstr "Steht an (automatisches Archivieren)"
+
+msgid "Episodes of shows with \"Archive automatically\" from the next 7 days, and those that aired but are not queued yet."
+msgstr "Episoden der Sendungen mit „Automatisch archivieren“ aus den nächsten 7 Tagen und solche, die gesendet, aber noch nicht eingereiht sind."
+
+msgid "No episode of a show with \"Archive automatically\" in the next 7 days."
+msgstr "Keine Episode einer Sendung mit „Automatisch archivieren“ in den nächsten 7 Tagen."
+
+msgid "Missing"
+msgstr "Fehlt"
+
+msgid "Not aired yet - due %s"
+msgstr "Noch nicht gesendet - fällig %s"
+
+msgid "Aired - due %s"
+msgstr "Gesendet - fällig %s"
+
+msgid "Due - queued at the next check"
+msgstr "Fällig - wird bei der nächsten Prüfung eingereiht"
+
+msgid "Waiting, at the latest until %s"
+msgstr "Wartet, längstens bis %s"
+
+msgid "Problems (last 30 days)"
+msgstr "Probleme (letzte 30 Tage)"
+
+msgid "Uploads that failed, stayed unclear or were given up, as long as the episode has no post. Archive again - after an unclear upload look on cba.media first and link the post if it is there."
+msgstr "Uploads, die gescheitert, unklar geblieben oder aufgegeben sind, solange die Episode keinen Beitrag hat. Erneut archivieren - nach einem unklaren Upload zuerst auf cba.media nachsehen und den Beitrag verknüpfen, falls er dort ist."
+
+msgid "No open problems."
+msgstr "Keine offenen Probleme."
+
+msgid "Reason"
+msgstr "Grund"
+
+msgid "Ended"
+msgstr "Beendet"
+
+msgid "Archive again"
+msgstr "Erneut archivieren"
+
+msgid "Link post…"
+msgstr "Beitrag verknüpfen…"
+
+msgid "History"
+msgstr "Verlauf"
+
+msgid "Running or waiting"
+msgstr "Läuft oder wartet"
+
+msgid "Automatic"
+msgstr "Automatisch"
+
+msgid "By hand"
+msgstr "Von Hand"
+
+msgid "Filter"
+msgstr "Filtern"
+
+msgid "No upload in this period."
+msgstr "Kein Upload in diesem Zeitraum."
+
+msgid "The newest %d uploads - narrow the filter or download the CSV for all."
+msgstr "Die neuesten %d Uploads - Filter eingrenzen oder für alle die CSV laden."
+
+msgid "Post"
+msgstr "Beitrag"
+
+msgid "Note"
+msgstr "Hinweis"
+
+msgid "Size (MB)"
+msgstr "Größe (MB)"
+
+msgid "Duration (s)"
+msgstr "Dauer (s)"
+
+msgid "Attempts"
+msgstr "Versuche"
+
+msgid "Waiting"
+msgstr "Wartet"
+
+msgid "Uploading"
+msgstr "Lädt hoch"
+
+msgid "Archived"
+msgstr "Archiviert"
+
+msgid "Failed"
+msgstr "Gescheitert"
+
+msgid "Unclear"
+msgstr "Unklar"
+
+msgid "Given up"
+msgstr "Aufgegeben"
+
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
+msgid "The upload had started already and was not cancelled."
+msgstr "Der Upload lief bereits und wurde nicht abgebrochen."
+
+msgid "The upload is queued again."
+msgstr "Der Upload ist erneut eingereiht."
+
+msgid "The episode is linked to the post."
+msgstr "Die Episode ist mit dem Beitrag verknüpft."
+
+msgid "The upload does not exist any more."
+msgstr "Den Upload gibt es nicht mehr."
+
+msgid "Only a failed, unclear, given up or cancelled upload can be started again."
+msgstr "Nur ein gescheiterter, unklarer, aufgegebener oder abgebrochener Upload kann erneut gestartet werden."
+
+msgid "Cancel this upload? The episode is not archived then; you can start it again later."
+msgstr "Diesen Upload abbrechen? Die Episode wird dann nicht archiviert; Sie können ihn später erneut starten."
+
+msgid "The post may exist on cba.media already. Look there first and link it if it is there - archive again anyway?"
+msgstr "Der Beitrag existiert vielleicht schon auf cba.media. Sehen Sie dort zuerst nach und verknüpfen Sie ihn, falls er da ist - trotzdem erneut archivieren?"
+
+msgid "Number of the post on cba.media (or its address with ?p=<number>):"
+msgstr "Nummer des Beitrags auf cba.media (oder seine Adresse mit ?p=<Nummer>):"

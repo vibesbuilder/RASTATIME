@@ -1,0 +1,288 @@
+<?php
+// RASTATIME 2026-11-04 - Analytics → Archive Status (operator go 2026-11-04):
+// the uploads to cba.media running and waiting (polled, progress in place,
+// reload when they change), what the automatic archiving has ahead, open
+// problems of the last 30 days and the history with filter and CSV.
+// Cancel only for waiting uploads (a running one belongs to the worker);
+// "Archive again" asks first after an unclear upload - the post may exist.
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$base = Config::getBasePath();
+$f = $this->filter;
+$back = http_build_query($f);
+$labels = ArchivingController::jobStatusLabels();
+$startedBy = fn ($j) => $j['trigger'] === 'auto' ? _('Automatic') : ($j['login'] !== '' ? $j['login'] : _('By hand'));
+$post = fn ($id) => '<a href="' . $h('https://cba.media/?p=' . (int) $id) . '" target="_blank" rel="noopener">' . (int) $id . '</a>';
+// one hidden form per action; the links below submit it (confirm / prompt in the script)
+$action = function ($op, $job, $label, $extra = '') use ($h, $base, $back) {
+    return '<form method="post" action="' . $h($base . 'archiving/status-op') . '" class="rt-status-form" data-op="' . $op . '"' . $extra . '>'
+        . '<input type="hidden" name="csrf" value="' . $h($this->csrf) . '" />'
+        . '<input type="hidden" name="op" value="' . $op . '" />'
+        . '<input type="hidden" name="id" value="' . (int) $job['id'] . '" />'
+        . '<input type="hidden" name="back" value="' . $h($back) . '" />'
+        . ($op === 'link' ? '<input type="hidden" name="post" value="" />' : '')
+        . '<a href="#">' . $h($label) . '</a></form>';
+};
+$reasons = function (array $list) use ($h) {
+    return $list ? '<ul class="rt-status-reasons"><li>' . implode('</li><li>', array_map($h, $list)) . '</li></ul>' : '';
+};
+?>
+<div class="ui-widget prefpanel clearfix padded-strong rt-participants rt-archive-status">
+    <h2><?php echo _("Archive Status"); ?></h2>
+    <p class="rt-participants-note">
+        <?php echo sprintf(_("Uploads to cba.media: what runs and waits now, what the automatic archiving has ahead, open problems and every upload so far. The automatic archiving starts %d minutes after the end of an episode (Settings → Archiving); the background service checks every 5 minutes."), (int) $this->autoDelay); ?>
+    </p>
+    <?php if (!$this->ready): ?>
+        <p class="rt-participants-warn"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
+    <?php endif; ?>
+    <?php if ($this->message): ?>
+        <p class="<?php echo $this->messageOk ? 'rt-editors-ok' : 'rt-editors-error'; ?>"><?php echo $h($this->message); ?></p>
+    <?php endif; ?>
+
+    <h3><?php echo _("Running and waiting"); ?></h3>
+    <?php if (!$this->open): ?>
+        <p class="rt-participants-empty"><?php echo _("No upload is running or waiting."); ?></p>
+    <?php else: ?>
+        <table class="datatable rt-participants-table rt-status-table">
+            <thead>
+                <tr>
+                    <th><?php echo _("Episode"); ?></th>
+                    <th><?php echo _("Show name"); ?></th>
+                    <th><?php echo _("Status"); ?></th>
+                    <th><?php echo _("Audio"); ?></th>
+                    <th><?php echo _("Started by"); ?></th>
+                    <th><?php echo _("Queued"); ?></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i = 0; foreach ($this->open as $j): ?>
+                    <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
+                        <td><?php echo $h($j['episode_local']); ?></td>
+                        <td><?php echo $h($j['show_name']); ?></td>
+                        <td>
+                            <?php if ($j['status'] === 'running'): ?>
+                                <?php echo $h($labels['running']); ?>:
+                                <span class="rt-status-pct" data-job="<?php echo (int) $j['id']; ?>"><?php echo $j['percent'] === null ? '&hellip;' : (int) $j['percent'] . ' %'; ?></span>
+                            <?php elseif ($j['attempts'] > 0): ?>
+                                <?php echo $h(sprintf(_("Next attempt at %s (attempt %d)"), $j['next_local'], $j['attempts'] + 1)); ?>
+                                <?php if ($j['error'] !== ''): ?><br /><span class="rt-status-detail"><?php echo $h($j['error']); ?></span><?php endif; ?>
+                            <?php else: ?>
+                                <?php echo _("Waiting for the background service"); ?>
+                            <?php endif; ?>
+                        </td>
+                        <td><?php echo $h($j['file']); ?></td>
+                        <td><?php echo $h($startedBy($j)); ?></td>
+                        <td><?php echo $h($j['created_local']); ?></td>
+                        <td class="rt-status-actions">
+                            <?php if ($j['status'] === 'queued'): ?>
+                                <?php echo $action('cancel', $j, _('Cancel')); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+
+    <h3><?php echo _("Ahead (automatic archiving)"); ?></h3>
+    <p class="rt-participants-note"><?php echo _("Episodes of shows with \"Archive automatically\" from the next 7 days, and those that aired but are not queued yet."); ?></p>
+    <?php if (!$this->planned): ?>
+        <p class="rt-participants-empty"><?php echo _("No episode of a show with \"Archive automatically\" in the next 7 days."); ?></p>
+    <?php else: ?>
+        <table class="datatable rt-participants-table rt-status-table">
+            <thead>
+                <tr>
+                    <th><?php echo _("Episode"); ?></th>
+                    <th><?php echo _("Show name"); ?></th>
+                    <th><?php echo _("Status"); ?></th>
+                    <th><?php echo _("Missing"); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i = 0; foreach ($this->planned as $p): ?>
+                    <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?><?php echo $p['state'] === 'excluded' ? ' rt-status-off' : ''; ?>">
+                        <td><?php echo $h($p['episode_local']); ?></td>
+                        <td><?php echo $h($p['show_name']); ?></td>
+                        <td>
+                            <?php
+                            switch ($p['state']) {
+                                case 'upcoming':
+                                    echo $h(sprintf(_("Not aired yet - due %s"), $p['due_local']));
+                                    break;
+                                case 'scheduled':
+                                    echo $h(sprintf(_("Aired - due %s"), $p['due_local']));
+                                    break;
+                                case 'due':
+                                    echo _("Due - queued at the next check");
+                                    break;
+                                case 'waiting':
+                                    echo '<span class="rt-participants-missing">' . $h(sprintf(_("Waiting, at the latest until %s"), $p['until_local'])) . '</span>';
+                                    break;
+                                default:
+                                    echo _("Not archived automatically: \"Do not archive this episode automatically\" is ticked.");
+                            }
+                            ?>
+                        </td>
+                        <td class="rt-participants-missing"><?php echo $reasons($p['reasons']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+
+    <h3><?php echo _("Problems (last 30 days)"); ?></h3>
+    <p class="rt-participants-note"><?php echo _("Uploads that failed, stayed unclear or were given up, as long as the episode has no post. Archive again - after an unclear upload look on cba.media first and link the post if it is there."); ?></p>
+    <?php if (!$this->problems): ?>
+        <p class="rt-participants-empty"><?php echo _("No open problems."); ?></p>
+    <?php else: ?>
+        <table class="datatable rt-participants-table rt-status-table">
+            <thead>
+                <tr>
+                    <th><?php echo _("Episode"); ?></th>
+                    <th><?php echo _("Show name"); ?></th>
+                    <th><?php echo _("Status"); ?></th>
+                    <th><?php echo _("Reason"); ?></th>
+                    <th><?php echo _("Started by"); ?></th>
+                    <th><?php echo _("Ended"); ?></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i = 0; foreach ($this->problems as $j): ?>
+                    <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
+                        <td><?php echo $h($j['episode_local']); ?></td>
+                        <td><?php echo $h($j['show_name']); ?></td>
+                        <td class="rt-participants-missing"><?php echo $h($labels[$j['status']] ?? $j['status']); ?></td>
+                        <td><?php echo $h($j['error']); ?></td>
+                        <td><?php echo $h($startedBy($j)); ?></td>
+                        <td><?php echo $h($j['finished_local']); ?></td>
+                        <td class="rt-status-actions">
+                            <?php echo $action('again', $j, _('Archive again'), $j['status'] === 'unclear' ? ' data-unclear="1"' : ''); ?>
+                            <?php echo $action('link', $j, _('Link post…')); ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+
+    <h3><?php echo _("History"); ?></h3>
+    <form method="get" action="<?php echo $h($base . 'archiving/status'); ?>" class="rt-participants-filter">
+        <label for="rt_status_year"><?php echo _("Year"); ?></label>
+        <select name="year" id="rt_status_year" class="input_select">
+            <?php foreach ($this->years as $y): ?>
+                <option value="<?php echo (int) $y; ?>"<?php echo $y === $f['year'] ? ' selected' : ''; ?>><?php echo (int) $y; ?></option>
+            <?php endforeach; ?>
+        </select>
+        <label for="rt_status_month"><?php echo _("Month"); ?></label>
+        <select name="month" id="rt_status_month" class="input_select">
+            <option value="0"><?php echo _("All"); ?></option>
+            <?php for ($m = 1; $m <= 12; ++$m): ?>
+                <option value="<?php echo $m; ?>"<?php echo $m === $f['month'] ? ' selected' : ''; ?>><?php echo sprintf('%02d', $m); ?></option>
+            <?php endfor; ?>
+        </select>
+        <label for="rt_status_status"><?php echo _("Status"); ?></label>
+        <select name="status" id="rt_status_status" class="input_select">
+            <option value=""><?php echo _("All"); ?></option>
+            <option value="open"<?php echo $f['status'] === 'open' ? ' selected' : ''; ?>><?php echo _("Running or waiting"); ?></option>
+            <?php foreach (['done', 'failed', 'unclear', 'skipped', 'cancelled'] as $s): ?>
+                <option value="<?php echo $s; ?>"<?php echo $f['status'] === $s ? ' selected' : ''; ?>><?php echo $h($labels[$s]); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <label for="rt_status_trigger"><?php echo _("Started by"); ?></label>
+        <select name="trigger" id="rt_status_trigger" class="input_select">
+            <option value=""><?php echo _("All"); ?></option>
+            <option value="auto"<?php echo $f['trigger'] === 'auto' ? ' selected' : ''; ?>><?php echo _("Automatic"); ?></option>
+            <option value="manual"<?php echo $f['trigger'] === 'manual' ? ' selected' : ''; ?>><?php echo _("By hand"); ?></option>
+        </select>
+        <input type="text" name="show" class="input_text" maxlength="100" placeholder="<?php echo $h(_("Show name")); ?>" value="<?php echo $h($f['show']); ?>" />
+        <button type="submit" class="btn"><?php echo _("Filter"); ?></button>
+        <a class="btn" href="<?php echo $h($base . 'archiving/status-csv?' . $back); ?>"><?php echo _("Download CSV"); ?></a>
+    </form>
+    <?php $rows = array_slice($this->history, 0, $this->historyMax); ?>
+    <?php if (!$rows): ?>
+        <p class="rt-participants-empty"><?php echo _("No upload in this period."); ?></p>
+    <?php else: ?>
+        <?php if (count($this->history) > $this->historyMax): ?>
+            <p class="rt-participants-note"><?php echo sprintf(_("The newest %d uploads - narrow the filter or download the CSV for all."), (int) $this->historyMax); ?></p>
+        <?php endif; ?>
+        <table class="datatable rt-participants-table rt-status-table">
+            <thead>
+                <tr>
+                    <th><?php echo _("Queued"); ?></th>
+                    <th><?php echo _("Show name"); ?></th>
+                    <th><?php echo _("Episode"); ?></th>
+                    <th><?php echo _("Started by"); ?></th>
+                    <th><?php echo _("Status"); ?></th>
+                    <th class="num"><?php echo _("Post"); ?></th>
+                    <th><?php echo _("Audio"); ?></th>
+                    <th class="num"><?php echo _("Size"); ?></th>
+                    <th class="num"><?php echo _("Duration"); ?></th>
+                    <th><?php echo _("Note"); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i = 0; foreach ($rows as $j): ?>
+                    <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
+                        <td><?php echo $h($j['created_local']); ?></td>
+                        <td><?php echo $h($j['show_name']); ?></td>
+                        <td><?php echo $h($j['episode_local']); ?></td>
+                        <td><?php echo $h($startedBy($j)); ?></td>
+                        <td class="<?php echo in_array($j['status'], ['failed', 'unclear', 'skipped'], true) ? 'rt-participants-missing' : ''; ?>"><?php echo $h($labels[$j['status']] ?? $j['status']); ?></td>
+                        <td class="num"><?php echo $j['post_id'] ? $post($j['post_id']) : ''; ?></td>
+                        <td><?php echo $h($j['file']); ?></td>
+                        <td class="num"><?php echo $j['bytes_total'] ? $h(sprintf('%.1f MB', $j['bytes_total'] / 1048576)) : ''; ?></td>
+                        <td class="num"><?php echo $j['secs'] !== null ? sprintf('%d:%02d', intdiv($j['secs'], 60), $j['secs'] % 60) : ''; ?></td>
+                        <td class="rt-status-detail"><?php echo $h($j['error']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</div>
+<script>
+(function ($) {
+  var T = <?php echo json_encode([
+      'cancel' => _('Cancel this upload? The episode is not archived then; you can start it again later.'),
+      'unclear' => _('The post may exist on cba.media already. Look there first and link it if it is there - archive again anyway?'),
+      'link' => _('Number of the post on cba.media (or its address with ?p=<number>):'),
+  ]); ?>;
+  var signature = <?php echo json_encode($this->signature); ?>;
+  var base = <?php echo json_encode($base); ?>;
+  var $page = $(".rt-archive-status");
+  $page.on("click", ".rt-status-form a", function (ev) {
+    ev.preventDefault();
+    var $form = $(this).closest("form"), op = $form.data("op");
+    if (op === "cancel" && !window.confirm(T.cancel)) { return; }
+    if (op === "again" && $form.data("unclear") && !window.confirm(T.unclear)) { return; }
+    if (op === "link") {
+      var value = window.prompt(T.link, "");
+      if (value === null || $.trim(value) === "") { return; }
+      $form.find("input[name=post]").val($.trim(value));
+    }
+    $form.trigger("submit");
+  });
+  // the open uploads: progress in place; when they change (one finished, a
+  // new one queued) the page reloads - not while someone types in the filter
+  function poll() {
+    $.getJSON(base + "archiving/status-data").done(function (r) {
+      if (!r || !r.ok) { return; }
+      if (r.signature !== signature) {
+        var el = document.activeElement;
+        if (!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) {
+          var url = new URL(window.location.href);
+          url.searchParams.delete("done");
+          window.location.replace(url.toString());
+          return;
+        }
+      }
+      $.each(r.percent || {}, function (id, pct) {
+        $page.find(".rt-status-pct[data-job='" + id + "']").text(pct === null ? "…" : pct + " %");
+      });
+    }).always(function () {
+      window.setTimeout(poll, signature ? 5000 : 30000);
+    });
+  }
+  window.setTimeout(poll, signature ? 5000 : 30000);
+})(jQuery);
+</script>

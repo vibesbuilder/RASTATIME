@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.116
-Date: 2026-11-03
+Draft version: 0.117
+Date: 2026-11-04
 
 > **Revision history**
+> - **0.117 (2026-11-04)** - **Archive status** (§23.86): Analytics -> Archive Status (uploads
+>   running and waiting, what the automatic archiving has ahead, open problems, history, CSV;
+>   cancel a waiting upload, archive again, link a post); "Editorial Teams" are called
+>   "Producers" in the UI, the yearly report counts no teams.
 > - **0.116 (2026-11-03)** - **Autoloading per episode** (§23.85): "Edit Instance" may
 >   override the show's autoloading (migration 0078), only before the build.
 > - **0.115 (2026-11-03)** - **Alerts, stage 1** (§23.84): dead air, services down and
@@ -8809,3 +8813,66 @@ serializeArray loop keeps the last value.
 (override read, effective resolution, upcoming query identical to the
 former Propel filter while nobody overrides, instance form with the
 block, show form without it, save no-op before the migration).
+
+### 23.86 Archive Status: Uploads, What Lies Ahead, Problems, History (2026-11-04)
+
+**Why.**  Without an overview a failing automatic archiving was noticed
+by chance (the banner of §23.81 only lists automatic failures, the
+dialog one episode).  Operator go 2026-11-04: one page under Analytics,
+cancel only for waiting uploads.  No migration, no service restart.
+
+**Page.**  `archiving/status` (ACL resource `archiving`, privileges
+`status`, `status-data`, `status-op`, `status-csv` for program managers;
+admins have the whole resource), menu Analytics -> Archive Status.
+`ArchivingService`:
+
+- `openJobs()` - `queued` and `running`, the running one first;
+- `plannedEpisodes(7)` - the rules of `archive_auto.candidates()` read
+  from the other end: shows with `auto_archive`, instances from "due +
+  24 h not yet passed" to "starts within 7 days", no post, no job, no
+  rebroadcast, no repeat show.  States `upcoming` / `scheduled` (before
+  the due time; the reasons are what the show lacks, `showProblems()`,
+  split out of `precheck()`), `due` / `waiting` (after it: `precheck()`
+  plus the short-recording check of `autoState()`), `excluded`
+  (`no_archive`).  Nothing is written; the worker decides as before;
+- `problemJobs(30)` - the newest job of an instance is `failed`,
+  `unclear` or `skipped`, finished within 30 days, the episode has no
+  post (manual and automatic, unlike the banner);
+- `jobHistory(year, month, status, trigger, show, limit)` - newest
+  first, `created_at` in station time; the page shows 500, the CSV all.
+
+**Actions** (`status-op`, POST with the CSRF token the Acl plugin checks;
+the filter travels in a `back` field and the redirect keeps it):
+
+- **Cancel** - `UPDATE ... SET status = 'cancelled' WHERE id = ? AND
+  status = 'queued'`.  The worker claims with `FOR UPDATE SKIP LOCKED`:
+  either it took the row first (it is `running`, nothing changes, the
+  page says so) or it never sees it.  A running upload is never touched.
+  The automatic run leaves an instance with any job alone, so a
+  cancelled automatic episode stays cancelled.
+- **Archive again** - `retryJob()`: only `failed`, `unclear`, `skipped`,
+  `cancelled`; a new manual job through `enqueueUpload()` (pre-check,
+  one open job per instance) with the same file, the recording when it
+  is gone.  The page asks first after `unclear` (the post may exist).
+- **Link post** - `linkPost()` on the job's instance.
+
+**Live part.**  The page polls `status-data` (5 s while uploads are open,
+else 30 s): the percent is updated in place; when the signature
+`id:status:attempts` of the open jobs changes the page reloads (not while
+a filter field has the focus).  The banner line of `archive_failed`
+links to the page for program managers and admins (`userType`).
+
+**Wording.**  The editorial teams of §23.82 are called **Producers** in
+the UI (DE Produzenten) - most shows are one person.  Table
+`cc_editor_profile`, routes and the CBA field `editors` stay.  The
+yearly report and the participants page count no teams any more
+(`participantsReport()` without the total).
+
+**Verification.**  `C:/Temp/optd/archive_status_probe.php` (page, JSON,
+CSV in four languages; `--write`: a waiting test job due tomorrow is
+cancelled, "again" refused by the pre-check, link and unlink, nothing
+left), `archive_status_states.php` (inside a rolled-back transaction:
+upcoming / scheduled / waiting / excluded, a failed job moves the episode
+from "ahead" to "problems", a newer job or a linked post clears it),
+`archive_producer_label.php`; JS parsed in the browser; live page
+checked as admin.  Rollback: `git revert` (legacy live at once).

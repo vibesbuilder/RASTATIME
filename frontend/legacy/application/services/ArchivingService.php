@@ -912,7 +912,6 @@ class Application_Service_ArchivingService
         if ($ep === null) {
             return [_('The show instance does not exist any more.')];
         }
-        $show = $ep['show_settings'];
         $missing = [];
         if (!$ep['aired']) {
             $missing[] = _('The episode has not aired yet.');
@@ -920,21 +919,7 @@ class Application_Service_ArchivingService
         if ($ep['cba_post_id']) {
             $missing[] = _('The episode is archived already.');
         }
-        if (!$show['cba_account_id']) {
-            $missing[] = _('The show has no CBA account (Edit Show → Archiving).');
-        } elseif (!(self::query("SELECT app_password <> '' AS ok FROM cc_cba_account WHERE id = ?", [$show['cba_account_id']])[0]['ok'] ?? false)) {
-            $missing[] = _('The CBA account of the show has no application password (Settings → Archiving).');
-        }
-        if (!$show['category_id']) {
-            $missing[] = _('The show has no CBA topic (Edit Show → Archiving).');
-        }
-        if ($show['languages'] === '') {
-            $missing[] = _('The show has no language (Edit Show → Archiving).');
-        }
-        // without a licence the CBA would publish under CC BY (its default)
-        if ($show['license'] === '') {
-            $missing[] = _('The show has no licence (Edit Show → Archiving).');
-        }
+        $missing = array_merge($missing, self::showProblems($ep['show_settings']));
         // no description on the episode or the show: the show name is the text (operator 2026-11-03)
         $production = $ep['production_date'] !== '' ? $ep['production_date'] : $ep['broadcast_date'];
         $tz = new DateTimeZone(Application_Model_Preference::GetTimezone());
@@ -952,6 +937,29 @@ class Application_Service_ArchivingService
             } elseif (!in_array($ext, self::AUDIO_EXTENSIONS, true)) {
                 $missing[] = sprintf(_('The CBA takes MP3, OGG and Opus, not %s.'), strtoupper($ext));
             }
+        }
+
+        return $missing;
+    }
+
+    /** What the show's archiving settings lack for any upload (showSettings() array). */
+    public static function showProblems(array $show): array
+    {
+        $missing = [];
+        if (!$show['cba_account_id']) {
+            $missing[] = _('The show has no CBA account (Edit Show → Archiving).');
+        } elseif (!(self::query("SELECT app_password <> '' AS ok FROM cc_cba_account WHERE id = ?", [$show['cba_account_id']])[0]['ok'] ?? false)) {
+            $missing[] = _('The CBA account of the show has no application password (Settings → Archiving).');
+        }
+        if (!$show['category_id']) {
+            $missing[] = _('The show has no CBA topic (Edit Show → Archiving).');
+        }
+        if ($show['languages'] === '') {
+            $missing[] = _('The show has no language (Edit Show → Archiving).');
+        }
+        // without a licence the CBA would publish under CC BY (its default)
+        if ($show['license'] === '') {
+            $missing[] = _('The show has no licence (Edit Show → Archiving).');
         }
 
         return $missing;
@@ -1017,6 +1025,250 @@ class Application_Service_ArchivingService
         );
 
         return null;
+    }
+
+    // ------------------------------------------------------------------
+    // Archive status (Analytics → Archive Status, operator go 2026-11-04)
+    // ------------------------------------------------------------------
+
+    /** Status filter of the history; "open" = queued or running. */
+    public const JOB_STATUSES = ['open', 'done', 'failed', 'unclear', 'skipped', 'cancelled'];
+
+    private const JOB_SELECT = "SELECT j.id, j.instance_id, j.status, j.trigger, j.attempts, j.last_error, j.post_id,
+                    j.bytes_total, j.bytes_sent,
+                    to_char(j.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS created_utc,
+                    to_char(j.next_attempt_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS next_attempt_utc,
+                    to_char(j.finished_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS finished_utc,
+                    EXTRACT(EPOCH FROM (j.finished_at - j.started_at)) AS secs,
+                    si.starts AS starts_utc, s.name AS show_name, f.track_title, f.artist_name, u.login
+               FROM cc_cba_upload j
+               JOIN cc_show_instances si ON si.id = j.instance_id
+               JOIN cc_show s ON s.id = si.show_id
+               LEFT JOIN cc_files f ON f.id = j.file_id
+               LEFT JOIN cc_subjs u ON u.id = j.requested_by";
+
+    private static function jobRow(array $r): array
+    {
+        $local = fn ($utc) => $utc ? self::utcToLocal($utc) : '';
+        $total = (int) $r['bytes_total'];
+
+        return [
+            'id' => (int) $r['id'],
+            'instance_id' => (int) $r['instance_id'],
+            'status' => (string) $r['status'],
+            'trigger' => (string) $r['trigger'],
+            'attempts' => (int) $r['attempts'],
+            'error' => (string) $r['last_error'],
+            'post_id' => $r['post_id'] === null ? null : (int) $r['post_id'],
+            'bytes_total' => $total,
+            'percent' => $total > 0 ? (int) floor(100 * (int) $r['bytes_sent'] / $total) : null,
+            'created_local' => $local($r['created_utc']),
+            'next_local' => $local($r['next_attempt_utc']),
+            'finished_local' => $local($r['finished_utc']),
+            'secs' => $r['secs'] === null ? null : (int) round((float) $r['secs']),
+            'show_name' => (string) $r['show_name'],
+            'episode_local' => self::utcToLocal($r['starts_utc']),
+            'file' => trim($r['track_title'] . ($r['artist_name'] ? ' - ' . $r['artist_name'] : '')),
+            'login' => (string) $r['login'],
+        ];
+    }
+
+    /** Uploads waiting or running: the running one first, then by the time they are due. */
+    public static function openJobs(): array
+    {
+        if (!self::tablesReady()) {
+            return [];
+        }
+        $rows = self::query(self::JOB_SELECT . " WHERE j.status IN ('queued', 'running')
+              ORDER BY (j.status = 'running') DESC, j.next_attempt_at, j.id");
+
+        return array_map(fn ($r) => self::jobRow($r), $rows);
+    }
+
+    /**
+     * Open problems (manual and automatic): the newest upload of an episode
+     * failed, stayed unclear or was given up within $days days, and the
+     * episode has no post.  Archiving it or linking the post clears the line.
+     */
+    public static function problemJobs(int $days = 30): array
+    {
+        if (!self::tablesReady()) {
+            return [];
+        }
+        $rows = self::query(self::JOB_SELECT . " WHERE j.status IN ('failed', 'unclear', 'skipped')
+                AND j.finished_at > now() - INTERVAL '" . max(1, $days) . " days'
+                AND NOT EXISTS (SELECT 1 FROM cc_cba_upload k WHERE k.instance_id = j.instance_id AND k.id > j.id)
+                AND NOT EXISTS (SELECT 1 FROM cc_episode e WHERE e.instance_id = j.instance_id AND e.cba_post_id IS NOT NULL)
+              ORDER BY j.finished_at DESC, j.id DESC
+              LIMIT 100");
+
+        return array_map(fn ($r) => self::jobRow($r), $rows);
+    }
+
+    /**
+     * What the automatic archiving has ahead (the rules of
+     * rastatime_worker/archive_auto.py): episodes of shows with "Archive
+     * automatically" from those still within the 24 hours after they were
+     * due to those starting in the next $days days, without post or upload.
+     * state: upcoming | scheduled | due (queued at the next check) | waiting
+     * | excluded; reasons: what blocks it (for upcoming and scheduled: what
+     * the show lacks, the episode is checked once it is due).
+     */
+    public static function plannedEpisodes(int $days = 7): array
+    {
+        if (!self::tablesReady()) {
+            return [];
+        }
+        $delay = self::autoDelayMin();
+        $rows = self::query(
+            "SELECT si.id, si.show_id, si.starts, si.ends, s.name AS show_name, COALESCE(e.no_archive, FALSE) AS no_archive
+               FROM cc_show_instances si
+               JOIN cc_show s ON s.id = si.show_id
+               JOIN cc_show_archiving a ON a.show_id = si.show_id
+               LEFT JOIN cc_episode e ON e.instance_id = si.id
+              WHERE a.auto_archive AND a.auto_since IS NOT NULL
+                AND si.ends >= a.auto_since
+                AND si.ends > (now() AT TIME ZONE 'UTC') - INTERVAL '" . ($delay + 1440) . " minutes'
+                AND si.starts < (now() AT TIME ZONE 'UTC') + INTERVAL '" . max(1, $days) . " days'
+                AND NOT si.modified_instance
+                AND COALESCE(si.rebroadcast, 0) = 0
+                AND s.repeat_of_show_id IS NULL
+                AND e.cba_post_id IS NULL
+                AND NOT EXISTS (SELECT 1 FROM cc_cba_upload j WHERE j.instance_id = si.id)
+              ORDER BY si.ends, si.id
+              LIMIT 200"
+        );
+        $now = time();
+        $lacks = [];
+        $out = [];
+        foreach ($rows as $r) {
+            $ends = strtotime($r['ends'] . ' UTC');
+            $due = $ends + 60 * $delay;
+            $showId = (int) $r['show_id'];
+            $lacks[$showId] ??= self::showProblems(self::showSettings($showId));
+            $reasons = $lacks[$showId];
+            if ($r['no_archive']) {
+                $state = 'excluded';
+                $reasons = [];
+            } elseif ($ends > $now) {
+                $state = 'upcoming';
+            } elseif ($now < $due) {
+                $state = 'scheduled';
+            } else {
+                $reasons = self::precheck((int) $r['id']);
+                $ep = self::episode((int) $r['id']);
+                $auto = $ep ? self::autoState($ep) : [];
+                if (!empty($auto['short_recording'])) {
+                    $reasons[] = sprintf(_('The recording covers %s minutes - less than half of the show is not archived automatically.'), $auto['short_recording']);
+                }
+                $state = $reasons ? 'waiting' : 'due';
+            }
+            $out[] = [
+                'instance_id' => (int) $r['id'],
+                'show_name' => (string) $r['show_name'],
+                'episode_local' => self::utcToLocal($r['starts']),
+                'state' => $state,
+                'due_local' => self::utcToLocal(gmdate('Y-m-d H:i:s', $due)),
+                'until_local' => self::utcToLocal(gmdate('Y-m-d H:i:s', $due + 86400)),
+                'reasons' => $reasons,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** Years with uploads, newest first (at least the current one). */
+    public static function jobYears(): array
+    {
+        $tz = new DateTimeZone(Application_Model_Preference::GetTimezone());
+        $now = (int) (new DateTime('now', $tz))->format('Y');
+        $first = self::tablesReady()
+            ? self::query("SELECT to_char(min(created_at) AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS first FROM cc_cba_upload")[0]['first']
+            : null;
+        $from = $first ? (int) substr(self::utcToLocal($first), 0, 4) : $now;
+
+        return range($now, min($from, $now));
+    }
+
+    /**
+     * The uploads queued in $year (station time; $month 1-12, 0 = the whole
+     * year), newest first.  $status one of JOB_STATUSES or '' for all,
+     * $trigger 'auto' | 'manual' | '', $show part of the show name.  At most
+     * $limit rows (0 = all, for the CSV).
+     */
+    public static function jobHistory(int $year, int $month, string $status, string $trigger, string $show, int $limit = 0): array
+    {
+        if (!self::tablesReady()) {
+            return [];
+        }
+        $tz = new DateTimeZone(Application_Model_Preference::GetTimezone());
+        $utc = new DateTimeZone('UTC');
+        $from = new DateTime(sprintf('%04d-%02d-01 00:00:00', $year, $month ?: 1), $tz);
+        $to = (clone $from)->modify($month ? '+1 month' : '+1 year');
+        $where = ['j.created_at >= ?', 'j.created_at < ?'];
+        $params = [$from->setTimezone($utc)->format('Y-m-d H:i:s') . '+00', $to->setTimezone($utc)->format('Y-m-d H:i:s') . '+00'];
+        if ($status === 'open') {
+            $where[] = "j.status IN ('queued', 'running')";
+        } elseif (in_array($status, self::JOB_STATUSES, true)) {
+            $where[] = 'j.status = ?';
+            $params[] = $status;
+        }
+        if ($trigger === 'auto' || $trigger === 'manual') {
+            $where[] = 'j.trigger = ?';
+            $params[] = $trigger;
+        }
+        if ($show !== '') {
+            $where[] = 's.name ILIKE ?';
+            $params[] = '%' . addcslashes($show, '%_\\') . '%';
+        }
+        $rows = self::query(
+            self::JOB_SELECT . ' WHERE ' . implode(' AND ', $where) . ' ORDER BY j.id DESC' . ($limit > 0 ? ' LIMIT ' . $limit : ''),
+            $params
+        );
+
+        return array_map(fn ($r) => self::jobRow($r), $rows);
+    }
+
+    /**
+     * Cancel an upload that waits; one that runs belongs to the worker.  The
+     * worker claims a job with FOR UPDATE SKIP LOCKED, so either it took the
+     * row first (running: nothing changes here, false) or it never sees it.
+     */
+    public static function cancelJob(int $jobId, string $by): bool
+    {
+        return self::tablesReady() && self::exec(
+            "UPDATE cc_cba_upload SET status = 'cancelled', finished_at = now(), last_error = ?
+              WHERE id = ? AND status = 'queued'",
+            [sprintf('cancelled by %s', $by), $jobId]
+        ) > 0;
+    }
+
+    /**
+     * Start a finished upload again (failed, unclear, skipped or cancelled):
+     * a new job by hand with the same audio, the recording when that file is
+     * gone.  The page asks first for an unclear one - the post may exist.
+     *
+     * @return array [int job id, string[] reasons when refused]
+     */
+    public static function retryJob(int $jobId, int $userId): array
+    {
+        $job = self::tablesReady() ? (self::query('SELECT instance_id, file_id, status FROM cc_cba_upload WHERE id = ?', [$jobId])[0] ?? null) : null;
+        if ($job === null) {
+            return [0, [_('The upload does not exist any more.')]];
+        }
+        if (!in_array($job['status'], ['failed', 'unclear', 'skipped', 'cancelled'], true)) {
+            return [0, [_('Only a failed, unclear, given up or cancelled upload can be started again.')]];
+        }
+
+        return self::enqueueUpload((int) $job['instance_id'], (int) $job['file_id'], $userId);
+    }
+
+    /** The instance of an upload job (0 when it does not exist). */
+    public static function jobInstance(int $jobId): int
+    {
+        return self::tablesReady()
+            ? (int) (self::query('SELECT instance_id FROM cc_cba_upload WHERE id = ?', [$jobId])[0]['instance_id'] ?? 0)
+            : 0;
     }
 
     // ------------------------------------------------------------------

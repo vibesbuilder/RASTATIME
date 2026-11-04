@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Archivierung: Archiv-Status-Seite (2026-11-04, Go 2026-11-04)** — Analytics →
+  **Archive Status** (Programm-Manager und Admins): laufende und wartende Uploads mit
+  Fortschritt (aktualisiert sich selbst), was das automatische Archivieren in den
+  nächsten 7 Tagen vor sich hat (fällig um, wartet worauf, was der Sendung noch fehlt,
+  ausgeschlossen), Probleme der letzten 30 Tage (gescheitert, unklar, aufgegeben — von
+  Hand und automatisch) und der Verlauf aller Uploads mit Filter (Jahr, Monat, Status,
+  gestartet von, Sendung) und CSV.  Aktionen: **Cancel** nur für wartende Uploads
+  (läuft er schon, bleibt er unberührt), **Archive again** (nach „unklar“ mit
+  Rückfrage), **Link post…**.  Der Warnhinweis verlinkt auf die Seite.  Keine
+  Migration, kein Neustart.  Manual ARCHIVING §7 + ANALYTICS ×4, ARCHITECTURE §23.86.
+  Wirksam: Legacy sofort, Texte DE/FR/ES nach Apache-Neustart.
+
 - **Edit Instance: Autoloading je Episode (2026-11-03, Go 2026-11-03, Regel „nur vor der Befüllung“)** —
   Der Abschnitt Autoloading Playlist ist im Instanz-Formular bearbeitbar:
   Häkchen „Use the show's autoloading settings“ (vorangekreuzt), abgewählt
@@ -108,7 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cc_editor_profile` und Routen bleiben.  Die Summe „Editorial teams“ entfällt in
   Analytics → Participants, im CSV (Commit `be181126`) und im Jahresbericht — gezählt
   werden nur die Menschen („People involved“).  Wirksam: Legacy sofort, Texte nach
-  Apache-Neustart.
+  Apache-Neustart.  Commit `e1964fb7`.
 - **Archivierung: Feinschliff nach der Abnahme (2026-11-03, Operator)** — Kalender:
   „Episode...“ heißt **Archive Online** (eigenes Wolken-Icon), der Knopf im Dialog
   **Archive online now**, „Link existing post“ hat einen Tooltip.  Sendungsformular: der

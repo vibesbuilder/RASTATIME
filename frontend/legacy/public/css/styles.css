@@ -5933,6 +5933,36 @@ div.dt-button-collection .dt-button > span {
     color: #8a8a8a;
 }
 
+/* RASTATIME 2026-11-04 - Analytics -> Archive Status (same look as
+   .rt-participants) */
+.rt-archive-status h3 {
+    margin: 1.4em 0 0.4em;
+}
+.rt-archive-status .rt-status-table {
+    max-width: none;
+}
+.rt-archive-status .rt-status-detail {
+    color: #aaa;
+    font-size: 12px;
+}
+.rt-archive-status tr.rt-status-off td {
+    color: #8a8a8a;
+}
+.rt-archive-status .rt-status-reasons {
+    margin: 0;
+    padding-left: 16px;
+}
+.rt-archive-status .rt-status-actions {
+    white-space: nowrap;
+}
+.rt-archive-status .rt-status-form {
+    display: inline;
+    margin-right: 10px;
+}
+.rt-archive-status .rt-participants-filter .input_text {
+    width: 12em;
+}
+
 /* RASTATIME 2026-11-03 - Settings -> Alerts */
 .rt-alerts legend {
     font-weight: bold;

@@ -7,7 +7,7 @@
 > behandelt den **Rückspiegel** — was tatsächlich gesendet wurde
 > und wie viele Menschen dabei zugehört haben.
 
-Das Menü **Analytics** in der oberen Navigation bündelt fünf
+Das Menü **Analytics** in der oberen Navigation bündelt sechs
 Seiten:
 
 | Seite | Frage, die sie beantwortet |
@@ -18,6 +18,7 @@ Seiten:
 | **Show Listener Stats** | Wie hat jede *Sendung* bei den Hörerzahlen abgeschnitten? |
 | **Participants** (Teilnehmende) | Wie viele Menschen haben die Sendungen eines Jahres gemacht? Siehe [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03). |
 | **Yearly Report** (Jahresbericht) | Sendeminuten der Eigenproduktionen und die Übersicht der Teilnehmenden, je ein Jahr, CSV. Siehe § 5 (seit 2026-11-03). |
+| **Archive Status** (Archiv-Status) | Ist jede Episode auf cba.media angekommen? Laufende und wartende Uploads, was das automatische Archivieren vor sich hat, Probleme, Verlauf, CSV. Siehe [Archivierung](./ARCHIVING.md) § 7 (seit 2026-11-04). |
 
 Die ersten beiden existieren für die **Rechenschaftspflicht** —
 Tantiemen-Meldungen, Sendeprotokolle für Behörden, Anrufe der Art

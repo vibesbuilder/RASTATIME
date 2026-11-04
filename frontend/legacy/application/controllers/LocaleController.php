@@ -160,6 +160,7 @@ final class LocaleController extends Zend_Controller_Action
             'Automatic archiving on cba.media gave up on' => _('Automatic archiving on cba.media gave up on'),
             'Look on cba.media first, then link the post or archive again under Archive Online in the calendar.' => _('Look on cba.media first, then link the post or archive again under Archive Online in the calendar.'),
             'Archive it by hand under Archive Online in the calendar.' => _('Archive it by hand under Archive Online in the calendar.'),
+            'Open Archive Status' => _('Open Archive Status'),
             // RASTATIME 2026-10-08 - preflight warning: failed podcast download
             'Podcast download failed:' => _('Podcast download failed:'),
             '%s attempt(s), last %s' => _('%s attempt(s), last %s'),

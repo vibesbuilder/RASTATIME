@@ -695,8 +695,13 @@ function loadPreflightWarnings() {
               ". " + (detail.status === "unclear"
                 ? $.i18n._("Look on cba.media first, then link the post or archive again under Archive Online in the calendar.")
                 : $.i18n._("Archive it by hand under Archive Online in the calendar."))
+              + " "
             )
           );
+          // 2026-11-04: the overview of every upload (Program Managers and Admins)
+          if (typeof userType !== "undefined" && /^[APS]$/.test(userType)) {
+            $li.append($("<a></a>").attr("href", baseUrl + "archiving/status").text($.i18n._("Open Archive Status")));
+          }
         } else if (w.warning_type === "podcast_download_failed") {
           // RASTATIME 2026-10-08: an automatic or manual episode download
           // failed (Application_Model_PodcastDownloadFailures); clears when

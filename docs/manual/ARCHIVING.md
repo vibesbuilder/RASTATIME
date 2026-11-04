@@ -3,7 +3,7 @@
 > **Where you are in the manual.** Settings → **Archiving** (producers,
 > CBA accounts); Calendar → show form, section **Archiving**;
 > Calendar → right-click an instance → **Archive Online**; Analytics →
-> **Participants**.  Read [Calendar](./CALENDAR.md) and
+> **Participants** and **Archive Status**.  Read [Calendar](./CALENDAR.md) and
 > [Record-per-Show](./RECORD_PER_SHOW.md) first - the audio of an
 > archived episode is the show's recording.
 >
@@ -239,7 +239,8 @@ run plans for the episode, e.g. *Archived automatically from
 
 When an automatic upload fails, stays unclear or is given up, the
 warning banner at the top of the page lists the episode for seven days,
-until it is archived by hand or its post is linked.
+until it is archived by hand or its post is linked; Program Managers
+and Admins find a link to **Analytics → Archive Status** (§7) there.
 
 > **Not recognised:** a replacement programme that ran instead of a live
 > show (the presenter did not come) is archived like the show.  Switch
@@ -281,7 +282,49 @@ Program Managers and Admins open this page.
 
 ---
 
-## 7. Frequently asked
+## 7. Archive Status
+
+**Analytics → Archive Status** (since 2026-11-04) shows on one page
+whether the episodes reach cba.media.  Program Managers and Admins open
+it; the warning banner links to it.
+
+* **Running and waiting** - the upload in progress (the share sent,
+  updated every few seconds) and those waiting: for the background
+  service, or for another attempt after a connection problem (time and
+  reason).  **Cancel** stops a waiting upload.  A running upload cannot
+  be cancelled - it belongs to the background service until it ends.
+* **Ahead (automatic archiving)** - the episodes of shows with *Archive
+  automatically* from the next 7 days and those that aired but are not
+  queued yet, with the time they are due:
+
+  | Status | Meaning |
+  |---|---|
+  | *Not aired yet - due ...* | The episode is still to come. |
+  | *Aired - due ...* | The waiting time (Settings → Archiving) runs. |
+  | *Due - queued at the next check* | Nothing is missing; the background service queues it within five minutes. |
+  | *Waiting, at the latest until ...* | Something is missing (column **Missing**); after that time the automatic run gives up. |
+  | *Not archived automatically: ...* | *Do not archive this episode automatically* is ticked. |
+
+  Before the broadcast, **Missing** already lists what the show lacks
+  (CBA account, topic, language, licence) - time to complete the show.
+* **Problems (last 30 days)** - uploads by hand or automatic that
+  failed, stayed unclear or were given up, as long as the episode has no
+  post.  **Archive again** queues the same audio once more (the
+  recording, if that file is gone).  After an *unclear* upload the page
+  asks first, because the post may exist: look on cba.media and use
+  **Link post…** (number or address) if it is there.  The line goes
+  away once the episode is archived or linked.
+* **History** - every upload with time, show, episode, who started it
+  (*Automatic* or the login), state, link to the post, audio, size,
+  duration and note.  Filter by year, month, state, started by and show
+  name; **Download CSV** takes the whole filtered list (the page shows
+  the newest 500).
+
+The page reloads by itself when an upload starts or ends.
+
+---
+
+## 8. Frequently asked
 
 ### "Archive online now is missing."
 
@@ -320,7 +363,8 @@ not a Program Manager or Admin.
 Open **Archive Online**: the block *Online archive* says why - the switch is
 off, the box *Do not archive* is ticked, the episode ended before the
 switch was turned on, it waits for something, or the run gave up and
-why.  Archive it by hand from there.
+why.  Archive it by hand from there.  **Analytics → Archive Status**
+(§7) lists all such episodes at once.
 
 ### "Where are Editorial Team and CBA Accounts?"
 

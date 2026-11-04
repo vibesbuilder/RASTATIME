@@ -1141,3 +1141,174 @@ msgstr ""
 
 msgid "Ticked: this episode follows the show. Unticked: the fields below apply to this episode only, as long as it has not been filled yet (about an hour before it starts)."
 msgstr ""
+
+msgid "Archive Status"
+msgstr ""
+
+msgid "Open Archive Status"
+msgstr ""
+
+msgid "Uploads to cba.media: what runs and waits now, what the automatic archiving has ahead, open problems and every upload so far. The automatic archiving starts %d minutes after the end of an episode (Settings → Archiving); the background service checks every 5 minutes."
+msgstr ""
+
+msgid "Running and waiting"
+msgstr ""
+
+msgid "No upload is running or waiting."
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Audio"
+msgstr ""
+
+msgid "Started by"
+msgstr ""
+
+msgid "Queued"
+msgstr ""
+
+msgid "Next attempt at %s (attempt %d)"
+msgstr ""
+
+msgid "Waiting for the background service"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Ahead (automatic archiving)"
+msgstr ""
+
+msgid "Episodes of shows with \"Archive automatically\" from the next 7 days, and those that aired but are not queued yet."
+msgstr ""
+
+msgid "No episode of a show with \"Archive automatically\" in the next 7 days."
+msgstr ""
+
+msgid "Missing"
+msgstr ""
+
+msgid "Not aired yet - due %s"
+msgstr ""
+
+msgid "Aired - due %s"
+msgstr ""
+
+msgid "Due - queued at the next check"
+msgstr ""
+
+msgid "Waiting, at the latest until %s"
+msgstr ""
+
+msgid "Problems (last 30 days)"
+msgstr ""
+
+msgid "Uploads that failed, stayed unclear or were given up, as long as the episode has no post. Archive again - after an unclear upload look on cba.media first and link the post if it is there."
+msgstr ""
+
+msgid "No open problems."
+msgstr ""
+
+msgid "Reason"
+msgstr ""
+
+msgid "Ended"
+msgstr ""
+
+msgid "Archive again"
+msgstr ""
+
+msgid "Link post…"
+msgstr ""
+
+msgid "History"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Running or waiting"
+msgstr ""
+
+msgid "Automatic"
+msgstr ""
+
+msgid "By hand"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "No upload in this period."
+msgstr ""
+
+msgid "The newest %d uploads - narrow the filter or download the CSV for all."
+msgstr ""
+
+msgid "Post"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "Note"
+msgstr ""
+
+msgid "Size (MB)"
+msgstr ""
+
+msgid "Duration (s)"
+msgstr ""
+
+msgid "Attempts"
+msgstr ""
+
+msgid "Waiting"
+msgstr ""
+
+msgid "Uploading"
+msgstr ""
+
+msgid "Archived"
+msgstr ""
+
+msgid "Failed"
+msgstr ""
+
+msgid "Unclear"
+msgstr ""
+
+msgid "Given up"
+msgstr ""
+
+msgid "Cancelled"
+msgstr ""
+
+msgid "The upload had started already and was not cancelled."
+msgstr ""
+
+msgid "The upload is queued again."
+msgstr ""
+
+msgid "The episode is linked to the post."
+msgstr ""
+
+msgid "The upload does not exist any more."
+msgstr ""
+
+msgid "Only a failed, unclear, given up or cancelled upload can be started again."
+msgstr ""
+
+msgid "Cancel this upload? The episode is not archived then; you can start it again later."
+msgstr ""
+
+msgid "The post may exist on cba.media already. Look there first and link it if it is there - archive again anyway?"
+msgstr ""
+
+msgid "Number of the post on cba.media (or its address with ?p=<number>):"
+msgstr ""

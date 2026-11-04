@@ -7,7 +7,7 @@
 > **espejo retrovisor** — qué salió realmente al aire y cuántas
 > personas escuchaban mientras tanto.
 
-El menú **Analytics** de la barra de navegación agrupa cinco
+El menú **Analytics** de la barra de navegación agrupa seis
 páginas:
 
 | Página | Pregunta que responde |
@@ -18,6 +18,7 @@ páginas:
 | **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
 | **Participants** (Participantes) | ¿Cuántas personas hicieron los programas de un año? Véase [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03). |
 | **Yearly Report** (informe anual) | Minutos de programa de las producciones propias y resumen de participantes, un año cada vez, CSV. Véase § 5 (desde 2026-11-03). |
+| **Archive Status** (estado del archivo) | ¿Llegó cada episodio a cba.media? Subidas en curso y en espera, lo que tiene por delante el archivo automático, problemas, historial, CSV. Véase [Archivo](./ARCHIVING.md) § 7 (desde el 2026-11-04). |
 
 Las dos primeras existen para la **rendición de cuentas** —
 informes de derechos de autor, registros para el regulador,

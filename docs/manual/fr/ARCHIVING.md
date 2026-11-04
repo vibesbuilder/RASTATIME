@@ -4,8 +4,9 @@
 > (producteurs, comptes CBA) ; Calendrier → formulaire de
 > l'émission, section **Archivage** ; Calendrier → clic droit sur une
 > occurrence → **Archiver en ligne** ; Statistiques → **Participants**
-> (dans l'interface anglaise : Settings → Archiving, Archiving, Archive
-> Online, Analytics → Participants).  Lisez d'abord
+> et **État de l'archivage** (dans l'interface anglaise : Settings →
+> Archiving, Archiving, Archive Online, Analytics → Participants et
+> Archive Status).  Lisez d'abord
 > [Calendrier](./CALENDAR.md) et
 > [Enregistrement par émission](./RECORD_PER_SHOW.md) - le son d'un
 > épisode archivé est l'enregistrement de l'émission.
@@ -261,7 +262,8 @@ rien ci-dessous*.
 Quand un envoi automatique échoue, reste incertain ou est abandonné, le
 bandeau d'avertissement en haut de la page cite l'épisode pendant sept
 jours, jusqu'à ce qu'il soit archivé à la main ou que son article soit
-lié.
+lié ; les Program Managers et les Admins y trouvent un lien vers
+**Statistiques → État de l'archivage** (§7).
 
 > **Non détecté :** un programme de remplacement diffusé à la place
 > d'une émission en direct (l'animateur n'est pas venu) est archivé comme
@@ -307,7 +309,53 @@ Les Program Managers et les Admins ouvrent cette page.
 
 ---
 
-## 7. Questions fréquentes
+## 7. État de l'archivage
+
+**Statistiques → État de l'archivage** (depuis le 2026-11-04, en anglais
+Analytics → Archive Status) montre sur une seule page si les épisodes
+arrivent sur cba.media.  Les Program Managers et les Admins l'ouvrent ;
+le bandeau d'avertissement y renvoie.
+
+* **En cours et en attente** - l'envoi en cours (la part envoyée, mise à
+  jour toutes les quelques secondes) et ceux en attente : du service
+  d'arrière-plan, ou d'une nouvelle tentative après un problème de
+  connexion (heure et raison).  **Annuler** arrête un envoi en attente.
+  Un envoi en cours ne peut pas être annulé - il appartient au service
+  d'arrière-plan jusqu'à sa fin.
+* **À venir (archivage automatique)** - les épisodes des émissions avec
+  *Archiver automatiquement* des 7 prochains jours et ceux déjà diffusés
+  mais pas encore en file d'attente, avec leur échéance :
+
+  | Statut | Signification |
+  |---|---|
+  | *Pas encore diffusé - prévu ...* | L'épisode est encore à venir. |
+  | *Diffusé - prévu ...* | Le délai d'attente (Paramètres → Archivage) court. |
+  | *Prévu - ajouté à la prochaine vérification* | Rien ne manque ; le service d'arrière-plan l'ajoute dans les cinq minutes. |
+  | *En attente, au plus tard jusqu'à ...* | Quelque chose manque (colonne **Manque**) ; ensuite l'archivage automatique abandonne. |
+  | *Pas d'archivage automatique : ...* | *Ne pas archiver cet épisode automatiquement* est coché. |
+
+  Avant la diffusion, **Manque** indique déjà ce qui manque à l'émission
+  (compte CBA, thème, langue, licence) - le temps de compléter
+  l'émission.
+* **Problèmes (30 derniers jours)** - envois manuels ou automatiques
+  échoués, restés incertains ou abandonnés, tant que l'épisode n'a pas
+  d'article.  **Archiver à nouveau** remet le même audio en file
+  d'attente (l'enregistrement, si ce fichier a disparu).  Après un envoi
+  *incertain*, la page demande d'abord confirmation, car l'article
+  existe peut-être : vérifiez sur cba.media et utilisez **Lier un
+  article…** (numéro ou adresse) s'il y est.  La ligne disparaît dès que
+  l'épisode est archivé ou lié.
+* **Historique** - chaque envoi avec heure, émission, épisode, qui l'a
+  lancé (*Automatique* ou le login), statut, lien vers l'article, audio,
+  taille, durée et remarque.  Filtre par année, mois, statut, lancé par
+  et nom de l'émission ; **Télécharger le CSV** prend toute la liste
+  filtrée (la page affiche les 500 plus récents).
+
+La page se recharge d'elle-même quand un envoi commence ou se termine.
+
+---
+
+## 8. Questions fréquentes
 
 ### « Archiver en ligne maintenant manque. »
 
@@ -348,7 +396,8 @@ Ouvrez **Archiver en ligne** : le bloc *Archive en ligne* indique
 pourquoi - l'interrupteur est désactivé, *Ne pas archiver
 automatiquement* est coché, l'épisode s'est terminé avant l'activation,
 il attend encore quelque chose, ou l'archivage a abandonné et pourquoi.
-Archivez-le à la main depuis là.
+Archivez-le à la main depuis là.  **Statistiques → État de
+l'archivage** (§7) liste tous ces épisodes d'un coup.
 
 ### « Où sont Équipe de rédaction et Comptes CBA ? »
 

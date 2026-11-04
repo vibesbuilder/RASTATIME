@@ -10,6 +10,10 @@
  *                                 and admins) and archiving/accounts (admins)
  *   Analytics → Participants    (archiving/participants, .../participants-csv):
  *                                 people involved per show and year
+ *   Analytics → Archive Status  (archiving/status, .../status-data, .../status-csv,
+ *                                 .../status-op): uploads running and waiting,
+ *                                 what the automatic archiving has ahead, open
+ *                                 problems, the history; cancel, again, link
  * ACL resource "archiving" = program managers and admins; "accounts" admins only.
  */
 class ArchivingController extends Zend_Controller_Action
@@ -235,5 +239,183 @@ class ArchivingController extends Zend_Controller_Action
             ->setHeader('Content-Type', 'text/csv; charset=utf-8', true)
             ->setHeader('Content-Disposition', 'attachment; filename="participants-' . $year . '.csv"', true)
             ->setBody($csv);
+    }
+
+    // ------------------------------------------------------------------
+    // Analytics → Archive Status (operator go 2026-11-04)
+    // ------------------------------------------------------------------
+
+    /** Rows of the history on the page; the CSV has all. */
+    private const STATUS_HISTORY_ROWS = 500;
+
+    /** The history filter from a request or the "back" field of a form, checked. */
+    private function statusFilter(array $src): array
+    {
+        $years = Application_Service_ArchivingService::jobYears();
+        $year = (int) ($src['year'] ?? $years[0]);
+        $status = (string) ($src['status'] ?? '');
+        $trigger = (string) ($src['trigger'] ?? '');
+
+        return [
+            'year' => in_array($year, $years, true) ? $year : $years[0],
+            'month' => max(0, min(12, (int) ($src['month'] ?? 0))),
+            'status' => in_array($status, Application_Service_ArchivingService::JOB_STATUSES, true) ? $status : '',
+            'trigger' => in_array($trigger, ['auto', 'manual'], true) ? $trigger : '',
+            'show' => mb_substr(trim((string) ($src['show'] ?? '')), 0, 100),
+        ];
+    }
+
+    /** "12:running:1,13:queued:0" (id:status:attempts) - the page reloads when the open uploads change. */
+    private static function statusSignature(array $open): string
+    {
+        return implode(',', array_map(fn ($j) => $j['id'] . ':' . $j['status'] . ':' . $j['attempts'], $open));
+    }
+
+    private function renderStatus(?string $message = null, bool $ok = true): void
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Analytics');
+        $filter = $this->statusFilter($this->getRequest()->getParams());
+        $messages = [
+            'cancelled' => _('The upload was cancelled.'),
+            'cancel-late' => _('The upload had started already and was not cancelled.'),
+            'again' => _('The upload is queued again.'),
+            'linked' => _('The episode is linked to the post.'),
+        ];
+        $done = (string) $this->getRequest()->getParam('done', '');
+        $this->view->message = $message ?? ($messages[$done] ?? null);
+        $this->view->messageOk = $message === null ? $done !== 'cancel-late' : $ok;
+        $this->view->filter = $filter;
+        $this->view->years = Application_Service_ArchivingService::jobYears();
+        $this->view->ready = Application_Service_ArchivingService::tablesReady();
+        $this->view->open = Application_Service_ArchivingService::openJobs();
+        $this->view->signature = self::statusSignature($this->view->open);
+        $this->view->planned = Application_Service_ArchivingService::plannedEpisodes();
+        $this->view->problems = Application_Service_ArchivingService::problemJobs();
+        $this->view->history = Application_Service_ArchivingService::jobHistory(
+            $filter['year'],
+            $filter['month'],
+            $filter['status'],
+            $filter['trigger'],
+            $filter['show'],
+            self::STATUS_HISTORY_ROWS + 1
+        );
+        $this->view->historyMax = self::STATUS_HISTORY_ROWS;
+        $this->view->autoDelay = Application_Service_ArchivingService::autoDelayMin();
+        $this->view->csrf = $this->csrfToken();
+        $this->_helper->viewRenderer->setScriptAction('status');
+    }
+
+    public function statusAction()
+    {
+        $this->renderStatus();
+    }
+
+    /** GET: the open uploads as JSON, polled by the page (progress; a change reloads it). */
+    public function statusDataAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $open = Application_Service_ArchivingService::openJobs();
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'signature' => self::statusSignature($open),
+            'percent' => array_column($open, 'percent', 'id'),
+        ]);
+    }
+
+    /**
+     * POST op (cancel | again | link), id (upload job), post (link: number or
+     * address), back (the history filter): the actions of the page.
+     */
+    public function statusOpAction()
+    {
+        $request = $this->getRequest();
+        if (!$request->isPost() || !Application_Service_ArchivingService::tablesReady()) {
+            $this->_redirect('archiving/status');
+
+            return;
+        }
+        // the Acl plugin has checked the CSRF token of every legacy POST
+        parse_str((string) $request->getPost('back', ''), $back);
+        $filter = $this->statusFilter($back);
+        $request->setParams($filter);
+        $op = (string) $request->getPost('op', '');
+        $id = (int) $request->getPost('id', 0);
+        $user = Application_Model_User::getCurrentUser();
+        $done = null;
+        if ($op === 'cancel') {
+            $done = Application_Service_ArchivingService::cancelJob($id, (string) $user->getLogin()) ? 'cancelled' : 'cancel-late';
+        } elseif ($op === 'again') {
+            [$jobId, $reasons] = Application_Service_ArchivingService::retryJob($id, (int) $user->getId());
+            if (!$jobId) {
+                $this->renderStatus(implode(' ', $reasons), false);
+
+                return;
+            }
+            $done = 'again';
+        } elseif ($op === 'link') {
+            $instanceId = Application_Service_ArchivingService::jobInstance($id);
+            $error = $instanceId
+                ? Application_Service_ArchivingService::linkPost($instanceId, (string) $request->getPost('post', ''))
+                : _('The upload does not exist any more.');
+            if ($error !== null) {
+                $this->renderStatus($error, false);
+
+                return;
+            }
+            $done = 'linked';
+        }
+        $this->_redirect('archiving/status?' . http_build_query($filter + ($done ? ['done' => $done] : [])));
+    }
+
+    /** The history with the filter of the page as CSV (all rows, UTF-8 with BOM). */
+    public function statusCsvAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $f = $this->statusFilter($this->getRequest()->getParams());
+        $rows = Application_Service_ArchivingService::jobHistory($f['year'], $f['month'], $f['status'], $f['trigger'], $f['show']);
+        $labels = self::jobStatusLabels();
+        $out = fopen('php://temp', 'w+');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, [_('Queued'), _('Show name'), _('Episode'), _('Started by'), _('Status'), _('Post'),
+            _('Audio'), _('Size (MB)'), _('Duration (s)'), _('Attempts'), _('Note')], ',', '"', '');
+        foreach ($rows as $r) {
+            fputcsv($out, [
+                $r['created_local'],
+                $r['show_name'],
+                $r['episode_local'],
+                $r['trigger'] === 'auto' ? _('Automatic') : ($r['login'] !== '' ? $r['login'] : _('By hand')),
+                $labels[$r['status']] ?? $r['status'],
+                $r['post_id'] ? 'https://cba.media/?p=' . $r['post_id'] : '',
+                $r['file'],
+                $r['bytes_total'] ? round($r['bytes_total'] / 1048576, 1) : '',
+                $r['secs'] ?? '',
+                $r['attempts'],
+                $r['error'],
+            ], ',', '"', '');
+        }
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+        $name = 'archive-status-' . $f['year'] . ($f['month'] ? sprintf('-%02d', $f['month']) : '') . '.csv';
+        $this->getResponse()
+            ->setHeader('Content-Type', 'text/csv; charset=utf-8', true)
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $name . '"', true)
+            ->setBody($csv);
+    }
+
+    /** Short names of the job states (page and CSV). */
+    public static function jobStatusLabels(): array
+    {
+        return [
+            'queued' => _('Waiting'),
+            'running' => _('Uploading'),
+            'done' => _('Archived'),
+            'failed' => _('Failed'),
+            'unclear' => _('Unclear'),
+            'skipped' => _('Given up'),
+            'cancelled' => _('Cancelled'),
+        ];
     }
 }

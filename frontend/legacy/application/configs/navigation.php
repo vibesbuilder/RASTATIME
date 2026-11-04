@@ -309,6 +309,17 @@ $pages[] = [
             'action' => 'index',
             'resource' => 'yearlyreport',
         ],
+        [
+            // RASTATIME 2026-11-04 - archive status: uploads to cba.media,
+            // what the automatic archiving has ahead, problems, history
+            // (Program Managers and Admins)
+            'label' => 'Archive Status',
+            'module' => 'default',
+            'controller' => 'archiving',
+            'action' => 'status',
+            'resource' => 'archiving',
+            'privilege' => 'status',
+        ],
     ],
 ];
 $pages[] = [

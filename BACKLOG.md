@@ -6879,8 +6879,14 @@ Nachtrag 2026-11-04 (Operator): "Editorial Teams" heissen in RASTATIME
 **Producers** (DE Produzenten) - meist eine Person, manchmal ein Team; an
 cba.media weiter als *editor*.  Keine Team-Zahl mehr in Participants, CSV
 und Jahresbericht, nur "People involved".  "Link existing post" bleibt wie
-es ist.  Naechster Schritt: Archiv-Status-Seite (Operator-Go 2026-11-04,
-Analytics, Abbrechen nur fuer wartende Auftraege).
+es ist (e1964fb7).
+
+Nachtrag 2026-11-04 (Operator-Go): **Archiv-Status-Seite gebaut**
+(Analytics -> Archive Status, §23.86): laufend/wartend, was die Automatik
+in 7 Tagen vor sich hat, Probleme 30 Tage, Verlauf mit Filter + CSV;
+Abbrechen nur fuer wartende Auftraege, Erneut (nach "unklar" mit
+Rueckfrage), Beitrag verknuepfen; Link im Warnhinweis.  Offen:
+Apache-Neustart (Texte), Sichtprobe durch den Operator.
 
 ### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
 

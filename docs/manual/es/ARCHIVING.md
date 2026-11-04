@@ -3,9 +3,10 @@
 > **Dónde está en el manual.** Ajustes → **Archivo** (productores,
 > cuentas de CBA); Calendario → formulario del programa,
 > sección **Archivo**; Calendario → clic derecho en una emisión →
-> **Archivar en línea**; Estadísticas → **Participantes** (en la
-> interfaz en inglés: Settings → Archiving, Archiving, Archive Online,
-> Analytics → Participants).  Lea primero
+> **Archivar en línea**; Estadísticas → **Participantes** y
+> **Estado del archivo** (en la interfaz en inglés: Settings →
+> Archiving, Archiving, Archive Online, Analytics → Participants y
+> Archive Status).  Lea primero
 > [Calendario](./CALENDAR.md) y
 > [Grabación por programa](./RECORD_PER_SHOW.md): el audio de un
 > episodio archivado es la grabación del programa.
@@ -254,7 +255,9 @@ de lo de abajo*.
 
 Cuando una subida automática falla, queda sin aclarar o se abandona, el
 aviso en la parte superior de la página nombra el episodio durante siete
-días, hasta que se archiva a mano o se vincula su entrada.
+días, hasta que se archiva a mano o se vincula su entrada; los Program
+Managers y los Admins encuentran allí un enlace a **Estadísticas →
+Estado del archivo** (§7).
 
 > **No se detecta:** un programa de sustitución emitido en lugar de un
 > programa en directo (no vino el presentador) se archiva como el
@@ -297,7 +300,53 @@ Los Program Managers y los Admins abren esta página.
 
 ---
 
-## 7. Preguntas frecuentes
+## 7. Estado del archivo
+
+**Estadísticas → Estado del archivo** (desde el 2026-11-04, en inglés
+Analytics → Archive Status) muestra en una sola página si los episodios
+llegan a cba.media.  La abren los Program Managers y los Admins; el
+aviso enlaza con ella.
+
+* **En curso y en espera** - la subida en curso (la parte enviada,
+  actualizada cada pocos segundos) y las que esperan: al servicio en
+  segundo plano, o a un nuevo intento tras un problema de conexión (hora
+  y motivo).  **Cancelar** detiene una subida en espera.  Una subida en
+  curso no se puede cancelar: pertenece al servicio en segundo plano
+  hasta que termina.
+* **Pendiente (archivo automático)** - los episodios de los programas con
+  *Archivar automáticamente* de los próximos 7 días y los ya emitidos que
+  aún no están en cola, con su vencimiento:
+
+  | Estado | Significado |
+  |---|---|
+  | *Aún no emitido: previsto ...* | El episodio aún está por llegar. |
+  | *Emitido: previsto ...* | Corre el tiempo de espera (Ajustes → Archivo). |
+  | *Previsto: se pone en cola en la próxima comprobación* | No falta nada; el servicio en segundo plano lo pone en cola en cinco minutos. |
+  | *En espera, como máximo hasta ...* | Falta algo (columna **Falta**); después el archivo automático se da por vencido. |
+  | *No se archiva automáticamente: ...* | *No archivar este episodio automáticamente* está marcado. |
+
+  Antes de la emisión, **Falta** ya indica lo que le falta al programa
+  (cuenta de CBA, tema, idioma, licencia): tiempo para completar el
+  programa.
+* **Problemas (últimos 30 días)** - subidas a mano o automáticas que
+  fallaron, quedaron inciertas o se abandonaron, mientras el episodio no
+  tenga entrada.  **Archivar de nuevo** vuelve a poner en cola el mismo
+  audio (la grabación, si ese archivo ya no existe).  Tras una subida
+  *incierta*, la página pregunta primero, porque puede que la entrada
+  exista: compruébelo en cba.media y use **Vincular entrada…** (número o
+  dirección) si está allí.  La línea desaparece en cuanto el episodio se
+  archiva o se vincula.
+* **Historial** - cada subida con hora, programa, episodio, quién la
+  inició (*Automático* o el login), estado, enlace a la entrada, audio,
+  tamaño, duración y nota.  Filtro por año, mes, estado, iniciado por y
+  nombre del programa; **Descargar CSV** toma toda la lista filtrada (la
+  página muestra las 500 más recientes).
+
+La página se recarga sola cuando una subida empieza o termina.
+
+---
+
+## 8. Preguntas frecuentes
 
 ### «Falta Archivar en línea ahora.»
 
@@ -338,6 +387,8 @@ Abra **Archivar en línea**: el bloque *Archivo en línea* indica el
 motivo - el interruptor está desactivado, *No archivar automáticamente*
 está marcado, el episodio terminó antes de activarlo, espera algo, o el
 proceso se dio por vencido y por qué.  Archívelo a mano desde allí.
+**Estadísticas → Estado del archivo** (§7) lista todos esos episodios
+a la vez.
 
 ### «¿Dónde están Equipo de redacción y Cuentas de CBA?»
 

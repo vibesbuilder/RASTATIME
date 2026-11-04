@@ -7,7 +7,7 @@
 > le **rétroviseur** — ce qui est réellement passé à l'antenne, et
 > combien de personnes écoutaient pendant ce temps.
 
-Le menu **Analytics** de la barre de navigation regroupe cinq
+Le menu **Analytics** de la barre de navigation regroupe six
 pages :
 
 | Page | Question à laquelle elle répond |
@@ -18,6 +18,7 @@ pages :
 | **Show Listener Stats** | Quelle audience chaque *émission* a-t-elle réalisée ? |
 | **Participants** | Combien de personnes ont fait les émissions d'une année ? Voir [Archivage](./ARCHIVING.md) § 6 (depuis le 2026-11-03). |
 | **Yearly Report** (rapport annuel) | Minutes de programme des productions propres et aperçu des participants, une année à la fois, CSV. Voir § 5 (depuis le 2026-11-03). |
+| **Archive Status** (état de l'archivage) | Chaque épisode est-il arrivé sur cba.media ? Envois en cours et en attente, ce que l'archivage automatique a devant lui, problèmes, historique, CSV. Voir [Archivage](./ARCHIVING.md) § 7 (depuis le 2026-11-04). |
 
 Les deux premières existent pour la **traçabilité** — déclarations
 de droits d'auteur, journaux réglementaires, appels du type « quel
