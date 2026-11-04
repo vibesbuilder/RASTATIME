@@ -7001,3 +7001,29 @@ Content" liefert die Sekunden (Probe `C:/Temp/optd/show_content_probe.php
 Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
+
+## Webstream-Puffer je Stream (Evaluierung 2026-11-04, BBC-Einstieg 5 s zu früh)
+
+### 🟡 Puffer je Webstream einstellbar (cc_webstream, Playout, Liquidsoap) - DEFER (Operator-Frage 2026-11-04)
+
+Befund: der BBC-Slot startet den frischen input.http 10 s vor der Zeile
+(WEBSTREAM_PREPARE_LEAD_SECONDS), Tor öffnet zur Zeile.  Unsere eigene
+Verzögerung ist input.http max_buffer 10 s (hält den Burst des Servers,
+bis zur Kappe) + Clock-Brücke 5 s; dazu die Latenz der BBC selbst.  Ein
+GRÖSSERER Puffer verschiebt den gehörten Inhalt weiter in die
+Vergangenheit, also noch mehr Vorlauf vor der Moderation; nur ein
+KLEINERER Puffer lässt die Moderation früher erscheinen.  Der präzise
+Hebel ist die Einstiegszeit in der Planung (Intro 5 s länger oder 5-s-
+Pad-Datei, Webstream-Zeile 5:00).
+Bauplan, falls doch: Spalten `bridge_seconds`/`max_buffer_seconds` an
+cc_webstream (Migration 0079), Webstream-Dialog, Schedule-Payload
+(wie input_gain_db), Playout `webstream_start(uri, gain, bridge, max)`,
+Liquidsoap `webstream_start` liest interaktive Variablen vor dem Bau von
+input.http/buffer(); ~150 Zeilen, 6 Dateien, 0,5–1 Tag, Liquidsoap-
+Neustart.  Risiko: kleinerer Puffer = weniger Reserve bei Aussetzern
+(Watchdog meldet Reconnect nach ~4 s nicht-ready), Einstellung wirkt
+auf Ein- UND Ausstieg gleichermaßen.
+Vorbedingungen: (1) Messung unserer tatsächlichen Zusatzlatenz (Probe:
+BBC direkt + eigener Stream gleichzeitig mitschneiden, Kreuzkorrelation,
+~1 h); (2) Planungs-Lösung reicht nicht oder Operator will generell
+weniger Latenz auf Webstreams.
