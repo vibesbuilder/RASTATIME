@@ -359,7 +359,8 @@ label.wrapp-label input[type="checkbox"] {
 
 /* RASTATIME 2026-11-04 - What: "Own production" with its help icon and air
    before the box (it sat on the label text), "Number of involved people"
-   below it, label above the field (form/add-show-tip-row.phtml). */
+   below it, a narrow field on the label's line like the box (operator)
+   (form/add-show-tip-row.phtml). */
 #schedule-add-show dt.rt-own-production .help_icon,
 #schedule-add-show dt.rt-participants-row .help_icon {
     margin-left: 6px;
@@ -367,15 +368,12 @@ label.wrapp-label input[type="checkbox"] {
     top: 0;
 }
 
-#schedule-add-show dd.rt-own-production input[type="checkbox"] {
+#schedule-add-show dd.rt-own-production input[type="checkbox"],
+#schedule-add-show dd.rt-participants-row input.input_text {
     /* .help_icon sits 3 px right of its box: 9 px of air on both sides */
     margin-left: 12px;
 }
 
-#schedule-add-show dt.rt-participants-row {
-    margin-bottom: 6px;
-}
-
 #schedule-add-show dd.rt-participants-row input.input_text {
-    width: 5em;
+    width: 2.5em;  /* 0-999 */
 }

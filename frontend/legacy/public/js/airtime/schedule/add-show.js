@@ -315,6 +315,13 @@ function setAddShowEvents(form) {
   form.find("h3").click(function () {
     $(this).next().toggle();
   });
+  // RASTATIME 2026-11-04 - measured once the section is open (after the toggle above)
+  form
+    .find("#schedule-show-archiving")
+    .prev("h3")
+    .click(function () {
+      syncArchivingWidths(form);
+    });
 
   form.find("input:radio[name=add_show_start_now]").click(function () {
     setupStartTimeWidgets();
@@ -1542,6 +1549,19 @@ function syncDependentVisibility(form) {
 }
 
 /**
+ * RASTATIME 2026-11-04 - "CBA podcast ID" as wide as the "Licence" select
+ * (operator).  The select takes the width of its longest option, which
+ * differs per language, so it is measured; nothing to measure while the
+ * section is collapsed.
+ */
+function syncArchivingWidths(form) {
+  var width = form.find("#add_show_cba_license").outerWidth();
+  if (width > 0) {
+    form.find("#add_show_cba_series_id").outerWidth(width);
+  }
+}
+
+/**
  * RASTATIME 2026-11-04 - the number of people involved belongs to own
  * productions only (operator): shown while "Own production" is ticked.  A
  * hidden value is still posted and kept, it just does not count.
@@ -1596,6 +1616,7 @@ function showErrorSections() {
   }
   if ($("#schedule-show-archiving .errors").length > 0) {
     $("#schedule-show-archiving").show();
+    syncArchivingWidths($("#schedule-add-show"));
   }
   if ($("#add_show_rebroadcast_relative .errors").length > 0) {
     $("#schedule-record-rebroadcast").show();

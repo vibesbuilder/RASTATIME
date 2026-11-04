@@ -71,7 +71,7 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
                 'pattern' => '/^\d{1,3}$/',
                 'messages' => [Zend_Validate_Regex::NOT_MATCH => _('Please enter a whole number between 0 and 999.')],
             ]]],
-            'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-participants-row block-display']]],
+            'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-participants-row']]],
         ]);
 
         // Add the description element

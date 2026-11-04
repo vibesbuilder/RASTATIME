@@ -5963,10 +5963,14 @@ div.dt-button-collection .dt-button > span {
     width: 12em;
 }
 
-/* RASTATIME 2026-11-03 - Settings -> Alerts */
-.rt-alerts legend {
-    font-weight: bold;
-    padding: 0 6px;
+/* RASTATIME 2026-11-03 - Settings -> Alerts.  2026-11-04 (operator): the
+   segments look like the other settings pages (Auto DJ): framed, the
+   legend keeps the common bar (an own "padding: 0 6px" squeezed it). */
+.rt-alerts fieldset {
+    padding: 1em;
+    border: 1px solid #444;
+    border-radius: 4px;
+    margin-top: 1em;
 }
 .rt-alerts .zend_form dd {
     margin-bottom: 8px;
