@@ -35,6 +35,27 @@ logger = logging.getLogger(__name__)
 
 PREF_PREFIX = "alerts_"
 
+
+def tls_context() -> ssl.SSLContext:
+    """The system trust store plus the ``certifi`` bundle.
+
+    RASTATIME 2026-11-04 (Telegram acceptance): Python reads the Windows
+    certificate store as it is, and Windows loads many root certificates only
+    on demand through its own TLS stack - api.telegram.org chains to a GoDaddy
+    root that was missing on the studio machine ("self-signed certificate in
+    certificate chain").  The certifi bundle (installed with ``requests``)
+    fills the gap; without it the system store alone is used.
+    """
+    ctx = ssl.create_default_context()
+    try:
+        import certifi  # pylint: disable=import-outside-toplevel
+
+        ctx.load_verify_locations(cafile=certifi.where())
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.debug("alerts: certifi bundle not loaded (%s)", exc)
+    return ctx
+
+
 #: cc_pref keys and their defaults (strings as stored)
 DEFAULTS: dict[str, str] = {
     "alerts_enabled": "false",
@@ -150,14 +171,14 @@ def send_mail(settings: AlertSettings, subject: str, body: str, timeout: float =
             settings.smtp_host,
             settings.smtp_port,
             timeout=timeout,
-            context=ssl.create_default_context(),
+            context=tls_context(),
         )
     else:
         client = smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=timeout)
     try:
         client.ehlo()
         if settings.smtp_security == "starttls":
-            client.starttls(context=ssl.create_default_context())
+            client.starttls(context=tls_context())
             client.ehlo()
         if settings.smtp_user:
             client.login(settings.smtp_user, settings.smtp_password)
@@ -176,7 +197,14 @@ def send_telegram(
     if not settings.telegram_ready:
         raise RuntimeError("Telegram is not configured (bot token and chat ids)")
     url = f"https://api.telegram.org/bot{settings.telegram_token}/sendMessage"
-    open_ = opener or urllib.request.urlopen
+    if opener is None:
+        ctx = tls_context()
+
+        def open_(req, timeout=None):
+            return urllib.request.urlopen(req, timeout=timeout, context=ctx)
+
+    else:
+        open_ = opener
     errors = []
     for chat in settings.telegram_chats:
         data = json.dumps({"chat_id": chat, "text": text, "disable_web_page_preview": True}).encode(

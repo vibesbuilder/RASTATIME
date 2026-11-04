@@ -16,6 +16,9 @@ setup(
         # (RASTATIME 2026-11-01: the CI runner failed on timezone "UTC";
         # locally it arrives as a dependency of Django).
         "tzdata>=2024.1;sys_platform=='win32'",
+        # RASTATIME 2026-11-04: root certificates for the alert channels
+        # (Windows loads roots lazily, Python does not - see alerts.tls_context)
+        "certifi>=2024.2.2",
         "click>=8.0.4,<8.2",
         "pydantic>=2.9.0",
         "pyyaml>=5.3.1,<6.1",
