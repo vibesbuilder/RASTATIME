@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `outro_playlist_id`), Leser tolerant über `to_jsonb`, die
   Befüllungs-Abfrage löst Instanz → Sendung auf. Manual CALENDAR §3 +
   AUTOLOADING_PLAYLISTS ×4, ARCHITECTURE §23.85. Migration offen
-  (Operator-Backup + Go). Commit `TBD`.
+  (Operator-Backup + Go). Commit `c6a40677`.
 
 - **Alarme per E-Mail (SMTP) und Telegram, Stufe 1 (2026-11-03, Go 2026-11-03)** —
   Settings → Alerts (Admins): Hauptschalter, Dead-Air-Schwelle, Erinnerung,
