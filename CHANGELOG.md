@@ -151,7 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   10:07, Playlist 639 statt 684). `AutoPlaylistManager::carryInstanceOverride`
   schreibt sie jetzt auf die neue Zeile; eine bereits befüllte Instanz gibt
   ihre Einstellungen unverändert weiter. Probe `instance_carry_probe.php`
-  (Transaktion + Rollback). Commit `TBD`.
+  (Transaktion + Rollback). Commit `c08967ca`.
 
 - **Dialog „Archive Online“ zu dunkel (2026-11-03, Operator)** — Beschriftungen, die Spalte
   „From the show“, „Online archive“ und der Status standen in Redmonds #222 auf dem dunklen
