@@ -67,6 +67,15 @@ class Application_Form_AddShowAutoPlaylist extends Zend_Form_SubForm
         $repeatOf->setRegisterInArrayValidator(false);
         $repeatOf->setDecorators(['ViewHelper']);
         $this->addElement($repeatOf);
+
+        // RASTATIME 2026-11-03 - autoloading per episode: rendered by the view
+        // for "Edit Instance" only (form attribute rtInstanceEdit); ticked =
+        // the episode follows the show
+        $inherit = new Zend_Form_Element_Checkbox('add_show_autoplaylist_inherit');
+        $inherit->setLabel(_("Use the show's autoloading settings"));
+        $inherit->setChecked(true);
+        $inherit->setDecorators(['ViewHelper']);
+        $this->addElement($inherit);
     }
 
     public function disable()

@@ -158,6 +158,23 @@ acción.
 
 ---
 
+### Lo que «Editar instancia» puede cambiar desde 2026-11-03: la carga automática
+
+La sección **Autoloading Playlist** del formulario de instancia es
+editable.  **Use the show's autoloading settings** (marcado por
+defecto) mantiene el episodio con la lista, intro, outro y repetición
+del programa.  Desmárquelo y los campos de abajo se aplican solo a este
+episodio: otra lista, ninguna carga automática, otra intro u outro.
+**Repeat of show** sigue siendo un ajuste del programa.
+
+La regla **«solo antes del relleno»**: la construcción de la carga
+automática se ejecuta una hora antes del inicio, aproximadamente.  Una
+vez relleno el episodio, la sección muestra una nota y ya no se puede
+cambiar; vacíe el episodio en el Show Builder y se rellena de nuevo con
+los ajustes actuales.
+
+---
+
 ## 4. Programas recurrentes
 
 Un programa recurrente es una definición con muchas

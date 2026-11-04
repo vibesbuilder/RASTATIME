@@ -67,6 +67,13 @@ Guarde el programa.
 > restante.  Detalles en [Calendario](./CALENDAR.md) § 4 «Repetición de
 > otro programa».
 
+> **Carga automática por episodio (desde 2026-11-03).**  «Editar
+> instancia» puede dar a un episodio su propia lista, intro, outro o
+> repetición, o ninguna carga automática; desmarque **Use the show's
+> autoloading settings** en la sección Autoloading Playlist.  Solo antes
+> de la construcción (una hora antes del inicio, aproximadamente):
+> véase [Calendario](./CALENDAR.md) § 3.
+
 ## 3. La cadencia de construcción de 60 segundos
 
 El constructor de autoplaylist corre cada 60 segundos.

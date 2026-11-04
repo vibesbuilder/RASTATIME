@@ -94,6 +94,10 @@ class Application_Service_ShowService
             $ccShowInstanceOrig = CcShowInstancesQuery::create()
                 ->findPk($showData['add_show_instance_id']);
 
+            // RASTATIME 2026-11-03 - autoloading per episode (migration 0078),
+            // ignored once the instance is filled
+            AutoPlaylistManager::saveInstanceOverride((int) $showData['add_show_instance_id'], $showData);
+
             // convert original start time into the show's local timezone
             $origLocalStartDateTime = $ccShowInstanceOrig->getLocalStartDateTime();
 

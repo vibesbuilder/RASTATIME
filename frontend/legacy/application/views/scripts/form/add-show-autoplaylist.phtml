@@ -4,6 +4,24 @@
                rendered in its own "Repeat" section above this one
                (schedule/add-show-form.phtml); the element stays in this
                subform, so saving and validation are unchanged. */ ?>
+        <?php /* RASTATIME 2026-11-03 - autoloading per episode ("Edit Instance" only) */ ?>
+        <?php if ($this->element->getAttrib('rtInstanceEdit')) { ?>
+            <div id="add_show_autoplaylist_instance_block">
+                <?php if ($this->element->getAttrib('rtInstanceBuilt')) { ?>
+                    <p class="rt-instance-note"><?php echo _("This episode is already filled; its autoloading settings can no longer be changed here. Clear the episode in the Show Builder to fill it again."); ?></p>
+                <?php } else { ?>
+                    <dt id="add_show_autoplaylist_inherit_label">
+                        <label for="add_show_autoplaylist_inherit">
+                            <?php echo $this->element->getElement('add_show_autoplaylist_inherit')->getLabel() ?>
+                        </label>
+                    </dt>
+                    <dd>
+                        <?php echo $this->element->getElement('add_show_autoplaylist_inherit') ?>
+                        <span class="help_icon" data-rt-tip="<?php echo htmlspecialchars(_("Ticked: this episode follows the show. Unticked: the fields below apply to this episode only, as long as it has not been filled yet (about an hour before it starts)."), ENT_QUOTES) ?>"></span>
+                    </dd>
+                <?php } ?>
+            </div>
+        <?php } ?>
         <dt id="add_show_has_autoplaylist_label">
             <label for="add_show_has_autoplaylist_label">
                 <?php echo $this->element->getElement('add_show_has_autoplaylist')->getLabel() ?>

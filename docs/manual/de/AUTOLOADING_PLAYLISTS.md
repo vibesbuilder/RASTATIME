@@ -91,6 +91,13 @@ auf und baut zukünftige Instanzen entsprechend.
 > die Restzeit.  Details in [Kalender](./CALENDAR.md) § 4
 > „Wiederholung einer anderen Sendung".
 
+> **Autoloading je Episode (seit 2026-11-03).**  „Instanz bearbeiten"
+> kann einer Episode eine eigene Playlist, ein eigenes Intro, Outro oder
+> die Wiederholung geben, oder gar kein Autoloading; dazu **Use the
+> show's autoloading settings** im Abschnitt Autoloading Playlist
+> abwählen.  Nur vor der Befüllung (etwa eine Stunde vor dem Start) -
+> siehe [Kalender](./CALENDAR.md) § 3.
+
 ## 3. Die 60-Sekunden-Build-Kadenz
 
 Der Autoplaylist-Builder läuft alle 60 Sekunden. Für jede

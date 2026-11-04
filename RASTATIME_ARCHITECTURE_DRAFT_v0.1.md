@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.115
+Draft version: 0.116
 Date: 2026-11-03
 
 > **Revision history**
+> - **0.116 (2026-11-03)** - **Autoloading per episode** (§23.85): "Edit Instance" may
+>   override the show's autoloading (migration 0078), only before the build.
 > - **0.115 (2026-11-03)** - **Alerts, stage 1** (§23.84): dead air, services down and
 >   pre-flight warnings by e-mail (SMTP) and Telegram; blank.detect on the bus,
 >   playout monitor, API watchdog, Settings -> Alerts.
@@ -8763,3 +8765,47 @@ test_alerts_playout.py` (10: monitor, listener, render),
 `backend/api/rastatime_api/tests/test_alert_watchdog.py` (5).
 Probe `C:/Temp/optd/alerts_probe.php` (service, view).  Rollback: `git
 revert`; the Liquidsoap block disappears with the next render.
+
+### 23.85 Autoloading per Episode: "Edit Instance" Overrides the Show (2026-11-03)
+
+**Why.**  A special episode of a series (a themed night, a guest mix)
+needs another autoloading playlist, or none, without touching the show;
+"Edit Instance" used to disable the whole section.  Operator go
+2026-11-03 with the rule "only before the fill".
+
+**Model.**  `cc_show_instances.autoplaylist_override` (default FALSE),
+`autoplaylist_id` (NULL = no autoloading playlist), `autoplaylist_repeat`,
+`intro_playlist_id` / `outro_playlist_id` (NULL = station default), all
+by migration 0078 with `ON DELETE SET NULL` to `cc_playlist`.  Propel is
+not regenerated: `AutoPlaylistManager::instanceOverride()` reads the row
+through `to_jsonb(cc_show_instances)` (keys missing before the
+migration), `saveInstanceOverride()` writes raw SQL and is a no-op until
+`instanceColumnsReady()`.
+
+**Build.**  `_upcomingAutoPlaylistShows()` is one SQL query: instances of
+the next hour, not built, `CASE WHEN override THEN autoplaylist_id IS NOT
+NULL ELSE show.has_autoplaylist END`, loaded with `findPks`.
+`effectiveAutoloading(instanceId)` resolves the playlist, repeat, intro
+and outro either from the override (intro / outro NULL -> station
+default) or from the show, exactly as before; `buildAutoPlaylist` uses
+it, `fillInstance` is unchanged.  "Repeat of show" (§23.65) is not
+affected.
+
+**Form.**  `AddShowAutoPlaylist` carries the checkbox
+`add_show_autoplaylist_inherit` (ticked = follow the show); the view
+renders it only when the form attribute `rtInstanceEdit` is set, which
+`ShowFormService::populateInstanceFormAutoPlaylist` does instead of the
+former `disable()`: show values, overlaid by the instance's own when it
+has any, "Repeat of show" disabled (show-level).  A filled instance
+(`autoplaylist_built`) gets `rtInstanceBuilt`: a note and a disabled
+section.  add-show.js greys the fields while the checkbox is ticked.
+`ShowService::editRepeatingShowInstance` calls `saveInstanceOverride`
+inside its transaction; inherit = `autoplaylist_override FALSE`, else the
+fields (has_autoplaylist off -> `autoplaylist_id NULL`).  Zend's
+checkbox posts the hidden `0` and the ticked `1`; the controller's
+serializeArray loop keeps the last value.
+
+**Verification.**  `C:/Temp/optd/instance_autoloading_probe.php`
+(override read, effective resolution, upcoming query identical to the
+former Propel filter while nobody overrides, instance form with the
+block, show form without it, save no-op before the migration).

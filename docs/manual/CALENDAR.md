@@ -211,6 +211,22 @@ Click the show → context menu → choose an action.
 
 ---
 
+### What "Edit Instance" can change since 2026-11-03: the autoloading
+
+The **Autoloading Playlist** section of the instance form is editable.
+**Use the show's autoloading settings** (ticked by default) keeps the
+episode on the show's playlist, intro, outro and repeat setting.  Untick
+it and the fields below apply to this episode only - a different
+playlist, no autoloading at all, another intro or outro.  **Repeat of
+show** stays a setting of the show.
+
+The rule **"only before the fill"**: the autoloading build runs about an
+hour before the start.  Once the episode is filled, the section shows a
+note and can no longer be changed; clear the episode in the Show
+Builder and it is filled again with the current settings.
+
+---
+
 ## 4. Recurring shows
 
 A recurring show is one definition with many instances eagerly

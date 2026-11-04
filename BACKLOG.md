@@ -6947,10 +6947,12 @@ wäre der einzige Kanal dafür.  Signal nur über signal-cli (Java, eigene
 Nummer), WhatsApp nur über Metas Cloud-API (Business-Konto, Vorlagen, Kosten
 je Nachricht).  Push-Apps (ntfy, Pushover) als billiger Zusatzkanal möglich.
 
-### 🟢 Edit Instance: Autoloading-Playlists je Instanz - GO 2026-11-03 mit Regel „nur vor der Befüllung“
+### ✅ Edit Instance: Autoloading-Playlists je Instanz - gebaut 2026-11-03 (Go 2026-11-03, Regel „nur vor der Befüllung“, Architektur §23.85)
 
-Vier Instanzspalten (leer = Vorgabe der Sendung), Abschnitt im Instanz-Formular,
-Befüllung löst Instanz → Sendung auf; nach der Befüllung nur Hinweis.
+Instanzspalten (Migration 0078, leer = Vorgabe der Sendung), Häkchen im
+Instanz-Formular, Befüllung löst Instanz → Sendung auf; nach der Befüllung
+nur Hinweis.  OFFEN: Migration 0078 (Backup + Go) und Abnahme an einer
+Testepisode.
 
 ### 🟡 Archiv-Status-Seite (laufende Uploads, Historie, CSV) - in der Archivierungs-Sitzung bauen (Operator 2026-11-03)
 

@@ -86,6 +86,12 @@ builds future instances accordingly.
 > autoloading playlist then fills only the remaining time.  Details in
 > [Calendar](./CALENDAR.md) § 4 "Repeat of another show".
 
+> **Autoloading per episode (since 2026-11-03).**  "Edit Instance" can
+> give one episode its own playlist, intro, outro or repeat setting, or
+> no autoloading at all; untick **Use the show's autoloading settings**
+> in the Autoloading Playlist section.  Only before the build (about an
+> hour before the start) - see [Calendar](./CALENDAR.md) § 3.
+
 ## 3. The 60-second build cadence
 
 The autoplaylist builder runs every 60 seconds. For each

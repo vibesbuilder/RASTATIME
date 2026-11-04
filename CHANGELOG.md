@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Edit Instance: Autoloading je Episode (2026-11-03, Go 2026-11-03, Regel „nur vor der Befüllung“)** —
+  Der Abschnitt Autoloading Playlist ist im Instanz-Formular bearbeitbar:
+  Häkchen „Use the show's autoloading settings“ (vorangekreuzt), abgewählt
+  gelten Playlist, Wiederholung, Intro und Outro nur für diese Episode (auch
+  „kein Autoloading“). Befüllte Episoden zeigen einen Hinweis und bleiben
+  gesperrt. Migration 0078 (`cc_show_instances.autoplaylist_override`,
+  `autoplaylist_id`, `autoplaylist_repeat`, `intro_playlist_id`,
+  `outro_playlist_id`), Leser tolerant über `to_jsonb`, die
+  Befüllungs-Abfrage löst Instanz → Sendung auf. Manual CALENDAR §3 +
+  AUTOLOADING_PLAYLISTS ×4, ARCHITECTURE §23.85. Migration offen
+  (Operator-Backup + Go). Commit `TBD`.
+
 - **Alarme per E-Mail (SMTP) und Telegram, Stufe 1 (2026-11-03, Go 2026-11-03)** —
   Settings → Alerts (Admins): Hauptschalter, Dead-Air-Schwelle, Erinnerung,
   Dienste, Preflight, SMTP (STARTTLS/SSL/keine, Anmeldung, Passwort nur

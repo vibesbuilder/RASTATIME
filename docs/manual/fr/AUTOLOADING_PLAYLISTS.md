@@ -94,6 +94,13 @@ l'attachement à son prochain poll (par défaut toutes les
 > ne remplit alors que le temps restant.  Détails dans
 > [Calendrier](./CALENDAR.md) § 4 « Rediffusion d'une autre émission ».
 
+> **Chargement automatique par épisode (depuis le 2026-11-03).**
+> « Modifier l'instance » peut donner à un épisode sa propre playlist,
+> son intro, son outro ou la répétition, ou aucun chargement
+> automatique ; décochez **Use the show's autoloading settings** dans
+> la section Autoloading Playlist.  Seulement avant le build (environ une
+> heure avant le début) - voir [Calendrier](./CALENDAR.md) § 3.
+
 ## 3. La cadence de build de 60 secondes
 
 Le builder d'autoplaylist tourne toutes les 60 secondes.

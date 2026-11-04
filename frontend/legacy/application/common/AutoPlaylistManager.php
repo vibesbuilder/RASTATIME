@@ -61,7 +61,10 @@ class AutoPlaylistManager
         foreach ($autoPlaylists as $autoplaylist) {
             // creates a ShowInstance object to build the playlist in from the ShowInstancesQuery Object
             $si = new Application_Model_ShowInstance($autoplaylist->getDbId());
-            $playlistid = $si->GetAutoPlaylistId();
+            // RASTATIME 2026-11-03 - autoloading per episode: the instance's
+            // own settings (Edit Instance) or the show's
+            $eff = self::effectiveAutoloading((int) $autoplaylist->getDbId());
+            $playlistid = $eff['auto'];
 
             // RASTATIME 2026-06-07 — Song Requests: a show whose autoload
             // playlist contains a "use requests" smart block is a REQUEST
@@ -82,14 +85,8 @@ class AutoPlaylistManager
             // intro at the start, outro at the end, the autoloading playlist
             // in between against the REAL layout time - never beyond the
             // show's end, the last row at most FILL_TOLERANCE_SECS before it.
-            $sid = $si->getShowId();
-            $show = new Application_Model_Show($sid);
-            $introplaylistid = $show->getHasOverrideIntroPlaylist()
-                ? $show->getIntroPlaylistId()
-                : Application_Model_Preference::GetIntroPlaylist();
-            $outroplaylistid = $show->getHasOverrideOutroPlaylist()
-                ? $show->getOutroPlaylistId()
-                : Application_Model_Preference::GetOutroPlaylist();
+            $introplaylistid = $eff['intro'];
+            $outroplaylistid = $eff['outro'];
 
             try {
                 self::fillInstance(
@@ -97,7 +94,7 @@ class AutoPlaylistManager
                     $introplaylistid ?: null,
                     $outroplaylistid ?: null,
                     $playlistid ?: null,
-                    (bool) $show->getAutoPlaylistRepeat()
+                    (bool) $eff['repeat']
                 );
             } catch (Throwable $e) {
                 Logging::warn(
@@ -1145,20 +1142,162 @@ class AutoPlaylistManager
      */
     protected static function _upcomingAutoPlaylistShows()
     {
-        // setting now so that past shows aren't referenced
-        $now = new DateTime('now', new DateTimeZone('UTC'));
-        // only build playlists for shows that start up to an hour from now
-        $future = clone $now;
-        $future->add(new DateInterval('PT1H'));
+        // RASTATIME 2026-11-03 - autoloading per episode: an instance with its
+        // own settings counts by them (autoplaylist_override, migration 0078),
+        // every other by its show.  The columns are read through to_jsonb so
+        // the query works before the migration ran.
+        $rows = Application_Common_Database::prepareAndExecute(
+            "SELECT i.id
+               FROM cc_show_instances i
+               JOIN cc_show s ON s.id = i.show_id
+              WHERE i.modified_instance = FALSE
+                AND i.autoplaylist_built = FALSE
+                AND i.starts > (now() AT TIME ZONE 'UTC')
+                AND i.starts < (now() AT TIME ZONE 'UTC') + INTERVAL '1 hour'
+                AND CASE WHEN COALESCE((to_jsonb(i) ->> 'autoplaylist_override')::boolean, FALSE)
+                         THEN (to_jsonb(i) ->> 'autoplaylist_id') IS NOT NULL
+                         ELSE s.has_autoplaylist END
+              ORDER BY i.starts",
+            [],
+            'all'
+        );
+        $ids = array_map(fn ($r) => (int) $r['id'], $rows);
+        if (!$ids) {
+            return [];
+        }
 
-        return CcShowInstancesQuery::create()
-            ->filterByDbModifiedInstance(false)
-            ->filterByDbStarts($now, Criteria::GREATER_THAN)
-            ->filterByDbStarts($future, Criteria::LESS_THAN)
-            ->useCcShowQuery('a', 'left join')
-            ->filterByDbHasAutoPlaylist(true)
-            ->endUse()
-            ->filterByDbAutoPlaylistBuilt(false)
-            ->find();
+        return CcShowInstancesQuery::create()->findPks($ids);
+    }
+
+    // ------------------------------------------------------------------
+    // RASTATIME 2026-11-03 - autoloading per episode (Edit Instance,
+    // migration 0078; raw SQL, Propel not regenerated)
+    // ------------------------------------------------------------------
+
+    private static $instanceColumnsReady;
+
+    /** True once migration 0078 added cc_show_instances.autoplaylist_override. */
+    public static function instanceColumnsReady(): bool
+    {
+        if (self::$instanceColumnsReady === null) {
+            try {
+                $row = Application_Common_Database::prepareAndExecute(
+                    "SELECT 1 AS ok FROM information_schema.columns WHERE table_name = 'cc_show_instances' AND column_name = 'autoplaylist_override'",
+                    [],
+                    Application_Common_Database::SINGLE
+                );
+                self::$instanceColumnsReady = !empty($row);
+            } catch (Exception $e) {
+                self::$instanceColumnsReady = false;
+            }
+        }
+
+        return self::$instanceColumnsReady;
+    }
+
+    /**
+     * The instance's own autoloading settings, or null when it follows the
+     * show: ['override' => bool, 'auto' => ?int, 'repeat' => bool,
+     * 'intro' => ?int, 'outro' => ?int, 'built' => bool].
+     */
+    public static function instanceOverride(int $instanceId): ?array
+    {
+        $row = Application_Common_Database::prepareAndExecute(
+            'SELECT to_jsonb(i) AS j FROM cc_show_instances i WHERE i.id = :id',
+            [':id' => $instanceId],
+            Application_Common_Database::SINGLE
+        );
+        if (!$row) {
+            return null;
+        }
+        $j = json_decode((string) $row['j'], true) ?: [];
+        $pg = fn ($v) => $v === true || $v === 't' || $v === 1 || $v === '1' || $v === 'true';
+
+        return [
+            'override' => $pg($j['autoplaylist_override'] ?? false),
+            'auto' => isset($j['autoplaylist_id']) && $j['autoplaylist_id'] !== null ? (int) $j['autoplaylist_id'] : null,
+            'repeat' => $pg($j['autoplaylist_repeat'] ?? false),
+            'intro' => isset($j['intro_playlist_id']) && $j['intro_playlist_id'] !== null ? (int) $j['intro_playlist_id'] : null,
+            'outro' => isset($j['outro_playlist_id']) && $j['outro_playlist_id'] !== null ? (int) $j['outro_playlist_id'] : null,
+            'built' => $pg($j['autoplaylist_built'] ?? false),
+        ];
+    }
+
+    /**
+     * What the build uses for an instance: its own settings when
+     * overridden, else the show's (intro / outro fall back to the station
+     * defaults).  Keys auto, repeat, intro, outro.
+     */
+    public static function effectiveAutoloading(int $instanceId): array
+    {
+        $ov = self::instanceOverride($instanceId);
+        if ($ov !== null && $ov['override']) {
+            return [
+                'auto' => $ov['auto'],
+                'repeat' => $ov['repeat'],
+                'intro' => $ov['intro'] ?: (Application_Model_Preference::GetIntroPlaylist() ?: null),
+                'outro' => $ov['outro'] ?: (Application_Model_Preference::GetOutroPlaylist() ?: null),
+            ];
+        }
+        $si = new Application_Model_ShowInstance($instanceId);
+        $show = new Application_Model_Show($si->getShowId());
+
+        return [
+            'auto' => $show->getHasAutoPlaylist() ? ($si->GetAutoPlaylistId() ?: null) : null,
+            'repeat' => (bool) $show->getAutoPlaylistRepeat(),
+            'intro' => ($show->getHasOverrideIntroPlaylist() ? $show->getIntroPlaylistId() : Application_Model_Preference::GetIntroPlaylist()) ?: null,
+            'outro' => ($show->getHasOverrideOutroPlaylist() ? $show->getOutroPlaylistId() : Application_Model_Preference::GetOutroPlaylist()) ?: null,
+        ];
+    }
+
+    /**
+     * Store the Edit-Instance form: inherit (= follow the show) or the
+     * instance's own settings.  Nothing happens once the instance is built
+     * (operator rule "only before the fill") or before migration 0078.
+     * Returns true when something was written.
+     */
+    public static function saveInstanceOverride(int $instanceId, array $data): bool
+    {
+        if (!self::instanceColumnsReady()) {
+            return false;
+        }
+        $ov = self::instanceOverride($instanceId);
+        if ($ov === null) {
+            return false;
+        }
+        if ($ov['built']) {
+            Logging::info("AutoPlaylistManager: instance {$instanceId} is already filled - autoloading settings of the form ignored");
+
+            return false;
+        }
+        $inherit = !array_key_exists('add_show_autoplaylist_inherit', $data) || (string) $data['add_show_autoplaylist_inherit'] === '1';
+        if ($inherit) {
+            Application_Common_Database::prepareAndExecute(
+                'UPDATE cc_show_instances SET autoplaylist_override = FALSE WHERE id = :id',
+                [':id' => $instanceId],
+                Application_Common_Database::EXECUTE
+            );
+
+            return true;
+        }
+        $has = !empty($data['add_show_has_autoplaylist']);
+        $auto = $has && !empty($data['add_show_autoplaylist_id']) ? (int) $data['add_show_autoplaylist_id'] : null;
+        $intro = !empty($data['add_show_intro_playlist_id']) ? (int) $data['add_show_intro_playlist_id'] : null;
+        $outro = !empty($data['add_show_outro_playlist_id']) ? (int) $data['add_show_outro_playlist_id'] : null;
+        $repeat = !empty($data['add_show_autoplaylist_repeat']) ? 'TRUE' : 'FALSE';
+        Application_Common_Database::prepareAndExecute(
+            "UPDATE cc_show_instances
+                SET autoplaylist_override = TRUE,
+                    autoplaylist_id = " . ($auto ? ':auto' : 'NULL') . ",
+                    autoplaylist_repeat = {$repeat},
+                    intro_playlist_id = " . ($intro ? ':intro' : 'NULL') . ",
+                    outro_playlist_id = " . ($outro ? ':outro' : 'NULL') . "
+              WHERE id = :id",
+            array_filter([':auto' => $auto, ':intro' => $intro, ':outro' => $outro, ':id' => $instanceId], fn ($v) => $v !== null),
+            Application_Common_Database::EXECUTE
+        );
+        Logging::info("AutoPlaylistManager: instance {$instanceId} got its own autoloading settings (auto=" . ($auto ?: 'none') . ")");
+
+        return true;
     }
 }

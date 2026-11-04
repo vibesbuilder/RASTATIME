@@ -5962,3 +5962,9 @@ div.dt-button-collection .dt-button > span {
 .rt-alerts-actions {
     margin-top: 12px;
 }
+
+/* RASTATIME 2026-11-03 - "Edit Instance": autoloading per episode */
+#add_show_autoplaylist_instance_block .rt-instance-note {
+    color: #8a8a8a;
+    margin: 4px 0 8px;
+}

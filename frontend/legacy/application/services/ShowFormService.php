@@ -112,7 +112,9 @@ class Application_Service_ShowFormService
         // description is edited in the calendar's "Archive Online" dialog only;
         // ShowService keeps the stored text when the field is absent
         $forms['what']->removeElement('add_show_instance_description');
-        $forms['autoplaylist']->disable();
+        // RASTATIME 2026-11-03 - autoloading per episode (operator go, rule
+        // "only before the fill"): the section stays editable for an instance
+        $this->populateInstanceFormAutoPlaylist($forms['autoplaylist']);
         $forms['repeats']->disable();
         $forms['who']->disable();
         $forms['style']->disable();
@@ -167,6 +169,36 @@ class Application_Service_ShowFormService
                 'add_show_own_production' => Application_Service_YearlyReportService::ownProduction($this->ccShow->getDbId()) ? 1 : 0,
             ]
         );
+    }
+
+    /**
+     * RASTATIME 2026-11-03 - "Edit Instance": the show's values, overlaid by
+     * the instance's own settings when it has any; "Repeat of show" stays
+     * show-level; a filled instance is read-only with a note.
+     */
+    private function populateInstanceFormAutoPlaylist($form)
+    {
+        $this->populateFormAutoPlaylist($form);
+        $form->setAttrib('rtInstanceEdit', 1);
+        $form->getElement('add_show_repeat_of')->setAttrib('disabled', 'disabled');
+        $ov = AutoPlaylistManager::instanceOverride((int) $this->instanceId);
+        $inherit = $form->getElement('add_show_autoplaylist_inherit');
+        if ($ov !== null && $ov['override']) {
+            $inherit->setChecked(false);
+            $form->populate([
+                'add_show_has_autoplaylist' => $ov['auto'] ? 1 : 0,
+                'add_show_autoplaylist_id' => $ov['auto'] ?: '',
+                'add_show_autoplaylist_repeat' => $ov['repeat'] ? 1 : 0,
+                'add_show_intro_playlist_id' => $ov['intro'] ?: 0,
+                'add_show_outro_playlist_id' => $ov['outro'] ?: 0,
+            ]);
+        } else {
+            $inherit->setChecked(true);
+        }
+        if ($ov !== null && $ov['built']) {
+            $form->setAttrib('rtInstanceBuilt', 1);
+            $form->disable();
+        }
     }
 
     private function populateFormAutoPlaylist($form)

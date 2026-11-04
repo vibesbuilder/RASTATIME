@@ -234,6 +234,24 @@ action.
 
 ---
 
+### Ce que « Modifier l'instance » peut changer depuis le 2026-11-03 : le chargement automatique
+
+La section **Autoloading Playlist** du formulaire d'instance est
+modifiable.  **Use the show's autoloading settings** (coché par défaut)
+garde l'épisode sur la playlist, l'intro, l'outro et la répétition de
+l'émission.  Décochez-la et les champs ci-dessous ne s'appliquent qu'à
+cet épisode - une autre playlist, pas de chargement automatique, une
+autre intro ou outro.  **Repeat of show** reste un réglage de
+l'émission.
+
+La règle **« seulement avant le remplissage »** : le build de chargement
+automatique tourne environ une heure avant le début.  Une fois
+l'épisode rempli, la section affiche une note et ne peut plus être
+modifiée ; videz l'épisode dans le Show Builder et il est rempli à
+nouveau avec les réglages actuels.
+
+---
+
 ## 4. Émissions récurrentes
 
 Une émission récurrente est une définition avec plusieurs

@@ -233,6 +233,23 @@ Aktion.
 
 ---
 
+### Was „Instanz bearbeiten" seit 2026-11-03 ändern kann: das Autoloading
+
+Der Abschnitt **Autoloading Playlist** des Instanz-Formulars ist
+bearbeitbar.  **Use the show's autoloading settings** (vorangekreuzt)
+hält die Episode bei Playlist, Intro, Outro und Wiederholung der
+Sendung.  Abgewählt gelten die Felder darunter nur für diese Episode -
+eine andere Playlist, gar kein Autoloading, ein anderes Intro oder
+Outro.  **Repeat of show** bleibt eine Einstellung der Sendung.
+
+Die Regel **„nur vor der Befüllung"**: Die Autoloading-Befüllung läuft
+etwa eine Stunde vor dem Start.  Ist die Episode befüllt, zeigt der
+Abschnitt einen Hinweis und lässt sich nicht mehr ändern; leeren Sie die
+Episode im Show Builder, dann wird sie mit den aktuellen Einstellungen
+neu befüllt.
+
+---
+
 ## 4. Wiederkehrende Sendungen
 
 Eine wiederkehrende Sendung ist eine Definition mit vielen

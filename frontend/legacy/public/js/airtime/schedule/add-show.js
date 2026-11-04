@@ -331,6 +331,22 @@ function setAddShowEvents(form) {
     $("#add_show_playlist_dropdown").show();
   }
 
+  // RASTATIME 2026-11-03 - autoloading per episode ("Edit Instance"): while
+  // the episode follows the show, its autoloading fields are greyed out
+  var $inherit = form.find("#add_show_autoplaylist_instance_block #add_show_autoplaylist_inherit");
+  if ($inherit.length) {
+    var syncInherit = function () {
+      var on = $inherit.prop("checked");
+      form
+        .find(
+          "#add_show_has_autoplaylist, select#add_show_autoplaylist_id, input#add_show_autoplaylist_repeat, select#add_show_intro_playlist_id, select#add_show_outro_playlist_id",
+        )
+        .prop("disabled", on);
+    };
+    $inherit.on("change", syncInherit);
+    syncInherit();
+  }
+
   if (!form.find("#add_show_repeats").prop("checked")) {
     form.find("#schedule-show-when > fieldset:last").hide();
     $("#add_show_rebroadcast_relative").hide();

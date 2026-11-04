@@ -7801,3 +7801,12 @@ msgstr "Der Playout-Dienst antwortete mit HTTP %d."
 
 msgid "The test message could not be sent."
 msgstr "Die Testnachricht konnte nicht gesendet werden."
+
+msgid "Use the show's autoloading settings"
+msgstr "Autoloading-Einstellungen der Sendung verwenden"
+
+msgid "This episode is already filled; its autoloading settings can no longer be changed here. Clear the episode in the Show Builder to fill it again."
+msgstr "Diese Episode ist bereits befüllt; ihre Autoloading-Einstellungen lassen sich hier nicht mehr ändern. Leeren Sie die Episode im Show Builder, um sie neu zu befüllen."
+
+msgid "Ticked: this episode follows the show. Unticked: the fields below apply to this episode only, as long as it has not been filled yet (about an hour before it starts)."
+msgstr "Angekreuzt: diese Episode folgt der Sendung. Abgewählt: die Felder darunter gelten nur für diese Episode, solange sie noch nicht befüllt ist (etwa eine Stunde vor dem Start)."
