@@ -7,7 +7,7 @@
 > behandelt den **Rückspiegel** — was tatsächlich gesendet wurde
 > und wie viele Menschen dabei zugehört haben.
 
-Das Menü **Analytics** in der oberen Navigation bündelt sechs
+Das Menü **Analytics** in der oberen Navigation bündelt sieben
 Seiten:
 
 | Seite | Frage, die sie beantwortet |
@@ -16,8 +16,8 @@ Seiten:
 | **History Templates** | Welche Spalten soll das Sendeprotokoll aufzeichnen und exportieren? |
 | **Listener Stats** | Wie viele Hörer waren je Stream verbunden, im Zeitverlauf? |
 | **Show Listener Stats** | Wie hat jede *Sendung* bei den Hörerzahlen abgeschnitten? |
-| **Participants** (Teilnehmende) | Wie viele Menschen haben die Sendungen eines Jahres gemacht? Siehe [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03). |
-| **Yearly Report** (Jahresbericht) | Sendeminuten der Eigenproduktionen und die Übersicht der Teilnehmenden, je ein Jahr, CSV. Siehe § 5 (seit 2026-11-03). |
+| **People Involved** (Teilnehmende) | Wie viele Menschen haben die Eigenproduktionen des Senders in einem Jahr gemacht? Siehe § 6 und [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03, eigener Menüeintrag seit 2026-11-04). |
+| **Programme Minutes** (Sendeminuten) | Wie viele Minuten Eigenproduktion liefen in einem Jahr auf Sendung? Je ein Jahr, CSV. Siehe § 5 (seit 2026-11-03; bis 2026-11-04 Teil des „Jahresberichts"). |
 | **Archive Status** (Archiv-Status) | Ist jede Episode auf cba.media angekommen? Laufende und wartende Uploads, was das automatische Archivieren vor sich hat, Probleme, Verlauf, CSV. Siehe [Archivierung](./ARCHIVING.md) § 7 (seit 2026-11-04). |
 
 Die ersten beiden existieren für die **Rechenschaftspflicht** —
@@ -163,15 +163,18 @@ selben Sendeplatz.
 > falten, die für das Zeitfenster der Sendung in
 > `cc_listener_count` existieren.
 
-## 5. Jahresbericht (seit 2026-11-03)
+## 5. Sendeminuten (seit 2026-11-03)
 
-**Analytics → Yearly Report** sammelt die Zahlen für die jährliche
-Meldung an die Behörden auf einer Seite, mit einer Jahresauswahl
-(Senderzeit; das laufende Jahr bis heute).
+Die Zahlen für die jährliche Meldung an die Behörden stehen auf zwei
+Seiten, jede mit einer Jahresauswahl (Senderzeit; das laufende Jahr bis
+heute): **Analytics → Programme Minutes** (Sendeminuten, dieser
+Abschnitt) und **Analytics → People Involved** (Teilnehmende, § 6).  Bis
+2026-11-04 waren beide eine Seite, der „Jahresbericht" (Yearly Report).
 
-**Sendeminuten.**  Kreuzen Sie **Own production** (Eigenproduktion) in
-einer Sendung an (Edit Show → What; einmalig oder wiederholend, Vorlagen
-und Import/Export tragen es als `own_production`).  Die Seite zählt die
+Kreuzen Sie **Own production** (Eigenproduktion) in einer Sendung an
+(Edit Show → What; das Hilfe-Symbol daneben erklärt es kurz; einmalig
+oder wiederholend, Vorlagen und Import/Export tragen es als
+`own_production`).  Die Seite zählt die
 Episoden markierter Sendungen, die im Jahr gesendet wurden - beendet,
 nicht gelöscht, keine alte Rebroadcast-Instanz - mit ihrer **geplanten**
 Dauer, je Sendung und Monat auf Minuten gerundet.  Sendungen, die als
@@ -183,9 +186,21 @@ Sendungen ohne Häkchen erscheinen ausgegraut mit ihren Minuten unter
 Eine Monatstabelle und **Download CSV (minutes)** (je Sendung, Summen,
 je Monat) runden den Abschnitt ab.
 
-**Teilnehmende.**  Dieselben Zahlen wie [Archivierung](./ARCHIVING.md)
-§ 6 (Beteiligte je Sendung, Episoden mit eigenem Wert, Beteiligungen),
-mit Links zum Filter „Sendungen ohne Wert" und zum
-Teilnehmenden-CSV.
+Program Managers und Admins öffnen diese Seite.
+
+## 6. Teilnehmende (seit 2026-11-03)
+
+**Analytics → People Involved** (Teilnehmende) zählt die Menschen, die
+die **Eigenproduktionen** des Senders in einem Jahr gemacht haben: je
+Sendung ihre **Number of involved people** (Anzahl Teilnehmende; Edit
+Show → What, unter **Own production**; das Feld erscheint, sobald das
+Kästchen angekreuzt ist), wie viele Episoden einen eigenen Wert haben
+(Archive Online bzw. Online archivieren im Kalender) und die Teilnahmen
+(die Menschen aller Episoden zusammengezählt).  Nur Sendungen mit **Own
+production** zählen - eine Sendung ohne Häkchen behält ihre Zahl, bleibt
+aber außen vor, bis sie wieder angekreuzt ist.  **Only shows without a
+value** (Nur Sendungen ohne Wert) und **Download CSV** (CSV
+herunterladen) helfen bei der Jahresmeldung.  Die Einzelheiten stehen in
+[Archivierung](./ARCHIVING.md) § 6.
 
 Program Managers und Admins öffnen diese Seite.

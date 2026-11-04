@@ -1,10 +1,11 @@
 <?php
 
 /**
- * RASTATIME 2026-11-03 - Analytics -> Yearly Report (operator go 2026-11-03):
- * programme minutes of the own productions and the participants overview of
- * the archiving module on one page with one year selector.  Program
- * Managers and Admins (ACL resource 'yearlyreport').
+ * RASTATIME 2026-11-03 - Analytics -> Programme Minutes (operator go
+ * 2026-11-03): the minutes of the own productions per year.  Until
+ * 2026-11-04 the "Yearly Report" with the participants overview, which is
+ * its own menu entry now (Analytics -> People Involved, archiving/
+ * participants).  Program Managers and Admins (ACL resource 'yearlyreport').
  */
 class YearlyreportController extends Zend_Controller_Action
 {
@@ -24,8 +25,6 @@ class YearlyreportController extends Zend_Controller_Action
         $this->view->years = Application_Service_YearlyReportService::years();
         $this->view->year = $year;
         $this->view->minutes = Application_Service_YearlyReportService::minutesReport($year);
-        $this->view->participants = Application_Service_ArchivingService::participantsReport($year);
-        $this->view->archivingReady = Application_Service_ArchivingService::tablesReady();
         $this->view->columnReady = Application_Service_YearlyReportService::columnReady();
         $this->view->isCurrentYear = $year === (int) (new DateTime('now', $tz))->format('Y');
         $this->view->today = (new DateTime('now', $tz))->format('Y-m-d');

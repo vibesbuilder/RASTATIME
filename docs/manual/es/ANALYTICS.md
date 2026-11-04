@@ -7,7 +7,7 @@
 > **espejo retrovisor** — qué salió realmente al aire y cuántas
 > personas escuchaban mientras tanto.
 
-El menú **Analytics** de la barra de navegación agrupa seis
+El menú **Analytics** de la barra de navegación agrupa siete
 páginas:
 
 | Página | Pregunta que responde |
@@ -16,8 +16,8 @@ páginas:
 | **History Templates** | ¿Qué columnas debe registrar y exportar el registro de emisión? |
 | **Listener Stats** | ¿Cuántos oyentes estaban conectados a cada flujo, a lo largo del tiempo? |
 | **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
-| **Participants** (Participantes) | ¿Cuántas personas hicieron los programas de un año? Véase [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03). |
-| **Yearly Report** (informe anual) | Minutos de programa de las producciones propias y resumen de participantes, un año cada vez, CSV. Véase § 5 (desde 2026-11-03). |
+| **People Involved** (Participantes) | ¿Cuántas personas hicieron las producciones propias de la emisora en un año? Véase § 6 y [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03, entrada de menú propia desde el 2026-11-04). |
+| **Programme Minutes** (Minutos de programa) | ¿Cuántos minutos de producciones propias salieron al aire en un año? Un año cada vez, CSV. Véase § 5 (desde el 2026-11-03; hasta el 2026-11-04 parte del «Yearly Report», el informe anual). |
 | **Archive Status** (estado del archivo) | ¿Llegó cada episodio a cba.media? Subidas en curso y en espera, lo que tiene por delante el archivo automático, problemas, historial, CSV. Véase [Archivo](./ARCHIVING.md) § 7 (desde el 2026-11-04). |
 
 Las dos primeras existen para la **rendición de cuentas** —
@@ -164,15 +164,19 @@ misma franja.
 > plegar los puntos de datos que existan en `cc_listener_count`
 > para la ventana horaria del programa.
 
-## 5. Informe anual (desde 2026-11-03)
+## 5. Minutos de programa (desde 2026-11-03)
 
-**Analytics → Yearly Report** reúne en una página las cifras del informe
-anual a las autoridades, con un selector de año (hora de la emisora; el
-año en curso hasta hoy).
+Las cifras del informe anual a las autoridades están en dos páginas,
+cada una con un selector de año (hora de la emisora; el año en curso
+hasta hoy): **Analytics → Programme Minutes** (Minutos de programa, esta
+sección) y **Analytics → People Involved** (Participantes, § 6).  Hasta
+el 2026-11-04 ambas eran una sola página, el «Yearly Report» (informe
+anual).
 
-**Minutos de programa.**  Marque **Own production** (producción propia)
-en un programa (Edit Show → What; único o recurrente; las plantillas y
-el Import/Export lo llevan como `own_production`).  La página cuenta los
+Marque **Own production** (producción propia) en un programa (Edit Show
+→ What; el icono de ayuda junto a la casilla la explica en breve; único
+o recurrente; las plantillas y el Import/Export lo llevan como
+`own_production`).  La página cuenta los
 episodios de los programas marcados emitidos en el año - terminados, no
 borrados, sin retransmisión antigua - con su duración **programada**,
 redondeada a minutos por programa y mes.  Los programas configurados
@@ -183,9 +187,21 @@ aparecen en gris con sus minutos bajo «otros programas (no contados)»
 para ver qué queda fuera.  Una tabla por mes y **Download CSV (minutes)**
 (por programa, totales, por mes) completan la sección.
 
-**Participantes.**  Las mismas cifras que [Archivado](./ARCHIVING.md)
-§ 6 (personas implicadas por programa, episodios con valor propio,
-participaciones), con enlaces al filtro «programas
-sin valor» y al CSV de participantes.
+Program Managers y Admins abren esta página.
+
+## 6. Participantes (desde 2026-11-03)
+
+**Analytics → People Involved** (Participantes) cuenta las personas que
+hicieron las **producciones propias** de la emisora en un año: por
+programa su **Number of involved people** (número de participantes;
+Edit Show → What, debajo de **Own production**; el campo aparece en
+cuanto se marca la casilla), cuántos episodios tienen un valor propio
+(Archive Online, «Archivar en línea», en el calendario) y las
+participaciones (las personas de cada episodio sumadas).  Solo cuentan
+los programas con **Own production**: un programa sin la casilla
+conserva su número, pero queda fuera hasta que se vuelva a marcar.
+**Only shows without a value** (solo programas sin valor) y **Download
+CSV** (descargar CSV) ayudan con el informe anual.  Los detalles están
+en [Archivo](./ARCHIVING.md) § 6.
 
 Program Managers y Admins abren esta página.

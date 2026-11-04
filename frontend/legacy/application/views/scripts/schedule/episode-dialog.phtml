@@ -76,7 +76,7 @@ $T = [
 
             <div class="rt-episode-pair">
                 <div>
-                    <label for="episode_participants"><?php echo _("People involved"); ?><?php echo $tip(_("Only when this episode differs from the show, e.g. with guests. Counts in Analytics → Participants.")); ?></label>
+                    <label for="episode_participants"><?php echo _("People involved"); ?><?php echo $tip(_("Only when this episode differs from the show, e.g. with guests. Counts in Analytics → People Involved (own productions).")); ?></label>
                     <input type="text" id="episode_participants" class="input_text rt-episode-short" maxlength="3" value="<?php echo $e['participants'] === null ? '' : (int) $e['participants']; ?>"
                            placeholder="<?php echo $e['show_participants'] === null ? '' : (int) $e['show_participants']; ?>"<?php echo $dis; ?> />
                     <span class="rt-episode-hint"><?php echo $e['show_participants'] === null

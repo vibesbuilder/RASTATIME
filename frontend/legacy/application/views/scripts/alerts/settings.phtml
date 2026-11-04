@@ -1,6 +1,8 @@
 <?php
 // RASTATIME 2026-11-03 - Settings → Alerts: e-mail (SMTP) and Telegram alerts
 // for dead air, services down and pre-flight warnings (stage 1).
+// 2026-11-04 (operator): one switch per channel at the top of its block,
+// the channel's fields show while it is ticked; no master switch.
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $v = $this->values;
 $e = $this->errors;
@@ -26,10 +28,6 @@ $on = fn ($k) => in_array($v[$k], ['true', '1', 't'], true) ? ' checked="checked
         <fieldset class="padded stream-setting-global">
             <legend><?php echo _("General"); ?></legend>
             <dl class="zend_form">
-                <dt><label for="alerts_enabled"><?php echo _("Send alerts"); ?></label></dt>
-                <dd><input type="checkbox" id="alerts_enabled" name="alerts_enabled" value="1"<?php echo $on('alerts_enabled'); ?> />
-                    <span class="rt-alerts-hint"><?php echo _("Master switch. Off: nothing is sent, the state is still tracked."); ?></span></dd>
-
                 <dt><label for="alerts_dead_air_seconds"><?php echo _("Dead air after (seconds)"); ?></label></dt>
                 <dd><input type="text" id="alerts_dead_air_seconds" name="alerts_dead_air_seconds" class="input_text" style="width: 6em;" value="<?php echo $h($v['alerts_dead_air_seconds']); ?>" />
                     <?php echo $err('alerts_dead_air_seconds'); ?>
@@ -53,6 +51,11 @@ $on = fn ($k) => in_array($v[$k], ['true', '1', 't'], true) ? ' checked="checked
         <fieldset class="padded stream-setting-global">
             <legend><?php echo _("E-mail (SMTP)"); ?></legend>
             <dl class="zend_form">
+                <dt><label for="alerts_mail_enabled"><?php echo _("Send alerts by e-mail"); ?></label></dt>
+                <dd><input type="checkbox" id="alerts_mail_enabled" name="alerts_mail_enabled" value="1" class="rt-alerts-switch"<?php echo $on('alerts_mail_enabled'); ?> />
+                    <?php echo $err('alerts_mail_enabled'); ?></dd>
+            </dl>
+            <dl class="zend_form rt-alerts-channel" data-switch="alerts_mail_enabled">
                 <dt><label for="alerts_smtp_host"><?php echo _("SMTP server"); ?></label></dt>
                 <dd><input type="text" id="alerts_smtp_host" name="alerts_smtp_host" class="input_text" style="width: 20em;" value="<?php echo $h($v['alerts_smtp_host']); ?>" />
                     <?php echo $err('alerts_smtp_host'); ?></dd>
@@ -96,6 +99,11 @@ $on = fn ($k) => in_array($v[$k], ['true', '1', 't'], true) ? ' checked="checked
         <fieldset class="padded stream-setting-global">
             <legend><?php echo _("Telegram"); ?></legend>
             <dl class="zend_form">
+                <dt><label for="alerts_telegram_enabled"><?php echo _("Send alerts by Telegram"); ?></label></dt>
+                <dd><input type="checkbox" id="alerts_telegram_enabled" name="alerts_telegram_enabled" value="1" class="rt-alerts-switch"<?php echo $on('alerts_telegram_enabled'); ?> />
+                    <?php echo $err('alerts_telegram_enabled'); ?></dd>
+            </dl>
+            <dl class="zend_form rt-alerts-channel" data-switch="alerts_telegram_enabled">
                 <dt><label for="alerts_telegram_token"><?php echo _("Bot token"); ?></label></dt>
                 <dd><input type="password" id="alerts_telegram_token" name="alerts_telegram_token" class="input_text" style="width: 28em;" value="" autocomplete="new-password" />
                     <?php echo $err('alerts_telegram_token'); ?>
@@ -120,6 +128,15 @@ $on = fn ($k) => in_array($v[$k], ['true', '1', 't'], true) ? ' checked="checked
 </div>
 <script>
 (function ($) {
+    // a channel's fields only while its switch is on (or while one of them was refused)
+    function syncChannels() {
+        $(".rt-alerts-channel").each(function () {
+            $(this).toggle($("#" + $(this).data("switch")).prop("checked") || $(this).find(".rt-alerts-error").length > 0);
+        });
+    }
+    $(".rt-alerts-switch").on("change", syncChannels);
+    syncChannels();
+
     $(".rt-alerts-test").on("click", function () {
         var channel = $(this).data("channel");
         var $msg = $(".rt-alerts-test-msg[data-channel='" + channel + "']");

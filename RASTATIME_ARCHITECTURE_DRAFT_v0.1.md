@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.117
+Draft version: 0.118
 Date: 2026-11-04
 
 > **Revision history**
+> - **0.118 (2026-11-04)** - **Operator cosmetics** (§23.87): the "Yearly Report" split into
+>   Analytics -> People Involved and Programme Minutes; the number of people involved moved
+>   from Archiving to What (below "Own production", shown while ticked) and counts for own
+>   productions only; Archiving read-only in Edit Instance; alerts with one switch per
+>   channel instead of the master switch.
 > - **0.117 (2026-11-04)** - **Archive status** (§23.86): Analytics -> Archive Status (uploads
 >   running and waiting, what the automatic archiving has ahead, open problems, history, CSV;
 >   cancel a waiting upload, archive again, link a post); "Editorial Teams" are called
@@ -8876,3 +8881,64 @@ upcoming / scheduled / waiting / excluded, a failed job moves the episode
 from "ahead" to "problems", a newer job or a linked post clears it),
 `archive_producer_label.php`; JS parsed in the browser; live page
 checked as admin.  Rollback: `git revert` (legacy live at once).
+
+### 23.87 Operator Cosmetics: Analytics Split, People in "What", Archiving in Edit Instance, Alert Channels (2026-11-04)
+
+Operator list of 2026-11-04 after the acceptance of §23.79-§23.86; the
+open points decided with the recommended options.
+
+**Analytics.**  The "Yearly Report" of §23.83 is split into two menu
+entries: **People Involved** (`archiving/participants`, ACL privilege
+`participants` of resource `archiving`, the page that existed for the
+"shows without a value" filter) and **Programme Minutes**
+(`yearlyreport/index`, only the minutes part).  No route changed, the
+CSVs stay.
+
+**People involved = own productions.**  The show field moved from the
+Archiving subform to `Application_Form_AddShowWhat`, right below
+`add_show_own_production`, label "Number of involved people", shown by
+`add-show.js` `syncOwnProduction()` while the box is ticked (or while the
+field carries a validation error).  Validation is a Zend `Regex`
+`^\d{1,3}$` on the element.  Storage stays
+`cc_show_archiving.participants`, written by the new
+`ArchivingService::saveParticipants()` (upsert of that column only);
+`saveShow()` no longer touches it.  A cleared tick keeps the value -
+`participantsReport()` filters `WHERE s.own_production` (every show while
+migration 0077 is missing), so it simply stops counting.  Both rows of
+What use `form/add-show-tip-row.phtml`: label, help icon from the
+element's description, the field.
+
+**Archiving in Edit Instance.**  The section is rendered for an
+instance too, populated with the show's values and disabled
+(`AddShowArchiving::disable()` sets `$readOnly`, the view shows a note
+pointing to Archive Online).  Disabled fields are not posted, so
+`ArchivingService::sectionPosted()` - "did `add_show_cba_status` come
+along" - replaces the old check on `add_show_participants` (which What
+now posts in Edit Instance as a read-only field).  The instance action
+never calls `saveArchiving()`; its failure path re-populates and
+disables the section too.  CSS: the archiving labels are not floated
+any more (narrow selects slid up beside the label and touched its help
+icon).
+
+**Alert channels.**  `cc_pref` keys `alerts_mail_enabled` and
+`alerts_telegram_enabled` replace the master switch in the UI.
+`rastatime_shared.alerts.settings_from_entries()`: a key never saved
+(empty) follows `alerts_enabled`, so settings from §23.84 keep working;
+`AlertSettings.enabled` = any channel on (the service/pre-flight checks
+run only then), `mail_active` / `telegram_active` = switch and set up,
+`_send()` uses them; the test message ignores the switches.  The legacy
+save writes `alerts_enabled` = any channel on for services still running
+the older code, refuses a switched-on channel that cannot send, and
+`load()` derives the switches for the form from the master switch and
+the channel's data until the first save.  The per-channel behaviour
+needs a PLAYOUT and API restart.
+
+**Verification.**  `C:/Temp/optd/show_form_cosmetics_probe.php` (What
+rows, Archiving without the field, Edit Instance read-only with the show
+values, validation 0-999; EN/DE/FR), `participants_save_probe.php`
+(rolled back: save paths, own productions only, value kept),
+`alerts_switch_probe.php` (rolled back: stored switches, refusals),
+`backend/shared/tests/alerts_test.py::test_channel_switches_2026_11_04`;
+live as admin: form (gaps measured), Edit Instance route, both
+Analytics pages, Alerts page.  Rollback: `git revert` (legacy live at
+once; the Python part after the restart).

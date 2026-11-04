@@ -103,10 +103,11 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Cuándo** | Fecha / hora de inicio, duración, fecha de fin, repeticiones, **¿Permitir inicio diferido?** (dejar que este programa empiece tarde cuando el anterior se sobrepasó — vea [Inicio diferido de programa](./DELAYED_START.md)). |
 | **Entrada Live Stream** | Permitir a presentadores remotos tomar el programa vía Show DJ. |
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
-| **Own production** (producción propia) | Marcar en las producciones propias de la emisora: los minutos emitidos del programa cuentan en Analytics → [Informe anual](./ANALYTICS.md) (desde 2026-11-03). |
+| **Own production** (producción propia) | Marcar en las producciones propias de la emisora: los minutos emitidos del programa cuentan en Analytics → [Minutos de programa](./ANALYTICS.md), sus personas en Analytics → Participantes (desde 2026-11-03).  Está en la sección **Qué** (*What* en la interfaz); el icono de ayuda junto a la casilla la explica en breve. |
+| **Number of involved people** (número de participantes) | Aparece debajo de **Own production** en cuanto se marca (desde 2026-11-04; antes en **Archivo** como *Participantes*): cuántas personas participan normalmente en un episodio, 0-999. Cuenta en Analytics → [Participantes](./ANALYTICS.md); un episodio concreto puede diferir (Archivar en línea). Quitar la casilla conserva el número; solo deja de contar. |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |
 | **Quién** | Presentadores adicionales. |
-| **Archivo** | Productor, participantes, cuenta de CBA, valores de cba.media y archivo automático del programa (no en Editar emisión). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
+| **Archivo** | Productor, cuenta de CBA, valores de cba.media y archivo automático del programa (de solo lectura en Editar instancia desde el 2026-11-04). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
 | **Estilo** | Color de fondo, color de texto, imagen de programa. |
 
 ### Por qué el formulario rechaza su guardado
@@ -155,6 +156,10 @@ acción.
   formulario Editar instancia.
 - No puede cambiar el inicio/fin de la instancia fuera
   del patrón de repetición del programa padre.
+- No puede cambiar la sección **Archivo**: muestra los valores
+  del programa de solo lectura (desde 2026-11-04).  La
+  descripción, la imagen y los participantes de este episodio
+  se editan en **Archivar en línea**.
 
 ---
 

@@ -283,14 +283,22 @@ pre-flight warning appears, and an all-clear when the problem is gone.
 
 | Field | Meaning |
 |---|---|
-| **Send alerts** | Master switch. |
 | **Dead air after (seconds)** | Silence on the broadcast bus (below -50 dB, the silence fallback included) for this long raises *Dead air*; audio back for 2 s clears it.  5 to 3600, default 30.  The threshold is compiled into the audio engine and applies with its next planned restart. |
 | **Reminder every (minutes)** | While a problem stays open; 0 = no reminders.  At most 20 messages per channel and hour. |
 | **Services** | Playout (watched by the API service), API, Apache, Icecast, Analyzer and Worker, checked once a minute; two misses in a row raise an alert. |
 | **Pre-flight warnings** | Every warning type of the dashboard banner raises an alert once and clears when it is gone. |
+| **Send alerts by e-mail** | Switches the e-mail channel on (since 2026-11-04; before, one master switch for both channels).  The fields of the channel appear while it is ticked; saving refuses it without a server, a sender and a recipient. |
 | **E-mail (SMTP)** | Server, port, encryption (STARTTLS, SSL/TLS, none), user name and password (login with authentication; the password is write-only), sender, comma-separated recipients.  The password-reset mail of the login page is not affected. |
+| **Send alerts by Telegram** | Switches the Telegram channel on (since 2026-11-04), its fields appear while it is ticked; saving refuses it without a bot token and a chat id. |
 | **Telegram** | Bot token from @BotFather (write-only) and comma-separated chat ids; the bot must be a member of the chat or group and have received one message.  A group id starts with a minus. |
 | **Send test e-mail / message** | After saving: a test message with the stored settings, sent by the playout service. |
+
+Both channels off: nothing is sent, the state is still tracked.  Settings
+saved before 2026-11-04 keep working: a channel counts as switched on
+while the old master switch was on and the channel is set up.  The
+playout and the API service read the per-channel switches after their
+next restart; until then they follow the old master switch, which is
+on while any channel is.
 
 Messages look like `[Station] ALERT: Dead air` with the time, the
 detail and the reporting service, `STILL OPEN` for reminders and `OK`

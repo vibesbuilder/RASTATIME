@@ -5,13 +5,19 @@
  * 2026-11-03): the settings of the e-mail (SMTP) and Telegram alerts in
  * cc_pref (keys alerts_*), read by the playout and the API service
  * (rastatime_shared.alerts), and the test messages through the playout's
- * HTTP listener (/alert-test).
+ * HTTP listener (/alert-test).  2026-11-04 (operator): one switch per
+ * channel (alerts_mail_enabled / alerts_telegram_enabled) instead of the
+ * master switch; alerts_enabled is still written as "any channel on" for
+ * services that run the older code until their restart.
  */
 class Application_Service_AlertService
 {
     /** key => default (strings as stored); mirrors rastatime_shared.alerts.DEFAULTS */
     public const DEFAULTS = [
         'alerts_enabled' => 'false',
+        // '' = not saved since 2026-11-04: load() derives it from alerts_enabled
+        'alerts_mail_enabled' => '',
+        'alerts_telegram_enabled' => '',
         'alerts_smtp_host' => '',
         'alerts_smtp_port' => '587',
         'alerts_smtp_security' => 'starttls',
@@ -40,6 +46,16 @@ class Application_Service_AlertService
             $v = Application_Model_Preference::getAlertSetting($key);
             $out[$key] = ($v === null || $v === '') ? $default : (string) $v;
         }
+        // before the per-channel switches: on = master switch on and the channel set up
+        $master = in_array($out['alerts_enabled'], ['true', '1', 't'], true);
+        if ($out['alerts_mail_enabled'] === '') {
+            $out['alerts_mail_enabled'] = $master && $out['alerts_smtp_host'] !== '' && $out['alerts_mail_from'] !== ''
+                && $out['alerts_mail_to'] !== '' ? 'true' : 'false';
+        }
+        if ($out['alerts_telegram_enabled'] === '') {
+            $out['alerts_telegram_enabled'] = $master && $out['alerts_telegram_token'] !== ''
+                && $out['alerts_telegram_chats'] !== '' ? 'true' : 'false';
+        }
         foreach (self::SECRETS as $key) {
             $out[$key . '_stored'] = $out[$key] !== '';
             $out[$key] = '';
@@ -57,7 +73,11 @@ class Application_Service_AlertService
     {
         $errors = [];
         $v = [];
-        $v['alerts_enabled'] = !empty($post['alerts_enabled']) ? 'true' : 'false';
+        $mailOn = !empty($post['alerts_mail_enabled']);
+        $telegramOn = !empty($post['alerts_telegram_enabled']);
+        $v['alerts_mail_enabled'] = $mailOn ? 'true' : 'false';
+        $v['alerts_telegram_enabled'] = $telegramOn ? 'true' : 'false';
+        $v['alerts_enabled'] = $mailOn || $telegramOn ? 'true' : 'false';
         $v['alerts_services'] = !empty($post['alerts_services']) ? 'true' : 'false';
         $v['alerts_preflight'] = !empty($post['alerts_preflight']) ? 'true' : 'false';
         $v['alerts_smtp_host'] = trim((string) ($post['alerts_smtp_host'] ?? ''));
@@ -108,13 +128,22 @@ class Application_Service_AlertService
                 $v[$key] = trim($val);
             }
         }
+        // a switched-on channel must be able to send
+        if ($mailOn && ($v['alerts_smtp_host'] === '' || $v['alerts_mail_from'] === '' || $v['alerts_mail_to'] === '')) {
+            $errors['alerts_mail_enabled'] = _('E-mail alerts need an SMTP server, a sender and at least one recipient.');
+        }
+        $tokenStored = (string) Application_Model_Preference::getAlertSetting('alerts_telegram_token') !== '';
+        if ($telegramOn && (($v['alerts_telegram_token'] ?? '') === '' && !$tokenStored || $v['alerts_telegram_chats'] === '')) {
+            $errors['alerts_telegram_enabled'] = _('Telegram alerts need a bot token and at least one chat id.');
+        }
         if ($errors) {
             return $errors;
         }
         foreach ($v as $key => $val) {
             Application_Model_Preference::setAlertSetting($key, $val);
         }
-        Logging::info('Alert settings saved (enabled=' . $v['alerts_enabled'] . ', smtp=' . ($v['alerts_smtp_host'] !== '' ? 'set' : 'empty')
+        Logging::info('Alert settings saved (mail=' . $v['alerts_mail_enabled'] . ', telegram=' . $v['alerts_telegram_enabled']
+            . ', smtp=' . ($v['alerts_smtp_host'] !== '' ? 'set' : 'empty')
             . ', telegram chats=' . ($v['alerts_telegram_chats'] !== '' ? 'set' : 'empty') . ')');
 
         return [];

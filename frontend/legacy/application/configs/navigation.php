@@ -299,11 +299,19 @@ $pages[] = [
             'resource' => 'showlistenerstat',
         ],
         [
-            // RASTATIME 2026-11-03 - yearly report: programme minutes of the own
-            // productions + the participants overview of the archiving module
-            // (Program Managers and Admins); archiving/participants stays
-            // reachable for the "shows without a value" filter
-            'label' => 'Yearly Report',
+            // RASTATIME 2026-11-04 - the "Yearly Report" of 2026-11-03 split in
+            // two entries (operator): the people involved in the own
+            // productions and their programme minutes (Program Managers and
+            // Admins)
+            'label' => 'People Involved',
+            'module' => 'default',
+            'controller' => 'archiving',
+            'action' => 'participants',
+            'resource' => 'archiving',
+            'privilege' => 'participants',
+        ],
+        [
+            'label' => 'Programme Minutes',
             'module' => 'default',
             'controller' => 'yearlyreport',
             'action' => 'index',

@@ -2,17 +2,21 @@
 
 /**
  * RASTATIME 2026-11-03 - archiving stage 1: the "Archiving" section of
- * the show form (editorial team, participants, CBA defaults).  Stored by
+ * the show form (producer, CBA defaults).  Stored by
  * Application_Service_ArchivingService::saveShow() in cc_show_archiving /
  * cc_show_editor_profile (migration 0074), not in cc_show.  Stage 2
  * (migration 0075): the CBA account the episodes are archived under, their
  * visibility, the topic as a list (when the worker has fetched it).
- * Stage 3 (migration 0076): "Archive automatically".
+ * Stage 3 (migration 0076): "Archive automatically".  2026-11-04: the
+ * number of people involved moved to What (below "Own production").
  */
 class Application_Form_AddShowArchiving extends Zend_Form_SubForm
 {
     /** "Y-m-d H:i" station time since when the show archives automatically, '' when off. */
     public $autoSinceLocal = '';
+
+    /** Edit Instance: the show's values, read-only (disable()). */
+    public $readOnly = false;
 
     public function init()
     {
@@ -28,11 +32,6 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
             ->setDecorators(['ViewHelper']);
         $this->addElement($profiles);
 
-        $this->addElement('text', 'add_show_participants', [
-            'label' => _('People involved'),
-            'class' => 'input_text',
-            'decorators' => ['ViewHelper'],
-        ]);
         $account = new Zend_Form_Element_Select('add_show_cba_account');
         $account->setLabel(_('CBA account'))
             ->setMultiOptions(Application_Service_ArchivingService::accountOptions())
@@ -114,7 +113,6 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
         $teams = Application_Service_ArchivingService::showProfiles($showId);
         $this->populate([
             'add_show_editor_profiles' => $teams ? (int) $teams[0]['id'] : 0,
-            'add_show_participants' => $s['participants'],
             'add_show_cba_series_id' => $s['cba_series_id'],
             'add_show_cba_license' => $s['license'],
             'add_show_cba_category_id' => $s['category_id'],
@@ -143,6 +141,7 @@ class Application_Form_AddShowArchiving extends Zend_Form_SubForm
 
     public function disable()
     {
+        $this->readOnly = true;
         foreach ($this->getElements() as $element) {
             if ($element->getType() != 'Zend_Form_Element_Hidden') {
                 $element->setAttrib('disabled', 'disabled');

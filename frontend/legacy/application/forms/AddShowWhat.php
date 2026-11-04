@@ -50,10 +50,28 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
         ]);
 
         // RASTATIME 2026-11-03 - yearly report: the station's own production
-        // (counted in Analytics -> Yearly Report -> Programme minutes)
+        // (counted in Analytics -> Programme Minutes and People Involved).
+        // 2026-11-04 (operator): help icon right of the label; the number of
+        // people involved moved here from Archiving and shows only while the
+        // box is ticked (add-show.js syncOwnProduction).  Stored in
+        // cc_show_archiving.participants (ArchivingService::saveParticipants).
         $this->addElement('checkbox', 'add_show_own_production', [
             'label' => _('Own production:'),
+            'description' => _('The station makes this show itself. Its aired minutes count in Analytics → Programme Minutes, its people in Analytics → People Involved.'),
             'required' => false,
+            'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-own-production']]],
+        ]);
+        $this->addElement('text', 'add_show_participants', [
+            'label' => _('Number of involved people:'),
+            'description' => _('How many people usually take part in an episode, counted in Analytics → People Involved. A single episode can differ: Archive Online in the calendar.'),
+            'class' => 'input_text',
+            'required' => false,
+            'filters' => ['StringTrim'],
+            'validators' => [['Regex', false, [
+                'pattern' => '/^\d{1,3}$/',
+                'messages' => [Zend_Validate_Regex::NOT_MATCH => _('Please enter a whole number between 0 and 999.')],
+            ]]],
+            'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-participants-row block-display']]],
         ]);
 
         // Add the description element

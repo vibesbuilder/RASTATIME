@@ -132,7 +132,7 @@ sie alle voraussetzen.
 | [Dashboard](./DASHBOARD.md) | Now-Playing-Widget, Quellenstatus, manuelle Übersteuerung, Station live über ein Mikrofon nehmen. |
 | [Kalender](./CALENDAR.md) | Sendungen erstellen, bearbeiten, Drag-and-Drop, wiederkehrende Sendungen, Wiederholungen, Hosts. |
 | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) | Sendungseinstellungen wiederverwenden, ohne sie jede Woche neu einzugeben. |
-| [Archivierung](./ARCHIVING.md) | Episoden auf cba.media archivieren: Produzenten und CBA-Konten (Einstellungen → Archivierung), die Archivierungs-Vorgaben einer Sendung, Titel, Teaser und Bild je Episode, „Online archivieren“ aus dem Kalender, die jährliche Übersicht der Teilnehmenden und die Seite Archiv-Status. |
+| [Archivierung](./ARCHIVING.md) | Episoden auf cba.media archivieren: Produzenten und CBA-Konten (Einstellungen → Archivierung), die Archivierungs-Vorgaben einer Sendung, Titel, Teaser und Bild je Episode, „Online archivieren“ aus dem Kalender, die Teilnehmenden je Eigenproduktion und die Seite Archiv-Status. |
 | [Import / Export](./IMPORT_EXPORT.md) | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON exportieren, in der Tabelle pflegen und mit Vorschau wieder importieren. |
 | [Verzögerter Sendungsstart](./DELAYED_START.md) | Eine freigeschaltete Sendung später beginnen lassen, wenn die Sendung davor überzogen hat, statt diese abzuschneiden. Die Verzögerung pflanzt sich über aufeinanderfolgende freigeschaltete Sendungen bis zum ersten zeitgebundenen Anker fort. |
 
@@ -161,7 +161,7 @@ sie alle voraussetzen.
 | Kapitel | Inhalt |
 |---|---|
 | [Streams](./STREAMS.md) | Bis zu vier Output-Streams konfigurieren, Hörerzahlen überwachen, Fehlerbehebung. |
-| [Analytics](./ANALYTICS.md) | Playout History (was tatsächlich lief, exportierbare Sendeprotokolle), History Templates, Listener Stats (Publikum pro Stream und pro Sendung im Zeitverlauf). |
+| [Analytics](./ANALYTICS.md) | Playout History (was tatsächlich lief, exportierbare Sendeprotokolle), History Templates, Listener Stats (Publikum pro Stream und pro Sendung im Zeitverlauf), Teilnehmende und Sendeminuten der Eigenproduktionen (Jahresmeldung), Archiv-Status. |
 | [Lokale Maschine](./LOCAL_MACHINE.md) | Soundkarten-Ausgang, Line-In-Eingang, Importformat (verlustfrei zu MP3), lokaler Import-Ordner. |
 | [Backup](./BACKUP.md) | Sicherungen von Datenbank + Konfiguration per Klick in einen gewählten Ordner; Download; der dokumentierte Wiederherstellungsweg. |
 | [Öffentliche Embed-Widgets](./WIDGETS.md) | Drop-in-Widgets für die öffentliche Website Ihrer Station (Now Playing — Show / Track, Weekly Program, Player). |

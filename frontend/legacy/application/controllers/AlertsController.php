@@ -43,7 +43,7 @@ class AlertsController extends Zend_Controller_Action
                     $values[$k] = is_array($v) ? '' : (string) $v;
                 }
             }
-            foreach (['alerts_enabled', 'alerts_services', 'alerts_preflight'] as $k) {
+            foreach (['alerts_mail_enabled', 'alerts_telegram_enabled', 'alerts_services', 'alerts_preflight'] as $k) {
                 $values[$k] = !empty($request->getPost($k)) ? 'true' : 'false';
             }
         }

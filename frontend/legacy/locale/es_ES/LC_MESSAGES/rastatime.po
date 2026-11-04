@@ -8159,3 +8159,42 @@ msgstr "Puede que la entrada ya exista en cba.media. Compruébelo primero y vinc
 
 msgid "Number of the post on cba.media (or its address with ?p=<number>):"
 msgstr "Número de la entrada en cba.media (o su dirección con ?p=<número>):"
+
+msgid "The station makes this show itself. Its aired minutes count in Analytics → Programme Minutes, its people in Analytics → People Involved."
+msgstr "La emisora produce este programa ella misma. Sus minutos emitidos cuentan en Estadísticas → Minutos de programa, sus participantes en Estadísticas → Participantes."
+
+msgid "Number of involved people:"
+msgstr "Número de participantes:"
+
+msgid "How many people usually take part in an episode, counted in Analytics → People Involved. A single episode can differ: Archive Online in the calendar."
+msgstr "Cuántas personas participan normalmente en un episodio, contado en Estadísticas → Participantes. Un episodio puede diferir: Archivar en línea en el calendario."
+
+msgid "The settings of the whole show, read-only here (Edit Show). This episode's description, image and people: Archive Online in the calendar."
+msgstr "Los ajustes de todo el programa, aquí solo de lectura (Editar Show). Descripción, imagen y participantes de este episodio: Archivar en línea en el calendario."
+
+msgid "People Involved"
+msgstr "Participantes"
+
+msgid "Programme Minutes"
+msgstr "Minutos de programa"
+
+msgid "People involved in the station's own productions, for the yearly statistics. The number is set per show (Edit Show → What → \"Own production\" → \"Number of involved people\") and can differ for a single episode (Archive Online in the calendar). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out."
+msgstr "Participantes en las producciones propias de la emisora, para la estadística anual. El número se fija por programa (Editar Show → What → \"Producción propia\" → \"Número de participantes\") y puede diferir en un episodio (Archivar en línea en el calendario). Solo cuentan los programas con \"Producción propia\"; se cuentan los episodios emitidos, las antiguas retransmisiones (rebroadcast) quedan fuera."
+
+msgid "Own productions aired"
+msgstr "Producciones propias emitidas"
+
+msgid "Only when this episode differs from the show, e.g. with guests. Counts in Analytics → People Involved (own productions)."
+msgstr "Solo si este episodio difiere del programa, p. ej. con invitados. Cuenta en Estadísticas → Participantes (producciones propias)."
+
+msgid "Send alerts by e-mail"
+msgstr "Enviar alertas por correo"
+
+msgid "Send alerts by Telegram"
+msgstr "Enviar alertas por Telegram"
+
+msgid "E-mail alerts need an SMTP server, a sender and at least one recipient."
+msgstr "Las alertas por correo necesitan un servidor SMTP, un remitente y al menos un destinatario."
+
+msgid "Telegram alerts need a bot token and at least one chat id."
+msgstr "Las alertas de Telegram necesitan un token de bot y al menos un id de chat."

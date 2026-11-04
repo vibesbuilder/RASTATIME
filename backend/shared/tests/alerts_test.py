@@ -145,6 +145,33 @@ def test_disabled_or_unconfigured_sends_nothing():
     assert not spy.mails and not spy.tgs
 
 
+def test_channel_switches_2026_11_04():
+    # never saved: both follow the old master switch
+    s = _settings()
+    assert s.enabled and s.mail_enabled and s.telegram_enabled
+    assert not _settings(alerts_enabled="false").telegram_enabled
+    # one switch per channel; the master switch no longer matters once they are saved
+    s = _settings(
+        alerts_enabled="false", alerts_mail_enabled="false", alerts_telegram_enabled="true"
+    )
+    assert s.enabled and not s.mail_active and s.telegram_active
+    spy, clock = Spy(), Clock()
+    m = _manager(spy, clock, s)
+    assert m.raise_alert("a", "A") is True
+    assert not spy.mails and len(spy.tgs) == 1
+    # both off: nothing is sent, the state is still tracked
+    off = _settings(alerts_mail_enabled="false", alerts_telegram_enabled="false")
+    assert not off.enabled
+    m2 = _manager(spy, clock, off)
+    assert m2.raise_alert("b", "B") is False and m2.is_open("b")
+    assert len(spy.tgs) == 1
+    # switched on but not set up: not active
+    assert not _settings(alerts_mail_enabled="true", alerts_smtp_host="").mail_active
+    # the test message ignores the switches (it tests the stored channel)
+    assert _manager(spy, clock, off).send_test("mail") == ""
+    assert len(spy.mails) == 1
+
+
 def test_rate_limit_per_channel():
     spy, clock = Spy(), Clock()
     m = _manager(spy, clock)

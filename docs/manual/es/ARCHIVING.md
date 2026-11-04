@@ -5,7 +5,7 @@
 > sección **Archivo**; Calendario → clic derecho en una emisión →
 > **Archivar en línea**; Estadísticas → **Participantes** y
 > **Estado del archivo** (en la interfaz en inglés: Settings →
-> Archiving, Archiving, Archive Online, Analytics → Participants y
+> Archiving, Archiving, Archive Online, Analytics → People Involved y
 > Archive Status).  Lea primero
 > [Calendario](./CALENDAR.md) y
 > [Grabación por programa](./RECORD_PER_SHOW.md): el audio de un
@@ -95,8 +95,7 @@ episodio no fije los suyos.
 
 | Campo | Significado |
 |---|---|
-| **Productor** | Quién hace el programa: una persona o un equipo, elegido de la lista (uno por programa, §1). El nombre se envía a cba.media como redacción y aparece en la vista Participantes. |
-| **Participantes** | Cuántas personas participan normalmente en un episodio (0-999). Cuenta en Estadísticas → Participantes. |
+| **Productor** | Quién hace el programa: una persona o un equipo, elegido de la lista (uno por programa, §1). El nombre se envía a cba.media como redacción y aparece en Estadísticas → Participantes. |
 | **Cuenta de CBA** | El usuario de CBA con el que se archivan los episodios (§2). |
 | **Visibilidad en cba.media** | *Público* (listado), *No listado* (accesible solo por su dirección) o *Privado* (visible solo para el usuario de CBA). |
 | **ID del pódcast en CBA** | El número del pódcast (serie) en cba.media al que pertenecen los episodios. Sin él, cba.media mantiene la entrada privada. |
@@ -123,9 +122,16 @@ licencia las responde:
 *CC Sampling+* permite reutilizar fragmentos, la obra completa solo sin
 fines comerciales; *Dominio público* no conserva ningún derecho.
 
-La sección no aparece en **Editar emisión**: pertenece al programa
-completo.  Los datos de un solo episodio se editan en **Archivar en
-línea** (§4).
+El número de participantes ya no está en esta sección (desde el
+2026-11-04): se encuentra en la sección **What**, debajo de **Producción
+propia**, como **Número de participantes** (0-999), y aparece en cuanto
+se marca **Producción propia**; cuenta en Estadísticas → Participantes
+(§6).
+
+En **Editar emisión** la sección se muestra **de solo lectura** con los
+valores del programa (desde el 2026-11-04; antes no aparecía): pertenece
+al programa completo.  Los datos de un solo episodio se editan en
+**Archivar en línea** (§4).
 
 > **¿De dónde sale el número del pódcast?**  Abra el pódcast en
 > cba.media; el número aparece en su dirección o en su página (la CBA
@@ -266,15 +272,21 @@ Estado del archivo** (§7).
 
 ---
 
-## 6. Vista de participantes
+## 6. Participantes
 
-**Estadísticas → Participantes** cuenta los participantes por programa
-y año (hora de la estación): las cifras de la estadística anual.
+**Estadísticas → Participantes** cuenta los participantes por
+producción propia y año (hora de la estación): las cifras de la
+estadística anual.  Solo cuentan los programas con **Producción propia**
+(Editar programa → What); su número es el **Número de participantes**
+justo debajo (desde el 2026-11-04; antes el campo estaba en esta sección
+y contaba cada programa).  Un programa al que se le quita la casilla
+conserva su número, pero queda fuera.
 
 * **Año**: el año en curso muestra el recuento hasta hoy.
-* **Solo programas sin valor**: los programas que se emitieron pero aún
-  no tienen *Participantes*.  Revise esta lista una vez; ponga `0` en
-  los programas automatizados o retransmitidos.
+* **Solo programas sin valor**: las producciones propias que se
+  emitieron pero aún no tienen *Número de participantes*.  Revise esta
+  lista una vez; ponga `0` en los programas automatizados o
+  retransmitidos.
 * **Descargar CSV**: la tabla y los totales como archivo de hoja de
   cálculo.
 
@@ -286,6 +298,7 @@ valor en `0` si sus personas ya cuentan en el original.
 
 | Columna / total | Significado |
 |---|---|
+| **Producciones propias emitidas** (total) | Producciones propias con al menos un episodio emitido en el año. |
 | **Episodios emitidos** | Episodios del programa en el año. |
 | **Participantes** | El valor del programa; el total suma los valores de todos los programas. |
 | **Episodios con valor propio** | Episodios cuyo diálogo fija otro número. |
@@ -375,11 +388,11 @@ valor predeterminado del usuario de CBA.
 La vista solo lista los programas **emitidos** en el año elegido.  Un
 programa nuevo aparece en cuanto termina su primer episodio.
 
-### «La sección Archivo falta o está en gris.»
+### «La sección Archivo está en gris.»
 
-Falta en **Editar emisión**: la sección pertenece al programa completo;
-para un episodio use **Archivar en línea**.  Está en gris si usted no
-es Program Manager ni Admin.
+En **Editar emisión** es de solo lectura: la sección pertenece al
+programa completo; para un episodio use **Archivar en línea**.  También
+está en gris si usted no es Program Manager ni Admin.
 
 ### «Un episodio no se archivó automáticamente.»
 

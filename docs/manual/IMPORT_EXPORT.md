@@ -114,7 +114,7 @@ import.
 | `linked`, `record` | yes/no |
 | `content`, `content_repeat` | the name of a playlist used as the show's **autoloading playlist**, and whether it repeats until the show is full — see [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). A playlist can hold tracks, smart blocks, webstreams and line-in inputs, so this fills every instance of the show automatically. |
 | `repeat_of` | name of an existing show whose last aired content fills this show shortly before it starts (**Repeat of show**, since 2026-10-18); empty = none. An unknown name is reported as a note and the show is imported without it. |
-| `own_production` | yes/no - the station's own production; the show's aired minutes count in Analytics → Yearly Report (since 2026-11-03). |
+| `own_production` | yes/no - the station's own production; the show's aired minutes count in Analytics → Programme Minutes, its people in Analytics → People Involved (since 2026-11-03). |
 | `intro_playlist`, `outro_playlist` | playlist names; empty = the station defaults |
 | `rastatime_auth`, `custom_auth`, `custom_username` | live DJ authentication as in the dialog |
 | `djs` | DJ logins, comma separated; only users of type DJ can be assigned |

@@ -7,7 +7,7 @@
 > **rear-view mirror** — what actually went on air, and how many
 > people were listening while it did.
 
-The **Analytics** menu in the top navigation bundles six pages:
+The **Analytics** menu in the top navigation bundles seven pages:
 
 | Page | Question it answers |
 |---|---|
@@ -15,8 +15,8 @@ The **Analytics** menu in the top navigation bundles six pages:
 | **History Templates** | Which columns should the history log record and export? |
 | **Listener Stats** | How many listeners were connected to each stream, over time? |
 | **Show Listener Stats** | How did each *show* perform in listener numbers? |
-| **Participants** | How many people made the shows of a year? See [Archiving](./ARCHIVING.md) § 6 (since 2026-11-03). |
-| **Yearly Report** | Programme minutes of the station's own productions and the participants overview, one year at a time, CSV. See § 5 (since 2026-11-03). |
+| **People Involved** | How many people made the station's own productions in a year? See § 6 and [Archiving](./ARCHIVING.md) § 6 (since 2026-11-03, own menu entry since 2026-11-04). |
+| **Programme Minutes** | How many minutes of own productions went on air in a year? One year at a time, CSV. See § 5 (since 2026-11-03; until 2026-11-04 part of the "Yearly Report"). |
 | **Archive Status** | Did every episode reach cba.media? Uploads running and waiting, what the automatic archiving has ahead, problems, history, CSV. See [Archiving](./ARCHIVING.md) § 7 (since 2026-11-04). |
 
 The first two exist for **accountability** — royalty reporting,
@@ -147,15 +147,17 @@ numbers across weeks, or two shows in the same slot.
 > aggregation can only fold data points that exist in
 > `cc_listener_count` for the show's time window.
 
-## 5. Yearly Report (since 2026-11-03)
+## 5. Programme Minutes (since 2026-11-03)
 
-**Analytics → Yearly Report** gathers the figures for the yearly reporting
-to the authorities on one page, with one year selector (station time;
-the current year up to today).
+The figures for the yearly reporting to the authorities are on two
+pages, each with a year selector (station time; the current year up to
+today): **Analytics → Programme Minutes** (this section) and
+**Analytics → People Involved** (§ 6).  Until 2026-11-04 both were one
+page, the "Yearly Report".
 
-**Programme minutes.**  Tick **Own production** in a show (Edit Show →
-What; one-off or recurring, templates and Import/Export carry it as
-`own_production`).  The page counts the episodes of flagged shows that
+Tick **Own production** in a show (Edit Show → What; the help icon next
+to it explains it in short; one-off or recurring, templates and
+Import/Export carry it as `own_production`).  The page counts the episodes of flagged shows that
 aired in the year - ended, not deleted, no legacy rebroadcast - with
 their **scheduled** duration, rounded to minutes per show and month.
 Shows set up as [Repeat of another show](./CALENDAR.md) are kept in a
@@ -165,9 +167,19 @@ greyed with their minutes under "other shows (not counted)" so you can
 see what is left out.  A table per month and **Download CSV (minutes)**
 (per show, totals, per month) complete the section.
 
-**Participants.**  The same figures as [Archiving](./ARCHIVING.md) § 6
-(People involved per show, episodes with their own value,
-participations), with links to the "shows without a
-value" filter and the participants CSV.
+Program Managers and Admins open this page.
+
+## 6. People Involved (since 2026-11-03)
+
+**Analytics → People Involved** counts the people who made the
+station's **own productions** in a year: per show its **Number of
+involved people** (Edit Show → What, below **Own production**; the field
+appears once the box is ticked), how many episodes have a value of their
+own (Archive Online in the calendar) and the participations (the people
+of every episode added up).  Only shows with **Own production** count -
+a show without the tick keeps its number but is left out until it is
+ticked again.  **Only shows without a value** and **Download CSV**
+help with the yearly reporting.  The details are in
+[Archiving](./ARCHIVING.md) § 6.
 
 Program Managers and Admins open this page.

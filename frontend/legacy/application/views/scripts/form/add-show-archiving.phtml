@@ -4,12 +4,13 @@
 // help icons right of the label (tooltip convention), errors below.
 // Stage 2: CBA account, visibility, topic list, the licence matrix as an
 // HTML tooltip (data-rt-tip-html, operator 2026-11-03).  Stage 3: "Archive
-// automatically" with the time it was switched on.
+// automatically" with the time it was switched on.  2026-11-04: the number of
+// people involved moved to What; in Edit Instance the section is shown
+// read-only with a pointer to Archive Online (operator).
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
 $f = $this->element;
 $tips = [
     'add_show_editor_profiles' => _('Who makes this show - one person or a team. The name is sent to cba.media as editor with every episode. Producers are managed under Settings → Archiving.'),
-    'add_show_participants' => _('How many people usually take part in an episode, for the yearly statistics (Analytics → Participants). A single episode can differ: Archive Online in the calendar.'),
     'add_show_cba_series_id' => _('The number of the podcast (series) on cba.media that the episodes of this show belong to.'),
     'add_show_cba_account' => _('The CBA user the episodes are archived under. Accounts are managed by admins under Settings → Archiving.'),
     'add_show_cba_status' => _('Public: listed on cba.media. Unlisted: reachable by its address only. Private: visible to the CBA user only.'),
@@ -44,6 +45,9 @@ $row = function ($name, $wide = true) use ($f, $h, $tips) {
 };
 ?>
 <fieldset class="rt-archiving">
+    <?php if ($f->readOnly): ?>
+        <p class="rt-archiving-note"><?php echo _("The settings of the whole show, read-only here (Edit Show). This episode's description, image and people: Archive Online in the calendar."); ?></p>
+    <?php endif; ?>
     <dl>
         <?php if (!Application_Service_ArchivingService::tablesReady()): ?>
             <p class="rt-archiving-note"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
@@ -52,7 +56,6 @@ $row = function ($name, $wide = true) use ($f, $h, $tips) {
             <?php if (count($f->getElement('add_show_editor_profiles')->getMultiOptions()) < 2): ?>
                 <p class="rt-archiving-note"><?php echo _("No producer yet - add one under Settings → Archiving."); ?></p>
             <?php endif; ?>
-            <?php $row('add_show_participants'); ?>
             <?php $row('add_show_cba_account'); ?>
             <?php if (count($f->getElement('add_show_cba_account')->getMultiOptions()) < 2): ?>
                 <p class="rt-archiving-note"><?php echo _("No CBA account yet - an admin adds them under Settings → Archiving."); ?></p>

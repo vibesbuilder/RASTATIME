@@ -331,6 +331,10 @@ label.wrapp-label input[type="checkbox"] {
     padding: 8px 0 0;
     margin-bottom: 6px;
     color: inherit;
+    /* 2026-11-04 (operator): not floated - narrow selects (Producer,
+       Visibility) slid up beside the label and touched its help icon */
+    float: none;
+    min-width: 0;
 }
 
 #schedule-add-show dt.rt-archiving-label .help_icon {
@@ -351,4 +355,27 @@ label.wrapp-label input[type="checkbox"] {
 .rt-archiving-note {
     margin: 4px 0 8px;
     color: #888;
+}
+
+/* RASTATIME 2026-11-04 - What: "Own production" with its help icon and air
+   before the box (it sat on the label text), "Number of involved people"
+   below it, label above the field (form/add-show-tip-row.phtml). */
+#schedule-add-show dt.rt-own-production .help_icon,
+#schedule-add-show dt.rt-participants-row .help_icon {
+    margin-left: 6px;
+    vertical-align: middle;
+    top: 0;
+}
+
+#schedule-add-show dd.rt-own-production input[type="checkbox"] {
+    /* .help_icon sits 3 px right of its box: 9 px of air on both sides */
+    margin-left: 12px;
+}
+
+#schedule-add-show dt.rt-participants-row {
+    margin-bottom: 6px;
+}
+
+#schedule-add-show dd.rt-participants-row input.input_text {
+    width: 5em;
 }

@@ -7,7 +7,7 @@
 > le **rétroviseur** — ce qui est réellement passé à l'antenne, et
 > combien de personnes écoutaient pendant ce temps.
 
-Le menu **Analytics** de la barre de navigation regroupe six
+Le menu **Analytics** de la barre de navigation regroupe sept
 pages :
 
 | Page | Question à laquelle elle répond |
@@ -16,8 +16,8 @@ pages :
 | **History Templates** | Quelles colonnes le journal de diffusion doit-il enregistrer et exporter ? |
 | **Listener Stats** | Combien d'auditeurs étaient connectés à chaque flux, au fil du temps ? |
 | **Show Listener Stats** | Quelle audience chaque *émission* a-t-elle réalisée ? |
-| **Participants** | Combien de personnes ont fait les émissions d'une année ? Voir [Archivage](./ARCHIVING.md) § 6 (depuis le 2026-11-03). |
-| **Yearly Report** (rapport annuel) | Minutes de programme des productions propres et aperçu des participants, une année à la fois, CSV. Voir § 5 (depuis le 2026-11-03). |
+| **People Involved** (participants) | Combien de personnes ont fait les productions propres de la station dans une année ? Voir § 6 et [Archivage](./ARCHIVING.md) § 6 (depuis le 2026-11-03, entrée de menu propre depuis le 2026-11-04). |
+| **Programme Minutes** (minutes de programme) | Combien de minutes de productions propres sont passées à l'antenne dans une année ? Une année à la fois, CSV. Voir § 5 (depuis le 2026-11-03 ; jusqu'au 2026-11-04, partie du « Yearly Report », le rapport annuel). |
 | **Archive Status** (état de l'archivage) | Chaque épisode est-il arrivé sur cba.media ? Envois en cours et en attente, ce que l'archivage automatique a devant lui, problèmes, historique, CSV. Voir [Archivage](./ARCHIVING.md) § 7 (depuis le 2026-11-04). |
 
 Les deux premières existent pour la **traçabilité** — déclarations
@@ -168,15 +168,19 @@ sur le même créneau.
 > replier que les points de données existant dans
 > `cc_listener_count` pour la fenêtre horaire de l'émission.
 
-## 5. Rapport annuel (depuis le 2026-11-03)
+## 5. Minutes de programme (depuis le 2026-11-03)
 
-**Analytics → Yearly Report** rassemble sur une page les chiffres de la
-déclaration annuelle aux autorités, avec un sélecteur d'année (heure de
-la station ; l'année en cours jusqu'à aujourd'hui).
+Les chiffres de la déclaration annuelle aux autorités se trouvent sur
+deux pages, chacune avec un sélecteur d'année (heure de la station ;
+l'année en cours jusqu'à aujourd'hui) : **Analytics → Programme
+Minutes** (cette section) et **Analytics → People Involved** (§ 6).
+Jusqu'au 2026-11-04, les deux formaient une seule page, le « Yearly
+Report » (rapport annuel).
 
-**Minutes de programme.**  Cochez **Own production** (production propre)
-dans une émission (Edit Show → What ; unique ou récurrente, les modèles
-et l'Import/Export la portent comme `own_production`).  La page compte
+Cochez **Own production** (production propre) dans une émission (Edit
+Show → What ; l'icône d'aide à côté l'explique en bref ; unique ou
+récurrente, les modèles et l'Import/Export la portent comme
+`own_production`).  La page compte
 les épisodes des émissions cochées diffusés dans l'année - terminés, non
 supprimés, sans ancienne rediffusion - avec leur durée **planifiée**,
 arrondie en minutes par émission et par mois.  Les émissions configurées
@@ -188,9 +192,21 @@ comptées) », pour voir ce qui manque.  Un tableau par mois et
 **Download CSV (minutes)** (par émission, totaux, par mois) complètent la
 section.
 
-**Participants.**  Les mêmes chiffres que [Archivage](./ARCHIVING.md)
-§ 6 (personnes impliquées par émission, épisodes avec valeur propre,
-participations), avec des liens vers le filtre
-« émissions sans valeur » et le CSV des participants.
+Les Program Managers et les Admins ouvrent cette page.
+
+## 6. Participants (depuis le 2026-11-03)
+
+**Analytics → People Involved** (participants) compte les personnes qui
+ont fait les **productions propres** de la station dans une année : par
+émission son **Number of involved people** (nombre de participants ;
+Edit Show → What, sous **Own production** ; le champ apparaît dès que la
+case est cochée), le nombre d'épisodes qui ont leur propre valeur
+(Archive Online dans le calendrier) et les participations (les
+personnes de chaque épisode additionnées).  Seules les émissions avec
+**Own production** comptent - une émission sans la case garde son
+nombre mais est laissée de côté jusqu'à ce qu'elle soit de nouveau
+cochée.  **Only shows without a value** et **Download CSV** aident pour
+la déclaration annuelle.  Les détails se trouvent dans
+[Archivage](./ARCHIVING.md) § 6.
 
 Les Program Managers et les Admins ouvrent cette page.

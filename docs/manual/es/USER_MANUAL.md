@@ -130,7 +130,7 @@ documento maestro arriba es lo único que todos asumen.
 | [Panel](./DASHBOARD.md) | Widget En reproducción, estado de fuente, anulación manual, poner la emisora en vivo desde un micrófono. |
 | [Calendario](./CALENDAR.md) | Crear programas, editar, arrastrar y soltar, programas recurrentes, repeticiones, presentadores. |
 | [Plantillas de programa](./SHOW_TEMPLATES.md) | Reutilizar configuración de programa sin reescribir cada semana. |
-| [Archivo](./ARCHIVING.md) | Archivar episodios en cba.media: productores y cuentas de CBA (Ajustes → Archivo), valores de archivo de un programa, título, teaser e imagen por episodio, «Archivar en línea» desde el calendario, la vista anual de participantes y la página Estado del archivo. |
+| [Archivo](./ARCHIVING.md) | Archivar episodios en cba.media: productores y cuentas de CBA (Ajustes → Archivo), valores de archivo de un programa, título, teaser e imagen por episodio, «Archivar en línea» desde el calendario, los participantes por producción propia y la página Estado del archivo. |
 | [Importar / Exportar](./IMPORT_EXPORT.md) | Exportar usuarios, programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como CSV/JSON, mantenerlos en una hoja de cálculo y reimportarlos con vista previa. |
 | [Inicio diferido de programa](./DELAYED_START.md) | Dejar que un programa inscrito empiece tarde cuando el programa anterior se sobrepasó, en lugar de recortar ese programa. El retraso se propaga a través de programas inscritos consecutivos hasta la primera ancla a hora fija. |
 
@@ -159,7 +159,7 @@ documento maestro arriba es lo único que todos asumen.
 | Capítulo | Contenido |
 |---|---|
 | [Streams](./STREAMS.md) | Configurar hasta cuatro streams de salida, monitorear contadores de oyentes, solución de problemas. |
-| [Analytics](./ANALYTICS.md) | Playout History (qué salió realmente al aire, registros exportables), History Templates, Listener Stats (audiencia por flujo y por programa a lo largo del tiempo). |
+| [Analytics](./ANALYTICS.md) | Playout History (qué salió realmente al aire, registros exportables), History Templates, Listener Stats (audiencia por flujo y por programa a lo largo del tiempo), People Involved (Participantes) y Programme Minutes (Minutos de programa) de las producciones propias (informe anual), Archive Status (estado del archivo). |
 | [Máquina local](./LOCAL_MACHINE.md) | Salida de tarjeta de sonido, entrada line-in, formato de importación (sin pérdida a MP3), carpeta de importación local. |
 | [Copia de seguridad](./BACKUP.md) | Copias de la base de datos + configuración con un clic en una carpeta elegida; descarga; el procedimiento de restauración documentado. |
 | [Widgets públicos integrables](./WIDGETS.md) | Widgets listos-para-usar para el sitio web público de su emisora (Now Playing — Show / Track, Weekly Program, Player). |

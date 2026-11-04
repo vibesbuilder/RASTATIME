@@ -1,9 +1,9 @@
-# Archiving: Producers, Episodes, Online Archive, Participants
+# Archiving: Producers, Episodes, Online Archive, People Involved
 
 > **Where you are in the manual.** Settings → **Archiving** (producers,
 > CBA accounts); Calendar → show form, section **Archiving**;
 > Calendar → right-click an instance → **Archive Online**; Analytics →
-> **Participants** and **Archive Status**.  Read [Calendar](./CALENDAR.md) and
+> **People Involved** and **Archive Status**.  Read [Calendar](./CALENDAR.md) and
 > [Record-per-Show](./RECORD_PER_SHOW.md) first - the audio of an
 > archived episode is the show's recording.
 >
@@ -88,8 +88,7 @@ apply to every episode of the show unless an episode sets its own.
 
 | Field | Meaning |
 |---|---|
-| **Producer** | Who makes the show - one person or a team, chosen from the list (one per show, §1). The name is sent to cba.media as editor and appears in the Participants overview. |
-| **People involved** | How many people usually take part in an episode (0-999). Counts in Analytics → Participants. |
+| **Producer** | Who makes the show - one person or a team, chosen from the list (one per show, §1). The name is sent to cba.media as editor and appears in Analytics → People Involved. |
 | **CBA account** | The CBA user the episodes are archived under (§2). |
 | **Visibility on cba.media** | *Public* (listed), *Unlisted* (reachable by its address only) or *Private* (visible to the CBA user only). |
 | **CBA podcast ID** | The number of the podcast (series) on cba.media the episodes belong to. Without it, cba.media keeps the post private. |
@@ -116,8 +115,15 @@ answers them:
 lets others reuse samples, the whole work only non-commercially;
 *Public domain* keeps no rights at all.
 
-The section is not shown in **Edit Instance**: it belongs to the whole
-show.  The data of a single episode is edited in **Archive Online** (§4).
+The number of people involved is not in this section any more (since
+2026-11-04): it sits in the section **What**, below **Own production**,
+as **Number of involved people** (0-999), and appears once **Own
+production** is ticked - it counts in Analytics → People Involved (§6).
+
+In **Edit Instance** the section is shown **read-only** with the values
+of the show (since 2026-11-04; before, it was not shown): it belongs to
+the whole show.  The data of a single episode is edited in **Archive
+Online** (§4).
 
 > **Where does the podcast number come from?**  Open the podcast on
 > cba.media; the number is part of its address or listed on its page
@@ -249,15 +255,20 @@ and Admins find a link to **Analytics → Archive Status** (§7) there.
 
 ---
 
-## 6. Participants overview
+## 6. People Involved
 
-**Analytics → Participants** counts the people involved per show and
-year (station time) - the figures for the yearly statistics.
+**Analytics → People Involved** counts the people involved per own
+production and year (station time) - the figures for the yearly
+statistics.  Only shows with **Own production** (Edit Show → What)
+count; their number is the **Number of involved people** right below
+it (since 2026-11-04; before, the field was in this section and every
+show counted).  A show whose tick is removed keeps its number but is
+left out.
 
 * **Year** - the current year shows the count so far.
-* **Only shows without a value** - the shows that aired but have no
-  *People involved* yet.  Work through this list once; set `0` for
-  automated or relayed programmes.
+* **Only shows without a value** - the own productions that aired but
+  have no *Number of involved people* yet.  Work through this list
+  once; set `0` for automated or relayed programmes.
 * **Download CSV** - the table and the totals as a spreadsheet file.
 
 Counted are the episodes that **aired** in the year (ended, not
@@ -268,6 +279,7 @@ in the original.
 
 | Column / total | Meaning |
 |---|---|
+| **Own productions aired** (total) | Own productions with at least one aired episode in the year. |
 | **Episodes aired** | Episodes of the show in the year. |
 | **People involved** | The show's value; the total adds the values of all shows. |
 | **Episodes with own value** | Episodes whose dialog sets a different number. |
@@ -352,11 +364,11 @@ CBA user applies.
 The overview only lists shows that **aired** in the chosen year.  A new
 show appears after its first episode has ended.
 
-### "The Archiving section is missing or greyed out."
+### "The Archiving section is greyed out."
 
-It is missing in **Edit Instance** - the section belongs to the whole
-show; use **Archive Online** for one episode.  It is greyed out when you are
-not a Program Manager or Admin.
+In **Edit Instance** it is read-only - the section belongs to the whole
+show; use **Archive Online** for one episode.  It is greyed out too when
+you are not a Program Manager or Admin.
 
 ### "An episode was not archived automatically."
 

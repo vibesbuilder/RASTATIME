@@ -2,14 +2,15 @@
 
 /**
  * RASTATIME 2026-11-03 - archiving (CBA archiving, migrations 0074-0076):
- *   Settings  → Archiving       (archiving/settings): the editorial teams a
+ *   Settings  → Archiving       (archiving/settings): the producers a
  *                                 show chooses from and, for admins, the CBA
  *                                 accounts, the upload limit and the waiting
  *                                 time of the automatic archiving; the forms
  *                                 post to archiving/editors (program managers
  *                                 and admins) and archiving/accounts (admins)
- *   Analytics → Participants    (archiving/participants, .../participants-csv):
- *                                 people involved per show and year
+ *   Analytics → People Involved (archiving/participants, .../participants-csv):
+ *                                 people involved per own production and year
+ *                                 (own menu entry since 2026-11-04)
  *   Analytics → Archive Status  (archiving/status, .../status-data, .../status-csv,
  *                                 .../status-op): uploads running and waiting,
  *                                 what the automatic archiving has ahead, open

@@ -302,14 +302,23 @@ problème a disparu.
 
 | Champ | Signification |
 |---|---|
-| **Send alerts** | Interrupteur principal. |
 | **Dead air after (seconds)** | Un silence sur le bus d'antenne (sous -50 dB, source de secours silencieuse comprise) de cette durée déclenche *Dead air* ; 2 s d'audio lèvent l'alerte.  5 à 3600, 30 par défaut.  Le seuil est compilé dans le moteur audio et s'applique à son prochain redémarrage planifié. |
 | **Reminder every (minutes)** | Tant qu'un problème reste ouvert ; 0 = pas de rappel.  Au plus 20 messages par canal et par heure. |
 | **Services** | Playout (surveillé par le service API), API, Apache, Icecast, Analyzer et Worker, contrôlés chaque minute ; deux échecs d'affilée déclenchent une alerte. |
 | **Pre-flight warnings** | Chaque type d'avertissement du bandeau déclenche une alerte une fois et la lève quand il disparaît. |
+| **Send alerts by e-mail** | Active le canal e-mail (depuis le 2026-11-04 ; avant, un seul interrupteur principal pour les deux canaux).  Les champs du canal apparaissent tant que la case est cochée ; l'enregistrement est refusé sans serveur, expéditeur et destinataire. |
 | **E-mail (SMTP)** | Serveur, port, chiffrement (STARTTLS, SSL/TLS, aucun), nom d'utilisateur et mot de passe (authentification ; le mot de passe n'est jamais réaffiché), expéditeur, destinataires séparés par des virgules.  L'e-mail de réinitialisation du mot de passe de la page de connexion n'est pas concerné. |
+| **Send alerts by Telegram** | Active le canal Telegram (depuis le 2026-11-04) ; ses champs apparaissent tant que la case est cochée ; l'enregistrement est refusé sans jeton de bot et identifiant de chat. |
 | **Telegram** | Jeton du bot de @BotFather (écriture seule) et identifiants de chat séparés par des virgules ; le bot doit être membre du chat ou du groupe et avoir reçu un message.  Un identifiant de groupe commence par un moins. |
 | **Send test e-mail / message** | Après enregistrement : un message de test avec les réglages enregistrés, envoyé par le service playout. |
+
+Les deux canaux désactivés : rien n'est envoyé, l'état reste suivi.  Les
+réglages enregistrés avant le 2026-11-04 continuent de fonctionner : un
+canal compte comme activé tant que l'ancien interrupteur principal était
+activé et que le canal est configuré.  Le service playout et le service
+API lisent les interrupteurs par canal après leur prochain redémarrage ;
+d'ici là, ils suivent l'ancien interrupteur principal, activé dès qu'un
+canal l'est.
 
 Les messages ressemblent à `[Station] ALERT: Dead air` avec l'heure, le
 détail et le service émetteur, `STILL OPEN` pour les rappels et `OK`

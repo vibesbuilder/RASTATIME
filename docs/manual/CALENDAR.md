@@ -136,10 +136,11 @@ The form is divided into collapsible sections. **What** and
 | **When** | Start date / time, duration, end date, repeats, **Allow delayed start** (let this show begin late when the previous one overran — see [Delayed Show Start](./DELAYED_START.md)). |
 | **Live Stream Input** | Allow remote hosts to take the show via Show DJ (per-show username + password). |
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
-| **Own production** | Tick for the station's own productions: the show's aired minutes count in Analytics → [Yearly Report](./ANALYTICS.md) (since 2026-11-03). |
+| **Own production** | Tick for the station's own productions: the show's aired minutes count in Analytics → [Programme Minutes](./ANALYTICS.md), its people in Analytics → People Involved (since 2026-11-03).  Sits in the section **What**; the help icon next to it explains it in short. |
+| **Number of involved people** | Appears below **Own production** once it is ticked (since 2026-11-04; before, in **Archiving** as *People involved*): how many people usually take part in an episode, 0-999. Counts in Analytics → [People Involved](./ANALYTICS.md); a single episode can differ (Archive Online). Removing the tick keeps the number, it just stops counting. |
 | **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Who** | Additional hosts beyond the primary one set under What. |
-| **Archiving** | Producer, people involved, CBA account, the cba.media defaults and automatic archiving of the show (not in Edit Instance). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
+| **Archiving** | Producer, CBA account, the cba.media defaults and automatic archiving of the show (read-only in Edit Instance since 2026-11-04). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
 | **Style** | Background colour, text colour, show image (visible only here for one-off shows; for recurring shows these stay constant across instances). |
 
 > **Operator tip.** If you are about to fill in the same name,
@@ -208,6 +209,9 @@ Click the show → context menu → choose an action.
   section in the Edit-Instance form for this reason.
 - Cannot change the start/end of the instance to a time outside
   the parent show's repeat pattern.
+- Cannot change the **Archiving** section: it shows the show's values
+  read-only (since 2026-11-04).  This episode's description, image and
+  people are edited in **Archive Online**.
 
 ---
 

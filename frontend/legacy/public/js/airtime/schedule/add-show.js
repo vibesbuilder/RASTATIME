@@ -390,6 +390,12 @@ function setAddShowEvents(form) {
     });
   syncArchiveDescriptionHint(form);
 
+  // RASTATIME 2026-11-04 - "Number of involved people" only for own productions
+  form.find("#add_show_own_production").on("change", function () {
+    syncOwnProduction(form);
+  });
+  syncOwnProduction(form);
+
   form.find("#add_show_repeats").click(function () {
     $(this).blur();
     form.find("#schedule-show-when > fieldset:last").toggle();
@@ -1532,6 +1538,21 @@ function syncDependentVisibility(form) {
   }
 
   syncArchiveDescriptionHint(form);
+  syncOwnProduction(form);
+}
+
+/**
+ * RASTATIME 2026-11-04 - the number of people involved belongs to own
+ * productions only (operator): shown while "Own production" is ticked.  A
+ * hidden value is still posted and kept, it just does not count.
+ */
+function syncOwnProduction(form) {
+  var own = !!form.find("#add_show_own_production").prop("checked");
+  // a refused value stays visible, or the save would fail without a word
+  var refused = form.find("#add_show_participants-element .errors").length > 0;
+  form
+    .find("#add_show_participants-label, #add_show_participants-element")
+    .toggle(own || refused);
 }
 
 /**

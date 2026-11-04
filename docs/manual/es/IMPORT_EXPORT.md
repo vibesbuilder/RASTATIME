@@ -120,7 +120,7 @@ administrador. Borre un archivo con contraseñas después de importarlo.
 | `linked`, `record` | yes/no |
 | `content`, `content_repeat` | el nombre de una lista usada como **lista de carga automática** del programa, y si se repite hasta llenar el programa; véase [Listas de carga automática](./AUTOLOADING_PLAYLISTS.md). Una lista puede contener pistas, bloques inteligentes, webstreams y entradas de línea, así cada instancia del programa se llena automáticamente. |
 | `repeat_of` | nombre de un programa existente cuyo último contenido emitido rellena este programa poco antes de empezar (**Repetición del programa**, desde 2026-10-18); vacío = ninguno. Un nombre desconocido se informa como nota y el programa se importa sin él. |
-| `own_production` | yes/no - producción propia de la emisora; los minutos emitidos cuentan en Analytics → Informe anual (desde 2026-11-03). |
+| `own_production` | yes/no - producción propia de la emisora; los minutos emitidos cuentan en Analytics → Minutos de programa, sus personas en Analytics → Participantes (desde 2026-11-03). |
 | `intro_playlist`, `outro_playlist` | nombres de listas; vacío = valores por defecto de la emisora |
 | `rastatime_auth`, `custom_auth`, `custom_username` | autenticación de DJ en directo como en el diálogo |
 | `djs` | logins de DJ, separados por comas; solo se pueden asignar usuarios de tipo DJ |

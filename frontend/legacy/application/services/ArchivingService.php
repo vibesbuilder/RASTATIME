@@ -4,7 +4,7 @@
  * RASTATIME 2026-11-03 - archiving stage 1 (CBA archiving, migrations
  * 0074 and 0075): editorial team profiles, per-show archiving defaults, per-episode
  * data (episode = show instance) with an optional image, and the yearly
- * participants overview (Analytics → Participants).
+ * participants overview (Analytics → People Involved).
  *
  * Propel classes are not generated for the four tables; everything here is
  * raw SQL like Application_Service_RepeatFillService, and every reader
@@ -275,18 +275,26 @@ class Application_Service_ArchivingService
     }
 
     /**
+     * Whether the form post carries the Archiving section: its selects are
+     * always posted when it is rendered and enabled (Edit Instance shows it
+     * disabled, missing tables render no fields).
+     */
+    public static function sectionPosted(array $data): bool
+    {
+        return array_key_exists('add_show_cba_status', $data);
+    }
+
+    /**
      * Field errors of the Archiving section (form field name => message).
      * Used by ShowFormService::validateShowForms().
      */
     public static function validateShowData(array $data): array
     {
         $errors = [];
-        foreach (['add_show_participants' => 999, 'add_show_cba_series_id' => 2147483647, 'add_show_cba_category_id' => 2147483647] as $field => $max) {
+        foreach (['add_show_cba_series_id', 'add_show_cba_category_id'] as $field) {
             $v = trim((string) ($data[$field] ?? ''));
-            if ($v !== '' && (!ctype_digit($v) || (int) $v > $max || ($field !== 'add_show_participants' && (int) $v === 0))) {
-                $errors[$field] = $field === 'add_show_participants'
-                    ? _('Please enter a whole number between 0 and 999.')
-                    : _('Please enter the number shown on cba.media, or leave the field empty.');
+            if ($v !== '' && (!ctype_digit($v) || (int) $v > 2147483647 || (int) $v === 0)) {
+                $errors[$field] = _('Please enter the number shown on cba.media, or leave the field empty.');
             }
         }
         if (self::normalizeLanguages((string) ($data['add_show_cba_languages'] ?? '')) === null) {
@@ -321,6 +329,23 @@ class Application_Service_ArchivingService
         return $errors;
     }
 
+    /**
+     * The number of people involved (What, below "Own production", since
+     * 2026-11-04), kept in cc_show_archiving next to the archiving defaults.
+     * Kept when "Own production" is cleared - it only stops counting.
+     */
+    public static function saveParticipants(int $showId, $value): void
+    {
+        if (!self::tablesReady() || $showId <= 0) {
+            return;
+        }
+        self::exec(
+            'INSERT INTO cc_show_archiving (show_id, participants, updated_at) VALUES (?, ?, now())
+             ON CONFLICT (show_id) DO UPDATE SET participants = EXCLUDED.participants, updated_at = now()',
+            [$showId, self::intOrNull($value)]
+        );
+    }
+
     /** Store the Archiving section of the show form (after validateShowData()). */
     public static function saveShow(int $showId, array $data): void
     {
@@ -333,11 +358,11 @@ class Application_Service_ArchivingService
         try {
             self::exec(
                 'INSERT INTO cc_show_archiving
-                        (show_id, participants, cba_series_id, license, category_id, languages, tags, teaser, contains_copyright,
+                        (show_id, cba_series_id, license, category_id, languages, tags, teaser, contains_copyright,
                          cba_account_id, cba_status, auto_archive, auto_since, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? THEN now() AT TIME ZONE \'UTC\' END, now())
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? THEN now() AT TIME ZONE \'UTC\' END, now())
                  ON CONFLICT (show_id) DO UPDATE SET
-                        participants = EXCLUDED.participants, cba_series_id = EXCLUDED.cba_series_id,
+                        cba_series_id = EXCLUDED.cba_series_id,
                         license = EXCLUDED.license, category_id = EXCLUDED.category_id,
                         languages = EXCLUDED.languages, tags = EXCLUDED.tags, teaser = EXCLUDED.teaser,
                         contains_copyright = EXCLUDED.contains_copyright, cba_account_id = EXCLUDED.cba_account_id,
@@ -348,7 +373,6 @@ class Application_Service_ArchivingService
                         updated_at = now()',
                 [
                     $showId,
-                    self::intOrNull($data['add_show_participants'] ?? ''),
                     self::intOrNull($data['add_show_cba_series_id'] ?? ''),
                     trim((string) ($data['add_show_cba_license'] ?? '')) ?: null,
                     self::intOrNull($data['add_show_cba_category_id'] ?? ''),
@@ -1272,7 +1296,7 @@ class Application_Service_ArchivingService
     }
 
     // ------------------------------------------------------------------
-    // Participants overview (Analytics → Participants)
+    // Participants overview (Analytics → People Involved)
     // ------------------------------------------------------------------
 
     /** Years from the first instance to the current one, newest first. */
@@ -1290,7 +1314,9 @@ class Application_Service_ArchivingService
      * Per show: the instances that aired in $year (station time, ended by
      * now, not deleted, no rebroadcast), the show's participants value, how
      * many episodes override it and the sum over the episodes ("person
-     * episodes"); totals below.
+     * episodes"); totals below.  Since 2026-11-04 own productions only
+     * (operator: the number belongs to "Own production"; every show while
+     * migration 0077 is missing).
      */
     public static function participantsReport(int $year): array
     {
@@ -1303,6 +1329,7 @@ class Application_Service_ArchivingService
             ? 'LEFT JOIN cc_episode e ON e.instance_id = si.id LEFT JOIN cc_show_archiving p ON p.show_id = si.show_id'
             : 'LEFT JOIN (SELECT NULL::int AS instance_id, NULL::smallint AS participants) e ON FALSE
                LEFT JOIN (SELECT NULL::int AS show_id, NULL::smallint AS participants) p ON FALSE';
+        $ownOnly = Application_Service_YearlyReportService::columnReady() ? 'WHERE s.own_production' : '';
         $team = $ready
             ? "(SELECT string_agg(ep.name, ', ' ORDER BY lower(ep.name)) FROM cc_show_editor_profile se
                  JOIN cc_editor_profile ep ON ep.id = se.profile_id WHERE se.show_id = s.id)"
@@ -1322,6 +1349,7 @@ class Application_Service_ArchivingService
                     count(i.eff) AS episodes_with_value, (s.repeat_of_show_id IS NOT NULL) AS is_repeat,
                     {$team} AS team
                FROM inst i JOIN cc_show s ON s.id = i.show_id
+              {$ownOnly}
               GROUP BY s.id, s.name, s.repeat_of_show_id
               ORDER BY lower(s.name), s.id",
             [$from, $to]

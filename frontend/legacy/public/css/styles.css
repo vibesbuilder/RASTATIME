@@ -5920,8 +5920,8 @@ div.dt-button-collection .dt-button > span {
     margin-top: 6px;
 }
 
-/* RASTATIME 2026-11-03 - Analytics -> Yearly Report (programme minutes +
-   participants, same look as .rt-participants) */
+/* RASTATIME 2026-11-03 - Analytics -> Programme Minutes (the "Yearly
+   Report" until 2026-11-04), same look as .rt-participants */
 .rt-yearly h3 {
     margin: 1.4em 0 0.4em;
 }

@@ -124,8 +124,11 @@ class Application_Service_ShowFormService
         $forms['record']->disable();
         $forms['rebroadcast']->disable();
         $forms['abs_rebroadcast']->disable();
-        // RASTATIME 2026-11-03 - show-level, not rendered for an instance
-        // (episode data lives in the calendar's "Archive Online" dialog)
+        // RASTATIME 2026-11-03 - show-level; since 2026-11-04 shown read-only
+        // with the show's values (operator), episode data lives in the
+        // calendar's "Archive Online" dialog.  Disabled fields are not
+        // posted, so ScheduleController::saveArchiving() leaves it alone.
+        $forms['archiving']->populateFromShow((int) $this->ccShow->getDbId());
         $forms['archiving']->disable();
     }
 
@@ -167,6 +170,8 @@ class Application_Service_ShowFormService
                 'add_show_instance_description' => $ccShowInstance->getDbDescription(),
                 // RASTATIME 2026-11-03 - yearly report
                 'add_show_own_production' => Application_Service_YearlyReportService::ownProduction($this->ccShow->getDbId()) ? 1 : 0,
+                // RASTATIME 2026-11-04 - moved here from Archiving (operator)
+                'add_show_participants' => Application_Service_ArchivingService::showSettings((int) $this->ccShow->getDbId())['participants'],
             ]
         );
     }
@@ -685,12 +690,12 @@ class Application_Service_ShowFormService
         $live = $forms['live']->isValid($formData);
         $record = $forms['record']->isValid($formData);
         $who = $forms['who']->isValid($formData);
-        // RASTATIME 2026-11-03 - archiving stage 1: the section is only
-        // rendered for a whole show (not Edit Instance), so it is checked
-        // only when its fields came along; populate() keeps the input when
-        // another section refuses the save
+        // RASTATIME 2026-11-03 - archiving stage 1: the section is checked
+        // only when its fields came along (Edit Instance shows it disabled,
+        // nothing is posted); populate() keeps the input when another
+        // section refuses the save
         $archiving = true;
-        if (array_key_exists('add_show_participants', $formData)) {
+        if (Application_Service_ArchivingService::sectionPosted($formData)) {
             $forms['archiving']->populate($formData);
             $archiving = $forms['archiving']->applyErrors(
                 Application_Service_ArchivingService::validateShowData($formData)

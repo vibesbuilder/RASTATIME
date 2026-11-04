@@ -115,6 +115,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Kosmetik-Liste des Operators (2026-11-04)** — **Analytics:** der „Yearly Report“
+  ist in zwei Menüpunkte geteilt, **People Involved** (DE Teilnehmende) und
+  **Programme Minutes** (DE Sendeminuten).  **People Involved zählt nur
+  Eigenproduktionen** (18 Sendungen markiert, 2026 bisher 14 gesendet).
+  **Sendungsformular:** das Feld „People involved“ heißt **Number of involved
+  people** und steht im Abschnitt What unter **Own production** — es erscheint erst,
+  wenn das Häkchen gesetzt ist; ohne Häkchen bleibt die Zahl gespeichert, zählt aber
+  nicht.  „Own production“ hat Abstand zum Text und ein Tooltip.  Im Abschnitt
+  Archiving stehen Producer und Visibility (wie alle Felder) unter ihrem Label statt
+  daneben (das Tooltip-Icon wurde überdeckt).  **Edit Instance** zeigt den Abschnitt
+  Archiving jetzt nur lesbar mit den Werten der Sendung und einem Hinweis auf
+  „Archive Online“.  **Alerts:** statt des Hauptschalters „Send alerts“ je ein
+  Häkchen **Send alerts by e-mail** / **Send alerts by Telegram** oben im Block des
+  Kanals; seine Felder erscheinen nur, wenn es gesetzt ist; ein eingeschalteter Kanal
+  ohne Server/Absender/Empfänger bzw. Token/Chat-ID wird beim Speichern abgelehnt.
+  Bisherige Einstellungen gelten weiter (beide Kanäle an).  Manual ANALYTICS §5/§6,
+  ARCHIVING §3/§6, CALENDAR, SETTINGS §6, IMPORT_EXPORT ×4, ARCHITECTURE §23.87.
+  Wirksam: Legacy sofort, Texte DE/FR/ES nach Apache-Neustart, Kanal-Häkchen im
+  Versand nach PLAYOUT- und API-Neustart (bis dahin gilt der alte Hauptschalter =
+  „irgendein Kanal an“).  Commit `PENDING`.
 - **Archivierung: „Producers“ statt „Editorial Teams“, keine Team-Zahl mehr (2026-11-04,
   Operator)** — Die meisten Sendungen macht eine einzelne Person, nur manche ein Team.
   Oberfläche und Handbuch heißen jetzt **Producer / Producers** (DE Produzent /

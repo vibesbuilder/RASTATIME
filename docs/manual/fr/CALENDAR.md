@@ -151,10 +151,11 @@ valeurs par défaut.
 | **Quand** | Date / heure de début, durée, date de fin, répétitions, **Autoriser le démarrage différé** (laisser cette émission commencer en retard quand la précédente a dépassé — voir [Démarrage différé d'émission](./DELAYED_START.md)). |
 | **Entrée Live Stream** | Permettre aux animateurs distants de prendre l'émission via Show DJ (nom d'utilisateur + mot de passe par émission). |
 | **Enregistrement** | Cocher pour enregistrer la sortie à l'antenne de l'émission dans un fichier. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md). |
-| **Own production** (production propre) | Cocher pour les productions propres de la station : les minutes diffusées de l'émission comptent dans Analytics → [Rapport annuel](./ANALYTICS.md) (depuis le 2026-11-03). |
+| **Own production** (production propre) | Cocher pour les productions propres de la station : les minutes diffusées de l'émission comptent dans Analytics → [Minutes de programme](./ANALYTICS.md), ses participants dans Analytics → Participants (depuis le 2026-11-03).  Se trouve dans la section **Quoi** ; l'icône d'aide à côté l'explique en bref. |
+| **Number of involved people** (nombre de participants) | Apparaît sous **Own production** dès que la case est cochée (depuis le 2026-11-04 ; avant, dans **Archivage** comme *Participants*) : combien de personnes participent habituellement à un épisode, 0-999. Compte dans Analytics → [Participants](./ANALYTICS.md) ; un épisode isolé peut différer (Archiver en ligne). Décocher la case garde le nombre, il cesse seulement de compter. |
 | **Autoloading Playlist** | Attacher une playlist pour remplir chaque instance automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Qui** | Animateurs supplémentaires au-delà du principal défini sous Quoi. |
-| **Archivage** | Producteur, participants, compte CBA, réglages cba.media et archivage automatique de l'émission (pas dans Modifier l'occurrence). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
+| **Archivage** | Producteur, compte CBA, réglages cba.media et archivage automatique de l'émission (en lecture seule dans Modifier l'occurrence depuis le 2026-11-04). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
 | **Style** | Couleur de fond, couleur de texte, image d'émission (visible seulement ici pour les émissions ponctuelles ; pour les émissions récurrentes, celles-ci restent constantes à travers les instances). |
 
 > **Conseil opérateur.** Si vous êtes sur le point de
@@ -231,6 +232,11 @@ action.
   formulaire Modifier l'instance pour cette raison.
 - Ne peut pas changer le début/fin de l'instance à un
   moment hors du motif de répétition de l'émission parent.
+- Ne peut pas modifier la section **Archivage** : elle
+  affiche les valeurs de l'émission en lecture seule
+  (depuis le 2026-11-04). La description, l'image et les
+  participants de cet épisode se modifient dans
+  **Archiver en ligne**.
 
 ---
 

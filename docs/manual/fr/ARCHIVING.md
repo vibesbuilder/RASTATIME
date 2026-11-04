@@ -5,7 +5,7 @@
 > l'émission, section **Archivage** ; Calendrier → clic droit sur une
 > occurrence → **Archiver en ligne** ; Statistiques → **Participants**
 > et **État de l'archivage** (dans l'interface anglaise : Settings →
-> Archiving, Archiving, Archive Online, Analytics → Participants et
+> Archiving, Archiving, Archive Online, Analytics → People Involved et
 > Archive Status).  Lisez d'abord
 > [Calendrier](./CALENDAR.md) et
 > [Enregistrement par émission](./RECORD_PER_SHOW.md) - le son d'un
@@ -98,8 +98,7 @@ siennes.
 
 | Champ | Signification |
 |---|---|
-| **Producteur** | Qui fait l'émission - une personne ou une équipe, choisi dans la liste (un par émission, §1). Le nom est transmis à cba.media comme rédaction et apparaît dans la vue Participants. |
-| **Participants** | Combien de personnes participent habituellement à un épisode (0-999). Compte dans Statistiques → Participants. |
+| **Producteur** | Qui fait l'émission - une personne ou une équipe, choisi dans la liste (un par émission, §1). Le nom est transmis à cba.media comme rédaction et apparaît dans Statistiques → Participants. |
 | **Compte CBA** | L'utilisateur CBA sous lequel les épisodes sont archivés (§2). |
 | **Visibilité sur cba.media** | *Public* (répertorié), *Non répertorié* (accessible seulement par son adresse) ou *Privé* (visible seulement par l'utilisateur CBA). |
 | **ID du podcast CBA** | Le numéro du podcast (série) sur cba.media auquel appartiennent les épisodes. Sans lui, cba.media garde l'article privé. |
@@ -127,9 +126,16 @@ la licence y répond :
 seulement à des fins non commerciales ; *Domaine public* ne garde aucun
 droit.
 
-La section n'apparaît pas dans **Modifier l'occurrence** : elle
-appartient à l'émission entière.  Les données d'un seul épisode se
-modifient dans **Archiver en ligne** (§4).
+Le nombre de participants ne se trouve plus dans cette section (depuis
+le 2026-11-04) : il se trouve dans la section **What**, sous
+**Production propre**, comme **Nombre de participants** (0-999), et
+apparaît dès que **Production propre** est cochée - il compte dans
+Statistiques → Participants (§6).
+
+Dans **Modifier l'occurrence**, la section s'affiche **en lecture
+seule** avec les valeurs de l'émission (depuis le 2026-11-04 ; avant,
+elle n'apparaissait pas) : elle appartient à l'émission entière.  Les
+données d'un seul épisode se modifient dans **Archiver en ligne** (§4).
 
 > **D'où vient le numéro du podcast ?**  Ouvrez le podcast sur
 > cba.media ; le numéro figure dans son adresse ou sur sa page (la CBA
@@ -273,16 +279,22 @@ lié ; les Program Managers et les Admins y trouvent un lien vers
 
 ---
 
-## 6. Vue des participants
+## 6. Participants
 
-**Statistiques → Participants** compte les participants par émission et
-par année (heure de la station) - les chiffres des statistiques
-annuelles.
+**Statistiques → Participants** compte les participants par production
+propre et par année (heure de la station) - les chiffres des
+statistiques annuelles.  Seules les émissions avec **Production
+propre** (Modifier l'émission → What) comptent ; leur nombre est le
+**Nombre de participants** juste en dessous (depuis le 2026-11-04 ;
+avant, le champ se trouvait dans cette section et chaque émission
+comptait).  Une émission dont la case est décochée garde son nombre
+mais est laissée de côté.
 
 * **Année** - l'année en cours montre le décompte à ce jour.
-* **Seulement les émissions sans valeur** - les émissions diffusées qui
-  n'ont pas encore de *Participants*.  Traitez cette liste une fois ;
-  mettez `0` pour les programmes automatisés ou relayés.
+* **Seulement les émissions sans valeur** - les productions propres
+  diffusées qui n'ont pas encore de *Nombre de participants*.  Traitez
+  cette liste une fois ; mettez `0` pour les programmes automatisés ou
+  relayés.
 * **Télécharger le CSV** - le tableau et les totaux comme fichier de
   tableur.
 
@@ -295,6 +307,7 @@ l'original.
 
 | Colonne / total | Signification |
 |---|---|
+| **Productions propres diffusées** (total) | Productions propres avec au moins un épisode diffusé dans l'année. |
 | **Épisodes diffusés** | Épisodes de l'émission dans l'année. |
 | **Participants** | La valeur de l'émission ; le total additionne les valeurs de toutes les émissions. |
 | **Épisodes avec valeur propre** | Épisodes dont la boîte de dialogue fixe un autre nombre. |
@@ -384,11 +397,12 @@ le réglage par défaut de l'utilisateur CBA s'applique.
 La vue ne liste que les émissions **diffusées** dans l'année choisie.
 Une nouvelle émission apparaît dès que son premier épisode est terminé.
 
-### « La section Archivage manque ou est grisée. »
+### « La section Archivage est grisée. »
 
-Elle manque dans **Modifier l'occurrence** - la section appartient à
-l'émission entière ; pour un épisode, utilisez **Archiver en ligne**.
-Elle est grisée si vous n'êtes ni Program Manager ni Admin.
+Dans **Modifier l'occurrence**, elle est en lecture seule - la section
+appartient à l'émission entière ; pour un épisode, utilisez **Archiver
+en ligne**.  Elle est aussi grisée si vous n'êtes ni Program Manager ni
+Admin.
 
 ### « Un épisode n'a pas été archivé automatiquement. »
 

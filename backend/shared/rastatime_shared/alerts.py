@@ -59,6 +59,9 @@ def tls_context() -> ssl.SSLContext:
 #: cc_pref keys and their defaults (strings as stored)
 DEFAULTS: dict[str, str] = {
     "alerts_enabled": "false",
+    # one switch per channel since 2026-11-04; empty (never saved) = alerts_enabled
+    "alerts_mail_enabled": "",
+    "alerts_telegram_enabled": "",
     "alerts_smtp_host": "",
     "alerts_smtp_port": "587",
     "alerts_smtp_security": "starttls",  # starttls | ssl | none
@@ -80,7 +83,11 @@ RATE_LIMIT_PER_HOUR = 20
 
 @dataclass
 class AlertSettings:
+    #: any channel switched on (the services/pre-flight checks run only then)
     enabled: bool = False
+    #: the per-channel switches (Settings -> Alerts, 2026-11-04)
+    mail_enabled: bool = True
+    telegram_enabled: bool = True
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_security: str = "starttls"
@@ -105,8 +112,16 @@ class AlertSettings:
         return bool(self.telegram_token and self.telegram_chats)
 
     @property
+    def mail_active(self) -> bool:
+        return self.mail_enabled and self.mail_ready
+
+    @property
+    def telegram_active(self) -> bool:
+        return self.telegram_enabled and self.telegram_ready
+
+    @property
     def any_channel(self) -> bool:
-        return self.mail_ready or self.telegram_ready
+        return self.mail_active or self.telegram_active
 
 
 def _as_bool(value: object) -> bool:
@@ -133,8 +148,18 @@ def settings_from_entries(entries: dict[str, object], station_name: str = "") ->
     """cc_pref rows (key -> value) to :class:`AlertSettings`; missing keys take the defaults."""
     get = lambda k: entries.get(k) if entries.get(k) not in (None, "") else DEFAULTS[k]  # noqa: E731
     sec = str(get("alerts_smtp_security")).strip().lower()
+    master = _as_bool(get("alerts_enabled"))
+
+    def switch(key: str) -> bool:
+        # never saved (settings from before 2026-11-04): follows the master switch
+        return master if entries.get(key) in (None, "") else _as_bool(entries[key])
+
+    mail_on = switch("alerts_mail_enabled")
+    telegram_on = switch("alerts_telegram_enabled")
     return AlertSettings(
-        enabled=_as_bool(get("alerts_enabled")),
+        enabled=mail_on or telegram_on,
+        mail_enabled=mail_on,
+        telegram_enabled=telegram_on,
         smtp_host=str(get("alerts_smtp_host")).strip(),
         smtp_port=_as_int(get("alerts_smtp_port"), 587, 1, 65535),
         smtp_security=sec if sec in ("starttls", "ssl", "none") else "starttls",
@@ -427,7 +452,7 @@ class AlertManager:
         text = self._format(kind, title, detail, since, settings, cleared=cleared)
         subject = self._subject(kind, title, settings)
         ok = False
-        if settings.mail_ready and self._rate_ok("mail", now):
+        if settings.mail_active and self._rate_ok("mail", now):
             try:
                 self._send_mail(settings, subject, text)
                 ok = True
@@ -435,7 +460,7 @@ class AlertManager:
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 self.last_errors["mail"] = str(exc)
                 logger.warning("alert mail failed: %s", exc)
-        if settings.telegram_ready and self._rate_ok("telegram", now):
+        if settings.telegram_active and self._rate_ok("telegram", now):
             try:
                 self._send_telegram(settings, text)
                 ok = True

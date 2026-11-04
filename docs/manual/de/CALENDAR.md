@@ -149,10 +149,11 @@ Standardwerten bleiben.
 | **Wann** | Startdatum / Uhrzeit, Dauer, Enddatum, Wiederholungen, **Verzögerten Start erlauben** (diese Sendung später beginnen lassen, wenn die vorige überzogen hat — siehe [Verzögerter Sendungsstart](./DELAYED_START.md)). |
 | **Live-Stream-Eingabe** | Remote-Hosts erlauben, die Sendung via Show DJ zu übernehmen (Pro-Sendung-Benutzername + Passwort). |
 | **Aufnahme** | Ankreuzen, um den On-Air-Output der Sendung in eine Datei aufzuzeichnen. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
-| **Own production** (Eigenproduktion) | Ankreuzen bei Eigenproduktionen des Senders: die gesendeten Minuten der Sendung zählen in Analytics → [Jahresbericht](./ANALYTICS.md) (seit 2026-11-03). |
+| **Own production** (Eigenproduktion) | Ankreuzen bei Eigenproduktionen des Senders: die gesendeten Minuten der Sendung zählen in Analytics → [Sendeminuten](./ANALYTICS.md), ihre Teilnehmenden in Analytics → Teilnehmende (seit 2026-11-03).  Steht im Abschnitt **What** (Was); das Hilfe-Symbol daneben erklärt es kurz. |
+| **Number of involved people** (Anzahl Teilnehmende) | Erscheint unter **Own production**, sobald es angekreuzt ist (seit 2026-11-04; vorher in **Archivierung** als *Teilnehmende*): wie viele Menschen üblicherweise an einer Episode mitwirken, 0-999. Zählt in Analytics → [Teilnehmende](./ANALYTICS.md); eine einzelne Episode kann abweichen (Online archivieren). Wird das Häkchen entfernt, bleibt die Zahl erhalten, sie zählt nur nicht mehr. |
 | **Autoloading Playlist** | Eine Playlist anhängen, um jede Instanz automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Wer** | Zusätzliche Hosts über den primären unter Was gesetzten hinaus. |
-| **Archivierung** | Produzent, Teilnehmende, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (nicht in Instanz bearbeiten). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
+| **Archivierung** | Produzent, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (in Instanz bearbeiten seit 2026-11-04 schreibgeschützt). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
 | **Style** | Hintergrundfarbe, Textfarbe, Sendungs-Bild (sichtbar nur hier für einmalige Sendungen; für wiederkehrende Sendungen bleiben diese über Instanzen hinweg konstant). |
 
 > **Operator-Tipp.** Wenn Sie im Begriff sind, denselben
@@ -230,6 +231,10 @@ Aktion.
 - Kann den Start/Ende der Instanz nicht auf eine Zeit
   außerhalb des Wiederholungsmusters der übergeordneten
   Sendung ändern.
+- Kann den Abschnitt **Archivierung** nicht ändern: Er zeigt
+  die Werte der Sendung schreibgeschützt (seit 2026-11-04).
+  Beschreibung, Bild und Teilnehmende dieser Episode
+  bearbeiten Sie unter **Online archivieren**.
 
 ---
 

@@ -117,7 +117,7 @@ master document above is the only thing they all assume.
 | [Dashboard](./docs/manual/DASHBOARD.md) | Now-Playing widget, source state, manual override, taking the station live from a microphone. |
 | [Calendar](./docs/manual/CALENDAR.md) | Creating shows, editing, drag-and-drop, recurring shows, repeats, hosts. |
 | [Show Templates](./docs/manual/SHOW_TEMPLATES.md) | Reusing show settings without re-typing them every week. |
-| [Archiving](./docs/manual/ARCHIVING.md) | Archiving episodes on cba.media: producers and CBA accounts (Settings → Archiving), the archiving defaults of a show, per-episode title, teaser and image, "Archive Online" from the calendar, the yearly participants overview and the Archive Status page. |
+| [Archiving](./docs/manual/ARCHIVING.md) | Archiving episodes on cba.media: producers and CBA accounts (Settings → Archiving), the archiving defaults of a show, per-episode title, teaser and image, "Archive Online" from the calendar, the people involved per own production and the Archive Status page. |
 | [Import / Export](./docs/manual/IMPORT_EXPORT.md) | Exporting users, shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON, keeping them in a spreadsheet and importing them again with a preview. |
 | [Delayed Show Start](./docs/manual/DELAYED_START.md) | Letting an opted-in show start late when the show before it overran, instead of trimming that show. The delay ripples across consecutive opted-in shows up to the first fixed-time anchor. |
 
@@ -143,7 +143,7 @@ master document above is the only thing they all assume.
 | Chapter | What's in it |
 |---|---|
 | [Streams](./docs/manual/STREAMS.md) | Configuring up to four output streams, monitoring listener counts, troubleshooting. |
-| [Analytics](./docs/manual/ANALYTICS.md) | Playout History (what actually aired, exportable log sheets), History Templates, Listener Stats (audience per stream and per show over time). |
+| [Analytics](./docs/manual/ANALYTICS.md) | Playout History (what actually aired, exportable log sheets), History Templates, Listener Stats (audience per stream and per show over time), People Involved and Programme Minutes of the own productions (yearly reporting), Archive Status. |
 | [Local Machine](./docs/manual/LOCAL_MACHINE.md) | Sound-card output, line-in input, import format (lossless to MP3), local import drop-folder. |
 | [Backup](./docs/manual/BACKUP.md) | One-click backups of database + configuration into a chosen folder; downloading them; the documented restore path. |
 | [Public Embed Widgets](./docs/manual/WIDGETS.md) | Drop-in widgets for your station's public website (Now Playing — Show / Track, Weekly Program, Player). |

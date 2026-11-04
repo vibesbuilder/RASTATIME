@@ -299,14 +299,22 @@ erscheint, und gibt Entwarnung, sobald das Problem weg ist.
 
 | Feld | Bedeutung |
 |---|---|
-| **Send alerts** | Hauptschalter. |
 | **Dead air after (seconds)** | So lange Stille auf dem Sendebus (unter -50 dB, die Stille-Ersatzquelle eingeschlossen) löst *Dead air* aus; 2 s Ton geben Entwarnung.  5 bis 3600, Standard 30.  Die Schwelle steckt in der Audio-Engine und greift mit ihrem nächsten geplanten Neustart. |
 | **Reminder every (minutes)** | Solange ein Problem offen bleibt; 0 = keine Erinnerungen.  Höchstens 20 Nachrichten je Kanal und Stunde. |
 | **Services** | Playout (vom API-Dienst überwacht), API, Apache, Icecast, Analyzer und Worker, minütlich geprüft; zwei Fehlversuche hintereinander lösen einen Alarm aus. |
 | **Pre-flight warnings** | Jede Warnungsart des Dashboard-Banners löst einmal einen Alarm aus und gibt Entwarnung, wenn sie weg ist. |
+| **Send alerts by e-mail** (Alarme per E-Mail senden) | Schaltet den E-Mail-Kanal ein (seit 2026-11-04; vorher ein Hauptschalter für beide Kanäle).  Die Felder des Kanals erscheinen, solange er angekreuzt ist; das Speichern lehnt ihn ohne Server, Absender und Empfänger ab. |
 | **E-mail (SMTP)** | Server, Port, Verschlüsselung (STARTTLS, SSL/TLS, keine), Benutzername und Passwort (Anmeldung; das Passwort wird nie wieder angezeigt), Absender, Empfänger durch Komma getrennt.  Die Passwort-Zurücksetzen-Mail der Anmeldeseite ist davon unabhängig. |
+| **Send alerts by Telegram** (Alarme per Telegram senden) | Schaltet den Telegram-Kanal ein (seit 2026-11-04), seine Felder erscheinen, solange er angekreuzt ist; das Speichern lehnt ihn ohne Bot-Token und Chat-ID ab. |
 | **Telegram** | Bot-Token von @BotFather (nur schreibbar) und Chat-IDs durch Komma getrennt; der Bot muss Mitglied des Chats oder der Gruppe sein und eine Nachricht erhalten haben.  Eine Gruppen-ID beginnt mit Minus. |
 | **Send test e-mail / message** | Nach dem Speichern: eine Testnachricht mit den gespeicherten Einstellungen, gesendet vom Playout-Dienst. |
+
+Beide Kanäle aus: Es wird nichts gesendet, der Zustand wird trotzdem
+verfolgt.  Vor 2026-11-04 gespeicherte Einstellungen gelten weiter: Ein
+Kanal gilt als eingeschaltet, wenn der alte Hauptschalter an war und der
+Kanal eingerichtet ist.  Playout- und API-Dienst lesen die Schalter je
+Kanal nach ihrem nächsten Neustart; bis dahin folgen sie dem alten
+Hauptschalter, der an ist, solange irgendein Kanal an ist.
 
 Nachrichten sehen so aus: `[Sender] ALERT: Dead air` mit Zeit, Detail
 und meldendem Dienst, `STILL OPEN` für Erinnerungen und `OK` für die

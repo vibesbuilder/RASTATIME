@@ -60,7 +60,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'end_date, end_time' => 'end of that broadcast; end_date may be empty (same day, or next day when end_time <= start_time)',
             'timezone' => 'IANA name, e.g. Europe/Berlin; empty = station default',
             'allow_delayed_start' => 'yes/no',
-            'own_production' => "yes/no - the station's own production, counted in Analytics -> Yearly Report (programme minutes)",
+            'own_production' => "yes/no - the station's own production, counted in Analytics -> Programme Minutes and People Involved",
             'repeats' => 'yes/no; repeat_type: none | weekly | biweekly | every_3_weeks | every_4_weeks | monthly_date | monthly_weekday',
             'days' => 'for weekly types: Mon,Tue,Wed,Thu,Fri,Sat,Sun (also Mo,Di,Mi,Do,Fr,Sa,So); empty = weekday of start_date',
             'months' => 'for monthly types: Jan,Feb,...,Dec or 1..12 (German short names work too); empty = every month',

@@ -6,7 +6,7 @@
 > auf eine Instanz → **Online archivieren**; Statistiken →
 > **Teilnehmende** und **Archiv-Status** (in der englischen Oberfläche
 > Settings → Archiving, Archiving, Archive Online, Analytics →
-> Participants und Archive Status).  Lesen Sie zuerst
+> People Involved und Archive Status).  Lesen Sie zuerst
 > [Kalender](./CALENDAR.md) und [Aufnahme pro Sendung](./RECORD_PER_SHOW.md)
 > - der Ton einer archivierten Episode ist die Aufzeichnung der Sendung.
 >
@@ -98,8 +98,7 @@ eine Episode keine eigenen setzt.
 
 | Feld | Bedeutung |
 |---|---|
-| **Produzent** | Wer die Sendung macht - eine Person oder ein Team, aus der Liste gewählt (einer je Sendung, §1). Der Name geht als Redaktion an cba.media und erscheint in der Übersicht Teilnehmende. |
-| **Teilnehmende** | Wie viele Menschen üblicherweise an einer Episode mitwirken (0-999). Zählt in Statistiken → Teilnehmende. |
+| **Produzent** | Wer die Sendung macht - eine Person oder ein Team, aus der Liste gewählt (einer je Sendung, §1). Der Name geht als Redaktion an cba.media und erscheint in Statistiken → Teilnehmende. |
 | **CBA-Konto** | Der CBA-Benutzer, unter dem die Episoden archiviert werden (§2). |
 | **Sichtbarkeit auf cba.media** | *Öffentlich* (gelistet), *Ungelistet* (nur über die Adresse erreichbar) oder *Privat* (nur für den CBA-Benutzer sichtbar). |
 | **CBA-Podcast-ID** | Die Nummer des Podcasts (Serie) auf cba.media, zu dem die Episoden gehören. Ohne sie hält cba.media den Beitrag privat. |
@@ -126,9 +125,16 @@ beantwortet sie:
 *CC Sampling+* lässt Ausschnitte weiterverwenden, das ganze Werk nur
 nicht-kommerziell; *Gemeinfrei* behält keinerlei Rechte.
 
-In **Instanz bearbeiten** fehlt der Abschnitt: er gehört zur ganzen
-Sendung.  Die Daten einer einzelnen Episode bearbeiten Sie unter
-**Online archivieren** (§4).
+Die Zahl der Teilnehmenden steht nicht mehr in diesem Abschnitt (seit
+2026-11-04): Sie steht im Abschnitt **What**, unter **Eigenproduktion**,
+als **Anzahl Teilnehmende** (0-999) und erscheint, sobald
+**Eigenproduktion** angehakt ist - sie zählt in Statistiken →
+Teilnehmende (§6).
+
+In **Instanz bearbeiten** wird der Abschnitt **schreibgeschützt** mit
+den Werten der Sendung angezeigt (seit 2026-11-04; vorher fehlte er):
+er gehört zur ganzen Sendung.  Die Daten einer einzelnen Episode
+bearbeiten Sie unter **Online archivieren** (§4).
 
 > **Woher kommt die Podcast-Nummer?**  Öffnen Sie den Podcast auf
 > cba.media; die Nummer steht in der Adresse oder auf der Seite (die
@@ -267,15 +273,21 @@ Archiv-Status** (§7).
 
 ---
 
-## 6. Übersicht Teilnehmende
+## 6. Teilnehmende
 
-**Statistiken → Teilnehmende** zählt die Teilnehmenden je Sendung und
-Jahr (Stationszeit) - die Zahlen für die Jahresstatistik.
+**Statistiken → Teilnehmende** zählt die Teilnehmenden je
+Eigenproduktion und Jahr (Stationszeit) - die Zahlen für die
+Jahresstatistik.  Nur Sendungen mit **Eigenproduktion** (Sendung ändern
+→ What) zählen; ihre Zahl ist die **Anzahl Teilnehmende** direkt
+darunter (seit 2026-11-04; vorher stand das Feld in diesem Abschnitt
+und jede Sendung zählte).  Eine Sendung, deren Häkchen entfernt wird,
+behält ihre Zahl, bleibt aber außen vor.
 
 * **Jahr** - das laufende Jahr zeigt den Stand bis heute.
-* **Nur Sendungen ohne Wert** - die Sendungen, die gelaufen sind, aber
-  noch keine *Teilnehmende* haben.  Arbeiten Sie diese Liste einmal
-  durch; setzen Sie `0` für automatisierte oder übernommene Programme.
+* **Nur Sendungen ohne Wert** - die Eigenproduktionen, die gelaufen
+  sind, aber noch keine *Anzahl Teilnehmende* haben.  Arbeiten Sie diese
+  Liste einmal durch; setzen Sie `0` für automatisierte oder übernommene
+  Programme.
 * **CSV herunterladen** - Tabelle und Summen als Tabellen-Datei.
 
 Gezählt werden die Episoden, die im Jahr **gesendet** wurden (beendet,
@@ -287,6 +299,7 @@ zählen.
 
 | Spalte / Summe | Bedeutung |
 |---|---|
+| **Gesendete Eigenproduktionen** (Summe) | Eigenproduktionen mit mindestens einer gesendeten Episode im Jahr. |
 | **Gesendete Episoden** | Episoden der Sendung im Jahr. |
 | **Teilnehmende** | Der Wert der Sendung; die Summe addiert die Werte aller Sendungen. |
 | **Episoden mit eigenem Wert** | Episoden, deren Dialog eine andere Zahl setzt. |
@@ -377,11 +390,11 @@ Die Übersicht listet nur Sendungen, die im gewählten Jahr **gesendet**
 wurden.  Eine neue Sendung erscheint, sobald ihre erste Episode zu Ende
 ist.
 
-### „Der Abschnitt Archivierung fehlt oder ist grau."
+### „Der Abschnitt Archivierung ist grau."
 
-In **Instanz bearbeiten** fehlt er - der Abschnitt gehört zur ganzen
-Sendung; für eine Episode nehmen Sie **Online archivieren**.  Grau ist
-er, wenn Sie nicht Programm-Manager oder Admin sind.
+In **Instanz bearbeiten** ist er schreibgeschützt - der Abschnitt gehört
+zur ganzen Sendung; für eine Episode nehmen Sie **Online archivieren**.
+Grau ist er auch, wenn Sie nicht Programm-Manager oder Admin sind.
 
 ### „Eine Episode wurde nicht automatisch archiviert."
 

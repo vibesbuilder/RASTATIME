@@ -925,6 +925,9 @@ class ScheduleController extends Zend_Controller_Action
             // toggled freely.
             $this->view->addNewShow = false;
             $this->view->action = 'edit-repeating-show-instance';
+            // RASTATIME 2026-11-04 - Archiving stays the read-only show view
+            $forms['archiving']->populateFromShow((int) $data['add_show_id']);
+            $forms['archiving']->disable();
             $this->view->form = $this->view->render('schedule/add-show-form.phtml');
         }
     }
@@ -1065,17 +1068,23 @@ class ScheduleController extends Zend_Controller_Action
 
     /**
      * RASTATIME 2026-11-03 - archiving stage 1: store the Archiving section
-     * of a whole show (absent in Edit Instance).  A failure here is logged
-     * and does not undo the show save.
+     * of a whole show (Edit Instance has its own action and posts nothing
+     * of it).  Since 2026-11-04 the number of people involved comes from
+     * What.  A failure here is logged and does not undo the show save.
      */
     private function saveArchiving($showId, array $data)
     {
-        if (!$showId || !array_key_exists('add_show_participants', $data)) {
+        if (!$showId) {
             return;
         }
 
         try {
-            Application_Service_ArchivingService::saveShow((int) $showId, $data);
+            if (array_key_exists('add_show_participants', $data)) {
+                Application_Service_ArchivingService::saveParticipants((int) $showId, $data['add_show_participants']);
+            }
+            if (Application_Service_ArchivingService::sectionPosted($data)) {
+                Application_Service_ArchivingService::saveShow((int) $showId, $data);
+            }
         } catch (Exception $e) {
             Logging::warn('archiving: show ' . $showId . ' not saved: ' . $e->getMessage());
         }
