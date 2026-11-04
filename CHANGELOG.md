@@ -134,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ARCHIVING §3/§6, CALENDAR, SETTINGS §6, IMPORT_EXPORT ×4, ARCHITECTURE §23.87.
   Wirksam: Legacy sofort, Texte DE/FR/ES nach Apache-Neustart, Kanal-Häkchen im
   Versand nach PLAYOUT- und API-Neustart (bis dahin gilt der alte Hauptschalter =
-  „irgendein Kanal an“).  Commit `PENDING`.
+  „irgendein Kanal an“).  Commit `df4c39e8`.
 - **Archivierung: „Producers“ statt „Editorial Teams“, keine Team-Zahl mehr (2026-11-04,
   Operator)** — Die meisten Sendungen macht eine einzelne Person, nur manche ein Team.
   Oberfläche und Handbuch heißen jetzt **Producer / Producers** (DE Produzent /
