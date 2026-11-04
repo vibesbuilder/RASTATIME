@@ -30,6 +30,7 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 | **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Ausgabe-Streams (Bitrate, Mount, Codec), Eingänge für Live-Einwahlen, Master-Login. | Admin | [Streams](./STREAMS.md) |
 | **Lokale Maschine** | Soundkarte, Import-Ordner und -Format, Aufnahme-Ordner und -Format, Speicherort der Bibliothek. | Admin | [Lokale Maschine](./LOCAL_MACHINE.md) |
+| **Alarme** | Meldungen per E-Mail und Telegram bei Stille (Dead Air), ausgefallenen Diensten und Preflight-Warnungen; je Kanal ein Schalter. Seit 2026-11-03; seit 2026-11-04 unter Lokale Maschine. | Admin | Dieses Kapitel §6 |
 | **Import / Export** | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Sicherungen von Datenbank und Konfiguration, der Medienspiegel, automatische Backups, Wiederherstellung. | Admin | [Backup](./BACKUP.md) |
 | **Status** | Zustand der Dienste, Speicherplatz, Dienst-Neustarts, erlaubte und gesperrte Adressen. | Admin | Dieses Kapitel §3 |

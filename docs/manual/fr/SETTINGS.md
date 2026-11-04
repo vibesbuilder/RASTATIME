@@ -30,6 +30,7 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 | **Auto DJ** | Remplissage des trous et complément des émissions incomplètes. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Flux** | Flux de sortie (débit, point de montage, codec), entrées pour les connexions en direct, identifiant Master. | Admin | [Flux](./STREAMS.md) |
 | **Machine locale** | Carte son, dossier et format d'import, dossier et format d'enregistrement, emplacement de la bibliothèque. | Admin | [Machine locale](./LOCAL_MACHINE.md) |
+| **Alertes** | Messages par e-mail et Telegram en cas de silence (dead air), de service arrêté et d'avertissement de pré-vol ; un interrupteur par canal. Depuis le 2026-11-03 ; sous Machine locale depuis le 2026-11-04. | Admin | Ce chapitre §6 |
 | **Import / Export** | Utilisateurs, émissions, playlists, smart blocks, webstreams et abonnements podcast en fichiers CSV/JSON, avec aperçu à l'import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Sauvegardes de la base de données et de la configuration, le miroir média, sauvegardes automatiques, restauration. | Admin | [Backup](./BACKUP.md) |
 | **Statut** | État des services, espace disque, redémarrages de services, adresses autorisées et bloquées. | Admin | Ce chapitre §3 |

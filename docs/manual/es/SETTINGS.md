@@ -30,6 +30,7 @@ Navegación izquierda → **Ajustes** abre el submenú:
 | **Auto DJ** | Relleno de huecos y completado de programas incompletos. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Streams de salida (bitrate, punto de montaje, códec), entradas para conexiones en directo, credencial Master. | Admin | [Streams](./STREAMS.md) |
 | **Máquina local** | Tarjeta de sonido, carpeta y formato de importación, carpeta y formato de grabación, ubicación de la biblioteca. | Admin | [Máquina local](./LOCAL_MACHINE.md) |
+| **Alertas** | Mensajes por correo y Telegram en caso de silencio (dead air), servicios caídos y avisos previos (pre-flight); un interruptor por canal. Desde 2026-11-03; debajo de Máquina local desde 2026-11-04. | Admin | Este capítulo §6 |
 | **Importar / Exportar** | Usuarios, programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como archivos CSV/JSON, con vista previa al importar. | Admin | [Importar / Exportar](./IMPORT_EXPORT.md) |
 | **Backup** | Copias de seguridad de la base de datos y la configuración, el espejo de medios, copias automáticas, restauración. | Admin | [Backup](./BACKUP.md) |
 | **Estado** | Estado de los servicios, espacio en disco, reinicios de servicios, direcciones permitidas y bloqueadas. | Admin | Este capítulo §3 |

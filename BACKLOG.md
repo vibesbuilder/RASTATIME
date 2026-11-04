@@ -6895,9 +6895,9 @@ Nachtrag 2026-11-04 (Operator-Kosmetik, Empfehlungen gewählt): Analytics
 geteilt in People Involved + Programme Minutes; "Number of involved
 people" unter "Own production" (nur sichtbar mit Häkchen, zählt nur für
 Eigenproduktionen, Wert bleibt); Archiving in Edit Instance nur lesbar;
-Alerts je Kanal ein Häkchen statt Hauptschalter (§23.87).  Offen:
-Apache-Neustart (Texte), PLAYOUT- + API-Neustart (Kanal-Häkchen im
-Versand), Sichtprobe durch den Operator.
+Alerts je Kanal ein Häkchen statt Hauptschalter (§23.87).  Apache,
+PLAYOUT und API neu gestartet, Sichtprobe bestanden (Operator
+2026-11-04); Alerts im Settings-Menü unter Local Machine.
 
 ### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
 

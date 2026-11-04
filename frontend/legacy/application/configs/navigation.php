@@ -184,15 +184,6 @@ $pages[] = [
             'privilege' => 'settings',
         ],
         [
-            // RASTATIME 2026-11-03 - alerts stage 1: e-mail and Telegram for
-            // dead air, services down and pre-flight warnings (admins)
-            'label' => 'Alerts',
-            'module' => 'default',
-            'controller' => 'alerts',
-            'action' => 'settings',
-            'resource' => 'alerts',
-        ],
-        [
             // RASTATIME 2026-05-21 — Auto-DJ settings page
             // (Section 23.20).  Master switch + filler-playlist
             // selection + default show name / logo for automatic
@@ -223,6 +214,16 @@ $pages[] = [
             'controller' => 'preference',
             'action' => 'local-machine',
             'resource' => 'preference',
+        ],
+        [
+            // RASTATIME 2026-11-03 - alerts stage 1: e-mail and Telegram for
+            // dead air, services down and pre-flight warnings (admins);
+            // below Local Machine since 2026-11-04 (operator)
+            'label' => 'Alerts',
+            'module' => 'default',
+            'controller' => 'alerts',
+            'action' => 'settings',
+            'resource' => 'alerts',
         ],
         [
             // RASTATIME 2026-10-13 — Import/Export of shows, playlists,

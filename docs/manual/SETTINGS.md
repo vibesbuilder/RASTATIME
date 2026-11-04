@@ -29,6 +29,7 @@ Left navigation → **Settings** opens the sub-menu:
 | **Auto DJ** | Gap filler and top-up of incomplete shows. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Output streams (bitrate, mount, codec), live dial-in inputs, Master login. | Admin | [Streams](./STREAMS.md) |
 | **Local Machine** | Sound card, import folder and format, recording folder and format, library location. | Admin | [Local Machine](./LOCAL_MACHINE.md) |
+| **Alerts** | Messages by e-mail and Telegram on dead air, services down and pre-flight warnings; one switch per channel. Since 2026-11-03; below Local Machine since 2026-11-04. | Admin | This chapter §6 |
 | **Import / Export** | Users, shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON files, with a preview step on import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Database and configuration backups, the media mirror, automatic backups, restoring. | Admin | [Backup](./BACKUP.md) |
 | **Status** | Service health, disk space, service restarts, allowed and blocked addresses. | Admin | This chapter §3 |
