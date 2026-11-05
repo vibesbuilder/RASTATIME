@@ -68,6 +68,10 @@ import re
 import threading
 from typing import Optional
 
+from ..liquidsoap_config import (
+    DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS,
+    DEFAULT_WEBSTREAM_BRIDGE_SECONDS,
+)
 from .interface import PlayoutEngine, PlayoutState
 from .liquidsoap_telnet import LiquidsoapTelnetClient
 
@@ -761,10 +765,22 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         url: str,
         *,
         gain_db: Optional[float] = None,
+        bridge_seconds: Optional[float] = None,
+        bridge_max_seconds: Optional[float] = None,
     ) -> None:
         """
         Start a scheduled webstream by setting the URL + optional gain
         on Liquidsoap's input.http source, then issuing webstream.start.
+
+        RASTATIME 2026-11-05 - ``bridge_seconds`` / ``bridge_max_seconds``
+        (cc_webstream columns, None = template defaults) are pushed as
+        ``var.set webstream.bridge`` / ``webstream.bridge_max`` BEFORE
+        ``webstream.start`` so the fresh ``buffer()`` of the slot is built
+        with them.  Always set (defaults when None) so one stream's values
+        do not leak into the next.  ``bridge_max`` is the fill level the
+        bridge reaches during the 10 s prepare lead and therefore the
+        delay added on top of the server's connect burst (07:00 BBC
+        measurement 2026-11-05: 3.6 s burst + 10 s bridge = 13.8 s).
 
         Phase-E sequence (analogue to recording_start's Mechanism B):
           1. webstream_set_url(url)              — set the HTTP URL
@@ -795,14 +811,30 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         gain_for_log = (
             f"{gain_db:+.2f}dB" if gain_db is not None and abs(gain_db) > 0.001 else "unity"
         )
+        bridge = (
+            float(bridge_seconds)
+            if bridge_seconds is not None
+            else DEFAULT_WEBSTREAM_BRIDGE_SECONDS
+        )
+        bridge_max = (
+            float(bridge_max_seconds)
+            if bridge_max_seconds is not None
+            else DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS
+        )
+        if bridge_max < bridge:
+            bridge_max = bridge
         logger.info(
-            "Liquidsoap webstream_start: url=%s gain=%s",
+            "Liquidsoap webstream_start: url=%s gain=%s bridge=%.1fs/%.1fs%s",
             self._redact(url),
             gain_for_log,
+            bridge,
+            bridge_max,
+            "" if bridge_seconds is None and bridge_max_seconds is None else " (per stream)",
         )
 
         try:
             self._telnet.webstream_set_url(url)
+            self._telnet.webstream_set_bridge(bridge, bridge_max)
             # Always set the gain — either the actual value or unity —
             # so a previous show's non-unity gain doesn't leak into the
             # new webstream.

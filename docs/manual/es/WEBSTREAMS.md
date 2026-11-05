@@ -230,6 +230,43 @@ Editar el webstream → **Ganancia de entrada (dB)**.
 
 ---
 
+## 6a. Búfer (retardo y reserva por stream)
+
+Un webstream programado pasa por un pequeño búfer en el motor
+de playout. Dos campos del diálogo del webstream lo controlan
+(cada uno con un icono de ayuda que muestra la versión corta):
+
+| Campo | Significado | Por defecto |
+|---|---|---|
+| **Búfer (s)** | Segundos de audio que el stream acumula antes de empezar a sonar. Manténgalo aprox. 1 s por debajo de *Búfer máx.* | 5 |
+| **Búfer máx. (s)** | Cantidad máxima de audio que guarda el búfer. En los 10 s previos al slot se llena hasta este valor; es el retardo añadido al burst de conexión del servidor y a la vez la reserva ante cortes. | 10 |
+
+Valores más pequeños acercan el stream al directo, valores
+más grandes dan más reserva. Deje ambos campos vacíos para los
+valores por defecto. Los valores se aplican desde el siguiente
+arranque del stream; no hace falta reiniciar. También viajan
+con **Configuración → Import / Export** (`webstreams.csv`,
+columnas `bridge_seconds`, `bridge_max_seconds`).
+
+**Ejemplo: boletines de BBC World Service.** Medido el
+2026-11-05: el servidor de la BBC envía 3,6 s de audio al
+conectar, el búfer añadía 10 s, así que el slot sonaba 13,8 s
+detrás del servidor y el presentador se oía 8,5 s después de
+la entrada. Con *Búfer* 2 y *Búfer máx.* 3 el retardo baja a
+unos 6,6 s: el boletín empieza 1,5 s después de la entrada y
+una fila de 5:02 termina en la pausa posterior.
+
+> **Cómo funciona bajo el capó.** Migración 0079 añadió
+> `cc_webstream.bridge_seconds` / `bridge_max_seconds` (NULL =
+> valores por defecto).  El playout fija `var.set
+> webstream.bridge` / `webstream.bridge_max` antes de cada
+> `webstream.start`; el `buffer()` nuevo del slot se construye
+> con ellos.  El `max_buffer` de `input.http` no es una palanca
+> de retardo: la entrada nunca descarta datos, solo frena la
+> lectura.  Vea ARCHITECTURE §23.88.
+
+---
+
 ## 7. Webstreams en autoloading playlists
 
 Un webstream puede ser todo el body de una autoloading

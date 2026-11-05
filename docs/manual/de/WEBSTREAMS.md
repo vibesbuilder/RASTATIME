@@ -346,6 +346,43 @@ angepassten Pegel.
 
 ---
 
+## 6a. Puffer (Verzögerung und Reserve je Stream)
+
+Ein geplanter Webstream läuft in der Playout-Engine durch einen
+kleinen Puffer. Zwei Felder im Webstream-Dialog steuern ihn
+(jedes mit einem Hilfe-Symbol, das die Kurzfassung zeigt):
+
+| Feld | Bedeutung | Standard |
+|---|---|---|
+| **Puffer (s)** | Sekunden Ton, die der Stream sammelt, bevor er zu spielen beginnt. Etwa 1 s unter *Puffer max* halten. | 5 |
+| **Puffer max (s)** | Größte Menge Ton, die der Puffer hält. In den 10 s vor dem Slot füllt er sich bis zu diesem Wert; das ist die Verzögerung zusätzlich zum Verbindungs-Burst des Servers und zugleich die Reserve bei Aussetzern. | 10 |
+
+Kleinere Werte bringen den Stream näher an live, größere geben
+mehr Reserve. Lassen Sie beide Felder leer für die
+Standardwerte. Die Werte gelten ab dem nächsten Start des
+Streams; kein Neustart nötig. Sie reisen auch mit
+**Einstellungen → Import / Export** (`webstreams.csv`, Spalten
+`bridge_seconds`, `bridge_max_seconds`).
+
+**Beispiel: BBC-World-Service-Nachrichten.** Gemessen am
+2026-11-05: der BBC-Server schickt beim Verbinden 3,6 s Ton,
+der Puffer fügte 10 s hinzu, der Slot lief also 13,8 s hinter
+dem Server, und die Moderation war 8,5 s nach dem Einstieg zu
+hören. Mit *Puffer* 2 und *Puffer max* 3 sinkt die Verzögerung
+auf etwa 6,6 s: das Bulletin beginnt 1,5 s nach dem Einstieg,
+und eine Zeile von 5:02 endet in der Pause danach.
+
+> **Wie es unter der Haube funktioniert.** Migration 0079
+> fügte `cc_webstream.bridge_seconds` / `bridge_max_seconds`
+> hinzu (NULL = Standard).  Das Playout setzt `var.set
+> webstream.bridge` / `webstream.bridge_max` vor jedem
+> `webstream.start`; der frische `buffer()` des Slots wird damit
+> gebaut.  Das `max_buffer` von `input.http` ist kein Hebel für
+> die Verzögerung: der Eingang verwirft nie Daten, er bremst nur
+> das Lesen.  Siehe ARCHITECTURE §23.88.
+
+---
+
 ## 7. Webstreams in autoloading Playlists
 
 Ein Webstream kann der gesamte Body einer autoloading

@@ -152,6 +152,31 @@ class WebstreamController extends Zend_Controller_Action
             $parameters['input_gain_db'] = max(-20.0, min(20.0, (float) $rawGain));
         }
 
+        // RASTATIME 2026-11-05 - per-webstream clock-bridge buffer
+        // (seconds).  Empty = engine default (NULL in the DB).  Ranges
+        // are a defence in depth, the dialog's number inputs enforce them
+        // too.  "max" is the fill level at the gate and the added delay;
+        // "bridge" (fill before output) must stay below it.
+        $bridgeErrors = [];
+        foreach (['bridge_seconds' => [0.5, 30.0], 'bridge_max_seconds' => [1.0, 60.0]] as $name => $range) {
+            $raw = $request->getParam($name);
+            if ($raw === null || trim((string) $raw) === '') {
+                $parameters[$name] = null;
+            } elseif (!is_numeric($raw)) {
+                $parameters[$name] = null;
+                $bridgeErrors[$name] = _('must be a number of seconds');
+            } else {
+                $parameters[$name] = max($range[0], min($range[1], (float) $raw));
+            }
+        }
+        if (
+            $parameters['bridge_seconds'] !== null
+            && $parameters['bridge_max_seconds'] !== null
+            && $parameters['bridge_seconds'] > $parameters['bridge_max_seconds']
+        ) {
+            $bridgeErrors['bridge_seconds'] = _('must not exceed Buffer max');
+        }
+
         if (!$this->isAuthorized($id)) {
             header('Status: 401 Not Authorized');
 
@@ -159,6 +184,11 @@ class WebstreamController extends Zend_Controller_Action
         }
 
         [$analysis, $mime, $mediaUrl, $di] = Application_Model_Webstream::analyzeFormData($parameters);
+        // RASTATIME 2026-11-05 - bridge field errors show next to their
+        // inputs like the URL/length ones (#<field>-error in the dialog).
+        foreach (['bridge_seconds' => 'bridge', 'bridge_max_seconds' => 'bridgemax'] as $name => $field) {
+            $analysis[$field] = isset($bridgeErrors[$name]) ? [false, $bridgeErrors[$name]] : [true, ''];
+        }
 
         try {
             if (Application_Model_Webstream::isValid($analysis)) {

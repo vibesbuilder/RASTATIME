@@ -1421,6 +1421,15 @@ def _render_webstream_input_block(
     # max_buffer (10 s default) of input.http absorbs upstream-server
     # jitter; buffer (5 s) absorbs the clock-bridge tick-drift and the
     # initial-connect cold-buffer rebuild.
+    #
+    # RASTATIME 2026-11-05 - measured on the 07:00 BBC slot: nobody pulls
+    # the bridge before the gate opens, so during the 10 s prepare lead
+    # it fills up to `max`; the delay at the gate is the server's connect
+    # burst (3.6 s) + `max` (10 s) = 13.8 s, independent of max_buffer
+    # (the input generator never drops, it only throttles the reader).
+    # Both bridge values are therefore interactive variables PLAYOUT sets
+    # per webstream (cc_webstream.bridge_seconds / bridge_max_seconds,
+    # NULL = these defaults) before every webstream.start.
     bridge = _format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_SECONDS)
     bridge_max = _format_crossfade_duration(DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS)
     return (
@@ -1435,6 +1444,8 @@ def _render_webstream_input_block(
         "# telnet contract: webstream.url [<url>], .start, .stop, .status,\n"
         "# .ready, .watchdog and var.set webstream.gain.\n"
         'webstream_gain = interactive.float("webstream.gain", 1.0)\n'
+        f'webstream_bridge = interactive.float("webstream.bridge", {bridge})\n'
+        f'webstream_bridge_max = interactive.float("webstream.bridge_max", {bridge_max})\n'
         'webstream_url = ref("")\n'
         "webstream_seq = ref(0)\n"
         'webstream_active_url = ref("")\n'
@@ -1510,8 +1521,11 @@ def _render_webstream_input_block(
         f"      timeout={_format_crossfade_duration(timeout_seconds)},\n"
         f"      poll_delay={_format_crossfade_duration(poll_delay_seconds)},\n"
         "      url)\n"
+        "    bb = webstream_bridge()\n"
+        "    bm = webstream_bridge_max()\n"
+        "    bm = if bm < bb then bb else bm end\n"
         '    b = buffer(id="webstream_bridge_#{n}",\n'
-        f"      buffer={bridge}, max={bridge_max}, s)\n"
+        "      buffer=bb, max=bm, s)\n"
         "    webstream_stopper.set(fun () -> s.stop())\n"
         "    webstream_status_fn.set(fun () -> s.status())\n"
         '    webstream_current_name.set("webstream_in_#{n}")\n'
@@ -2676,7 +2690,10 @@ def render_rastatime_liq(
         .replace("${ICECAST_OUTPUTS}", icecast_blocks)
         .replace("${HOURLY_RECORDING_BLOCK}", hourly_block)
         .replace("${SHOW_RECORDING_ENCODER}", show_encoder)
-        .replace("${ALERT_BLANK_BLOCK}", _render_alert_blank_block(alert_blank_url, alert_dead_air_seconds))
+        .replace(
+            "${ALERT_BLANK_BLOCK}",
+            _render_alert_blank_block(alert_blank_url, alert_dead_air_seconds),
+        )
     )
     return rendered
 

@@ -319,6 +319,43 @@ output stream both receive the adjusted level.
 
 ---
 
+## 6a. Buffer (per-stream delay and reserve)
+
+A scheduled webstream passes through a small buffer in the
+playout engine. Two fields on the webstream dialog control it
+(each has a help icon with the short version):
+
+| Field | Meaning | Default |
+|---|---|---|
+| **Buffer (s)** | Seconds of audio the stream collects before it starts to play. Keep it about 1 s below *Buffer max*. | 5 |
+| **Buffer max (s)** | Largest amount of audio the buffer holds. During the 10 s before the slot the buffer fills up to this value, so this is the delay added on top of the server's own connect burst, and at the same time the reserve against dropouts. | 10 |
+
+Smaller values bring the stream closer to live, larger ones
+give more reserve. Leave both empty for the defaults. The
+values apply from the next start of the stream; no restart is
+needed. They also travel with **Settings → Import / Export**
+(`webstreams.csv`, columns `bridge_seconds`,
+`bridge_max_seconds`).
+
+**Example: BBC World Service bulletins.** Measured on
+2026-11-05: the BBC server sends 3.6 s of audio at connect,
+the buffer added 10 s, so the slot played 13.8 s behind the
+server and the presenter was heard 8.5 s after the entry.
+With *Buffer* 2 and *Buffer max* 3 the delay drops to about
+6.6 s: the bulletin starts 1.5 s after the entry and a row of
+5:02 ends in the pause after it.
+
+> **How it works under the hood.** Migration 0079 added
+> `cc_webstream.bridge_seconds` / `bridge_max_seconds` (NULL =
+> the defaults).  The playout sets `var.set webstream.bridge` /
+> `webstream.bridge_max` before every `webstream.start`; the
+> fresh `buffer()` of the slot is built with them.  The
+> `max_buffer` of `input.http` is not a delay lever: the input
+> never drops data, it only throttles the reader.  See
+> ARCHITECTURE §23.88.
+
+---
+
 ## 7. Webstreams in autoloading playlists
 
 A webstream can be the entire body of an autoloading

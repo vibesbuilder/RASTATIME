@@ -18,6 +18,14 @@ class Webstream(models.Model):
     # no change to behaviour.  Range enforced UI-side: -20..+20 dB.
     input_gain_db = models.FloatField(default=0, db_column="input_gain_db")
 
+    # RASTATIME 2026-11-05 - per-webstream clock-bridge buffer (seconds).
+    # bridge_max_seconds is the fill level the bridge reaches before the
+    # gate opens and therefore the delay added on top of the server's
+    # connect burst; bridge_seconds is the fill before output starts
+    # (keep it ~1 s below max).  NULL = engine defaults (5 s / 10 s).
+    bridge_seconds = models.FloatField(blank=True, null=True, db_column="bridge_seconds")
+    bridge_max_seconds = models.FloatField(blank=True, null=True, db_column="bridge_max_seconds")
+
     owner = models.ForeignKey(
         "core.User",
         on_delete=models.DO_NOTHING,

@@ -30,6 +30,8 @@ def _make_webstream_event(
     *,
     uri: str = "http://stream.example.com/test.mp3",
     input_gain_db=None,
+    bridge_seconds=None,
+    bridge_max_seconds=None,
     show_name: str = "Test Webstream Show",
     duration_seconds: int = 600,
     type_: EventKind = EventKind.WEB_STREAM_OUTPUT_START,
@@ -48,6 +50,8 @@ def _make_webstream_event(
         uri=uri,
         show_name=show_name,
         input_gain_db=input_gain_db,
+        bridge_seconds=bridge_seconds,
+        bridge_max_seconds=bridge_max_seconds,
     )
 
 
@@ -96,6 +100,8 @@ def test_webstream_start_liquidsoap_path_calls_engine_webstream_start(
     engine.webstream_start.assert_called_once_with(
         "http://stream.example.com/test.mp3",
         gain_db=3.0,
+        bridge_seconds=None,
+        bridge_max_seconds=None,
     )
     # Legacy engine.play MUST NOT be called in this path
     engine.play.assert_not_called()
@@ -134,6 +140,23 @@ def test_webstream_start_liquidsoap_path_with_none_gain(
     engine.webstream_start.assert_called_once_with(
         event.uri,
         gain_db=None,
+        bridge_seconds=None,
+        bridge_max_seconds=None,
+    )
+
+
+def test_webstream_start_passes_per_stream_bridge(liquidsoap_scheduler):
+    """RASTATIME 2026-11-05: cc_webstream bridge values reach the engine."""
+    sched, engine = liquidsoap_scheduler
+    event = _make_webstream_event(bridge_seconds=2.0, bridge_max_seconds=3.0)
+
+    sched._on_webstream_start("key1", event)
+
+    engine.webstream_start.assert_called_once_with(
+        event.uri,
+        gain_db=None,
+        bridge_seconds=2.0,
+        bridge_max_seconds=3.0,
     )
 
 

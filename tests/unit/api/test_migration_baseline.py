@@ -82,7 +82,7 @@ _EXPECTED_LEAF_NODES: frozenset[tuple[str, str]] = frozenset(
     {
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("legacy", "0078_instance_autoloading"),
+        ("legacy", "0079_webstream_bridge"),
         ("linein", "0005_linein_input_gain_db"),
         ("playback", "0001_initial"),
         ("preflight", "0001_initial"),
@@ -97,10 +97,10 @@ _EXPECTED_LEAF_NODES: frozenset[tuple[str, str]] = frozenset(
 #: 75 legacy + 5 linein + 2 soundcard + playback, preflight and
 #: song_request (1 each) + Django's own auth (12), contenttypes (2) and
 #: sessions (1).
-_EXPECTED_NODE_COUNT = 102
+_EXPECTED_NODE_COUNT = 103
 
-#: Number of legacy migrations (0001 … 0078 without 0002, see below).
-_EXPECTED_LEGACY_COUNT = 77
+#: Number of legacy migrations (0001 … 0079 without 0002, see below).
+_EXPECTED_LEGACY_COUNT = 78
 
 
 # ---------------------------------------------------------------------------

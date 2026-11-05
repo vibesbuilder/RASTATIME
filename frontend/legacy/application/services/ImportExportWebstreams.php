@@ -3,7 +3,8 @@
 /**
  * RASTATIME 2026-10-13 - webstreams.csv (Section 23.56).
  *
- * Columns: name, description, url, length (HH:MM:SS), input_gain_db.
+ * Columns: name, description, url, length (HH:MM:SS), input_gain_db,
+ * bridge_seconds, bridge_max_seconds (RASTATIME 2026-11-05, empty = default).
  * Import goes through Application_Model_Webstream::analyzeFormData (the
  * same URL probe the dialog runs) and ::save; the name is the key.
  */
@@ -26,7 +27,7 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
 
     public function columns(): array
     {
-        return ['name', 'description', 'url', 'length', 'input_gain_db'];
+        return ['name', 'description', 'url', 'length', 'input_gain_db', 'bridge_seconds', 'bridge_max_seconds'];
     }
 
     public function columnHelp(): array
@@ -37,6 +38,8 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
             'url' => 'stream or playlist URL (http/https, .m3u/.pls allowed) - probed on import like in the dialog',
             'length' => 'default length HH:MM:SS (used when the stream is scheduled)',
             'input_gain_db' => 'input gain in dB, e.g. -2 or 1.5; empty = 0',
+            'bridge_seconds' => 'buffer before the stream starts to play, seconds; empty = default (5)',
+            'bridge_max_seconds' => 'buffer maximum = added delay and reserve, seconds; empty = default (10)',
         ];
     }
 
@@ -48,6 +51,8 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
             'url' => 'http://stream.live.vc.bbcmedia.co.uk/bbc_world_service',
             'length' => '00:05:05',
             'input_gain_db' => '-2',
+            'bridge_seconds' => '',
+            'bridge_max_seconds' => '',
         ]];
     }
 
@@ -68,6 +73,8 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
                 'url' => $row['url'] ?? '',
                 'length' => $row['length'] ?? '',
                 'input_gain_db' => $row['input_gain_db'] ?? '',
+                'bridge_seconds' => trim($row['bridge_seconds'] ?? ''),
+                'bridge_max_seconds' => trim($row['bridge_max_seconds'] ?? ''),
                 '_errors' => [],
             ];
             if ($rec['name'] === '') {
@@ -82,6 +89,11 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
             }
             if ($rec['input_gain_db'] !== '' && !is_numeric(str_replace(',', '.', $rec['input_gain_db']))) {
                 $rec['_errors'][] = _('input_gain_db must be a number');
+            }
+            foreach (['bridge_seconds', 'bridge_max_seconds'] as $col) {
+                if ($rec[$col] !== '' && !is_numeric(str_replace(',', '.', $rec[$col]))) {
+                    $rec['_errors'][] = $col . ' ' . _('must be a number of seconds');
+                }
             }
             $rec['summary'] = $rec['url'];
             $records[] = $rec;
@@ -101,6 +113,8 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
             'url' => $record['url'],
             'length' => sprintf('%02dh %02dm %02ds', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60),
             'input_gain_db' => $record['input_gain_db'] === '' ? '0' : str_replace(',', '.', $record['input_gain_db']),
+            'bridge_seconds' => $record['bridge_seconds'] === '' ? null : (float) str_replace(',', '.', $record['bridge_seconds']),
+            'bridge_max_seconds' => $record['bridge_max_seconds'] === '' ? null : (float) str_replace(',', '.', $record['bridge_max_seconds']),
         ];
     }
 
@@ -145,7 +159,8 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
     public function export(array &$files): string
     {
         $con = Propel::getConnection();
-        $st = $con->query('SELECT name, description, url, length, input_gain_db FROM cc_webstream ORDER BY lower(name)');
+        $st = $con->query('SELECT name, description, url, length, input_gain_db, bridge_seconds, bridge_max_seconds FROM cc_webstream ORDER BY lower(name)');
+        $num = function ($v) { return $v === null ? '' : rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.'); };
         $rows = [];
         foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
             $rows[] = [
@@ -153,7 +168,9 @@ class Application_Service_ImportExportWebstreams extends Application_Service_Imp
                 'description' => (string) $r['description'],
                 'url' => $r['url'],
                 'length' => self::secondsToHms(max(0, self::intervalToSeconds($r['length']))),
-                'input_gain_db' => $r['input_gain_db'] === null ? '' : rtrim(rtrim(number_format((float) $r['input_gain_db'], 2, '.', ''), '0'), '.'),
+                'input_gain_db' => $num($r['input_gain_db']),
+                'bridge_seconds' => $num($r['bridge_seconds']),
+                'bridge_max_seconds' => $num($r['bridge_max_seconds']),
             ];
         }
 

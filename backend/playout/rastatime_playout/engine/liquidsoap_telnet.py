@@ -432,6 +432,17 @@ class LiquidsoapTelnetClient:
         """
         return self.send_command(f"var.set webstream.gain = {linear_factor}")
 
+    def webstream_set_bridge(self, bridge_seconds: float, bridge_max_seconds: float) -> str:
+        """
+        RASTATIME 2026-11-05 - set the clock-bridge buffer the next
+        ``webstream.start`` builds its ``buffer()`` with:
+        ``var.set webstream.bridge = <s>`` (fill before output) and
+        ``var.set webstream.bridge_max = <s>`` (fill level at the gate =
+        added delay).  Call before :meth:`webstream_start`.
+        """
+        self.send_command(f"var.set webstream.bridge = {float(bridge_seconds):.2f}")
+        return self.send_command(f"var.set webstream.bridge_max = {float(bridge_max_seconds):.2f}")
+
     def webstream_start(self) -> str:
         """
         Tell the input.http source to begin connecting + buffering.

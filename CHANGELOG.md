@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Webstream-Puffer je Stream (2026-11-05, Go 2026-11-05)** — Webstream-Dialog:
+  **Buffer (s)** und **Buffer max (s)** mit Hilfe-Symbol-Tooltips (leer = Standard
+  5 s / 10 s), Import/Export `webstreams.csv` mit den Spalten `bridge_seconds` /
+  `bridge_max_seconds`.  Das Playout setzt `var.set webstream.bridge` /
+  `webstream.bridge_max` vor jedem `webstream.start`; der frische `buffer()` des
+  Slots wird damit gebaut.  Hintergrund (Messung 07:00-Slot 2026-11-05): die Brücke
+  füllt sich im 10-s-Vorlauf bis `max`, Verzug am Tor = Server-Burst 3,6 s + max
+  (13,8 s heute); `max_buffer` von input.http ist kein Hebel (Generator verwirft
+  nichts).  Migration 0079 (zwei NULL-Spalten an cc_webstream; Legacy toleriert
+  das Fehlen).  Manual WEBSTREAMS §6a ×4, ARCHITECTURE §23.88.  Wirksam: Legacy
+  sofort, API/PLAYOUT nach Neustart (PLAYOUT rendert rastatime.liq neu →
+  LIQUIDSOAP-Neustart).
+
 ## [1.1.0] - 2026-11-04
 
 ### Added

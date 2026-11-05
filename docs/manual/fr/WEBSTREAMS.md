@@ -280,6 +280,45 @@ l'audio n'atteigne le mixeur de sortie.
 
 ---
 
+## 6a. Tampon (retard et réserve par flux)
+
+Un webstream planifié traverse un petit tampon dans le moteur
+de playout. Deux champs du dialogue webstream le règlent
+(chacun avec une icône d'aide qui donne la version courte) :
+
+| Champ | Signification | Défaut |
+|---|---|---|
+| **Tampon (s)** | Secondes d'audio que le flux accumule avant de commencer à jouer. À garder environ 1 s sous *Tampon max*. | 5 |
+| **Tampon max (s)** | Quantité maximale d'audio que le tampon conserve. Dans les 10 s avant le créneau, il se remplit jusqu'à cette valeur ; c'est donc le retard ajouté au burst de connexion du serveur, et en même temps la réserve contre les coupures. | 10 |
+
+Des valeurs plus petites rapprochent le flux du direct, des
+valeurs plus grandes donnent plus de réserve. Laissez les deux
+champs vides pour les valeurs par défaut. Les valeurs
+s'appliquent au prochain démarrage du flux ; aucun redémarrage
+n'est nécessaire. Elles voyagent aussi avec **Paramètres →
+Import / Export** (`webstreams.csv`, colonnes `bridge_seconds`,
+`bridge_max_seconds`).
+
+**Exemple : bulletins BBC World Service.** Mesuré le
+2026-11-05 : le serveur BBC envoie 3,6 s d'audio à la
+connexion, le tampon ajoutait 10 s, le créneau jouait donc
+13,8 s derrière le serveur et le présentateur s'entendait 8,5 s
+après l'entrée. Avec *Tampon* 2 et *Tampon max* 3, le retard
+tombe à environ 6,6 s : le bulletin commence 1,5 s après
+l'entrée et une ligne de 5:02 se termine dans la pause qui le
+suit.
+
+> **Comment ça marche sous le capot.** Migration 0079 a ajouté
+> `cc_webstream.bridge_seconds` / `bridge_max_seconds` (NULL =
+> défauts).  Le playout règle `var.set webstream.bridge` /
+> `webstream.bridge_max` avant chaque `webstream.start` ; le
+> `buffer()` neuf du créneau est construit avec.  Le
+> `max_buffer` de `input.http` n'est pas un levier de retard :
+> l'entrée ne jette jamais de données, elle freine seulement la
+> lecture.  Voir ARCHITECTURE §23.88.
+
+---
+
 ## 7. Webstreams dans autoloading playlists
 
 Un webstream peut être tout le body d'une autoloading

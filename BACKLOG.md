@@ -7004,7 +7004,7 @@ und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 
 ## Webstream-Puffer je Stream (Evaluierung 2026-11-04, BBC-Einstieg 5 s zu früh)
 
-### 🟡 Puffer je Webstream einstellbar (cc_webstream, Playout, Liquidsoap) - DEFER (Operator-Frage 2026-11-04)
+### ✅ Puffer je Webstream einstellbar (cc_webstream, Playout, Liquidsoap) - GEBAUT 2026-11-05 (Go 2026-11-05 nach der 07:00-Messung, §23.88; Felder Buffer / Buffer max mit Tooltips, Standard für alle Streams; Empfehlung BBC 2/3 + Zeile 5:02)
 
 Befund: der BBC-Slot startet den frischen input.http 10 s vor der Zeile
 (WEBSTREAM_PREPARE_LEAD_SECONDS), Tor öffnet zur Zeile.  Unsere eigene

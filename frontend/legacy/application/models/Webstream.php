@@ -481,6 +481,27 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
             $stmt->execute();
         }
 
+        // RASTATIME 2026-11-05 - per-webstream clock-bridge buffer
+        // (NULL = engine default).  Raw SQL like the gain; tolerated
+        // until migration 0079 added the columns (the save of the other
+        // fields must not fail on a live system that has not migrated).
+        if (array_key_exists('bridge_seconds', $parameters) || array_key_exists('bridge_max_seconds', $parameters)) {
+            try {
+                $con = Propel::getConnection();
+                $stmt = $con->prepare(
+                    'UPDATE cc_webstream SET bridge_seconds = :bridge, bridge_max_seconds = :max WHERE id = :id'
+                );
+                $bridge = $parameters['bridge_seconds'] ?? null;
+                $max = $parameters['bridge_max_seconds'] ?? null;
+                $stmt->bindValue(':bridge', $bridge === null ? null : (float) $bridge, $bridge === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+                $stmt->bindValue(':max', $max === null ? null : (float) $max, $max === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+                $stmt->bindValue(':id', $newId, PDO::PARAM_INT);
+                $stmt->execute();
+            } catch (Exception $exc) {
+                Logging::warn('webstream ' . $newId . ': bridge columns not saved (migration 0079 pending?): ' . $exc->getMessage());
+            }
+        }
+
         // RASTATIME 2026-09-30 - a changed default length follows into the
         // rows of the upcoming shows (they copy it at insertion), and those
         // shows are laid out again - like the cue points of a file.
@@ -517,6 +538,41 @@ class Application_Model_Webstream implements Application_Model_LibraryEditable
         $stmt->execute();
         $value = $stmt->fetchColumn();
         return $value === false || $value === null ? 0.0 : (float) $value;
+    }
+
+    /**
+     * RASTATIME 2026-11-05 - Read the clock-bridge buffer of a webstream:
+     * ['bridge' => float|null, 'max' => float|null], null = engine
+     * default.  Nulls as well when the columns do not exist yet
+     * (migration 0079 pending) so the dialog still opens.
+     */
+    public static function getBridgeForId($webstreamId)
+    {
+        $none = ['bridge' => null, 'max' => null];
+        if (empty($webstreamId)) {
+            return $none;
+        }
+        try {
+            $con = Propel::getConnection();
+            $stmt = $con->prepare(
+                'SELECT bridge_seconds, bridge_max_seconds FROM cc_webstream WHERE id = :id'
+            );
+            $stmt->bindValue(':id', (int) $webstreamId, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $exc) {
+            Logging::warn('webstream ' . $webstreamId . ': bridge columns not read (migration 0079 pending?): ' . $exc->getMessage());
+
+            return $none;
+        }
+        if (!$row) {
+            return $none;
+        }
+
+        return [
+            'bridge' => $row['bridge_seconds'] === null ? null : (float) $row['bridge_seconds'],
+            'max' => $row['bridge_max_seconds'] === null ? null : (float) $row['bridge_max_seconds'],
+        ];
     }
 
     // method is not used, webstreams aren't currently kept track of for isScheduled.

@@ -8362,3 +8362,21 @@ msgstr "Les alertes par e-mail nécessitent un serveur SMTP, un expéditeur et a
 
 msgid "Telegram alerts need a bot token and at least one chat id."
 msgstr "Les alertes Telegram nécessitent un jeton de bot et au moins un identifiant de chat."
+
+msgid "Buffer (s):"
+msgstr "Tampon (s) :"
+
+msgid "Buffer max (s):"
+msgstr "Tampon max (s) :"
+
+msgid "Seconds of audio the stream collects before it starts to play. Keep it about 1 s below Buffer max. Empty = default 5 s."
+msgstr "Secondes d'audio que le flux accumule avant de commencer à jouer. À garder environ 1 s sous Tampon max. Vide = 5 s par défaut."
+
+msgid "Largest amount of audio the buffer holds. It fills up to this value in the 10 s before the stream goes on air, so this is the delay added on top of the server's own burst, and the reserve against dropouts. Smaller = the stream is heard closer to live, with less reserve. Empty = default 10 s."
+msgstr "Quantité maximale d'audio que le tampon conserve. Il se remplit jusqu'à cette valeur dans les 10 s avant la mise à l'antenne ; c'est donc le retard ajouté au burst du serveur, et la réserve contre les coupures. Plus petit = le flux s'entend plus près du direct, avec moins de réserve. Vide = 10 s par défaut."
+
+msgid "must be a number of seconds"
+msgstr "doit être un nombre de secondes"
+
+msgid "must not exceed Buffer max"
+msgstr "ne doit pas dépasser Tampon max"

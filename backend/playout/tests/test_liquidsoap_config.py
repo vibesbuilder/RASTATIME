@@ -970,7 +970,12 @@ def test_full_render_default_includes_webstream_input_block():
     assert "webstream = amplify({webstream_gain()}, webstream_raw)" in active
     # a fresh 5 s bridge (max 10 s) per slot - no stale audio from the
     # previous slot, and crossfade-compatible like before
-    assert ('b = buffer(id="webstream_bridge_#{n}",\n      buffer=5.0, max=10.0, s)') in active
+    # RASTATIME 2026-11-05: the bridge values are interactive variables
+    # PLAYOUT sets per webstream before webstream.start (defaults 5/10).
+    assert 'interactive.float("webstream.bridge", 5.0)' in active
+    assert 'interactive.float("webstream.bridge_max", 10.0)' in active
+    assert "bm = if bm < bb then bb else bm end" in active
+    assert ('b = buffer(id="webstream_bridge_#{n}",\n      buffer=bb, max=bm, s)') in active
     assert "buffer=10.0,\n  max=20.0" not in active
     # PLAYOUT's telnet contract is registered by the template itself
     for cmd in ('"url"', '"start"', '"stop"', '"status"', '"ready"'):

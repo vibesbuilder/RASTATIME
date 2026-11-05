@@ -178,6 +178,15 @@ class WebStreamEvent(BaseEvent):
     # None or 0 = unity gain (default upstream behaviour).
     input_gain_db: Optional[float] = None
 
+    # RASTATIME 2026-11-05 - per-webstream clock-bridge buffer (seconds),
+    # cc_webstream.bridge_seconds / bridge_max_seconds.  The scheduler
+    # hands them to engine.webstream_start, which sets them in Liquidsoap
+    # before the fresh buffer() of the slot is built.  None = engine
+    # default (5 s / 10 s).  bridge_max is the fill level at the gate and
+    # therefore the delay added on top of the server's connect burst.
+    bridge_seconds: Optional[float] = None
+    bridge_max_seconds: Optional[float] = None
+
 
 class LineinEvent(BaseEvent):
     """

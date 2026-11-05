@@ -2386,7 +2386,12 @@ class PlayoutScheduler:
         logger.info("Prepare %s: pre-buffering web stream %s (gate closed).", key, event.uri)
         self._webstream_generation += 1
         self._engine.webstream_gate(False)
-        self._engine.webstream_start(event.uri, gain_db=event.input_gain_db)
+        self._engine.webstream_start(
+            event.uri,
+            gain_db=event.input_gain_db,
+            bridge_seconds=event.bridge_seconds,
+            bridge_max_seconds=event.bridge_max_seconds,
+        )
         self._prepared = (key, event)
 
     def _take_prepared(self, event: object) -> bool:
@@ -2888,6 +2893,9 @@ class PlayoutScheduler:
             isinstance(prev_event, WebStreamEvent)
             and prev_event.uri == event.uri
             and (prev_event.input_gain_db or 0.0) == (event.input_gain_db or 0.0)
+            # RASTATIME 2026-11-05 - a different bridge needs a fresh input
+            and prev_event.bridge_seconds == event.bridge_seconds
+            and prev_event.bridge_max_seconds == event.bridge_max_seconds
         ):
             logger.info(
                 "Web stream %s: same stream as %s - keeping the source, no bounce.",
@@ -2929,6 +2937,8 @@ class PlayoutScheduler:
         self._engine.webstream_start(
             event.uri,
             gain_db=event.input_gain_db,
+            bridge_seconds=event.bridge_seconds,
+            bridge_max_seconds=event.bridge_max_seconds,
         )
         self._engine.webstream_gate(True)
 

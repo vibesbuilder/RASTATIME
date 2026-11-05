@@ -54,6 +54,33 @@
                     <?php echo _("Range: -20.0 to +20.0 dB.  0 = no change."); ?>
                 </span>
             </dd>
+
+            <?php /* RASTATIME 2026-11-05 - per-webstream clock-bridge buffer.
+                   Saved into cc_webstream.bridge_seconds / bridge_max_seconds
+                   (NULL = engine default 5 s / 10 s).  PLAYOUT sends
+                   var.set webstream.bridge / webstream.bridge_max before
+                   every webstream.start; the fresh buffer() of the slot is
+                   built with them.  The p.description paragraphs become
+                   help-icon tooltips (spl.js, $.rtDescriptionTooltips). */
+            $bridge = Application_Model_Webstream::getBridgeForId($this->obj->getId());
+            $fmt = function ($v) { return $v === null ? '' : rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.'); };
+            ?>
+            <div id="bridge-error" class="errors" style="display:none;"></div>
+            <dt id="bridge-label"><label for="streamBridgeSeconds"><?php echo _("Buffer (s):"); ?></label></dt>
+            <dd id="bridge-element">
+                <input type="number" id="streamBridgeSeconds" name="bridge_seconds"
+                       min="0.5" max="30" step="0.5" placeholder="5"
+                       value="<?php echo htmlspecialchars($fmt($bridge['bridge']), ENT_QUOTES); ?>" />
+                <p class="description"><?php echo _("Seconds of audio the stream collects before it starts to play. Keep it about 1 s below Buffer max. Empty = default 5 s."); ?></p>
+            </dd>
+            <div id="bridgemax-error" class="errors" style="display:none;"></div>
+            <dt id="bridgemax-label"><label for="streamBridgeMaxSeconds"><?php echo _("Buffer max (s):"); ?></label></dt>
+            <dd id="bridgemax-element">
+                <input type="number" id="streamBridgeMaxSeconds" name="bridge_max_seconds"
+                       min="1" max="60" step="0.5" placeholder="10"
+                       value="<?php echo htmlspecialchars($fmt($bridge['max']), ENT_QUOTES); ?>" />
+                <p class="description"><?php echo _("Largest amount of audio the buffer holds. It fills up to this value in the 10 s before the stream goes on air, so this is the delay added on top of the server's own burst, and the reserve against dropouts. Smaller = the stream is heard closer to live, with less reserve. Empty = default 10 s."); ?></p>
+            </dd>
         </dl>
     </div>
 

@@ -432,6 +432,12 @@ def generate_webstream_events(
     input_gain_db = webstream.get("input_gain_db")
     if input_gain_db is not None:
         input_gain_db = float(input_gain_db)
+    # RASTATIME 2026-11-05 - per-webstream clock-bridge buffer (None =
+    # engine default); older API responses lack the keys.
+    bridge_seconds = webstream.get("bridge_seconds")
+    bridge_seconds = float(bridge_seconds) if bridge_seconds is not None else None
+    bridge_max_seconds = webstream.get("bridge_max_seconds")
+    bridge_max_seconds = float(bridge_max_seconds) if bridge_max_seconds is not None else None
 
     stream_buffer_start_event = WebStreamEvent(
         type=EventKind.WEB_STREAM_BUFFER_START,
@@ -443,6 +449,8 @@ def generate_webstream_events(
         # Show data
         show_name=show["name"],
         input_gain_db=input_gain_db,
+        bridge_seconds=bridge_seconds,
+        bridge_max_seconds=bridge_max_seconds,
     )
     insert_event(events, buffer_start_key, stream_buffer_start_event)
 
@@ -458,6 +466,8 @@ def generate_webstream_events(
         # Show data
         show_name=show["name"],
         input_gain_db=input_gain_db,
+        bridge_seconds=bridge_seconds,
+        bridge_max_seconds=bridge_max_seconds,
     )
     insert_event(events, play_key, stream_output_start_event)
 
@@ -473,6 +483,8 @@ def generate_webstream_events(
         # Show data
         show_name=show["name"],
         input_gain_db=input_gain_db,
+        bridge_seconds=bridge_seconds,
+        bridge_max_seconds=bridge_max_seconds,
     )
     insert_event(events, buffer_end_key, stream_buffer_end_event)
 
@@ -486,6 +498,8 @@ def generate_webstream_events(
         # Show data
         show_name=show["name"],
         input_gain_db=input_gain_db,
+        bridge_seconds=bridge_seconds,
+        bridge_max_seconds=bridge_max_seconds,
     )
     insert_event(events, stop_key, stream_output_end_event)
 

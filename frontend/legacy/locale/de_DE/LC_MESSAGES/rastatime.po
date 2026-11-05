@@ -8005,3 +8005,21 @@ msgstr "E-Mail-Alarme brauchen einen SMTP-Server, einen Absender und mindestens 
 
 msgid "Telegram alerts need a bot token and at least one chat id."
 msgstr "Telegram-Alarme brauchen ein Bot-Token und mindestens eine Chat-ID."
+
+msgid "Buffer (s):"
+msgstr "Puffer (s):"
+
+msgid "Buffer max (s):"
+msgstr "Puffer max (s):"
+
+msgid "Seconds of audio the stream collects before it starts to play. Keep it about 1 s below Buffer max. Empty = default 5 s."
+msgstr "Sekunden Ton, die der Stream sammelt, bevor er zu spielen beginnt. Etwa 1 s unter Puffer max halten. Leer = Standard 5 s."
+
+msgid "Largest amount of audio the buffer holds. It fills up to this value in the 10 s before the stream goes on air, so this is the delay added on top of the server's own burst, and the reserve against dropouts. Smaller = the stream is heard closer to live, with less reserve. Empty = default 10 s."
+msgstr "Größte Menge Ton, die der Puffer hält. In den 10 s vor dem Sendebeginn füllt er sich bis zu diesem Wert; das ist die Verzögerung zusätzlich zum Burst des Servers und zugleich die Reserve bei Aussetzern. Kleiner = der Stream ist näher an live zu hören, mit weniger Reserve. Leer = Standard 10 s."
+
+msgid "must be a number of seconds"
+msgstr "muss eine Zahl in Sekunden sein"
+
+msgid "must not exceed Buffer max"
+msgstr "darf Puffer max nicht überschreiten"

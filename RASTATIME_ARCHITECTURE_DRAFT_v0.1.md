@@ -8942,3 +8942,65 @@ values, validation 0-999; EN/DE/FR), `participants_save_probe.php`
 live as admin: form (gaps measured), Edit Instance route, both
 Analytics pages, Alerts page.  Rollback: `git revert` (legacy live at
 once; the Python part after the restart).
+
+### 23.88 Per-Webstream Clock-Bridge Buffer (2026-11-05)
+
+**Why.** The operator takes the hourly 5-minute BBC World Service
+bulletin live and heard the presenter ~8 s after the entry.  Measured
+on the 07:00 slot of 2026-11-05 (BBC direct + own Icecast recorded in
+parallel, cross-correlated on a wall-clock axis, probe
+`C:/Temp/optd/wslat/`): our output lags the BBC server by 13.8 s.
+Composition: the server's connect burst (3.6 s, sits in the
+`input.http` generator and plays out first) + the clock bridge, which
+nobody consumes before the gate opens and which therefore fills up to
+`max` (10 s) during the 10 s prepare lead.  `max_buffer` of
+`input.http` is NOT a lever (10 vs 1 s: same delay; the generator
+throttles the reader, it never drops).  A test process with `mksafe`
+pulling the bridge showed 8.8 s (bridge held at `buffer` = 5 s), which
+is why the first estimate was wrong.  Delay = buffered audio = reserve
+against dropouts; every second gained is a second of reserve lost.
+
+**What.** Two nullable columns on `cc_webstream` (migration 0079):
+`bridge_seconds` (fill before output, keep ~1 s below max) and
+`bridge_max_seconds` (fill level at the gate = added delay).  NULL =
+the template defaults `DEFAULT_WEBSTREAM_BRIDGE_SECONDS` 5 /
+`DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS` 10.
+
+- Legacy: webstream dialog fields **Buffer (s)** / **Buffer max (s)**
+  (number inputs, `p.description` → help-icon tooltips via
+  `$.rtDescriptionTooltips(..., {only: ["bridge", "bridgemax"]})` in
+  `spl.js` `mod.init`), controller clamps 0.5–30 / 1–60 and rejects
+  bridge > max (`#bridge-error`), `Webstream::save` writes the columns
+  with raw SQL and `getBridgeForId` reads them, both tolerating the
+  columns' absence (warning) so the live UI works before the migration.
+  Import/Export `webstreams.csv` carries both columns.
+- API: `Webstream.bridge_seconds` / `bridge_max_seconds`
+  (`FloatField(null=True)`), serializer `__all__`.
+- Playout: `WebStreamEvent.bridge_seconds` / `bridge_max_seconds` from
+  the schedule payload; `engine.webstream_start(uri, gain_db,
+  bridge_seconds, bridge_max_seconds)` at both call sites (prepare at
+  T-10 s and the direct start); the same-stream hand-over keeps the
+  source only when the bridge values match too.
+  `LiquidsoapPlayoutEngine.webstream_start` resolves None to the
+  defaults, clamps max ≥ bridge and sends
+  `var.set webstream.bridge = <s>` / `var.set webstream.bridge_max = <s>`
+  before `webstream.start` (`LiquidsoapTelnetClient.webstream_set_bridge`).
+- Template: `webstream_bridge = interactive.float("webstream.bridge",
+  5.0)`, `webstream_bridge_max = interactive.float("webstream.bridge_max",
+  10.0)`; `webstream_start()` reads both, `bm = if bm < bb then bb else
+  bm end`, and builds `buffer(id="webstream_bridge_#{n}", buffer=bb,
+  max=bm, s)`.  Verified with `liquidsoap --check` on a patched copy of
+  the live script.
+
+**Numbers for the BBC slot** (delay = 3.6 s + max): max 10 → 13.6 s,
+bulletin +8.5 s after the gate, exit cuts ~3 s; max 5 → 8.6 s, +3.5 s;
+max 3 → 6.6 s, +1.5 s, row 5:02 ends in the pause after the bulletin;
+max 2 → 5.6 s, +0.5 s.  Recommendation 2/3 with row 5:02; DJ streams
+keep the defaults (10 s reserve).  Not built: `self_sync=true` (drops
+the burst via the bridge overrun, 1.6 s measured, new path on the
+Windows build) and `max_buffer` as a setting (no effect).
+
+**Rollout.** Migration 0079 (operator backup + quiet window), restart
+API → PLAYOUT (renders rastatime.liq) → LIQUIDSOAP; legacy live at once.
+Rollback: `git revert`; the columns may stay.
+

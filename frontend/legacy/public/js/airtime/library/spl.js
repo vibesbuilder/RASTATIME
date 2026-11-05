@@ -852,6 +852,10 @@ var AIRTIME = (function (AIRTIME) {
       // RASTATIME 2026-05-16 - per-webstream input-gain (dB).  The
       // server clamps to [-20, +20] and falls back to 0 on bad input.
       var inputGainDb = $pl.find("#streamInputGainDb").val();
+      // RASTATIME 2026-11-05 - per-webstream clock-bridge buffer (s);
+      // empty = engine default.
+      var bridgeSeconds = $pl.find("#streamBridgeSeconds").val();
+      var bridgeMaxSeconds = $pl.find("#streamBridgeMaxSeconds").val();
 
       //hide any previous errors (if any)
       $(".side_playlist.active-tab .errors").empty().hide();
@@ -867,6 +871,8 @@ var AIRTIME = (function (AIRTIME) {
           length: length,
           name: name,
           input_gain_db: inputGainDb,
+          bridge_seconds: bridgeSeconds,
+          bridge_max_seconds: bridgeMaxSeconds,
         },
         function (json) {
           if (json.analysis) {
@@ -1897,6 +1903,14 @@ var AIRTIME = (function (AIRTIME) {
     setCueEvents();
     setFadeEvents();
     mod.setFadeIcon();
+
+    // RASTATIME 2026-11-05 - webstream dialog: the buffer fields explain
+    // themselves through help-icon tooltips (p.description -> help_icon +
+    // rtTooltip, the /preference/stream-setting look).
+    $.rtDescriptionTooltips($pl.find("dl.side_playlist"), {
+      where: "field",
+      only: ["bridge", "bridgemax"],
+    });
 
     initialEvents();
     setUpPlaylist();
