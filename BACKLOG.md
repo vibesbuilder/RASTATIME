@@ -7100,6 +7100,25 @@ Idee: (1) AutoPlaylistManager::expandPlaylist loggt WARN „smart block
 (2) der Smart-Block-Editor zeigt nach „Speichern" die Trefferzahl der
 Kriterien (0 rot).  ~40 Zeilen Legacy, 2 h.  Vorbedingung: Operator-Go.
 
+### 💡 PLAYOUT-Neustart mitten im Webstream verbindet den Stream neu - IDEA (Befund 2026-11-05 17:05)
+
+Befund: Paket-Neuinstallation für v1.2.0, PLAYOUT-Neustart 17:05:45
+während eines Webstream-Slots (seit 17:01:05).  Liquidsoap spielte den
+Stream in den 7 s ohne PLAYOUT weiter; die neue PLAYOUT-Instanz kennt
+aber keinen `_playing_key` und startet den laufenden Stream per Catch-up
+neu (`Catch-up: in-progress web stream … (started 288s ago)`, 17:05:52
+`stop` + `webstream_start … bridge=3.0s/5.0s`): frische Verbindung,
+Brücke füllt neu → vermutlich ein Aussetzer bzw. Sprung von einigen
+Sekunden auf Sendung (nicht gemessen; 17 s später übernahm ohnehin die
+nächste Datei).  Code: `playout_scheduler.py`, Webstream-Arm-Pfad
+(`elif key != self._playing_key:` → `_on_webstream_start`).
+Idee: vor dem Webstream-Catch-up die Engine fragen (`webstream.status`
+per Telnet, ggf. die laufende URL), wie es die Neustart-Übernahme §23.89
+für Dateien tut: läuft dieselbe URL schon, nur den Key binden statt neu
+zu verbinden.  Bis dahin Betriebsregel: PLAYOUT nur neu starten, während
+eine Datei läuft.  ~1–2 h + Probe an einem Testslot.  Vorbedingungen:
+Operator-Go; prüfen, ob Telnet die laufende URL liefert.
+
 ## Doppelter Queue-Push nach manuellem Liquidsoap-Neustart (Befund 2026-11-05, 11:00-Testshow)
 
 ### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - GEBAUT 2026-11-05 (Go 2026-11-05, Vorschläge 2+3, §23.89; Abnahme 2026-11-05 12:35 + 13:15 bestanden: Catch-up 5 s bzw. 7 s nach manuellem Neustart, Reconnect-Erkennung 1,3 s, kein Duplikat; Übernahme-Pfad nur per Test abgedeckt)
