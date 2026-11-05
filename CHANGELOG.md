@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/api/v2/schema` nur noch mit Login (IsAuthenticated; Api-Key gilt für die
   Endpunkte, nicht für die Doku).  Widgets unverändert (eigene now-playing-data).
   Wirksam: Legacy sofort (live geprüft), Schema nach API-Neustart.  ARCHITECTURE
-  §23.90.
+  §23.90.  Commit `1d4be827`.
 
 ### Fixed
 
