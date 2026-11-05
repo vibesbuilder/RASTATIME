@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Suite 885 grün.  Kein Liquidsoap-Neustart nötig, PLAYOUT-Neustart genügt.
   ARCHITECTURE §23.89.  Commit `439252a9`.  Abnahme 2026-11-05 12:35 (manueller
   Liquidsoap-Neustart mitten in einer 60-min-Datei): Erkennung 12:35:14, Catch-up bei
-  +1207 s um 12:35:16, Ton nach ~5 s zurück; Übernahme-Pfad noch nicht live gesehen.
+  +1207 s um 12:35:16, Ton nach ~5 s zurück.  Zweite Probe 13:14:55 (Neustart 3 s nach
+  dem Queue-Ahead, an der Sendegrenze): Erkennung per Telnet-Reconnect 1,3 s nach dem
+  PLAY, Catch-up +4,9 s, Ton 13:15:05, nur eine Anfrage in der Queue.
 
 ### Added
 
