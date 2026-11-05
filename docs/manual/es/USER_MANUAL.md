@@ -163,6 +163,7 @@ documento maestro arriba es lo único que todos asumen.
 | [Máquina local](./LOCAL_MACHINE.md) | Salida de tarjeta de sonido, entrada line-in, formato de importación (sin pérdida a MP3), carpeta de importación local. |
 | [Copia de seguridad](./BACKUP.md) | Copias de la base de datos + configuración con un clic en una carpeta elegida; descarga; el procedimiento de restauración documentado. |
 | [Widgets públicos integrables](./WIDGETS.md) | Widgets listos-para-usar para el sitio web público de su emisora (Now Playing — Show / Track, Weekly Program, Player). |
+| [API](./API.md) | Los puntos de acceso públicos de lectura (programación, now playing, historial), el interruptor Public RASTATIME API del que dependen los widgets, la API v2 con Swagger tras iniciar sesión, y por qué la única clave API nunca sale de la emisora. |
 
 ### Administración
 

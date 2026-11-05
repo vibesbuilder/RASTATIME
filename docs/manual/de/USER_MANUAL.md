@@ -165,6 +165,7 @@ sie alle voraussetzen.
 | [Lokale Maschine](./LOCAL_MACHINE.md) | Soundkarten-Ausgang, Line-In-Eingang, Importformat (verlustfrei zu MP3), lokaler Import-Ordner. |
 | [Backup](./BACKUP.md) | Sicherungen von Datenbank + Konfiguration per Klick in einen gewählten Ordner; Download; der dokumentierte Wiederherstellungsweg. |
 | [Öffentliche Embed-Widgets](./WIDGETS.md) | Drop-in-Widgets für die öffentliche Website Ihrer Station (Now Playing — Show / Track, Weekly Program, Player). |
+| [API](./API.md) | Die öffentlichen Lese-Endpunkte (Programm, Now Playing, History), der Schalter Public RASTATIME API, von dem die Widgets abhängen, die API v2 mit Swagger nach Login, und warum der einzige API-Key die Station nie verlässt. |
 
 ### Administration
 

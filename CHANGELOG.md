@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Manual-Kapitel API (2026-11-05)** — `docs/manual/API.md` in EN/DE/FR/ES: wer was lesen
+  darf, der Schalter „Public RASTATIME API" und die Widgets, die öffentlichen
+  Lese-Endpunkte der Legacy-API mit Parametern, die offenen v2-Endpunkte samt
+  now-playing-Form, Swagger nach Login, Api-Key-Nutzung und die Regel „Schlüssel nie
+  weitergeben", curl-Beispiele, FAQ.  TOC in allen vier USER_MANUAL.md.
+
 ### Security
 
 - **Öffentliche Lese-API: Metadaten-Whitelist und Schema-Sperre (2026-11-05, Go

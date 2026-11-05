@@ -147,6 +147,7 @@ master document above is the only thing they all assume.
 | [Local Machine](./docs/manual/LOCAL_MACHINE.md) | Sound-card output, line-in input, import format (lossless to MP3), local import drop-folder. |
 | [Backup](./docs/manual/BACKUP.md) | One-click backups of database + configuration into a chosen folder; downloading them; the documented restore path. |
 | [Public Embed Widgets](./docs/manual/WIDGETS.md) | Drop-in widgets for your station's public website (Now Playing — Show / Track, Weekly Program, Player). |
+| [API](./docs/manual/API.md) | The public read endpoints (programme, now playing, history), the Public RASTATIME API switch the widgets depend on, API v2 with Swagger after login, and why the single API key never leaves the station. |
 
 ### Administration
 

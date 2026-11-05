@@ -170,6 +170,7 @@ qu'ils supposent tous.
 | [Machine locale](./LOCAL_MACHINE.md) | Sortie carte son, entrée line-in, format d'import (sans perte vers MP3), dossier d'import local. |
 | [Sauvegarde](./BACKUP.md) | Sauvegardes de la base + configuration en un clic dans un dossier choisi ; téléchargement ; la procédure de restauration documentée. |
 | [Widgets publics intégrables](./WIDGETS.md) | Widgets prêts-à-l'emploi pour le site web public de votre station (Now Playing — Show / Track, Weekly Program, Player). |
+| [API](./API.md) | Les points d'accès publics en lecture (programme, now playing, historique), l'interrupteur Public RASTATIME API dont dépendent les widgets, l'API v2 avec Swagger après connexion, et pourquoi l'unique clé API ne quitte jamais la station. |
 
 ### Administration
 

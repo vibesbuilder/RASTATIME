@@ -7067,7 +7067,7 @@ ein externer Nutzer, der heute auf ein anderes Feld zugreift, verliert es
 permission_classes auf den beiden Spectacular-Views, 5 Zeilen, 30 min.
 Alternative: bewusst offen lassen, wenn die API Dritten angeboten wird.
 
-### 🟡 Manual-Kapitel API (EN/DE/FR/ES) - DEFER (Operator 2026-11-05: verschoben)
+### ✅ Manual-Kapitel API (EN/DE/FR/ES) - GESCHRIEBEN 2026-11-05 (docs/manual/API.md ×4, TOC ×4)
 Öffentliche Endpunkte (ohne Schlüssel), Api-Key-Endpunkte, Swagger-UI,
 Beispiele mit curl, Hinweis „Api-Key nie weitergeben".  ~150 Zeilen je
 Sprache, 3 h.
