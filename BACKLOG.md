@@ -7004,7 +7004,7 @@ und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 
 ## Doppelter Queue-Push nach manuellem Liquidsoap-Neustart (Befund 2026-11-05, 11:00-Testshow)
 
-### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - GEBAUT 2026-11-05 (Go 2026-11-05, Vorschläge 2+3, §23.89; Abnahme offen: PLAYOUT-Neustart + Replikat-Probe)
+### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - GEBAUT 2026-11-05 (Go 2026-11-05, Vorschläge 2+3, §23.89; Abnahme 2026-11-05 12:35 bestanden: Catch-up 5 s nach manuellem Neustart; Übernahme-Pfad noch nicht live gesehen)
 
 Hergang (playout-stdout.log, liquidsoap-stdout.log): 10:29:23 PLAYOUT-Neustart
 (Operator) rendert rastatime.liq neu (Brücken-Variablen) -> geplanter
