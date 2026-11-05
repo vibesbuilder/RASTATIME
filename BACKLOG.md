@@ -7002,6 +7002,42 @@ Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
 
+## Doppelter Queue-Push nach manuellem Liquidsoap-Neustart (Befund 2026-11-05, 11:00-Testshow)
+
+### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - DEFER (Analyse 2026-11-05)
+
+Hergang (playout-stdout.log, liquidsoap-stdout.log): 10:29:23 PLAYOUT-Neustart
+(Operator) rendert rastatime.liq neu (Brücken-Variablen) -> geplanter
+Liquidsoap-Neustart 10:29:29-10:29:34, Wiedereinstieg 'Rent I Pay' bei +143 s
+korrekt.  10:30:05-10:30:07 ZWEITER Liquidsoap-Neustart (manuell, nicht vom
+Playout; "LOG START 10:30:07"): 'Rent I Pay' 13 s früher aus, 2 s Stille, das
+Playout erkennt den Neustart nicht (nur Telnet-Reconnect 10:30:09).  Der
+Queue-Ahead 'Transatlantic Love Affair' um 10:30:09 landet ZWEIMAL in der
+frischen Queue (Reconnect + Wiederholung in send_command; Liquidsoap: RID 0
+sofort gespielt, RID 1 dahinter) -> ab 10:35:59 spielt der Titel ein zweites
+Mal, die Kette läuft 4:27 hinter den Zeilen her.  Die Heuristik "mehr Rest
+als der Vorgänger haben kann -> die Queue ist auf dem Nachfolger, kein
+Skip" (playout_scheduler ~2690) vertraut der Queue und synchronisiert nie
+auf die Uhr; jede Zeile hängt ihr Stück hinten an.  11:00:00: 'World News'
+(Vorshow) läuft weiter, TOH-Jingle / Dayteaser / Intro landen dahinter in
+der Queue; das Webstream-Tor (uhrgesteuert) öffnet 11:01:05, der Start
+leert die Queue -> die drei Jingles sind weg.  Showteaser danach per play
+frisch -> korrekt.  Playout History zeigt Zeilen, nicht das Gehörte.  Die
+7-Minuten-Verschiebung der AutoDJ-Show hat damit nichts zu tun.
+
+Vorschläge (je ~40-80 Zeilen, Tests im Replikat):
+1. Telnet: einen `push` nach Reconnect nicht wiederholen (nur lesende
+   Kommandos), oder vor dem Push `scheduled.queue` prüfen - kein Duplikat.
+2. Jeder Telnet-Reconnect prüft `uptime`; frische Instanz -> laufendes
+   Element neu einsetzen (wie beim eigenen Neustart 10:29:34).
+3. Uhr-Sanity: passt der Engine-Rest weder zum Vorgänger noch zum
+   Nachfolger (265 s Rest, Nachfolger 9,9 s) -> Skip auf die Zeile statt
+   "no skip".  Hätte 'World News' um 11:00:00 geschnitten.
+Betriebsregel bis dahin: nach einem PLAYOUT-Neustart LIQUIDSOAP nicht
+zusätzlich von Hand neu starten - das Playout tut es selbst an der
+Titelgrenze, wenn rastatime.liq sich geändert hat (Log "Planned Liquidsoap
+restart").
+
 ## Webstream-Puffer je Stream (Evaluierung 2026-11-04, BBC-Einstieg 5 s zu früh)
 
 ### ✅ Puffer je Webstream einstellbar (cc_webstream, Playout, Liquidsoap) - GEBAUT 2026-11-05 (Go 2026-11-05 nach der 07:00-Messung, §23.88; Felder Buffer / Buffer max mit Tooltips, Standard für alle Streams; Empfehlung BBC 2/3 + Zeile 5:02; ABGENOMMEN 2026-11-05 11:00 mit 3/5: 8,6 s Verzug, Bulletin +4 s, Ausstieg 0,4 s nach der Pause)
