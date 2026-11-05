@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **API: `/api/v2/now-playing` liest den Sendeplan (2026-11-05, Go 2026-11-05)** — Der
+  Endpunkt las ein prozessinternes Singleton, das im Betrieb (Playout und API als
+  getrennte Dienste) nie gefüllt wird, und meldete immer „nichts läuft".  Jetzt aus
+  der Datenbank wie die Widgets: laufende Schedule-Zeile (Datei, Webstream oder
+  Line-In) mit Credit-Feldern, laufende Sendung, nächster Titel, Quelle (scheduled /
+  live_dj / master_dj vom Playout-Zustand), immer HTTP 200, bei Fehlern die
+  Leerlauf-Form.  Tests `tests/unit/api/test_now_playing_view.py`.  Wirksam nach
+  API-Neustart.  ARCHITECTURE §23.91.
+
 - **Playout: Neustart-Erkennung und Uhr-Sanity nach dem 11:00-Vorfall (2026-11-05, Go
   2026-11-05)** — Drei Schutzmechanismen gegen eine doppelt gespielte Datei nach einem
   ungeplanten Liquidsoap-Neustart: (1) jeder Telnet-Reconnect lässt den

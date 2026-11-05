@@ -7026,9 +7026,8 @@ Ist-Zustand (curl von außen, 2026-11-05 13:30):
 - BEFUND: live-info-v2 liefert für den laufenden Titel die komplette
   cc_files-Zeile: filepath (Serverpfad D:/stor/…), owner_id, md5, comments,
   lyrics, import_status, lptime, …  Upstream-Erbe; öffentlich sichtbar.
-- Nebenbefund: /api/v2/now-playing meldet is_playing=false bei laufender
-  Sendung (playout.now_playing default_state) - Endpunkt offenbar nicht
-  gespeist; Widgets nutzen ihn nicht.
+- Nebenbefund: /api/v2/now-playing meldete immer is_playing=false (Singleton
+  ohne Speisung) - BEHOBEN 2026-11-05 (Go, §23.91): liest jetzt den Sendeplan.
 
 ### ✅ Metadaten-Whitelist für die öffentlichen Lese-Endpunkte - GEBAUT 2026-11-05 (Go 2026-11-05, §23.90, live geprüft)
 live-info / live-info-v2 / track geben nur noch: title, artist, album,

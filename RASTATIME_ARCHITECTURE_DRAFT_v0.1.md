@@ -9094,3 +9094,22 @@ Schedule model and is untouched; `/api/track` only serves artwork.
 tokens, cache/throttle for week-info, `/api/v2/now-playing` reporting
 idle while a show plays (side finding).
 
+### 23.91 /api/v2/now-playing from the Schedule (2026-11-05)
+
+The endpoint (T7 prototype era) read `playout.now_playing.default_state`,
+a process-level singleton filled only when the engine runs inside the
+API process; production runs two services, so it always answered idle.
+Nobody consumed it (no widget, no JS, no playout call); the contract
+tests only required 200 + the three keys.  Now `now_playing._snapshot()`
+reads cc_schedule (`starts_at <= now < ends_at`, instance not modified,
+newest first, the first row with a file / webstream / line-in) with
+`select_related`, the show from the row's instance (or the instance
+covering `now` when no row plays), the next row, and the source from the
+playout's `/source-state` (0.5 s timeout, fail-soft "scheduled").  Public
+fields follow `WidgetHelper::PUBLIC_TRACK_FIELDS` (type, id, title,
+artist, album, genre, year, length_seconds, starts_at, ends_at,
+has_artwork).  Any exception degrades to the idle shape (the contract
+tests run without a database).  Keys: is_playing, now, source,
+started_at, item, show, next.  Django 5 note: `django.utils.timezone.utc`
+is gone - `datetime.timezone.utc`.
+
