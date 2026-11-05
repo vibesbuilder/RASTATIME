@@ -7002,6 +7002,22 @@ Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
 
+## Smart Block ohne Treffer bleibt stumm (Befund 2026-11-05, Ausgefedert „Jingle vor BBC")
+
+### 💡 Fill-Warnung und Editor-Hinweis bei Smart Blocks ohne passende Datei - IDEA (2026-11-05)
+
+Befund: die 14 Blöcke „Ausgefedert XX Jingle vor/nach BBC" filtern auf
+Album „Ausgefedert XX Jingle vor BBC", die Dateien tragen aber das Album
+„Ausgefedert XX Vor BBC" / „Nach BBC" (Block-Name und Album-Name wurden
+verwechselt).  Der Block trifft 0 Dateien, die Befüllung übergeht ihn
+still: das Fill-Log zählt nur „intro/outro/auto N rows".  Intro- und
+Outro-Blöcke derselben Serie passen und laufen.  Kein Code-Fehler, aber
+eine Falle ohne Hinweis.
+Idee: (1) AutoPlaylistManager::expandPlaylist loggt WARN „smart block
+<name> matched no file - skipped" und zählt es im Fill-Log mit (empty N);
+(2) der Smart-Block-Editor zeigt nach „Speichern" die Trefferzahl der
+Kriterien (0 rot).  ~40 Zeilen Legacy, 2 h.  Vorbedingung: Operator-Go.
+
 ## Doppelter Queue-Push nach manuellem Liquidsoap-Neustart (Befund 2026-11-05, 11:00-Testshow)
 
 ### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - GEBAUT 2026-11-05 (Go 2026-11-05, Vorschläge 2+3, §23.89; Abnahme 2026-11-05 12:35 bestanden: Catch-up 5 s nach manuellem Neustart; Übernahme-Pfad noch nicht live gesehen)
