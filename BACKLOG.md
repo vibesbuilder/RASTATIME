@@ -7012,7 +7012,10 @@ Album „Ausgefedert XX Jingle vor BBC", die Dateien tragen aber das Album
 verwechselt).  Der Block trifft 0 Dateien, die Befüllung übergeht ihn
 still: das Fill-Log zählt nur „intro/outro/auto N rows".  Intro- und
 Outro-Blöcke derselben Serie passen und laufen.  Kein Code-Fehler, aber
-eine Falle ohne Hinweis.
+eine Falle ohne Hinweis.  Operator hat Alben und Kriterien am 2026-11-05
+angeglichen, Befüllung läuft (Vorschau zeigt bei 0 Treffern "No track match
+the search criteria", daneben steht "Duration: 1 items" = Limit, keine
+Trefferzahl - leicht zu verwechseln).
 Idee: (1) AutoPlaylistManager::expandPlaylist loggt WARN „smart block
 <name> matched no file - skipped" und zählt es im Fill-Log mit (empty N);
 (2) der Smart-Block-Editor zeigt nach „Speichern" die Trefferzahl der
