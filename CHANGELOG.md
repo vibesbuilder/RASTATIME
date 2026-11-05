@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   das Fehlen).  Manual WEBSTREAMS §6a ×4, ARCHITECTURE §23.88.  Wirksam: Legacy
   sofort, API/PLAYOUT nach Neustart (PLAYOUT rendert rastatime.liq neu →
   LIQUIDSOAP-Neustart).  Commit `8d8d90c9`.
+  Abnahme 2026-11-05 11:00 (Testshow, BBC News mit Buffer 3 / max 5, Playout-Log
+  „bridge=3.0s/5.0s (per stream)"): Verzug 8,6 s statt 13,8 s wie vorhergesagt,
+  Bulletin 4 s nach dem Einstieg statt 8,5 s, Ausstieg 0,4 s nach der Pause.
+  Migration 0079 live 10:2x, Dienste neu gestartet.
 
 ## [1.1.0] - 2026-11-04
 
