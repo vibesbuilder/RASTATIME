@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zum Vorgänger noch zum Nachfolger passt (Nachfolger-Clip + 20 s Spiel;
   11:00:00: 265 s vor einem 9,9-s-Jingle).  Tests `test_restart_adopt.py` (9),
   Suite 885 grün.  Kein Liquidsoap-Neustart nötig, PLAYOUT-Neustart genügt.
-  ARCHITECTURE §23.89.
+  ARCHITECTURE §23.89.  Commit `439252a9`.
 
 ### Added
 
