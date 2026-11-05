@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nichts).  Migration 0079 (zwei NULL-Spalten an cc_webstream; Legacy toleriert
   das Fehlen).  Manual WEBSTREAMS §6a ×4, ARCHITECTURE §23.88.  Wirksam: Legacy
   sofort, API/PLAYOUT nach Neustart (PLAYOUT rendert rastatime.liq neu →
-  LIQUIDSOAP-Neustart).
+  LIQUIDSOAP-Neustart).  Commit `8d8d90c9`.
 
 ## [1.1.0] - 2026-11-04
 
