@@ -7002,6 +7002,59 @@ Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
 
+## Öffentliche API und Widgets (Operator-Frage 2026-11-05, Bestandsaufnahme)
+
+Ist-Zustand (curl von außen, 2026-11-05 13:30):
+- API v2 (Django, /api/v2/): alles hinter Login/Api-Key (403 ohne), außer
+  bewusst offen: version, info (nur Stationsname), now-playing,
+  song-requests/search + submit (Wunschfunktion; Suche liefert id, title,
+  artist, album, has_artwork).  OpenAPI-Schema (211 KB) und Swagger-UI sind
+  OHNE Login lesbar (/api/v2/schema, /schema/swagger-ui).
+- Legacy-API v1 (/api/…): mit „Public RASTATIME API" = an (cc_pref
+  third_party_api=1, Settings → General) sind live-info, live-info-v2,
+  week-info, station-metadata, show-schedules, shows, show-tracks, track,
+  track-types, show-logo, stream-m3u öffentlich (nur lesen); der Rest
+  verlangt den Api-Key (401 geprüft: version, get-stream-setting,
+  list-all-files).  Ein einziger Api-Key (general.api_key) mit Vollzugriff,
+  keine Client-Schlüssel.  Keine Drossel auf den Lese-Endpunkten
+  (week-info 273 KB je Abruf).
+- Widgets (/embed/…): öffentliche iframes, ohne Login per Design; sie
+  ziehen aus live-info / track / show-logo / now-playing-data /
+  song-requests.  Der Schalter „Public RASTATIME API" ist ihre
+  Voraussetzung (steht so in der Beschreibung).  Paket „öffentliche
+  Seiten leise" (2026-11-02) ist drauf.
+- BEFUND: live-info-v2 liefert für den laufenden Titel die komplette
+  cc_files-Zeile: filepath (Serverpfad D:/stor/…), owner_id, md5, comments,
+  lyrics, import_status, lptime, …  Upstream-Erbe; öffentlich sichtbar.
+- Nebenbefund: /api/v2/now-playing meldet is_playing=false bei laufender
+  Sendung (playout.now_playing default_state) - Endpunkt offenbar nicht
+  gespeist; Widgets nutzen ihn nicht.
+
+### 🟡 Metadaten-Whitelist für die öffentlichen Lese-Endpunkte - DEFER (Go offen)
+live-info / live-info-v2 / track geben nur noch: title, artist, album,
+year, genre, length, starts/ends, artwork/has_artwork, track_type, url
+(info_url/buy_this_url).  ~40 Zeilen ApiController + Test, 2 h.  Risiko:
+ein externer Nutzer, der heute auf ein anderes Feld zugreift, verliert es
+(Widgets geprüft).  Rückfall git revert.
+
+### 🟡 Schema und Swagger nur mit Login/Api-Key - DEFER (Go offen)
+permission_classes auf den beiden Spectacular-Views, 5 Zeilen, 30 min.
+Alternative: bewusst offen lassen, wenn die API Dritten angeboten wird.
+
+### 💡 Manual-Kapitel API (EN/DE/FR/ES) - IDEA
+Öffentliche Endpunkte (ohne Schlüssel), Api-Key-Endpunkte, Swagger-UI,
+Beispiele mit curl, Hinweis „Api-Key nie weitergeben".  ~150 Zeilen je
+Sprache, 3 h.
+
+### 💡 Lese-Token je Client für Dritte - IDEA
+Heute nur ein Vollzugriffs-Key; wer Dritten mehr als die öffentlichen
+Endpunkte geben will, braucht Client-Token mit Leserecht (Tabelle,
+Settings-Seite, DRF-Auth-Klasse).  ~250 Zeilen, 1-2 Tage.  Nur bei
+konkretem Bedarf.
+
+### 💡 Drossel/Cache für week-info und live-info - IDEA
+Apache mod_cache (60 s) oder Zend-Cache; erst bei Lastproblemen.
+
 ## Smart Block ohne Treffer bleibt stumm (Befund 2026-11-05, Ausgefedert „Jingle vor BBC")
 
 ### 💡 Fill-Warnung und Editor-Hinweis bei Smart Blocks ohne passende Datei - IDEA (2026-11-05)
