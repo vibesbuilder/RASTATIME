@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Line-In) mit Credit-Feldern, laufende Sendung, nächster Titel, Quelle (scheduled /
   live_dj / master_dj vom Playout-Zustand), immer HTTP 200, bei Fehlern die
   Leerlauf-Form.  Tests `tests/unit/api/test_now_playing_view.py`.  Wirksam nach
-  API-Neustart.  ARCHITECTURE §23.91.
+  API-Neustart.  ARCHITECTURE §23.91.  Commit `0979ba9b`.
 
 - **Playout: Neustart-Erkennung und Uhr-Sanity nach dem 11:00-Vorfall (2026-11-05, Go
   2026-11-05)** — Drei Schutzmechanismen gegen eine doppelt gespielte Datei nach einem
