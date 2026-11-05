@@ -7004,7 +7004,5011 @@ und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 
 ## Doppelter Queue-Push nach manuellem Liquidsoap-Neustart (Befund 2026-11-05, 11:00-Testshow)
 
-### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - DEFER (Analyse 2026-11-05)
+### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - EVALUIERT 2026-11-05, Go offen
+
+Hergang (playout-stdout.log, liquidsoap-stdout.log): 10:29:23 PLAYOUT-Neustart
+(Operator) rendert rastatime.liq neu (Brücken-Variablen) -> geplanter
+Liquidsoap-Neustart 10:29:29-10:29:34, Wiedereinstieg 'Rent I Pay' bei +143 s
+korrekt.  10:30:05-10:30:07 ZWEITER Liquidsoap-Neustart (manuell, nicht vom
+Playout; "LOG START 10:30:07"): 'Rent I Pay' 13 s früher aus, 2 s Stille, das
+Playout erkennt den Neustart erst 10:31:29 (Prozess-Detektor, Poll ~2 min).
+Dazwischen (10:30:09) landet der Queue-Ahead 'Transatlantic Love Affair' in
+der frischen, leeren Queue und spielt sofort (RID 0, 8 s vor der Zeile).
+10:31:29 nimmt der Detektor an, "die frische Instanz spielt nichts"
+(_forget_current_after_restart, Fix vom 2026-11-02 für die stille Station)
+und setzt denselben Titel als Catch-up bei +75 s erneut ein - per push,
+ohne Flush, HINTER das laufende Exemplar (RID 1) -> ab 10:35:59 spielt der
+Titel ein zweites Mal, die Kette läuft 4:27 hinter den Zeilen her.  Die
+Heuristik "mehr Rest als der Vorgänger haben kann -> die Queue ist auf dem
+Nachfolger, kein Skip" (playout_scheduler ~2690) vertraut der Queue und
+synchronisiert nie auf die Uhr; jede Zeile hängt ihr Stück hinten an.
+11:00:00: 'World News' (Vorshow) läuft weiter, TOH-Jingle / Dayteaser /
+Intro landen dahinter in der Queue; das Webstream-Tor (uhrgesteuert) öffnet
+11:01:05, der Start leert die Queue -> die drei Jingles sind weg.
+Showteaser danach per play frisch -> korrekt.  Playout History zeigt
+Zeilen, nicht das Gehörte.  Die 7-Minuten-Verschiebung der AutoDJ-Show hat
+damit nichts zu tun.  (Telnet-Reconnect-Wiederholung war der erste
+Verdacht, ist aber nicht die Ursache: send_command wiederholt nur bei
+gescheitertem Senden, und Liquidsoap hat RID 1 erst 10:31:32 bekommen.)
+
+Evaluierung 2026-11-05 (sieben Punkte, Kurzfassung):
+1. Telnet-Push nicht wiederholen - NO-GO: nicht die Ursache, würde bei
+   echtem Verbindungsabriss einen Titel verlieren.
+2. Neustart-Erkennung + Wiedereinstieg mit Blick auf die Engine - GO-fähig:
+   (a) bei jedem Telnet-Reconnect sofort `uptime` prüfen (statt 2-min-Poll);
+   (b) vor dem Catch-up `scheduled.remaining`/Queue lesen: spielt die
+   frische Instanz schon das erwartete Element -> übernehmen (Zeiger
+   setzen), sonst Queue flushen und Catch-up pushen.  ~60-90 Zeilen,
+   playout_scheduler + liquidsoap_engine, Tests mit Fake-Engine, 0,5 Tag;
+   Risiko gering (nur Neustart-Pfad), Rückfall git revert.
+3. Uhr-Sanity im "no skip"-Zweig - GO-fähig: passt der Engine-Rest auch
+   nicht zum NACHFOLGER (Rest > Clip des Nachfolgers + Puffer + 2 s) ->
+   Skip auf die Zeile und Warnung.  Hätte 10:36:07 (268 s vs 212 s) und
+   11:00:00 (265 s vs 9,9 s) gegriffen.  ~30 Zeilen + 2 Tests, 2 h;
+   Risiko: ein Fehl-Skip schneidet einen legitimen Titel - abgefangen,
+   weil ein Nachfolger, den cross schon gezogen hat, nie mehr Rest hat als
+   seinen eigenen Clip.  Rückfall git revert.
+Empfehlung: 2 + 3 zusammen bauen (ein Commit), Probe im Replikat mit
+manuellem Liquidsoap-Neustart während eines Titels; Punkt 1 verwerfen.
+
+Betriebsregel bis dahin:**
+nie LIQUIDSOAP allein neu starten — immer PLAYOUT (rendert den Index
+neu) → LIQUIDSOAP, danach Session-Sonde: Session muss auf
+„Tascam-Lautsprecher (US-16x08)" liegen.
+
+**Umgesetzt 2026-09-05 (Operator-Go, `1dbeb71`):** Option 3.
+Renderer schreibt `device_name=` wenn der erste exakte Namens-Treffer
+ein Ausgang auf MME/WASAPI ist und im blockierenden Probe öffnet
+(Tascam → MME-Eintrag), sonst weiter `device_id=` mit Begründung im
+Log; Boot-Race-Fix (PLAYOUT startet LIQUIDSOAP im 10-min-Boot-Fenster
+selbst neu); Preflight-Watchdog `main_output_session_missing`
+(Session-Sonde alle 15 min, pycaw/comtypes im venv).  Replika:
+Session liegt auf dem Tascam.  Die Betriebsregel bleibt für manuelle
+Neustarts außerhalb des Boot-Fensters sinnvoll (Index-Drift zwischen
+Render und Öffnen ist mit `device_name` aber entschärft).
+
+### ✅ Line-In-Startlücke: Capture-Kette verkürzen (neu 2026-09-03, Paket umgesetzt und abgenommen 2026-09-04, abgehakt 2026-09-09)
+
+**Abgehakt 2026-09-09:** das Paket „Line-In-Latenz" (unten) ist seit
+2026-09-04 live und abgenommen — Startlücke 6 → 2,0 s, Abschneiden am
+Ende 6 → ~2 s.  Die restlichen ~2 s sind die Kette selbst; weiter nur
+über „Quellen vorwärmen — Gate im Bus-Switch" (💡 oben).  Der folgende
+Absatz ist der Stand vor dem Paket.
+
+**Stand (vor dem Paket):** Die Lücke zwischen Show-Ende und erstem hörbaren Line-In-
+Signal liegt bei **~6 s** (vorher ~7 s).  Der 2026-09-03er Tuning-
+Schritt (`input.http` `max_buffer` 4,0 → 2,0 s, `poll_delay` 2,0 →
+0,5 s, http-Quelle parallel zum Feeder-Start scharfgeschaltet) hat nur
+~1 s gebracht — `max_buffer` ist **nicht** der dominierende Anteil.
+
+**Messung (15:15-Show):** PLAY bei +0,005 s, `linein_start_http` bei
++0,054 s (Parallel-Arming greift), ffmpeg meldet „streaming" bei
++1,6 s — bis Liquidsoap die Quelle übernimmt vergehen aber weitere
+~4 s.  Der Löwenanteil steckt also in der Capture-Kette selbst:
+Gerät öffnen → sounddevice-Feeder-Health-Check (~1,5 s) → ffmpeg-
+Encoding → genug MP3 im Icecast-Mount, damit ein Decoder einrastet.
+
+**Evaluierung 2026-09-04 (nach Hörtest 15:55–16:20, Go ausstehend):**
+Der Operator hat die Sekunden live ins Mikrofon gesprochen — die
+**letzten ~6 s der Line-In-Show fehlen** auf dem Stream.  Das ist
+dieselbe Größe wie die Startlücke: die **Durchlauf-Latenz L** der
+Kette.  Was zur Studiozeit t gesprochen wird, erreicht den Stream bei
+t+L; beim Slot-Ende E steckt alles aus [E−L, E] noch in der Kette und
+wird mit dem Schließen der Quelle verworfen.  Vorwärmen behebt nur die
+Startlücke, NICHT das Abschneiden — nur ein kleineres L hilft beidem.
+
+Aufschlüsselung von L (~6 s) — **korrigiert nach Messung am echten
+Mount (16:56, vier isolierte Hörer):**
+- ~~Icecast `burst-size` 65535 B (2,7 s)~~ — der `/linein-capture`-
+  Mount hat seit 2026-05-13 bereits `burst-size 0` (`config/icecast.xml`
+  ist die Live-Konfiguration, `-c C:\rastatime\config\icecast.xml`).
+  Meine erste Zuordnung war falsch.
+- **FFmpeg-Format-Autodetection ≈ 5 s** (dominant): Icecast-
+  `access.log` zeigte Quelle und Hörer ab +0,0 s verbunden, Audio ab
+  +0,7 s, Decoder erst bei +6 s.  Hörer mit Default-Argumenten: 6 s;
+  mit `format="mp3"`: **1 s**; `format` + Probe-Argumente: 2 s; nur
+  Probe-Argumente: 6 s.  Ein ffmpeg-HTTP-Server im Reinraum zeigte das
+  nicht (1 s) — er sendet einen Header, Icecast-Hörer steigen mitten
+  im Datenstrom ein.
+- `input.http max_buffer` = 2,0 s → permanente Latenz.
+- Decoder + Switch-Transition ≈ 0,5–1 s.
+- Feeder → ffmpeg: 0,1 s; ffmpeg bereits `nobuffer/low_delay/flush_packets`.
+- Nur Startlücke: Health-Check `time.sleep(1.5)`.
+
+**Paket „Line-In-Latenz" — UMGESETZT 2026-09-04 (Go des Operators):**
+1. `linein_http`: `format="mp3"` (Konstante `LINEIN_HTTP_FORMAT`).
+2. `max_buffer` 2,0 → 1,0 s.
+3. Health-Check 1,5 → 0,75 s (`_STARTUP_HEALTH_CHECK_S`).
+Kein ICECAST-Neustart nötig; PLAYOUT + LIQUIDSOAP.  **Live-Abnahme
+2026-09-04 17:45–17:50 (Operator zählt Sekunden ins Mikrofon + Monitor):
+Startlücke 6 → 2,0 s** (Feeder streamt +0,93 s, Decoder bereit +2,0 s,
+keine Decoder-Fehler), **Abschneiden am Ende 6 → ~2 s**.  Damit ist
+das Paket abgenommen.  Die verbleibenden 2 s an beiden Enden sind die
+Kette selbst (Feeder-Start + Poll + Decoder bzw. Puffer + Decoder) —
+weiter nur über „Quellen vorwärmen — Gate im Bus-Switch" (Start) und
+den dort beschriebenen Gate-Off-Crossfade (Ende).
+
+Die verbleibenden ~2 s sind normale Sendeketten-Latenz; Moderatoren
+enden entsprechend früher (Studio-Praxis, im Manual dokumentieren).
+Nicht empfohlen: „Drain" am Slot-Ende (Quelle L Sekunden länger halten)
+— verschiebt jedes Folgeelement um L, Jingles/Stundenwechsel unpünktlich.
+
+### ✅ Testplan erstellen (neu 2026-09-02, Reihenfolge-Punkt 14, DONE 2026-10-06)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** `docs/operator/TEST_PLAN.md` (Abnahme-Checkliste A1–A6, Restore-Probe A6.2 `facab94`), `scripts/run_tests.ps1` für die drei Suiten (`8a974a7`); Soll seit 2026-10-22: unit 739/38, playout 819/3, api 151.
+
+**Status (alt):** Idea — Operator-Wunsch 2026-09-02, Umfang noch zu klären.
+**Kontext:** Bisher wird punktuell getestet (pytest-Suiten für
+playout/audio/api, plus manuelle Live-Verifikation nach UI-Commits
+laut Projektregeln).  Was fehlt, ist ein **zusammenhängender,
+dokumentierter Testplan** — insbesondere für die Dinge, die nur
+live prüfbar sind (Sendekette, Line-In, Recording, Show-Übergänge).
+**Vor der Evaluierung mit dem Operator zu klären:**
+- Zielgruppe: nur Operator-Selbsttest, oder übergabefähig für Dritte?
+- Umfang: reine Abnahme-Checkliste (manuell) vs. automatisierte
+  Regressionsschicht vs. beides?
+- Auslöser: vor jedem Release / nach Maschinenwechsel / periodisch?
+- Soll die Live-Verifikations-Konvention aus den Projektregeln darin
+  aufgehen?
+**Erfahrungswert aus der Line-In-Abnahme (2026-09-01/02):** die
+teuersten Fehler waren NICHT im Code (Voice-Clarity-APO, Erdschleife,
+verklemmter Capture-Handle).  Ein guter Testplan braucht daher auch
+**Umfeld-Checks** (Windows-Audio-Effekte aus, Pegel/Rauschabstand
+messbar, Geräte-IDs aktuell), nicht nur Software-Tests.
+
+### ✅ Line-In: Kanal-Auswahl auf Multi-Input-Devices (DONE 2026-08-31, `e91ae9b`)
+
+**Status:** Implementiert nach Operator-Go 2026-08-31 — Code + Tests +
+Doku committet (`e91ae9b` Feature, `e003f08` Manual/Architecture).
+**Wichtige Abweichung vom Evaluierungs-Plan:** Der PoC (Schritt 1)
+widerlegte die WASAPI-shared-Annahme — das Windows-Mix-Format des
+Tascam-Endpoints steht auf Stereo und PortAudio deckelt hart;
+exclusive lehnt der Treiber ab, DirectSound liefert Stille, WDM-KS
+kann kein Blocking-Read.  **MME** liefert nachweislich alle 16
+echten Kanäle (Per-Lane-Bitvergleich des ADC-Rauschens) und wurde
+der Feeder-Modus.  Zweite Abweichung: Der Live-Pfad ist die
+Liquidsoap-Engine (F-2, dshow direkt in-process) — dafür kam eine
+zweite Source `input.http(id="linein_http")` auf den lokalen
+`/linein-capture`-Mount hinzu (Phase-F-Muster), per `fallback` in
+denselben Switch-Arm gefaltet; Stereo `1/2` bleibt unverändert auf
+dshow-direkt.
+**Verifiziert:** Feeder live gegen das Tascam (16 ch @ 48 kHz, Kanäle
+5/6 → Stereo); UI-Picker live (Tascam → 24 Optionen, Jabra → „Mono
+1"); playout-Suite 295 passed, audio-unit 196 passed.
+**Offen (Deploy + Abnahme):**
+1. **PLAYOUT-Dienst-Neustart** (rendert rastatime.liq mit
+   linein_http; kurze On-Air-Unterbrechung → Operator wählt den
+   Moment).  Bis dahin: Multichannel-Pfad inaktiv, Stereo-Betrieb
+   unverändert.
+2. Operator legt die Studio-Line-Ins an (ein Line-In pro Paar) und
+   fährt einen Hörtest über eine geplante Line-In-Show auf einem
+   Paar > 1/2.
+3. Alt-Zeilen einmal neu speichern (device_name-Pflicht für den
+   Feeder; ohne Namen fällt der Pfad laut loggend auf dshow 1/2
+   zurück).
+
+Ursprüngliche Evaluierung (2026-08-31, als Referenz):
+**Anforderung:** Am US-16x08 hängen mehrere Studios (ein Stereo- bzw.
+zwei Mono-Inputs pro Studio).  Ein Line-In soll nicht nur das Device,
+sondern auch **welche Kanäle** (Stereo-Paar oder Mono-Kanal) wählen.
+
+**Befund (Ist-Zustand, live verifiziert):**
+- Windows exponiert das US-16x08 als **einen** 16-Kanal-WASAPI-
+  Endpoint („Mikrofon", channels: 16) — keine Per-Paar-Devices.
+  Device-Manager liest die Kanalzahl bereits aus (WAVEFORMATEX).
+- Das Feature ist **halb gebaut**: `rastatime_linein.channel_mapping`
+  (DB + Domain-Validierung + API) und sogar das UI-Feld „Channel
+  Mapping" (Komma-Indizes, `0,1`) existieren — aber die Capture
+  (`FfmpegLineinCapture`, dshow) **wendet das Mapping nie an**.
+- Und sie **kann es dort auch nicht**: der Tascam-dshow-Pin bietet
+  laut `-list_options` **max. 2 Kanäle** (= fix Inputs 1+2); `-channels
+  16` wird abgelehnt.  Die 16 Kanäle sind nur via WASAPI erreichbar;
+  der ffmpeg-Build hat kein WASAPI-Input (nur dshow/openal).
+
+**Lösungsweg (Option A, empfohlen):** Kleiner Python-**WASAPI-Feeder**
+(sounddevice/PortAudio, shared mode) öffnet den 16ch-Endpoint,
+extrahiert die `channel_mapping`-Kanäle (Paar → Stereo, ein Kanal →
+Dual-Mono) und pipet s16le-PCM an ffmpeg-stdin; ffmpeg encodiert
+unverändert weiter nach `/linein-capture`.  Bestehender
+Watchdog-Pfad bleibt wirksam (Feeder-Stall → ffmpeg-`time=`-Freeze;
+Device-Verlust → PortAudio-Error → Pipe-EOF → bestehende
+Restart-Logik).  **2-Kanal-Devices bleiben auf dem bewährten
+dshow-Pfad** — der Feeder greift nur bei >2-Kanal-Devices.
+UI: Textfeld → Picker („Input 1/2", „3/4", …, „Mono 5", gespeist aus
+`channels` der Device-API).
+**Verworfen:** Tascam-Mixer-Routing (nur global, nicht pro Studio),
+Liquidsoap-Umbau (bricht Phase-B-Design), virtuelle Audio-Kabel
+(Fremd-Infra im Sendepfad).
+
+**Aufwand:** Feeder ~150–250 LoC + Capture-Anpassung + UI-Picker
+~100–150 LoC + Tests + Manual (4 Sprachen); neue Dependency
+`sounddevice` (pip-only, bündelt PortAudio-DLL).  ~1.5–2.5 Tage.
+**Vorbedingung / Schritt 1 nach Go:** 15-min-PoC — sounddevice
+installieren, 1-s-16ch-WASAPI-Capture gegen das Tascam als harte
+Machbarkeitsbestätigung (shared-mode-Format-Frage), erst dann bauen.
+
+**Modus-Frage (Operator 2026-08-31, „ASIO oder WDM?"):** Klarstellung:
+das „WASAPI" im Device-Picker ist nur das Enumerations-Label
+(MMDevice); die heutige Capture läuft über **DirectShow/WDM** — genau
+der Pfad mit dem 2-Kanal-Deckel.  Entschieden: **kein
+Operator-sichtbarer Modus-Schalter**, sondern Automatik — ≤2ch-Device
+→ bewährter dshow-Pfad, >2ch-Device → WASAPI-**shared**-Feeder
+(Endpoint bleibt für andere Apps frei); versteckter
+Config/Env-Fallback shared↔exclusive nur, falls der PoC
+Format-Probleme im shared mode zeigt.  **ASIO verworfen:** (1) nicht
+in ffmpeg und nicht in Standard-PortAudio/sounddevice-Wheels
+(Steinberg-SDK nicht redistributierbar → eigener Build wäre zu
+pflegen), (2) Single-Client — RASTATIME würde das Interface für jede
+andere ASIO-Nutzung sperren, plus WDM/ASIO-Samplerate-Kopplung der
+Tascam-Treiber, (3) kein Nutzen: der ms-Latenzvorteil verpufft in der
+~0.5–0.8-s-Kette (Encoder + Icecast + Monitor).  MME/DirectSound
+(ebenfalls 2ch) und WDM-KS (fragilster PortAudio-Backend, nur
+Notnagel) bringen nichts.
+**Nachtrag nach PoC (selber Tag):** Zwei Annahmen dieses Absatzes
+waren falsch — WASAPI shared ist real aufs 2ch-Mix-Format gedeckelt,
+und MME meldet nicht 2ch, sondern liefert **alle 16 echten Kanäle**.
+Der Feeder-Modus wurde daher MME (siehe ✅-Status oben); das
+ASIO-No-Go bleibt unverändert gültig.
+
+**Nachtrag 2026-09-03 („Option B"):** Auch die Automatik-Entscheidung
+„≤2ch → dshow" ist gefallen.  Der dshow-Pfad adressiert das Gerät als
+`audio=@device_cm_{...}\wave_{<GUID>}` aus der gespeicherten Windows-
+Audio-**Endpoint**-GUID — DirectShow führt aber eine eigene
+Geräte-GUID-Liste und kennt diese nicht.  An der 15:20-Testshow
+(„Tascam 1-2") antwortete ffmpeg `Could not find audio only device`
+und der Slot ging **stumm auf Sendung**.  Seither läuft jeder geplante
+Line-In über den MME-Feeder (löst per Anzeigename auf); dshow ist nur
+noch Fallback für Alt-Zeilen ohne `device_name`.  Kein
+Operator-Schalter — die Automatik bleibt, nur ihre Bedingung ist jetzt
+„device_name vorhanden?" statt „Kanalzahl?".
+
+### ✅ Listener-Statistik zeigt keine Daten (DONE 2026-08-30, `00ce768`)
+
+**Status:** Behoben — Sammel-Kette komplett, E2E live bewiesen.
+**Ursache (deckte sich mit dem 🟡-Defer-Eintrag unten):** Der
+`StatsCollectorThread` existierte, wurde aber nur im verwaisten
+`main.py` gestartet — der aktive Entry-Point `__main__.py` kannte ihn
+nicht → `cc_listener_count` blieb leer, beide Analytics-Views
+korrekterweise ohne Daten.  Zusätzlich wäre die Output-Quelle
+(`rastatime.conf outputs:`) seit dem Phase-D-Cutover leer gewesen.
+**Fix:** Collector-Start in `__main__.py` (120-s-Poll); Poll-Liste
+kommt jetzt via `outputs_from_stream_settings()` aus den live
+`cc_pref stream_output_N`-Settings (Admin-Creds inklusive; Einträge
+ohne Admin-Passwort werden mit Warnung übersprungen).  4 neue Tests.
+**E2E-Beweis:** 2 Test-Listener (mp3/aac) erschienen im nächsten
+Zyklus als exakt 1/1/0 in `cc_listener_count`.
+**Browser-Check (2026-08-30, 18:20):** Chart rendert mit allen drei
+Mounts in der Legende; `get-data` liefert live Punkte im
+2-Minuten-Takt (letzter Punkt ≤ 2 min alt).  **Show Listener Stats**
+funktioniert wie designt: Tabelle füllt erst nach Filter-Klick und
+lässt Shows ohne Datenpunkte im Sendefenster weg — Sammlung begann
+17:42 (Playout-Neustart mit dem Patch), daher erscheinen Shows ab
+der 08:07-Sendung am 2026-08-31.  Rest-Check: dann einmal
+draufschauen.
+**Doku:** neues Manual-Kapitel ANALYTICS (EN/DE/FR/ES, `96cc252`).
+
+### ✅ Migration: Backup→Restore-Durchlauf auf der alten Maschine validiert (2026-06-16)
+
+**Status:** ERLEDIGT 2026-06-16 — isolierter Trockenlauf gefahren (Temp-DB +
+Temp-Pfade, Live-DB nur gelesen, danach aufgeräumt). **Ergebnis: bestanden** —
+DB-Round-Trip 47/47 Tabellen identisch (0 `pg_restore`-Fehler), Pfad-Rewrite
+307/307 + idempotent, 307/307 Medien-Dateien auf Disk vorhanden, `rastatime.conf`
+parst. **Dabei gefundene MIGRATION.md-Fehler korrigiert** (Commit `70bb994`):
+eine DB statt zwei (`libretime` = totes Leftover), Pfad-Rewrite auf
+`rastatime.cc_files` statt `libretime.cc_music_dirs` (Tabelle existiert nicht),
+`cc_music_dirs`/`storage_path`-Schritte gestrichen, Config-Pfad `\config\` statt
+`\etc\`, neuer §4.8 für die neue IP. Nächster Schritt: echter Umzug.
+
+**(Historie der Vorbedingung — erfüllt:)** vor dem echten Umzug auf die
+neue Maschine den kompletten Backup→Restore-Weg **einmal auf der alten
+Maschine durchspielen**, um `docs/operator/BACKUP.md` (Full-Backup) +
+`docs/operator/MIGRATION.md` Phase A/C (Restore) als reproduzierbar zu
+beweisen, bevor man sich beim Cutover darauf verlässt.
+**Operator-Wert:** Hoch — Migration ist betriebskritisch; ein validierter
+Restore ist die Versicherung gegen einen fehlgeschlagenen Umzug.
+
+**Vorbedingung / Durchführung:** in **isolierte Ziele** restoren, damit die
+alte Maschine als Rollback-Quelle unangetastet bleibt:
+- DB-Dumps in **temporäre DB-Namen** (z.B. `rastatime_restore_test`) statt
+  der Live-DB restoren.
+- Medien-/Config-Restore in **temporäre Pfade** statt der Live-Pfade.
+- Verifizieren: Track-Count DB vs. Dateien, 3 Stichproben abspielbar (analog
+  MIGRATION.md §4.5), Config-Parsing; danach Test-Artefakte aufräumen.
+
+**Parameter für den echten Lauf (2026-06-16):** neue Maschine bekommt **neue
+IP/Hostname** (nicht „gleiche IP") → MIGRATION.md §6.3 + `public_url` +
+Icecast + Firewall + externe Stream-/Embed-URLs entsprechend anpassen.
+Station derzeit **nicht live** → Downtime unkritisch, kein Low-Traffic-Fenster
+nötig.
+
+### ✅ Podcast-Downloads: ACL sperrt den studio-User aus — BEHOBEN 2026-08-27
+
+**Status:** ERLEDIGT 2026-08-27. **Root Cause bestätigt:** `download.py`
+lud in den %TEMP% des Dienstkontos (`NamedTemporaryFile` ohne `dir=`) und
+`shutil.move` = Same-Volume-Rename **behält die Quell-ACL** (NTFS) — die
+restriktive SYSTEM-Temp-ACL wanderte so in die Library. **Fix:** Temp-Datei
+wird jetzt direkt im Ziel-Ordner geboren (`NamedTemporaryFile(dir=import_dir,
+prefix="podcast_tmp_")`) und per `os.replace` im selben Ordner umbenannt —
+erbt die Library-ACL ab Erstellung, kein icacls nötig. Regressionstests
+`podcasts/tests/test_download.py` (Temp-Dir-Spy + Failure-Cleanup, 2 passed);
+E2E-verifiziert auf der Live-Library (`studio:(I)(F)` vererbt). BACKUP.md
+trägt jetzt die elevated-Warnung + Robocopy-Log-Prüfschritt. Bestand auf der
+neuen Maschine war bereits sauber (Transfer vererbte ACLs neu); alte Maschine
+bleibt unangetastet (Rollback-Box). `download.py` war die einzige
+NamedTemporaryFile-Stelle im Backend.
+**(Ursprünglicher Befund zur Historie:)** gefunden 2026-06-17 beim
+Medien-Transfer zur neuen Maschine.
+**Symptom:** Die per Podcast-Feature heruntergeladenen Episoden
+(`media/imported/2/podcast_ep*.mp3`, **33 Stück, in `cc_files` referenziert**)
+haben eine Windows-ACL **ohne** `studio`/`Benutzer` — `studio` kann sie nicht
+einmal lesen (`icacls` → „Zugriff verweigert"). Normale Tracks haben
+`VORDEFINIERT\Benutzer:(I)(RX)`. Der Downloader läuft offenbar als
+SYSTEM/Dienstkonto und setzt eine restriktive, nicht vererbte ACL.
+
+**Auswirkung:**
+- **Playout funktioniert** (Liquidsoap-Dienst läuft als SYSTEM/Admin, darf lesen).
+- **Aber jedes Backup/Robocopy als `studio` überspringt diese Dateien
+  stillschweigend** — betrifft `docs/operator/BACKUP.md` (Full-Backup) **und**
+  den Migrations-Medien-Copy (32 Dateien / 2,86 GB fielen beim ersten
+  LAN-Robocopy aus, exit ≥8).
+
+**Fixes:**
+1. **Sofort (Migration):** Medien-Robocopy **elevated** laufen lassen
+   (Administratoren haben `(F)`) → kopiert die fehlenden Podcasts.
+2. **Dauerhaft:** Quell-ACL korrigieren — `icacls … /reset` (Vererbung vom
+   Eltern-Ordner → `Benutzer:(RX)`) und/oder den Podcast-Downloader so
+   anpassen, dass er die ACL nicht restriktiv setzt.
+3. **BACKUP.md** muss den Medien-Robocopy elevated empfehlen **oder** auf
+   nicht-lesbare Dateien prüfen — sonst stille Backup-Lücke.
+
+### ✅ INSTALL.md / MIGRATION.md auf den realen Liquidsoap-Stack nachziehen — DONE 2026-08-27
+
+**Status:** ERLEDIGT 2026-08-27. Umfang wuchs beim agenten-gestützten
+Voll-Audit von 2 auf **16 Dateien**: INSTALL.md (7-Dienste-Topologie, §2.0
+Windows-Prep/SAC/statische IP, RabbitMQ+VC-Redist+Liquidsoap+Icecast+FFmpeg
+als Prereqs, YAML-Config, venv-Sequenz inkl. psycopg2 + editierbare Pakete,
+Step 9a–9h mit Engine-Env + .liq-Render, Checkliste), MIGRATION.md (ANALYZER
+in allen Listen, Recordings-Ordner-Trio, AV-Liste, §4.7-Alternative ohne
+NSSM-Dumps, neuer §4.9 .liq-Render, 8765-Healthcheck), INSTALL_APACHE.md
+(VC-Redist, Module, ZF1-Rewrite inkl. HTTP_AUTHORIZATION, /api/v2-Proxy),
+BACKUP.md (7-Dienste-Env-Export, elevated-Warnung, Robocopy-Log-Check,
+`rastatime` statt `rastatime_user`), RESTART_ORDER.md + SERVICE_TOPOLOGY.md
+(Voll-Umbau auf 7 Dienste), UPGRADE.md, CRASH_RECOVERY.md, DEVICE_MISSING.md,
+LINE_IN_BROKEN.md, README.md, LIQUIDSOAP_CUTOVER.md (Hist.-Hinweis),
+Manual RECORD_PER_SHOW (EN/DE/FR/ES Pfad), ADR-002/-006 (Superseded-Notes).
+Code-seitig: `bootstrap.ps1` Required/Optional-Tausch (RabbitMQ required,
+VLC optional; funktional getestet, Exit 0) + `install-api.ps1`-Header 8765.
+Adversarial verifiziert (3-Agent-Pass gegen Skripte + Live-System).
+**Nachtrag 2026-08-27 — beide Infra-Folge-Fixes ERLEDIGT:**
+`status.ps1` kennt jetzt alle **7** Dienste (inkl. HTTP-Proben für API
+:8765/health, Apache :80, Icecast :8000; Port-Tabelle + Install-Hints
+korrigiert; live getestet — 7× Running, 3× HTTP 200) und die
+„prüfe die anderen drei separat"-Workarounds sind wieder aus INSTALL/
+RESTART_ORDER/CRASH_RECOVERY/README entfernt.  `run-api.ps1` Default-Port
+8000 → **8766** (Operator-Entscheid; kollidiert weder mit Icecast 8000
+noch mit dem Produktions-API-Dienst 8765 — Dev-Server lief im Test
+parallel zum vollen Stack), WINDOWS_DEV_STATUS.md nachgezogen.
+**(Ursprüngliche Befundliste zur Historie:)**
+
+1. **API-Port ist 8765, nicht 8000.** `install-api.ps1` bindet Waitress auf
+   Param-Default `$ApiPort = 8765` (Header-Kommentar „8000" ist tot);
+   `install-playout.ps1` pollt `http://127.0.0.1:8765/health` + setzt
+   `RASTATIME_API_URL=http://127.0.0.1:8765`. **Port 8000 gehört Icecast.**
+   → INSTALL.md §9a und MIGRATION.md §5 (`…:8000/health`) korrigieren auf 8765.
+2. **RabbitMQ fehlt als Voraussetzung.** `install-analyzer.ps1` + die PHP-Uploads
+   brauchen RabbitMQ (Queue `analyzer`, vhost `/rastatime`, Port 5672) + Erlang.
+   Steht in **keiner** Prereq-Liste (INSTALL.md §2, MIGRATION.md §3.3). → ergänzen.
+3. **Echte Topologie = 7 Dienste:** `API, WORKER, PLAYOUT, ANALYZER, APACHE,
+   ICECAST` (in `infra\nssm\`) **+ LIQUIDSOAP** (eigenes Skript). INSTALL.md nennt
+   4 (libVLC-Ära), MIGRATION.md 6 (vergisst **ANALYZER**). → beide angleichen.
+
+**Nebenpunkte:** INSTALL.md §9c `-VlcPluginPath` existiert im echten
+`install-playout.ps1` nicht mehr (libVLC-Reste); `RASTATIME_PLAYOUT_ENGINE=
+liquidsoap` wird von `install-playout.ps1` **nicht** gesetzt (muss separat als
+AppEnvironmentExtra ans PLAYOUT-Service, sonst Default-Engine); `rastatime.conf.
+template` heißt real `rastatime.conf.example`.
+
+**Weitere Funde beim echten Install 2026-08-26:**
+- `psycopg2` wird von keinem backend-Paket als Dependency deklariert —
+  venv-Aufbau nach INSTALL.md ergibt einen API-Stack ohne DB-Treiber
+  (`pip install psycopg2-binary` manuell nötig). → in backend/api
+  pyproject.toml deklarieren oder in INSTALL.md §4 aufnehmen.
+- INSTALL.md Step 7: `manage.py` liegt unter `backend\api\rastatime_api\
+  manage.py` (nicht `backend\api\manage.py`); `collectstatic` ist mit den
+  prod-Settings gar nicht lauffähig (kein `STATIC_ROOT` gesetzt) und im
+  Deployment auch nicht nötig → Schritt streichen/korrigieren.
+- INSTALL.md nennt VLC/libVLC als Pflicht + `python-vlc` in requirements.txt —
+  seit dem Liquidsoap-Cutover obsolet (Neue Maschine läuft ohne VLC).
+- `infra\scripts\dev\bootstrap.ps1` prüft VLC als *required* und RabbitMQ
+  als *optional* — für den Produktiv-Stack genau invertiert.
+- Icecast: Live-Config (`config/icecast.xml`) ist auf **2.4.4**-Semantik
+  gebaut (`stream_auth`, `mount_add/remove`); `install-icecast.ps1`-Default
+  (`C:\Program Files\Icecast\bin\icecast.exe`) + MIGRATION.md-AV-Liste
+  (`Icecast2.exe`) passen nicht zum realen Layout `C:\Tools\Icecast\bin\
+  icecast.exe` (Betriebsort auf alter wie neuer Maschine).
+- MIGRATION.md §2.2(5)/§4.6 + §3.2-AV-Liste nennen den Recordings-Pfad
+  `C:\Users\studio\Music\Recording` — seit dem Record-per-Hour-Umbau
+  (2026-06-06) real: `Music\Show Recordings` + `Music\Permanent Recordings`
+  (+ `Music\Import` als Local-Import-Quelle); Pfade kommen aus `cc_pref`
+  (`local_recording_folder`, `local_247_recording_folder`,
+  `local_import_folder`).
+- Apache-Host-Setup: die produktive `httpd.conf` (Rewrite-Front-Controller,
+  `/api/v2`-ProxyPass, **`RewriteRule ^ - [E=HTTP_AUTHORIZATION:...]`** für
+  fcgid) war nie im Repo/Doc — INSTALL_APACHE.md um die drei Blöcke ergänzen
+  (bei der Migration 2026-08-26 aus der alten Maschine rekonstruiert).
+
+**Operator-Wert:** Mittel — kein Live-Risiko, aber jeder künftige Install/Umzug
+läuft sonst gegen falsche Ports/fehlende Prereqs. **Aufwand:** ~1–2 h Doku in
+EN (+ DE/FR/ES falls Manual betroffen). **Vorbedingung:** Migration durch — die
+realen Schritte werden beim echten Install dieser Maschine ohnehin verifiziert,
+danach 1:1 in die Docs übernehmen.
+
+### ✅ Import-Ordner: Ruhe-Prüfung vor dem Import (evaluiert + umgesetzt 2026-09-17)
+
+**Umgesetzt 2026-09-17 (Operator-Go; `67db437`; Details im CHANGELOG „Fixed"):**
+`QUIET_SECONDS = 60` in `LocalImportScanTask` — importiert wird nur, was
+60 s unverändert ist; Statuszeile zählt „settling".  FTP-Server und
+FTP-Polling: Operator 2026-09-17 „eventuell später" (💡 unten bleibt).
+**Nebenbefund:** Manual LOCAL_MACHINE „How files are processed" beschreibt
+einen nie gebauten Ablauf (Staging-/.failed-Ordner, rekursive Unterordner
+mit Album-Zuordnung) — der Code verschiebt nach organize, löscht
+Fehlschläge und ignoriert Unterordner; Doku-Drift, Korrektur in 4 Sprachen
+steht aus (🟡).  **Korrigiert 2026-09-17** in allen vier Sprachen
+(Abschnitte + Fehlersuche; `46c0ce3`).
+
+**Anlass (Operator-Fragen 2026-09-17):** Was passiert nach dem Import
+(Antwort: Audio wird in die Bibliothek VERSCHOBEN, fehlgeschlagene
+Importe werden absichtlich gelöscht - Design 2026-05-16 gegen
+Dauerwiederholung; Nicht-Audio und Unterordner bleiben liegen)?  Gehen
+Netzlaufwerke oder FTP als Quelle?
+
+**Befund:** `LocalImportScanTask::scanOnce` hat KEINEN Schutz gegen halb
+geschriebene Dateien - der 5-Minuten-Scan kann eine Datei mitten im
+langsamen Upload wegziehen (kaputter Import + Quelle gelöscht =
+Verlust).  Lokal nie aufgefallen, bei Netz-/FTP-Zulieferung real.
+
+**Empfehlung (Go ausstehend):** Ruhe-Prüfung - nur Dateien importieren,
+deren mtime älter als ~60 s ist; ~1-2 h inkl. Test + Manual-Hinweis
+LOCAL_MACHINE (4 Sprachen).  Vorbedingung für jede Netz-/FTP-Quelle.
+
+**Quellen-Varianten:**
+- FTP-Server AUF der Studiomaschine mit Wurzel = Import-Ordner: kein
+  RASTATIME-Code, Operator installiert/verwaltet (z. B. FileZilla
+  Server); empfohlen für Zulieferung von Vorproduktionen.
+- NAS per UNC-Pfad: Validierung akzeptiert UNC heute schon (nur
+  is_dir/is_writable), Scan läuft aber als LocalSystem im Apache-PHP →
+  Freigabe müsste für das Computerkonto/Gast erreichbar sein oder das
+  Dienstkonto von RASTATIME-APACHE umgestellt werden (Betriebsarbeit);
+  gemappte Buchstaben (Z:) gehen prinzipiell nicht (Session-gebunden).
+- 💡 Aktives FTP-Polling durch RASTATIME: zum vollen Item aufgewertet,
+  siehe „Import from FTP Server" direkt darunter (2026-09-17).
+
+### ✅ „Import from FTP Server“ als zweite Import-Quelle (evaluiert + umgesetzt 2026-09-17)
+
+**Umgesetzt 2026-09-17 (Operator-Go mit Antworten: löschen nach
+Abholung ja, FTP+SFTP — geliefert FTP/FTPS/SFTP via PHP-curl —,
+Zugangsdaten in cc_pref, 5-min-Takt, Import-Ordner-Abhängigkeit in UI +
+Handbuch; `75d52f8`; Details im CHANGELOG „Added“).**  Entfernte Ruhe-Regel
+nach Replikat-Befund (wachsende Datei schlüpfte durch die reine
+Nach-Download-Probe): zwei größenstabile Sichtungen ≥ 60 s.  Live-Test:
+pyftpdlib (Abholen+Löschen+wachsende Datei bleibt) + SFTP-Listing gegen
+test.rebex.net.  ARCHITECTURE 0.38 (§23.36).
+
+**Operator-Wunsch 2026-09-17:** zusätzlich zum Import-Ordner einen
+entfernten FTP-Server als Quelle, manuell aktivierbar/deaktivierbar.
+Klarstellung: genau das IST das FTP-Polling — FTP kennt kein Push,
+RASTATIME muss regelmäßig nachsehen und abholen.
+
+**Design (Evaluierung):** Abhol-Task im PHP-Task-Manager (5-min-Takt
+wie der Ordner-Scan + „Fetch now"), lädt per PHP-curl (FTP/FTPS) in den
+lokalen Import-Ordner herunter — ab dort übernimmt die bestehende Kette
+inkl. Ruhe-Prüfung, kein zweiter Import-Pfad.  Einstellungen in cc_pref
+(enabled, host, port, user, password, remote path, FTPS); UI-Sektion
+unter dem Import-Ordner.  Aufwand ~1 Tag inkl. Live-Test mit
+Wegwerf-FTP-Server (pyftpdlib aus der venv) und Handbuch ×4.
+
+**Klärfragen vor dem Go:** (a) nach Abholung entfernt löschen?
+(empfohlen: ja = Briefkasten-Semantik, braucht Löschrecht; sonst
+Merkliste nötig); (b) FTP oder FTPS — was kann der Ziel-Server?
+(Klartext-FTP überträgt das Passwort offen); (c) Zugangsdaten in
+cc_pref wie andere Dienst-Passwörter ok?; (d) 5-Minuten-Takt
+ausreichend?  Voraussetzung: Import-Ordner bleibt konfiguriert.
+
+**Alternative ohne Code** (Operator 2026-09-17 „eventuell später"):
+FTP-Server AUF der Studiomaschine mit Wurzel = Import-Ordner; braucht
+Erreichbarkeit von außen (Portfreigabe, Härtung).
+
+### ✅ Backup/Restore via UI (Settings-Submenü) — DONE 2026-09-17
+
+**Stufe 3 gebaut 2026-09-17 (Operator-Go; `a522ede`):** Auto-Sektion (alle N Tage, Aufbewahrung, cc_pref
+`local_backup_auto`), Kommando `backup_auto` (Fälligkeit selbst geprüft,
+derselbe BackupJob, Aufräumen mit Überlebensgarantie fürs neueste ZIP),
+Runner `scripts/backup-auto.ps1` für die einmalige Aufgabenplaner-
+Registrierung (Befehl im Skriptkopf + Handbuch), schlanke
+Restore-Sektion.  **In Betrieb seit 2026-09-17 15:48:** API neu
+gestartet (Operator), Aufgabe „RASTATIME-Backup" registriert (täglich
+03:30, SYSTEM; nach PowerShell-Quoting-Stolperer des Operators in der
+erhöhten Sitzung übernommen), zwei Probeläufe mit Exit 0 und korrektem
+„nothing to do: disabled"; Log `logs/backup-auto.log` sauber
+(PYTHONPATH-Nachtrag im Runner).  **Offen nur noch:** Auto-Sektion in
+der UI aktivieren + ersten Nachtlauf im Log prüfen.
+
+
+**Neu-Evaluierung + Operator-Go 2026-09-16 (Arbeitsreihenfolge Punkt 10):**
+Die Lücke von damals (Async-Job/Progress-Infra) existiert seit dem
+Storage-Umzugs-Job nicht mehr — Stufe 1 (Manual Backup: DB im
+pg_dump-Custom-Format + alle Config-Dateien + Manifest als ein ZIP,
+Backup-Ordner als Einstellung, Liste + Download, Job im API-Prozess nach
+dem MoveJob-Muster) **gebaut 2026-09-16** (`df53122`; Details im CHANGELOG
+„Added"; Settings → Backup, 5 API-Routen, PHP-Proxies, Handbuch-Kapitel
+BACKUP in 4 Sprachen, ARCHITECTURE §23.35).  DB-Zugangsdaten aus
+rastatime.conf (Operator-Entscheidung).  Grundsatzfragen beantwortet:
+Scheduler = Windows-Aufgabenplaner + Management-Command (Worker bleibt
+Stub); Speicherort = serverseitiger Zielordner + Liste; Restore =
+schlank (Browser + Anleitung, kein 1-Klick-Restore).  **Live abgenommen
+2026-09-17 10:20:** erstes Operator-Backup über die UI, ZIP-Integrität OK,
+`db.dump` per `pg_restore --list` gelesen (47 Tabellen mit Daten), Config
++ Manifest vollständig.  **Offen: Stufe 2**
+(Media serverseitig per robocopy-Spiegel + Verify) **und Stufe 3**
+(Auto-Backup-Sektion + `backup_run`-Command + Aufbewahrung, Restore-
+Sektion als Backup-Browser).  **Stufe 2 gebaut 2026-09-17** (`72e13c7`): Option „Include media library",
+robocopy-/MIR-Spiegel nach `<Ordner>/media` mit Verify, Phasen +
+Fortschritt + Cancel; Tests mit echtem robocopy inkl. Purge-Nachweis.
+**Live abgenommen 2026-09-17 15:31** (nach dem Checkbox-Proxy-Fix
+`3a31f5b`): 2512 Dateien / 6,7 GB in 24 s, Spiegel deckungsgleich.
+
+**Status (ursprünglich 2026-05-31):** Defer — A + B empfohlen & gut machbar (architektur-angepasst),
+C bewusst schlank.  Start erst nach Grundsatz-Entscheidung (Scheduler) +
+Operator-Go.  **Nicht für HW-Wechsel nötig** — das CLI-Backup aus
+`docs/operator/BACKUP.md` deckt die Migration vollständig ab.
+**Evaluiert:** 2026-05-31.
+**Operator-Wert:** Hoch (Auto-Backup) bis mittel (Manual).  Backup ist
+betriebskritisch; eine UI senkt die Hürde ggü. CLI.  Restore-via-UI: gering.
+
+**Vom Operator vorgeschlagen:** Settings-Submenü „Backup/Restore", 3 Sektionen:
+- **A) Auto-Backup:** Activate-Checkbox + Häufigkeit (alle X Tage) + Include-Media.
+- **B) Manual Backup:** Button + Include-Media + „Speicherort-Fenster".
+- **C) Restore:** Button + Include-Media + „Backup-Auswahl-Fenster".
+
+**Zentraler Architektur-Konflikt (Browser ≠ Server-Dateisystem):** Ein
+Browser kann **keinen OS-Dateidialog auf dem Server** öffnen (auch nicht
+Single-Machine, Security-Sandbox).  „Speicherort/Backup wählen" geht nur via
+(a) Browser-Download/-Upload oder (b) server-seitig konfigurierter Zielordner
++ Backup-Liste.  Die Media Library (100+ GB) sprengt jeden Browser-Transfer
+→ Media-Backup **muss server-seitig** (robocopy) bleiben, nie über den Browser.
+
+**Empfohlenes (angepasstes) Design:**
+- Server-seitiger **Backup-Zielordner** (Settings-Feld, z.B. `D:\rastatime-backups`)
+  statt OS-Dialog; UI **listet** vorhandene Backups (löst Speicherort + Auswahl).
+- **DB + Config** (klein, MB): ZIP, optional als Browser-Download.
+  **Media** (groß): immer server-seitig via `robocopy /MIR` — das ist
+  **inkrementell gratis** (nur Geändertes), erfüllt den Operator-Wunsch ohne
+  eigenes Change-Tracking.
+- Backup-Job läuft server-seitig; UI **pollt Status** (`cc_pref`
+  last_run/last_status — Muster „Local Import Scan" existiert bereits).
+- **C) Restore bewusst schlank:** UI = Backup-Browser (Liste + Metadaten) +
+  Schritt-für-Schritt-Anleitung (BACKUP.md §7).  **Kein** 1-Klick-DB-Restore
+  aus dem laufenden Web-UI (privilegiert + disruptiv: Dienste stoppen, DB als
+  Superuser droppen/neu anlegen — das System zieht sich den Teppich unter den
+  Füßen weg).  Echter Restore bleibt CLI/offline (oder dediziertes Offline-Script).
+
+**Bausteine vorhanden (Präzedenzfälle):** Settings-Page-Muster „Local Machine"
+(nav-Eintrag in `navigation.php` + `PreferenceController`-Action + plain
+`.phtml`, kein Zend_Form nötig + JS + `cc_pref`/`rastatime_*`-Django-Model).
+Datei-Download an Browser (`FileResponse(as_attachment=True)`, Windows-Branch
+in `storage/views/file.py`).  Status-Polling (`local_import_last_status`).
+
+**Net-new / Lücken:**
+- **Auto-Backup-Scheduler — größte Lücke:** `rastatime_worker` ist aktuell ein
+  Stub; der echte `BackgroundRunner` (Interval-Runner) existiert + ist getestet,
+  aber **nicht verdrahtet**.  Kein APScheduler/cron im Code.
+- Upload-Limits (PHP/Django) nicht gepinnt (nur Linux-Artefakte 512M; Django
+  Default 2.5 MB) — nur relevant bei Restore-via-Upload, das wir ohnehin nicht
+  empfehlen.
+- Async-Job/Progress-Infra: nur synchron-blockierend vorhanden.
+
+**Aufwand:** B (Manual, DB+Config, Download) ~1–2 Tage; + Media (server-seitig)
+~+1–2 Tage; A (Auto inkl. Scheduler) ~2–4 Tage; C (schlank) ~0,5–1 Tag.
+Voll: **~1–2 Wochen**.
+
+**Vorbedingungen / offene Grundsatz-Entscheidungen (vor Start klären):**
+1. **Auto-Backup-Scheduler:** Windows Task Scheduler (robust, idle-box-tauglich,
+   BACKUP.md nutzt es bereits) **[empfohlen]** vs. `BackgroundRunner` aktivieren
+   (in-app, mehr Arbeit, berührt den frisch umgestellten Worker-Dienst).
+2. **Speicherort-Modell:** server-seitiger Zielordner + Backup-Liste bestätigen.
+3. **Restore-Scope:** schlank (Backup-Browser + Anleitung) bestätigen.
+
+**Risiko Live-Betrieb:** A + B niedrig (additive, server-seitige Features).
+C (echter Restore) hoch — daher bewusst ausgeklammert.
+**Randnotiz:** Tote `cc_backup`-Tabelle (Airtime-Erbe) nicht wiederverwendbar;
+kann mit dem Storage-Cleanup mitentfernt werden.
+
+### ✅ Show-Shift: nachfolgende Show schiebt sich bei Overbook (seit 2026-06-15 live, Filler-Erweiterung `b7d2890` 2026-09-27, zwei Live-Proben bestanden)
+
+**Statusberichtigung 2026-09-23 (Punkt-5-Aufnahme):** Die Funktion ist seit
+2026-06-15 KOMPLETT GEBAUT und LIVE — Stufe B: `ShowShiftService` (Kaskade
+Anchor/Clearing/Shift, forward-only), `ShowShiftTask` alle 2 min (letzter
+Lauf heute 23:06), Checkbox „Allow delayed start?" im Show-Formular,
+Handbuch `DELAYED_START.md` EN/DE/FR/ES, CHANGELOG (Commits fe630ec →
+53788ba).  Die Neubewertung vom 2026-09-10 unten war ein Buchungsfehler
+(ging von ungebaut aus).  **Was wirklich offen ist:** 0 von 489 Shows haben
+die Checkbox gesetzt, 0 verschobene Instanzen in 90 Tagen, 0 Log-Zeilen —
+die Funktion hat im Betrieb noch nie gearbeitet und wurde nie mit einem
+echten Overrun live verifiziert; der PHP-Service hat KEINE automatischen
+Tests (die „zehn Scheduler-Testdateien" sind Playout-Tests, nicht dieser
+Service).  Design-Entscheide (Stufe, Ende der verschobenen Show, Kaskade,
+Obergrenze über 15-min-Lead) sind im Service-Docblock festgehalten.
+Nächster Schritt = Operator-Entscheid: kontrollierte Live-Abnahme mit
+Testshow-Overrun oder dunkel lassen bis zum ersten Opt-in.
+
+**Status (alt, überholt):** Go vom 2026-05-22; Operator 2026-09-10: „für später gemerkt".
+
+**🟢 Erweiterung „Filler statt Kürzung" — GEBAUT 2026-09-27 (Operator-Go,
+Entscheide D1: Outro bleibt, davor ersetzen · D2: bis ≥ Lücke füllen, letzter
+Filler gekürzt · D3: mehrere Titel · D4: nur B; Details CHANGELOG „Added").
+Live-Probe 2026-09-27 BESTANDEN (Details CHANGELOG „Fixed" 27.09.).
+**Marker-Bug BEHOBEN 2026-09-27** (Migration 0058, `delayed_start_from`; Details
+CHANGELOG „Fixed" 27.09.).  Ursprüngliche Evaluierung:** Im SHIFT-Fall wird der überstehende
+Schluss von Show B nicht gekürzt, sondern die nicht mehr passenden
+Schluss-Titel werden entfernt und die Lücke bis B.ends aus einer unter
+Settings → General wählbaren **Filler-Playlist** (Picker wie
+„Traffic-Alert Smart Block", aber `getPlaylistNames`) mit passend langen
+Titeln gefüllt.  Datenlage komplett: `cc_playlistcontents.cliplength`
+liefert Dauern, der Shift läuft in einer Transaktion mit anschließendem
+PushSchedule, Insert-Form für cc_schedule ist bekannt (Scheduler.php).
+Kein Schema-, kein Playout-Eingriff.  Aufwand ~400-500 LoC PHP + Manual
+×4, 1,5-2,5 Tage inkl. Live-Probe mit Testshows (die auch den bisher nie
+ausgelösten Basis-Shift abnimmt).  Offene Entscheide: (D1) letzten Titel
+oder letzten Titel VOR dem Outro-Jingle ersetzen; (D2) Rest-Politik —
+Empfehlung: bis ≥ Lücke füllen, der letzte Filler wird gekürzt (nie
+Stille, nie ein Show-Titel gekürzt); (D3) mehrere Schluss-Titel entfernen,
+wenn der Überhang länger als einer ist; (D4) Geltung auch für As eigene
+Kürzung im ANCHOR-Fall; (D5) Wiederholungs-Vermeidung der Filler (v2).
+Hinweis: Legacy-PHP hat keine Test-Infrastruktur — Auswahl-Logik als
+reine Funktion bauen, Abnahme per Probe-Protokoll.
+Die Vorbedingung ist inzwischen erfüllt (zehn Scheduler-Testdateien,
+~2.900 Zeilen).  **Neubewertung 2026-09-10:** Stufe A nur im Playout
+(Checkbox pro Show, die Timer der Folgeshow werden um den Überhang des
+letzten Titels verschoben, Datenbank und Anzeige bleiben unverändert, die
+Folgeshow wird am Ende gestaucht; ~600 Zeilen, 2–3 Tage) oder Stufe B wie
+unten (Zeilen der Folgeshow in der Datenbank verschieben, Dashboard,
+Aufnahme und History folgen; mehrere Wochen).  Vor dem Start ein
+Design-Entscheid in eigener Sitzung: Stufe, Verhalten am Ende der
+verschobenen Show, Obergrenze des Überhangs, Zusammenspiel mit der
+Einstellung „Overbooked trimmen" (`schedule_trim_overbooked`), die das
+Gegenteil tut.
+**Status (alt):** Go, mit Vorbedingung (Scheduler-Tests erst).
+**Evaluiert:** 2026-05-22.
+**Operator-Wert:** Sehr hoch — echtes Live-Radio-Problem (Musik überzieht, News wird mitten im Wort gecuttet).
+**Differenzierung:** Echter Unterschied ggü. Airtime / LibreTime.
+
+**Features:**
+- Neue Checkbox in Edit/New Show: "Start der Show verschieben zulassen"
+- Bei Overbook der Vorshow + shiftable nachfolgender Show: Tracks der Overbook-Show zu Ende, danach geschobener Start
+- Optionale Phase 2: Auto-Befüllungs-Rebuild bei autoloading-playlist nach Shift
+
+**Aufwand:** ~3750 LoC, ~5-7 Wochen.
+**Vorbedingung:** Scheduler-Test-Suite ausbauen (~1500 LoC Tests vorab).
+**Risiko Live-Betrieb:** Hoch ohne Tests — eine fehlerhafte Shift bringt Show zur falschen Zeit auf Sendung.
+**Empfohlene Ausrollung:** Feature-Flag, opt-in pro Show; 30 Tage Beobachtung; dann Default.
+
+### ✅ Record-per-Hour (Vorstufe für 7-Tage-Catchup) — DONE 2026-06-06
+
+**Status:** ✅ **IMPLEMENTIERT 2026-06-06** — neu auf die Phase-C5-
+Liquidsoap-Aufnahme-Architektur aufgesetzt (**nicht** der ursprüngliche
+FFmpeg-Tap-Plan unten, der seit dem FfmpegRecorder-Delete obsolet war):
+zweiter Liquidsoap-`output.file` auf dem Bus mit stündlicher
+`reopen_when`-Rotation; Format/Bitrate/Retention/Enable per Settings-UI
+(eigener „24/7 Recording Folder", „Recording Folder" → „Show Recording
+Folder" umbenannt); Pypo-Retention-Daemon; Cue-Sidecars (`.cues.json`).
+Commits `80c3dbf` (Recorder) + `0127ff0` (Retention) + `7b9a8bc`/`84c5c34`
+(UI) + `9b3d857` (Cue) + `58515c8`/`7ae8c64`/`75310e1`/`8abd631`
+(Doku EN/DE/FR/ES).  Live-verifiziert (11-h-Lauf, nahtlose Übergänge).
+Das **7-Tage-Catchup-Frontend** (nutzt die Sidecars) bleibt offen.
+Original-Evaluierung unten zur Historie:
+
+**Evaluiert:** 2026-05-22.
+**Operator-Wert:** Hoch — Compliance, Catchup, Notfall-Backup.
+
+**Features:**
+- FFmpeg-Segment-Mux mit `-segment_atclocktime` für Stunden-Grenzen
+- Neuer NSSM-Service `RASTATIME-RECORDER`
+- Settings → Local Machine: Folder-Path + Enable + Retention-Days
+- Optional: Show-Cue-Markers als JSON-Sidecar
+- Co-Existenz mit Record-per-Show (beide tappen Icecast unabhängig)
+
+**Aufwand:** ~1750 LoC, ~2 Wochen.
+**Vorbedingung:** Keine.
+**Risiko Live-Betrieb:** Niedrig — paralleler Prozess.
+**Folgeprojekt:** 7-Tage-Catchup-Frontend nutzt diese Chunks als Input.
+
+### ✅ Seamless Bus-Mix — Output-Stack-Politur (CLOSED 2026-09-11)
+
+**Status:** ✅ Geschlossen 2026-09-11 (Arbeitsreihenfolge Punkt 6,
+Statusprüfung auf Operator-Wunsch).  Alle drei Symptome sind durch die
+Liquidsoap-Migration (Phase 0–D, Cutover 2026-05-28) und die Folgearbeiten
+erledigt:
+- **#1 Listener-Reconnect / Counter-Reset:** Liquidsoap hält je Mount eine
+  persistente Icecast-Quelle.  Beleg 2026-09-11 08:20 (`status-json.xsl`):
+  `rastatime`, `rastatime-aac`, `rastatime-ogg` verbunden seit 2026-09-10
+  13:28:15 = seit dem letzten LIQUIDSOAP-Start, über alle Titel- und
+  Showwechsel hinweg.
+- **#2 Tail-Cut bei kurzen Titeln:** Liquidsoap spielt die Queue gapless;
+  `cue_out` läuft als Annotation mit, der Titel läuft in der Überlappung zu
+  Ende statt abgeschnitten zu werden.  Live-Abnahmen: Paket 2 (`ff567ce`,
+  2026-09-04) und die Sechs-Show-Sequenz 2026-09-10 11:00 („alle Shows
+  klangen gut", Übergang Show 1→2 nahtlos).
+- **#3 1–2 s Stille beim Webstream-Wechsel:** Vorwärmen mit Gate (Paket 2)
+  und frische `input.http`-Quelle je Slot (Plan A, `1eb8713`, 2026-09-08),
+  live bestätigt 2026-09-08 (12:07, 17:07, Stall-Test 22:20).
+- **Obsolet-Liste:** `mpv_engine.py`, `ffmpeg_streamer.py`, `_stop_streamers`
+  und der Tail-Flush-Wait sind am 2026-09-10 gelöscht (`2590cf2`).
+  `Scheduler::calculateCrossfades` (PHP) bleibt bewusst: sie legt die
+  Überlappung in der Zeitachse (`cc_schedule.starts/ends`) aus
+  `default_crossfade_duration` an, derselben Quelle wie der Liquidsoap-
+  Crossfade.  Der Rollback-Plan (Feature-Flag zu mpv) ist mit der Löschung
+  hinfällig.
+
+**Ursprünglicher Eintrag (2026-05-25):**
+
+**Status (alt):** Go in zwei Phasen.  Phase 1 sofort (Tail-Cut-Bug),
+Phase 2 später (Architektur-Eingriff für persistente Icecast-PUT-
+Verbindung).
+**Evaluiert:** 2026-05-25.
+**Operator-Wert:** Sehr hoch — direkte Hörer-Erfahrung.
+
+**Drei beobachtete Symptome am aktuellen Output-Stack**
+(mpv → 3× FfmpegStreamer → Icecast PUT, hard stop+start bei
+jedem Track-/Show-Wechsel):
+
+| # | Symptom | Lösungsklasse |
+|---|---|---|
+| 1 | Listener-Player muss bei Track-/Show-Change neu verbinden, Stream-Dauer-Counter resetted | Architektur — persistente Icecast-PUT-Verbindung nötig |
+| 2 | Track-Ende um 1–2 s abgeschnitten, besonders bei kurzen Files (4–10 s) und vor Webstream-Items | Bug — Stop-Trigger hängt an Scheduler-Clock statt mpv's `end-file`-Event |
+| 3 | 1–2 s Stille beim Wechsel zu Webstreams | Folge aus #1 — verschwindet wenn persistente Verbindung steht |
+
+**Phase 1 (sofort, 2–3 Tage) — Option D: Tail-Cut-Bug-Fix**
+- Im `playout_scheduler.py::_on_file_start` (analog für webstream
+  / linein) hängt der Hard-Stop des laufenden mpv an einer
+  scheduler-clock-basierten Timer-Berechnung.  Bei kurzen Files
+  ist die Cue-Out-Zeit ggü. mpv's Decode-Latenz pessimistisch
+  → die letzten Frames werden abgeschnitten.
+- Fix: Trigger an mpv's `end-file`-Event (reason=0) hängen +
+  Timeout-Fallback wenn das Event ausbleibt.  Falls der nächste
+  Track-Slot noch nicht erreicht ist, wartet der Scheduler.
+- Aufwand: ~150 LoC + Live-Test.
+- Risiko: niedrig (isolierter Pypo-Code-Pfad, easy revert).
+
+**Phase 2 (in Arbeit ab 2026-05-25) — Variante A: Voll-Migration
+mpv → Liquidsoap als alleiniges Audio-Backend**
+
+Operator-Entscheidung 2026-05-25: nach 3 Phase-1-Fix-Iterationen
+(cb20df6, 2b2a787, 952ec3b) bleibt der Tail-Cut bei einigen
+kurzen Tracks bestehen.  Plus die Phase-2-Probleme (Listener-
+Reconnect, Stille beim Webstream-Wechsel) sind durch keinen
+Workaround im mpv-Stack zu lösen.  Statt zusätzlicher Pflege-
+Schleifen am Custom-Stack: Voll-Migration zu Liquidsoap als
+Audio-Backend (Subprocess hinter Pypo-Scheduler).  Eliminiert
+~1500 LoC Custom-Code (mpv_engine, FfmpegStreamer × 3,
+Crossfade-Berechnung in PHP, mein Tail-Cut-Wait-Hack), bringt
+~700 LoC neuen Adapter-Code dazu → netto –800 LoC.
+
+**Was Liquidsoap nativ kann (löst all diese Probleme):**
+- Persistent Icecast-PUT × 3 Mountpoints (Listener-Reconnect-
+  Problem weg)
+- Gapless transitions zwischen Tracks (Tail-Cut weg, kein
+  Wait-Hack mehr nötig)
+- Crossfade nativ (PHP-Scheduler-Crossfade-Berechnung obsolet)
+- ICY-Metadata-Push automatisch beim Track-Wechsel (notify-
+  media-started-Hack obsolet)
+- Source-Switching master_dj / live_dj / scheduled via
+  `switch(...)` (eigener SourceSwitcher obsolet)
+- Replay-Gain via `amplify(override="replaygain_track_gain")`
+- Cue-Points nativ via `cue_cut(...)`
+
+**Was Python-seitig bleibt:**
+- Pypo-Scheduler (Timer, Schedule-Sync mit Frontend-API)
+- FfmpegRecorder (per-show Recording)
+- FfmpegLineinCapture (Windows-dshow → localhost:8000/linein-
+  capture → von Liquidsoap als input.http konsumiert)
+- Library-Cache (Download-Pipeline vom Frontend)
+- LiquidsoapEngine-Adapter (neuer Python-Wrapper, ~300 LoC,
+  Telnet/Socket-Client für Server-Commands)
+
+**Phasen-Plan (Tasks #88–#92, Gesamt 6–8 Wochen kalendarisch):**
+
+- **Phase 0** (Operator-Aktion, 1 Tag): ✅ DONE 2026-05-25.
+  Liquidsoap 2.4.4 Windows-Build läuft stabil; `%ffmpeg(...)`
+  encoder als Production-Format identifiziert.
+- **Phase A** (~1 Woche): 4h Burn-In mit MP3-Stream läuft seit
+  2026-05-25 (reduziert von 18h auf 4h auf Operator-Wunsch nach
+  ersten stabilen ~77 MB-Snapshots).  Mit dem verkürzten Test
+  bleiben subtile Memory-Leaks (~5–10 MB/h) unentdeckt, werden
+  aber in Phase D A/B-Test gegen mpv über Tage sichtbar.
+- **Phase B** (~2 Wochen): `LiquidsoapEngine` Python-Adapter +
+  Telnet-Client + NSSM-Service.  Feature-Flag
+  `RASTATIME_PLAYOUT_ENGINE=liquidsoap` als env-var (statt
+  Frontend-Preference — env-var-Pattern existiert schon im
+  Code für `vlc`-Fallback).
+- **Phase C** (~3–4 Wochen, hochgesetzt von 2–3 wegen
+  Recording-Migration): Migration aller Source-Typen + DJ-Source-
+  Receiver-Wechsel + Recording-Migration zu Liquidsoap.
+- **Phase D** (~2 Wochen): Live-A/B auf Test-Mount, Bug-Fix,
+  Doku in 4 Sprachen, Cutover als operator-explicit Aktion.
+
+**Operator-Entscheidungen 2026-05-25 (Phase-B-Kickoff):**
+
+| Frage | Entscheidung | Konsequenz |
+|---|---|---|
+| Liquidsoap-Process-Lifecycle | Eigener NSSM-Service `RASTATIME-LIQUIDSOAP` | NSSM-Install-Script in `backend/playout/config/nssm-install-liquidsoap.ps1`.  Operator startet/stoppt Liquidsoap unabhängig von Pypo. |
+| DJ-Source-Receiver (Master / Show) | Liquidsoap `input.harbor` | Operator-DJ-Software muss in Phase C auf neuen Liquidsoap-Port (8001 master / 8002 show) umstellen.  Verzichtet auf Icecast `/source` für DJ.  Native crossfade zwischen DJ und Scheduled. |
+| Recording-Migration | Wird mit nach Liquidsoap migriert | FfmpegRecorder entfällt in Phase D.  `output.file` mit metadata-driven filename + `reopen_when` macht das per-show Recording.  Phase C wird größer (3–4 Wochen statt 2–3). |
+
+**Rollback-Plan:** Feature-Flag `audio_backend` erlaubt jederzeit
+Fallback zu mpv ohne Service-Reinstall — nur Preference-Toggle
++ Service-Restart.
+
+**Risiko Live-Betrieb:** mittel.  Output-Pipeline-Eingriff geht
+direkt an die Hörer.  Gestaffelter Rollout: Phase 0/A/B sind
+unsichtbar (testen nur), Phase C/D unter Feature-Flag, finaler
+Cutover erst nach 1–2 Wochen A/B-Vergleich.
+
+**Bei Voll-Migration werden obsolet** (wird in Phase D entfernt):
+- `mpv_engine.py` (~450 LoC)
+- `ffmpeg_streamer.py` (~500 LoC)
+- `Scheduler::calculateCrossfades` (PHP, ~300 LoC)
+- `_stop_streamers` Parallel-Stops (eigener Hotfix 2b2a787,
+  obsolet weil ffmpeg nicht mehr unsere Sache ist)
+- Tail-Flush-Wait (Commits cb20df6 + 952ec3b, obsolet weil
+  Liquidsoap gapless macht)
+
+### ✅ Storage-Struktur-Bereinigung (Root → D:\stor + owner-id weg) — DONE 2026-09-16 (`6059dc4`, `c0b3c70`, Umzug abgenommen 09:43)
+
+**Status:** 🟢 **ENTBLOCKT 2026-09-02** — die zusätzliche Festplatte ist
+geliefert (Operator-Meldung 2026-09-02); als Reihenfolge-Punkt 7
+eingeplant.  Vor Umsetzung: 6-Punkte-Evaluierung + Wartungsfenster
+vereinbaren (Sendepause nötig), Backup vorher verifizieren.
+
+**Evaluierung 2026-09-15 (Arbeitsreihenfolge Punkt 7):** Empfehlung **Go**
+in drei Stufen, wartet auf Operator-Go und Wartungsfenster.
+
+*Ist-Stand:* `D:` = Intel-RAID-1-SSD, 1,86 TB, NTFS, leer, gesund,
+Authentifizierte Benutzer haben Ändern-Recht (Dienste laufen als
+LocalSystem).  Bibliothek `C:\rastatime\media`: 4,3 GB, 2.489 Dateien
+(344 Audio, 2.120 Cover unter `imported/2/artwork`, 1 Show-Bild, 1 Auto-DJ-
+Logo, 4 hängende Importe vom 2026-05-20 in `organize/`, deren cc_files-Zeilen
+599/616/627/631 leeren `filepath` und `import_status=2` haben).  Die
+Storage-Wurzel steht nur in `rastatime.conf` (`storage.path`); PHP
+(`Config::getStoragePath`), API (`settings.CONFIG.storage.path`), PLAYOUT
+(`config.storage.path`, Direktzugriff auf die Bibliothek für den Cache) und
+Analyzer (Zielordner kommt je Import-Nachricht aus PHP) lesen sie von dort.
+Kein Apache-Alias, keine Tabelle `cc_music_dirs`.
+
+*Abweichungen von MIGRATION.md §4.4/§4.5 (dort nicht erfasst):*
+- Die owner-id-Ebene wird an **vier** Stellen erzeugt, nicht nur in
+  `MediaService.php:35`: `backend/api/rastatime_api/podcasts/download.py:169`
+  (Podcast-Downloads, `imported/<owner>` bzw. `imported/podcast`),
+  `PreferenceController.php:1055` (Auto-DJ-Logos) und
+  `ShowImageController.php:168/292` (Show-Bilder).
+- `cc_files.filepath`: 343 Zeilen unter `imported/2/`, davon **36 mit
+  führendem Schrägstrich** (`/imported/2/podcast_…`, Podcast-Importe) — das
+  Muster in §4.4(c) (`^imported/[0-9]+/`) träfe sie nicht; nötig ist
+  `^/?imported/[0-9]+/`.  Kein Interpret-Ordner ist rein numerisch (die
+  Idempotenz-Warnung greift nicht).
+- `cc_files.artwork`: 216 Zeilen `imported/2/artwork/…` — ebenfalls umschreiben.
+- `cc_show.image_path` (29 Zeilen) und `cc_pref.auto_dj_logo_path` halten
+  **absolute** Pfade `C:/rastatime/media/imported/2/…` — brechen schon durch
+  den Wurzelwechsel, müssen auf `D:/stor/imported/…` umgeschrieben werden.
+- PLAYOUT entfernt einen führenden Schrägstrich selbst (`lstrip("/")`),
+  PHP joint per `OsPath::join`, API per `Path(...) / rel` — die Schreibweise
+  der DB-Pfade darf bleiben.
+
+*Eingriff:* (1) `rastatime.conf` `storage.path: D:/stor`; (2) vier
+Code-Stellen ohne owner-id-Segment (PHP live ohne OpCache, API/Worker
+Neustart); (3) eine DB-Transaktion: `cc_files.filepath`, `cc_files.artwork`
+(`^/?imported/[0-9]+/` → `imported/`), `cc_show.image_path` und
+`cc_pref.auto_dj_logo_path` (Präfix `C:/rastatime/media/imported/2/` →
+`D:/stor/imported/`); (4) Dateien: `imported/2/*` → `D:\stor\imported\`
+(flach), `organize/` → `D:\stor\organize\`; (5) Neustart API, WORKER,
+ANALYZER, PLAYOUT — LIQUIDSOAP, STANDBY, Icecast und Apache bleiben laufen
+(Liquidsoap spielt aus dem PLAYOUT-Cache `C:\rastatime\scheduler`); (6)
+Umfeld: Windows-Search-Indexierung auf `D:` ist an (für `D:\stor` abschalten),
+Defender-Ausnahme für `D:\stor` (siehe Nebenbefund).
+
+*Ablauf in drei Stufen:* **A** Vorbereitung ohne Betriebseingriff:
+Migrations- und Prüfskript mit Trockenlauf (zählt, schreibt nichts),
+Vorkopie `robocopy /MIR` der 4,3 GB nach `D:\stor` im laufenden Betrieb, DB-
+Dump.  **B** Wartungsfenster ~15 min ohne geplante Datei-Sendung
+(Webstream-Slots sind unbetroffen, Hörer bleiben verbunden, der Stream zeigt
+den Off-Air-Text): Dienste API/WORKER/ANALYZER/PLAYOUT stoppen, Schluss-Sync
+(Sekunden), Conf + Code + DB-Transaktion, Dienste starten, Prüfung (3 Titel
+abspielen, ein Cover, das Show-Bild, ein Test-Upload, ein Podcast-Download).
+**C** `C:\rastatime\media` bleibt 7 Tage als Rückfall liegen, dann löschen.
+Rückfall in B: Conf zurück, DB-Dump einspielen, Dienste starten — die Dateien
+liegen noch an beiden Orten.
+
+*Aufwand:* Code ~10 Zeilen an vier Stellen + API-Test für den Podcast-Pfad;
+Migrationsskript mit Trockenlauf ~150 Zeilen (PowerShell/Python); DB-
+Transaktion ~20 Zeilen; MIGRATION.md §4.4/§4.5 korrigieren, CHANGELOG,
+ARCHITECTURE (Minor: Storage-Layout), BACKLOG, INSTALL.md/Handbuch-Stellen mit
+dem Pfad.  *Dauer:* Stufe A ~3 h, Stufe B ~15–30 min, Stufe C 7 Tage warten.
+*Sinn:* mittel — Bibliothek auf der gespiegelten Datenplatte, raus aus dem
+Repo-Baum, sauberere Backups und Pfade; kein Platzdruck (C: 848 GB frei).
+*Regel:* die DB-Umschreibung ist der eine direkte SQL-Schreibzugriff, den die
+Betriebsregel „nur per API" sonst verbietet — nur im Fenster, nur mit
+explizitem Go, in einer Transaktion.
+
+*Offene Entscheidungen für den Operator:* (a) Fenster-Termin; (b) die 4
+hängenden Importe in `organize/`: Zeilen löschen und Dateien neu importieren,
+oder mitnehmen; (c) Aufnahme- und Import-Ordner (`C:\Users\studio\Music\…`,
+Settings → Local Machine) ebenfalls nach `D:` (eigene Einstellung, kein Teil
+dieses Umbaus); (d) Cover-Ordner `artwork` liegt danach unter
+`D:\stor\imported\artwork` neben den Interpreten-Ordnern (wie heute unter
+`imported/2/`).
+
+**Stufe 1 umgesetzt 2026-09-16 (Operator-Go, `6059dc4`):** fünf Code-Stellen ohne owner-id-Ebene, Show-Bilder und
+Auto-DJ-Logo relativ, Django-Befehl `storage_flatten` (Trockenlauf/`--apply`,
+eine Transaktion, Rückgängig bei Fehler).  Trockenlauf in Produktion: 80
+Einträge, 343 + 216 + 29 + 1 Zeilen, 343/343 Pfade auflösbar.
+**Ausgeführt in Produktion 2026-09-16 09:10 (Operator, nach DB-Dump
+`C:\\Temp\\optd\\db_before_flatten_20260916_091032.dump`):** 80 Einträge
+verschoben, 343 + 216 + 29 + 1 Zeilen umgeschrieben, 343/343 Pfade
+auflösbar, `imported/2` entfernt.  Live geprüft: Show-Logo und Auto-DJ-Logo
+(HTTP 200), Cover-Endpunkt, drei Downloads über die API, Track-Metadaten.
+RASTATIME-API-Neustart für den Podcast-Pfad durch den Operator.
+
+**Neue Richtung (Operator 2026-09-15): Speicherort als Einstellung**
+Nicht nur einmal nach `D:\stor` umziehen: unter Settings → Local Machine
+soll der Speicherort der Bibliothek wählbar sein, wie der Import Folder.
+Evaluierung 2026-09-15, Empfehlung Go in drei Stufen (wartet auf Go):
+
+- *Machbarkeit:* ja.  Jeder Leser der Wurzel kann die Einstellung statt
+  `rastatime.conf` fragen: PHP (`Config::getStoragePath`, pro Request), API
+  und Worker (`settings.CONFIG.storage.path` → Preference pro Aufruf), PLAYOUT
+  (bei jedem Refresh wie die ICY-Werte), Analyzer (Zielordner kommt je Import
+  aus PHP).  Vorbedingung: alle DB-Pfade relativ zur Wurzel (Stufe 1), sonst
+  bricht jeder Wechsel Show-Bilder und Auto-DJ-Logo.
+- *Eingriff:* neuer cc_pref-Schlüssel `local_storage_folder` (leer =
+  `rastatime.conf`); Feld + Knopf „Verschieben" auf der Local-Machine-Seite
+  mit Fortschritt; API-Endpunkt Prüfen/Starten/Status; Umzugs-Job (kopieren →
+  zählen/prüfen → Wurzel umschalten → alte Kopie stehen lassen, Hinweis zum
+  Löschen), Importe während des Jobs gesperrt; Prüfungen: Pfad
+  erreichbar/beschreibbar, nicht innerhalb der alten Wurzel, genug Platz.
+- *Aufwand:* ~600–900 Zeilen (PHP/JS/Python) + Tests, Handbuch
+  LOCAL_MACHINE EN/DE/FR/ES, ARCHITECTURE (Minor).  *Dauer:* Stufe 1
+  (einmalige Bereinigung: owner-id-Ebene an vier Stellen, führende
+  Schrägstriche, `cc_files.artwork`, Show-Bilder und Logo relativ) ~½ Tag
+  inkl. ruhigem Moment für die DB-Transaktion; Stufe 2 (Einstellung + Job)
+  2–3 Tage; Stufe 3 = erster Umzug nach `D:\stor` über die UI als Abnahme.
+- *Sinn:* hoch für den Operator-Wunsch, keine Hand-Edits an
+  `rastatime.conf` mehr, der Umzug wird wiederholbar (weitere Platte, Backup-
+  Rückspielung).  *Empfehlung:* Go; Stufe 1 ist auch für den reinen Umzug nötig
+  und kann sofort beginnen.
+
+**Stufe 2 umgesetzt 2026-09-16 (Operator-Go; Entscheidungen: alte Kopie löscht
+der Operator selbst, keine Netzlaufwerke in v1, Aufnahme-/Import-Ordner bleiben
+eigene Einstellungen; `c0b3c70`):** Einstellung,
+Auflöser in PHP/API/PLAYOUT, Umzugs-Job, Import-Sperre, Preflight-Warnung,
+Handbuch.  **Abnahme 2026-09-16 09:43 (Operator, über die Oberfläche):**
+„Check" OK (1,9 TB frei), „Move library" → 2.489 Dateien / 4,5 GB in 9 s
+kopiert, geprüft, umgeschaltet; Wurzel `D:/stor` (Quelle: Einstellung);
+PLAYOUT folgte beim nächsten Refresh, Preflight ohne Warnung; danach
+Show-Logo, Cover und drei API-Downloads von der neuen Wurzel geprüft.  Alte
+Kopie unter `C:\\rastatime\\media` liegt noch (Operator löscht sie selbst,
+Erinnerung ab ~2026-09-23).  Damit ist Arbeitsreihenfolge Punkt 7 erledigt.
+
+**Stufe 2 im Detail (Evaluierung 2026-09-16):**
+
+*Wahrheit und Leser:* neuer cc_pref-Schlüssel `local_storage_folder`
+(leer = `storage.path` aus `rastatime.conf`, das damit nur noch Startwert
+ist).  Ein Auflöser je Seite: PHP `Config::getStoragePath()` fragt zuerst die
+Einstellung (pro Request, wie `local_import_folder`); API/Worker
+`rastatime_api.storage.root.get_storage_root()` (Einstellung → Config, 15 s
+Cache) an den drei Stellen `storage/views/file.py` (2×),
+`podcasts/views/podcast.py` und als Standard von `storage_flatten`; PLAYOUT
+holt die Wurzel bei jedem Refresh von `GET /api/v2/storage/location` (fällt
+ohnehin auf den API-Download zurück, wenn der Direktzugriff fehlschlägt);
+Analyzer bekommt das Ziel je Import aus PHP.  `conf.php` prüft beim Start
+weiter, dass der Konfig-Pfad existiert — das alte Wurzelverzeichnis bleibt
+daher als leerer Ordner stehen (die Löschfunktion leert nur den Inhalt).
+
+*Umzugs-Job (im API-Prozess, Thread; Zustand als JSON in cc_pref
+`local_storage_move`, überlebt einen API-Neustart als „unterbrochen →
+fortsetzen"):* 1 Prüfen (absolut, lokales Laufwerk — kein UNC in v1,
+anlegbar/beschreibbar per Testdatei, nicht in der alten Wurzel und
+umgekehrt, freier Platz ≥ Bibliotheksgröße + 10 %) → 2 Importe sperren (eine
+Prüfung `Application_Common_Storage::assertWritable()` in MediaService,
+LocalImportScanTask, Show-Bild- und Logo-Upload; Podcast-Download in der
+API) → 3 Kopieren mit `robocopy <alt> <neu> /E /COPY:DAT /R:2 /W:2 /NP`
+(wiederaufnehmbar, Fortschritt = Bytes im Ziel gegen Ausgangsgröße alle 2 s)
+→ 4 Prüfen (Dateizahl und Bytes gleich, jede `cc_files.filepath` im Ziel
+vorhanden) → 5 Umschalten (Einstellung setzen; PHP/API sofort, PLAYOUT beim
+nächsten Refresh) → 6 alte Kopie bleibt; Knopf „Alte Kopie löschen" mit
+Rückfrage, nur wenn Schritt 4 grün war.  Abbruch während 3 erlaubt (Ziel
+bleibt teilkopiert, ein neuer Start setzt fort); nach 5 kein Rückweg per
+Knopf, Rückfall = Einstellung leeren (alte Kopie liegt noch).
+
+*Zugriffsschutz:* Start/Abbruch/Löschen nur über PHP-Actions hinter Login +
+CSRF (wie `restart-audio-chain`); PHP ruft die API auf localhost mit dem
+API-Key auf.  Die API-Endpunkte `storage/location`, `storage/move` (POST
+start/cancel/delete-old, GET status) verlangen den API-Key — anders als die
+Soundkarten-Endpunkte, die ohne Auth auf 0.0.0.0:8765 antworten.
+
+*Oberfläche (Local Machine, Abschnitt „Media Library Location"):* aktueller
+Pfad, Herkunft (Einstellung/Konfiguration), Bibliotheksgröße, freier Platz am
+Ziel; Feld + „Prüfen" + „Verschieben" (Rückfrage), Fortschrittsbalken
+(Poll alle 2 s), danach Hinweis auf die alte Kopie mit Löschknopf; bei
+„unterbrochen" ein „Fortsetzen".  Tooltips per rtTooltip.  Preflight-Warnung
+`storage_root_unavailable` (Wurzel fehlt/nicht beschreibbar, z. B. Platte
+weg) im Dashboard-Banner.
+
+*Eingriff:* API ~350 Zeilen + Tests ~250; PHP ~350 (Config/Storage,
+Controller-Actions, Sperren, Seite + JS); PLAYOUT ~40 + Tests; Handbuch
+LOCAL_MACHINE EN/DE/FR/ES, INSTALL.md/MIGRATION.md (Konfig-Pfad = Startwert),
+CHANGELOG, ARCHITECTURE Minor (0.34).  *Dauer:* ~2 Tage Bau, Abnahme = Umzug
+nach `D:\stor` über die Oberfläche (4,3 GB ≈ 1 min Kopie).  *Risiken:*
+API-Neustart während der Kopie (wiederaufnehmbar), Defender-Echtzeitscan
+auf dem Ziel (Ausnahme setzen), ACL: Zielordner erbt vom Laufwerk
+(Authentifizierte Benutzer: Ändern — Backups ohne Erhöhung möglich, anders
+als die Podcast-Dateien von 2026-06), lange Pfade (robocopy kann sie,
+Prüfschritt nutzt `\\?\`-Präfix).
+*Sinn:* hoch (Operator-Wunsch, wiederholbar, kein Hand-Edit).
+*Empfehlung:* Go.  Offene Entscheidungen: (a) Löschen der alten Kopie per
+Knopf oder nur manuell; (b) Netzlaufwerke (UNC) in v1 ausschließen; (c)
+Aufnahme-/Import-Ordner bleiben eigene Einstellungen.
+
+*Nebenbefund (eigenes Thema):* Auf der Maschine läuft **Microsoft Defender**,
+nicht Bitdefender, und **keine einzige Pfad- oder Prozess-Ausnahme** ist
+gesetzt — die Liste aus MIGRATION.md §3.2 gilt damit für Defender und ist
+nicht umgesetzt.  Echtzeitscan auf `C:\rastatime\scheduler`, den Aufnahmen und
+Liquidsoap kann I/O-Spitzen verursachen; Operator-Entscheidung.
+
+**(Vorgeschichte:)** ERNEUT DEFER (Operator-Entscheid 2026-08-26 bei der Migration):
+die neue Maschine hat **keine zweite SSD/D:** — Medien bleiben unter
+`C:\RASTATIME\media`, MIGRATION.md §4.4/§4.5 wurden übersprungen (kein
+MediaService-Patch, kein cc_files-Rewrite; 340/340 DB-Pfade auf Disk
+verifiziert). **Neue Vorbedingung:** D:-Laufwerk nachrüsten — Operator
+erhält die zusätzliche Festplatte laut eigener Aussage in den Tagen nach
+dem 2026-08-26; danach als eigenes Wartungsfenster nach §4.4/§4.5
+durchziehen (Doku bleibt gültig; Reihenfolge: Platte als D: formatieren →
+Dienste stoppen → §4.4 a–c Code/Conf/DB → §4.5 robocopy-Flatten →
+3-Track-Verifikation → Dienste starten).
+**(Ursprünglicher Plan unten zur Historie:)**
+**Status (alt):** Geplant für die Hardware-Migration nächste Woche.
+**Evaluiert:** 2026-05-29 (Operator-Wunsch "kosmetische Dinge").
+**Operator-Entscheidung 2026-05-29:** in die Hardware-Migration
+integrieren statt isoliert auf der Live-Maschine (Daten-Migration,
+nicht kosmetisch).
+
+**Zwei Wünsche, beide an der Storage-Struktur:**
+1. **Root-Folder weg vom Projektordner.**  Aktuell
+   `C:/rastatime/media` (= rastatime.conf storage.path, im Repo-Baum).
+   Ziel: `D:\stor` auf SSD-B der neuen Maschine.
+2. **owner-id-Unterordner `imported/2/` wegsparen.**  Die `2` ist die
+   User-ID des importierenden Operators (`MediaService.php` Z.35
+   `'/imported/' . $fileOwnerId`).  Bei Single-Operator überflüssig.
+   Ziel: `D:\stor\imported\<artist>\<album>\...` ohne owner-id-Ebene.
+
+**Warum nicht jetzt isoliert:** beides ist Daten-Migration
+(cc_files.filepath + cc_music_dirs.directory umschreiben + Files
+physisch verschieben).  Auf der Live-Maschine = Sendeausfall-Risiko
+bei unvollständiger Migration.  Bei der Hardware-Migration werden die
+Files eh alle verschoben → risikofrei + keine Doppelarbeit.
+
+**Vollständig dokumentiert in `docs/operator/MIGRATION.md` §4.4 + §4.5:**
+- Code-Patch MediaService.php (owner-id-Segment raus)
+- rastatime.conf storage.path → D:/stor
+- DB-Transaktion: cc_music_dirs.directory + cc_pref + regexp_replace
+  auf cc_files.filepath (`imported/<digits>/` → `imported/`)
+- robocopy-Flattening beim Restore
+- Verifikation (3 Tracks abspielen vor Go-Live)
+
+**Side-Fund 2026-05-29:** MIGRATION.md hatte einen falschen
+Storage-Pfad (`C:\rastatime\stor` existiert nicht, echt ist
+`C:\rastatime\media`) — beim Audit gefunden + korrigiert (sonst hätte
+das Media-Backup die Library verfehlt).
+
+**Offen bei der Migration:** show-images + auto-dj-logos behalten
+vorerst ihre `imported/<owner-id>/`-Subtrees (selten, klein); optionale
+DB-Spalten-Bereinigung dokumentiert aber nicht Pflicht.
+
+**Aufwand:** Teil der Migration (kein separater Aufwand); Code-Patch
+~3 Zeilen, DB-Transaktion ~10 Zeilen SQL.
+**Risiko:** Niedrig im Migrations-Kontext (geplanter Wartungs-Stopp +
+Verifikations-Schritt vor Go-Live).
+
+### ✅ Legacy-mpv-Code-Delete (erledigt 2026-09-10)
+
+**Status:** ✅ **DONE 2026-09-10** (Arbeitsreihenfolge Punkt 15, Operator-Go).
+Gelöscht: `mpv_engine.py`, `ffmpeg_streamer.py`, der Streamer-Test, alle
+`streaming_handled_externally`-Zweige im Scheduler, Icecast-`killsource`,
+Listener-Relais-Zugangsdaten, Stream-Output-Hot-Reload, der Icecast-
+`listmounts`-Poller und `engine_kind` im Switcher, Engine-Auswahl in
+`__main__` (`RASTATIME_PLAYOUT_ENGINE` nur noch `liquidsoap`, sonst
+CRITICAL + Abbruch).  DJ-Kick jetzt per Harbor-Telnet
+(`master_dj.stop`/`show_dj.stop`); Capture-Restart-Callback und
+Webstream-Resume bewaffnen die Liquidsoap-Quellen statt URLs in die
+Request-Queue zu schieben.  Details CHANGELOG „Legacy-mpv-Engine
+gelöscht", ARCHITECTURE §23.28.  **Abweichung vom Plan:**
+`ffmpeg_linein_capture.py` bleibt — es ist seit Option B (2026-09-03)
+der aktive MME-Feeder-Pfad jedes geplanten Line-Ins, kein Legacy-Rest;
+`_stable_id_to_dshow_audio` musste daher nicht umziehen.  ffmpeg.exe
+bleibt damit als Feeder-Encoder in Betrieb.
+
+**Ursprünglicher Plan (historisch):**
+
+**Status (alt):** Go nach 1 Woche stabilem Live-Betrieb.
+**Evaluiert:** 2026-05-29.  Phase E + F Code-DONE + Live-Test
+beide erfolgreich (Phase E: BBC-Webstream am 2026-05-29 18:40,
+Phase F: Line-Input am 2026-05-29 spätabends).
+
+**Polish-Items (deferred zur Hardware-Migration):**
+- Phase-E + Phase-F: kleine Haker während Webstream/Line-Input —
+  Operator-Hypothese: CPU-bound auf i3-1315U.  Test auf neuer
+  Lenovo M70s Gen 5/6 ohne Bottleneck.
+
+**Was zu löschen ist (~2800 LoC):**
+- `backend/playout/rastatime_playout/engine/mpv_engine.py` (~450 LoC)
+- `backend/playout/rastatime_playout/engine/ffmpeg_streamer.py` (~500 LoC)
+- `backend/playout/rastatime_playout/engine/vlc_engine.py` (falls obsolet)
+- `backend/playout/rastatime_playout/engine/ffmpeg_linein_capture.py`
+  (~806 LoC) — **ABER VORHER** den reinen Helper
+  `_stable_id_to_dshow_audio` (dshow-Spec aus Device-GUID) in ein
+  neutrales Modul herauslösen (z.B. `engine/dshow_device.py`): der
+  Liquidsoap-Pfad seit Phase F-2 (`input.ffmpeg(dshow)`) importiert
+  diesen Helper und würde sonst brechen.  Operator-Entscheid
+  2026-05-30: FfmpegLineinCapture-Löschung an diesen mpv-Cleanup
+  gekoppelt (statt Einzel-Löschung).
+- Pypo-Scheduler-Branches `_on_*_start` mpv/VLC-Pfade + die
+  `_linein_capture`-Konstruktion/Watchdog-Verdrahtung in
+  `playout_scheduler.__init__` + Legacy-Line-In-Pfade
+  (`_on_linein_start`/`_on_stop`/Resume) (~250 LoC)
+- DeprecationWarning + env-var-Fallback (`RASTATIME_PLAYOUT_ENGINE=
+  mpv|vlc`) in `__main__.py`
+- Plus zugehörige Tests (`test_ffmpeg_streamer_*`, `test_mpv_*`;
+  `test_scheduler_linein.py` Legacy-Pfad-Tests anpassen, der
+  FfmpegLineinCapture-Mock im Liquidsoap-Pfad entfällt)
+
+**Side-Effect**: ffmpeg.exe-Dependency extern komplett weg — seit
+Phase F-2 nutzt nur noch der Legacy-mpv-Line-In-Pfad
+FfmpegLineinCapture; mit dem mpv-Delete fällt auch das letzte externe
+Subprozess-Spawning weg.  liquidsoap-internal libavcodec/format bleibt.
+
+**Aufwand:** ~3-4 h inkl. Helper-Umzug + Tests-Updates + voller
+Regression-Check.
+**Vorbedingung:** Neue Hardware in Betrieb + 1 Woche Stabil-Lauf
+mit Phase-E + Phase-F aktiv (deferred zur Hardware-Migration).
+**Risiko Live-Betrieb:** Niedrig — wir löschen nur Code-Pfade die
+nicht mehr aktiv sind (`streaming_handled_externally=True` ist seit
+Phase-D Cutover fest).
+
+
+### ✅ Phase-E Polish: Webstream-Buffer + Switch-Verhalten — ROOT CAUSE BEHOBEN 2026-08-30
+
+**Status:** ERLEDIGT 2026-08-30 (`428805e` + cc_pref-Update) — und die
+Ursache war **weder Buffer noch Switch noch Hardware**: Auf Windows löst
+`localhost` AAAA-first (`::1`) auf, Icecast 2.4.4 lauscht nur IPv4 —
+jeder **ICY-Metadata-Update-Call** der Icecast-Outputs (pro Trackstart,
+für mp3+aac-Mount) verbrannte ~5 s im IPv6-Connect und fror die
+Liquidsoap-**Hauptclock** ein (~10 s gestapelt). Bei Webstream-Shows
+fraß jeder Freeze-Catchup den 5-s-Brückenpuffer → Switch-Flip → neuer
+Trackstart → nächster Freeze = der 11-s-Ping-Pong (Symptome 1+3).
+Datei-Shows hatten dieselben Freezes an jedem Trackwechsel (4–9/Show).
+Symptom 2 (Mount-Abriss): seit Cutover 0× — Alt-Hardware-Artefakt.
+**Beweiskette** (autonom, 0 On-Air-Impact, Testbett auf /polish-test):
+3-Tage-Log-Korrelation (Webstream 50–86, Datei 4–9, Leerlauf 0 Catchups)
+→ Quelle sekundengenau glatt (320 kbit/s) → T1/T2/T5/T7 isoliert sauber
+→ **T9 host=localhost: 25 Tracks = 25 Catchups (1:1)** →
+**T10 host=127.0.0.1: 26 Tracks = 0 Catchups**.
+**Fix:** (a) `cc_pref stream_output_1..3` host → `127.0.0.1`;
+(b) Renderer-Härtung `_normalize_loopback_host()` in
+`liquidsoap_config.py` (+6 Tests, 81/81 grün). Live seit 2026-08-30
+17:16 (Referenz: 17:07-Show 9 min vor dem Fix hatte noch 12 Catchups).
+**Rest-Validierung:** Show-Fenster 2026-08-31 (08:07 Datei / 12:07 +
+17:07 Webstream lokal) müssen ~0 Catchups zeigen —
+`Select-String C:\RASTATIME\logs\liquidsoap-stdout.log -Pattern '2026/08/31.*catchup'`.
+**(Ursprüngliche Symptom-Analyse unten zur Historie:)**
+**Evaluiert:** 2026-05-29 (Phase-E Live-Tests).
+
+**Beobachtete Symptome im Live-Test 19:00-19:09:**
+
+1. **Regelmäßige kleine Haker** während Webstream läuft —
+   möglicherweise input.http buffer-underrun bei Network-Jitter,
+   ODER CPU-Bottleneck auf der aktuellen i3-1315U-Hardware.
+2. **Mountpoint /rastatime verschwand kurz** während kurzer
+   Scheduled-Tracks — Icecast PUT-Verbindung abriss (sollte mit
+   Liquidsoap eigentlich persistent sein). Möglicherweise PortAudio-
+   underflow → Liquidsoap-Cascade.
+3. **Falscher Track (Intro BBC News kurz) wurde mittendrin im
+   Webstream hörbar** — wenn webstream.is_ready=false (Buffer leer)
+   flippt der switch kurz zu scheduled; wenn dort noch ein Track in
+   der queue hängt, kommt er als Schnipsel raus.
+
+**Hypothesen:**
+- Initial-Buffer von 5 s (post-fix) reicht möglicherweise immer noch
+  nicht bei Network-Jitter oder CPU-Last-Spitzen.
+- Switch-Flip bei kurzem Buffer-Underrun ist zu aggressiv —
+  bräuchte Debounce (z.B. minimum 3 s nicht-ready bevor wegschalten).
+- Scheduled queue sollte beim webstream.start geleert werden (Pypo
+  ruft `engine.stop()` was deferred-stop ist; eventuell racy bei
+  back-to-back Track→Webstream-Übergängen).
+
+**Diagnose-Plan (nach Hardware-Migration):**
+1. Burn-In auf neuer Maschine (i5-14400 oder Core Ultra 5 225) ohne
+   CPU-Bottleneck — wenn Haker weg → Hardware war Ursache, fertig.
+2. Wenn Haker noch da: Buffer 5s → 10s erhöhen, Live-Test.
+3. Wenn Haker noch da: Switch-Debounce via `source.available(...)`
+   wrapper testen.
+4. Mountpoint-Verschwinden: PortAudio-Logs prüfen, ggf. buffer-Größe
+   für PortAudio-Bus-Split erhöhen.
+
+**Aufwand:** ~4-8 h für Diagnose + Polish-Iterationen.
+**Vorbedingung:** Hardware-Migration durch (Lenovo ThinkCentre M70s
+mit dezenter CPU).
+**Risiko Live-Betrieb:** Niedrig — Code-Pfad steht, nur Tuning.
+
+**Workaround heute:** Phase-E funktioniert, mit den o.g. kleinen
+Haker-Symptomen. Akzeptabel für die nächsten Tage bis Hardware kommt.
+
+
+### ✅ Internet-Erreichbarkeit via HTTPS — Weg A (Operator-Entscheidung 2026-10-04, LIVE 2026-10-06)
+
+**Stufe 3 bestanden 2026-10-06 08:40–08:52 (Operator von extern, 198.51.100.20):**
+UI-Login, Calendar inkl. Dialoge, Streams aac/ogg/mp3 über `/stream/`, HTTP→HTTPS, DJ-
+Einwahl über `radio.example.org:8001` als Host `djuser` (08:51:00 accepted →
+`scheduled -> show` → Trennen 08:51:22).  Von hier: API über Name und LAN-IP 200,
+sensible Pfade (`/.git/*`, `/.env`, `/config/*`, `/server-status`) → Login-Redirect,
+nichts außerhalb des Docroots erreichbar.  Widgets ungeprüft (noch nicht in Verwendung).
+Befund: Internet-Scanner treffen die Seite bereits (Dutzende IPs in den ersten Stunden,
+`/.git/config`, `/.htpasswd`, `/api/.env`) — alles abgewiesen; Login-Brute-Force-Schutz
+fehlt (💡 unten).  **Punkt 16 erledigt.**
+
+**Entscheidung 2026-10-04:** **Weg A** (Studio-PC direkt, feste öffentliche IP),
+öffentliche URL `https://radio.example.org` für Planer-UI und Hörer-Stream;
+die **DJ-Einwahl bleibt HTTP** (Harbor :8001 direkt weitergeleitet, kein TLS —
+Operator-Entscheidung; Empfehlung: für Remote-DJs Custom-Login der Sendung statt
+UI-Konten, weil die Zugangsdaten im Klartext reisen).  `cloud.example.org` ist
+ein eigener Server, aber nicht als Edge brauchbar.  Stufenplan:
+**0 Vorbedingungen** — 17c Secrets (vorgezogen), PostgreSQL + RabbitMQ auf
+127.0.0.1, Firewall-Eingang nur 80/443/8001.  **1 Code** (RASTATIME) — interne
+API-Basis vom `public_url` trennen, `public_url` = https://…, Django
+`ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`, HTTP→HTTPS-Redirect + HSTS, Stream-Proxy
+`/stream/<mount>` → Icecast :8000 (ICY-Header, kein Puffern), Widgets/CORS gegen
+die neue URL.  **2 Infrastruktur** (Operator) — DNS-A-Record, Router-Forwards
+80/443/8001 → 192.168.1.164, win-acme (Let's Encrypt, Auto-Renewal), Apache-SSL-
+vHost (conf aus dem Repo), Hairpin-NAT/Split-DNS fürs LAN.  **3 Abnahme** —
+von außen (Mobilfunk): UI-Login, Stream, BUTT-Einwahl, Widgets, HSTS, SSL-Labs-
+Note, aus dem LAN per öffentlichem Namen.
+**Stand 2026-10-04 — Stufe 0 vorbereitet (Operator-Go):** Runbook
+`docs/operator/GO_LIVE_HTTPS.md` §0 mit Secrets-Inventar (Werte nie ausgegeben):
+UI-`admin` noch Standardpasswort, DB- und RabbitMQ-Passwort = Beispielwerte,
+RabbitMQ-`guest` (administrator) existiert, Icecast source/relay/admin 5 Zeichen,
+Harbor-Rückfall 8 Zeichen; `api_key`/`secret_key`/`internal_listener`/Master-
+Source bereits custom.  Code: Line-In-Capture nimmt die Icecast-Zugangsdaten aus
+Settings → Streams (vorher fest `admin`).  Befund Netz: PostgreSQL (pg_hba nur
+localhost), RabbitMQ und API lauschen auf 0.0.0.0; Firewall-Regeln 80/443/8001
++ obsolet 8002, Programmregeln „any port" für Erlang/epmd/liquidsoap (eine auf
+`C:\temp\liq245`).  **Block 1 (DB-Passwort + PostgreSQL auf localhost) erledigt 2026-10-04 16:40,
+verifiziert:** DB-Login mit dem Wert aus `rastatime.conf` ok, 5432 nur 127.0.0.1/::1,
+UI 200, API 200, Playout armed=8, kein Auth-Fehler mehr seit 16:38.  Lehre: ein
+Passwort mit führendem `!` ohne Anführungszeichen macht die YAML-Datei ungültig —
+alle Dienste standen ~10 min, der YAML-Parser schrieb den Wert in zwei Logs
+(maskiert); seither „Passwörter in rastatime.conf immer in Anführungszeichen"
+im Runbook.  **Block 2 (RabbitMQ) erledigt 2026-10-04 16:58, verifiziert:** Benutzer nur noch
+`rastatime` (`guest` weg), Passwort custom, AMQP-Listener nur 127.0.0.1:5672
+(`rabbitmq.conf`), Analyzer „Listening for messages", Worker idle, Playout ohne
+Fehler, PHP erreicht localhost:5672 (IPv4).  Nebenbefund: pika löst `localhost`
+zuerst nach `::1` auf → 2 s Verzögerung + Fehlerzeilen je Verbindung; Abhilfe
+`listeners.tcp.local_v6 = ::1:5672` als zweite Zeile (optional).
+**Block 3 (Icecast + Harbor) erledigt 2026-10-04 17:16, verifiziert:** icecast.xml
+source/relay/admin/master custom, Settings → Streams Ausgänge 1–3 Passwort + Admin-
+Passwort custom, `stream.harbor.*` custom; PLAYOUT renderte beide .liq 17:13:05,
+STANDBY auf den Fallback-Mounts seit 17:13:24, Hauptinstanz nach erzwungenem
+`nssm restart` 17:15:52 auf allen drei Mounts, Hörerstatistik (`/admin/stats.xml`)
+mit neuem Admin-Passwort 200.  Lehre: der Playout schiebt den Liquidsoap-Neustart
+auf, solange ein Item läuft (Webstream 17:07–17:15) → Stream war 17:12:54–17:15:52
+leer; im Runbook jetzt `nssm restart RASTATIME-LIQUIDSOAP` als fester Schritt und
+„nicht während eines laufenden Items".  **Block 4 (API-Bind + Firewall) erledigt 2026-10-04 17:35, verifiziert:** API nur
+127.0.0.1:8765 (LAN-Zugriff 000), Apache-Proxy `/api/v2/version` 200, Playout lädt
+den Plan weiter; Firewall-Eingang jetzt 80, 443, 8000 (Icecast, LAN), 8001 (Harbor),
+Apache- und Liquidsoap-Programmregel — 8002, Erlang, epmd und die `C:	emp`-Liquidsoap-
+Regel sind weg.  Nebenbefund: UltraVNC lauscht auf 5800/5900, Intel LMS auf 16993
+(nur LAN, keine Weiterleitung — bei Punkt 17c/Stufe 2 bewusst entscheiden).
+**Block 5 (UI-`admin`) erledigt 2026-10-04 17:40.  Prüfung 0.7 bestanden — Stufe 0
+abgeschlossen:** alle Secrets „custom" (api_key, secret_key, DB, RabbitMQ,
+internal_listener, Harbor ×2, Icecast ×3, Streams-Ausgänge ×3), UI-Admins ohne
+Standardpasswort, RabbitMQ nur `rastatime`, Listener außerhalb Loopback nur 80, 8000,
+8001 (+8002 Liquidsoap, nicht weitergeleitet), alle Dienste laufen, UI 200, drei
+Mounts.  **Stufe 1 (Code) erledigt 2026-10-04 (`a0fc2f3`):** `general.internal_url` +
+`internal_base_url()` (Playout v1-Client, DJ-Auth, Analyzer-Callback, Notify),
+Hörer-URL `<public_url>/stream/<mount>`, `infra/apache/` (Stream-Proxy, ACME-Alias,
+443-vHost), Django ALLOWED_HOSTS/CSRF/Proxy-Header, CORS-Origin-Bug behoben; Suite
+739 passed, Apache-Syntax mit Includes OK, `/embed/player` liefert `/stream/`-URLs.
+**Offen (Operator, Stufe 1 aktivieren):** zwei `Include`-Zeilen in httpd.conf
+(stream-proxy, acme), `C:\RASTATIME\acme` anlegen, Apache/PLAYOUT/ANALYZER neu
+starten; Prüfung `http://192.168.1.164/stream/rastatime`.  Nebenbefund: `config/
+icecast.xml` ist versioniert und trägt seit Block 3 die echten Passwörter im
+Arbeitsbaum — nicht committen; Vorschlag: aus dem Index nehmen + `.example`.
+**Stufe 1 aktiviert 2026-10-05 09:30 (Operator: Includes nach Notepad++-als-Admin,
+Apache neu):** `/stream/rastatime` über Apache 200/audio/mpeg mit ICY-Headern, ACME-
+Alias liefert Testdatei als text/plain, Player/Widgets auf `/stream/`, Playout und
+Analyzer intern auf 127.0.0.1.  Nachbesserung `e7113e5`: Status/Admin/Playlist-Pfade
+unter `/stream/` waren noch erreichbar (Location-Reihenfolge) — wirksam beim nächsten
+Apache-Neustart (mit Stufe 2).  `icecast.xml` aus dem Index (`f89cf83`, `.example`).
+**2026-10-05 10:15 LAN-Adresse → 192.168.1.64** (Operator, DHCP-Bereich; IP bleibt statisch,
+IPv6 bleibt an — nur Link-local, kein AAAA-Record geplant): `public_url` + Icecast-
+`<hostname>` nachgezogen, Repo/Werkzeuge/Memory bereinigt; Router-Forwards in Stufe 2
+auf 192.168.1.64.  **Stufe 2 bis Punkt 3 erledigt 2026-10-05 22:36:** Zielnetz (Profil Privat, NTP
+`*.pool.ntp.org`, Gateway/DNS 192.168.1.1), A-Record `radio.example.org →
+203.0.113.10` (kein AAAA, extern aufgelöst), Forwards 80/443/8001 → 192.168.1.64
+(Hairpin per IP funktioniert), Module ssl/socache_shmcb/http2, Zertifikat per win-acme
+(Let's Encrypt, gültig bis 2027-01-03, Aufgabe „win-acme renew" 09:00, Renewal-Skript
+nach Fix `ca1b991` getestet), TLS-Host aktiv: TLS 1.3, HSTS, Redirect nur für den
+öffentlichen Namen, LAN per IP ohne Redirect, Stream und ACME-Pfad über den Namen,
+Icecast-Status/Admin/Playlists 403; Handy-Test (Mobilfunk) vom Operator bestanden.
+Zweimal musste die httpd.conf-Bearbeitung wiederholt werden (Notepad++ ohne Admin
+speichert still nicht — immer mit `Select-String` gegenprüfen).  **Offen:** Router-
+DNS-Override `radio.example.org → 192.168.1.64` fürs Haus (Gateway cacht NXDOMAIN),
+dann Punkt 2.4 `public_url = https://radio.example.org` + Neustart API/PLAYOUT/
+ANALYZER — **erledigt 2026-10-06 08:30** (Gateway löst den Namen inzwischen auf, Hairpin trägt das
+Haus; Override optional): API über den Namen 200, Settings `ALLOWED_HOSTS`/CSRF/CORS auf
+`radio.example.org`, Playout/Analyzer intern 127.0.0.1, Player/Widgets/Embed auf
+`https://…/stream/<mount>`, Stream + Widgets über 443 200.  Nachbesserung `0b2453e`:
+LAN-Adresse (automatisch ermittelt) und `allowed_cors_origins` bleiben in
+`ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`, sonst war `http://192.168.1.64` für API-Seiten tot
+(API-Neustart nötig).  Daten-Fix: Station-Podcast-URL `http://localhost/feeds/station-
+rss` (Installationswert, als RSS-Link auf jeder Seite) → `https://radio.example.org/
+feeds/station-rss`.  **Jetzt Stufe 3** (Abnahme von außen).
+**Evaluierung 2026-10-03 (6 Punkte, Live-Readiness Punkt 16):**  **Befund:** alles nur im LAN — Apache
+2.4.68 nur :80 (mod_ssl/http2/remoteip vorhanden, nicht konfiguriert), Icecast
+2.4.4 :8000 (+8080/8443 ohne TLS; libssl-DLLs liegen bei), Harbor :8001 Klartext
+(Liquidsoap-Harbor kann kein TLS), API :8765 auf 0.0.0.0 (zusätzlich von Apache
+unter /api/v2 proxied), **PostgreSQL :5432 und RabbitMQ :5672 auf 0.0.0.0**
+(nur Firewall davor), Firewall an, Eingangsregeln 8001/443 aktiv.  `public_url`
+= http://192.168.1.164 wird vom PLAYOUT als Basis des Legacy-v1-API-Clients und
+der DJ-Auth-Prüfung benutzt (32 Dateien) → muss intern bleiben, wenn die
+öffentliche URL eine andere wird (`RASTATIME_DJ_AUTH_WEB_URL` existiert; v1-
+Client braucht eine eigene interne Basis).  Legacy setzt `session.cookie_secure`
+nur bei `$_SERVER['HTTPS']` → hinter einem TLS-Proxy `SetEnvIf X-Forwarded-Proto`;
+Django `ALLOWED_HOSTS = ["*"]`, kein `CSRF_TRUSTED_ORIGINS`.  Secrets sind
+Einrichtungswerte (17c).  **Wege:** A direkte Exponierung (Port-Forwards 80/443
+→ Studio-PC, mod_ssl + win-acme, Apache proxied Icecast, Harbor via stunnel/VPN)
+— ein Rechner, aber der Sende-PC steht im Internet und Hörerlast liegt auf dem
+Studio-Uplink; **B Edge-Server** (VPS, Caddy/nginx mit Auto-TLS, Icecast-Relay
+oder RASTATIME pusht `output.icecast` dorthin, Studio nur ausgehend bzw. per
+WireGuard) — Studio ohne Eingangsport, Hörerlast in der Cloud, ein kleiner
+Zusatzrechner; C Cloudflare Tunnel (+ Access) für die UI — kein Eingangsport,
+SSO-Tor, aber kein Dauer-Audio über den Tunnel.  **Empfehlung:** Stufenplan
+0 Secrets + DB/RabbitMQ auf 127.0.0.1 binden (Vorbedingung) → 1 Public Stream
+per Push auf einen Cloud-Icecast hinter TLS (B) → 2 Remote-UI per WireGuard
+(Admins) oder Cloudflare Tunnel + Access (DJs/Planer) → 3 DJ-Einwahl von außen
+nur per VPN.  Codeanteil in RASTATIME ~50 Zeilen (interne API-Basis getrennt
+von `public_url`, Forwarded-Proto, CSRF-Origins).  Offene Fragen an den
+Operator: ist `cloud.example.org` ein eigener Server (dann Edge = dort), und
+wer braucht UI / DJ-Einwahl von außen?  **Vorherige Idee (2026-08-26):**
+**Kern:** Router-Forwards minimal halten (nur Stream; UI/DJ besser via VPN),
+DynDNS/Domain + A-Record, `public_url` auf öffentliche URL (erfordert
+Hairpin-NAT oder Split-DNS für LAN-Zugriff), TLS via Reverse-Proxy (Mixed-
+Content: HTTPS-Website blockt HTTP-Stream → auch Icecast hinter TLS).
+**Harte Vorbedingung:** Secrets-Härtung — `api_key`/`secret_key`
+(change-before-production), Icecast source/relay/admin = `admin` (inkl.
+`cc_pref stream_output_*`), Harbor `changeme`, `internal_listener`-Default;
+PostgreSQL/RabbitMQ niemals forwarden. Bei Interesse formale Evaluierung
+nach Konvention (6 Punkte).
+
+### ✅ Login-Brute-Force-Schutz für die öffentliche UI (notiert 2026-10-06, (a)(b)(c) gebaut und abgenommen 2026-10-06, `7bb67a7`)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Neustarts und Aufgabe „RASTATIME-FirewallWatch" sind erledigt (Live-Readiness komplett 2026-10-06).  Später 2FA/Allowlist bleibt 💡.
+
+**Stand 2026-10-06:** (a) Web-Login je Adresse 10/15/15 hart, je Benutzer 20/60/5 weich
+(429 + Retry-After, Migration 0064) und (b) Harbor-Drossel 5/10/15 im Playout gebaut,
+live geprobt (Web) bzw. getestet (15 Tests); Details CHANGELOG 06.10., Handbuch
+USERS_AND_ROLES §8, Architektur §23.53.  **(c) gebaut 2026-10-06:** Grund-Header (zu frühe DJ-Einwahl zählt nicht), Playout-
+Endpoints, System Status „Gesperrte Adressen" mit Entsperren, `rt-blocks.ps1`,
+`rt-firewall-watch.ps1` (Trockenlauf 48 h: 9 Scanner).  **Offen (Operator):** PLAYOUT-
+Neustart, Apache-Neustart (.mo), Aufgabe „RASTATIME-FirewallWatch" registrieren, Seite
+einmal ansehen; später 2FA/Allowlist (💡).
+**Ursprüngliche Idee:**  Seit dem Go-Live treffen Scanner die Seite im Stundentakt; die
+Legacy-Login-Seite kennt weder Sperre noch Verzögerung nach Fehlversuchen, und auf
+Windows gibt es kein fail2ban.  Optionen: (a) Zähler in `cc_pref`/Session + wachsende
+Verzögerung je IP/Benutzer im `LoginController` (~60 Zeilen), (b) Apache `mod_security`
+(Windows-Build schwierig) oder `mod_evasive` (nicht verfügbar), (c) Skript, das
+`https-access.log` auswertet und IPs per `New-NetFirewallRule` zeitweise sperrt
+(Aufgabenplaner, 5-min-Takt).  Empfehlung: (a) zuerst, (c) als Ergänzung.  Dazu
+2FA/Allowlist für Admin-Konten erwägen.  Vorbedingung: Operator-Go, Testplan (14).
+
+### ✅ Icecast 2.4.4 → 2.5.x Upgrade (Future) - erledigt 2026-10-24 (2.5.0 live, Bewährung bis 2026-11-23, Rückfall 2.4.4 bleibt bis dahin)
+
+**Status:** Idea — bewusst NICHT in der Hardware-Migration 2026-08 gemacht
+(Operator-Entscheid: 2.4.4 wie alte Maschine, kein Versionssprung im Umzug).
+Die Live-`icecast.xml` ist empirisch auf 2.4-Semantik abgestimmt: Source-Auth
+via `<authentication type="url">` + `stream_auth`, DJ-Connect/Disconnect via
+`mount_add`/`mount_remove` direkt an den Playout-Listener :8770. Icecast 2.5
+ersetzt diese Optionen durch `event-bindings` — Upgrade erfordert Portierung
+der Auth-/Notify-Verdrahtung + Livetest des kompletten DJ-Pfads (Master/Show
+connect, Source-Switch, Watchdog). 2.5.0-win64-Installer lag bereits vor
+(`C:\_install\icecast_win64_2.5.0.exe`). **Vorbedingung:** stabiler Betrieb
+nach Migration + eigenes Wartungsfenster mit Rollback (2.4.4-Baum unter
+`C:\Tools\Icecast` sichern).
+
+### ✅ Phase-E ICY-Metadata-Forwarding → Stream-Metadaten komplett (DONE 2026-09-13)
+
+**Status:** Erledigt 2026-09-13 (Arbeitsreihenfolge Punkt 8, Operator-Go,
+`b997a7a`).  Umfang gewachsen: nicht nur Webstream-Titel,
+sondern Stream Label (drei Varianten), Off Air Metadata bei Stille,
+Show-Name für DJ/Webstream/Line-In, Mount-Genre/URL.  Details CHANGELOG
+„Stream-Metadaten" und ARCHITECTURE §23.29; Replikat-E2E acht Schritte grün.
+**Live-Abnahme 2026-09-13/14 (nach dem Operator-Neustart aller Dienste):**
+Datei-Show 13.09. 16:17–16:20: „C-60 - Mutters kleine Helfer" auf MP3/AAC
+binnen 5 s nach dem Start, 2 s nach dem Ende wieder der Off-Air-Text.
+Webstream-Show „Event Calendar" 14.09. 08:07–08:15: Show-Name ab
+08:07:00 (der Cloud-Stream sendet keine eigenen ICY-Titel), Off-Air-Text ab
+08:15:00.  OGG jeweils im Stream geprüft (Opus-Tags); die Icecast-Statusseite
+zeigt für OGG-Mounts keinen Titel.  Rückwirkend nicht belegbar: das
+Icecast-`access.log` protokolliert `/admin/metadata` ohne Titeltext.  Nach
+dem außerplanmäßigen LIQUIDSOAP-Neustart 14.09. 03:51 hat PLAYOUT die Werte
+neu gesetzt (siehe Item „Liquidsoap stirbt beim Wiederöffnen des
+Tascam-Ausgangs nach Pufferleerlauf").
+**Ursprünglicher Eintrag:**
+**Status (alt):** Idea — nice-to-have, nicht eilig.
+**Evaluiert:** 2026-05-29.
+
+Aktuell setzt Pypo per `var.set webstream.gain = X` den Stream-Gain,
+aber die LIVE-ICY-Metadata vom Webstream (z.B. BBC's aktueller Track-
+Title) wird nicht an Hörer durchgereicht. Die Hörer sehen weiterhin
+die Pypo-Schedule-Metadata (Show-Name), nicht die Stream-internen
+Title-Updates.
+
+input.http hat `on_metadata` callback → könnte via Liquidsoap-Script
+in Bus-metadata gepumpt werden. Aufwand: ~50-100 LoC Template + Test.
+
+### ✅ Widgets — drei Wellen (DONE 2026-09-18, alle 15 Embed-Endpoints live verifiziert)
+
+**Status:** Go in Wellen statt Big-Bang — alle drei Wellen plus Player v2 geliefert (Arbeitsreihenfolge Punkt 12).
+**Evaluiert:** 2026-05-22.
+**Operator-Wert:** Hoch — Widgets sind die Public-Face der Station.
+**Risiko Live-Betrieb:** Niedrig (isoliert vom Stream).
+
+**Welle 1 (~1 Woche):**
+- ✅ **DONE** Current Show + Current Track Widget mit Restzeit (Section 23.22, Commits 64a0b15 + Polish a5452c6)
+- ✅ **DONE** Widget-Polish 2026-05-22: 300 px Breitencap, `?overflow=ellipsis|marquee`, operator-konfigurierbare Empty-State-Labels via neuem Submenu **Widgets → Current Show/Track**
+- ✅ **DONE** Next Shows / Latest Shows Widget mit Show-Filter via `?show_id=N` (Stable über Recurring-Instanzen) und `?show=Name` als Fallback. Shared template + JSON-Endpoint, ASC/DESC-Ordering, `modified_instance=TRUE`-Filterung wie internes Dashboard. Settings-Submenu **Widgets → Next/Latest Shows** mit Show-Picker-Dropdown + 2 Empty-State-Labels + Preview + Embed-Code-Generator.
+- ✅ **DONE** On-Air-Today Widget mit Header-Band, Time-Range + Show-Name pro Zeile, current-Row bold, Show-Links (target="_blank"). Code-Default 6 Zeilen (`ON_AIR_TODAY_DEFAULT_LIMIT`), URL-Override `?limit=N` (1..20), optionaler `?day=YYYY-MM-DD` für historische/zukünftige Tagesübersichten. Station-Kalendertag hart gedeckelt — nie morgige Shows. Settings-Submenu **Widgets → On Air Today** mit 1 Empty-State-Label + Preview + Embed-Code.
+
+**Welle 2 (~1.5 Wochen):**
+- ✅ **DONE** Weekly Schedule modernisiert (Wave-1-Style): ±N-Wochen-Navigation (`?week_offset`), Link-Embedding mit `?link=plain|underline` (default plain), LibreTime-Branding raus, optionales BG-Bild via `?bg=URL`, `?theme=auto|dark|light`, vollständiger Vanilla-JS-Stack ohne jQuery/Handlebars. Settings-Submenu **Widgets → Weekly Schedule** mit Label + Preview + Embed-Code.
+- ✅ **DONE** Multi-View Schedule Widget (`/embed/multi-view-schedule`) basierend auf FullCalendar 6.1.10 (lokal gehostet, kein CDN). Day / 2-Day / Week Views umschaltbar (`?view=` + in-widget Buttons). Show-Slots aus `cc_show.background_color`, Klick → Modal mit Description + URL-Button. Auto-Scroll zur now-Linie. ~5min Cache-Default. Settings-Submenu **Widgets → Multi-View Schedule**.
+
+**Welle 3 (~1 Woche):**
+- ✅ **DONE** Track History Widget (`/embed/track-history`) für letzte 7 Tage mit HTML5-Date-Picker + Now-Button + Pagesize-Dropdown (10/20/50/100), Time-Filter, Load-More-Pagination, Klick → Modal mit Show-Kontext + "Played in the show:"-Label. Webstream-Inklusion via LEFT JOIN + Metadata-COALESCE. Source: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN `cc_show_instances → cc_show` mit Fallback auf `cc_playout_history_metadata`. Exclude-Short-Tracks Filter (Preference + URL-Override). Settings-Submenu **Widgets → Track History**.
+
+**Nachwelle (2026-09-18, Operator-Go Option A):**
+- ✅ **DONE** Stream-Player-Widget v2 — das letzte Upstream-Widget
+  (2015er jQuery-Player) im Wellen-Stil neu gebaut; Details im
+  CHANGELOG „Changed" 2026-09-18.  Damit ist der öffentliche Bereich
+  jQuery-frei und Punkt 12 der Arbeitsreihenfolge komplett.
+- 💡 Falls der Stations-Podcast öffentlich geschaltet wird
+  (displayRssTab): Radio-Page braucht einen seiteneigenen Podcast-
+  Tab-Link — der alte In-Player-Knopf (iframe-Injektion) wurde mit
+  dem v2-Player entfernt.
+
+**Aufwand gesamt:** ~1700 LoC + ~400 LoC Doku (Wellen 1-3) + ~700 LoC
+Player v2.
+
+**Welle 4 — Ideen-Sammlung (2026-09-18, Operator-Frage „was haben
+andere Stationen, das uns fehlt?").  Noch KEIN Go — Bestandsaufnahme
+der Datenlage + Priorisierung.  ENTSCHIEDEN am 2026-09-18: nur W4.1
+gebaut, alles Übrige vom Operator abgelehnt.**
+
+- ✅ **W4.1 Cover-Artwork in den Widgets — DONE + abgenommen 2026-09-18** (Operator-Go;
+  Nachschärfung: Player per gespeicherter Checkbox, Track History ohne Cover;
+  Details im CHANGELOG „Added").  Player + Track History default AN, Now
+  Playing opt-in per `?art=on` (height="50"-Einbettungen).  **Offen als
+  Betriebs-Aufgabe, kein Code:** nur 13 von 64 Musiktiteln haben Artwork
+  (202 der 216 Cover hängen an Jingles) — Cover werden erst breit
+  sichtbar, wenn die Musikdateien Bilder bekommen.  Ursprüngliche
+  Notiz: — der
+  verbreitetste Baustein auf Sender-Seiten, bei uns überall Text-only.
+  Datenlage GUT: 216 von 372 Dateien haben `cc_files.artwork`, der
+  Endpoint `/api/track?id=N&return=artwork` existiert und wird vom
+  Song-Request-Widget schon genutzt.  Betrifft Now-Playing-Track,
+  Player v2 und Track-History-Zeilen; überall mit Platzhalter für die
+  42 % ohne Bild.  Aufwand ~0,5-1 Tag.
+- ❌ ABGELEHNT (Operator 2026-09-18): **W4.2 Podcast-/On-Demand-Widget** (`/embed/podcasts`) — Liste der
+  letzten Episoden mit Abspiel-Knopf; bei Sendern mit Nachhör-Angebot
+  Standard, bei uns gar nicht vorhanden.  Datenlage GUT: 5 Podcasts,
+  95 Episoden, 1 Stations-Podcast.  Aufwand ~1-1,5 Tage.  Vorfrage an
+  den Operator: nur Stations-Podcast oder auch importierte Feeds?
+- ❌ ABGELEHNT (Operator 2026-09-18): **W4.3 „Zum Kalender hinzufügen" (.ics)** — pro Show-Slot eine
+  Termindatei; kleine, praktische Ergänzung für On-Air-Today /
+  Weekly / Multi-View.  Datenlage vorhanden (Schedule).  Aufwand
+  ~0,5 Tag.
+- ❌ ABGELEHNT (Operator 2026-09-18): **W4.4 Hörerzähler** (`/embed/listeners`) — „N Hörer gerade".
+  Datenlage GUT: Icecast-status-json live + 39.072 Zeilen
+  `cc_listener_count`.  ZWEISCHNEIDIG: bei kleinen Zahlen öffentlich
+  eher kontraproduktiv; falls gebaut, per Default AUS und optional als
+  Tages-/Wochen-Höchstwert statt Momentanwert.
+- ❌ ABGELEHNT (Operator 2026-09-18): **W4.5 Meistgespielt-Charts** (`/embed/top-tracks`) — Klassiker
+  („Top 10 der Woche").  Technisch machbar: `cc_playout_history`
+  (2.617 Zeilen) gefiltert auf `cc_track_types.code='music'`.
+  ABER dünn: nur 64 Musik-Dateien im Bestand, Spitzenreiter 22 Plays
+  in 90 Tagen — die Liste zeigt faktisch die kleine Rotation.  Ohne
+  Track-Type-Filter dominieren Jingles/Teaser (241 Jingle-Dateien).
+  Erst sinnvoll, wenn die Musik-Bibliothek deutlich wächst.
+- ❌ **W4.6 Show-/DJ-Profil-Widget — ABGELEHNT (Operator 2026-09-18);
+  war ohnehin BLOCKIERT durch leere Metadaten.**
+  Auf Sender-Seiten üblich (Sendungsbild, Beschreibung, Moderation,
+  nächste Termine), bei uns NICHT baubar: von 489 Shows haben nur 29
+  ein `image_path`, 2 eine `description` und 9 eine `url`.  Das Widget
+  wäre zu ~99 % leer.  **Vorbedingung:** Sendungs-Metadaten pflegen
+  (Operator-Aufgabe, kein Code) — lohnt sich unabhängig davon, weil
+  Multi-View-Modal und On-Air-Today dieselben Felder anzeigen.
+- ❌ ABGELEHNT (Operator 2026-09-18): **W4.7 Grüße/Widmung im Song-Request** — freier Nachrichtentext
+  zusätzlich zum Titelwunsch.  Erweiterung des bestehenden Widgets,
+  kein neues.  Braucht Moderations-/Missbrauchs-Überlegung, bevor
+  öffentlich freitext-Eingaben ins Haus kommen.
+- ❌ **Bewusst NICHT vorgeschlagen:** Live-Chat (Moderationslast),
+  Sleep-Timer/Wecker (Nischenfunktion, Browser-untauglich),
+  „Listen on TuneIn/Alexa"-Kacheln (bloße Links, kein Widget).
+
+---
+
+### ✅ Line-In Metadaten in Track History (DONE 2026-05-22 v17)
+
+**Status:** DONE — vereinfachte Variante umgesetzt.
+Operator-Wunsch: nur den Line-Input-Namen loggen, keine
+echten Stream-Metadaten.
+
+**Was wurde gebaut:**
+- `HistoryService::insertLineInLog()` + `endLineInLog()`
+  — schreiben/schließen `cc_playout_history`-Rows mit
+  `file_id = NULL` + Metadaten-Keys `track_title` /
+  `artist_name`.
+- `DashboardController::switchSourceAction` Hook — bei
+  ON/OFF eines `master_dj` oder `live_dj` Source-Switches
+  wird der History-Eintrag automatisch geschrieben /
+  geschlossen.
+- `widget_line_input_label` Preference (default "Line
+  Input"), operator-editierbar unter Settings → Widgets
+  → Track History.
+- Track History Widget + Analytics Playout History
+  Dashboard zeigen die Einträge automatisch (das LEFT
+  JOIN + COALESCE-Pattern war schon da von der
+  Webstream-Inklusion).
+
+**Was wurde explizit NICHT gebaut** (war im ursprünglichen
+Plan, aber Operator hat es verworfen):
+- Liquidsoap-Skript-Modifikation zum Auslesen echter
+  Line-In-Metadaten — Operator wollte das nicht, das
+  Label-only Logging reicht ihm.
+- Differenzierte Settings-Labels für master_dj vs
+  live_dj — beide nutzen das gleiche `track_title`, im
+  `artist_name` steht der raw source identifier
+  ("Master Source" / "Show Source") falls eine spätere
+  UI-Erweiterung sie unterscheiden möchte.
+
+**Bekannte Grenzen:**
+- Greift nur bei Source-Switches **via Dashboard-UI**.
+  Direkter Liquidsoap-Source-Connect ohne Operator-
+  Eingriff (z.B. ein DJ verbindet sich direkt zum
+  Icecast-Source-Endpoint) löst den Hook nicht aus —
+  würde Liquidsoap-/Pypo-Bridge-Erweiterung erfordern.
+  Operator-Workflow ist aber typischerweise via
+  Dashboard, daher in der Praxis kaum relevant.
+
+**Folge-Iteration v18 (2026-05-23)** — die obige
+Grenze ist für den häufigsten Fall (Show ohne
+Scheduled Items, Liquidsoap auto-switcht auf
+master_dj) inzwischen geschlossen, ebenso die analoge
+Lücke für Webstream-als-Show-Inhalt:
+- **Webstream als Show-Inhalt** —
+  `HistoryService::insertPlayedItem()` schreibt jetzt
+  auch für `cc_schedule`-Items mit `stream_id` einen
+  synthetischen Block-Eintrag (vorher `early return`).
+- **Live-Show ohne Items** —
+  `HistoryService::ensureLiveShowLogged()` als
+  opportunistischer Side-Effect in
+  `ApiController::liveInfoAction(V2)` schreibt idem-
+  potent einen Eintrag mit `artist_name = "Live Show"`.
+- Übrig bleibt nur: ein DJ verbindet sich direkt zum
+  Icecast-Source-Endpoint, ohne dass ein Show-Slot
+  existiert UND ohne dass ein Operator den Dashboard-
+  Switch betätigt — sehr seltener Praxisfall.
+
+**Hotfix v18.1 (2026-05-23)** — v18 hatte die dritte
+cc_schedule-FK-Spalte übersehen.  RastaTime-spezifisch
+hat `cc_schedule` neben `file_id` und `stream_id` auch
+`linein_id` (Migration 0047, Line-In-Library Phase A).
+- **Line-In als Show-Inhalt** —
+  `insertPlayedItem()` hat jetzt einen `linein_id`-
+  Branch, liest `cc_schedule.linein_id` per Raw-SQL
+  (Propel-Klasse kennt die Spalte nicht), looked
+  `rastatime_linein.name` für Title/Artist und schreibt
+  einen synthetischen Block-Eintrag.  Auch ein
+  `Logging::debug` für jeden insertPlayedItem-Aufruf
+  und ein `Logging::warn` für unerwartete Schedule-
+  Row-Shapes — Diagnose-Trace falls in Zukunft eine
+  weitere Variante auftaucht.
+
+### ✅ AutoDj max-show-duration 12 h → 24 h (DONE 2026-05-23 v18)
+
+**Status:** DONE.
+Operator-Verdacht (2026-05-23) bestätigt: die ursprüngliche
+12 h-Obergrenze aus `AutoDjService::MAX_SHOW_DURATION_SECS`
+(Q2 vom 2026-05-21) war für lange Live-Events und Overnight-
+Blöcke zu knapp.  Cap auf 24 h gehoben, Kommentare in
+AutoDjService.php nachgezogen.  Kein Architektur-Eingriff,
+keine Migration nötig — nur ein Konstanten-Bump.
+
+---
+
+## 🛠️ Technical Debt / Refactor-Backlog
+
+### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31; Kern ✅ 2026-09-17, Rest = Build-Pipeline 🔴 Hold 2026-10-28)
+
+**Operator 2026-10-28: Build-Pipeline 🔴 Hold** (nach genauerer Erklärung).  Ist-Stand: kein package.json, kein
+Node auf STUDIO, 58 App-Dateien / ~25.500 Zeilen unminifiziert einzeln über `headScript()` (~25 globale + 15-20
+seitenspezifische Skripte je Seite), Cache-Buster aus mtime+Größe (JS-Korrektur nach F5 live), 52 Dateien an jQuery,
+3 mit moderner Syntax, 11 mit fetch.  Eine Pipeline (Vite/esbuild, Bundles, optional TS/Linter) brächte eine neue
+Abhängigkeit auf die Produktionsmaschine oder eingecheckte Bundles, nähme den Live-Vorteil (Build je Änderung), und
+die eigentliche Arbeit wäre der Umbau der window-Globalen und Script-Reihenfolge in Module (2-4 Wochen) plus geforkte
+DataTables-Plugins als lokale Pakete - für null Operator- und Betriebsnutzen (LAN-intern).  Risiko gering (nur
+Frontend, Rückfall per Git).  Der Trigger der Strategie (stark reaktive Komponente) ist nie eingetreten.
+**Vorbedingungen für eine Wiederaufnahme:** GitHub-Veröffentlichung beschlossen (fremde Entwickler erwarten
+package.json + Linter) - dann zuerst nur Linter/Formatter als Entwicklungswerkzeug ohne Build-Schritt für die
+Produktion (~½ Tag), Bundling weiterhin nur per eigenem ADR.  Nicht erneut vorschlagen.
+
+**Status: Kern ABGESCHLOSSEN 2026-09-17** (Bewährungs-Signal des Operators
+für jq3 + FC6 nach drei ruhigen Monaten; Abschluss-Block: dataTransfer-Fix
++ 5b + FC1.5-Fork-Entfernung + UI-Politur, Commit-Hashes im CHANGELOG
+„Removed"/„Fixed" 2026-09-17).  Verbleibend: DataTables 2.0 (eigene
+Entscheidung später) + optionale Build-Pipeline.  Ursprünglicher Status:
+In Arbeit — Strategie geklärt (Operator 2026-05-31: **Hybrid,
+Vanilla-First**), **Stufe 0 (Quick Wins) gestartet**.  Ersetzt die grobe
+Erst-Eval 2026-05-22, deren Bestandsaufnahme an mehreren Stellen falsch war
+(s. Korrekturen).
+**Re-evaluiert:** 2026-05-31 (verifizierte Inventur des realen Stacks, Agent).
+**Operator-Wert:** Security (jQuery-CVE), Wartbarkeit, EOL-Hygiene.
+**Relativierung:** Frontend ist Operator-only (authentifiziert, intern, nicht
+öffentlich) → das XSS-CVE ist real, aber kein anonymer Angriffsvektor; stärkerer
+Treiber ist Wartbarkeit.
+
+**Strategie (Operator-Entscheid 2026-05-31): Hybrid, Vanilla-First.**
+- **Default** jeder Ablösung: modernes ES6+ (fetch, querySelector, native
+  `<dialog>`/`<audio>`) + moderne Libs als **vendored Bundle** (kein npm/Build —
+  genau wie FullCalendar 6 bereits eingebunden ist).  Einbindung wie gehabt über
+  Zend `headScript()`.
+- **Build-Pipeline** (Vite+Vue+TS) NUR, falls eine Komponente stark
+  reaktiv/zustandsbehaftet ist UND in Vanilla unverhältnismäßig viel Boilerplate
+  erzeugt → dann erst **eigener ADR + Operator-Go**.  Einziger plausibler
+  Kandidat: Podcast-Editor — aber klein genug für Vanilla.
+
+**Verifizierte Bestandsaufnahme (2026-05-31) — es gibt KEINE Build-Pipeline:**
+kein package.json / Bundler / TS / Linter / node_modules; alle Libs
+hand-vendored `.min.js`, statisch via `headScript()`; `assets.json` ist nur ein
+MD5-Cache-Buster.
+
+| Library | Version | Status | Footprint | Schwierigkeit |
+|---|---|---|---|---|
+| jQuery | 1.8.3 (global) + 1.10.2 (nur Embed-Player) | veraltet, CVE-2020-11023 | 47/53 app-JS + alle Plugins | am härtesten (Substrat) |
+| DataTables | 1.9.4 (2012) | veraltet | 28 Sites/12 Dateien, server-side, 2 geforkte Plugins | sehr hart |
+| FullCalendar (Schedule) | 1.5.4 (2012) | EOL | 3 Dateien, drag/resize, **zeitzonen-gepatcht** | hart + fragil |
+| FullCalendar (Embed) | 6.1.10 (2023) | modern (RASTATIME) | 1 Datei | schon modern |
+| qtip2 | nightly 2012 | EOL | 22 Sites/11 Dateien, flach | mittel |
+| AngularJS | 1.4.5 | EOL 2022 | **2 JS / 4 Views** (nur Podcast) | eher leicht (isoliert) |
+| jPlayer | 2.7.0 (2014) | archiviert | 2 Dateien / 3 Sites + toter Flash-Fallback | leicht (native `<audio>`) |
+| Bootstrap (JS) | 2.x (2012) | uralt | global, Modals | mittel |
+| plupload | 1.5.4 | alt | 1 Datei (Dropzone koexistiert) | leicht |
+| div. (jQuery UI 1.8.24, Underscore 1.5.1, Handlebars, Flot, blockUI, **Tipsy** = 2. Tooltip-Lib, contextMenu, datetimepicker, sprintf, colorpicker) | 2011-2013 | alt | versch. | versch. |
+| wavesurfer 4.6.0 (2024), dayjs, FC6, Embed-Widgets | aktuell | modern (RASTATIME) | — | schon modern |
+
+**Korrekturen ggü. Erst-Eval 2026-05-22:**
+- jQuery 1.8.3 + 1.10.2 laden **nicht** parallel auf einer Seite (1.10.2 nur im
+  Embed-Player, eigene Seite) → „Quick-Win Doppel-Load" war gegenstandslos.
+- AngularJS in **4** Views (nicht 7), nur Podcast/Publish.
+- **Zwei** FullCalendars (alt 1.5.4 Schedule + neu 6.1.10 Embed), nicht „~1.6".
+- Stack viel größer als die 6 Libs (Bootstrap-JS 2.x, jQuery UI, 2 Tooltip-Libs …).
+- Fork hat bereits moderne Inseln (Embed-Widgets = Vanilla JS, FC6, wavesurfer 4.6).
+
+**Stufenplan (alles Vanilla-First, risiko-aufsteigend):**
+- **Stufe 0 — Quick Wins (🟢 niedrig, ✅ ABGESCHLOSSEN 2026-06-01):**
+  - ✅ **0a DONE** (`324ca80`): AngularJS nicht mehr global — nur noch per-page
+    (Podcast/Showbuilder laden `angular.min.js` selbst vor `podcast.js`).
+  - ✅ **0b DONE** (`38c4525`): Tooltip-Dedupe — Tipsy (2. Tooltip-Lib, nur 1
+    Nutzung in `user.js`) global raus, die eine Stelle auf qtip2 migriert
+    (qtip2 bleibt, eingebauter `.ui-tooltip-tipsy`-Stil → Optik 1:1).
+  - ✅ **0c DONE** (`9792349`): jPlayer→native `<audio>` für die Audio-Preview
+    (= jPlayer Teil 1/3, s.u.).
+- **✅ jPlayer-Ablösung KOMPLETT (2026-06-01):** alle 3 Nutzer auf natives
+  `<audio>` migriert, dann die Lib (2.7.0, 2014) global entfernt:
+  - ✅ **Teil 1/3:** Audio-Preview (`9792349`).
+  - ✅ **Teil 2/3:** Dashboard-Stream-Player (`b2b11b4`) — inkl.
+    `reachableStreamUrl()`-Fix (localhost→`window.location` für Remote-Hörer).
+  - ✅ **Teil 3/3:** Radio-Page Podcast-Player (`86a4ef0`), custom Skin behalten
+    + nativ angesteuert. Live-Stream-Player (Embed/Muses) bekam denselben
+    localhost-Fix (`bd5d9ca`).
+  - ✅ **Lib entfernt** (`9fa39e8`): `js/jplayer/*` (13 Dateien), globaler Load,
+    totes Header-Div, 7 `assets.json`-Einträge. Verifiziert, kein 500.
+- **Player-Follow-ups:**
+  - ✅ **Player-Design wie bei LibreTime wiederhergestellt** (`6312961` +
+    `69ab09a`, 2026-06-01) — Preview + Dashboard-Stream haben wieder einen
+    custom jPlayer/LibreTime-Skin (dunkle Leiste, orange Balken, CSS-Buttons,
+    an natives `<audio>` gebunden, ohne jQuery-UI/Bootstrap/Sprite). Radio-Page
+    behielt ihr Skin bereits (Teil 3/3).
+  - ✅ **Preview für „Scheduled Line-Input" — ehrliche Behandlung DONE
+    2026-09-17 (Operator-Go; `c65d0ca`)** — der
+    Player kennt Typ 2 jetzt: Zeile „[live input]" (gedimmt), nichts wird
+    geladen, Auto-Weiter überspringt sie (vorher kaputter null-Eintrag,
+    der die Kette stoppte).  💡 **Echtes Reinhören** in den Eingang wäre
+    ein eigenes Feature: ein zweiter, on-demand Vorschau-Feeder auf dem
+    MME-Gerät (Shared Mode), der WAV über HTTP an den Browser streamt —
+    ~1-2 Tage, Fragen: Gerätekonkurrenz zum Sende-Feeder während einer
+    laufenden Line-In-Show, Aufräumen nach dem Schließen des Popups.
+- **✅ Stufe 1 — isolierte EOL ABGESCHLOSSEN (2026-06-01):**
+  - ✅ **AngularJS 1.4.5 → Vanilla/jQuery KOMPLETT** — die einzigen 3 Controller
+    (Publish, Podcast, StationPodcast) / 4 Views auf vanilla migriert, dann die
+    Lib + Loads entfernt.  Commits: `6b79128` (Publish-Pilot), `ede7c12`
+    (Podcast+Station), `62fbe18` (Lib raus), `b30326e` (My-Podcast ins
+    Hauptmenü).  Strategie: Low-Diff (Controller-Bodies fast unverändert, nur
+    `$http`→`$.ajax` + Form-Glue + Bootstrap), ~750 Z. DataTables unberührt.
+  - ✅ **qtip2 → Floating UI KOMPLETT** — ~31 Tooltips über 14 Dateien auf den
+    eigenen `rtTooltip`-Wrapper (Floating UI vendored) migriert, dann qtip2-Lib
+    (~3.800 Z.) + Load + assets.json entfernt.  Commits: `f07c53c`
+    (Wrapper+Pilot), `4cba934` (Rest, qtip-Kompat-Schicht), `d63394f` (Lib raus).
+    (Realer Footprint war ~31/14, nicht die geschätzten 22/11.)
+- **Stufe 2 — harte Kerne, EINZELN m. Fallback (🟡, IN ARBEIT):**
+  - ✅ **FullCalendar 1.5 → 6 (Schedule) — FC6 ist Default seit 2026-06-01**
+    (`8ce8ec1` a1 Shell, `5abaab5` a2 Rich-Rendering, `169106d` b1 Klick-
+    Interaktionen, `688e466` b2 Drag/Resize, `81d8c8d` c1 Default-Flip).  FC6
+    6.1.10 (vanilla, kein jQuery) ersetzt den geforkten EOL-FC1.5.4.  **Zeitzonen-
+    Patch gelöst** (= Hauptrisiko 1 unten): naive Stationszeit-Strings + FC6
+    `timeZone:'local'` + natives `now` auf Stationszeit — derselbe Ansatz wie das
+    Embed-Widget, kein Lib-Handpatch mehr.  Verifiziert: 3 Views, Stationszeit,
+    Status-Icons + Fill-Bar, Grid-Dropdown (1/5/10/15/30/60m), Create + **alle
+    Recurrence-Rhythmen** (weekly+Wochentage, every 2/3/4 weeks, monthly day-of-
+    month, monthly day-of-week, 5. Donnerstag), ContextMenu, Drag/Resize,
+    Sperrlogik.  FC1.5-Fork bleibt als Rollback (`?fc6=0`) + Safety-Net.
+    - ✅ **FC1.5-Fork entfernt (DONE 2026-09-17)** — Bewährungs-Signal des
+      Operators; Fork, css/fullcalendar.css, ?fc6-Flag, FC1.5-Zweig und die
+      fünf toten Callbacks raus (dayClick/windowResize/addQtipsToIcons
+      bleiben — FC6 ruft sie).  Ursprünglicher Plan: (`js/fullcalendar/` inkl. Fork-
+      Zeitzonen-Patches, `css/fullcalendar.css`, FC1.5-Branch in
+      `createFullCalendar()`, toter Code `viewDisplay`/`eventRender`/
+      `eventAfterRender`/`dayClick`/`eventDrop`/`eventResize`, ScheduleController-
+      Load, assets.json-Einträge, Flag-Logik).  **Vorbedingung:** FC6 hat sich im
+      echten Livebetrieb über eine Bewährungsphase stabil gezeigt (Operator gibt
+      Signal).  Bis dahin Sofort-Rollback behalten.
+    - ✅ **Kalender-Design-Politur DONE (2026-06-01, `be429da`)**: neues
+      `css/schedule-fc6.css` (dark "LibreTime"-Theme — graue Tagesleiste, dunkle
+      Zellen + Grid-Linien, graue Toolbar-Buttons, Brand-Orange Now-Linie, kein
+      gelber Today-Tint, dezente Event-Kanten, Fill-Bar-Fix für Kurz-Events) +
+      No-Leading-Zero-Uhrzeiten ("8:00").  Scoped auf `#schedule_calendar` →
+      Rollback/Embed unberührt.  Operator-verifiziert.
+    - ✅ **ENTFÄLLT (2026-09-17): User-Manual-Screenshots** — das Kalender-
+      Kapitel ist reiner Text, es gibt keine Screenshots zu aktualisieren.
+      Ursprüngliche Notiz: (Schedule-Kapitel, alle 4 Sprachen)
+      auf den FC6-Look aktualisieren — Bedienung unverändert, daher niedrige
+      Prio; sinnvoll gebündelt mit der FC1.5-Fork-Entfernung.
+  - ✅ **jQuery 1.8 → 3.7 KOMPLETT (5b DONE 2026-09-17)** — Migrate-Netz +
+    Legacy-Assets + Flag-Logik entfernt (Details im CHANGELOG „Removed");
+    vorher der dataTransfer-Fix in library.js ($.event.props ist in jQuery 3
+    weg).  Historie: `?jq3=0` bleibt der Rollback (wie FC6). Resume-Details:
+    - **Flag:** `?jq3=1` setzt Session-Cookie `rt_jq3`, `?jq3=0` löscht; Helper
+      `PageLayoutInitPlugin::rtUseJquery3()`. Weitere Helfer: `rtJqueryUiThemeCss()`
+      (redmond 1.8.8 vs `css/redmond-1.13/`) + `rtDataTablesCore()` (DT 1.9 vs
+      `js/datatables-1.13/`).
+    - **DONE (committet, operator-verifiziert auf jq3):**
+      - `841141a` 26× `.live()`→`.on()` + `$(window).load`→`.on` (safe auf 1.8).
+      - `7e673d9` jQuery 3.7.1 + jquery-migrate 3.5.2 + jQuery UI 1.13.3 vendored
+        + Flag (PageLayoutInit + IndexController).
+      - `9afafc9` `$.browser`-Shim (`js/libs/jquery-browser-shim.js` — blockUI/
+        jquery.ui.timepicker.js/contextMenu lasen `$.browser.msie`) + jQuery-UI-
+        1.13-redmond-Theme (`css/redmond-1.13/`, CSS+13 Bilder) + Grau-Umfärbung.
+      - `d9eba9e` DataTables 1.9→**1.13** Core (1.13 behält Legacy-Hungarian-
+        Optionen + Server-Side-`sEcho/aaData` → **Backend + Init unverändert**).
+        builder.js `fnStateLoadParams` `abVisCols`-Guard (1.13 änderte State-Format).
+      - `abdacd0` Fork-Foundation: ColReorder 1.6.2 + Buttons 2.4.2 (+colVis)
+        vendored; Table-Widget lädt sie auf jq3 statt der alten ColVis/colReorder.
+      - **Verifiziert läuft auf jq3:** User/Tracktype-Tabellen, Dialoge, Kalender
+        (FC6+Add-Show+Overlap), Kontextmenü, Settings/Streams, Showbuilder-Tabs+
+        -Timeline.
+    - **PENDING (Reihenfolge):**
+      1. **DataTables-Fork-Init-Umbau** (der große Brocken):
+         - ✅ **library.js (Library-Tabelle) DONE (2026-06-03/04, `f51a3c6` +
+           Styling-Commit).** Wurzel-Bug: die 38-Spalten-Tabelle, verschachtelt im
+           `<"dataTables_scrolling">`-sDom-Wrapper, bricht den 1.13-Init **still**
+           ab (Tabelle wird beim DOM-Build detached, kein Fehler/Alert/Warning).
+           Fix: `t` bare im sDom + Scroll-Container **post-init** wrappen; der
+           Buttons-`B`-sDom-Buchstabe bricht den Init genauso → colvis
+           **programmatisch** nach dem Init (`collectionLayout:'fixed'` = zentriertes
+           Panel, da Inline-Collection vom `overflow:hidden` geclippt würde);
+           ColReorder via `R`; Flex-Layout für Suche→Toolbar→Tabelle→Footer-
+           Reihenfolge; Toolbar-Buttons via `.library_toolbar`-Fallback (das
+           jQuery-UI-`.fg-toolbar` gibt's auf DT 1.13 nicht mehr); moderne Buttons/
+           ColReorder-CSS via `AirtimeTableView::injectTableCssDependencies()` +
+           `body.rt-jq3`-Styling (Suche/Button/Pagination/Checkbox-Dropdown).
+         - ✅ **builder.js (Showbuilder rechtes Panel / „Scheduled Shows") DONE
+           (2026-06-04, `cb84741`).** Wurzel-Bug: DT 1.13 baut die verschachtelten
+           `<"sb-padded"<"H"C>>` / leeren `<"F">`-sDom-Slots nicht (H/F sind
+           reservierte sDom-Buchstaben → nur der *innere* Div entsteht), und das
+           jQuery-UI-`.fg-toolbar` fehlt → Timerange + Select/Trim/Remove/Jump/
+           Cancel/Columns waren weg.  Fix: jq3-conditional sDom mit dem library-
+           erprobten flachen `<"H"<"sb_toolbar"C>>`-Muster + Toolbar-Fallback auf
+           `.sb_toolbar` + programmatischer Buttons-colvis (Icon-only) + operator-
+           getunte Layout-Offsets (28/59/90 px).  Plus: `$menu` von global auf
+           lokal gezogen (das `$menu = undefined` am Funktionsende clobberte sonst
+           das geteilte Library-`$menu` → Library-Toolbar-Buttons verschwanden).
+         - ✅ **colvis-„Columns"-Dropdown unter den Button verankert (beide Panels)
+           DONE (2026-06-04, `6a4adad`).** Neuer `js/airtime/common/colvisanchor.js`
+           (`$.fn.rtColvisAnchor`, Floating UI: bottom-end + flip + shift +
+           autoUpdate, MutationObserver-Teardown).  `collectionLayout:'fixed'`
+           zentrierte das Panel mittig (Workaround gegen `overflow:hidden`-Clipping);
+           der Anchor setzt es jetzt direkt unter den Button (zentriert bleibt der
+           Graceful-Fallback, falls Floating UI fehlt).  Inline-`!important` via
+           `setProperty` schlägt das `!important` der Fallback-CSS.  Beide colvis-
+           Buttons jetzt Icon-only (gedrängte Toolbar).
+         - ✅ **podcast.js / Table-Widget DONE (2026-06-05, `5f3d85d`).** Beide
+           Widget-Tabellen (Podcast-Liste `#podcast_table` + Podcast-Episoden)
+           laufen über das geteilte `AIRTIME.widgets.Table`; ein Fix im Widget
+           (`table.js`) repariert beide: jq3-conditional sDom (bare `t` + Post-
+           Init-`.dataTables_scrolling`-Wrap + echter `<"dataTables_footer">`-Div,
+           da `F` reserviert), programmatischer Buttons-colvis nach den Toolbar-
+           Buttons, Flex-Spalten-Layout (`.rt-jq3-widget`-Marker), und Initial-
+           `fnDraw()` auf jq3 (deferLoading=1 wird auf 1.13 honoriert → server-
+           side-Liste blieb sonst leer bis zum ersten Sortieren).  **Kein State-
+           Strip nötig** (die Podcast-Tabellen nutzen kein `bStateSave` — mein
+           früherer Hinweis war eine falsche Extrapolation).  **Plus** Scoping-
+           Fix der Right-Panel-CSS: `.sb-content .btn-toolbar .btn-group{top:59px}`
+           + `#show_builder .dataTables_scrolling{top:90px}` leakten in die
+           Podcast-Tabellen (auch unter `.sb-content`/`#show_builder`) → auf den
+           `.sb_toolbar`-Slot eingegrenzt + Widget-Scrolling-Override.
+         - ✅ **playouthistory/historytable.js DONE (2026-06-05, `faf249d`).**
+           Die 3 Analytics-Tabellen (Log Sheet / File Summary / Show Summary)
+           rendern auf jq3.  Mehrere Versions-Gap-Bugs: (a) der Tabellen-Build
+           lief im jQuery-UI-`show`-Tab-Event, das UI 1.10+ in `activate`
+           umbenannt hat (feuert nicht mehr, auch nicht für den initialen Tab) →
+           `activate` + manueller Initial-Build; (b) `dtModern` hing an
+           `$.fn.dataTable.Buttons`, aber die Seite lädt nur den DT-Core (kein
+           Buttons) → Check via `versionCheck("1.10")`; (c) jq3-sDom (bare `t` +
+           `<"dataTables_footer">` + `.history_toolbar`-Slot, Length-Menü in den
+           Footer) + Post-Init-Wrap; (d) Show-Summary-Accordion:
+           `accordion("destroy")` vor Init wirft auf UI 1.13 → Guard auf
+           `.ui-accordion`.
+         - ✅ **showlistenerstat.js + Flot-Grafik DONE (2026-06-05, `9deac05`).**
+           **Show Listener Stats** (Tabelle): jq3-sDom (bare `t`, `T`/TableTools
+           raus, `<"dataTables_footer">`-Wrapper), Post-Init-Wrap, `dtModern` via
+           `versionCheck` (Seite lädt kein Buttons); plus `.blur(validateTimeRange())`
+           → `.blur(validateTimeRange)` (das `()` band den Rückgabe-Wert als
+           Handler → jQuery-3-`apply`-Fehler).  **Listener Stats** (Grafik):
+           Flot 0.7 (jQuery-3-inkompatibel) → **Flot 0.8.3** vendored (+ neues
+           `jquery.flot.time.js` für `mode:"time"`).  Beide rendern auf jq3
+           (DataTable + Flot-Canvas verifiziert); sind nur leer, weil aktuell
+           keine Listener-Stats vorliegen (→ separates 🔴-Item oben).
+         - ✅ **Übrige Seiten-Verifikation (Schritt 4) DONE (2026-06-05).** Sweep
+           über die restlichen Seiten auf jq3 (Drag-Reorder, Slider, Autocomplete,
+           Template-Reorder, Prefs, Users, Smartblock-Generate, Radio-Seite) sauber.
+           Einziger Fund: **Datei-Upload 500** — als vorbestehender Backend-/PHP-8-
+           Bug entlarvt (REST-CSRF-Feldname `csrf` vs gelesenes `csrf_token`; bei
+           multipart zusätzlich `null['csrf_token']`-Crash auf PHP 8), **nicht**
+           jq3-verursacht (Legacy identisch).  Fix `1f66224` (ACL-Plugin akzeptiert
+           `csrf`|`csrf_token` + Null-Guard für nicht-JSON-Bodies), verifiziert auf
+           `?jq3=1` **und** `?jq3=0`.
+      2. ✅ **Advanced/Per-Column-Library-Filter DONE (2026-06-04, `62923e3`).**
+         Der geforkte 2012er `columnFilter` (nur DT-1.9-API) war auf jq3
+         übersprungen → Panel da, Felder tot.  Neuer `wireModernColumnFilter()`
+         befüllt die vorhandenen `#advanced_search`-Slots + verdrahtet `fnFilter`
+         (Text→ILIKE, numerisch/Länge/Datum→`from~to`-Range, Track-Typ→exakt),
+         Spalten-Index reorder-fest per Datenname, 350 ms Per-Spalten-Debounce.
+         **Backend byte-genau unverändert** (DT 1.13 sendet im Legacy-Kompat-Modus
+         weiter `sSearch_{N}`/`mDataProp_{N}`, `fnServerData` sendet `advSearch`).
+         Legacy behält das Plugin.  *(Operator-Wunsch 2026-06-04.)*
+         **Plus Regressions-Fix (gleicher Commit):** `fnStateSaveParams` strippte
+         die Suche per DT-1.9-Namen (`oSearch`/`aoSearchCols`), damit sie nicht
+         über Seitenwechsel persistiert — DT 1.13 hat die State-Felder umbenannt
+         (`search` + `columns[].search`), der Strip lief ins Leere → Suche leakte
+         in den gespeicherten State (Tabelle kam gefiltert zurück, Panel leer +
+         zu).  Jetzt auch die 1.13-Form gestrippt, beim Speichern **und** Laden;
+         Library **+** rechtes Showbuilder-Panel (`builder.js`, gleicher Bug).
+      3. ✅ **Buttons/ColReorder-CSS — OBSOLET (2026-09-17):** Buttons lädt
+         nur auf Library, Showbuilder und Podcasts, und alle drei wurden im
+         Juni gestylt; die übrigen Tabellen-Seiten laden die Extension gar
+         nicht — es gibt nichts mehr anzugleichen.
+      4. ✅ **Kosmetik-Politur DONE 2026-09-17** (Commit im CHANGELOG „Fixed"):
+         Schließen-✕ für alle Dialoge (1.13 ließ den Knopf als nacktes
+         <button> ohne Icon zurück), Datepicker dunkel (letzter Blau-Rest),
+         `.ui-widget-content`-Rand entblaut.  Nicht reproduzierbar, geparkt
+         bis zu einem Operator-Zeigefinger: „Scheduled-Tracks-Dialog zu
+         hoch" + „Add/Edit-Show zu hell" (Notizen von vor dem dunklen
+         Dialog-Theme vom 31.08.).  Ursprüngliche Liste: Scheduled-
+         Tracks-Dialog sitzt zu weit oben; View-Dialog-Schließen-Icon unsichtbar;
+         Add/Edit-Show-Hintergrund zu hell; restliche blaue Reste (Borders/
+         Datepicker-Tage/Icons).
+      5. **Flag→Default flippen + Migrate-Netz entfernen** (gestaffelt):
+         - ✅ **5a Default-Flip DONE (2026-06-05, `87c1d35` + CHANGELOG `9514981`).**
+           `rtUseJquery3()` Default `false → true` → ohne Flag/Cookie laden jetzt
+           jQuery 3.7.1 + migrate + UI 1.13.3 + DataTables 1.13 (App-Layout +
+           Radio-Page; `rtDataTablesCore()` hängt am selben Flag → 1.13 im
+           Gleichschritt).  Rollback: `?jq3=0` (Cookie, per Session) + Commit-Revert
+           (global).  jquery-migrate bleibt als Netz.  Live-verifiziert per curl
+           (Default→jquery-3.7.1 HTTP 200, `?jq3=0`→jquery-1.8.3).
+         - 🟡 **5b DEFER — Migrate-Netz + Legacy-Assets entfernen.** Zu entfernen:
+           jquery-migrate 3.5.2 + die Legacy-Assets (jQuery 1.8.3, jQuery UI 1.8.x +
+           redmond-1.8, DataTables 1.9, `$.browser`-Shim) + die `?jq3`-Flag-Logik
+           (`rtUseJquery3`/`rtJqueryUiThemeCss`/`rtDataTablesCore` + alle
+           Conditional-Loads in PageLayoutInitPlugin/IndexController) + die
+           zugehörigen `assets.json`-Einträge.
+           **Vorbedingungen (beide nötig):**
+           1. Der jq3-Default hat sich über eine Bewährungsphase im Livebetrieb
+              stabil gezeigt (Operator gibt Signal — testet ab 2026-06-05 einige
+              Tage).
+           2. Die `JQMIGRATE`-Konsolen-Warnungen sind seitenübergreifend sauber —
+              sonst entfernt man Shims, auf die noch Code baut (vgl. Hauptrisiko 2:
+              `method` vs `type` kann AJAX still auf GET kippen).  Prüfung:
+              `jQuery.migrateWarnings` pro Seite.
+           Bis dahin Legacy + Migrate als Sofort-Rollback behalten.  Abschluss:
+           CHANGELOG-Eintrag (ARCHITECTURE.md existiert nicht → CHANGELOG ist die
+           Quelle, wie bei FC6).
+  - 🟡 **DataTables 1.13 → 2.0** (eigener späterer Schritt nach jQuery 3):
+    server-side-Format (sEcho/aaData → draw/data) + Init auf neue API umstellen.
+    Modernitäts-Wette, nicht jQuery-3-blockierend.  **Evaluiert 2026-09-17:
+    Defer** — DT 2 kappt die 1.9-Kompatibilität, auf der der gesamte Bestand
+    fährt (Hungarian-Init inkl. der Juni-sDom-Kniffe von Library/Builder,
+    Legacy-Server-Protokoll in Datatables.php + 4 weiteren PHP-Stellen);
+    ~11 JS-Init-Stellen + 5 PHP-Dateien, Buttons 3/ColReorder 2, kein
+    DT2-Pendant für die 2012er FixedColumns/FixedHeader-Forks, State-Format
+    wandert erneut.  ~1,5-3 Wochen für null sichtbaren Betriebsnutzen;
+    konkurriert strategisch mit der Grundsatzfrage Legacy-Frontend.
+    **Wiedervorlage-Trigger:** (a) Sicherheitslücke/EOL der 1.x-Linie, die
+    uns trifft; (b) konkretes DT2-only-Bedürfnis (Barrierefreiheit,
+    Extension); (c) Entscheidung „Legacy-Frontend bleibt auf Jahre".
+    Bis dahin 1.13 vendored + gepinnt.
+- **(Optional) Build-Pipeline:** 🔴 Hold (Operator 2026-10-28, s. Kopf des Items); vorher: nur bei Trigger
+  (s. Strategie), eigener ADR.
+
+**Hauptrisiken (Stufe 2 absichern):**
+1. ✅ **FullCalendar-Zeitzonen-Patch — GELÖST (2026-06-01)** — war: Schedule-Grid
+   lief auf Server- statt Browser-Zeit via hand-gepatchter 2012-Lib
+   (`fullcalendar/AIRTIME_DEV_README`), fragilste Kopplung.  Die FC6-Migration
+   ersetzt den Handpatch durch naive Stationszeit-Strings + FC6
+   `timeZone:'local'` + natives `now` auf Stationszeit (wie das Embed-Widget).
+   Der Fork bleibt nur noch als Rollback bis zur Entfernung.
+2. **jQuery-1.8-Semantik-Falle** — `soundcardsetting.js:228` dokumentiert
+   `method` vs `type` (1.9+); ein jQuery-Bump kann AJAX **still** auf GET
+   umstellen („200 OK, speichert aber nicht").
+3. **Lokal geforkte** Plugins (DataTables columnFilter/ColVis, serverbrowser,
+   tipsy, contextmenu) — Patches bei Lib-Update von Hand neu anwenden.
+
+**Aufwand:** Stufe 0 ~1 Woche · Stufe 1 ~3-4 Wochen · Stufe 2 ~4-6 Wochen.
+Voll ~8-12 Wochen, über Monate verteilt.
+**Vorbedingung:** ruhige Phase (kein paralleler Feature-Rollout) — HW-Wartezeit
+passt für Stufe 0/1.
+**Risiko Live-Betrieb:** Stufe 0/1 niedrig (isoliert/additiv); Stufe 2 mittel
+(Legacy parallel als Fallback halten, Live-Verifikation pro Seite).
+
+---
+
+## 🤔 Strategische Entscheidungen (vor Implementation klären)
+
+### 🔴 Payware / Feature-Gating (Tier-System)
+
+**Status:** Hold — juristisch + strategisch vorklären.  **Bestätigt Operator 2026-10-28** nach genauerer Erklärung.
+**Stand 2026-10-28:** AGPL-3.0 (LICENSE im Repo, Code überwiegend von LibreTime-Autoren) - Gates sind für jeden
+sichtbar und legal entfernbar, Relizenzierung des verwobenen Kerns nicht möglich; direkte Spannung mit dem
+GitHub-Thema (Payware nur als getrennte, nicht veröffentlichte Erweiterung neben dem offenen Kern denkbar); ein
+einziger Betreiber, keine zweite Installation - Tiers, Grandfathering, Konkurrenzanalyse setzen Kunden voraus, die
+es nicht gibt.  Technische Präzedenzen, falls je nötig: Rollen-System (vier Rollen, Zend ACL, Menü- + Aktions-Ebene)
+und der Stereo-Tool-Lizenzschlüssel (Settings-Feld steuert ein Feature); ein Tier wäre eine fünfte Dimension neben
+den Rollen (signierter Schlüssel in cc_pref, Prüfung im Acl_plugin, Feature-Katalog, Spiegelung in der API).  Risiko
+live: Gate-Fehler sperrt den Operator aus Sendefunktionen (Line-Inputs, Restart Services) aus.
+**Zusätzliche Vorbedingungen (vor den vier unten):** (0a) juristische Auskunft zur AGPL-Verträglichkeit, (0b)
+Entscheidung GitHub-Veröffentlichung ja/nein.  Realistische Alternative bleibt Donation / bezahlter Support statt
+bezahlter Funktionen.  Nicht erneut vorschlagen.
+**Evaluiert:** 2026-05-22.
+**Geschäftlicher Wert:** Hoch (Monetarisierung).
+**Technischer Aufwand:** ~3250 LoC, 6-10 Wochen.
+
+**Kandidaten-Features für Gating** (Operator-Wunschliste):
+Line-Inputs, Analytics, Auto-DJ, ausgewählte Widgets, Show Templates,
+Local Machine, Restart Services, Podcast Auto-Expiry, etc.
+Sowohl Menü-Ebene als auch Einzelfeld-Ebene gewünscht.
+
+**Vorbedingungen (kein Code vor diesen Klärungen):**
+1. **License-Modell juristisch klären** — RASTATIME ist Fork von LibreTime (AGPL). Paid-Tier auf AGPL-Fork ist tricky: Source bleibt offen, jemand könnte Gates entfernen und re-distribuieren. Dual-Licensing oder eigene Re-Lizenzierung wäre nötig.
+2. **Pricing-Tiers definieren** — welche Features in welchem Tier (Marketing-Entscheidung)
+3. **Kommunikations-Strategie** für bestehende Operator (Grace-Period? Grandfathering?)
+4. **Konkurrenzanalyse** — Airtime Pro, RadioDJ, BroadcastBuddy
+
+**Alternative**: Donation-Modell (wie OBS Studio) — gleiche Open-Source-Reputation, deutlich weniger juristischer Aufwand, keine Gates im Code.
+
+**Empfehlung:** Erst die vier Vorbedingungen klären, dann technisch entscheiden ob Payware oder Donation.
+
+---
+
+## 💡 Future Feature Ideas (nicht evaluiert, nur notiert)
+
+### ✅ Bibliotheks-Knopf „Tags und Cover aus Datei neu einlesen" (notiert 2026-10-08) — als „Re-read Tags" gebaut 2026-10-21 (`08a4b9f`, §23.69)
+
+**Stand 2026-10-23 (Aufräum-Durchgang):** Knopf liest die Tag-Spalten und Dateiwerte (md5, Größe, Bitrate) neu; das eingebettete Cover wird dabei **nicht** neu gelesen (nicht gewünscht gewesen; bei Bedarf eigener Punkt).
+
+**Status:** 💡 Idee aus der Evaluierung „Metadaten/Covers" 2026-10-08.
+Operator-Entscheidung: Massenbearbeitung der Metadaten in RASTATIME (gebaut),
+Cover-Suche im Netz **nicht** einbauen — dafür ein externes Werkzeug (Mp3tag:
+Cover aus Discogs/MusicBrainz mit Vorschau, Einbetten, Massen-Tagging) vor dem
+Import.  Für schon importierte Dateien fehlt ein Baustein: ein Knopf in der
+Werkzeugleiste, der für die Auswahl die Import-Analyse wiederholt (Tags und
+eingebettetes Cover neu aus der Datei lesen, `cc_files` nachziehen).  ~2 h über
+die bestehende Analyzer-Pipeline.  Vorsicht: Mp3tag schreibt die Datei neu,
+Titel auf Sendung nicht anfassen.  Bestand 2026-10-08: 47 von 60 Musiktiteln
+ohne Cover.  Vorbedingung: Operator-Go.
+
+### ❌ „Play Count" auch für Webstreams und Line-Ins (notiert 2026-10-07, verworfen)
+
+**Status:** ❌ **Verworfen durch den Operator 2026-10-07** (Nutzen zu gering für eine Migration).  Ursprüngliche Notiz: Operator-Frage vom 2026-10-07.  Die Bibliotheksspalte
+„Play Count" zählt Dateien über `cc_playout_history.file_id`.  Webstream-
+und Line-In-Einsätze stehen ebenfalls im Protokoll (`file_id` NULL, erkennbar
+nur an `artist_name`/`track_title` in den Metadaten: Webstream-Name bzw.
+Quellen-Label) — ein Umbenennen des Webstreams oder zwei Line-Ins mit
+gleichem Gerätenamen machen eine Zählung per Name unzuverlässig.  Sauber:
+Migration 0065 mit `stream_id`/`linein_id` in `cc_playout_history`,
+`HistoryService::insertPlayedItem/insertWebstreamMetadata/insertLineInLog`
+setzen sie, einmaliges Nachfüllen alter Zeilen per Namensabgleich, dann
+derselbe gruppierte Join je Zweig der Bibliotheksabfrage.  ~1,5 h; Migration
+braucht frisches Backup + ruhiges Fenster.  Vorbedingung: Operator-Go.
+
+### ✅ Smart Block „Dauer in Zeit" als Sendezeit statt Titelsumme (notiert 2026-10-06)
+
+**Status:** ✅ **DONE 2026-10-06** (Operator-Go gleichen Abends): Minuten-/
+Stunden-Blöcke werden über `Scheduler::pickDynamicBlock()` gegen die
+ausgelegte Länge gewählt (Budget = Limit); Probe: StationIDs bei 12:00,0 /
+24:06,9 / 36:18,8, Ende −0,02 s.  Ursprünglicher Text: Seit 2026-10-06 (Architektur §23.54)
+ist die Restzeit ausgelegt und „verbleibende Zeit"-Blöcke füllen bis auf
+etwa eine Sekunde.  Ein Block mit *Dauer in Zeit* (z. B. 12 min) zählt
+weiterhin die Summe seiner Titel: vier Musiktitel laufen durch 3 × 3 s
+Überlappung etwa 9 s kürzer; in der Standardstunde (3 × 12 min + StationIDs)
+rutschen die StationIDs damit um 9/18/27 s nach vorn, das Sendungsende
+stimmt trotzdem (der letzte Block fängt es auf).  Falls die StationIDs auf
+die Minute sitzen sollen: Auswahl wie `Scheduler::pickRemainingBlock()`
+gegen die ausgelegte Länge (Budget = Limit), ~20 Zeilen in
+`pickDynamicBlock()`.  Vorbedingung: Operator-Wunsch — ändert das sichtbare
+Verhalten aller Dauer-Blöcke (und ihrer Längenanzeige in Playlists).
+
+### 🟡 Line-In-Eingangsverstärkung live nachregeln (notiert 2026-10-02) - Defer (Operator 2026-10-28)
+**Operator 2026-10-28:** bleibt im Backlog, kein Go.
+
+
+**Status:** 💡 Idee, nicht evaluiert.  Entstanden mit der
+Line-In-Eingangsverstärkung (2026-10-02, Option A: `amplify` in Liquidsoap,
+`var.set linein.gain`; siehe CHANGELOG / Architektur).
+**Heute:** Eine Änderung im Line-In-Dialog wirkt ab dem nächsten Slot, der
+nach dem nächsten Sendeplan-Einlesen (120 s) beginnt; ein laufender Line-In
+behält seinen Wert bis zum Slot-Ende.
+**Skizze:** Regler bzw. +/−-Knöpfe (Dashboard oder Line-In-Dialog), die den
+Gain eines gerade laufenden Line-Ins sofort setzen — technisch nur ein
+`var.set linein.gain` über PLAYOUT; Option A erlaubt das ohne Umbau.
+Optional die Übernahme des Werts in `rastatime_linein.input_gain_db`.
+**Vorbedingungen:** Bedarf aus dem Betrieb; Weg UI → PLAYOUT festlegen
+(HTTP-Endpunkt wie `/source-event`, Liquidsoap-Telnet nie direkt aus dem
+UI); Berechtigung (nur Admin oder auch Program Manager?).
+
+### ✅ Show-Grenzen mit eigener Crossfade-Dauer (Operator-Wunsch 2026-09-10) — GEBAUT 2026-09-27
+
+**Status:** ✅ Umgesetzt 2026-09-27 (Operator-Go; Antworten auf die vier
+offenen Fragen: (1) alte Sendung blendet aus, neuer Titel sofort voll; (2)
+innerhalb der Sendung ein echter Crossfade, 8-s-Regel entfällt — Ersatz ist
+das Titel-Attribut „No Fade during Crossover" (Überlapp bleibt, der markierte Titel blendet nicht); (3) ja, der Show-Wert steuert
+auch Line-In/Webstream-Wechsel, gleicher Stream in beiden Sendungen bleibt
+nahtlos; (4) Startwert 1 s).  Abweichung von der Skizze: nicht
+`liq_cross_duration`/`liq_fade_out` je Titel — in Liquidsoap 2.4 setzt der
+Override am NEUEN Titel dessen Kopf-Puffer, nicht den Schwanz des alten
+(Bench 2026-09-27) —, sondern eine eigene Übergangsfunktion mit
+`rt_cross`-Variable und fester Pufferlänge; Titel werden vorab in die Queue
+gelegt (Queue-Ahead).  Details CHANGELOG 27.09.  Ursprüngliche Skizze
+darunter zur Historie.
+
+**Ursprünglicher Status (2026-09-10):** 💡 Idee, evaluiert 2026-09-10,
+Operator: „kein Go, merken wir uns für später".  Ersetzt als Richtung die
+Per-Track-Idee (kurze Titel ohne Fade) aus dem Mai.
+**Wunsch:** Der heutige Crossfade (Überlapp aus Settings → General „Default
+Crossfade Duration", derzeit 1,0 s, keine Ein-/Ausblendung) funktioniert gut,
+gilt aber für alle Übergänge.  An Show-Grenzen (Show-Start/-Ende) sollen
+andere Werte gelten als innerhalb einer Show; einstellbar ebenfalls unter
+Settings → General.
+**Skizze (Evaluierung 2026-09-10):**
+- Neues Feld „Show Crossfade Duration" neben dem bestehenden; `cc_pref`-
+  Schlüssel, kein Schema-Umbau.
+- Scheduler kennt die Show-Instanz je Titel (`FileEvent.instance_id` aus
+  `schedule.instance`); beim Push bekommt der letzte Titel einer Show die
+  Metadaten `liq_cross_duration` + `liq_fade_out` mit dem Show-Wert, alle
+  übrigen den Standardwert (Liquidsoaps `cross` liest beide Schlüssel pro
+  Titel; `liq_fade_in` optional für den ersten Titel der Folgeshow).
+- Werte je Refresh-Zyklus aus `cc_pref` lesen → Änderungen wirken ab dem
+  nächsten Titel ohne Neustart; nur der Gate-Fade für Line-In/Webstream
+  bleibt im gerenderten Skript (Neustart der Audio-Kette wie heute).
+- Show-Ende in Stille / Show-Start aus Stille bleiben harte Schnitte
+  (kein Partner-Titel), separat lösbar (`fade.skip`).
+**Aufwand:** ~5–6 h inkl. Replikat-Nachweis, Tests, Handbuch ×4.
+**Vor einem Go zu klären:** (1) Form des Show-Übergangs: alte Show blendet
+über N s aus und der neue Titel startet sofort voll (Vorschlag, weil Shows
+oft mit Jingle/ID beginnen) oder echtes Crossfade mit Einblenden; (2) bleibt
+es innerhalb der Show beim heutigen Überlapp ohne Fades, und entfällt die
+30-s-Regel für kurze Titel; (3) steuert der Show-Wert auch den Gate-Fade
+bei Line-In/Webstream-Showwechseln; (4) Startwert des neuen Feldes (1,0 s
+= heutiger Standard).
+
+### ✅ Mid-Show Song Requests (echtes Just-in-time) — GO 2026-06-16, Kern geliefert 2026-06-16
+
+**Status:** 🟢 Go (Operator 2026-06-16).  Variante **(a) inkrementell entlang
+der Dramaturgie** gewählt.
+**Evaluiert:** 2026-06-16.
+**Operator-Wert:** Hoch — der Hörer hört seinen Wunsch in DERSELBEN Show
+statt erst in der nächsten.
+
+Aktuell füllt sich eine Request-Show **einmal** ~8 Min vor Start (Option
+C-onepass, Dead-Air-sicher).  Ein Request *nach* der Befüllung landet erst
+in der nächsten Show.
+
+**Gewähltes Design (Variante a):** den Ein-Pass-Fill (`AutoPlaylistManager::
+_fillRequestShowByPositions`) auf **inkrementelles Cursor-Fill** umstellen —
+pro Poll nur die nächste(n) Dramaturgie-Position(en) bis `now + kleiner
+Vorlauf` auflösen, mit den dann **frischen** Requests.  Braucht einen
+**persistenten Positions-Cursor pro Instanz** (kleine additive Spalte
+`cc_show_instances.autoplaylist_cursor`, Migration 0057 — sonst füllt der
+nächste Poll die Dramaturgie doppelt).  Reuse `addAutoloadItemToShow` +
+`_consumeScheduledRequests`.  **Kein Playout-Eingriff** — pypo nimmt
+Mid-Show-`cc_schedule`-Änderungen auf (deque-replace bei `PushSchedule`,
+Push zur Startzeit); `fillRequestShows` erfasst bereits laufende Instanzen.
+
+**Aufwand:** ~150–300 Z. PHP + Migration 0057 + Doku-Umschrift (SONG_REQUESTS
+§5/FAQ "late requests" dreht sich um, 4 Sprachen).  ~1–2 Tage.
+**Risiko Live-Betrieb:** Niedrig (Frontend, kein Playout-Eingriff).
+
+### ✅ Traffic Alerts (kurzfristige MP3, max. 10 min bis Ausstrahlung) — T1+T2 geliefert 2026-06-16, T4 Doku `b0a117c` 2026-06-16; Deadline-Skip bleibt 🟡
+
+**Status:** 🟢 Kern geliefert 2026-06-16 — T1 Settings-Picker (`96b5f30`) +
+T2 inkrementeller Fill (`e0c7873`).  **Design-Pivot** gegenüber der
+ursprünglichen Go-Entscheidung (siehe unten).  🟡 **Deadline-Skip deferred**
+(Operator wählte 2026-06-16 Dramaturgie-Dichte statt aktivem Skip).
+✅ **T4 Doku** geliefert 2026-06-16 (`b0a117c`: Manual-Kapitel 4 Sprachen + i18n +
+CHANGELOG + ARCHITECTURE).
+**Operator-Wert:** Hoch — hartes Betriebs-Requirement mit klarer 10-min-SLA.
+
+Kurzfristig eintreffende Traffic-MP3s müssen binnen max. 10 min laufen.
+
+**GELIEFERTES Design (Pivot — inkrementeller Fill statt Insert+Shift):** Ein in
+Settings definierter **Traffic-Alert-Smart-Block** (Single-Select-Dropdown,
+cc_pref `traffic_alert_block_id`).  Eine Show, die diesen Block in ihrer
+Autoload-Dramaturgie trägt, wird **inkrementell gefüllt — exakt wie eine
+Request-Show** (Reuse der Mid-Show-R1-Engine): jede Traffic-Position wird erst
+kurz vor ihrem Slot aufgelöst und zieht dann den neuesten, noch nicht
+eingeplanten Alert (FIFO nach `utime`, kein Random-Fallback, keine
+Doppel-Ausstrahlung).  Weil künftige Items noch gar nicht aufgelöst sind,
+**entfällt das Insert-after-current + Folge-Item-Schieben komplett** —
+Operator-Vereinfachung 2026-06-16.  pypo spielt über die normale
+`scheduled`-Queue, kein Liquidsoap-Template-Eingriff, erscheint in
+History/Kalender.
+
+**SLA-Methode (Operator-Entscheidung B, 2026-06-16):** Die 10-min-Frist wird
+über **Dramaturgie-Dichte** gehalten — der Operator platziert Traffic-Slots eng
+genug (≤ SLA) und hält Tracks direkt vor einem Slot kurz.  Kein aktiver
+Deadline-Skip.
+
+**🟡 Deferred — Deadline-Skip (Vorbedingung zum Wiederaufgreifen):** Falls der
+Live-Betrieb zeigt, dass Dramaturgie-Dichte allein die SLA nicht hält (z. B. ein
+überlanger laufender Track schiebt einen Alert-Slot über `Import+10min`), dann
+schmaler Skip (Option A): wenn das **nächste** eingeplante Item ein Traffic-Alert
+ist und seine Frist zu reißen droht, `source.skip` auf den laufenden Track über
+die bestehende Liquidsoap-Telnet-Verbindung.  Erkennung des Alert-Items via
+`file_id ∈ Traffic-Block-Pool` (kein Schema) oder Marker-Spalte auf
+`cc_schedule` (Migration 0058).  ~80–150 Z.  Erst bauen, wenn die Vorbedingung
+im Betrieb eintritt.
+
+**Verworfen:** Weg B (Liquidsoap interrupting queue, AzuraCast-Stil) — Playout-
+Eingriff + Drift mit pypos zeitbasiertem Modell + nicht in History.  Nur falls
+"immer sofort, mitten im Track abbrechen" zwingend würde.
+
+**Wie andere das machen:** AzuraCast = interrupting `request.queue` +
+Fallback-Priorität (`track_sensitive`); klassische Automation (Zetta/Rivendell/
+mAirList/RadioDJ) = Cart-Wall/Insert-Next oder feste Uhrzeit-Slots + Netz-Trigger.
+
+**Gemeinsame Basis (Operator-Wunsch 4) — eingelöst:** Mid-Show Requests und
+Traffic Alerts teilen sich EINE inkrementelle Fill-Engine
+(`_fillRequestShowByPositions`); der Unterschied ist nur die Slot-Auflösung
+(Request-Draw + Random-Fallback vs. `_appendTrafficAlert` FIFO ohne Fallback).
+
+### 7-Tage-Catchup Frontend
+
+Web-Player der auf Record-per-Hour-Chunks zugreift. HTTP-Range-
+Streaming, einfacher Index, Sprung zu Show-Starts via
+Cue-Marker-Sidecars. Folge-Projekt nach Record-per-Hour.
+
+### Outbound Podcast Generator
+
+RSS-Feed-Generator der aus Record-per-Show-Files automatisch einen
+Podcast-Feed erzeugt. Erwähnt in `docs/operator/UPGRADE.md` Backlog
+und im Manual als "noch nicht implementiert". Komplementär zum
+Catchup.
+
+### Per-Weekday Autoplaylist
+
+"Rock am Samstagabend, Jazz am Sonntagmorgen". Erwähnt in
+ARCHITECTURE §23.20 (Auto DJ) als Out-of-Scope. Aktuell ist
+`auto_dj_playlist_id` global.
+
+### Daypart-aware Auto DJ
+
+Verschiedene Auto-DJ-Playlists für verschiedene Tageszeiten.
+Workaround heute: einzelner Smart Block mit
+Time-of-Day-Tags + wöchentlicher Filter-Anpassung.
+
+### Operator-Confirmation vor Auto-DJ-Show-Erstellung
+
+"5 Lücken erkannt, 1 Show würde erstellt werden — bestätigen?"
+statt direkter Materialisierung. Erwähnt in ARCHITECTURE §23.20.
+
+### Auto-DJ-Show eigene Farbgebung
+
+Visuell dimmer als Operator-Shows im Kalender, statt
+Default-Farbe.
+
+### Auto-DJ Recording Opt-in
+
+Heute `record = false` hardcodiert für Auto-DJ-Shows. Preference
+zum opt-in für Operator die Auto-DJ-Recordings wollen.
+
+### Show-Templates: Cross-Station Export
+
+Aktuell nur via direktem DB-`pg_dump`. UI-basierter Export /
+Import (mit ID-Resolution für Playlists + Bilder).
+
+### Recurring "third Friday of month" Pattern
+
+Aktuell nicht unterstützt. Workaround: vier monatliche
+einmalige Shows. Echte Implementation erfordert RRULE-style
+recurrence (iCal-RFC).
+
+### HLS / DASH Output-Stream
+
+Aktuell nur Icecast/Shoutcast. Workaround: externer
+`ffmpeg -hls_time 6` Repackager.
+
+### Listener Auth (Subscriber-Only-Stream)
+
+`icecast-auth.php` existiert bereits. Aktivierung pro Mount
+in `config/icecast.xml`. Default-Install hat es aus.
+
+### SSO / OAuth für API
+
+Aktuell nur API-Keys + PHP-Session. Authn-Proxy vor Apache
+nötig. Erwähnt in `docs/operator/UPGRADE.md` Backlog.
+
+### RTL-Sprach-Support (Arabisch, Hebräisch)
+
+UI ist LTR-designed. Bräuchte CSS-Rework zusätzlich zur
+Translation. Erwähnt in `docs/manual/*/I18N.md`.
+
+### Show-Builder mid-air editing
+
+Live-Show während sie läuft umsortieren, ohne Cut. Heute:
+Sortierung der bereits-gespielten + nächsten Tracks freezable.
+
+---
+
+## 🐞 Known Issues / Bug Backlog
+
+### ✅ Line-In-Zombie: Wächter-Schleife start+stop alle 2 s, 404-Flut nach Feeder-Stopp (Befund 2026-11-01) - behoben 2026-11-01 (Operator-Go)
+
+**Befund:** seit 2026-10-29 09:30 `dropped input linein_http_in_N reconnected on its own - reaping (start+stop)` im
+2-s-Takt (69.000 Zeilen am 30.10., pausiert nur zwischen Liquidsoap-Neustart 14:16 und nächstem Line-In-Slot 22:00);
+nach dem PLAYOUT-Neustart 2026-11-01 10:26 ohne Feeder-Mount 18.000 Icecast-404 in 1,5 h, Liquidsoap 87 MB/h statt
+21 MB/h (2.576 MB, harte Grenze 3.072 wäre ~17:30 gefallen).  Operator startete LIQUIDSOAP 12:23 neu (Schleife weg).
+**Ursache (Replikat, Liquidsoap 2.4.6 + Mock-Mount + Proben 1-5 in `C:/Temp/optd/linein_zombie/`):**
+ein vom `source.dynamic`-Arm getrennter `input.http` schläft und verarbeitet `stop()` nie (Status bleibt `connected`,
+Stream läuft weiter); `start()`+`stop()` darauf verbindet nur neu; ein Re-Armieren des Zombies löst eine ffmpeg-
+Assertion aus.  **Fix:** `linein_http_stop()` hält den Eingang armiert bis `stopped` (0,5-s-Prüfung, 5 s Deckel,
+Gate `linein_live` hält ihn stumm), Start während des Abbaus wird als `linein_http_next` vorgemerkt; Line-In-Reaper
+aus dem Wächter entfernt.  §23.68 Nachtrag (0.106), Test angepasst, `liquidsoap --check` grün.  **LIVE 2026-11-01
+12:57:24:** PLAYOUT-Neustart durch den Operator, Render mit Drain-Block, planmäßiger Liquidsoap-Neustart an der
+Titelgrenze 12:57:20-24 (Standby-Metadaten „back on air soon“ 4 s), Mounts wieder auf dem Hauptprogramm, keine
+Line-In-Zeile, kein 404.  **Abnahme offen:** nächster Line-In-Slot ohne `reaping`-Zeilen und ohne 404 nach dem Ende.
+
+### 🟡 Webstream-Reaper: dasselbe Zombie-Muster wie beim Line-In (notiert 2026-11-01)
+
+`webstream_stop()` trennt den Arm ebenfalls sofort und der Reaper macht start+stop auf `connected`-Zombies.  In den
+Logs seit 2026-10-27 keine Schleife (Webstream-Eingänge laufen über den Cloud-Wächter mit eigener Reconnect-Logik),
+darum nicht mit angefasst.  **Wenn** `webstream_watchdog ... reaping` gehäuft auftaucht: den Abbau wie beim Line-In
+(armiert bis `stopped`, dann trennen) übernehmen; Probe-Vorlagen `C:/Temp/optd/linein_zombie/reaper_probe*.liq` + `mock_mount.py` sind die Vorlage.
+
+### ✅ Backup/Janitor eine Stunde zu früh seit der Zeitumstellung (Befund 2026-11-01) - behoben 2026-11-01 (Operator-Go)
+
+**Status:** Erledigt 2026-11-01.  Beide Aufgaben hatten `StartBoundary ...T02:30:00+01:00` bzw. `02:50:00+01:00`
+(so legt `New-ScheduledTaskTrigger -At 03:30` sie im September ab); mit Offset hält der Task Scheduler den
+UTC-Zeitpunkt, nach dem 2026-10-25 also 02:30/02:50 Wanduhr.  Fix: `StartBoundary` ohne Offset auf
+`2026-11-01T03:30:00` / `T03:50:00` gesetzt (`Set-ScheduledTask`), nächster Lauf 2026-11-02 03:30/03:50.
+Manual BACKUP (vier Sprachen) und `scripts/log-janitor.ps1` nennen jetzt die drei Zeilen zum Festnageln.
+FirewallWatch (Minutentakt) und PhpCgiReaper (Ereignis) sind nicht betroffen.  **Kontrolle:** `backup-auto.log`
+und `log-janitor.log` am 2026-11-02 mit 03:30/03:50-Stempel.
+
+### ✅ Upload über die UI ab 128 MiB: Apache 500 vor PHP (Befund Operator 2026-10-29) - behoben 2026-10-29 (`1b4be74e`)
+
+**Status:** Erledigt 2026-10-29 16:46 (Operator-Go, Apache-Neustart durch den
+Operator).  Drei `POST /rest/media` einer Datei knapp über 128 MiB (134.225.063
+Bytes) bekamen 500; `https-error-*.log`: `mod_fcgid: HTTP request length ...
+exceeds MaxRequestLen (134217728)`.  Apache begrenzte den Body also auf 128 MiB,
+während PHP (`post_max_size` = `upload_max_filesize` = 512M) und damit die
+Upload-Seite (`RASTATIME_PLUPLOAD_MAX_FILE_SIZE` aus `post_max_size`) 512 MB
+versprachen; Plupload sendet ohne Chunking, die ganze Datei ist ein Request.
+Stufe B war nicht beteiligt (Fehler vor PHP).
+**Fix:** `FcgidMaxRequestLen 536870912` (512 MiB) in `C:\Tools\Apache24\conf\httpd.conf`
+Zeile 551 und `docs/operator/INSTALL_APACHE.md`; Sicherung
+`C:\Temp\optd\httpd.conf.before-maxrequestlen-*`.  **Abnahme:** nach dem Neustart
+16:46:35 zwei Uploads 201 (144 MB und 273 MB), Analyzer importierte beide,
+`organize/` leer, keine Quarantäne, keine MaxRequestLen-Warnung mehr.
+**Lehre:** Upload-Grenzen stehen an drei Stellen (Apache fcgid, php.ini, UI-Anzeige
+aus php.ini); bei einer Änderung alle drei abgleichen.  Installer/Doku pinnen
+jetzt denselben Wert.
+
+### ✅ REST-Modul ohne Anmeldung: 500 statt 401 (Nebenbefund 2026-10-21, DONE gleichen Tags)
+
+**Status:** Erledigt 2026-10-21 (Operator-Go direkt nach dem Eintrag).
+`ErrorController::errorAction` beantwortet eine Ausnahme mit Code 401
+als 401 (Text „ERROR: Incorrect API key.", neue `error401Action`) und
+403 als 403 (bestehende Seite, betrifft `CORSHelper`), mit einer
+INFO-Zeile „Access refused (401): GET /rest/..." (Pfad ohne
+Query-String) statt ERR + Stacktrace.  Live: `rest/media`,
+`rest/podcast`, `rest/podcast-episodes`, `rest/media/1/download` ohne
+Anmeldung 401; mit API-Key und mit Sitzung 200; `feeds/station-rss` mit
+fremder Origin 403 (vorher 500); Seiten ohne Sitzung weiter 302.
+**Ursprünglicher Status:** 🟡 Defer — notiert auf Operator-Wunsch, nicht dringend: die
+Oberfläche greift immer angemeldet zu, der Playout mit API-Key.
+**Befund:** Jede Adresse unter `/rest/*` (`rest/podcast`, `rest/media`,
+`rest/podcast-episodes` …) antwortet ohne Sitzung und ohne API-Key mit
+einer HTML-500-Seite.  `Acl_plugin::preDispatch` setzt für das
+REST-Modul zwar Status 401 (`verifyAuth`) und wirft dann
+`Zend_Controller_Exception('Incorrect API key', 401)`; der
+`ErrorController` mappt aber jede Ausnahme außer „keine Route /
+Controller / Action" auf `error500Action` und ignoriert den Code.  Jeder
+solche Aufruf schreibt zwei ERR-Zeilen samt Stacktrace in
+`C:\rastatime\logs\legacy.log`.  Volumen 2026-10-06 bis 10-21: 14
+Ereignisse (davon 6 Testaufrufe am 21.10.) — kein Scanner-Rauschen, auch
+nicht seit HTTPS öffentlich ist.
+**Fix-Skizze (~10 Zeilen):** im `ErrorController::errorAction` eine
+Ausnahme mit Code 401 (bzw. 403) als 401 beantworten — kurzer
+JSON-/Text-Body wie `verifyAuth` („ERROR: Incorrect API key."), kein
+Stacktrace im Log (höchstens eine INFO-Zeile).  Alternative im Plugin:
+statt zu werfen die Antwort 401 senden und den Dispatch beenden.
+**Vorbedingungen:** keine; Live-Prüfung mit `curl -i` auf `rest/media`
+und `rest/podcast` ohne Sitzung (401), mit Sitzung unverändert 200;
+der Playout-Zugriff mit API-Key darf sich nicht ändern.
+
+### ✅ „Local Machine"-Seite in de_DE / fr_FR / es_ES unübersetzt (festgestellt 2026-10-02, DONE 2026-10-03)
+
+**Status:** Erledigt 2026-10-03 (Operator-Go für die ganze Seite).  Beim
+Nachtragen stellte sich heraus, dass nicht nur die fünf Strings fehlten,
+sondern die ganze Seite: von 94 `_()`-Strings kannte de_DE 13 (die
+Soundkarten-/Line-In-Meldungen vom Mai), fr_FR/es_ES nur 5 — Import-Ordner,
+FTP-Import, Bibliotheks-Speicherort, 24/7- und Sendungsaufnahme waren nie
+in die .po-Dateien aufgenommen worden.  81 / 89 / 89 Einträge ergänzt
+(Terminologie aus den Manuals), `.mo` per `frontend/legacy/scripts/po2mo.py
+--all` gebaut, alle 94 Strings je Locale über PHPs gettext gegen die
+kompilierten Kataloge verifiziert.  Der Test
+`tests/unit/test_t20_3_menu_i18n.py` läuft jetzt über alle Strings der
+View, damit ein neuer Abschnitt nicht wieder unübersetzt landet; die
+beiden `xfail`-Marker sind weg.  Details CHANGELOG 03.10.
+**Befund (Original):** keine der drei Legacy-Locales kannte das
+Navigations-Label `Local Machine` (seit der Umbenennung von „Soundcard" am
+2026-05-16) noch die vier Seiten-Strings der Speichern-/Neustart-Meldungen
+(Neustart-Knopf vom 2026-09-03).
+
+### ✅ REST `PUT /rest/media/<id>` mit unbekannter ID: 500 statt 404 (Nebenbefund 2026-09-10, DONE gleichen Tags)
+
+**Status:** Behoben 2026-09-10 (`7993bfe`): Null-Guard im `catch`
+von `CcFiles::updateFromArray`, Ausnahme mit ID im Text; live geprüft, PUT und
+DELETE auf eine unbekannte ID antworten jetzt 404.  **Befund (Original):** beim CSRF-Live-Beweis (`PUT
+/rest/media/999999999`) antwortet das REST-Modul mit einer HTML-500-Seite:
+`CcFiles::updateFromArray()` ruft `setDbImportStatus()` auf `null` auf
+(`findPk` findet nichts); das ist ein PHP-`Error`, den das `catch (Exception)`
+in `MediaController::putAction` nicht fängt (legacy.log 2026-09-10 18:55:42).
+**Fix (~5 Zeilen):** in `updateFromArray` bei `!$file` eine
+`RastatimeFileNotFoundException` werfen (bestehender 404-Pfad) und/oder in
+`putAction` `Throwable` fangen.
+
+### ✅ „Recent Uploads"-Liste aktualisiert sich nicht automatisch nach Upload (DONE 2026-08-30, `8110b47`)
+
+**Status:** Behoben.
+**Ursache (nicht fehlender Callback — Callback kam nie zum Zug):**
+Dropzone 4 Auto-Discover scannt das DOM auf seinem eigenen
+DOMContentLoaded-Hook, die `Dropzone.options.*`-Objekte (mit dem
+`success`-Handler, der die Liste nachzieht) werden aber erst in
+jQuery 3s asynchronem `$(document).ready` zugewiesen — einen Microtask
+später.  Je nach Load-Order initialisierte die Zone **ohne** Optionen
+→ Upload lief, `success`-Refresh nie.
+**Fix:** `Dropzone.autoDiscover = false` + explizites `new Dropzone(...)`
+direkt nach der Options-Zuweisung (`plupload.js` + Dashboard-Zone in
+`main_builder.js`); `dropzone.min.js` wird jetzt vor den Options-Files
+appended (`PluploadController.php`).
+**Rest-Check (offen, klein):** ein realer Upload-Roundtrip im Browser
+(Liste zieht nach) — Operator-Sichtprüfung genügt.
+
+### ✅ Statische Asset-Cache-Buster: Clients kleben an alten CSS/JS (DONE 2026-08-31, `0767393`)
+
+**Status:** Behoben (Operator-Go am selben Tag — das Problem biss
+allein heute dreimal).  `Assets::url()` leitet den `?<hash>` jetzt
+aus **mtime+Größe der echten Datei** ab (12-Hex-md5, per Request
+memoisiert) statt aus der build-zeitlichen `assets.json`: jede
+Änderung ergibt sofort eine neue URL, Unverändertes bleibt stabil
+gecacht.  Fehlende Dateien behalten das Upstream-Verhalten
+(Error-Log + time()).  `tools/assets-checksum-update.py` +
+`application/assets.json` sind damit obsolet (liegen gelassen,
+nichts referenziert sie).  Live bewiesen: Hash stabil über Requests,
+ändert sich bei touch, /schedule lädt ohne Asset-Fehler.  Kein
+Strg+F5 mehr nötig — ein normaler Reload genügt ab jetzt.
+**Ursprünglicher Eintrag:**
+**Befund:** Die `?<hash>`-Query an CSS/JS-Links ist **versionsbasiert,
+nicht inhaltsbasiert** — sie ändert sich bei Datei-Edits nicht.  Dazu
+sendet Apache für statische Assets **weder `Cache-Control` noch
+`Expires`** → Browser nutzen Heuristik-Caching (10 % der Zeit seit
+Last-Modified; bei monatealten Dateien Tage bis Wochen) und
+revalidieren nicht.  Folge: UI-Fixes erreichen bereits benutzte
+Browser erst stark verzögert.  So blieb auch der (heute behobene)
+Juni-Parse-Bug in `schedule-fc6.css` unsichtbar konsistent.
+**Workaround heute:** Operator-Browser wurde per `fetch(cache:
+'reload')` aktualisiert; andere Rechner: einmal **Strg+F5** pro Seite.
+**Fix-Optionen (bei Umsetzung entscheiden):** (a) mtime-basierter
+Buster im Layout-Helper (kleiner PHP-Eingriff, präzise), (b)
+`mod_expires`/`Cache-Control: no-cache` für `/css`+`/js` in der
+Apache-Conf (2 Zeilen, revalidiert per 304, minimal mehr Requests).
+**Aufwand:** ~0.5–2 h je nach Option.
+
+### ✅ CSRF-Token rotiert bei jedem Fehlversuch (DONE 2026-09-10 — die Rotation war wirkungslos)
+
+**Status:** Erledigt 2026-09-10 (Arbeitsreihenfolge Punkt 3, Operator-Go „kleine
+Form").  **Korrigierte Diagnose:** die Rotation in `Acl_plugin.php` hat nie
+gewirkt — `PageLayoutInitPlugin::_initCsrfNamespace()` schließt die Session in
+`routeShutdown` schreibend (`session_write_close()`), der `preDispatch`-Hook
+schrieb den neuen Token nur in den Speicher des abgebrochenen Requests.  Live
+bewiesen (eingeloggte Brave-Sitzung, `PUT /rest/media/999999999`): zwei falsche
+Tokens → 401, echter Token danach → Request erreicht den Controller.  Ein
+Fehlschlag kostete also immer nur den einen Request; die „Vergiftung" war ein
+Trugschluss aus dem Code-Lesen.  **Gemacht:** tote Rotation entfernt, 401-
+Warnung mit Methode/Pfad/Origin/Sec-Fetch-Site/Token-Status;
+`SecurityHelper::verifyCSRFToken` mit `hash_equals` und ohne `null == null`-
+Durchwinken; `PluploadController::uploadAction` auf dieselbe Prüfung.  Details
+CHANGELOG „CSRF-Prüfung gehärtet".  Nicht gemacht (Option B, Operator-
+Entscheid): das 5-Minuten-Timeout der Zend-Hash-Formulare (Login, Add User,
+Add Track Type) bleibt.
+
+**Ursprüngliche Annahme (2026-06-05, überholt):**
+**Status (alt):** Defer — kein Bug, aber raue UX (notiert 2026-06-05 beim Upload-Fix).
+**Hintergrund:** `Acl_plugin.php:184` regeneriert den Session-`authtoken` bei
+**jedem** fehlgeschlagenen CSRF-Check.  Folge: ein einzelner Fehlschlag macht den
+im DOM gerenderten Token der bereits offenen Seite ungültig → alle weiteren
+nicht-GET-REST-Aktionen dieser Seite scheitern, bis hart neu geladen wird.
+Aggressiver als nötig.
+**Option:** nur bei echten Angriffs-Signalen rotieren statt bei jedem Mismatch —
+Sicherheits-Verhalten, separat zu entscheiden.
+**Verwandt (optional, jetzt unnötig):** Der Dashboard-Dropzone-`sending`-Hook, der
+`csrf_token` anhängen würde, feuert auf jQuery 3 nicht rechtzeitig (sein
+`$(document).ready`-Setup läuft einen Microtask nach Dropzones Auto-Discover).  Der
+Server-Fix (akzeptiert das statische `csrf`-Formularfeld) macht den Client-Pfad
+überflüssig; optionales Aufräumen wäre, die `Dropzone.options.content`-Zuweisung aus
+`onReady` auf Modul-Init zu ziehen (`main_builder.js`).
+
+### ✅ Playout History: Tabelle + Export-Buttons werden nicht angezeigt (CLOSED 2026-08-30)
+
+**Status:** Geschlossen — reproduziert nicht mehr; live in eingeloggter
+Browser-Session verifiziert (2026-08-30, 18:15).
+**Entdeckt:** 2026-06-01 beim DataTables-1.13-Test.
+**Browser-Befund (alle drei Tabs funktionieren):**
+- **Log Sheet:** 5 Spalten + echte Zeilen (heutige 08:07/12:07-
+  Sendungen), Export-/Toolbar-Buttons gerendert;
+  `localStorage['datatables-historyitem-aoColumns']` korrekt gefüllt.
+- **File Summary:** baut beim Tab-Wechsel (6 Spalten, aggregierte
+  Track-Zählung).  **Show Summary:** Per-Show-Blöcke inkl.
+  CSV/PDF-Export.  Konsole über alles hinweg fehlerfrei.
+**Einordnung:** Der Eintrag stammte vom 2026-06-01 — **vor** den
+historytable-Fixes vom 2026-06-05 (`faf249d`: `activate`-Tab-Event,
+sDom, Accordion-Guard), die die Render-Kette reparierten; der Eintrag
+war seither stale.  Diagnose 2026-08-30 hatte das Backend bereits
+entlastet (Feed-SQL liefert Zeilen).
+**Nebenbei gehärtet (`4522e43`):** SQL-Injection im File-Summary-Sort
+(ORDER-BY-Whitelist) + beide `fnSetFilteringDelay(350)`-Aufrufe
+entfernt (kein „f" im sDom → Plugin band `$('input', undefined)` =
+alle Inputs der Seite neu und riss den Range-Pickern die
+Keyup-Listener ab).
+
+### ✅ Lokales Monitoring / Main-Output-Setting (DONE 2026-09-03, `6464b17`)
+
+**Status:** ERLEDIGT — Reihenfolge-Punkt 1.  Das Main-Output-Setting
+wirkt jetzt tatsächlich: `engine/portaudio_output.py` löst den
+Windows-Endpunkt zu einem PortAudio-Index auf (probiert die Host-APIs
+durch, WASAPI → MME → DirectSound → WDM-KS, Hardware-Token-Matching für
+die anders benannte WDM-KS-Variante) und rendert ihn als `device_id=`
+in die `.liq`.  Kein Kandidat öffnbar → OS-Default + lauter Log-Eintrag.
+Anwenden per bewusstem, bestätigtem Knopf „Jetzt anwenden"
+(`preference/restart-audio-chain`: PLAYOUT zuerst, dann LIQUIDSOAP) —
+bewusst NICHT automatisch beim Speichern (Stream-Abriss ohne Vorwarnung)
+und bewusst NICHT an der Django-API (bindet `0.0.0.0` ohne Auth).
+**Live verifiziert:** Jabra → PortAudio-Index 4 (MME), `device_id=4` in
+der gerenderten `.liq`, `liquidsoap --check` grün, 14 neue Tests,
+keine Regression (37 Fehler auch auf Baseline).
+**Tascam-Wunsch erfüllt — mit einer Vorbedingung (2026-09-03 13:30):**
+Der US-16x08-Ausgang lehnte jede Host-API ab, solange sein Windows-
+Mix-Format auf 48 kHz stand (WASAPI shared verlangt exakt die Mix-Rate,
+Liquidsoap läuft auf 44,1).  Nach Umstellung auf **44,1 kHz** öffnet
+WASAPI blockierend und Liquidsoap treibt den Tascam als Sendeausgang;
+Line-In-Aufnahme am selben Interface läuft parallel.  Details im
+Eintrag „Tascam als Sende-/Monitor-Ausgang" weiter unten.
+**Teures Learning (Sendeausfall 2026-09-03):** Die erste Probe testete
+im Callback-Modus, meldete WDM-KS als tauglich → Liquidsoap starb beim
+Geräte-Öffnen und riss die Icecast-Ausgänge mit.  `liquidsoap --check`
+fängt das NICHT (nur Typprüfung, öffnet nie ein Gerät).  Regel daraus:
+**Geräte-Features immer mit einem echten Liquidsoap-Lauf verifizieren**,
+und eine Probe muss dieselbe API-Betriebsart nutzen wie der Konsument.
+Offen bleibt damit: ein Monitor-Ausgang am Tascam wäre nur über einen
+anderen Weg erreichbar (z. B. Hardware-Routing im Tascam-Panel:
+„Computer 1/2 → Line-Out", also ohne Windows-Beteiligung).
+
+**(Ursprünglicher Eintrag zur Historie:)**
+**Status (alt):** Defer — Operator-Wunsch 2026-09-01 („am liebsten
+Tascam-Ausgänge als Output"); Interim: Windows-Default-Ausgabe =
+Jabra (entspricht dem konfigurierten Main-Output-Setting).
+**Hintergrund (Messung 2026-09-01):** Der Tascam-WDM-Treiber ist
+faktisch **Single-Direction**: Hält ein Client den Render-Pfad
+(Liquidsoaps `output.portaudio` auf dem Windows-Default), scheitert
+JEDER WDM/MME-Capture-Open (INVALPARAM/BADFORMAT) — und ein
+Capture-Versuch gegen laufenden Render riss umgekehrt den Output um
+(der Monitor-Ausfall vom 2026-08-31, „host error 6").  Vollduplex
+kann das Gerät nur über ASIO (für uns No-Go).
+**KOEXISTENZ-PROBE GEFAHREN (2026-09-03) — „Vollduplex nur über ASIO"
+ist WIDERLEGT.**  Messmatrix (Tascam-Output + gleichzeitig
+MME-16ch-Capture, Skripte `coexist_probe.py` / `crosstalk_scaling.py`):
+
+| Output-Host-API | Ergebnis |
+|---|---|
+| WASAPI | ❌ Open scheitert (`Invalid device`, −9996) |
+| MME | ❌ Open scheitert (`Unanticipated host error`, −9999) |
+| DirectSound | ❌ Start scheitert (−9999) |
+| **WDM-KS** | ✅ **Output + Capture gleichzeitig, echte ADC-Daten** |
+
+Zusatzbefund **Übersprechen Ausgang→Eingang**: real und
+pegel-skalierend nachgewiesen (Ton −20 → −8 dBFS, Anstieg auf den
+unbeschalteten Kanälen +9…+13 dB = 1:1-Skalierung).  Stärkster Kanal
+**Ch9: Isolation ~45 dB** unter Ausgangspegel; andere Kanäle 55–65 dB.
+**Schleifenverstärkung 45 dB unter Eins → KEINE Rückkopplungsgefahr**,
+aber ein leiser Programm-„Geist" kann in einem Line-In mitlaufen.
+Getriebene Eingänge (echte Quelle dran) sind besser als der
+gemessene Worst Case an offenen Buchsen.
+**Messfalle dokumentiert:** Eine erste Bleed-Messung an Ch3/4 zeigte
+scheinbar +23 dB Übersprechen — das war das laufende Programmsignal,
+nicht der Ton.  Übersprechen NUR auf unbeschalteten Kanälen messen
+und immer über Pegel-Skalierung verifizieren, nie aus einem
+Einzelvergleich schließen.
+**Konsequenz für die Implementierung:** Der Device-Resolver darf sich
+NICHT auf eine Host-API festlegen — er muss Kandidaten durchprobieren,
+bis ein Open gelingt (für den Tascam-Ausgang ist das WDM-KS, für
+Jabra/Realtek vermutlich WASAPI/MME).  Hinweis: WDM-KS ist ein
+kernel-naher, exklusiver Pfad — währenddessen können andere
+Windows-Apps den Tascam-Ausgang nicht mitbenutzen (auf einer
+dedizierten Sendemaschine unkritisch).
+
+**Zwei Bausteine für die Rückkehr:**
+1. ~~**WASAPI-Koexistenz-Probe**~~ — erledigt 2026-09-03, siehe oben;
+   WASAPI-Output geht gar nicht, WDM-KS ist der Weg.
+2. **`output.portaudio` ans Main-Output-Setting binden:** Liquidsoap
+   nimmt heute stur das Windows-Default-Gerät und ignoriert
+   `main_output_id` aus Settings → Local Machine (Lücke).  Renderer
+   um eine Device-Auswahl erweitern (PortAudio-Device-Match per
+   Name), damit Monitoring-Ziel explizit konfiguriert ist statt
+   Default-abhängig.
+**Betriebswissen (2026-09-01):** Nach Fehlopen-Serien kann der
+Tascam-WDM-Stack verklemmen (alle Opens INVALPARAM) und ein
+PnP-Restart bei belegtem Gerät hinterlässt Geister-Endpoints —
+Heilung: Gerät freigeben (ggf. LIQUIDSOAP kurz stoppen) + **USB
+kurz ab-/anstecken**.  Studio-Wechsel am selben Interface
+(Back-to-Back-Shows, anderes Paar) kostet ~14 s Übergang
+(Mount-Neuaufbau + input.http-Puffer).
+**Zweiter Klemm-Modus (Nachmittag 2026-09-01):** Nach dem
+Feeder-Crash-Zyklus von 12:15 (3× Open+Sofort-Tod durch den
+NameError) fiel der Capture-Pfad in einen **Dither-Zombie-Modus**:
+Opens gelingen, aber es kommen keine ADC-Daten mehr — Fingerabdruck:
+alle 16 Kanäle uniform −96,7 dBFS Floor, Mount konstant
+−91,0/−84,3 dB, während das Tascam-Panel real anliegendes Signal
+zeigt (Kanal 3 bestätigt).  Heilung auch hier nur USB-Re-Plug (um
+11:02 nachweislich wirksam — Scan 11:04 sah Signal).  Falls die
+Verklemmer chronisch werden: **Tascam-Treiber-Update prüfen**
+(nachhaltige Kur; eigenes Wartungsfenster, da Treiberwechsel).
+**ROOT CAUSE GEFUNDEN (2026-09-02): Windows „Voice Clarity"-APO —
+das Tascam war nie defekt.**  Beweisführung:
+1. Fremdrechner-Test (Operator): US-16x08 liefert an einem zweiten
+   Windows-Rechner via Audacity/MME einwandfrei Signal → Gerät ok.
+2. Jabra-Mikrofon auf der Studio-Maschine zeigt via MME denselben
+   Fingerabdruck: ~1 s reales Signal, dann Abfall auf exakt
+   −90,3/−96,7 dBFS Dauer-Floor (KI-Filter „konvergiert").
+3. Kontrollexperiment gleiche Sekunde, gleiches Gerät: WDM-KS
+   (treiber-direkt, ohne APO-Kette) liefert dauerhaft Raumsignal;
+   MME (Engine + Effekte) unterdrückt nach 1 Block alles → einziger
+   Unterschied ist die Effektkette der Windows-Audio-Engine.
+Täter: APO-Paket „Voice Clarity" (PnP „VocaEffectPack",
+`SWD\DRIVERENUM\{96BEDF2C-18CB-4A15-B821-5E95ED0FEA61}#VOCAEFFECTPACK
+&1&1E3C765A&0`, Klasse AudioProcessingObject, Provider Microsoft,
+1.0.4.7057, installiert 2026-08-25), per FxProperties an ALLE
+Capture-Endpoints geheftet (TEAC-, Class- und Jabra-Endpoint).
+KI-Sprachfreistellung klassifiziert Line-Signal (Musik/Ton = „keine
+Stimme") als Störgeräusch → Rest = Dither-Teppich.  Das erklärt
+rückwirkend ALLE „Zombie"-Phänomene: die „Heilungen" nach Re-Plug
+waren nur frische Konvergenz-Fenster (Kurz-Scans erwischten die
+erste Sekunde), die Treiber-Odyssee jagte einen Geist.
+**Fix:** Voice-Clarity-APO-Gerät im Geräte-Manager deaktivieren
+(global, admin, reversibel via Enable-PnpDevice) und/oder pro
+Endpoint Einstellungen → System → Sound → Eingabe →
+Audioverbesserungen = Aus.  Auf einer Sende-Maschine hat KEIN
+Capture-Endpoint KI-Filter zu tragen.  **Betriebs-Lore:** Nach
+großen Windows-Updates prüfen, ob der Effekt reaktiviert/neu
+angeheftet wurde (Kurztest: MME-Scan eines Line-Signals > 5 s —
+bleibt der Pegel, ist alles gut).
+
+**ABNAHME BESTANDEN + Rauschteppich-Ursache = Erdschleife
+(2026-09-02).**  Nach dem Deaktivieren von Voice Clarity lief die
+Kanalwahl mehrfach sauber on air (Kaltstart-Show 12:36, Feeder ab
++1,5 s, Mount ≡ öffentlicher Stream).  Operator hörte im Webstream
+aber einen Rauschteppich.  Systematische Lokalisierung (alle
+Messungen mit `analyze_clean.py`/`raw_floor.py`/`spectrum.py` im
+Scratchpad, floor(p5) + HF-Proxy + Goertzel-Sweep):
+- Feeder-Code ist transparent (`extract_frames` sortiert nur
+  int16-Lanes, kein Float/Dither/Gain); ffmpeg-Cmd ohne Gain/Filter.
+- **Stille-Messung ADC-direkt vs. Feeder-Ausgang: auf 0,3 dB
+  identisch** (rms −58, HF −69,8) → die Software fügt NULL hinzu.
+- Spektrum bei Stille: Brummen bei **100/200/300 Hz je −30 dBFS**
+  (gerade Vielfache von 50 Hz dominant = Vollweg-Gleichrichter-
+  Fingerabdruck), Höhen 3–10 kHz nur −57…−62 dB → kein Hiss.
+- **Beweistest Kabel getrennt:** Eingang unbeschaltet fällt der Floor
+  auf −84 dBFS, die 100-Hz-Linie auf −100 dB (70 dB weg).  Das
+  Brummen kommt also über die Signalleitung → **Erdschleife**
+  (Schirm → Tascam → USB → PC → Netz).
+**RASTATIME ist vollständig freigesprochen** — Rauschteppich ist
+externe Studio-Verkabelung.  **Fix (Operator-Seite, Priorität):**
+(1) Mantelstromfilter/Trennübertrager in die Ch-3/4-Leitung, (2)
+symmetrisch (XLR/TRS) verbinden, (3) DI-Box mit Ground-Lift, (4)
+gemeinsame Steckdosenleiste.  USB-Isolator NICHT nötig (Schleife
+läuft übers Audiokabel).  **Betriebs-Lore:** Kanal 3/4 sind
+Mic/Line-Combo-Eingänge; unsymmetrische Quellen brauchen galvanische
+Trennung.  Software-Abnahme der Kanalwahl = bestanden.
+Rest-Housekeeping: die Line-In-Rows tragen noch die alte, vor der
+Treiber-Odyssee gespeicherte `device_id`; der Name-Fallback greift
+bei jedem Start (Warnung im Log).  Beim nächsten Settings-Besuch die
+Sources einmal neu speichern, dann matcht die aktuelle Endpoint-ID.
+
+**FINAL ABGESCHLOSSEN (2026-09-02 abends).**  Housekeeping erledigt:
+die 4 Tascam-Rows per API-PATCH von `eb8ab9e3-…` auf die aktuelle
+`15982059-3662-4bfb-ab8c-ecb06ad66f71` gesetzt (Mappings erhalten);
+seither startet der Feeder ohne Name-Fallback-Warnung (Log der
+19:06-Show bestätigt).  **Erdschleife-Gegenprobe live bestanden:**
+Operator schloss eine Signalquelle OHNE eigenes Netzteil an (kein
+zweiter Erdungspfad) — Stille-Messung auf dem Stream: 100 Hz von
+−30 auf **−90 dBFS** (59 dB weg), 200/300 Hz −72/−75, Floor Ch3
+−72 dBFS.  Operator bestätigt per Ohr: „Das Brummen ist weg."  Damit
+Kanalwahl-Feature **vollständig abgenommen** (Software + Live-Hörtest).
+**Klarstellung „zwei Feeder-Prozesse":** kein Bug — der venv-Python
+`…\.venv\Scripts\python.exe` ist ein Launcher-Stub, der den
+Basis-Python (`C:\Program Files\Python313\python.exe`) als Kind
+startet; nur EINER öffnet das MME-Gerät.  Beim Show-Ende werden beide
+sauber beendet (Feeder-Count 0 verifiziert).  Restpegel-Hinweis:
+Ch4 rauscht ~12 dB mehr als Ch3 (kanalspezifisch, auch bei
+getrenntem Eingang so — unkritisch, Nutzsignal lag auf Ch3).
+
+### ✅ Tascam als Sende-/Monitor-Ausgang ohne PortAudio-Blocking (evaluiert 2026-09-03, erledigt 2026-09-03 über Option B)
+
+**Status:** ✅ **ERLEDIGT über Option B (2026-09-03, 13:30)** — Ursache
+war das Windows-Mix-Format des Render-Endpunkts (48 kHz/24 bit).
+Operator stellte es auf **44,1 kHz** um → WASAPI öffnet blockierend,
+Resolver löst `Tascam-Lautsprecher [WASAPI] idx 18` auf, Produktions-
+Rendering läuft stabil, hörbarer Testton läuft, **Koexistenz bewiesen**
+(Liquidsoap→Tascam + Line-In-Feeder MME-16ch-Capture vom selben Gerät +
+ffplay parallel).  Kein Reboot nötig; Option A (unten) bleibt als
+dokumentierter Notfallplan, wird NICHT gebaut.  **Ohr-Abnahme nach dem
+Reboot (2026-09-03 ~14:10, Operator):** Tascam als aktives Geraet
+angezeigt, Test-Show ueber den Tascam-Ausgang kristallklar.  **Betriebs-Lore:** Das
+Endpunkt-Format muss 44,1 kHz bleiben (Liquidsoap-Framerate); springt es
+(Treiber-Neuinstallation!) auf 48 kHz zurück, fällt der Ausgang auf
+OS-Default, der Resolver loggt den Hinweis, der „Aktiv"-Anzeiger zeigt
+die Abweichung.  Check-Skript: `C:/Temp/rastatime-postreboot-check.py`.
+**(Evaluierung vor der Lösung, zur Historie:)**
+**Ausgangslage (gemessen 2026-09-03):** Der Tascam-US-16x08-Ausgang
+lässt sich über KEINEN Weg durch die Windows-Audio-Engine öffnen —
+PortAudio (MME/DirectSound/WASAPI, blocking + callback, int16/float32,
+44,1 + 48 kHz, 2 + 8 Kanäle), libao/wmm (`waveOutOpen FAILED`), und
+sogar SDL/ffplay als „normale App" (`WASAPI can't initialize audio
+client`).  Registry: aktiver Render-Endpunkt `{97af73f9…}` state=1,
+Mix-Format 48000/24bit/stereo, FxProperties LEER.  Vermutlich
+Windows-seitig defekter Render-Endpunkt (Operator hörte schon am
+2026-09-01 nichts, als der Tascam Windows-Default war) → nach dem
+geplanten Reboot 5-Minuten-Recheck.  **Nur WDM-KS (kernel streaming,
+exklusiv, NUR Callback-Modus) funktioniert.**  Liquidsoaps
+`output.portaudio` nutzt die blockierende API → am Tascam unbrauchbar;
+auch bei `settings.frame.audio.samplerate := 48000` („Invalid device").
+**Prototyp bewiesen — `output.external` + eigener Output-Feeder
+(sounddevice, WDM-KS, Callback; Spiegelbild des linein_feeder):**
+- Audio fließt in Echtzeit (455 323 Frames / 10,3 s @ 44,1 kHz).
+- Mit 300 ms Vorpuffer + blocksize 2048: 8 Startup-Underruns, danach
+  **konstant 0** über 15 s.
+- **Feeder abgeschossen:** Liquidsoap überlebt, `output.file`
+  (Icecast-Stellvertreter) läuft weiter, Feeder wird per
+  `reopen_on_error` automatisch neu gestartet (Supervision liegt in
+  Liquidsoap, kein Python-Watchdog nötig).
+- **Feeder hängt (liest stdin nicht mehr):** UNGESCHÜTZT steht der
+  Icecast-Stellvertreter (0 B in 8 s) — die Pipe blockiert die Clock.
+  MIT `buffer(buffer=2.0)` + `clock.assign_new(sync="cpu")` (dasselbe
+  Muster wie der PortAudio-Block) läuft er ungestört weiter.  →
+  **Isolation ist Pflicht.**
+**Optionen:** (A) output.external-Feeder wie oben, ~150 LoC Feeder +
+~60 Renderer + ~40 Resolver (Callback-Probe für den Feeder-Pfad,
+Blocking-Probe für portaudio — Probe-Modus MUSS zum Konsumenten
+passen, Lehre aus dem Ausfall) + Tests + Doku ×4; ~6–8 h, ~1–1,5 Tage
+mit Live-Fenster.  Exklusives KS ist für einen Sendeweg ein Vorteil
+(bit-transparent, kein Windows-Mixer, keine Fremd-App kann
+einspeisen).  Latenz ≈ Vorpuffer + buffer() (heute 2 s am Monitor-
+Block; für Sendeweg auf ~0,5 s tunen).  (B) Engine-Pfad heilt nach
+Reboot → evtl. plain output.portaudio via MME/DS wie beim Jabra;
+unsicher, 5-min-Check nach Reboot.  (C) PortAudio/Liquidsoap neu bauen
+→ No-Go (Zuverlässigkeit vor Modernität).
+**Mess-Skripte:** Scratchpad `out_feeder*.py`, `ext*.liq`, `hang*.liq`.
+
+### ✅ Boot-Race: LIQUIDSOAP startet parallel zu PLAYOUT und liest die alte .liq (erledigt 2026-09-07, abgehakt 2026-09-09)
+
+**Erledigt (Operator-Bestätigung 2026-09-09):** der Boot-Fenster-Neustart
+vom 2026-09-07 (`__main__`: ändert das Rendern die .liq in den ersten
+zehn Minuten nach dem Boot, startet PLAYOUT RASTATIME-LIQUIDSOAP selbst
+neu; bei Index-Adressierung des Main Output übersprungen) ist der hier
+empfohlene „Boot-Fenster-Schutz".
+
+**Status:** Defer — Design-Entscheidung nötig (gefunden 2026-09-03 beim
+Tascam-Sendeausgang).  Kein akuter Blocker: der „Jetzt anwenden"-Knopf
+löst es jederzeit auf, und der „Aktiv"-Anzeiger macht es sichtbar.
+**Befund:** RASTATIME-PLAYOUT und RASTATIME-LIQUIDSOAP sind beide
+StartMode=Auto, DelayedAutoStart=False, ohne Dienst-Abhängigkeit.
+PLAYOUT rendert rastatime.liq erst Sekunden nach seinem Start (Django,
+DB, API); Liquidsoap liest die Datei sofort beim Start → nach einem
+Reboot läuft Liquidsoap mit dem VORHERIGEN Skript.  Jede Änderung, die
+ein Re-Rendern braucht (Main Output, Stream-Outputs, Harbor, Hourly
+Recording), wird durch einen Reboot also NICHT angewendet; PLAYOUT
+loggt nur „RESTART the RASTATIME-LIQUIDSOAP NSSM service".
+**Optionen (Trade-offs, vor Umsetzung mit Operator klären):**
+1. NSSM: LIQUIDSOAP mit DelayedAutoStart oder Abhängigkeit von PLAYOUT
+   — billig, aber nur ein Zeitpolster; die Render-Dauer ist nicht
+   garantiert (DB-Start).  Kein echtes Handshake.
+2. PLAYOUT startet LIQUIDSOAP selbst neu, wenn der Render-Inhalt sich
+   beim Start geändert hat (`changed=True`) — deterministisch; Nachteil:
+   ein automatischer Liquidsoap-Neustart ist genau die Aktion, die wir
+   beim Speichern bewusst NICHT automatisch auslösen (Stream-Abriss).
+   Beim Boot ist noch nichts on air → vertretbar, aber es braucht eine
+   Schutzlogik (nur innerhalb der ersten Minute nach Boot, nie im
+   laufenden Betrieb).
+3. Liquidsoap wartet beim Start auf ein „Render fertig"-Signal (Datei-
+   Marker/Health-Gate wie bei WORKER/PLAYOUT gegen die API) — sauberste
+   Lösung, mehr Aufwand (NSSM-Wrapper-Skript).
+**Empfehlung:** Option 2 mit Boot-Fenster-Schutz, ~2–3 h; vorher Go.
+**Bis dahin (Betriebsregel):** Nach jedem Reboot Settings → Local Machine
+→ „Aktiv"-Zeile prüfen; bei Abweichung einmal „Jetzt anwenden".
+
+**Nachtrag 2026-09-05 (Beweis nach dem Reboot 11:15):** Instanz #1
+startete 11:15:15 mit der .liq vom Vorabend (`device_id=18`), PLAYOUT
+renderte 11:15:18 neu (`device_id=14`), Instanz #1 starb 11:15:22 an
+„Blocking API not supported" (18 war inzwischen ein WDM-KS-Gerät),
+NSSM startete Instanz #2 um 11:15:27 — die nun Index 14 = Realtek
+öffnete (Endpoints erschienen zwischen Probe und Öffnen; siehe
+„PortAudio-Geräteindex instabil").  Ohne den zufälligen Re-Render
+wäre es eine Neustart-Schleife gewesen.  Die Empfehlung (Option 2 mit
+Boot-Fenster-Schutz) steht; sie muss zusammen mit dem `device_name`-
+Eintrag umgesetzt werden, sonst bleibt der Index-Drift.
+**Umgesetzt 2026-09-05 (`1dbeb71`):** Option 2 — PLAYOUT ruft
+`nssm restart RASTATIME-LIQUIDSOAP` selbst, wenn sein Render die .liq
+innerhalb von 10 min nach dem Hochfahren geändert hat
+(`liquidsoap_service.py`, `RASTATIME_LIQUIDSOAP_BOOT_RESTART=0`
+schaltet ab).  Status damit 🟢.
+**Nachtrag 2026-09-06 (`578e950`):** Das Gegenstück — PLAYOUT vor
+LIQUIDSOAP — ließ den einmaligen `recording.stop`/Gate-Reset ins
+Leere laufen (Sentinel-Datei wuchs).  Jetzt wiederholt der Scheduler
+beides bis zu 90 s, bis Telnet antwortet; gilt auch nach dem Boot-
+Fenster- und dem nächtlichen Neustart.
+
+### 💡 Line-In: Kanalwahl auch im Library-Schnell-Editor (Option A)
+
+**Status:** Idea — Operator-Entscheid 2026-09-01: „vorerst Option B,
+eventuell später Option A".
+**Kontext:** Es gibt zwei Line-In-Editoren: (1) den vollen Editor
+unter Settings → Local Machine → Line-In Sources (seit `1f60295`;
+inkl. Kanal-Picker, Priorität, Verwaltungstabelle) und (2) den
+schlanken Library-Seiten-Editor (`linein/linein.phtml`, Name/Gerät/
+Standardlänge/Beschreibung).  Option B (umgesetzt): der
+Library-Editor zeigt einen Hinweis-Link auf den vollen Editor; neue
+Einträge dort starten mit Kanälen 1/2 (`saveAction` lässt
+`channel_mapping` bei PATCH unangetastet, defaultet bei POST).
+**Option A (bei Umsetzung):** Kanal-Picker (wie in linein.js
+`populateChannelSelect`) auch in `linein/linein.phtml` + `saveAction`
+um `channel_mapping` erweitern.  ~1–2 h.
+**Mitzunehmen:** LINE_IN.md trägt Alt-Drift aus der Frühzeit — §2/§5/
+§6 referenzieren eine Seite „Settings → Line-In Library", die es
+nicht (mehr) gibt (real: Library-Hauptmenü „Line Inputs" + Settings →
+Local Machine); LOCAL_MACHINE.md §3 beschreibt eine
+Input-Device-Checkbox-Liste, die die Seite nicht hat.  Bei
+Option-A-Umsetzung das Kapitel in einem Zug sanieren (4 Sprachen).
+
+### ✅ Latent: `HistoryService::getSqlTypes()` mappt DATETIME auf ungültigen PG-Cast (DONE 2026-09-10)
+
+**Status:** Behoben 2026-09-10 (Arbeitsreihenfolge Punkt 4, `cdc8f0b`): Cast-String `timestamp`; Typnamen der ganzen Tabelle gegen die
+Datenbank geprüft (`date`, `time`, `timestamp`, `text`, `boolean`, `integer`,
+`float` gültig, `datetime` nicht).
+**Ursprünglicher Befund:** Idea/Latent — heute harmlos, Fund der 2026-08-30er
+Playout-History-Diagnose.
+**Befund:** `getSqlTypes()` übersetzt `TEMPLATE_DATETIME` in den
+Cast-String `'datetime'` — den Typ gibt es in PostgreSQL nicht
+(korrekt wäre `timestamp`).  Harmlos, solange kein History-Template
+ein eigenes DATETIME-Feld definiert (die Stock-Templates tun es
+nicht); sobald eines angelegt wird, wirft der Feed-Query einen
+SQL-Fehler.  Einzeiler-Fix, bei nächster Arbeit an
+`HistoryService.php` mitnehmen.
+
+### ✅ Smart Block speichern funktioniert nicht (DONE 2026-08-30, `5029a7c`)
+
+**Status:** Behoben — Root Cause empirisch bewiesen (Standalone-Harness).
+**Ursache (PHP-8-Klasse, nicht jQuery):** Eine Criteria-Zeile, die noch
+auf ihrem „Select criteria"-Platzhalter steht, postet den Key `'0'` —
+der nicht in der Criteria-Map liegt.  Auf PHP 7 humpelte der
+Missing-Key-Zugriff als null + Notice durch und das Formular zeigte
+danach den gewollten Fehler „You must select Criteria and Modifier";
+auf PHP 8 knallt derselbe Zugriff in den non-nullable Return-Type von
+`BlockCriteria::get()` → TypeError → HTTP 500.  Das Save-`$.post`
+hatte keinen `.fail()`-Handler → Editor hing stumm am Spinner =
+„Block wird nicht gespeichert".  Traf **jeden** Save mit unberührter
+Criteria-Zeile.
+**Fix:**
+- `Criteria.php`: `BlockCriteria::get()` liefert für unbekannte Keys
+  einen neutralen Platzhalter → die freundliche Validierung greift
+  wieder statt des 500ers.
+- `Block.php`: etc-Feld-Reads in `saveSmartBlockCriteria()`
+  null-coalesced — die Methode DELETEt erst alle gespeicherten
+  Kriterien und insertet dann neu; ein TypeError mittendrin
+  vernichtete die Kriterien des Blocks endgültig (Datenverlust-Guard).
+- `spl.js`: Save-`$.post` hat jetzt einen `.fail()`-Handler (meldet
+  HTTP-Status statt stumm zu hängen).
+**Rest-Check (offen, klein):** ein Save-Roundtrip im eingeloggten
+Browser (unberührte Zeile → Validierungsfehler; echte Kriterien →
+gespeichert) — Operator-Sichtprüfung genügt.
+
+### ✅ Analytics: Listener Stats + Show Listener Stats sammeln keine Daten (DONE 2026-08-30, `00ce768`)
+
+**Status:** Behoben — gebaut wie unten evaluiert, mit einer Abweichung:
+die Poll-Liste kommt aus den live `cc_pref stream_output_N`-Settings
+(inkl. Admin-Creds) statt aus icecast.xml — damit folgt der Collector
+Stream-Änderungen ohne Neustart.  E2E bewiesen (2 Test-Listener →
+exakt 1/1/0 in `cc_listener_count`); Details im ✅-Eintrag
+„Listener-Statistik zeigt keine Daten" oben.  Ursprüngliche
+Evaluierung darunter als Referenz belassen:
+**Evaluiert:** 2026-05-29 (Operator-Wunsch).
+**Operator-Priorität:** Low.  Listener Stats wichtiger als Show
+Listener Stats.
+
+**Symptom:** Unter ANALYTICS → "Listener Stats" + "Show Listener
+Stats" ist nur die Date-Range-Auswahl bedienbar, sonst bleibt alles
+leer (kein Chart, keine Tabelle).
+
+**Diagnose (Anzeige-Kette intakt, Daten-Sammlung gebrochen):**
+Controller (`ListenerstatController`), Model (`ListenerStat`), Views,
+flot-Chart-JS und der API-Endpoint (`ApiController::pushStreamStatsAction`
+→ `insertDataPoints`) funktionieren.  `cc_listener_count` hat aber
+**0 Zeilen** → leeres JSON → leerer Graph.  Drei Brüche:
+
+1. **StatsCollectorThread läuft nicht.**  Wird nur in der verwaisten
+   `backend/playout/rastatime_playout/main.py` gestartet; der aktive
+   Entry-Point `__main__.py` (`python -m rastatime_playout`) kennt ihn
+   nicht (0 Referenzen).
+2. **Output-Quelle leer.**  `StatsCollector.collect()` liest
+   `config.stream.outputs.merged` aus rastatime.conf, dort
+   `outputs: icecast: []`.  Beim Liquidsoap-Cutover (Phase D) wanderte
+   die Output-Config nach cc_pref + rastatime.liq.
+3. **Admin-Passwort fehlt.**  Der Collector pollt Icecast
+   `/admin/stats.xml` und braucht das Icecast-**Admin**-Passwort
+   (nicht das Source-Passwort, das Liquidsoap zum Pushen nutzt) —
+   aktuell nirgends für den Collector verdrahtet.
+
+**Was gebaut werden müsste:**
+- `StatsCollectorThread` in `__main__.py` starten (~3-5 Zeilen).
+- Output-Quelle umstellen: Icecast `/admin/stats.xml` direkt pollen
+  mit Admin-Creds aus icecast.xml/config — unabhängig von der leeren
+  rastatime.conf-Output-Liste.
+- Admin-Passwort-Config-Read.
+- Show Listener Stats: baut auf denselben cc_listener_count-Daten
+  (JOIN cc_show_instances) — funktioniert fast automatisch sobald
+  Listener Stats Daten liefert; nur Tabellen-View prüfen.
+
+**Aufwand:** Listener Stats ~150-250 LoC + Tests (~1 Tag);
+Show Listener Stats ~50 LoC zusätzlich (~0.5 Tag).
+**Vorbedingungen:** (1) Live-Betrieb aktiv, (2) erste echte Listener
+(sonst nicht testbar — ohne Hörer keine Daten), (3) Hardware-Migration
+durch (auf stabiler Plattform reparieren).
+**Risiko Live-Betrieb:** Sehr niedrig — Collector ist ein Read-Only-
+Beobachter neben dem Stream; kein Eingriff in Playout/Recording/Output.
+
+### ✅ Liquidsoap clock.assign_new wrapped alle Outputs in portaudio_clock (DONE 2026-05-28 — C5-Side-Fix)
+
+**Status:** DONE — bus-split via `buffer(buffer=0.5, bus)` als asynchrone
+Clock-Bruecke implementiert (Task #108).  Phase-D-Defer hat sich erledigt
+weil der C5-Reality-Test 2026-05-28 01:25 zeigte dass die clock.assign_new-
+allein-Variante NICHT reicht: PortAudio underflow crashte trotzdem das
+ganze Liquidsoap (Output underflowed → Shutdown started, ~5s NSSM-Restart
+mitten in einer aktiven Recording).  Der echte Bus-Split via buffer() ist
+die canonical Liquidsoap-Loesung, jetzt im Renderer + Test gesichert.
+Trade-off: lokales Monitor-Speaker laeuft 500 ms hinter Stream/Recording.
+
+**Festgestellt:** 2026-05-27 (Phase-C4 Reality-Test).
+**Behoben:** 2026-05-28 (Phase-C5 Reality-Test, Renderer-Edit in
+`liquidsoap_config.py::_render_local_output_block`).
+
+---
+
+### ✅ Liquidsoap Latency-Catchup unter System-Last verliert Recording-Audio (Phase-D) — CLOSED 2026-09-16
+
+**Geschlossen 2026-09-16 (Arbeitsreihenfolge Punkt 9, Bedingung vom
+09.09. erfüllt):** Catchups pro Tag aus allen Liquidsoap-Logs seit dem
+01.09.: 02.–05.09. 100.000–162.000 (die `sync="cpu"`-Uhr, behoben 05.09.),
+06.09. 6, 08.09. 10, 10.09. 4, 11./12.09. je 2, seit 13.09. keine.  Die
+24/7-Aufnahme vom 16.09. (erster voller Tag nach dem Storage-Umbau) hat
+Stundendateien von 3599,9–3600,1 s (11, 13, 14, 15 Uhr); die durch
+Einstellungs-Neustarts geteilten Stunden 12 und 16 summieren sich auf
+3599,2 bzw. 3599,0 s (≈ 1 s Neustart-Lücke, kein Catchup-Verlust).  Die
+Ursache von Mai/Juni (7 min Verlust bei 96 Catchups/h) war die alte
+Hardware plus die Uhr-Konfiguration; beides ist weg.  Wieder öffnen,
+wenn eine Stundendatei ohne Neustart unter 3595 s fällt.
+
+**Beobachtung bis 2026-09-15 (Operator-Go 2026-09-09):** die Catchups
+(„We must catchup") liefen am 2026-09-04 81.222-mal, am 2026-09-08
+fünfmal, am 2026-09-09 gar nicht — der Auslöser ist mit den Änderungen
+vom 05.09. weg.  Bleibt es bis 15.09. dabei, wird der Punkt geschlossen.
+**Status:** Defer — funktional kein Showstopper, aber Recording-Loss-Risk
+unter Spitzenlast.
+**Festgestellt:** 2026-05-28 (C5 Burn-In #2).
+
+**Symptom:**
+Im 6-Stunden-Burn-In (02:48 - 10:05) waren 5 von 6 Shows mit
+99-100 % Recording-Duration korrekt. Eine 60-min-Show (06:00-07:00)
+landete bei 88.2 % (3173 von 3600 s = 7 min Audio verloren).
+
+Korrelation: Liquidsoap-Log zeigt `Latency is too high: catchup N.NN s`
+Warnungen mit folgender Häufigkeit pro Stunde:
+- 04: 28  /  05: 21  /  06: **96**  /  07: 72  /  08: 21
+
+Peak in der Stunde wo die Show 7 Minuten verlor. Zusätzlich
+1 Telnet-Timeout (Pypo → Liquidsoap) um 06:11:45 — Liquidsoap war
+zu beschäftigt mit Catchup um den `scheduled.push` Befehl
+rechtzeitig zu beantworten. Pypo hat sich nach dem Timeout
+sauber erholt (kein Folge-Error).
+
+**Realer Datenpunkt (2026-06-06, erster 24/7-Recorder-Live-Test):** Im
+11-h-Test (23:00–10:00) waren fast alle Stunden-Dateien exakt 60 min;
+einzig die 00:00-Datei verlor ~5 min (55:01), die 23:00-Datei war die
+erwartete Teil-Erststunde (57:31).  Operator korreliert den 00:00-Verlust
+mit HW-Überlast durch komplexe Schaltungen um Mitternacht (HW-Tausch steht
+unmittelbar bevor).  Bestätigt: das Symptom betrifft auch den **24/7-
+Recorder** (zweiter `output.file` auf demselben Bus), nicht nur Per-Show —
+selbe vermutete Ursache (Catchup unter Last).  Nach HW-Tausch erneut prüfen.
+
+**Hypothesen:**
+- System-Last-Quelle: Hintergrund-Disk-I/O (Backup? Indizierung?
+  Windows-Update?), oder anderer Process (Bitdefender-Scan?)
+- Liquidsoap-Pipeline-Tuning: Frame-Size, Buffer-Größen,
+  Threading-Settings könnten Catchup-Latenz reduzieren
+- output.file selbst könnte Mit-Verursacher sein (synchroner Disk-
+  Write blockt Bus)
+
+**Diagnose-Skript für Phase-D:**
+- 24h Burn-In MIT zusätzlicher Last-Probe (perfmon-Logging
+  parallel zu burnin2_snapshots: CPU%, Disk-I/O, Memory-Pressure)
+- Cross-Reference: korrelieren Catchup-Events mit System-Metriken?
+- Falls Disk-I/O der Schuldige: output.file separat per
+  clock.assign_new vom Bus isolieren (analog zur PortAudio-Lösung)
+
+**Workaround bis dahin:**
+- Nichts. 60-min-Show-Recordings unter Spitzenlast sind potentiell
+  unvollständig. 10-min-Show-Recordings sind in der Praxis stabil
+  bei 99-100 %.
+
+**Aufwand:** ~4-8 h für Diagnose, danach 1-3 d Fix je nach Root-Cause.
+
+---
+
+### ✅ Per-Track Crossfade-Entscheidung basierend auf Track-Länge — ERSETZT 2026-09-27
+
+**Status:** ✅ Erledigt 2026-09-27 durch das Titel-Attribut „Exclude from
+Crossover" (Edit Metadata; Operator-Entscheid: kein Längen-Schwellwert,
+sondern eine Markierung je Titel).  Der markierte Titel spielt vollständig,
+Nachbarzeilen ohne Crossfade-Versatz.  Historie darunter.
+
+**Ursprünglicher Status:** Defer — Phase-D-Polish.
+**Evaluiert:** 2026-05-28 (Phase-D Stück-B Operator-Wunsch).
+**Operator-Vision (klare Spezifikation):**
+
+> "Für alle Tracks < 30 s gilt IMMER kein (0.0 s) Crossfade,
+> Fade-In oder Fade-Out.  Für alle Tracks ≥ 30 s kann man die
+> Einstellung unter SETTINGS → GENERAL vornehmen."
+
+**Aktueller Stand (2026-05-28 nach Phase-D Stück-B):**
+- Globaler Default `crossfade(fade_in=0.0, fade_out=0.0)` (commit X)
+  = hart-cut für ALLE Tracks. Sicher dass jeder Track zu 100 %
+  spielt, aber Music-zu-Music-Übergänge sind abrupt.
+- Crossfade-Duration weiterhin via env-var
+  `RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS` (default 1.0).
+
+**Was gebaut werden müsste:**
+
+1. **Per-Track fade-Decision** — über Pypo's `_build_annotate_uri`
+   eine Liquidsoap-Metadata-Annotation, die der crossfade-Operator
+   pro Track liest:
+     - Tracks `(cue_out - cue_in) < 30 s`: `liq_cross_start_duration="0.0"`
+       + `liq_cross_end_duration="0.0"`  (separat, NICHT die
+       zusammenfassende `liq_cross_duration` — das hat Phase-D
+       Stück-B-Iteration 2026-05-28 silenced statt no-fade'd).
+     - Tracks `≥ 30 s`: keine Annotation, Liquidsoap nutzt das
+       globale fade_in/fade_out (= cc_pref settings, siehe unten).
+
+   Vorbedingung: lokales Liquidsoap-Test-Setup mit echten Files
+   (5-s-Jingle + 60-s-Music + per-track Annotations) bauen, um
+   zu verifizieren dass `liq_cross_start/end_duration="0.0"` wirklich
+   "no fade" macht und nicht "skip track".
+
+2. **Frontend-Settings funktional machen** (siehe separates BACKLOG-Item
+   "Frontend-Settings Default Fade In / Out / Crossfade Duration"):
+   die GLOBAL fade_in/fade_out Werte für Tracks ≥ 30 s sollen aus
+   cc_pref (Settings → General → Default Crossfade Duration / Default
+   Fade In / Fade Out) gelesen werden, nicht aus env-var.  Bei
+   Settings-Save: re-render rastatime.liq + Pypo signal-restart.
+
+**Aufwand:** ~6-10 h gesamt:
+- ~2 h Liquidsoap lokaler Test-Setup + Verify start/end_duration-Semantik
+- ~2 h Pypo `_build_annotate_uri` + Tests
+- ~3-4 h Frontend-Setting-Wiring (cc_pref-Reader + render-Hook)
+- ~1 h Doku-Updates
+
+**Vorbedingungen:**
+- Phase E + F idealerweise durch (damit auch Webstreams/Line-Inputs
+  per cue_in/cue_out durch den gleichen Mechanismus laufen)
+- Phase D Live-Betrieb stabil ohne kritische Bugs
+
+**Workaround heute (2026-05-28):**
+Operator akzeptiert globale hard-cuts.  Kurze Jingles spielen zu
+100 %; Music-zu-Music ist hart aber click-frei (kein audible
+gap, nur kein smooth fade).
+
+---
+
+### ✅ Frontend-Settings "Default Fade In / Out / Crossfade Duration" wieder funktional machen — ERLEDIGT 2026-09-27
+
+**Status:** ✅ Erledigt 2026-09-27: „Default Track Crossfade Duration" und
+„Default Show Crossfade Duration" wirken (cc_pref primär, env-Fallback,
+Einstellungs-Neustart per Fingerprint); die wirkungslosen Fade-In/Out-Felder
+sind ausgeblendet statt reanimiert (Operator-Entscheid).  Historie darunter.
+
+**Ursprünglicher Status:** Defer — Operator-Wunsch 2026-05-28, kein akuter Blocker.
+**Evaluiert:** 2026-05-28 (Phase-D Stück-B-Iteration).
+**Operator-Wert:** Mittel — bessere UX (Settings statt env-var-Bearbeitung).
+
+**Aktueller Stand:**
+- **Default Fade In (s)** und **Default Fade Out (s)** in
+  Settings → General Preferences werden vermutlich beim
+  Schedule-Build/Play noch nicht verwendet (Upstream-Erbe;
+  Liquidsoap-Engine ignoriert sie).
+- **Default Crossfade Duration (s)** wird aktuell durch die
+  env-var `RASTATIME_LIQUIDSOAP_CROSSFADE_SECONDS` am
+  RASTATIME-PLAYOUT NSSM-Service kontrolliert (default 2.0,
+  jetzt operator-gesetzt auf 1.0).  Das Frontend-Setting wird
+  ignoriert.
+
+**Was gebaut werden müsste:**
+1. Pypo: in `__main__.py` oder `liquidsoap_config.py` die env-var
+   als Fallback behalten, aber primary-source soll das cc_pref
+   sein (analog zu wie stream-outputs aus cc_pref gelesen werden).
+2. Bei Settings-Save: Pypo `reload_outputs` oder ähnlicher Mechanismus
+   triggert .liq re-render + Liquidsoap-restart (optional;
+   einfacher: Operator restartet manuell).
+3. Fade-In/Out: in Pypo's Track-push-annotate-string als
+   `fade_in="N"` / `fade_out="N"` mit-geben (Liquidsoap kann
+   diese annotations).
+
+**Teil-Erledigung 2026-09-04:** Punkt 1 (Crossfade-Setting als
+primäre Quelle, Env-Var als Fallback) ist mit Paket 2 umgesetzt
+(`eabf798`).  Offen bleiben Punkt 2 (Re-Render-Hook beim Speichern —
+heute: „Jetzt anwenden" in Local Machine) und Punkt 3 (Fade-In/Out).
+
+**Aufwand:** ~3-4 h für Crossfade-Setting + Re-Render-Hook;
+~1-2 h für Fade-In/Out.
+
+**Vorbedingung:** Frontend-Setting muss Operator-Permission haben
+(Admin only — UI ist da, nur Backend-Wiring fehlt).
+
+---
+
+### ✅ Sendung verschieben rundet die Zeilen auf ganze Sekunden (festgestellt 2026-10-01, DONE gleichen Tags)
+
+**Status:** Behoben 2026-10-01 (`c7b5192`, Operator-Go gleichen Tags):
+`updateScheduleStartTime()` verschiebt per SQL-Intervall (Mikrosekunden
+bleiben), `moveItem()` legt die Quell-Sendung nach `removeGaps()` per
+`calculateCrossfades()` neu aus.  Probe an einer temporären 10-min-Instanz
+(±600 s): 5/5 Zeilen mit Bruchteilen, 0 Abweichungen, Rückweg byte-gleich
+zum Build — Details CHANGELOG 01.10.
+
+**Befund:** Bei der Live-Probe der exakten Autoloading-Befüllung
+(`cdc4689`, Instanz 2224 „testautoloading") war der Slot nach dem Build mit
+0,0 s Rest ausgelegt.  Nach dem Verschieben der Sendung (10:40 → 10:50 →
+11:00, Bearbeiten-Dialog) blieb die Kette intakt, der Rest wuchs aber auf
+1,0 s: die Zeilen lagen auf ganzen Sekunden (Outro-Zeile 11:59:40 bis
+11:59:59, PLAY 11:59:40,05 / STOP 11:59:59,06).  Hörbar war nichts — das
+Outro lief bis zur Sendungsgrenze durch, und `show/old` übergab um
+12:00:00,06 an die nächste Sendung.
+
+**Ursache:** `Application_Service_SchedulerService::updateScheduleStartTime()`
+(`services/SchedulerService.php:49`) verschiebt die Zeilen über die
+Propel-Setter `setDbStarts()/setDbEnds()`, die auf `Y-m-d H:i:s` kürzen.
+Beide Verschiebe-Pfade laufen dort durch: der Bearbeiten-Dialog
+(`ShowService` → `instanceIdsForScheduleUpdates`) und das Ziehen im
+Kalender (`CalendarService::moveShow()`).  `calculateCrossfades()` hat
+dasselbe Problem am 2026-09-27 für die Auslegung gelöst (Raw-SQL mit
+`DEFAULT_MICROTIME_FORMAT`, `models/Scheduler.php:790`), läuft nach dem
+Verschieben aber nicht.
+
+**Fix-Skizze:** Die `foreach`-Schleife durch ein einziges
+`UPDATE cc_schedule SET starts = starts + :diff::INTERVAL, ends = ends +
+:diff::INTERVAL WHERE instance_id IN (...)` ersetzen — Timestamp-Arithmetik
+in PostgreSQL behält die Mikrosekunden, und die Zeilen bleiben exakt so
+zueinander, wie der Build sie ausgelegt hat.  Danach prüfen, ob
+`removeGaps()` (`models/Scheduler.php:846`) noch über die Setter speichert.
+Probe: Test-Sendung bauen, verschieben, `ap_fill_test.php --plan` bzw. die
+`cc_schedule`-Zeilen vor/nach dem Verschieben vergleichen (Rest muss 0,0 s
+bleiben).
+
+---
+
+### ✅ Speicherzuwachs der Liquidsoap-Hauptinstanz eingrenzen (≈ 8 MB/h im Leerlauf, festgestellt 2026-09-15) — (a) weiche Grenze 2560 MB gesetzt 2026-10-28, (b) Ursachensuche 🟡 Defer
+
+**Stand 2026-10-28 (Auswertung der Playout-Logs 16.–28.10., Operator-Go (a) mit 2560 MB):**
+Der Zuwachs hängt am Programm, nicht an der Laufzeit: ruhige Tage mit wenigen Titeln 8–10 MB/h,
+volle Musiktage (350–410 abgespielte Titel) 16–19 MB/h, Spitzen in den musiklastigen Stunden.
+Startwert nach Neustart ≈ 1000 MB (davon ≈ 900 MB Stereo Tool, seit 2026-10-02).  Die weiche Grenze
+1536 MB war damit nach ≈ 30 h erreicht → Speicher-Neustart faktisch jede zweite Nacht um 04:00
+(21.10., 27.10.); `RESTART_EVERY_DAYS=7` kam nie zum Zug.  Real belegt: 483 MB Working Set bei
+1509 MB Private Bytes, 16 GB RAM (6,6 GB frei).  **(a) umgesetzt:** `RASTATIME_LIQUIDSOAP_RESTART_AT_MB=2560`
+per `nssm set AppEnvironmentExtra` am PLAYOUT-Dienst (alle bestehenden Einträge wiederholt), harte
+Grenze 3072 unverändert; wirksam seit PLAYOUT-Neustart 17:57 (Umgebung des Prozesses geprüft) → Neustart etwa jede vierte
+Nacht.  Folge-Einstellung: Dashboard-Banner `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB=2816` (Vorgabe 2048 läge unter der neuen
+weichen Grenze und stünde den letzten Tag vor jedem Neustart), gesetzt 2026-10-28, wirksam seit PLAYOUT-Neustart 18:02
+(Prozess-Umgebung geprüft); erster Grenz-Neustart mit der neuen Grenze voraussichtlich 31.10. 04:00.  Manual LOCAL_MACHINE ×4 ergänzt.  **(b) Defer:** Ursache je Titel (Decoder, Cross-Puffer,
+R128-Gain, ICY-Block, Telnet-Kommandos je Titel à 17 Selects) nur im Replikat eingrenzbar (4–6 h,
+Ergebnis offen); Vorbedingung: die Replikat-Messung aus dem Upgrade-Item zeigt, dass das Leck auch
+mit OCaml 5 bleibt — sonst erledigt sich (b) mit dem Upgrade.
+
+**Status (bis 2026-10-28):** Idee / Untersuchung, kein Handlungsdruck — der geplante Neustart
+greift bei 1536 MB im 04:00-Fenster, beim heutigen Zuwachs etwa alle 6 Tage.
+**Vorbedingung:** Operator-Go; sinnvoll erst, wenn das Neustart-Intervall über
+etwa 6 Tage steigen soll.
+
+**Befund (Speicherwoche, Instanz seit 2026-09-14 10:43):** 103 MB nach dem
+Start, 155 MB nach 5,1 h, 301 MB nach 21,3 h, 333 MB nach 24,4 h.  Über Nacht
+(2026-09-14 15:50 bis 2026-09-15 08:00: ein Webstream-Slot, keine Titel, keine
+DJs, keine Telnet-Verbindungen) +146 MB in 16,2 h, also ≈ 8,5 MB/h im
+Leerlauf; dazu ≈ 7–12 MB je Webstream-Slot.  Gemessene Basis am 2026-09-10:
+≈ 5 MB/h.  Das Wachstum kommt vermutlich in Stufen (OCaml-Heap), kurze
+Messfenster streuen stark.
+
+**Ausgeschlossen:** die Main-Output-Brücke (Replikat 2,8 h auf dem
+Realtek-Ausgang: `buffer`, `buffer.adaptative` und `buffer.adaptative(
+resample=false)` jeweils flach, die adaptiven Varianten einmalig +38 MB) und
+das Telnet-Leck (keine Verbindungen über Nacht).
+
+**Kandidaten:** der Harbor-Accept-Loop (Unix.select-Leck des Windows-Builds),
+der `bus.on_frame`-Rückruf des Webstream-Wächters (50 Aufrufe/s), der
+ICY-Block (`metadata.map` auf dem Bus), Heap-Wachstum ohne Leck.
+
+**Vorgehen, falls gewünscht:** Replikat mit dem Produktionsskript (Test-Mounts,
+eigener Telnet-Port), Blöcke einzeln abschalten, Speicher alle 10 min messen;
+`C:/Temp/optd/bridge_mem_compare.py` als Vorlage.
+**Umgesetzt 2026-09-15 (Operator-Go „günstige Mitte", `ac20f02`):** der Preflight-Scan loggt alle 15 min den Speicher der
+Hauptinstanz mit Zuwachs und Rate seit der ersten Messung (`grep "Liquidsoap
+memory" logs/playout-stdout.log`).  Die Ursachensuche selbst bleibt Idee.
+
+### ✅ Liquidsoap stirbt beim Wiederöffnen des Tascam-Ausgangs nach Pufferleerlauf (festgestellt 2026-09-14, DONE 2026-09-14)
+
+**Status:** Erledigt 2026-09-14 (Operator-Go Variante B, `9b0aa3e`):
+`output.portaudio(fallible=false, …, mksafe(…))`, Brücke `buffer.adaptative`
+mit höchstens 0,1 % Tempoanpassung, abschaltbar per
+`RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE=false`.  Aktiv seit 2026-09-14 10:43 (Operator-Neustart PLAYOUT und LIQUIDSOAP,
+Tascam-Session bestätigt).  Beobachten: nach dem Start kein
+`[portaudio_safe:3] Switch to safe_blank.` und kein `Buffer emptied` mehr,
+keine Main-Output-Warnung.  3-h-Dauertest beider Brücken auf dem
+Realtek-Ausgang (Stille, `C:/Temp/optd/bridge_probe.py soak`): kein Leerlauf,
+kein Stopp; dort ist die Drift klein und läuft in die Gegenrichtung (der
+Puffer wächst um ≈ 0,2 s in 3 h), `estimated()` blieb konstant bei 2,002 s —
+die Driftkorrektur selbst ist damit nicht belegt.  **Nachweis in Produktion
+2026-09-15 08:00:** 21 h nach der Aktivierung kein Leerlauf (nur die
+Umschaltung beim Start), kein Neustart, keine Gerätefehler, keine
+Main-Output-Warnung.  Bisher lief der Puffer spätestens 12 h nach dem Start
+leer (gemessen 5–12 h) — die Driftkorrektur wirkt
+(`C:/Temp/optd/bridge_night_check.py`).  Nicht durch die
+Stream-Metadaten verursacht: das Muster besteht seit 2026-09-07.
+
+**Befund:** Läuft der 2-s-Puffer vor `output.portaudio` leer
+(`[buffer.producer] Buffer emptied`, `portaudio_clock` wechselt in den
+„non self-sync mode"), stoppt der Ausgang (`fallible=true`) und öffnet das
+Gerät beim Wiederanlaufen neu.  PortAudio kennt nur die Geräteliste vom
+Prozessstart.  Hat Windows seitdem einen Endpunkt entfernt (vermutlich wie
+bei der Nacht-Neustart-Schleife 2026-09-06/07 der Display-Audio-Endpunkt
+beim Display-Schlaf), zeigt der per Name aufgelöste Index ins Leere:
+`Unanticipated host error 2 in open_device: A device ID has been used that
+is out of range for your system` → `Invalid_argument("option is None")` im
+Clock-Thread → Prozessende mit Exit-Code 2 → NSSM startet nach 5 s neu.
+
+| Leerlauf | Wiederöffnen | Folge |
+|---|---|---|
+| 2026-09-07 21:44:12 | Geräte-ID ungültig | Neustart 21:44:20 |
+| 2026-09-08 20:22:44 | Geräte-ID ungültig | Neustart 20:22:52 |
+| 2026-09-09 16:36:39 | Geräte-ID ungültig | Neustart 16:36:47 |
+| 2026-09-10 03:06:42 | ok | — |
+| 2026-09-10 21:38:11 | ohne Fehler, falsches Gerät | Main-Output-Warnung bis 12.09. 04:14 |
+| 2026-09-12 15:43:06 | ok | — |
+| 2026-09-14 03:51:21 | Geräte-ID ungültig | Neustart 03:51:29 |
+
+**Auswirkung 2026-09-14 03:51 (nichts geplant):** die drei Icecast-Mounts
+~6 s ohne Quelle (die Standby-Mounts waren verbunden), Tascam ~10 s stumm.
+PLAYOUT hat den Neustart erkannt und `recording.stop`, die Gates und die
+Stream-Metadaten neu gesetzt; Preflight danach ohne Warnung.  Während einer
+Sendung wäre das ein hörbarer Aussetzer, und laut Code setzt PLAYOUT den
+laufenden Datei-Titel danach nicht fort (Wiederaufnahme mit Sprung gibt es
+nur nach einem DJ-Ende); der Rest fehlt bis zum nächsten Titel-Timer.
+
+**Stiller Fall, belegt:** Nach dem Reboot am 10.09. startete Liquidsoap um
+13:28:15 mit einer kurzen Geräteliste (Tascam = PortAudio 3 [MME]).  Beim
+Wiederöffnen um 21:38:11 zeigte der veraltete Index auf ein anderes Gerät:
+kein Fehler, aber die Preflight-Prüfung meldete ab 21:43 im Dashboard
+(Schwere error) „Liquidsoap plays its Main Output to …, not to
+'Tascam-Lautsprecher (US-16x08)'" bis zum Nacht-Neustart am 12.09. 04:01 —
+rund 30 h ohne Liquidsoap-Ton am Tascam.
+
+**Evaluierung 2026-09-14:**
+- *Ursache der Leerläufe:* Drift zwischen Tascam-Takt und Haupt-Uhr.  Der
+  2-s-Puffer ist nach 10–12 h leer (≈ 50 ppm); das ergibt etwa zweimal am
+  Tag eine Lücke von ~2 s am Tascam, auch ohne Absturz.
+- *Listenwechsel:* Tagsüber rendert PLAYOUT den Tascam als PortAudio 7 [MME]
+  (Display-Audio des DELL-Monitors vorhanden), nachts als 6, direkt nach dem
+  Reboot am 10.09. als 3.  Alle vier Abstürze: Start mit langer Liste,
+  Leerlauf bei ausgeschaltetem Bildschirm (Kernel-Power 566, Abschaltung
+  nach 15 min).
+- *Laufzeitversuche* (`C:/Temp/optd/probe_p1..p4.liq`, Realtek-Gerät, Stille,
+  Erzeuger 4 s abgeschaltet): die heutige Form stoppt den Ausgang und startet
+  ihn neu (= Wiederöffnen).  Mit `mksafe` und `fallible=false` läuft der
+  Ausgang durch, ohne Neustart, und bleibt self-sync.
+  `buffer.adaptative(limit=1.001)` läuft auf dem Windows-Build zusammen mit
+  `clock.assign_new`, Füllstand stabil bei ~2,0 s.  Ohne `mksafe` lehnt
+  Liquidsoap `fallible=false` beim Start ab („That source is fallible");
+  `--check` erkennt das nicht.
+- *Optionen:* (A) `mksafe` + `fallible=false`: kein Wiederöffnen mehr, die
+  Lücke von ~2 s alle ~12 h bleibt.  (B) A + `buffer.adaptative` mit enger
+  Geschwindigkeitsgrenze (0,1 %), per Umgebungsvariable abschaltbar: auch
+  keine Lücken mehr; die Funktion ist in 2.4.4 als experimentell markiert.
+  (C) Display-Audio des DELL-Monitors in Windows deaktivieren (Operator):
+  weniger Listenwechsel, deckt Reboot und USB-Geräte nicht ab.  (D) Eine
+  Einstellung für nicht tödliche Streaming-Fehler gibt es in 2.4.4 nicht.
+  (E) Externer Feeder statt PortAudio: zu groß für das Problem.
+- *Empfehlung:* Go für B (enthält A); C optional.  Aufwand ~3–4 h plus
+  Beobachtung über mindestens einen Tag; Aktivierung per PLAYOUT- und
+  LIQUIDSOAP-Neustart.  Vor `RASTATIME_LIQUIDSOAP_RESTART_EVERY_DAYS=7`
+  umsetzen, weil längere Laufzeiten mehr Leerläufe bedeuten.
+
+**Belege:** `logs/liquidsoap.log` (grep `Buffer emptied|out of range|LOG START`),
+`logs/liquidsoap-stderr.log` (`Fatal error: exception Invalid_argument`),
+Windows-Anwendungsprotokoll, Quelle `nssm`, Ereignisse 1013/1014 (Exit-Code 2,
+Aktion Restart).  PLAYOUT selbst lief durch; Item 11 (NSSM-Resilience)
+betrifft PLAYOUT und ist davon nicht berührt.
+
+### ✅ Pypo-NSSM-Service-Resilience untersuchen (Phase-D-Beobachtung) — CLOSED 2026-09-16
+
+**Geschlossen 2026-09-16 (Arbeitsreihenfolge Punkt 11, Bedingung vom
+09.09. erfüllt):** `playout-stdout.log` seit dem 09.09.: 20 Zeilen
+„RASTATIME-PLAYOUT: running" gegen 20 „shutdown requested", jede
+„running"-Zeile folgt auf einen angeforderten Shutdown (alle Neustarts
+waren Operator-Neustarts nach Commits); über das ganze Log 55 gegen 54
+(die Differenz ist der erste Start des Logs).  `playout-stderr.log` enthält
+nur die fünf `NameError`-Tracebacks der Entwicklung vom 10.09. (behoben
+in `fec9df9`), nichts Neues.  Die Untersuchungsschritte unten bleiben als
+Rezept, falls PLAYOUT je wieder ungeplant fehlt.
+
+**Beobachtung bis 2026-09-15 (Operator-Go 2026-09-09):** im gesamten
+`playout-stdout.log` stehen 39 Starts gegen 38 angeforderte Shutdowns,
+also höchstens ein ungeplanter Neustart seit Mai und keiner in den
+letzten Wochen (die letzten fünf Starts waren Operator-Neustarts am
+08./09.09.).  Passiert bis 15.09. nichts, wird der Punkt geschlossen.
+**Status:** Defer — bei nächstem Auftreten Logs sammeln, dann analysieren.
+**Festgestellt:** 2026-05-28 (Phase-D Stück-B-Start).
+
+**Symptom:**
+Operator hat festgestellt dass `RASTATIME-PLAYOUT` (Pypo) als
+NSSM-Service nicht lief, obwohl er nicht manuell gestoppt wurde.
+Konsequenz: source_switcher pollt nicht → DJ-Source-Connect via
+Liquidsoap-Harbor wird zwar von Liquidsoap detected, aber Pypo
+meldet keinen Source-Switch an Backend → kein rotes On-Air-Light
+im Dashboard, kein Recording-Hook, kein notify-media-item-start-play.
+
+**NSSM-Config-Status (geprüft 2026-05-28):**
+- `AppExit Default = Restart` ✓
+- `AppRestartDelay = 5000` ms ✓
+- Service-Auto-Start: ✓
+
+**Mögliche Ursachen bei nächstem Auftreten zu prüfen:**
+- Pypo-Crash mit env-var-Fehler beim Liquidsoap-Engine-Init
+  (z. B. Liquidsoap-Telnet nicht erreichbar bei kalt-Boot →
+  ConnectionError → Crash)
+- Mehrfacher Crash → NSSM-Throttle (Default: nach 5 Restart-
+  Versuchen in 60 s pausiert NSSM den Auto-Restart)
+- Race beim Boot: Liquidsoap-Service startet später als Pypo,
+  Pypo crashed beim ersten Telnet-Versuch, NSSM-Throttle greift
+
+**Untersuchung beim nächsten Auftreten:**
+```powershell
+# NSSM-Reset, falls Throttle aktiv:
+nssm reset RASTATIME-PLAYOUT
+
+# Pypo-stderr für die Crash-Zeit
+Get-Content C:\rastatime\logs\playout-stderr.log -Tail 50
+
+# NSSM-Stop-Reason
+Get-WinEvent -LogName System -MaxEvents 100 |
+    Where-Object { $_.ProviderName -match "Service Control Manager" -and
+                   $_.Message -match "RASTATIME-PLAYOUT" } |
+    Format-Table TimeCreated, Id, LevelDisplayName, Message -Wrap
+```
+
+**Mögliche Fixes:**
+- NSSM-Service-Dependency auf RASTATIME-LIQUIDSOAP setzen
+  (Pypo startet erst NACH Liquidsoap)
+- Pypo-Constructor: ConnectionError beim initial recording.stop
+  bereits abgefangen, aber engine-init könnte separat crashen —
+  hier defensive try/except prüfen
+- Telnet-Retry beim Pypo-Init mit exponential-backoff (5 Versuche
+  über 30 s) bevor Crash
+
+**Workaround bis untersucht:** Operator prüft regelmäßig
+`Get-Service RASTATIME-PLAYOUT`, startet manuell falls down.
+
+---
+
+### ✅ PowerShell `NativeCommandError`-Noise beim Pypo-Start (DONE 2026-08-30, `88e1071`)
+
+**Status:** Behoben — Root Cause war präziser als unten vermutet:
+**kein** `print(file=sys.stderr)` in `soundcard/apps.py`, sondern das
+Django-`LOGGING`-Dict in `settings/_internal.py`: der Console-
+`StreamHandler` defaultete auf **stderr**, und `propagate: True` ließ
+jede Zeile zusätzlich über playouts Root-`basicConfig` laufen →
+Doppel-Emission, wovon die stderr-Kopie in PowerShell als roter
+`NativeCommandError` erschien.  Fix: Handler auf `ext://sys.stdout`,
+`propagate: False`, Formatter mit Timestamp/Level angeglichen.
+Live verifiziert: die Soundcard-Zeile erscheint genau einmal,
+getimestampt, auf stdout.  Ursprüngliche Analyse darunter als
+Referenz belassen:
+**Festgestellt:** 2026-05-26 (Phase-C8 Reality-Test).
+
+**Symptom:**
+Wenn Pypo manuell aus PowerShell mit `2>&1 | Tee-Object …` gestartet
+wird, kommt für die `INFO Soundcard manager registered ...` Zeile ein
+roter PowerShell-Stack-Trace:
+```
+C:\rastatime\.venv\Scripts\python.exe : INFO Soundcard manager registered ...
+    + CategoryInfo          : NotSpecified: (...) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+```
+
+**Root cause:**
+`rastatime_api.soundcard.apps.SoundcardAppConfig.ready()` schreibt direkt
+auf **stderr** (per `print(..., file=sys.stderr)` oder ähnlichem
+Django-internen Mechanismus), **bevor** das Python-Logging-Framework
+voll aufgesetzt ist. PowerShell klassifiziert externes Stderr-Output
+mit `2>&1`-Merge automatisch als `NativeCommandError`, auch wenn der
+Inhalt nur ein INFO ist. Die gleiche Information wird kurz danach
+auch sauber vom Python-Logger ausgegeben (mit Timestamp + Logger-Name) —
+**keine doppelte Funktionalität, nur doppelter Log-Eintrag.**
+
+**Workaround:**
+Operator kann statt `2>&1 | Tee-Object` einfach `*> file` benutzen,
+dann landet alles sauber in der Datei + im Terminal:
+```powershell
+C:\rastatime\.venv\Scripts\python.exe -m rastatime_playout *> C:\rastatime\logs\pypo.log
+```
+
+**Echter Fix (für später):**
+In `backend/api/rastatime_api/soundcard/apps.py` (oder wo das `print`
+herkommt) den stderr-print auf `logger.info(...)` umstellen. Müsste
+die Audit-Aktion sein dass alle App-Init-Logs durch Python-Logging
+laufen. ~30 min.
+
+**RASTATIME-Bezug:** kein funktionaler Impact, betrifft nur das
+Terminal-Erlebnis beim manuellen Pypo-Start für Diagnose-Zwecke.
+
+---
+
+### ✅ Host-Hardware-Instabilität (STUDIO-Maschine, nicht RASTATIME-Code) — obsolet seit dem Maschinenwechsel 2026-08
+
+**Abgehakt 2026-09-09 (Operator-Bestätigung):** betraf die alte
+Maschine; seit der Migration auf den neuen Studio-Rechner (2026-08,
+192.168.1.164) nicht mehr aufgetreten.
+
+**Status:** Hold — blockiert Live-Betrieb, externe Hardware-Aktion nötig.
+**Festgestellt:** 2026-05-25 (Analyse von 5 BSODs der letzten 11 Tage).
+
+**Befund:**
+5 unerwartete Host-Reboots (14.05. / 18.05. / 23.05. / 24.05. / 25.05.) mit
+**verschiedenen** Bug-Check-Codes (`0x0A`, `0x1E`, `0x13A`, `0x154`, `0x20001`)
+in **verschiedenen** Schuld-Domänen (Storage `storahci.sys`, Kernel-Heap,
+Intel-PPM/Hyper-V, Bitdefender-AV, Lock-Wait). Muster ist **Hardware-Instabilität**,
+nicht ein einzelner Treiber-Bug.
+
+**Top-Verdacht:**
+1. **SSD-Defekt** (`WD Blue SA510 2TB`, Consumer-Modell) — 24.05.-Crash war
+   `IO_DEVICE_ERROR` im Storage-Stack
+2. **RAM-Defekt** — Kernel-Heap-Korruption (23.05.) + Stack-Korruption (25.05.)
+3. **Thermal/CPU** — Pre-Boot-Event 25.05.: CPU 7 wurde 71 Sek. firmware-throttled
+
+**RASTATIME-Bezug:** Kein direkter. RASTATIME läuft komplett im User-Mode
+(Python, ffmpeg, mpv, Icecast, Apache) und kann diese Kernel-Crashes nicht
+auslösen. Korrelation entsteht durch 24/7-Workload, der latente Hardware-Defekte
+schneller manifestiert.
+
+**Bereits durchgeführte Mitigationen (Stand 2026-05-26):**
+- ✅ SSD-SMART via `Get-StorageReliabilityCounter` + WMI ATAPISmartData
+  ausgewertet: keine harten Defekt-Indikatoren (Reallocated=0, Uncorrectable=0,
+  CRC=0), aber SSD-Temp 63 °C bei Idle + 977 ms Read-Latency-Peak verdächtig
+- ✅ WD Dashboard installiert; Firmware `530500WD` ist laut WD für 2TB-Modell aktuell
+  (kein Critical Update verfügbar; das `52046100`-Update betrifft nur 250G/500G/1T-Varianten)
+- ✅ Bitdefender aktualisiert + Exclusions gesetzt:
+  - Paths: `C:\RASTATIME`, `C:\Tools`, `C:\Program Files\PostgreSQL\17\data`
+  - Processes: Python (venv), PHP-CGI, Apache httpd, Icecast, mpv, Liquidsoap,
+    NSSM, PostgreSQL
+- ✅ Killer Performance Suite UWD (Rivet Networks) deinstalliert; Treiber bleibt
+  (ist eh Intel-Unified-Driver für die I225/I226-Hardware mit Killer-Branding)
+- ✅ Windows DISM `/RestoreHealth` erfolgreich (Component Store integer);
+  Media Feature Pack auf Pro-N installiert (Reboot ausstehend, separates Thema)
+- ✅ Übernacht-Monitoring 12.5 h (1150 Samples) mit eigenem PS-Skript:
+  - SSD-Temp **runter auf min 42 / avg 45 / max 54 °C** (vorher 63 °C)
+  - Disk Busy avg 0.1 %, CPU avg 5 %
+  - Bitdefender nur in 1 % der Samples Top-RAM (vorher 42 %)
+  - **0 BSODs** in 12.5 h (Crash-Frequenz vorher: alle ~2 Tage → statistisch
+    aber zu kurz für harte Aussage; mindestens 1 Woche stabil = signifikant)
+  - ⚠️ Caveat: Read/Write-Latenz-Counter `AvgDiskSec*` ist uint32-in-Sekunden,
+    rundet alles <1 s auf 0; sub-second Spikes nicht erfasst. Für nächsten Test
+    muss `Win32_PerfRawData_*` mit manueller Frequency-Berechnung verwendet werden.
+
+**Noch offen:**
+- ❌ Memtest86+ über Nacht — bleibt die wichtigste unabhängige Hardware-Verifikation
+- ❌ BIOS-Update prüfen
+- ❌ Sub-second Latenz-Messung mit korrektem Counter (sensor-monitor v3)
+- ❌ Mittelfristig: Consumer-SSD durch Enterprise-Modell ersetzen (WD Red, Samsung PM, Kioxia CD)
+
+**Trigger für Re-Eskalation:**
+- BSOD in den nächsten 7 Tagen → Mitigationen waren nicht ausreichend, Hardware-Test priorisieren
+- 7+ Tage BSOD-frei → Bitdefender-AV-Interaktion war wahrscheinlich Haupt-Trigger;
+  Mitigationen ausreichend, Memtest weiterhin als routine-Check empfohlen
+
+**Minidumps + cdb-Setup für künftige Analyse:** vorhanden in `C:\Temp\dumps\`,
+Symbole gecached in `C:\Temp\symbols\`, WinDbg installiert. Pro Crash:
+```
+cdbX64.exe -z <dump> -y "srv*C:\Temp\symbols*https://msdl.microsoft.com/download/symbols" -c "!analyze -v;q"
+```
+
+**Monitoring-Artefakte aus 2026-05-25/26 Session** (für späteres Re-Analysieren):
+- `C:\Temp\dump_analyze.py` — Minidump-Bugcheck + Driver-Liste-Parser
+- `C:\Temp\analyze-overnight.py` — CSV-Stats für sensor-log-v2
+- `C:\Temp\sensor-monitor-v2.ps1` — Übernacht-Sensor-Logger (mit oben genanntem Bug)
+- `C:\Temp\sensor-log-v2.csv` — 12.5 h Übernacht-Daten 25.→26.05.
+- `C:\Temp\ssd-smart.ps1` / `.txt` — SMART-Snapshot vom 25.05.
+
+---
+
+## 📊 Wartungs-Metrik
+
+| | Stand 2026-05-22 | Stand 2026-10-23 (Aufräum-Durchgang) |
+|---|---|---|
+| Aktive Backlog-Items | 3 (Show-Shift, Record-per-Hour, Widgets — Welle 1 erste Hälfte fertig) | 0 mit Go; 5 offene Betriebspunkte in „Stand vor dem Live-Betrieb" |
+| Deferred Items | 1 (JS-Modernisierung) | 13 (alle mit Vorbedingungen) |
+| Hold Items | 1 (Payware) | 2 (Payware, JS-Build-Pipeline seit 2026-10-28) |
+| Future Ideas | 13 | ~26 (12 bewertete 💡 + 14 unbewertete unter „Future Feature Ideas") |
+| Known Bugs | 0 (RASTATIME-Code) + 1 Host-Hardware-Issue (Stand 2026-05-26, Mitigationen in Verifikation) | 0 offen (alle Einträge der Bug-Sektion ✅) |
+
+---
+
+## 🔄 Pflege-Hinweis
+
+Dieses Backlog wird über Sessions hinweg gepflegt.  Wenn ein
+Feature implementiert wird:
+1. Eintrag aus aktiven / deferred items entfernen
+2. Im CHANGELOG.md vermerken (Standard-Workflow)
+3. Bei Architektur-Relevanz: ARCHITECTURE.md neuer Section + Versions-Bump
+4. Manual in allen 4 Sprachen aktualisieren
+
+Wenn ein neues Feature evaluiert wird:
+1. Sechs-Punkte-Evaluation (Machbarkeit, Architektur-Eingriff,
+   Aufwand, Dauer, Sinn, Empfehlung) durchführen
+2. Eintrag hier hinzufügen mit Status-Marker
+3. Wenn Hold mit Vorbedingungen: diese explizit auflisten
+
+## Komponenten aktuell halten (Operator-Frage 2026-10-09)
+
+### ✅ Komponenten-Manifest, Klassen, Wartungsfenster, Pruefskript - gebaut 2026-10-09
+`docs/operator/COMPONENTS.md` (Inventar mit Version/Quelle/Update-Weg/Rueckfall, Klassen A exponiert / B Audio-Kette /
+C Code-Abhaengigkeiten, monatliches Fenster nach Patch Tuesday mit Tag + Backup + TEST_PLAN-Kurzlauf) und
+`scripts/update_check.py` (read-only: installierte Versionen gegen endoflife.date, PyPI, GitHub).  Erster Lauf:
+Django 4.2 EOL seit 2026-04-07; Patch-Releases offen fuer Apache 2.4.69, PHP 8.3.35, PostgreSQL 17.11, Python 3.13.16,
+Liquidsoap 2.4.6, ffmpeg 9.0.2, django-cors-headers 4.9, psycopg2 2.9.13, urllib3 2.8.  Stufe 2 (Preflight-Warnung
+components_outdated in der UI) 💡 spaeter.
+
+### ✅ Django 4.2 LTS -> 5.2 LTS (Evaluation 2026-10-09, Go 2026-10-10, installiert 00:20)
+4.2 ohne Security-Fixes seit 2026-04-07; 5.2 LTS bis 2028-04.  Trockenlauf in Scratch-venv (Django 5.2.18, DRF 3.16.1,
+django-filter 25.2, cors 4.9): `check` sauber, keine neuen Migrationen, API 116/118 (die 2 Fehler sind Branding-Tests,
+scheitern auch unter 4.2), Playout 795, Unit 738 (1 bestehender i18n-Fehler) - identisch zur 4.2-Basis; keine
+Django-Deprecations.  Code nutzt keine 5.x-Entfernungen (eigener md5-Hasher in core.User, kein pytz/index_together).
+Aufwand: Pins in backend/api/requirements.txt, pip install, API+PLAYOUT-Neustart; ~1 h inkl. Doku.  Nebeneffekt:
+db_default verfuegbar (Line-In-Gain-Lore).  Installiert 2026-10-10 00:20 (Tag live-2026-10-10, Pins in setup.py +
+requirements.txt, pip check sauber, django check prod sauber); API-/PLAYOUT-Neustart durch Operator, danach
+Verifikation (Logs, /api/v2/version, UI, Suiten im Prod-venv).
+
+### ✅ Liquidsoap 2.4.4 -> 2.4.6 auf dem Hauptdienst (Go 2026-10-10, live 10:55) - Standby folgt nach einer ruhigen Woche
+Offizieller win64-Build (49 MB).  Relevante Fixes fuer uns: `sequence` verliert den ersten Chunk+Metadaten eines
+Nachfolgers nicht mehr (unsere kurzen Jingles laufen ueber sequence/cross), `cross` behaelt Metadaten bei wiederholtem
+Titel + on_track bei jedem Crossing (ICY), `fade.out` mutet nach Skip nicht den ganzen Folgetitel, `output.file`
+reopen_on_error-Delay (24/7-Aufnahme), input.harbor Socket-Cleanup, output.icecast chunked reconnect,
+metadata.deduplicate nicht ueber Track-Marke, unbegrenztes Wachstum in Typ-Unifier/Buffern behoben (2.4.5: Leak in
+Strings.Mutable, cross-Crash bei source.skip von aussen).  NICHT behoben: Unix.select-Leak (OCaml 4.14 bleibt).
+Risiko: Windows-Build-Eigenheiten (Stereo Tool, portaudio, input.http-Haenger) - Bench Pflicht (--check, 40-s-Lauf mit
+Stereo Tool, Speicher, Shutdown), Tausch im ruhigen Moment, Rueckfall = Ordner zurueckbenennen.  Aufwand ~2 h.
+Durchgefuehrt 2026-10-10: Bench 00:24 (check rc 0 fuer beide Skripte, Stereo Tool ok, 975 MB flach; Shutdown-Rest wie
+bei 2.4.4, Bench-Zombie PID 17140 haelt C:/Tools/liquidsoap-2.4.6 bis zum Reboot -> Build unter
+C:/Tools/liquidsoap-v2.4.6).  Hauptdienst per nssm set Application/AppDirectory umgestellt, Neustart 10:55:40:
+liquidsoap-lang=2.4.6, Stereo Tool aktiv (Lizenz gesetzt), alle Mounts, PLAYOUT hat Gates neu gesetzt.  OFFEN:
+Nachmessung erste Sendungen (12:00 BBC), Speicher-Trend, nach ruhiger Woche RASTATIME-STANDBY umstellen und
+C:/Tools/liquidsoap (2.4.4) als Rueckfall behalten.
+
+### ✅ Icecast 2.4.4 -> 2.5.0 (Evaluation 2026-10-10: Defer; Operator-Go 2026-10-24, Testinstanz abgenommen, LIVE seit 2026-10-24 14:02)
+**Umgeschaltet 2026-10-24 14:02** (Standby zuvor gestoppt, da abhängig): sechs Mounts, Liquidsoap 14:02:06, Statistik ohne 401, öffentlicher Stream meldet 2.5.0, ICY-Titel ab 14:06 bestätigt.  Operator 2026-10-24: Bewährung 5 Tage (Prüfung 2026-10-29) und 30 Tage (2026-11-23); danach ggf. Rückfall (2.4.4-Ordner + icecast.xml.2.4.4-backup) entfernen.  Ungenutzte Installer-Kopie C:/Tools/Icecast/icecast.xml vom Operator gelöscht.
+**Stand 2026-10-24:** 2.5.0 (win64, SHA-512 gegen xiph.org geprüft) nach `C:\Tools\Icecast-2.5.0` installiert (Operator).
+Testinstanz auf Port 8010 mit Kopie der Live-Konfiguration (`C:/Temp/optd/icecast25/icecast-test.xml`, Rückrufe auf
+127.0.0.1:9), Skript `C:/Temp/optd/icecast25/ice25_test.py`: Statusseite, status-json, admin/stats.xml (Struktur wie vom
+Playout-Kollektor gelesen), Quellen per PUT, Hörer, Fallback-Kette hin und zurück, Metadaten-Update, killsource - alles
+OK; unsere 2.4-Konfiguration lädt ohne Warnung zu unbekannten Elementen.  Liquidsoap mit den drei Produktions-Encodern
+(MP3 320, AAC 320, Opus/OGG 128): alle Mounts, ICY-Titel auf MP3 und AAC, OGG wie gehabt ohne ICY.
+**Befund + Lösung:** ohne `<charset>UTF-8</charset>` je Mount sendet der Windows-Build von 2.5 leere ICY-Titel
+(`StreamTitle=''`, Log `No charset found for "ISO8859-1"`), obwohl stats.xml den Titel zeigt; mit der Charset-Zeile
+kommen Titel inkl. Umlaut beim Hörer an.  Dazu `<mime-types>` absolut setzen (2.5 sucht relativ zum cwd).  2.5 antwortet
+HTTP/1.1, stats.xml ohne audio_info/channels/samplerate/server_url (nichts liest sie), Log-Rauschen „legacy stream
+type audio/mpeg" und „uses safe method GET on /admin" (Liquidsoap) ohne Funktionseinschränkung.  TLS: nur nötig, wenn ein
+listen-socket `<tls>` hat - wir haben keinen (Apache terminiert); der Build bringt OpenSSL 1.1.1 mit.
+**Umschalten (ruhiges Fenster, ~10 min, ein Hörer-Reconnect):** vorbereitete Live-Konfiguration
+`C:/Temp/optd/icecast25/icecast-live-2.5.xml` (= Live + charset x6 + mime-types + webroot/adminroot auf 2.5.0, Port 8000,
+Passwörter unverändert); Ablauf: `config/icecast.xml` sichern und ersetzen, `nssm set RASTATIME-ICECAST Application
+C:\Tools\Icecast-2.5.0\bin\icecast.exe`, `nssm set RASTATIME-ICECAST AppDirectory C:\Tools\Icecast-2.5.0`,
+`Restart-Service RASTATIME-ICECAST`, dann Mounts/Hörerstatistik/ICY-Titel/öffentlicher Stream prüfen.  Rückfall:
+beide nssm-Werte auf `C:\Tools\Icecast`, Sicherung zurück (die charset-Zeilen versteht 2.4 ebenfalls), Neustart.
+Danach COMPONENTS.md, RESTART_ORDER.md, CHANGELOG; 2.4.4-Ordner bleibt als Rückfall bis zur nächsten Wartung.
+Vorbedingungen: Testinstanz mit dem win64-Installer neben 2.4.4 auf anderem Port, Konfig-Abgleich (icecast.xml ist
+schon im 2.5-Stil mit <role>/<event>, aber zwei <alias> -> <resource>), Pruefung von admin/stats.xml, admin/killsource
+und der Fallback-Kette mit Liquidsoap-Testausgang.  Nutzen: X-Forwarded-For hinter dem Proxy, gepflegte Linie; keine
+Sicherheitsfixes in 2.5.0.  Upstream-Doku luecken (ChangeLog/NEWS ohne 2015-2025, 2.5-Doku WIP).
+Icecast 2.5.0 ist veroeffentlicht (Tag 2025-12-31, icecast_win64_2.5.0.exe).  Nicht dringend: der oeffentliche Stream
+laeuft ueber den Apache-Reverse-Proxy, 2.4.4 ist intern.  Vor einem Wechsel Changelog pruefen (Konfig-Aenderungen,
+Fallback-Mounts, Admin-API fuer kick_dj_source, status.xsl-Parsing in der Playout-Statistik).
+
+### ✅ Composer auf der Maschine + `composer audit` fuer die 99 Legacy-Pakete (Go 2026-10-10, Audit gelaufen)
+composer.phar (getcomposer.org, ~3 MB) nach C:/Tools/composer; dann `composer audit` im Legacy-Verzeichnis, Ergebnis
+in COMPONENTS.md Abschnitt 1; Updates innerhalb der Pins in einem Worktree mit PHP-Lint + TEST_PLAN-UI-Checks.
+Audit 2026-10-10 (Composer 2.10.3): 5 Advisories in 2 Paketen - phpseclib/phpseclib 3.0.52 (2x medium: X25519
+Private-Key-Recovery, SSRF via X.509 AIA; nur ueber php-amqplib eingebunden, RabbitMQ-Pfad) und symfony/yaml 5.4.45
+(3x low: YAML-Parser DoS).  Dry-run: phpseclib -> 3.0.57, symfony/yaml -> 5.4.53, beide innerhalb der Pins, keine
+weiteren Abhaengigkeiten.  vendor/ ist nicht im Git (nur composer.lock) -> `composer update` wirkt sofort live;
+Vorgehen: composer update der zwei Pakete, `php -l` ueber die geaenderten Dateien, UI-Kurzlauf, composer.lock
+committen.  Go 2026-10-10 -> erledigt: phpseclib 3.0.57, symfony/yaml 5.4.53, Audit sauber.  Zwischenfall: beide
+vendor-Ordner waren git-Checkouts eines anderen Windows-Benutzers, composer brach den Batch ab ('git show-ref');
+KORREKTUR nach Apache-error_log: Legacy-PHP antwortete von 11:52 bis 12:32 (~40 min) mit Fatal/500 - jeder Stats-Push
+(alle 2 min) und ein Bot-Scan um 12:17 (84 Treffer) liefen auf; Sendebetrieb nicht betroffen.  Die Composer-Laeufe
+selbst dauerten so lange, meine Zwischenpruefung per curl kam zu frueh.  Regeln in COMPONENTS.md: git-Checkouts im
+vendor erst entfernen, dann --prefer-dist; nach jeder vendor-Aenderung Apache error_log auf PHP Fatal pruefen.
+
+### ✅ Titelstarts 1,7 s zu spaet: Speicherort-Abruf zaehlt bei jedem Refresh die Bibliothek (gefunden + behoben 2026-10-10)
+Phasenmessung (5ce7eec) nach dem PLAYOUT-Neustart 11:48: 'fetch 1.1-1.4 s, icy 0.0 s, root 1.9-2.1 s, lock 0.0,
+arm 0.0' -> die Start-Timer werden ~2 s nach der Uhrzeit-Referenz armiert.  Ursache: `_refresh_storage_root` ruft
+GET /api/v2/storage/location, dessen Payload `library_size()` per os.walk ueber D:/stor (198.481 Dateien seit dem
+Massenimport 2026-10-09) berechnet; Cache 60 s < Refresh 120 s -> jeder Refresh zahlt.  Verlauf der PLAY-Verspaetung:
+5.-8.10. 0,1 s, 9.10. 0,4 s, 10.10. 1,7 s (Sendung 11:15 lief +1,9 s).  Fix-Vorschlag (Go offen): (1) Playout nimmt die
+Uhrzeit-Referenz unmittelbar vor dem Armieren (Hausarbeit kann Timer nie mehr verschieben); (2) API liefert die
+Bibliotheksgroesse aus einem Cache (z.B. 15 min) und rechnet im Hintergrund nach, GET blockiert nie; UI zeigt Alter.
+Go 2026-10-10 -> beides gebaut (Playout: Referenz vor der Arm-Schleife, Phasenzeile mit 'bookkeeping' und 'timers
+armed X s after the clock reference'; API: library_size Cache 900 s + Hintergrund-Recount, library_size_age_seconds im
+Payload, Move-Validierung zaehlt weiter exakt).  Wirksam nach API- und PLAYOUT-Neustart; Nachmessung: Phasenzeile
+(armed < 0,1 s) und Titelstart +0,3 s.
+Nachmessung 2026-10-10: Neustarts 13:20, Phasenzeilen 'root 0.02-0.13 s, timers armed 0.00 s'; Testshow 13:25-13:35:
+alle vier PLAY innerhalb von 7-14 ms nach der Zeilensekunde, auf Sendung +0,50 s (Korrelation 0,99) statt +1,90 s.
+Beobachtung: mit Liquidsoap 2.4.6 liegt der Datei-Start bei +0,5 s statt +0,3 s unter 2.4.4 (~0,2 s mehr
+Start-Latenz, konstant ueber die Kette; der Fix 'sequence behaelt den ersten Chunk' ist der Verdacht) - Sprung
+akzeptabel, im Memory notiert, bei der Standby-Umstellung erneut messen.
+
+### ✅ Statistik-Pushes: push-stream-stats 500 / admin/stats.xml 401 - historisch, geklaert 2026-10-10
+Der Stats-Thread des PLAYOUT bekommt alle 2 min HTTP 500 vom Legacy-Endpunkt /api/push-stream-stats und 401 von
+http://127.0.0.1:8000/admin/stats.xml (Icecast-Admin-Passwort?).  Nur Hoererstatistik betroffen, kein Sendebetrieb.
+Befund: beide Fehler traten NUR am 2026-10-04 auf (500 = Symfony-YAML-ParseException in rastatime.conf, Passwort mit
+'!' unquotiert - seither gequotet; 401 = Icecast-Admin-Zugang, 17:08-17:12, danach nie wieder) und heute 11:52-12:32
+(Composer-Zwischenfall).  Seit 12:34 keine Fehler, Pushes laufen.  Hinweis: das Apache error_log vom 04.10. enthaelt
+das damalige Passwort im Klartext (Parse-Fehlermeldung) -> Operator sollte es rotieren und das error_log bereinigen.
+
+### ✅ Datenbank-Passwort rotieren (Klartext im Apache-error_log vom 2026-10-04) - DONE 2026-10-24 (Runbook `docs/operator/PASSWORD_ROTATION.md`)
+**Stand 2026-10-24:** Rolle per `\password` in psql, rastatime.conf Zeile 26, Dienste API/PLAYOUT/LIQUIDSOAP/STANDBY/WORKER/ANALYZER neu gestartet; mit rotiert api_key und internal_listener (ungenutzt).  Die Log-Datei vom 04.10. existierte nicht mehr, auch nicht im Janitor-Archiv.
+Das aktive PostgreSQL-Passwort des Benutzers rastatime steht in 61 Zeilen von C:/Tools/Apache24/logs/error_log
+(Symfony-YAML-Parse-Fehler vom 04.10., unquotiertes '!').  Risiko begrenzt (PostgreSQL nur localhost, Log nur lokal).
+Ablauf im ruhigen Moment: neues Passwort ohne YAML-Sonderzeichen oder in Anfuehrungszeichen; psql ALTER ROLE rastatime
+WITH PASSWORD; rastatime.conf database.password; Neustart API, PLAYOUT, ANALYZER, WORKER (Legacy-PHP liest die Datei je
+Request, Backup-Task je Lauf); Apache neu starten und error_log bereinigen; danach Logins/UI/Stats-Push pruefen.
+
+## Import-Formate normalisieren (Operator-Frage 2026-10-14)
+
+### ✅ Import-Format-Normalisierung: verlustfrei -> MP3 320, rohes AAC -> M4A, Tags aus jedem Format, '_failed' statt Loeschen - live + abgenommen 2026-10-14 (Go 2026-10-14)
+Anlass: Operator-Frage 2026-10-14 "Welche Dateien sind im FLAC- oder WAV-Format in der Bibliothek?" -> Probe nach
+Codec (ffprobe, nicht mime): id 603 FLAC, id 604 WAV.  Beim Pruefen des Importpfads gefunden: rohes ADTS-.aac wird
+ohne Index ~1,9 s zu lang geschaetzt und traegt keine Tags (mit ID3v2-Kopf scheiterte der Import ganz); WAV-Tags,
+RIFF INFO, Vorbis DESCRIPTION und MP4-Freeform-Felder wurden nicht gelesen; der Import-Ordner nahm .oga an,
+createAndImport lehnte ab ("Bad file extension.") und der Scan loeschte die Quelle (Datenverlust).
+Entscheidungen Operator 2026-10-14: verlustfreie Originale nicht aufbewahren; Standard an; Ziel MP3 320 CBR (M4A
+verliert den Expiry-Tag); verlustbehaftetes Audio (MP3/AAC/Vorbis/Opus) nie neu kodieren (ALAC in .m4a gilt als
+verlustfrei); Entscheidung nach Codec, nicht nach Endung; ffmpeg mit
+BELOW_NORMAL; Rueckfall = Original unveraendert importieren; Podcasts ausser Scope.
+Gebaut (Worktree feat/import-format-normalization): Analyzer-Schritt convert_format zwischen analyze_metadata und
+analyze_duration (ADTS immer per Stream-Copy -> .m4a; verlustfrei -> MP3 320 mit ID3v2.3, Cover, Expiry als TXXX,
+44,1 kHz ausser 32/44,1/48, Downmix > 2 Kanaele, Pruefung + Umbenennung, Original erst geloescht, wenn die
+Umwandlung abgelegt ist); ffprobe fuellt
+fehlende Tags in jedem Format; Einstellung Settings -> Local Machine -> Import Format (cc_pref
+convert_lossless_to_mp3, fehlt = an, je Import-Nachricht options.convert_lossless); cc_files.source_md5 (Migration
+0066) fuer die Duplikatpruefung von bulk_import; Befehl convert_lossless fuer Bestandsdateien (Trockenlauf Standard,
+6-h-Sendeplan-Schutz, eine Transaktion, id/Cue-In bleiben, R128 an der MP3 neu gemessen); eine Endungsliste fuer Upload, Import-Ordner,
+FTP und createAndImport; fehlgeschlagene Uebergabe -> <Import-Ordner>/_failed/<gleicher Pfad>, nie geloescht.
+Review-Fixes 2026-10-14 (zwei Reviews): encoder auf 64 Zeichen gekuerzt (Analyzer + validateFileArray; ein langer
+TSSE liess den Import scheitern), Original erst nach organise_file geloescht (spaeterer Fehler / Analyzer-Neustart
+behalten es), moveFileToStor loescht keine Import-Ordner-Datei mehr, Analyzer-Heartbeat 1800 s + Wiederzustellung
+ohne Datei wird still bestaetigt, Migration mit lock_timeout 5 s, convert_lossless setzt name/mtime und verweigert
+waehrend eines Bibliotheksumzugs, Titel ohne Tag = neuer Dateiname, Tooltip "verlustbehaftet" statt "M4A".
+Tests: Analyzer +65, API +26 (bestehende Fehlschlaege unveraendert), test_migration_baseline auf 0066,
+Legacy-Helper 69/69 + Review-Check 10/10, Layout EN/DE/FR/ES.
+Doku: CHANGELOG, Architektur §23.57 (0.70), Manual LOCAL_MACHINE + LIBRARY x4.
+**Eingespielt 2026-10-14:** `D:\import` vorher geprueft (nur 422 Nicht-Audio-Reste, keine .mp4/.mp2/.mp1/.au);
+Tag live-2026-10-14b (live-2026-10-14 bestand schon auf e6c6911), Backup 03:30; Migration 0066 11:31:20 aus dem
+Branch (einzige offene Migration, Spalte + Index geprueft), ff-Merge 11:31:57 (c0fc858), curl: /login 200,
+/preference/local-machine und POST /preference/import-format-save 302 zum Login, keine Fehler im legacy.log;
+Operator startete API, WORKER, ANALYZER, APACHE neu. Probe 11:53 (fuenf Testdateien "RASTATIME Formatprobe" im
+Import-Ordner, ids 22272-22276): FLAC mit Cover + DESCRIPTION + EXPIRY -> MP3 320 mit APIC, Kommentar, Expiry
+2026-12-31; WAV mit ID3-Chunk -> MP3 320 mit allen Tags; rohes ADTS mit ID3-Kopf -> M4A, 20,04 s, Tags; .oga
+unveraendert importiert; FLAC 96 kHz/24 bit -> MP3 44,1 kHz; source_md5 = MD5 des Originals, Originale weg,
+organize/ leer, kein _failed. Bestand 12:16 nach der Grenze 12:15: `convert_lossless --ids 603 604 --yes`
+(26,8 -> 9,5 MB, 64,2 -> 14,6 MB; Laenge + Cue unveraendert; True Peak 604 1,2 -> 1,8 dBTP neu gemessen);
+die Originale liegen bis zum naechsten Spiegellauf (03:30) noch in `D:\backups\media`.
+**Abgenommen 2026-10-14:** Operator prueft Settings -> Local Machine -> Import Format im Browser und loescht die
+Probe-Tracks 22272-22276 (leere Probe-Ordner in D:\stor entfernt). **Bleibt offen:** `_failed` live nicht provoziert -
+eine Uebergabe scheitert nur an Rechten/Speicher/DB/RabbitMQ, eine kaputte Audiodatei wird uebergeben und
+scheitert erst im Analyzer (bleibt wie bisher in organize/); abgedeckt durch die Helper-Checks 69/69 + 10/10;
+der echte ADTS-Laengenfehler (~1,9 s) trat bei der synthetischen Probe nicht auf.
+Nebenbefund: id 14509 ist eine Dublette von 603 (Bilderbuch - Plansch (EOAE Remix), gleiche Laenge, aus dem
+Massenimport, nie gespielt).
+Nebenbefunde (klein, ohne eigenes Item): nur die neuen ffmpeg/ffprobe-Aufrufe laufen mit BELOW_NORMAL (ReplayGain,
+R128, Stille, Abspielbarkeit, Dauer weiter normal); convert_lossless misst die Lautheit
+(R128) an der neuen MP3 nach, weil ihr True Peak einige Zehntel dB hoeher liegen kann; eine .au-Datei bekommt bei ausgeschalteter Option keinen
+mime-Typ (bei Uploads schon vorher so).
+
+### ✅ Podcast-Downloads umgehen den Analyzer: keine Format-Normalisierung, keine Tag-Fuellung (notiert 2026-10-14) - Lautheitsmessung nachgeruestet 2026-10-24
+**Stand 2026-10-24 (Operator-Go):** Codec-Probe ueber alle 134 Episoden: 132 MP3, 2 OGG Vorbis - Normalisierung nicht noetig (Vorbedingung nicht erfuellt, Ansatz bleibt notiert).  Wirklich gefehlt hat die R128-Messung (109/134 ohne Werte): die API schickt jetzt nach dem Download die loudness_only-Nachricht an den Analyzer (podcasts/loudness_queue.py); Backfill ueber Settings -> Streams -> Measure loudness.
+Episoden laedt die API selbst und schreibt Datei + Bibliothekszeile direkt (LIBRARY 2.3); convert_format und die
+ffprobe-Tags greifen dort nicht.  Feeds liefern praktisch immer MP3 oder M4A - relevant nur fuer einen Feed mit rohem
+ADTS (Laenge ~2 s zu lang) oder WAV/FLAC.  Ansatz bei Bedarf: der Download-Pfad nutzt probe_audio /
+remux_adts_to_m4a / transcode_to_mp3 des Analyzer-Moduls (wie convert_lossless), oder Episoden laufen ueber die
+Analyzer-Queue.  Vorbedingung: ein Feed, der es braucht (vorher per Codec-Probe ueber imported/<Podcast>/ pruefen).
+
+### ✅ Sechs Bibliotheksdateien mit Decoder-Muell (True Peak +10 bis +84 dBTP) - Inhaltspruefung (notiert 2026-10-24, erledigt 2026-10-24)
+**Erledigt 2026-10-24:** Operator hat fuenf Dateien geloescht; 22327 „Mit Tanz & Theater durchs Leben" (dancetalk, 83 min) bleibt - Analyse: keine Decoder-Fehler, sondern heiss ausgesteuertes Material (1315 von 4988 Sekunden ueber 0 dBFS, bis +4,8 dBFS; −9 LUFS), das Playout daempft es auf −23 LUFS, die Verzerrung steckt im Material.  Caribou-Titel nach dem Analyzer-Fix a34856f gemessen, keine Datei ohne Werte mehr.
+Beim Nachholen der Lautheitsmessung gefunden: 23842 „Long Hard Road" (Nitty Gritty Dirt Band, +10 LUFS / +84 dBTP),
+23639 „(Don't Take Her) She's All I Got" (+71 dBTP), 11103 „Babylon Dub" (+41), 1770 „Twins" (Caribou, +14), 10903
+„Schoen (Lied fuer David Bowie)" (+11), 22327 „Mit Tanz & Theater durchs Leben" (+10).  ffmpeg dekodiert hier echte
+Stoerbursts (auch mit -err_detect / -ec 0 unveraendert), die Dateien sind beschaedigt; das Playout daempft sie
+entsprechend ihrer gemessenen Lautheit (23842 um 33 dB).  To do (Operator): reinhoeren, ggf. neu beschaffen oder
+loeschen.  Dazu 193 Dateien mit True Peak > +3 dBTP (MP3-Ueberschwinger, meist harmlos).
+
+### ✅ Upload: Dateien ohne Artist-/Album-Tag landen direkt in imported/ (Operator-Frage 2026-10-24) — DONE 2026-10-24
+**Erledigt 2026-10-24 (Operator-Go, Ordnername „tagless", §23.71):** organise_file legt Dateien ohne Interpreten-Tag
+unter imported/tagless/ ab (6 Testfälle); Umzugslauf `manage.py move_tagless` (Trockenlauf 63 Dateien, `--yes` verschiebt
+und zieht cc_files.filepath nach, Dateien mit Sendeplan-Zeile ±2/3 h werden übersprungen).  Analyzer-Neustart nötig.
+**Abgenommen 2026-10-25:** Analyzer neu gestartet, getaggter Upload → imported/Example Radio/Weather/, ungetaggter →
+imported/tagless/; Umzugslauf mit Go: 63 verschoben, 0 übersprungen, imported/ ohne lose Dateien, 64 tagless-Zeilen alle auf Platte.
+
+Der Analyzer baut den Zielpfad imported/<Artist>/<Album>/<Datei>; fehlen beide Tags, bleibt nur imported/ (63 Dateien,
+z. B. „01 -  - Chill Zone 2.mp3", „INOK Sommerfest 20260718.mp3").  Idee: Rueckfall-Ordner imported/_ohne-Tags/ (oder
+„Unknown Artist") im organise_file-Schritt, bestehende 63 per Umzugslauf nachziehen (filepath in cc_files anpassen).
+~1 h, Analyzer-Neustart.  Vorbedingung: Operator-Go und Entscheidung ueber den Ordnernamen.
+
+### ✅ Upload: gescheiterte Uploads sichtbar machen und aufräumen (Operator 2026-10-28) - (a)-(d) gebaut 2026-10-28 (Operator-Go, §23.75)
+**Erledigt 2026-10-28:** (a) Grund: Pipeline legt `{import_status: 2, comments: <Grund>}` in die Queue, der Listener meldet ihn
+(Spalte heißt `comments`; upstream schrieb „comment" ins Leere); Upload-Tabelle zeigt ihn.  (b) „Clear" löscht auch das Original
+in organize/ (`CcFiles::deleteOrganizeLeftovers`, Präfix `<id>-`), neue Aktion „Download" (`plupload/download-failed/id/N`,
+Besitzer/PM/Admin).  (c) Filter „Failed (N)" / „Pending (N)", API `GET /api/v2/storage/imports/failed`, Preflight
+`imports_failed` (Fehlschläge > 1 h, organize-Reste > 1 Tag ohne pending-Zeile) mit Banner-Link zur Upload-Seite.
+(d) `repair_container`: ID3-Block vor RIFF-Kopf wird abgeschnitten, MP3-Payload per `-c copy` ausgelesen, PCM → WAV; Original
+bleibt bis zum Einsortieren.  Tests: Analyzer 9 (+ pipeline_test angepasst), API 3, Playout 5; JS-Syntax.  Offen: Neustarts
+ANALYZER/API/PLAYOUT/Apache (Operator) und E2E-Probe (kaputte Datei + RIFF-mit-ID3 über den Import Folder).
+
+**Ursprüngliche Notiz:**
+Befund: ein Upload vom 20.10. (WAV mit MP3-Inhalt und vorangestelltem ID3-Block, von ffprobe abgelehnt) blieb als
+Original in `D:/stor/organize/` liegen, der Bibliothekseintrag 24975 stand versteckt auf `import_status = 2`; in der
+Oberfläche war davon nichts zu sehen, der Operator fand die Datei beim Blick in den Ordner.  Idee: (a) Upload-Dialog /
+„Recent Uploads" zeigt gescheiterte Uploads mit Grund (Analyzer-Fehlertext) und bietet „Datei herunterladen" und
+„Verwerfen" (löscht Original in organize/ und den versteckten Eintrag); (b) Preflight- oder Dashboard-Hinweis, wenn
+organize/ Dateien älter als ein Tag enthält; (c) optional Reparaturversuch für RIFF-mit-ID3-Mischlinge (RIFF-Kopf
+suchen, Datenstrom auslesen - so wurde 24975 am 28.10. von Hand gerettet).  ~½ Tag für (a)+(b), Manual x4.
+Vorbedingung: Operator-Go.
+
+### 🟡 Upload: gleiche Datei zweimal hochladen wird nicht erkannt (Operator-Frage 2026-10-24) - Defer (Operator 2026-10-28)
+**Operator 2026-10-28:** bleibt im Backlog. Begründung: Benutzer können nicht wissen, ob ein anderer Benutzer dieselbe Datei
+schon hochgeladen hat; eine Abweisung würde sie nur verwirren. Duplikate bleiben bewusst erlaubt (siehe Memory).
+
+Heute: zweite Datei bekommt im Ziel ein UUID-Suffix (organise_file), eine zweite cc_files-Zeile mit identischem md5
+entsteht; nur bulk_import (CLI) prueft md5/source_md5.  Idee: beim Web-Upload (CcFiles::createAndImport) den md5 gegen
+cc_files pruefen und den Upload mit Hinweis auf den bestehenden Titel abweisen (oder optional zulassen).  ~2 h inkl.
+UI-Meldung + Manual x4.  Vorbedingung: Operator-Go (Memory: Duplikate sind bisher bewusst erlaubt).
+
+### ✅ Covers: zehn Dateien je Track im artwork-Ordner, 183.359 Dateien / 8,5 GB (Operator-Frage 2026-10-24) — DONE 2026-10-24
+**Erledigt 2026-10-24 (Operator-Go, §23.71):** FileDataHelper schreibt nur noch die fünf JPGs; getArtworkData baut die
+Data-URI aus `<base>-<size>.jpg` (Rückfall: alte Textdatei).  Aufräumlauf `manage.py artwork_prune_datauri` (Trockenlauf:
+91.677 Textdateien / 4,35 GB mit JPG-Satz; `--yes` löscht).  Live geprüft: Bibliothekszeilen, Editor 256 px, Now Playing,
+`/api/track?return=artwork-*`.
+**Aufräumlauf mit Go 2026-10-25:** 91.677 gelöscht, 0 Fehler, 10 s; artwork-Ordner 91.682 Dateien / 4,34 GB (vorher 8,5 GB);
+Stichprobe 200 zufällige Cover × 2 Größen = 400 Data-URIs aus JPGs, 0 Rückfälle.  2 verwaiste Textdateien bleiben (Namen ohne
+das „ ..."-Suffix ihrer JPGs, keine cc_files-Zeile zeigt darauf, 150 KB).
+
+Je Track mit eingebettetem Cover schreibt FileDataHelper::saveArtworkData das Original als Data-URI (ohne Endung),
+fuenf JPG-Groessen (32/64/128/256/512) und vier Data-URI-Kopien davon (-32/-64/-128/-256).  Genutzt werden die
+Data-URI-32 im Dashboard, die JPGs in Library/Player/Widgets.  Idee: Data-URI-Kopien bei Bedarf aus dem JPG erzeugen
+(renderDataURI kann das), nur JPGs speichern -> etwa die Haelfte der Dateien und ~40 % des Platzes; Aufraeumlauf fuer den
+Bestand.  ~3 h.  Vorbedingung: Operator-Go, Backup des artwork-Ordners.
+
+### 💡 Expiry in M4A nur best effort (notiert 2026-10-14)
+Beim ADTS -> M4A-Umpacken schreibt convert_format Expiry, ISRC, LABEL und LANGUAGE als
+`----:com.apple.iTunes:<Name>`-Freeform-Atome; der Analyzer liest Expiry ueber ffprobe zurueck, andere Programme
+zeigen oder erhalten diese Atome nicht zuverlaessig (deshalb ist das Ziel fuer verlustfreie Dateien MP3, nicht M4A).
+Pruefen, bevor M4A-Dateien mit Expiry ausserhalb von RASTATIME bearbeitet werden: Rundreise mit Mp3tag (Feld
+sichtbar? nach dem Speichern noch da?); ggf. Hinweis im Manual LIBRARY.
+
+### 💡 bulk_import: --allowed-extensions kann die Standardliste nur erweitern (notiert 2026-10-14)
+`--allowed-extensions` ist `action="append"` mit `default=DEFAULT_ALLOWED_EXTENSIONS`: eigene Angaben haengen an die
+Standardliste an, eine Einschraenkung (z.B. nur .mp3) ist nicht moeglich.  Ausserdem fehlen in der Standardliste
+.mp4/.mp2/.mp1/.au, die Upload, Import-Ordner und FTP seit 2026-10-14 annehmen.  Ansatz: default=None und erst nach
+dem Parsen auf die Standardliste zurueckfallen (kleiner Fix + Test); betrifft nur den Kommandozeilen-Massenimport.
+
+### ✅ MP3-Stream-Ausgang laeuft mit 48 kHz, der Mix mit 44,1 kHz (notiert 2026-10-14) — erledigt 2026-10-25
+**Befund 2026-10-25:** Die 48 kHz kamen aus Settings → Streams → Stream 1 → „Sample Rate" (cc_pref stream_output_1,
+Feld-Standard 44,1); der Generator übernimmt den Wert je Mount in `%ffmpeg(... samplerate=N)`, Haupt- und Standby-Skript.
+AAC stand schon auf 44,1, Opus braucht 48 (Klemme).  **Operator-Go, Umstellung ohne Code:** Wert auf 44,1 kHz gesetzt,
+Playout erkannte den Fingerabdruck 12:07:21 (Webstream auf Sendung → gewartet), geplanter Neustart an der Grenze 12:15:00,
+5,0 s, Aufhol-Einstieg +5,0 s; Mount `/rastatime` seit 12:15:17 mit 44.100 Hz.  `nssm restart` meldet wie bei jedem
+geplanten Neustart Exit 1 (bekannt seit 2026-09-07, Dienst kommt zurück).  Standby-Skript 12:15 neu gerendert →
+RASTATIME-STANDBY danach erneut neu starten (der Operator-Neustart 12:06 kam vor dem Rendern).  Manual STREAMS
+„Sample Rate" EN/DE/FR/ES berichtigt (Dialog bietet 44,1/48, nicht 22,05/32).
+Bei der Abtastraten-Frage der Format-Normalisierung aufgefallen: der Mix (Tascam-Format, siehe Tascam-Item) laeuft
+mit 44,1 kHz, der MP3-Stream-Ausgang mit 48 kHz - fuer diesen Ausgang wird resampelt.  Kein Fehler, aber
+unnoetige Arbeit und ein zusaetzlicher Resampler im Signalweg.  Vorbedingungen fuer ein Go: eigene Evaluierung (woher
+die 48 kHz kommen - Stream-Einstellung oder Encoder-Default; Wirkung auf Hoerer-Clients und Icecast-Fallback-Mounts),
+Umstellung nur im ruhigen Fenster mit Hoer-Abnahme, weil ein Encoder-Neustart die Hoerer kurz trennen kann.
+
+### ❌ Backup-Medienspiegel liegt auf derselben Platte D: wie die Bibliothek (notiert 2026-10-14) - entfällt 2026-10-23
+**Operator 2026-10-23:** gestrichen.  Seit 2026-10-19 liegen die Backups auf `E:/backups` (1,6 TB frei), der
+Medienspiegel ist aus (`local_backup_include_media` = false); den alten Spiegel `D:\backups\media` (Stand 07.10.,
+178 GB) löscht der Operator selbst.
+Der Nachtlauf 03:30 spiegelt die Bibliothek (D:\stor) nach D:\backups - das schuetzt gegen Loeschen und Fehlbedienung,
+nicht gegen einen Ausfall der Platte D:.  Seit 2026-10-14 werden verlustfreie Originale beim Import nicht mehr
+aufbewahrt; fuer importierte Titel gibt es damit nur Bibliothek + Spiegel auf derselben Platte.  Vorschlag zur
+Evaluierung: zweites Ziel fuer den Spiegel (andere interne Platte, externe Platte oder NAS) oder wenigstens fuer die
+DB-ZIPs; Platzbedarf und Laufzeit des Spiegels nach dem Massenimport (~198.000 Dateien) vorher messen.
+
+## Kalender Import/Export (Operator-Wunsch 2026-10-11)
+
+### ✅ Settings -> 'Import/Export': Shows per CSV (+ ZIP mit Logos) importieren und exportieren - gebaut 2026-10-13
+Evaluation 2026-10-11: Machbar ueber die bestehende Kette ShowFormService::validateShowForms (inkl.
+checkOverlappingShows je Wiederholung) -> ShowService::addUpdateShow mit dem Feld-Array des New-Show-Dialogs; alle 24
+gewuenschten Spalten haben ein Formularfeld (Playlisten/DJs per Name aufgeloest, Farben hex, Tage als Liste).
+Entscheidungen Operator: eigener Menuepunkt Settings -> Import/Export (Export gleich wichtig); Logos Variante a) = ZIP
+mit shows.csv + logos/<datei> (Ablage wie Rest_ShowImageController: <Bibliothek>/imported/show-images/<id>/).
+Vorschlag: Vorschau-Schritt (Tabelle je Zeile ok/Ueberlappung/unbekannte Playlist/DJ, nur gruene Zeilen
+importieren); custom_password NICHT aus der CSV (Custom Auth nur einschalten + Benutzername, Passwort im Dialog oder
+Zufallswert einmalig anzeigen) - Entscheidung offen.
+Spalte 'Content' (Inhalte: Tracks, Line-In, Webstream): Stufe 1 = Playlist-Name -> Autoloading-Playlist der Show
+(cc_playlistcontents traegt file/block/stream/linein, fuellt jede kuenftige Instanz automatisch, kein neuer Code im
+Scheduler); Stufe 2 = explizite Liste 'file:<pfad>;webstream:<name>;linein:<name>;playlist:<name>' je Zeile, Import
+legt sie per Application_Model_Scheduler::scheduleAfter in die bestehenden Instanzen (nur bis shows_populated_until;
+spaetere Instanzen bleiben leer -> fuer Wiederholungen Stufe 1 empfohlen); Export serialisiert die naechste kuenftige
+Instanz.  Aufwand: Basis 1,5 Tage, Content Stufe 1 +0,5 h, Stufe 2 +1 Tag.
+Go 2026-10-13 (Vorschau + Export, custom_password nie aus der Datei mit Hinweis, Content Stufe 1, Stufe 2 spaeter) ->
+gebaut: ImportexportController + ImportExportService + 5 Typ-Handler, eigene ZIP-Klasse (kein ext-zip), Menuepunkt
+Settings -> Import/Export (Admin), 104 Strings DE/FR/ES, Manual IMPORT_EXPORT x4, Architektur-Abschnitt.  CLI-Probe
+(C:/Temp/optd/importexport_test.php + ie_cleanup.php): Export/Template/Rundreise/synthetisches Buendel mit allen
+Typen inkl. Logo, DJ, Autoloading, Ueberschneidung abgewiesen.  Browser-Abnahme Operator 2026-10-13: Apache
+neu gestartet (.mo), Vorlagen-Buendel geladen, Export-ZIP wieder hochgeladen, Vorschau wie erwartet -> abgenommen.
+
+### 💡 Import/Export Stufe 2: explizite Inhaltsliste je Sendung, 'ersetzen' fuer Sendungen, Podcast-Episoden
+Content Stufe 2 (file:/webstream:/linein:/playlist: je Zeile per Scheduler in die bestehenden Instanzen), Konflikt-
+modus 'ersetzen' auch fuer Sendungen (Instanzen/Inhalte erhalten), Export/Import heruntergeladener Episoden.
+Operator 2026-10-13: Stufe 2 eventuell spaeter.
+
+### ✅ Import/Export auch fuer Playlisten, Smart Blocks, Webstreams, Podcast-Abos - gebaut 2026-10-13 (Go 2026-10-13, einzeln und als Buendel)
+Alle vier machbar ueber bestehende Modelle: Playlist::addAudioClips (Inhalte file/block/stream/linein per Pfad/Name),
+Block::saveSmartBlockCriteria (229 Kriterienzeilen fuer 32 Bloecke: criteria/modifier/value/extra/criteriagroup ->
+JSON statt CSV), Webstream::save (name, url, description, length, mime, input_gain_db; analyzeFormData prueft die URL),
+PodcastService::createFromFeedUrl + imported_podcast (auto_ingest, auto_expiry, album_override, Track-Typ; Episoden
+werden nicht exportiert, der Feed liefert sie).  Gemeinsames Format: ein ZIP-Buendel mit shows.csv, playlists.csv,
+blocks.json, webstreams.csv, podcasts.csv, logos/; Import in Abhaengigkeitsreihenfolge Webstreams -> Smart Blocks ->
+Playlisten -> Podcasts -> Shows, Export in derselben Reihenfolge; Namen als Schluessel, Konflikt-Regel (ueberspringen /
+ersetzen) als Option.  Aufwand zusaetzlich: Webstreams 0,5 d, Playlisten 0,5 d, Smart Blocks 1 d (Kriterien-Mapping +
+Validierung), Podcasts 0,5 d (Feed-Abruf beim Import) -> gesamt mit Shows 4 Tage.  Empfehlung: Go in der Reihenfolge
+Shows+Webstreams, dann Playlisten, dann Bloecke/Podcasts; eine Seite, ein Buendel.
+
+### ✅ Import/Export Smart Blocks: Gruppen-Semantik + Datumskriterien korrigiert - gebaut 2026-10-14 (Go 2026-10-14: Format A, ohne Offset, Doku-Korrekturen)
+Befund 2026-10-14: README/Manual beschrieben die Gruppen verkehrt ("Gruppe UND, Gruppen ODER"); die Abfrage ODERt
+Regeln desselben Feldes in einer Gruppe (die "+"-Zeilen des Editors) und UNDet alles andere.  Relative Datumsregeln
+(before/after/between) kamen ohne Einheit an -> Zeile scheiterte mit "Undefined variable $datetimeunit" und liess
+einen Block ohne Regeln zurueck (= ganze Bibliothek), bei 'ersetzen' waren die Regeln des bestehenden Blocks weg;
+absolute Daten wanderten als UTC hinaus und als Ortszeit zurueck.  Gebaut: value + unit/extra_unit (altes "7 day
+ago" wird weiter gelesen), absolute Daten in der Benutzer-Zeitzone, Editor-Pruefungen in der Vorschau, eine
+Transaktion je Block, Vorlagen-Beispiel korrigiert, Manual IMPORT_EXPORT/LIBRARY/AUTOLOADING_PLAYLISTS x4, 8 Strings
+DE/FR/ES.  Architektur §23.56 Nachtrag (0.69.1).
+
+### ✅ Smart-Block-Abfrage: gleiches Feld in mehreren Gruppen mit Alternativen klammert falsch - gebaut 2026-10-14 (Go 2026-10-14, Architektur §23.58)
+Erledigt 2026-10-14: Ansatz (b) umgesetzt; (a)/(c) Vorher/Nachher ueber alle 32 Bloecke der Station identisch
+(Anzahl + Hash der sortierten Datei-IDs), 7 Muster-Bloecke treffen jetzt den SQL-Sollwert (4 lagen vorher falsch);
+Manual-Grenzhinweis entfernt.  Urspruenglicher Eintrag (Defer, gleicher Tag):
+Propel haengt addAnd/addOr an die bestehende Bedingung derselben Spalte; kommt ein Feld in mehreren Zeilen vor und
+hat eine spaetere Zeile "+"-Alternativen, entsteht ((A oder B) und C) oder D statt (A oder B) und (C oder D).
+Gemessen 2026-10-14: (Rock + Indie) / (Electronic + World) -> 2.923 Titel = nur World (erwartet 0).  Betrifft den
+Editor genauso; im Manual als Grenze dokumentiert ("Alternativen nur in der ersten Gruppe des Feldes").
+Vorbedingungen fuer ein Go: (a) eigene Evaluierung, weil die Korrektur das Ergebnis bestehender Editor-Bloecke
+aendern kann - Stand 2026-10-14 hat kein Live-Block das Muster (SQL-Pruefung), vor dem Umbau erneut pruefen;
+(b) Ansatz in Block::getListofFilesMeetCriteria: je Feld eine Criterion-Kette aus einem geklammerten Criterion je
+Gruppe bauen (getNewCriterion + addOr innerhalb der Gruppe, Criterion::addAnd zwischen den Gruppen) statt
+addAnd/addOr auf die Spalte, Sonderfall NOT ILIKE/<> "oder IS NULL" mitnehmen; (c) Vorher/Nachher-Zaehlung aller
+Live-Bloecke (identisch erwartet) + Probe-Muster oben (erwartet 0); (d) ruhiges Sendefenster, die Auswertung laeuft
+beim Planen und beim Autoloading.
+
+### ✅ Import/Export: Playlist-Ersetzen atomar machen - gebaut 2026-10-14 (Go 2026-10-14, Architektur §23.58)
+ImportExportPlaylists::create loescht bei 'ersetzen' mit deleteAllFilesFromPlaylist vor addAudioClips (eigene
+Transaktion); scheitert addAudioClips, bleibt die Playlist leer.  Risiko klein (Eintraege werden vorher
+aufgeloest), Vorschlag: dieselbe Propel-Transaktion um create() wie bei den Smart Blocks seit 2026-10-14.
+Erledigt 2026-10-14: Eine Transaktion allein reichte nicht - deleteAllFilesFromPlaylist endete mit einem nackten
+commit() ohne beginTransaction und haette die aeussere Transaktion vorzeitig festgeschrieben (gemessen: Playlist
+danach leer).  Die Methode hat jetzt eine eigene, ausgeglichene Transaktion; Playlists und Smart Blocks laufen ueber
+ImportExportType::atomically() (Rollback bis zur Ausgangstiefe, auch nach PHP-Error, Propel-Instance-Pools geleert).
+Block::deleteAllFilesFromBlock hatte dasselbe nackte commit() (laeuft nur im Editor: "Leeren" und "Generate"
+statischer Bloecke, ohne umgebende Transaktion) - auf Operator-Wunsch am selben Tag ebenfalls ausgeglichen
+(gemessen: alt 0 von 5 Eintraegen nach dem Rollback des Aufrufers, neu alle 5; Editor-Verhalten unveraendert).
+
+### 🟡 Stream-Metadaten „nicht weitergeben": Jingle soll „Sendername - Sendungsname" zeigen - Defer 2026-10-15 (Operator: Stand reicht so)
+
+Stand: `cc_files.icy_forward` / `cc_track_types.icy_forward` (Migration 0068,
+Commit c4daf1e) sind live; ein verstecktes Paket (`icy_hide=true`,
+`show_name`) lässt den Vortitel im Stream stehen, alle weiteren Titel
+erscheinen normal. Der Versuch, Titel/Interpret als leere Schlüssel
+mitzuschicken (83f2f05), zeigte zwar den Jingle-Text, danach erreichte aber
+kein Paket mehr den Icecast-Ausgang (Probe 23:44-23:49) - revertiert
+(0fa56e0). Operator 2026-10-15: so belassen.
+
+Vorbedingungen für eine Wiederaufnahme:
+- Replikat-Probe: warum liefert der Bus nach einem Paket mit leeren Feldern
+  keine Pakete mehr (`metadata.map(id="icy_rewrite", update=true,
+  strip=false, insert_missing=false)` + `rt_cross`)?
+- Alternative prüfen: das Playout schickt den fertigen Text
+  „Sendername - Sendungsname" direkt als `title` (kein `icy_hide`-Zweig,
+  keine leeren Felder).
+- Abnahme mit `C:/Temp/optd/icy_watch.py HH:MM:SS` und
+  `liq_cmd.py "output.icecast.metadata"` um zwei aufeinanderfolgende Jingles.
+
+## Operator-Punkte 2026-10-16 (Library-ID, Massenimport-Duplikate, Zeitumstellung)
+
+### ✅ Bibliothek: Spalte „ID" - gebaut 2026-10-16
+Operator: Datei-ID nirgends sichtbar.  Spalte vor „File Name", sichtbar, nur bei Dateien (Playlisten/Bloecke/
+Webstreams eigene Nummernkreise -> leer), sortierbar, Bereichssuche.  Gespeicherte Spalten-Layouts einmalig
+zurueckgesetzt (Spaltenzahl).  Apache-Neustart fuer den uebersetzten String.
+
+### ✅ Massenimport: `--allow-duplicates` - gebaut 2026-10-16
+Befund: nur `bulk_import` prueft md5/source_md5, Upload-Seite und Import-Ordner nie.  Schalter importiert
+trotzdem (gleiche Audiodaten, andere Tags); sonst unveraendert (Operator 2026-10-16).
+
+### ✅ Sendungen ueber die Zeitumstellung: Ende zur Wanduhrzeit - gebaut 2026-10-16
+Befund: Dauer wurde als verstrichene Stunden addiert -> Herbst 1 h Luecke, Fruehling 1 h Ueberlappung bei
+Sendungen ueber 02:00-03:00.  Fix `ShowService::wallClockEnd` (Architektur §23.62), Probe mit 10 Faellen.
+Operator-Go wegen 24/7-Betrieb.  Kalender 2026-10-16: keine Instanz kreuzt eine Umstellung, daher kein
+Korrekturlauf.  Vor der naechsten Umstellung (2026-10-25) Blick in den Kalender genuegt.
+
+### ✅ Zeitumstellungsnacht 24./25.10.2026 (03:00 → 02:00) - geprüft 2026-10-25
+Erster Live-Fall von wallClockEnd.  Befund aus DB, Playout-/Liquidsoap-Log und 24/7-Aufnahmen:
+- Instanz 25391 „Electronic Evening" 24.10. 22:00 – 25.10. 04:00 UTC = 6 echte Stunden (00:00–05:00 Wanduhr),
+  Autoloading füllte 5:59:56,995 (Budget = echte Dauer), 104 Zeilen, alle 104 gespielt, letzte endet 03:59:56 UTC.
+- Playout lief durch beide 02:xx-Stunden (Log in Ortszeit: 711 Zeilen in „02" = zwei Stunden), armed-Zähler stetig,
+  past=0, kein Fehler, kein Sprung; Liquidsoap ohne Neustart (nur ID3-Hinweise, ein Harbor-ECONNRESET 03:21).
+- Folgesendung „BBC Newsday (Live)" 04:00 UTC = 05:00 CET: TOH-Jingle PLAY um 05:00:00,006, 5/5 Zeilen gespielt.
+- 24/7-Aufnahmen: Stundenfiles in Ortszeit; die doppelte Stunde liegt als `2026-10-25 02-00.mp3` (CEST) und
+  `2026-10-25 02-00.2.mp3` (CET) vor, beide volle 57,6 MB; 03-00 und 04:00-Rotation normal.
+
+### ✅ Cue-Datei der doppelten Stunde vermischt beide Durchgänge (notiert 2026-10-25) - gebaut 2026-10-28 (Operator-Go, §23.34 Addendum)
+**Erledigt 2026-10-28:** `cue_writer` schreibt `hour_start_utc` + `utc_offset` in jedes Sidecar; gehört das Sidecar der
+Wanduhr-Stunde zu einer anderen UTC-Stunde, gehen die Marken nach `<Stunde>-00.2.cues.json` (`sidecar_part`, `recording`
+= `.2.mp3`), `parts` je Sidecar nur die Dateien der eigenen Stunde (Schonfrist 60 s); alte Sidecars ohne UTC-Felder
+werden fortgeführt; Neustart in normaler Stunde unverändert.  7 neue Tests (Doppelstunde, Teile-Aufteilung, Neustart,
+altes Sidecar, naive Uhr, Offset-Text).  Wirksam nach PLAYOUT-Neustart; erster Live-Fall 2027-10-31 (Memory-Erinnerung).
+Die Datei vom 25.10. bleibt unverändert (Aufbewahrung 10 Tage).
+
+**Ursprünglicher Befund:**
+`2026-10-25 02-00.cues.json` führt unter `parts` beide MP3s (beide mit start 02:00:00 / offset 0) und unter `marks`
+die 39 Marken beider Stunden gemeinsam, `t` relativ zur selben Wanduhr-Stunde (Marken 16741–16760 CEST, 16779–16783 CET,
+nicht nach `t` sortiert).  Für Stufe 2 der Sendungswiederholung (Live-Zeilen als Cue-Scheiben, §23.67) wäre die
+Zuordnung Marke → Teil nötig (z. B. `part`-Index je Marke oder eigene `02-00.2.cues.json`).  Betrifft nur die
+Herbst-Umstellung (nächste 2027-10-31); ~1 h in `recording_hourly`/Cue-Schreiber.  Vorbedingung: Operator-Go.
+Betroffen ist nur die 24/7-Stundenaufnahme der doppelten Stunde 02:00–03:00, unabhängig davon, welche Sendung dann läuft.
+
+### 👁 Beobachtung Frühlings-Zeitumstellung Nacht 27./28.03.2027 (02:00 → 03:00) - Operator-Wunsch 2026-10-25
+Die Stunde 02:00–03:00 fehlt.  Erwartung (wallClockEnd, §23.62): eine Sendung über die Umstellung endet zur Wanduhrzeit
+und ist eine echte Stunde kürzer; Autoloading füllt gegen die echte Dauer; eine Endzeit in der fehlenden Stunde rückt
+auf +1 h (PHP).  Checkliste für den 28.03.2027 beim ersten Kontakt (Memory reminder_dst_spring_2027):
+1. Kalender/DB: Instanzen über 01:00–03:00 UTC am 28.03. - Dauer = Wanduhr minus 1 h, keine Lücke, keine Überlappung.
+2. Autoloading: Befüllung = echte Dauer (nicht Wanduhr-Dauer, sonst 1 h Überhang).
+3. Playout-/Liquidsoap-Log 01:30–03:30 Ortszeit: kein Sprung, kein Abbruch; Stunde „02" fehlt im Ortszeit-Log.
+4. 24/7-Aufnahmen: keine Datei `02-00`, Datei `03-00` beginnt direkt nach `01-00`; Cue-Dateien plausibel.
+5. Folgesendung nach der Umstellung startet pünktlich; Ergebnis in BACKLOG/Memory festhalten.
+
+### Zaehler „X of N tracks" ueberlappt Suchbegriff (Schedule Tracks) - erledigt ohne Eingriff
+Operator 2026-10-16: tritt nicht mehr auf.  Nicht weiter verfolgt.
+
+### 🟡 Legacy-PHPUnit wiederbeleben (Defer, Operator 2026-10-16)
+`frontend/legacy/tests` stammt aus der PHPUnit-4-/PHP-5-Zeit (`PHPUnit_Framework_TestCase`, eigene Test-DB
+`tests/config`), vendor/bin hat kein phpunit.  Legacy-Logik wird mit Bootstrap-Probe-Skripten geprueft
+(C:/Temp/optd, Muster importexport_test.php; z. B. dst_wallclock_probe.php).  Wiederbeleben = PHPUnit 10 per
+Composer, Tests auf `PHPUnit\Framework\TestCase` + Attribute heben, Test-DB-Setup unter Windows; ca. 1-2 Tage.
+Vorbedingung: groesserer Legacy-Umbau steht an (sonst Nutzen zu klein, Legacy weicht langfristig).
+Zwischenstand: `scripts/run_tests.ps1` (2026-10-16) buendelt die drei Python-Suiten mit den noetigen Variablen.
+**Stand 2026-10-28 (Operator: Defer bestaetigt):** Bestand = 6 Dateien / 32 Tests (26 davon ShowService), ~2.300 Zeilen;
+4 Dateien erben von `Zend_Test_PHPUnit_DatabaseTestCase` (DbUnit, seit PHPUnit 9 tot), `AirtimeInstall` legt je Test eine
+frische DB an (Linux-gepraegt).  Heute 75 Probe-Skripte in C:/Temp/optd.  Empfehlung fuer den Fall des Vorziehens: nicht
+portieren, sondern klein neu — PHPUnit 10/11 als Dev-Abhaengigkeit, eigener Basisfall mit Transaktion/Rollback gegen eine
+Test-DB (Installer nur mit Test-Praefix im DB-Namen), Probe-Skripte nach und nach als Tests ins Repo; ~0,5 Tag Geruest +
+~1 h je Probe.  Risiko fuer den Sendebetrieb keins, solange die Test-DB einen eigenen Namen traegt.
+
+### ✅ Settings -> Local Machine -> Import Folder: Kontrollkaestchen fuer Massenimport-Duplikate - gebaut 2026-10-16
+cc_pref `bulk_import_allow_duplicates` (Standard aus), speichert beim Anklicken (POST preference/bulk-import-save),
+`bulk_import` liest es als Vorgabe, `--allow-duplicates` schaltet je Lauf ein.  Manual LOCAL_MACHINE ×4.
+
+## Backup und Teaser (Operator 2026-10-16)
+
+### ❌ Backup: Recordings in den Medienspiegel aufnehmen (Operator 2026-10-16 -> Backlog) - Operator erledigt es manuell 2026-10-28
+**Operator 2026-10-28:** kein Umbau; stattdessen ein neues Backup inklusive Medien von Hand, alte Backups werden gelöscht
+(sie sind überflüssig).  Kein Code.  Ursprüngliche Notiz:
+Befund: Medienspiegel (robocopy, backup.py) umfasst nur die Bibliothekswurzel D:/stor; die 24/7-Aufnahme
+(D:/recordings/24-7, ~12 GB, 10 Tage Aufbewahrung) und die Sendungsaufnahmen (C:/Users/studio/Music/Show
+Recordings) sind nicht gesichert.  Backup-Ziel stand am 16.10. noch auf D:/backups (gleiche Platte wie
+Bibliothek), E: wird gerade formatiert -> Operator stellt um.  Idee: Settings -> Backup Haekchen
+"Include recordings", robocopy der beiden Ordner nach <Backup>/recordings, Verifikation wie Medienspiegel;
+~2 h mit Doku.  Empfehlung: Recordings auf D: lassen, nie direkt auf die USB-Platte aufnehmen.
+
+### 🟡 Backup: Wiederherstellen per Knopf / Skript (evaluiert 2026-10-24, Operator: kein Go, alle drei Optionen ins Backlog)
+**Heute:** Settings → Backup nennt das Wiederherstellen (seit 24.10. als erster Abschnitt) einen bewussten
+Offline-Vorgang: Dienste stoppen (Apache, Playout, Analyzer, Worker, API), `db.dump` aus dem ZIP mit
+`pg_restore` zurück, Dienste starten (`docs/operator/BACKUP.md` §7, Handbuch Backup §6).  DB ~23 MB → Restore in
+Sekunden; Restore-Probe A6.2 am 07.10. in eine Wegwerf-DB bestanden; die Rolle `rastatime` darf Datenbanken
+anlegen (kein Superuser nötig).  **Kern-Hürde eines Knopfs:** er lebt in der Weboberfläche, die dafür gestoppt
+werden muss → die Arbeit braucht einen eigenständigen Ablauf außerhalb von Apache/API; die UI löst nur aus und
+zeigt das Ergebnis nach dem Neustart.
+**Optionen:**
+- **A - Knopf in der UI:** „Restore…" je Zeile unter „Existing backups", Bestätigung durch Eintippen des
+  Sicherungsnamens, nur Admin; ausgeführt von einer einmal registrierten Aufgabe „RASTATIME-Restore" (SYSTEM):
+  (1) Sicherheitskopie des aktuellen Stands, (2) Dump in eine **Neben-DB** zurückspielen und prüfen - die
+  laufende DB bleibt unberührt, (3) erst dann Dienste stoppen und **umbenennen** (`rastatime` →
+  `rastatime_before_<Zeit>`, neu → `rastatime`, Sekunden), (4) Migrationen, Dienste starten, Status schreiben.
+  Liquidsoap und Icecast laufen weiter (Standby/Fallback hält die Hörer); Rückfall = zurück umbenennen.
+  Aufwand ~1,5-2 Tage (API-Endpunkt, Auslöser, Statusdatei, UI, Tests, Handbuch ×4).
+- **B - halbautomatisch:** Knopf „Restore vorbereiten" macht (1)+(2) und meldet „bereit"; den Tausch stößt der
+  Operator per Skript an.
+- **C - nur Skript:** `rt-restore.ps1` mit demselben sicheren Ablauf (Neben-DB, Umbenennen, Rückfall), aus
+  einer Admin-Shell.  Kern von A und B; ~½ Tag mit Probe an einer Wegwerf-DB.
+**Abwägung:** Restore ist der seltene Notfall - dann zählt ein sicherer, schneller Weg mit Rückfall (bringt
+schon C).  A spart im Notfall die Admin-Shell, legt aber eine DB-ersetzende Aktion in die Weboberfläche, die
+von jedem Admin-Login erreichbar ist (öffentlich erreichbare Station).  Empfehlung bei der Evaluierung: C
+zuerst, A erst wenn C sich bewährt hat (Knopf = nur Auslöser für dasselbe Skript), B unnötig.
+**Vorbedingungen (alle Optionen):** Operator-Go; Probe des Umbenennens in einem ruhigen Sendefenster (~1-2 min
+Weboberfläche weg); Restore-Drill A6.2 bleibt die regelmäßige Prüfung der Dumps.
+
+### ✅ Teaser-Automatik Stufe 1 - gebaut 2026-10-16 (Go 2026-10-16, Architektur §23.63)
+Jingle -> Sendung + Typ (show/today/tomorrow) an cc_files (Migration 0069), Track-Editor + Mehrfach-Bearbeitung,
+Bibliotheksspalte "Teaser"; Smart-Block-Kriterien teaser_show / teaser_type / teaser_fits; Fuellkontext
+(Instanz, Sendung, Slot) aus Autoloading (Intro=Start, Outro=Ende, Inhalt=Kettenende) und Scheduler
+(Ende der Vorgaengerzeile).  Operator-Regeln: nie die befuellte Sendung, nie eine Sendung, die fuer heute vorbei
+ist (today/show), tomorrow nur bei Ausstrahlung am Folgetag.  Erweiterung: "Exclude tracks/artists played
+lately" zaehlt geplante Zeilen im Fenster (beide Richtungen).  Trockenprobe in Transaktion bestanden.
+Abnahme-Rueckmeldung 2026-10-16: mehrere Sendungen je Jingle -> Verknuepfungstabelle cc_file_teaser (Migration 0070),
+Mehrfachauswahl in beiden Editoren; Fixes: Sendungsliste (UNION-ORDER BY), leere Bibliothek nach 0069 (74cd18c).
+Migration 0070 gelaufen, Abnahme 2026-10-16 18:15 bestanden (Spalte, Mehrfach-Bearbeitung, Block, Testsendung 18:15:
+Intro "morgen"-Jingle, Outro Showteaser, Rotation).  Nachbesserungen aus der Abnahme: Bereitschaftspruefung (dde697c),
+Typ zuerst (781d200), Pool-Dropdown-Widget (06491c9), Spaltenzusatz nur bei Tagesteasern.
+
+### ✅ Teaser-Automatik Stufe 2 - gebaut 2026-10-16 (Go 2026-10-16 nach der Abnahme von Stufe 1)
+Kalender-Kontextmenue "Teasers" je Sendung (Admin/PM): Jingles mit Typ, weiteren Sendungen, Loesen, Picker zum
+Verknuepfen mit Typwahl.  Abnahme Operator 2026-10-16 19:40 bestanden (Fixes: isUserType statt isAdminOrPM, JSON-Kontext,
+Skript im Wurzelelement).  Nicht gebaut (bei Bedarf): Anzeige in der Sendungs-Vorschau, Bibliotheksfilter
+"Teaser der Sendung X".
+
+
+### ✅ Windows-Updates Oktober 2026 + Lenovo-Firmware - installiert 2026-10-23 (Operator); Windows 11 26H2 bleibt 🟡 DEFER
+**Stand 2026-10-23 (Aufräum-Durchgang, Operator hat installiert und um 18:01 neu gestartet):** Build 26200.9711
+(KB5127648 + KB5127690 + KB5127647), BIOS M5OKT41A (1.65) per Lenovo Commercial Vantage.  Neustart geprüft:
+Tascam per Name (PortAudio 11 WASAPI / 4 MME), Line-In-Capture bereit, Liquidsoap 18:01:19 mit gültiger
+Stereo-Tool-Lizenz und Icecast-Mounts, Aufhol-Start 'To Ramona' bei +165 s, Preflight ohne Warnungen, alle
+10 Dienste laufen.  BIOS-Vergleich gegen den Snapshot vom 16.10. (neuer Snapshot
+`C:/Temp/optd/bios_settings_M5OKT41A_2026-10-23.txt`): AfterPowerLoss = Last State unverändert; vom Update
+umgestellt: SecureBoot Disabled → Enabled, HardDiskPre-delay 12 s → Disabled, OptionKeysDisplay Enabled →
+Disabled (+ OptionKeysDisplayStyle entfallen), PhysicalPresenceforClear Disabled → Enabled - Operator
+entscheidet, ob etwas zurückgestellt wird (Boot lief mit den neuen Werten).  **Offen:** TPM-Firmware
+15.25.19744 (WMI meldet weiterhin 15.24.18954; Windows Update listet sie und das Lenovo-Paket 1.0.0.65 noch),
+Dell-Monitor-INF bleibt bewusst aus.
+Stand 2026-10-16 (nur gelesen, nichts installiert): Windows 11 Pro 25H2 Build 26200.9457 (KB5129195 vom 15.09.),
+BIOS M5OKT3EA (1.62), BitLocker aus, Richtlinie "nur benachrichtigen, nie selbst neu starten" aktiv (WINDOWS_24_7.md).
+Empfehlung Go - der Operator installiert im Wartungsfenster nach dem 03:30-Backup (WINDOWS_24_7.md §3, danach
+RESTART_ORDER.md), drei getrennte Schritte mit je einem Neustart:
+(1) KB5127648 (2026-10 kumulativ, 26200.9711) + KB5127690 (.NET) + KB890830 (MSRT).  Die bekannten Probleme treffen
+    hier nicht: USB Audio Class 1.0 (Tascam US-16x08 laeuft ueber den TEAC-Treiber, nur dessen MIDI-Teil ueber
+    usbaudio; das Problem kam schon mit dem September-Update, das seit 15.09. ohne Stoerung laeuft), RDP aus,
+    kein 802.1X (dot3svc gestoppt).
+(2) Lenovo System Firmware 1.0.0.65 = BIOS M5OKT41A (1.65, 2026-08-25): bringt die Sicherheitskorrekturen von
+    M5OKT3FA (LEN-213045/-213178/-213835) und M5OKT40A (LEN-217092/-216819).  Danach BIOS-Einstellungen gegen
+    C:/Temp/optd/bios_settings_M5OKT3EA_2026-10-16.txt vergleichen (Lenovo: Einstellungen evtl. neu setzen;
+    wichtig AfterPowerLoss = Last State).
+(3) Lenovo TPM Firmware 15.25.19744 (2026-07-29), nach dem BIOS.
+Nicht installieren: Dell U2419HC Monitor-INF (2018, rein kosmetisch, Treiber bleiben per Richtlinie aussen vor).
+26H2 DEFER: Freischaltpaket auf derselben Codebasis wie 25H2 (gleiche Fehler, gleiche Korrekturen), kaum Neues;
+25H2 Pro wird bis 2027-10-12 versorgt.  Vorbedingungen fuer ein Go: (a) Schritt (1) installiert (Voraussetzung des
+Pakets: KB5124010 oder spaeter); (b) einige Wochen ohne neue 26H2-spezifische Known Issues oder Safeguard Holds
+(Windows Release Health pruefen); (c) Wartungsfenster wie oben, ein Neustart; spaetestens vor Oktober 2027.
+
+## Wiederholungen automatisieren (Operator 2026-10-18)
+
+### ✅ Wiederholung von Sendung, Stufe 1 - gebaut 2026-10-18 (Go 2026-10-18, Architektur §23.65)
+
+Sendung B wählt Sendung A als Quelle (Edit Show → Autoloading Playlist →
+„Repeat of show"); kurz vor dem Start wird der Inhalt der zuletzt
+beendeten A-Instanz kopiert (Jingles eingeschlossen - das Track-Typ-Flag
+„Copy into Repeats" wurde am selben Tag wieder entfernt, Migration 0072),
+das Autoloading füllt die Restzeit; Ketten erlaubt,
+Kreise verboten; Löschsperre für noch gebrauchte Titel.  Migration 0071
+live 2026-10-18 17:27, Probe bestanden (repeat_e2e_probe.php); Abnahme
+2026-10-18 18:36 durch den Operator: „testwhc“ (19:40) wurde 65 min vor dem
+Start mit den 5 Zeilen von „testshowc“ (17:40) befüllt, identische Reihenfolge.
+Nebenbefund dabei behoben: Quellenliste blendete Sendungen der nächsten zwei
+Stunden aus (NOW() ohne UTC, 737f347/0b8838b).
+
+### Dayteaser nach dem BBC-Webstream fehlte - Befund 2026-10-21, Operator-Entscheidung ohne Code
+
+Der zweite Dayteaser-Block (50,05 s, Typ Jingles mit 0 s Crossfade, also ohne Ueberlappung) passte nach dem
+304-s-Webstream um 0,1 s nicht in die 7-min-Sendung; die Befuellung liess ihn aus, der Auto DJ fuellte die
+49,9 s mit einem kurzen Musiktitel.  Operator 2026-10-21: Webstream auf 303 s kuerzen (kein Code).  Nicht gebaut:
+Toleranz von 0,5 s Ueberhang fuer das letzte Element in `AutoPlaylistManager::insertFitting` (waere die
+robuste Variante, falls das Muster bei anderen Laengen wiederkehrt).
+
+### ✅ Wiederholung von Sendung, Stufe 2: aufgezeichnete Live-Sendungen - gebaut 2026-10-20 (Go 2026-10-20, Architektur §23.67)
+
+Live-Sendungen (DJ, Line-In) haben keine kopierbaren Sendeplan-Zeilen;
+die Wiederholung muss die Show-Aufzeichnung (Record-per-Show, MP3/AAC/
+OGG/Opus nach Settings → Local Machine) abspielen.  Vorbedingungen:
+1. Stufe 1 eine Woche im Betrieb (Kopie, Löschsperre, Autoloading-Rest).
+2. Signal „Aufnahme fertig" vom Playout an Legacy (Pfad + Instanz-Id),
+   Import der Datei über den Import-Ordner/Analyzer in einen Track-Typ
+   „Recordings", Verknüpfung
+   Datei ↔ A-Instanz (`cc_show_instances.file_id` existiert).
+3. `fillDue()` wartet bei einer Live-Quelle auf den Import und legt die
+   Aufnahme als einzige Zeile in B (Länge = Aufnahmedauer, Rest
+   Autoloading).
+4. Aufbewahrung: Recording-Retention darf die Datei nicht vor der
+   Wiederholung löschen.
+Aufwand grob 300-500 Zeilen Playout + Legacy, 1-2 Tage plus Beobachtung
+einer echten aufgezeichneten Sendung.
+Gebaut 2026-10-20: Vorbedingung 2 kam mit „Copy Show Recordings into Library" (§23.66); Line-In-Zeilen
+werden zu Cue-Scheiben der Aufnahme, Original ohne Zeilen = ganze Aufnahme, Warten bis 5 min vor Start,
+Löschsperre fuer die Aufnahme, Scheduler uebernimmt explizite Cue-Werte.  Proben repeat2_probe.php +
+repeat2_e2e_probe.php bestanden.  OFFEN: Abnahme des Operators mit „Listen Up Test" → „Listen Up WH".
+
+### 🔴 Wiederholung von Sendung: DJ-per-Harbor-Anteile als Cue-Scheiben der Aufnahme - HOLD (Operator: kein Go 2026-10-23)
+
+Offener Rest von Stufe 2: Line-In- und Webstream-Zeilen werden seit 2026-10-20/21
+durch Cue-Scheiben der Aufnahme ersetzt, ein per Harbor verbundener DJ aber
+nicht.  Der Sendeplan weiss nicht, ob ein DJ verbunden war (Fallback-Playlist
+steht als normale Zeilen drin, der Quellen-Umschalter blendet den DJ darueber);
+cc_live_log wird seit der Liquidsoap-Umstellung (Mai 2026) nicht mehr
+geschrieben, Harbor-Ereignisse stehen nur im Playout-Log.  Folge heute: eine
+DJ-Sendung mit Fallback-Playlist wird als Zeilenkopie wiederholt (Playlist
+statt DJ); nur ein Original ganz ohne Zeilen bekommt die ganze Aufnahme.
+
+Vorschlag (2026-10-19, kein Go): Playout schreibt jedes Harbor-Ereignis
+(Master/Show, an/aus, Zeitstempel) in die DB (cc_live_log existiert, ~80
+Zeilen); beim Befuellen gelten Line-In-Zeilen, Webstream-Zeilen und DJ-
+Zeitraeume gleichermassen als Live-Bereiche -> Cue-Scheiben, von einem DJ ganz
+ueberdeckte Playlist-Zeilen fallen weg, angeschnittene werden gekuerzt; kam
+kein DJ, bleibt es die Zeilenkopie.  Nur die Verbindung zaehlt, nicht die
+Konfiguration "DJ erlaubt".  Aufwand ~100-150 Zeilen Playout + Legacy.
+Operator 2026-10-23: kein Go, in den Backlog.  Wiederaufnahme nur auf
+Operator-Wunsch; Vorbedingung dann: Harbor-Ereignisse persistent (Punkt 1 oben).
+
+## Operator-Punkte 2026-10-19 (Kalender, Library-Ordner, Sekundaerfarbe, WebP)
+
+### ✅ Kalender: Wochentag-Vorauswahl bei „Repeats" + Breite nach „Edit Show" - gebaut 2026-10-19
+
+Beides Operator-Meldungen: der angehakte Tag war immer „heute" (`attr("value")`
+statt `.val()`), und der Kalender blieb nach dem Schließen des Formulars schmal
+(FC6 misst nur beim Fenster-Resize, jetzt `updateSize()` in `windowResize()`).
+Commit e3d9aa7.
+
+### ✅ Zeitumstellung: Sendung 00:00-05:00 „im Kalender bis 6:00 sichtbar" - Ursache gefunden und behoben 2026-10-19
+
+Befund: DB (Instanzen der importierten Sendung 683 und der neu angelegten 1230:
+alle 00:00-05:00 Ortszeit, 5 h), Event-Feed (`getFullCalendarEvents`, Probe
+`C:/Temp/optd/calfeed_probe.php`) und FullCalendar 6 im Browser-Harness
+(Tag/Woche/Monat mit den Live-Optionen, Probe im eingebauten Browser) zeigen
+alle 00:00-05:00.  Die Zeitumstellung ist in der Nacht 24./25.10. (03:00 →
+02:00), nicht am 26.10.  Vorbedingung: Screenshot des Operators mit Ansicht
+(Tag/Woche/Monat), Browser und Uhrzeit der Beobachtung; ggf. Browser-Zeitzone
+pruefen.
+Aufloesung (Screenshots des Operators, Sendung Sonntag 00:00-05:00 ueber die Umstellungsnacht 25.10.):
+`ShowFormService::calculateDuration` rechnete in echten Stunden (6 h) und speicherte „06:00" als
+Dauer; Fix = Wanduhr-Differenz.  Show 1239 „Electronic Evening" muss neu angelegt werden.
+
+### ✅ Mehrere Library-Ordner -> „Copy Show Recordings into Library" - gebaut 2026-10-19 (Go 2026-10-19: Option A mit Kontrollkaestchen, Architektur §23.66)
+
+Evaluierung 2026-10-19: Eine echte zweite Wurzel ist ein Architektur-Umbau -
+alle 21.739 `cc_files.filepath` sind relativ zu EINER Wurzel
+(`Application_Common_Storage::root()`, API `storage/root.py`, PLAYOUT-Cache,
+Analyzer `import_directory`, Umzugs-Job, Backup-Spiegel); `cc_music_dirs` gibt
+es nicht mehr.  Empfehlung: nicht die Wurzel vervielfachen, sondern die
+Aufnahmen in die Bibliothek importieren (Kopie nach `D:/stor/imported/...`,
+Track-Typ „Recordings", Original bleibt in `D:/recordings/shows`).  Das ist
+zugleich Vorbedingung 2 von „Wiederholung von Sendung, Stufe 2".  Optionen:
+A) Playout meldet „Aufnahme fertig" → Legacy importiert die Datei sofort
+(Metadaten Sendung/Datum, Verknuepfung zur Instanz; ~1 Tag).  B) zweiter
+Import-Ordner im Kopiermodus fuer den Scanner (5-min-Takt, MD5-Dedup; ~0,5 Tag,
+ohne Instanz-Verknuepfung).  Operator 2026-10-19: Option A mit Kontrollkaestchen
+"Copy Show Recordings into Library" (Settings -> Local Machine -> Show Recording).  Gebaut 2026-10-19
+(Playout meldet api/recording-finished, Legacy importiert getaggte Kopie als Track-Typ "Recordings",
+Verknuepfung cc_show_instances.file_id, Duplikate ueber md5/source_md5).  OFFEN: PLAYOUT-Neustart durch den
+Operator, Abnahme mit einer aufgezeichneten Testsendung.
+
+### ✅ Sekundaerfarbe der Oberflaeche einstellbar (Operator-Frage 2026-10-19) - gebaut 2026-10-26 (Operator-Liste 2026-10-26)
+
+**Ergebnis:** Settings → General → Secondary Color (`ui_secondary_color`, Standard `#1adeff`) faerbt
+Fortschrittsbalken der Sendung, Markierung des aktiven Eintrags im Dashboard-Menue und in den Untermenues,
+den aktuellen Titel in Scheduled Shows und die `.btn-new`-Knoepfe (fuer weisse Schrift nur bis Kontrast 4,5:1
+abgedunkelt).  Details CHANGELOG 2026-10-26, Architektur §23.43 Nachtrag.
+
+**Urspruenglicher Befund:**
+
+
+`#02cef9` kommt in der gesamten Oberflaeche genau einmal vor: Fortschrittsbalken
+der laufenden Sendung im Dashboard (`styles.css` `.progressbar .progress-show`
+samt PNG-Streifen).  Eine Einstellung wie „Primary Color" (`ui_accent_color`,
+`Application_Model_AccentColor`, 2026-09-29) waere technisch ~2 h (zweite
+Praeferenz, Palette `--rt-secondary*`, Manual ×4), braucht aber die Liste der
+Elemente, die der Operator als „Sekundaerfarbe" wahrnimmt.  Vorbedingung:
+Screenshot/Liste der gemeinten Stellen.
+
+### ✅ Show-Logos als WebP (Operator-Frage 2026-10-19) - gebaut 2026-10-25 (Operator-Go 2026-10-25)
+
+**Ergebnis:** WebP an allen Logo-Stellen: Show-Logo (Formular-Validator, REST-Upload mit MIME-Liste,
+`common.js`), Stationslogo, Auto-DJ-Logo, Show-Import (Logos im Bündel).  `ImageSize` schreibt WebP
+(Qualität 90) und erhält jetzt den Alphakanal von PNG/WebP beim Verkleinern; ein unbekannter Typ endet als
+"Bad file extension" statt ErrorException.  Probe: 1200×800-WebP mit Transparenz → 600×400 WebP,
+transparente Hälfte bleibt transparent, finfo `image/webp`, Validator OK.  Handbuch AUTO_DJ / SETTINGS /
+IMPORT_EXPORT (wo vorhanden ×4).  Upload im Browser durch den Operator ausstehend.
+
+**Ursprünglicher Befund:**
+
+Heute abgelehnt an drei Stellen: `AddShowStyle` (Extension-Validator
+jpg,jpeg,png,gif), `Rest_ShowImageController` (MIME-Liste + Erweiterungs-Map),
+`common.js validateMimeType`.  GD hat WebP-Unterstuetzung (imagecreatefromwebp/
+imagewebp vorhanden), `ImageSize` arbeitet mit `imagecreatefromstring` und
+schreibt per `image<ext>`; Auslieferung `api/show-logo` nimmt den MIME-Typ
+per `mime_content_type`.  Landing-Hintergrund und Widget-Cover akzeptieren
+WebP bereits.  Aufwand ~1 h inkl. Stationslogo (`GeneralPreferences`) und
+Manual CALENDAR ×4.
+
+## Metadaten und Audio-Analyse (Evaluierung 2026-10-21)
+
+### ✅ Bibliothek: "Re-read Tags" - gebaut 2026-10-21 (Go 2026-10-21, Architektur §23.69)
+
+In Windows nachbearbeitete Dateien: RASTATIME liest nie von selbst nach (DB = Wahrheit).  Knopf neben
+"Cue Points": API `files/reread-tags` mit dem Tag-Leser des Analyzers, Whitelist der Tag-Felder,
+RASTATIME-Spalten bleiben, Bestaetigung im Dialog.  Kein automatischer Abgleich (wuerde Editor-Aenderungen
+stillschweigend ueberschreiben).  Abnahme 2026-10-21: Knopf im Browser bestaetigt (Operator), Live-Probe des
+Endpunkts mit zwei Dateien, deren Tags der DB entsprechen: 2 gelesen, 0 geaendert, Zeilen unveraendert.
+
+### 🟡 Metadaten Energy, Tempo, Key, Timbre + Analyse beim Import (Mood-Detector-Fork) - DEFER (Operator 2026-10-21: unsicher)
+
+Evaluierung: moeglich (Mood-Detector, MIT, librosa-basiert, ~2 s je Titel, 30 s aus der Mitte; Tempo per
+Beat-Tracking, Energy RMS, Key per Chroma, Brightness; Mood per Regeltabelle, nur DJ/Electronic-Kategorien,
+Pop/Rock/Jazz fehlen).  Plan in zwei Stufen: 1) objektive Werte Tempo (nur wenn bpm leer), Key, Energy,
+Timbre als Spalten + Editor + Bibliothek + Smart-Block-Kriterien + Batch fuer den Bestand (24.900 Titel
+x 2 s = ~14 h, niedrige Prioritaet); Tags per mutagen (TBPM/TKEY/TMOO/TXXX) beim Import, bei
+Bestandsdateien md5-Nachzug und nie bei geplanten Dateien.  2) Mood-Regeln inkl. Pop/Rock nach Sichtung
+der Stufe-1-Zahlen.  Aufwand ~2 Tage.  Vorbehalt des Operators: librosa zieht numpy, scipy, numba,
+soundfile nach sich - groesste neue Abhaengigkeit seit Django 5.2, auf Windows/Python 3.13 erst zu benchen.
+Vorbedingung fuer ein Go: Bench in einer separaten venv (Installierbarkeit, Laufzeit je Titel,
+Speicher), danach Entscheidung.
+Bench 2026-10-21 (`C:/Temp/optd/librosa_bench/`, eigene venv, Produktivsystem unberuehrt): librosa 1.0.0
+mit numpy 2.5.4, scipy 1.18.1, numba 0.68.0, scikit-learn 1.9.1, soundfile 0.14.0 installiert sich in 58 s,
+414 MB; 35 Bibliothekstitel (30 s aus der Mitte, 22,05 kHz): erster Titel 7,6 s (JIT), danach 0,30 s je
+Titel (max 0,38 s), RSS-Spitze 301 MB -> Bestand 24.900 Titel ~2 h statt der geschaetzten 14 h.
+Qualitaet: Tempo gegen vorhandene TBPM-Tags bei 15 Titeln nur 5 exakt, 6 halb/doppelt (Oktavfehler),
+4 daneben -> Tempo nur mit Halb/Doppel-Korrektur und Abgleich gegen vorhandene bpm brauchbar; Energy und
+Brightness robust; Key plausibel, aber ohne Referenzdaten unverifiziert.  Entschaerfung des
+Abhaengigkeits-Vorbehalts: Analyse als eigener Worker-Prozess in einer getrennten venv (Aufruf per
+Subprozess aus dem Analyzer), die Produktiv-venv bleibt unveraendert.  Operator 2026-10-23: bleibt im
+Backlog (Defer), Bench-Umgebung C:/Temp/optd/librosa_bench bleibt fuer einen spaeteren Anlauf liegen.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
+(ebur128/astats liefern Energie, kein Tempo/Key) - nur Teilabdeckung.
+
+## Test-Hygiene (2026-10-22)
+
+### ✅ Drei Suiten wieder gruen ueber `scripts/run_tests.ps1` - erledigt 2026-10-22
+Bei der Verifikation von 977f2df fielen vier vorbestehende Testprobleme auf, alle ohne Live-Wirkung:
+(1) `tests/unit/playout/test_linein_gap.py` ankerte noch auf dem alten `linein_http_raw = input.http(...)` -
+seit 685dc17 (§23.68) oeffnet `linein_http_start()` je Slot ein frisches `input.http`; Test angepasst, Werte unveraendert.
+(2) `backend/playout/tests/message_handler_test.py` brach die Sammlung ab (kein `kombu` in der venv) -
+`pytest.importorskip("kombu")`, siehe naechster Punkt.
+(3) `run_tests.ps1` lud mit `-p no:logging` das Logging-Plugin aus und damit auch `caplog` (27 Fehler) -
+jetzt `-o log_cli=false` (gleicher Zweck: das `log_cli = true` der pyproject-Dateien stumm schalten);
+dazu gewinnt ein vorgesetztes `RASTATIME_CONFIG_FILEPATH` (Worktrees) und `backend\playout` steht im Unit-PYTHONPATH.
+(4) API-Suite: `FakeConverter.is_wma` fehlte seit 5179636, zwei Tests erwarteten noch den Stationsnamen
+„LibreTime" (seit ad12764 „RASTATIME").  Soll seit 2026-10-22: api 151, playout 819/3 uebersprungen, unit 739/38.
+
+### ✅ Totes Upstream-Playout entfernt: `main.py` + `message_handler.py` (RabbitMQ/kombu) - erledigt 2026-10-22 (Go 2026-10-22)
+`rastatime_playout/main.py` (pypo-Einstieg, Console-Script `rastatime-playout` in `setup.py`) und
+`message_handler.py` (kombu-Consumer der RabbitMQ-Exchange `playout`) werden in RASTATIME nicht mehr erreicht:
+der Dienst startet `python -m rastatime_playout` (`__main__.py`), Sendeplan- und Quellen-Ereignisse kommen ueber
+den HTTP-Listener (:8770, §23.70 / Option d).  `kombu` ist weder installiert noch in `setup.py`; `main.py` wuerde
+beim Import sofort scheitern.  Vorschlag: beide Module, den Console-Script-Eintrag und `message_handler_test.py`
+entfernen (~1 h, kein Dienst betroffen, kein Neustart).  Vorbedingung: Operator-Go (Loeschen von Modulen).
+Erledigt 2026-10-22: beide Module, Console-Script `rastatime-playout` und `message_handler_test.py` entfernt,
+BASELINE_MODULES/LINUX_INVENTORY markiert.  `PypoFile` hat jetzt keinen Aufrufer mehr ausser seinem Test
+(bewusst stehen gelassen, eigener Punkt bei Bedarf).  Playout-Suite 819 / 2 uebersprungen.
+
+## Oberflächen-Punkte 2026-10-23 (Operator)
+
+### ✅ Suchzeilen-Zaehler, Podcast-Track-Type, New-Show-Abschnitte, Now/Future-Sperre - behoben 2026-10-23
+
+Vier Meldungen, siehe CHANGELOG.  Fuenfte Meldung (Podcast-Editor: kein "wird geladen"-Symbol waehrend des
+Downloads) ebenfalls behoben 2026-10-23: der Episoden-POST kehrt erst zurueck, wenn die API die Datei
+heruntergeladen hat (synchron seit T-PODCAST-1), die Tabelle wurde also zu spaet neu geladen; die Zeile wird
+jetzt vor dem POST als "pending" markiert (podcast.js importSelectedEpisodes).
+
+### ✅ Bibliothek: Spalten je Medientyp (Line-In, Webstream, Playlist, Smart Block) - Evaluierung 2026-10-23, gebaut 2026-10-24 (Operator-Go)
+**Stand 2026-10-24:** Profil je Medientyp und Tabelle in den Benutzereinstellungen, Vorgaben je Typ, Spalten-Knopf schreibt ins Profil des offenen Reiters; Chrome-Abnahme aller fünf Reiter, Persistenz-Test durch den Operator bestanden 2026-10-24 (Spalte umschalten, Reiterwechsel, F5).
+
+Heute eine Spaltenmenge fuer alle Typen (library.js, Sichtbarkeit je Benutzer in cc_pref ueber
+usersettings/get-library-datatable).  Machbar: Sichtbarkeitsprofil je Medientyp speichern und beim Wechsel des
+Reiters anwenden (setCurrentTable), Spaltenwahl im Menue schreibt ins Profil des aktiven Typs; sinnvolle
+Vorgaben je Typ (Line-In: Name, Geraet, Laenge; Webstream: Name, URL, Laenge; Playlist/Block: Name, Laenge,
+Ersteller, Aenderung).  Aufwand ~1 Tag (JS + Einstellungs-Endpunkt + Manual LIBRARY x4), Risiko gering.
+Empfehlung: Go bei Bedarf, nach den laufenden Abnahmen.  Operator 2026-10-23: "klingt gut" - explizites Go
+steht noch aus.
+
+### ✅ Kalender: "Rueckgaengig" fuer einige Sekunden nach Loeschen - gebaut 2026-10-28 (Variante A, Operator-Go)
+**Umgesetzt 2026-10-28 (§23.76):** verzoegertes Loeschen im Browser — `undo-delete.js` blendet die Sendung(en) aus, Toast
+mit 10-s-Countdown und „Undo", der unveraenderte Loeschaufruf geht erst danach; Rueckgaengig verwirft ihn; Verlassen der
+Seite schickt offene Loeschungen als Beacon (CSRF im Body); Fehlschlag des spaeten Aufrufs blendet wieder ein.  Server
+unveraendert, „Cancel Show" bleibt sofort.  Neubewertung gegenueber dem 23.10.: Weg a) ist der sichere (Fehlrichtung =
+nicht geloescht), Weg b) der riskante; die Behauptung „Bestaetigungsabfrage bleibt der Schutz" war falsch — das
+Kalendermenue loeschte ohne Rueckfrage.  Harness-Abnahme im eingebauten Browser; Operator-Abnahme 2026-10-28 abends bestanden (Toast auf Wunsch oben unter der
+Werkzeugleiste `ae1ab6a9`, Undo-Link in Primärfarbe `466c5058`).  Nebenbefund dabei behoben: bearbeitete Instanz einer
+wiederkehrenden Sendung bot „Delete Instance and All Following“ an (Upstream-Reihenfolgefehler, `adf052e9`, abgenommen).
+**Operator 2026-10-28 (vormittags):** zunaechst Defer; nach genauerer Risiko-Erklaerung Go fuer Variante A.
+
+
+Loeschen einer Instanz entfernt heute sofort Sendeplanzeilen und markiert die Instanz; das Playout holt den
+Plan ca. alle 90 s.  Zwei Wege: a) echtes Verzoegern des Loeschens (Toast 10 s, danach ausfuehren) - riskant,
+weil Kalender/Builder zwischendurch inkonsistent sind; b) Snapshot + Wiederherstellen (Instanz + Zeilen
+puffern, Toast "Rueckgaengig" 10 s, Wiederherstellung legt alles neu an, Playout-Refresh danach) - sauber,
+aber nur fuer Instanz-Loeschung sinnvoll (Serien, Wiederholungs-Verknuepfungen, Aufnahmen machen es
+komplex).  Aufwand 1-2 Tage.  Empfehlung: Defer; die Bestaetigungsabfrage vor dem Loeschen bleibt der
+Schutz.  Operator 2026-10-23: Defer.  Vorbedingung fuer ein Go: Bedarf aus dem Betrieb (versehentliches
+Loeschen trotz Bestaetigung) und ein ruhiges Fenster fuer Weg b).
+
+## Sicherheit und Datenpflege (Operator-Punkte 2026-10-25)
+
+### ✅ DJ-Login: loser Vergleich `==` - behoben 2026-10-25 (Operator: „sofort", `7b6ea96`)
+
+`check-live-stream-auth` verglich Login, Passwort-MD5, Master- und Show-Zugang mit `==` (Magic Hash
+„0e…" = „0e…", „1e3" = „1000", `null` = „").  Jetzt `ApiController::credentialEquals()` (`hash_equals`,
+leerer Sollwert passt nie); Probe acht Fälle OK, falsche Zugangsdaten live 401.
+
+### ✅ DJ-Passwortprüfung ohne API-Key öffentlich erreichbar (Befund 2026-10-25) - behoben 2026-10-25 (Operator-Go, Option a)
+
+**Ergebnis:** `ApiController::init()` nimmt `check-live-stream-auth`, `update-source-status` und
+`icecast-listener-allow` nur noch von Loopback an (127.0.0.0/8, `::1`, `::ffff:127.x`); sonst 403 über den
+403-Zweig des ErrorControllers und eine WARN-Zeile „api/<aktion> refused for <ip>: local callers only" im
+`legacy.log`.  Vorab geprüft: alle Aufrufe der letzten 16 Tage kamen von 127.0.0.1 (auch die echten
+DJ-Logins vom 24.10. aus dem Internet - Harbor → PLAYOUT → PHP), PLAYOUT nutzt `http://127.0.0.1` (keine
+Umgebungs-Überschreibung), die URL-Auth der aktiven `config/icecast.xml` (`/main`, `/show`) ruft
+`public/icecast-source-auth.php`, nicht diese Aktionen (Korrektur: zuerst die ungenutzte Installer-Kopie
+`C:\Tools\Icecast\icecast.xml` gelesen; siehe Rollen-Audit S5); kein `mod_remoteip` vor
+Apache.  Probe: lokal (HTTPS und `http://127.0.0.1`) weiter 401 bei falschen Daten, über die LAN-Adresse
+192.168.1.64 alle drei 403, `live-info` 200.  Doku: GO_LIVE_HTTPS (`general.internal_url` muss lokal bleiben).
+Abnahme 2026-10-25 15:08 bestanden: Master-Login „source" per BUTT von außen (198.51.100.30) - PLAYOUT
+„accepted", PHP-Aufruf von 127.0.0.1 mit 200, Umschalten auf Master und zurück, keine WARN „refused".
+
+**Befund (vorher):**
+
+**Befund:** `/api/check-live-stream-auth` steht in der Liste der Aktionen ohne API-Key (`ApiController`
+init, Kommentar: Icecast-URL-Auth kann keinen Key mitsenden) und ist über `https://radio.example.org`
+aus dem Internet aufrufbar.  Wer die Adresse kennt, kann DJ-, Show- und Master-Zugangsdaten direkt
+durchprobieren - **an der Brute-Force-Bremse von PLAYOUT (`dj_auth.py`, nur für Harbor-Logins) vorbei**,
+und `rt-firewall-watch.ps1` zählt 401 bewusst nicht (Sitzungs-Abläufe).  Die Antwort verrät zudem den
+Grund (`X-Rastatime-Auth-Reason`: no-show / not-host / bad-password), also ob ein Login ein Host der
+laufenden Sendung ist.  Aufrufer heute: PLAYOUT über `general.internal_url` (127.0.0.1) und Icecast lokal.
+`update-source-status` (No-op) und `icecast-listener-allow` (strikter Vergleich, Admin-Bypass nur mit
+von Icecast gesetzter Client-IP 127.0.0.1) stehen in derselben Liste - unkritisch, aber ebenfalls nur lokal
+gebraucht.
+**Optionen:** (a) in PHP nur Loopback (`REMOTE_ADDR` 127.0.0.1 / ::1) zulassen, sonst 403 - eine
+Prüfung am Anfang der drei Aktionen, wirkt sofort; (b) dasselbe in Apache (`<Location /api/check-live-
+stream-auth>` `Require local`) - Apache-Neustart nötig; (c) zusätzlich ein gemeinsames Geheimnis
+PLAYOUT → PHP (Header).  **Empfehlung:** (a), ~30 min inkl. Probe (lokal 401/200 wie heute, von außen
+403) und Doku; vorher prüfen, dass Icecast 2.5.0 (seit 24.10.) die URL-Auth nicht mehr selbst aufruft
+bzw. nur lokal.
+
+### ✅ Passwörter als ungesalzenes MD5 (Befund 2026-10-25) - bcrypt seit 2026-10-27 (Operator-Go, §23.73)
+**Erledigt 2026-10-27/28:** bcrypt (Kosten 12) auf beiden Seiten - PHP `Application_Model_Password` + Login-Adapter
+`Rastatime_Auth_Adaptor_Password` (ersetzt `MD5(?)` in SQL), `User::setPassword/verifyPassword` (DJ-Harbor), Passwort-Reset,
+Django `core.User` mit Paket `bcrypt`; alter MD5-Hash wird einmal akzeptiert und beim Login ersetzt; Befehl
+`manage.py password_hashes`.  PHP-Probe 14/14 (Adapter, DJ-Pfad, $2b$/$2y$, Rehash), Django-Tests 185 grün, HTTPS-Login
+mit MD5-Wegwerfkonto → 302 + Hash $2y$12$.  API-Neustart 2026-10-28 08:33 + Basic-Auth-Probe (bcrypt 200, falsch 403,
+MD5-Konto 200 → danach $2b$): Abnahme komplett.  Offen nur noch: Login aller zehn Konten → Umstellung (password_hashes zählt),
+alte Backups mit MD5-Werten: Operator löscht sie 2026-10-28 statt die Admin-Passwörter neu zu setzen.
+
+**Ursprünglicher Befund:**
+
+**Befund:** `cc_subjs.pass` enthält `md5(passwort)` ohne Salz (`Application_Model_User::setPassword`,
+Web-Login `Auth.php` mit `setCredentialTreatment('MD5(?)')`, DJ-Login `md5($password)`, Django-API mit
+eigenem md5-Hasher in `core.User`).  Ein Datenbank- oder Backup-Leck gibt die Passwörter damit praktisch
+im Klartext preis (Rainbow-Tables); Backup-ZIPs enthalten die DB.  9 Konten (2 Admin, 1 PM, 4 DJ, 2 Gast).
+**Idee:** `password_hash()` (bcrypt/argon2) mit transparentem Neu-Hashen beim nächsten erfolgreichen
+Login (alter MD5-Wert erkannt an Länge 32/Hex), Web-Login ohne SQL-`MD5(?)` (Prüfung in PHP), DJ-Login
+`password_verify`, Django-Hasher passend (`django.contrib.auth`-kompatibel oder Legacy-Prüfung), Users-
+Import hasht Klartext mit dem neuen Verfahren.  Berührt Login, API, DJ-Harbor - Evaluierung (6 Punkte)
+und Go nötig; Vorbedingung: Probe aller drei Login-Wege an einem Test-Konto.
+
+### ✅ Autoloading: gelöschte Playlist lässt Sendungen leer (Befund 2026-10-25) - Variante (c) gebaut 2026-10-28 (Operator-Go, §23.74)
+**Erledigt 2026-10-28:** (a) Löschdialog der Bibliothek fragt `library/playlist-usage` ab und nennt Sendungen (Autoloading /
+Intro / Outro) und Senderstandard; `Playlist::detachFromShows` schaltet beim Löschen `has_autoplaylist` der betroffenen
+Sendungen ab und setzt den Senderstandard zurück (Warnzeile im Log).  (b) Preflight-Warnart `autoplaylist_missing`
+(Playout-Scan über `/api/v2/show-instances?starts_after/before&modified=false`, neuer Filter) mit Banner-Text.
+Proben: PHP 5/5 (Nutzung, Löschen, Häkchen, Standard-Outro), Playout-Tests 5, API-Filtertest 2, JS-Syntax.  Offen:
+PLAYOUT-Neustart (Operator), Dialog-Abnahme mit Wegwerf-Playlist „pwprobe-autoload" an Testsendung „tests".
+
+**Ursprünglicher Befund:**
+
+Beim Löschen einer Playlist setzt der Fremdschlüssel `cc_show.autoplaylist_id` auf NULL (`ON DELETE SET
+NULL`, ebenso intro/outro); „Add Autoloading Playlist" bleibt angehakt, das Autoloading füllt dann nichts.
+25.10.: 34 Sendungen so, 20 mit kommenden Folgen (leer), Ursache Löschungen in der Bibliothek seit 23.10.;
+der Operator hat die dringenden zugeordnet.  Ideen: (a) beim Löschen einer Playlist warnen und die
+Sendungen auflisten, die sie als Autoloading/Intro/Outro nutzen; (b) Preflight-Warnung im Dashboard
+„Sendung X: Autoloading an, keine Playlist" für Folgen in den nächsten 7 Tagen; (c) beides.  Prüf-Skript:
+Scratchpad `autoplaylist_null_summary.php` (nur lesend).
+
+### ✅ Löschen eines Titels ohne Artwork: Glob über den Bibliotheks-Hauptordner (Befund 2026-10-25) - behoben 2026-10-25 im Rollen-Audit-Sofortpaket (S7, CcFiles::deletePhysicalFile: Glob nur bei nicht-leerem Artwork-Pfad)
+
+**Korrigierte Ursache (Rollen-Audit S7):** nicht ein leerer `filepath`, sondern ein leeres `artwork`:
+`CcFiles::deletePhysicalFile` löscht nach der Audiodatei alles, was `glob("<root>/<artwork>*")` trifft - bei
+`artwork = ''` ist das `D:/stor\*`, also **jede Datei direkt im Bibliotheks-Hauptordner**; bei `NULL`
+`D:/stor*` (Geschwister wie `D:/stor.zip`).  6.332 Titel haben `artwork = ''`.  Heute liegen in `D:/stor` nur
+Ordner, darum nur die Warnung `unlink(D:/stor/\imported): Is a directory` (24./25.10. drei Fälle, abgefangen;
+die Audiodatei ist gelöscht, das Artwork-Aufräumen bricht ab).  Behebung im Sofort-Paket des Rollen-Audits
+(Glob nur bei nicht-leerem Artwork-Pfad unterhalb der Bibliothek).
+
+### ✅ Rollen-Audit: kleine Folgepunkte (notiert 2026-10-25, Paket 5) - umgesetzt 2026-10-25 (Operator-Go)
+
+Alle drei umgesetzt (Super-Admin-Hinweis, Show Templates für PM + Widgets nur PM+, Kapitel SETTINGS ×4
+neu).  Apache-Neustart durch den Operator 2026-10-25 21:16 - die übersetzten Hinweise sind aktiv.  Nebenbefund: die API v2
+(Django) kennt die Rolle „S“ nicht (`GROUPS["S"]` fehlt, `is_superuser` nur für „A“) - ein Super Admin
+bekäme dort einen Fehler; folgenlos, solange es keinen gibt (auf dieser Station keiner, die Installation
+legt `admin` als Admin an).  Ursprüngliche Notiz:
+
+- **Super-Admin-Zeile im Benutzer-Dialog leer:** `user.js` blendet die Details aus und will
+  `#user_details_superadmin_message` zeigen - das Element gibt es nicht, der Dialog bleibt leer.  Ein
+  Hinweis „Der Super Admin ändert seine Angaben unter Mein Profil" (neuer Text, ×4 übersetzen,
+  po2mo + Apache-Neustart).
+- **Program Manager und die Seiten Show Templates / Widgets:** PMs speichern Vorlagen im
+  Sendungsdialog, die Übersicht *Einstellungen → Show Templates* ist Admin-only; die Seite *Widgets*
+  öffnen alle (Speichern nur PM+).  Operator-Entscheidung: Show Templates für PM freigeben wie Auto DJ
+  (ACL-Privileg + Menü)?  Widgets-Seite für Gäste/DJs ausblenden?
+- **Kapitel SETTINGS (×4) beschreibt erfundene Funktionen:** Untermenü *Tools* (DB-Konsole,
+  Log-Viewer, Cache-Reset), Seite *Localisation* u. a. - beim Rollen-Kapitel nur die Rollen-Stellen
+  korrigiert; eine Durchsicht des ganzen Kapitels gegen die Oberfläche steht aus.
+
+### ✅ Rolle „Super Admin“ entfernen? - Option B umgesetzt 2026-10-25 (Operator-Go, mit Löschschutz für `admin`)
+
+Migration 0073 live eingespielt (21:30, Backup 02:30 OK, Tag live-2026-10-25): keine S-Konten, Merker
+„eingerichtet“ gesetzt, Schema 73.  Benutzerseite: `admin` ohne Löschen-Symbol, Server lehnt ab;
+API v2 `DELETE /api/v2/users/<admin>` -> 403 nach API-Neustart (Operator, 21:54 erledigt).
+Nebenbefunde der Kontrolle: (1) anonymes `/api/v2/users` gab 500 (`TypeError` in `IsAdminOrOwnUser`) -
+behoben (`e83fc00`), live seit dem API-Neustart 22:06 (anonym jetzt 403); (2) ✅ dem Dienst
+RASTATIME-API fehlte `PYTHONUTF8=1` - vom Operator am 25.10. gesetzt, aktiv seit 22:06: Fehlermeldungen mit Umlauten (z. B. PostgreSQL „Passwort-Authentifizierung …“) scheitern
+beim Protokollieren (`UnicodeEncodeError`) und landen nur zeitstempellos in `api-stderr.log` - die
+Datenbank-Fehler dort stammen so aus der Passwort-Rotation am 24.10.  Vorschlag (Operator, mit
+API-Neustart): `PYTHONUTF8=1` in die NSSM-Umgebung von RASTATIME-API aufnehmen.  Ursprüngliche Bewertung:
+
+**Befund:** „S“ ist eine Airtime-Altrolle.  Die Installation legt `admin` als Admin an (`data.sql`), die
+Oberfläche kann niemanden zum S machen, LDAP/FreeIPA/Header-Anmeldung sind nicht aktiv (`general.auth`
+= local); auf der Station gibt es kein S-Konto.  Die API v2 kennt S gar nicht.  21 Legacy-Dateien nennen S,
+die meisten nur in Listen „S, A, P“ (harmlos).  Echte Sonderfälle: Löschschutz, Angaben im Benutzer-Dialog
+gesperrt (+ Hinweis), Namens-Hack in Mein Profil, Einrichtungsdialog Sprache/Zeitzone **nur für S** (zeigt
+sich deshalb hier nie), Import/Export-Sonderregeln, getFirstAdmin bevorzugt S, LDAP/Header-Gruppen-Mapping,
+ungenutzter Decorator `SuperAdmin_Only`, ungenutzte Variable in UsabilityHints.
+**Optionen:** (A) so lassen; (B) **stilllegen**: Daten-Migration S→A (für alte Airtime-Datenbanken),
+externe Gruppen auf Admin mappen, Sonderfälle entfernen, Einrichtungsdialog für Admins, Handbuch ×4,
+Konstante/Listen als harmlose Altlast belassen (~2-3 h, kein Dienst-Neustart); (C) komplett entfernen
+inkl. Konstante, ACL-Rolle, aller Listen und LDAP-Konfigschlüssel (~4-5 h, mehr Streuung, kaum Mehrwert).
+Verlust in B/C: das einzige S-Merkmal, ein unlöschbares Besitzerkonto - optional als Schutz für `admin`
+nachbilden.  **Empfehlung:** B (Go), Priorität niedrig - kein Live-Nutzen, aber weniger Sonderfälle und
+Legacy/API konsistent.
+
+## 🟢 Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - GO 2026-10-28, in Arbeit
+
+**Operator-Go 2026-10-28** mit diesen Entscheidungen: (1) Historie per `git filter-repo` (alle Commits bleiben, Audio +
+icecast.xml raus); (2) Repo zuerst **privat**, öffentlich erst ganz zum Schluss; (3) keine Org, Repo `vibesbuilder/RASTATIME`;
+(4) Push mit den Stufe-B-Brücken; (5) Install-Probe auf einer frischen Windows-11-VM auf einer anderen Maschine durch den
+Operator; (6) Worktrees geprüft und entfernt.  **Vorgabe:** der Betreiber ist der einzige Contributor; kein Werkzeugname
+erscheint im Projekt (Commit-Identität `vibesbuilder <4569147+vibesbuilder@users.noreply.github.com>`, Historie wird
+in Phase 3 per Mailmap vereinheitlicht und von Trailer-Zeilen befreit).
+
+**Phasenplan:** 0 Aufräumen (Worktrees, Root, Standort-Reste) · 1 Marke Stufe B mit Brücken (+ 5 Tage Brücke, Operator 2026-10-29) ·
+2 Brücken raus, INSTALL/UPGRADE/COMPONENTS aktualisieren, SECURITY.md, Issue-Vorlagen · 3 Historie im Klon unter
+C:\Temp bereinigen, Live-Checkout per Tag umhängen · 4 Repo anlegen (Operator), Push, CI grün · 5 Install-Probe (Operator)
+· 6 Release v1.0.0.
+- ✅ **Phase 0 erledigt 2026-10-28** (`c098c414`): vier verwaiste Worktree-Branches entfernt (alle in master), Planungsdateien
+  + `readme.txt` nach `docs/dev/history/`, Runbooks/BACKLOG ohne zweite Rolle, lokale Werkzeugpfade aus der `.gitignore`
+  in `.git/info/exclude`, Commit-Identität gesetzt.  Standort-Reste gesichtet: Testwerte (192.168.1.64, D:/stor) und
+  Go-Live-Runbooks sind bewusst standortbezogen und bleiben; offen nur die Betreiber-E-Mail in GO_LIVE_HTTPS.
+- ✅ **Phase 0 Nachträge 2026-10-29** (Operator-Antworten): Werkzeugnamen auch aus den historischen Planungsdateien und
+  dem Architektur-Draft entfernt; `AGENTS.md` in `CONTRIBUTING.md` aufgenommen und aus dem Repo genommen;
+  Betreiber-E-Mail im HTTPS-Runbook durch die GitHub-noreply-Adresse ersetzt; Phase 3 bereinigt zusätzlich
+  Dateiinhalte alter Versionen (`--replace-text`).
+- ✅ **Phase 1 gebaut 2026-10-29** (Marke Stufe B, eigener Abschnitt oben): Repo-Teil committet (`d07b4890`, `20364f4f`), Suiten grün;
+  Live-Umschaltung der vier Python-Dienste 2026-10-29 14:16 (Skript brach zweimal ab, Schritte 2a–4 von Hand);
+  Brücke instrumentiert, **Phase 2 (Brücke entfernt) 2026-11-01** nach drei Nächten ohne Treffer.
+- ✅ **Phase 3 Historie bereinigt 2026-11-01** (Operator installierte `git filter-repo`, Lauf im Spiegel-Klon
+  `C:\Temp\rt-clean-work\rt-clean2.git`, 26 s): `scheduler/` + `config/icecast.xml` aus allen Commits, Mailmap auf
+  vibesbuilder, Message-Callback (Trailer raus, Werkzeugnamen ersetzt), `--replace-text` über alte Dateiversionen
+  (8 Regex-Regeln; eine Passwort-Regel wurde verworfen, weil der alte Wert ein Allerweltswort ist und 178 aktuelle
+  Dateien traf).  Verifiziert: HEAD-Tree identisch, 1.191 Commits (Feature/Revert-Paar vom 2026-05-21 leer
+  geworden), 37 Tags, 0 Werkzeugnamen in Texten und Blobs, eine Identität, Pack 52 MB.  Live-Checkout per
+  `reset --soft` umgehängt, Tags ersetzt; `reflog expire` + `gc --prune=now --aggressive` nach Operator-Ja am
+  selben Tag: alte Objekte weg, `.git` 23 MB statt 1,1 GB, Rückfall-Tag gelöscht.  Spiegel-Klon
+  `C:\Temp\rt-clean-work\rt-clean2.git` (52 MB) bleibt bis zum Push als Referenz liegen.
+  Alte→neue Hashes: `docs/dev/history/commit-map-2026-11-01.txt`.
+- ✅ **Phase 2b erledigt 2026-11-01:** INSTALL.md auf Liquidsoap 2.4.6 / Icecast 2.5.0 (Harbor-Auth statt URL-Auth),
+  Composer-Voraussetzung + Schritt 4b + Fehlerbild 5.8 + Update-Schritt 3b; README Schritt 3b + Security-Abschnitt;
+  Platzhalter-URLs → `vibesbuilder/RASTATIME` (README-Badges, INSTALL, CRASH_RECOVERY, CHANGELOG-Link, constants.php);
+  `icecast.xml.example` mit `<charset>UTF-8</charset>`; `SECURITY.md`; `.github/ISSUE_TEMPLATE` (bug/feature/config).
+  COMPONENTS.md war bereits aktuell.
+- ✅ **Phase 4 erledigt 2026-11-01:** privates Repo `vibesbuilder/RASTATIME` vom Operator angelegt (Name RASTATIME,
+  „Studio“ verworfen); Remote `origin`, erster Push `master` ohne `live-*`-Tags (Operator, Credential Manager),
+  Remote = lokal, README/Commits geprüft.  Actions musste der Operator erst aktivieren.  CI-Befunde und Fixes:
+  Workflows horchten auf `main` → `master`; Geschwisterpakete vor dem Testpaket installieren; ffmpeg auf dem Runner;
+  zwei Prozesstabellen-Tests setzen die Plattform selbst; Fixture-Generator `tests/fixtures/generate.sh` aus der
+  Historie zurückgeholt (war als „totes Linux-Skript“ gelöscht, Makefile zeigte noch darauf).  **Operator-Entscheidung:**
+  Test-Matrix auf `windows-latest` (Produktplattform, Python 3.11 + 3.13), Lint und PHP bleiben auf Ubuntu;
+  Analyzer-Job vorübergehend `continue-on-error` (siehe 🟡 unten).  **ruff-Sweep** (`fc269947`, Operator installierte
+  ruff 0.17.3 in die venv): 632 Auto-Fixes, 161 Dateien formatiert, Rest von Hand; `.ruff.toml` mit begründeten
+  Ausnahmen (UP042 StrEnum, B027, F401 in Re-Export-Modulen/Settings, Migrationen ausgeschlossen); Wächtertest für
+  generate.sh umgedreht.  Windows-Runner-Fund: zoneinfo ohne IANA-Datenbank → `tzdata` als Windows-Abhängigkeit
+  von `rastatime_shared` (`a319f9ff`).  **Lauf #8 grün:** ruff, shared/api-client/playout auf Windows 3.11 + 3.13,
+  php grün; Analyzer rot-nicht-blockierend (47 bekannte Fehler).  Suiten lokal: api 195, playout 845, unit 738,
+  shared 36.
+- ✅ **Phase 5 vorbereitet 2026-11-01:** Protokoll `docs/operator/INSTALL_PROBE.md`
+  (Download-Liste, Zeile je INSTALL-Abschnitt, Abnahme A1.1/A1.3/A1.5 + Upload-Rundlauf + Reboot).  Vorab-Prüfung
+  INSTALL gegen Live: NSSM-Installer ohne `PYTHONUTF8` (behoben), 9d ohne Neustart-Variablen (ergänzt), Erst-Login
+  fehlte (ergänzt), `stream.internal_listener` tot seit 2026-10-25 (raus), `playout:`-Block im Beispiel.
+- ✅ **Phase 5 durchgeführt 2026-11-01/02** (VirtualBox-VM Windows 11, NAT; §2 durch den Operator, INSTALL §4 Schritt 1
+  bis §6 durch eine coding assistant-Sitzung in der VM; Branch `probe/vm-2026-11`, Fast-Forward in master 2026-11-02):
+  **5 h 10 min** (Operator ≈ 1 h 30, Sitzung 3 h 40 Wanduhr inkl. Stopps, Browser-Teil, Reboot) gegen 2–4 h laut
+  INSTALL §1.  Ergebnis: Station sendet auf `/rastatime`, Reboot ohne Hand, A1.1/A1.3/A1.5 ok, Upload-Rundlauf ok
+  (Cue-Punkte gemessen, PHP-CA-Bündel wirkt), Sendung auf dem Mount erst nach vier Stopps.  **15 Doku-Fixes**
+  (Hashes in INSTALL_PROBE §5): Apache-Kommentar/SRVROOT/ExecCGI/DirectoryIndex, php.ini-Erweiterungen,
+  Execution-Policy, `where.exe`, `python -m pip`, 52 Pakete, Geheimnis-Generator, RabbitMQ PATH/Cookie/Loopback,
+  PostgreSQL Loopback, `-ApiHost`, `media`-Ordner, `icecast.xml` in 9g, Schritt 9i STANDBY, „Erster Stream-Ausgang“,
+  Mount-Prüfung nach Neustarts.  Snapshot `03-installed` auf der VM für die Wiederholung des Stream-Teils.
+  **Noch offene Doku-Nachzügler** (gleiche Fehler außerhalb der Probe, klein): UPGRADE.md:131
+  `pip install --upgrade pip` → `python -m pip`; `Activate.ps1` ohne Policy-Zeile in UPGRADE.md / CRASH_RECOVERY.md;
+  CRASH_RECOVERY.md / RESTART_ORDER.md installieren die API ohne `-ApiHost 127.0.0.1` nach.
+- ✅ **Phase 5 Produktbefunde (14) - Operator-Go je Befund 2026-11-02, alle 14 gebaut am selben Tag** (Details
+  CHANGELOG 2026-11-02).  **Offen danach:** PLAYOUT-Neustart (Python-Änderungen, neuer Render mit
+  `rt_stream_N`-Callbacks) und F5 im Browser; Browser-Abnahme Settings → Streams (leerer Mount → rote Liste,
+  Liquidsoap-Meldung im Status-Kasten) und Local Machine → Main Output „Off“ - **erledigt 2026-11-02** (PLAYOUT
+  neu gestartet, drei Mounts online, `Stream N: Liquidsoap connected` im Log, rote Liste sichtbar, Off-Option
+  da; Nachbefund: die Seite zeigte nach dem verweigerten Speichern leere Felder → Wiederbefüllung gebaut).
+  Befund 2 Teil 2 **aus dem VM-Log geklärt**: kein Hänger, sondern die Idempotenz-Abkürzung der Engine nach
+  einem Neustart (Zustandsspiegel nicht geleert) → `forget_playback_state()` + sofortiger Refresh gebaut.
+  `extension=zip` aktiviert (Operator).  **Noch offen:** Stream-Teil der Abnahme auf dem VM-Snapshot
+  `03-installed` wiederholen; Manual-Übersetzungen (.po) für sechs neue UI-Strings; PLAYOUT-Neustart für den
+  Engine-Fix.  **Studio-Probe 2026-11-02 12:10** (LIQUIDSOAP-Neustart im Webstream): Erkennung + Catch-up ok,
+  Lücke 68 s (Poll) → Reconnect-Auslöser gebaut (`request_refresh_soon`), Übersetzungen erledigt (ca892169).
+  **VM-Wiederholung des Stream-Teils 2026-11-02 (frische DB statt Snapshot):** Punkt 3 Save ok, Punkt 4 Meldung
+  sichtbar (Text nun ohne OCaml-Positionen, `error.message`), Punkt 5 Neustart im laufenden Titel → Catch-up
+  +490 s innerhalb einer Sekunde (Log 13:28:09-10), Punkt 6 Off gesetzt (Abnahme über Marker + Log), Reboot ok.
+  Die VM-Sitzung pushte zwei INSTALL-§7-Fixes auf `docs/install-7-standby` mit Attributions-Trailer → auf master
+  ohne Trailer übernommen (7041d491, b5568f47), Branch löscht der Operator; Regel steht jetzt in CONTRIBUTING.
+- ✅ **ICY-Titel bleibt „Off Air“ nach Webstream → Datei** (Befund Studio 2026-11-02 12:15, Operator-Go + gebaut
+  2026-11-02 nachmittags: verzögerte Markierung wie vorgeschlagen; wirksam nach dem nächsten Liquidsoap-Neustart,
+  Abnahme = Hörer-ICY nach einem Webstream → Datei-Wechsel zeigt den Titel; ursprünglicher Befund:)
+  beim Slot-Wechsel schließt PLAYOUT das Webstream-Gate 50 ms vor dem Push, die Bus-Arm-Transition
+  `bus_arm_scheduled` sieht `scheduled_q` noch nicht bereit und setzt `off_air` auf die Transitionsquelle - das
+  Paket überholt die Titel-Metadaten der Datei, der Stream zeigt bis zum nächsten Titel „RASTATIME back on air
+  soon“ (Hörer-ICY geprüft 12:34, Icecast status-json identisch).  Vorschlag: in `bus_arm_scheduled` die
+  Off-Air-Markierung 0,5 s verzögert (`thread.run`) und nur dann, wenn `scheduled_q` dann noch leer ist, auf
+  `silence_fallback` statt auf die Transitionsquelle setzen; Probe mit `C:/Temp/optd/run_e2e_icy.py`.  Risiko
+  gering (nur Metadaten), Aufwand ~1 h inkl. Replikat.  Unabhängig von den Neustart-Fixes (Reihenfolge Gate →
+  Push besteht seit 2026-09-04).
+  **Hoch:**
+  1. ✅ **Settings → Streams speichert auf frischer Datenbank nicht** — `cc_pref` hat kein `stream_label_format`,
+     `preference/stream-setting.phtml` prüft das Radio mit `$i == $value`, unter PHP 8 ist `0 == ''` falsch, kein
+     „Stream Label“ vorgewählt, der Browser sendet kein `streamFormat`, `PreferenceController.php:1261` wirft
+     `Undefined array key "streamFormat"` → POST 500, der Stream bleibt deaktiviert.  Trifft jede Neuinstallation
+     (Studio hat den Schlüssel).  Fix: Default im Formular/Modell (`StreamSetting.php` Radio `streamFormat`) oder
+     `$values['streamFormat'] ?? 0`; Workaround steht in INSTALL Schritt 9.
+  2. ✅ **Stille Station nach Liquidsoap-Neustart** — kommt Liquidsoap einige Sekunden nach PLAYOUTs Start-Catch-up
+     zurück, landet der Catch-up im alten Prozess, der neue fällt auf `silence_fallback`, PLAYOUT verbindet neu,
+     schiebt den laufenden Titel aber nicht nach; der nächste Zyklus loggt `Catch-up ... entering at +657.9 s` und
+     `Liquidsoap stop (deferred up to 0.5s)`, dann nichts mehr (kein `Liquidsoap play`), Telnet antwortet.  Erst ein
+     PLAYOUT-Neustart hilft.  Die dokumentierte Folge PLAYOUT → LIQUIDSOAP ist damit zeitabhängig.  Fix-Richtung:
+     nach einem Telnet-Reconnect den laufenden Titel erneut übergeben und den Stop-Pfad gegen Hängen absichern
+     (`__main__.py`, Catch-up/Reconnect).  Studio-Relevanz: jeder Einstellungs-/geplante Neustart.
+  3. ✅ **Portaudio-Unterlauf tötet die Engine** — `Fatal error: exception Failure("Portaudio error in write_stream:
+     Output underflowed")`, Exit 2, zweimal in der VM (VirtualBox HD Audio, `Latency is too high: we must catchup`);
+     NSSM startet nach 5 s neu, aber alle Icecast-Ausgänge fallen mit, `status.ps1` meldet weiter Running.  Fix-
+     Richtung: Monitor-Ausgang in `output.portaudio` fehlertolerant (`fallible`/`on_error`, eigener Clock oder
+     Puffer) oder abschaltbar machen; Preflight-Warnung bei wiederholten Unterläufen.  Studio: Tascam-Kette ist
+     stabil (seit 2026-09-14), aber derselbe Pfad.
+  **Mittel:**
+  4. ✅ `infra/nssm/install-api.ps1` Standard `-ApiHost 0.0.0.0` (Zeile 76) → `127.0.0.1`; CRASH_RECOVERY /
+     RESTART_ORDER rufen ohne Parameter.
+  5. ✅ `install-icecast.ps1` prüft `icecast.xml` nicht (Icecast hängt stumm in Sitzung 0, kein Port, kein Log, NSSM
+     „Running“) und nennt sich `[OPTIONAL]`, obwohl INSTALL Icecast als Teil des Stacks führt → Datei-Prüfung mit
+     Abbruch, Banner anpassen.
+  6. ✅ Settings → Streams nimmt einen aktivierten Stream mit leerem Mount/Passwort an (gerendert `mount="/"`,
+     Liquidsoap `401 Authentication Required` alle 3–4 s); die Statuszeile sagt nur „Start RASTATIME-PLAYOUT and
+     schedule content“ → Pflichtfelder validieren, 401 aus `liquidsoap-stdout.log` oder Icecast-Status anzeigen.
+  7. ✅ Web-Anwendung legt `storage.path` nicht an (`conf.php:294`, jede Seite antwortet mit dem 66-Byte-Text „does
+     not exists!“) → Ordner anlegen oder den Fix in der Meldung nennen, Grammatik.
+  8. ✅ `infra/nssm/status.ps1`: kennt RASTATIME-STANDBY nicht; `PropertyNotFoundStrict` bei `$content.Count` auf
+     einzeiligen Logs (StrictMode, Zeile 209); stderr-Schwänze ohne Alter (zeigen alte Fehler); Logs als ANSI gelesen
+     (`â€¦`); Port 8001 gelistet, auch wenn kein Harbor konfiguriert ist; eine Liquidsoap-Crash-Schleife liest sich als
+     Running (NSSM-Neustarts/Uptime anzeigen).
+  9. ✅ PLAYOUT versucht dreimal, einen noch nicht installierten Liquidsoap-Dienst neu zu starten (`nssm restart
+     RASTATIME-LIQUIDSOAP exited 3: Can't open service!`, drei ERROR-Zeilen bei jeder Neuinstallation zwischen 9d
+     und 9h) → Dienst-Existenz vorher prüfen, INFO statt ERROR.
+  10. ✅ `bootstrap.ps1` prüft weder `httpd -t` noch die PHP-Erweiterungen (war vor den 2.6-Fixes trotzdem grün) →
+      `httpd.exe -t` und `php.exe -m` gegen die Liste aus INSTALL_APACHE §3.
+  **Niedrig:**
+  11. ✅ PLAYOUT-Warnung „the loaded rastatime.liq has no harbor source events (older render)“ erscheint auch, wenn
+      schlicht kein `stream.harbor` konfiguriert ist (`source_switcher.py:847`) → Wortlaut unterscheiden.
+  12. ✅ Gerenderte `rastatime.liq`: zwei `lang.deprecated`-Warnungen für `audio_to_stereo` (Line-In-Block,
+      `liquidsoap_config.py:1640/1695`), `scheduled.flush_and_skip` doppelt registriert („already registered!
+      Previous definition replaced“).
+  13. ✅ RASTATIME-WORKER läuft als `dev stub (no real handlers registered)`, `Runner : none`, `idle` alle 5 s
+      (`backend/rastatime_worker/__main__.py`) — Pflichtdienst ohne Aufgabe; klären, ob er bleibt.
+  14. ✅ `install-worker.ps1` / `install-analyzer.ps1` prüfen den Status zu früh (`[WARN] ... StartPending`, Running
+      ≈ 20 s später); `nssm start` meldet `Unexpected status SERVICE_START_PENDING` mit Exit 1 (9d, 9h) — Wartezeit
+      oder Running-Poll bis 30 s.
+- 💡 **Catch-up nach fehlgeschlagenem Push bleibt liegen** (Befund Studio 2026-11-02 14:23, bei der
+  Paket-Neuinstallation): PLAYOUT startete, während Liquidsoap noch 90 s weg war; der Start-Catch-up schlug fehl
+  („Liquidsoap play failed … Cannot connect“), die Engine ging auf ERROR, der Scheduler behielt aber `_playing_key`.
+  Als Liquidsoap um 14:23:58 kam, löste der Reconnect-Auslöser den Refresh aus, der Titel wurde jedoch nicht neu
+  armiert (Schlüssel galt als spielend) - 11 s Stille bis zum nächsten Titel.  Vorschlag: im Refresh einen
+  Engine-Zustand ERROR wie „nichts auf Sendung“ behandeln (Schlüssel vergessen → Catch-up).  Klein, kein Live-Risiko;
+  tritt nur auf, wenn PLAYOUT vor Liquidsoap läuft.
+- ✅ **Phase 6 Release v1.0.0 - 2026-11-02** (Operator-Go nach der VM-Wiederholung des Stream-Teils, Punkte 3-6 +
+  Reboot bestanden): Versionen `1.0.0` in den fünf `setup.py` (statt des LibreTime-Erbes 4.5.0) und
+  `RASTATIME_VERSION` (statt 0.5); CHANGELOG `[Unreleased]` → `[1.0.0]`, kuratierte englische Release-Notes
+  `docs/releases/v1.0.0.md` (der Release-Workflow nimmt diese Datei, sonst den CHANGELOG-Abschnitt, der mit 10.000
+  Zeilen zu groß für den GitHub-Body wäre); `release.yml` ohne das nicht paketierte `worker`; CONTRIBUTING
+  `master` statt `main`.  Tag `v1.0.0`, Release-Workflow baut fünf Wheels + Frontend-Zip.  Die Studio-Dienste
+  melden `1.0.0` erst nach `pip install -e` der Pakete + API-Neustart (nicht eilig).
+- ✅ **`bootstrap.ps1` modernisiert 2026-11-01** (Operator-Go vor der Probe): alle §2-Komponenten Pflicht mit
+  Versionsausgabe (generische `Test-Tool`-Prüfung: Produktionspfad, sonst PATH), Composer/Git optional, VLC raus;
+  INSTALL Schritt 2 und INSTALL_PROBE angepasst.  Studio-Maschine: 10/10 grün.
+- ✅ **Analyzer-Testsuite angepasst 2026-11-01** (`686ad377`, Operator-Go): von 47 roten Tests waren 42 ein echter
+  Produktionsfehler - der silencedetect-Parser kannte das ffmpeg-Präfix `Parsed_silencedetect_N` nicht, Cue-Punkte
+  blieben seit Mai bei 0/Länge (siehe 🟡 unten).  Die übrigen fünf: tagless-Ordner (gewollt seit 2026-10-24),
+  Mono-m4a mit aktuellem Encoder mono, Rechte-Test ohne `/sys`.  Suite in `run_tests.ps1` (`analyzer`, `shared`,
+  Teil von `all`), Regressionstest `silencedetect_parse_test.py`, `continue-on-error` im Workflow entfernt.
+- ✅ **Cue-Punkte der Bestandsbibliothek nachgemessen 2026-11-01 15:58** (Evaluierung + Go, `98062966`): 24.857
+  Dateien trugen Cue-In 0 / Cue-Out = Länge (Analyzer-Parser-Fehler seit Mai, `686ad377`).  Messgeschwindigkeit
+  4 s je Stunde Audio; Trockenlauf in vier Teilen 40 min → 19.997 Änderungen, 22 Ausreißer; Nebenfund `!`/`%` in
+  Pfaden (383 Dateien, `escapeshellarg`, behoben, auch Library-Knopf).  `--apply --skip-flagged`: 19.975 Dateien,
+  155 künftige Zeilen, 65 Instanzen neu ausgelegt, 10 s; Nachprüfung: 4.882 Dateien bleiben bei 0/Länge (4.860 ohne
+  Stille + 22 markiert), alle künftigen Zeilen = Dateiwerte, PLAYOUT las den Plan 15:58 neu.  Rückfall: `--restore`
+  mit den CSV-Berichten (`logs/cue_redetect-*.csv`, Kopie `C:/Temp/optd/cue_reports/`) + Backup 02:30.
+- ✅ **22 markierte Titel vom Operator 2026-11-01 erledigt** (Cue-Punkte von Hand gesetzt oder Dateien gelöscht;
+  Liste `C:/Temp/optd/cue_reports/flagged_22.txt`).  Ursprünglich: 3× Cue-In > 10 s
+  (ids 3081 „35 Minutes“ 30 s, 17253 „Swans Will Save“ 60 s, 22303 „Meine Abschiedssendung“ 11 s), 19× stiller Rest
+  > 30 s, meist Hidden Tracks (ids 1125, 1650, 2653, 2779, 4643, 6678 „DMD KIU LIDT“ 367 s, 7567, 8929, 9235, 11793,
+  16413, 16889, 17415, 17615, 18581, 18754, 19835, 20877, 24335).  Werkzeug: Library-Knopf „Cue Points“ (übernimmt
+  die Messung) oder Track-Editor (Hand).  Operator-Geschmack, kein Fehler.
+
+**Vormerkung aus der Evaluierung 2026-10-25:** „Wir behalten uns dieses Thema im Backlog für später." Vorbedingungen für
+einen späteren Start: frische Windows-VM für die Install-Probe, GitHub-Org/Repo durch den Operator, ruhige Woche
+für den filter-repo-Lauf (Historie wird neu geschrieben, alle Klone/Worktrees danach neu).
+
+Operator-Frage: RASTATIME auf GitHub veröffentlichen, in unregelmäßigen Abständen Releases anbieten,
+Update aus GitHub heraus (eventuell per Knopf in der UI).
+
+**Befund (Ist-Stand 2026-10-25):** AGPL-3.0 (LICENSE, Pflicht als LibreTime-Fork), README mit Fork-Tabelle,
+CONTRIBUTING, FORK_NOTES, docs/operator INSTALL (756 Zeilen) + UPGRADE (306 Zeilen, stop → deploy → pip →
+migrate → restart) + COMPONENTS, drei GitHub-Workflows (`python.yml` ruff + pytest, `php.yml`, `release.yml`:
+Tag `v*.*.*` → Wheels je Backend-Paket + Frontend-Zip + Release aus dem CHANGELOG-Abschnitt).  Kein Remote,
+kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (404).  1.082 Commits seit 2026-04-24.
+
+**Blocker vor dem ersten Push:**
+1. Historie 1,07 GiB: Audiodateien `scheduler/*.mp3|wav|flac` (bis 137 MB je Datei) in alten Commits -> GitHub
+   lehnt Dateien > 100 MB ab.  Historie mit `git filter-repo` bereinigen (oder frischer Start mit einem Commit).
+2. Geheimnisse in der Historie: `config/icecast.xml` 4x committed (3 Passwortzeilen; Werte seit 2026-10-24 rotiert,
+   also tot, trotzdem entfernen), LibreTime-Baseline-Beispielschlüssel.  Gleicher filter-repo-Lauf.
+3. Frischer Klon läuft nicht: `frontend/legacy/vendor` (211 MB) ist ignoriert, composer.json/lock vorhanden, aber
+   kein INSTALL-Schritt „composer install"; INSTALL nennt Liquidsoap 2.4.4 / Icecast 2.4.4 (live 2.4.6 / 2.5.0).
+   Niemand hat seit der Baseline eine Neuinstallation nach INSTALL.md gemacht -> Install-Probe auf frischer
+   Windows-VM ist der eigentliche Brocken.
+4. Standortspezifisches im Code: `exampleradio` 4 Dateien, `D:/stor` 5, `192.168.1.64` 8, `studio` 11 (meist Tests,
+   Beispiele, Kommentare) - durchgehen, keine Blocker erwartet.  Root-Aufräumen: BLOCKERS_T0.1, IMPLEMENTATION_PLAN,
+   POST_IMPLEMENTATION, CLEANUP_INVENTORY nach docs/dev/history, lokale Zustandsordner nur lokal ignorieren; BACKLOG bleibt.
+5. Stereo Tool ist proprietär (nicht im Repo, Lizenz je Betreiber) -> als optional dokumentieren.  SECURITY.md,
+   Issue-Vorlagen, Hinweis „Windows 11 only" (CONTRIBUTING hat ihn).
+
+**Stufen:**
+- 🟡 **Stufe 0 - Veröffentlichung:** filter-repo (Audio + icecast.xml), Root aufräumen, composer-Schritt + Versionen
+  in INSTALL, SECURITY.md, Org/Repo anlegen (Operator), Push, CI grün bekommen.  ~2 Tage + Install-Probe auf
+  frischer VM 1-2 Tage (VM stellt der Operator).  **Vorbedingung seit 2026-10-28:** Marke „libretime" → „rastatime"
+  Stufe B (Paketnamen, `RASTATIME_*`, Konfigdatei, gettext-Domäne, PHP-Klassen; eigener Abschnitt mit Brücken-
+  Vorgehen, ≈ 1 Tag + Beobachtungswoche) vor dem ersten Push, damit fremde Entwickler keine halbe Umbenennung sehen.
+- 🟡 **Stufe 1 - Releases:** SemVer ab `v1.0.0`, Versionsnummer ins Produkt (Settings/About + `/api/version`),
+  CHANGELOG-Abschnitt je Version (release.yml liest ihn), Tag pushen -> Release.  ~½ Tag.
+- 🟡 **Stufe 2 - Update-Skript `rt-update.ps1`:** UPGRADE.md automatisiert: Backup (Aufgabe RASTATIME-Backup),
+  Dienste stoppen, `git fetch` + Checkout des Release-Tags (oder Release-Zip), `composer install`, `pip install -e`,
+  Migrationen, Dienste in Reihenfolge starten, Smoke-Test (health, Mounts), Rollback auf den vorigen Tag + DB.
+  Erhöhte Rechte nötig (Dienste).  ~1 Tag + Probe.
+- 🟡 **Stufe 3 - Knopf in der UI (Defer):** Settings → „Updates": Versionsprüfung gegen die GitHub-Releases-API
+  (wie `scripts/update_check.py`), Changelog anzeigen, „Install" startet `rt-update.ps1` als geplante Aufgabe
+  mit erhöhten Rechten (Apache/PHP läuft ohne Admin, der Updater stoppt Apache selbst), Wartungsseite + Fortschritt
+  aus einer Statusdatei, Abschluss im ruhigen Moment (Standby übernimmt die Hörer wie beim geplanten Neustart).
+  ~2-3 Tage.  Vorbedingung: zwei echte Releases sind über Stufe 2 gelaufen.
+
+**Empfehlung (bei Wiederaufnahme):** Stufen 0-2 in dieser Reihenfolge, Stufe 3 danach.  Ohne die Install-Probe auf einer
+frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an Schritt 1.
+
+## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
+
+### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 + 3 abgenommen 2026-11-03 (evaluiert 2026-11-01)
+
+Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
+hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
+automatisch als CBA-Beitrag veroeffentlichen (spaeter Apple/Spotify ueber den
+CBA-Feed).  Recherche: cba.media ist ein WordPress mit offener REST-API
+(`wp/v2/posts` mit Taxonomien `language`, `editor`, `tags`, Meta `station_id`;
+Inhaltstypen `series` = Podcast, `station`, `channel`; Medien-Upload
+`wp/v2/media`; Anmeldung per Anwendungspasswort; undokumentiert
+`cba/v1/zipupload`, `media/v1/ingest`).  Die CBA-eigenen Pflichtfelder (Lizenz
+kommerziell/Bearbeitung, AKM, Produktionsdatum, Erstausstrahlung, Thema,
+Podcast-Zuordnung) sind im Index nicht beschrieben.  AURA (gitlab.servus.at/
+aura, AGPL) macht das Gewuenschte mit dem Dienst "battery": CBA-ID je Sendung,
+Zugangsdaten je Sendung oder je Benutzer, automatischer Upload nach der
+Ausstrahlung ohne ungeplanten Fallback, Lizenz-Zuordnungstabelle,
+"Number of people involved" fuer die RTR-Statistik.
+
+Geplanter Schnitt (Empfehlung Go in Stufen, Risiko niedrig fuer den Betrieb):
+0. Klaerung mit CBA (office@cba.media) oder AURA-Code: API-Nutzung erlaubt,
+   Felder fuer Lizenz/AKM/Produktionsdatum/Podcast-Zuordnung, Testpodcast,
+   Rate-Limits.  **Vorbedingung fuer Stufe 2-3.**
+1. Autor:innen/Redaktions-Profile (Settings, eigene Tabellen, N:M zu Sendungen),
+   Sendungs-Metadaten fuer CBA (Edit Show -> "Veroeffentlichung": CBA-Podcast-ID,
+   Automatik, Lizenzvorgaben, Thema, Sprache, Schlagworte, Teaser-Vorlage),
+   Teilnehmerzahl je Sendung mit Instanz-Override + Jahresstatistik.  ~2 Tage,
+   unabhaengig von CBA.
+2. CBA-Upload manuell aus dem Kalender (Kontextmenue der gelaufenen Instanz:
+   "Publish to CBA", "Link existing CBA post"), Auftragstabelle + Python-Worker
+   (nicht Playout, nicht PHP-Webrequest), Sichtbarkeit waehlbar (Privat/
+   Ungelistet/Oeffentlich), Status im Instanz-Dialog.  ~3 Tage.
+3. Automatik: nach dem Import der Aufzeichnung (§23.66) Beitrag anlegen und
+   veroeffentlichen, Bedingungen: kein ungeplanter Fallback, mindestens ein
+   Autor:innen-Profil, Pflichtfelder gesetzt; Wiederholungen (§23.65) nicht
+   erneut veroeffentlichen, sondern als Wiederholung verknuepfen.  ~1 Tag.
+4. Apple/Spotify: ueber den CBA-Podcast-Feed, einmalige Einreichung, kein Code.
+Gesamt ~2.000-2.500 Zeilen, ~8 Arbeitstage plus Wartezeit auf CBA.
+
+**Befund 2026-11-02 aus dem AURA-Code (gitlab.servus.at/aura/battery,
+packages/cba_integration + aura_common/apis/cba_api.py):** Der Upload laeuft
+ueber EINEN Aufruf `POST https://cba.media/wp-json/cba/v1/zipupload`
+(multipart: Feld `meta` = JSON, Feld `file` = ZIP mit `audio.<ext>` und
+optional `image.<ext>`), Anmeldung HTTP Basic mit CBA-Benutzername und
+Passwort (Anwendungspasswort), optional Query-Parameter `api_key`, Timeout
+5 min, Antwort `{success, post_id, attachment_ids}` bzw. `{success:false,
+message}`.  `meta`-Felder: `title`, `content`, `teaser`, `languages`
+(Sprachcodes, max. 3), `production_date`, `broadcast_date`,
+`publication_date`, `category_id` (= Thema, Liste via `wp/v2/categories`),
+`series_id` (= Podcast-ID), `status` (private | unlisted | publish | future),
+`license` (Schluessel: copyright, cc by-nc-nd, cc by-nd, cc by-nc, cc by-sa,
+cc by, cc zero, pd), `tags` (kommagetrennt), `editors` (kommagetrennte
+Namen = Redakteur:innen), `contains_copyright` (= AKM-Material),
+`remove_copyright_regions`, `regions` (Abschnitte start/end/type music|
+spokenword/license/title/author/description aus dem Playlog),
+`image_license`, `image_caption`.  AURA verhindert Doppel-Uploads ueber die
+gespeicherte Post-ID und sperrt je Episode.  Damit ist Stufe 0 weitgehend
+geklaert; bei CBA bleibt zu fragen: Erlaubnis/Testpodcast, Rate-Limits,
+ob `api_key` noetig ist.  Operator-Klarstellung 2026-11-02: Automatik =
+Upload UND Veroeffentlichung (status publish) einige Minuten nach dem Ende
+jeder Instanz, Redaktionsteam an der (wiederholenden) Sendung; manuell =
+Kontextmenue einer gelaufenen Instanz im Kalender.  Weiterhin kein Go.
+Operator 2026-11-03: zusaetzlich ein **Bild je Episode/Instanz** (optional,
+neben dem Bild der Sendung/des Podcasts) - der zipupload traegt es als
+`image.<ext>` im ZIP mit `image_license`/`image_caption`; Ablage z.B. im
+Instanz-Dialog (Edit Instance) oder beim manuellen Upload waehlbar.
+
+**Entscheidungen 2026-11-03 (Operator):** Go fuer Stufe 1 mit den
+Empfehlungen; Anfrage an CBA (Stufe 0) verschickt der Operator selbst.
+- E1 Upload laeuft im Worker-Dienst (RASTATIME-WORKER wird vom Platzhalter
+  zum Job-Runner), nicht im API-Prozess (der liefert dem Playout den
+  Sendeplan) und nicht in PHP.
+- E2 CBA-Zugangsdaten unter Settings, Passwortfeld nur setzbar (nicht
+  auslesbar), ein Stationskonto; Konten je Sendung erst bei Bedarf.
+- E3 Redaktionsteam = eigene Profile (Name, optional mit Benutzer
+  verknuepft), N:M zur Sendung.
+- E4 Episodenbild optional, JPG/PNG, Ablage wie Sendungsbilder
+  (`imported/episode-images/<Instanz>/`), mit Bildlizenz und
+  Bildunterschrift; ohne Episodenbild wird KEIN Bild mitgeschickt (CBA
+  zeigt das Podcast-Bild - am Testpodcast pruefen).
+- E5 Die Automatik laedt immer die Aufzeichnung hoch.  Offen vor Stufe 2:
+  beim manuellen Upload wahlweise eine andere Library-Datei?
+- Episodendaten liegen in einem eigenen Dialog "Episode..." im
+  Kalender-Kontextmenue (auch fuer gelaufene Instanzen; das
+  Sendungsformular oeffnet keine vergangenen Instanzen), die
+  Sendungs-Vorgaben im Abschnitt "Publishing" des Sendungsformulars.
+- Teilnehmerzahl: Wert je Sendung, Override je Episode, Uebersicht unter
+  Analytics -> Participants (Jahr waehlbar, je Sendung, Summen, fehlende
+  Werte, CSV).
+- Stufe 4 (Apple/Spotify ueber den CBA-Feed) gilt fuer oesterreichische
+  Stationen; die direkte Anbindung fuer internationale Stationen steht als
+  eigene Idee unten.  Die `regions` (Musik/Wort fuer AKM) bleiben Idee.
+
+**Stand 2026-11-03: Stufe 1 gebaut** (Architektur §23.79, Migration 0074,
+Handbuch "Publishing"): Settings -> Editorial Team, Abschnitt Publishing im
+Sendungsformular, Kalender "Episode..." (auch gelaufene Instanzen, Bild
+JPG/PNG <= 10 MB), Analytics -> Participants mit CSV.  Probe
+`C:/Temp/optd/publishing_probe.php` gruen.  Browser-Abnahme durch den
+Operator bestanden 2026-11-03 (Formular, Dialog mit Bild-Upload, beide
+Seiten).  Anfrage an CBA hat der Operator am 2026-11-03 verschickt.  Vor
+Stufe 2: Antwort von CBA, Entscheidung "manueller Upload mit anderer
+Library-Datei?", Auswahllisten fuer CBA-Podcast/-Thema statt Nummern
+(wp/v2/series, wp/v2/categories).
+
+**CBA-Antwort und Spezifikation 2026-11-03** (vom Operator, ZIP-Upload-API):
+Anmeldung per HTTP Basic mit CBA-Benutzername + WordPress-Anwendungspasswort
+("API-Key", im CBA-Profil anzulegen; kein `api_key`-Parameter), Upload nur
+fuer die Rollen admin/author/podcaster/stationmanager/channelmanager.  JEDE
+Sendung braucht einen CBA-User, unter dessen Namen sie erscheint.  Pflicht in
+`meta`: title, content (nicht leer), languages (max. 3 aus der CBA-Liste),
+production_date (YYYY-MM-DD, Vergangenheit), category_id; optional
+broadcast_date, publication_date, series_id (leer -> privat), status
+(Standard privat), license (copyright, cc by, cc by-nc, cc by-nd,
+cc by-nc-nd, cc sampling+, cc zero, pd - kein cc by-sa), tags, editors,
+contains_copyright, image_license (frei), image_caption (<= 500), regions.
+ZIP: genau eine Audio/Video-Datei (mp3, ogg, opus, webm, mp4) und hoechstens
+ein Bild (jpg, gif, png).  Kein Endpunkt zum nachtraeglichen Aendern;
+"Kommentare erlauben" ist nicht in der API (CBA-Voreinstellung gilt).
+
+**Entscheidungen 2026-11-03 (Operator), ersetzen E2 und klaeren E5:**
+- Zugang: eigene Liste **Settings -> CBA Accounts** (Bezeichnung, Benutzername,
+  Anwendungspasswort nur setzbar), nur Admins verwalten sie; jede Sendung
+  waehlt ihr Konto im Abschnitt Publishing.
+- Lizenz: Auswahlliste mit den CBA-Schluesseln bleibt, je Sendung; die
+  Matrix Nennung/kommerziell/Bearbeitung -> Lizenz steht als Hilfe im Tooltip.
+- Erstausstrahlung = Beginn der Instanz (Stationszeit); Produktionsdatum =
+  Sendetag, im Dialog "Episode..." ueberschreibbar.
+- "Instance Description" verschwindet aus Edit Instance; "Episode..." ist die
+  einzige Stelle fuer die Beschreibung.
+- Automatik (Stufe 3): Schalter je Sendung (aus); keine Uploads bei fehlendem
+  Konto/Thema/Sprache/Text, ohne brauchbare Aufzeichnung (< 50 % der
+  Sendungslaenge), bei Wiederholungen, bei vorhandener Post-ID, bei
+  "Nicht veroeffentlichen" im Episoden-Dialog; nur Episoden, die nach dem
+  Einschalten enden (keine Aufarbeitung); Start einstellbare Zeit nach dem
+  Import (Vorschlag 30 min), Wiederholen bis 24 h, danach Grund im Dialog.
+- Manueller Upload darf statt der Aufzeichnung eine andere Library-Datei
+  nehmen (nur Formate, die CBA annimmt).
+
+**Stand 2026-11-03 abends: Stufe 2 gebaut** (Operator-Go, Architektur §23.80,
+Migration 0075).  Operator: das Feature heisst **"Archiving"** ("Publish"
+gehoert zu My Podcast), Knopf "Archive online..." (DE "Online archivieren...");
+Upload nur Admins + PMs, Bremse 4 Mbit/s.  Gebaut: Settings -> CBA Accounts
+(Admins, Verbindungstest, Upload-Grenze), Archiving-Abschnitt mit Konto,
+Sichtbarkeit, Themenliste, Lizenz-Matrix-Tooltip; Episode-Dialog mit
+Produktionsdatum, "nicht automatisch archivieren", Block "Online archive"
+(Vorab-Pruefung, Audio-Wahl, Status, Link existing post); RASTATIME-WORKER
+als Job-Runner (gebremster Datenstrom, Wiederholen nur bei sicher nicht
+angekommen, "unklar" nie automatisch).  Zusaetzlich: Lizenz ist Pflicht
+(sonst CC BY bei CBA), Edit Instance verlor Episodendaten (behoben).
+Offen: Neustart RASTATIME-WORKER + Apache durch den Operator, erster echter
+Upload (Sichtbarkeit privat) in einen Podcast nach Wahl, danach Stufe 3
+(Automatik, ~1 Tag).
+
+**Abnahme Stufe 2 am 2026-11-03 bestanden:** drei Testsendungen von Hand
+archiviert (privat und oeffentlich, je eigener Beitrag im Testpodcast).
+Unterwegs behoben: Meldungen der Konten-Seite gingen verloren, Rolle
+`station_manager` (Spec: `stationmanager`) wurde abgelehnt (79c66ccd), das ZIP
+im Upload hatte absolute Positionen - HTTP 400 "ZIP file couldn't be opened"
+(19be7886).  Offen vor Stufe 3: Erkennung "ungeplanter Fallback" (es gibt
+keinen gespeicherten Quellen-Verlauf je Instanz), Ort der Verzoegerung,
+Meldung fehlgeschlagener Automatik-Uploads.
+
+**Stufe 3 gebaut 2026-11-03** (Operator-Go mit A (a), B, C wie empfohlen;
+Architektur §23.81, Migration 0076 live): Schalter "Archive automatically"
+je Sendung, Wartezeit unter Settings -> CBA Accounts (30 min), Worker prueft
+alle 5 Minuten, ueberspringt nach 24 h mit Grund, Warnhinweis
+`archive_failed` 7 Tage.
+
+**Stufe 3 abgenommen 2026-11-03** (WORKER + Apache 17:01 neu gestartet):
+Testsendung mit Schalter, Aufzeichnung und Wartezeit 5 min.  Ab Faelligkeit
+wartete die Episode mit Grund ("neither the episode nor the show has a
+description", Log + Episode-Dialog); nach dem Nachtragen der Beschreibung
+legte der naechste Durchlauf den Auftrag selbst an (Trigger `auto`),
+Upload 36 MB in 85 s, Beitrag oeffentlich, Episode verknuepft.  Rest:
+Wartezeit wieder auf den gewuenschten Wert stellen (Operator).
+
+Nachtrag 2026-11-03 (Operator, Feinschliff §23.82): Settings "Archiving"
+als eine Seite (Teams + CBA-Konten), ein Redaktionsteam je Sendung
+(Dropdown), Kalender "Archive Online", ohne Beschreibung geht der
+Sendungsname als Text an cba.media.  Offen: Apache- + WORKER-Neustart,
+Sichtprobe durch den Operator.
+
+Nachtrag 2026-11-03 (Operator-Go): Hinweis "Sendung ohne Beschreibung"
+unter dem Schalter gebaut - das Formular prueft die Beschreibung nicht (sie
+kann je Episode kommen), bei der Abnahme wartete die erste Episode genau
+darauf.  Nur Hinweis, keine Sperre; neue Texte nach Apache-Neustart.
+
+Nachtrag 2026-11-04 (Operator): "Editorial Teams" heissen in RASTATIME
+**Producers** (DE Produzenten) - meist eine Person, manchmal ein Team; an
+cba.media weiter als *editor*.  Keine Team-Zahl mehr in Participants, CSV
+und Jahresbericht, nur "People involved".  "Link existing post" bleibt wie
+es ist (e1964fb7).
+
+Nachtrag 2026-11-04 (Operator-Go): **Archiv-Status-Seite gebaut**
+(Analytics -> Archive Status, §23.86): laufend/wartend, was die Automatik
+in 7 Tagen vor sich hat, Probleme 30 Tage, Verlauf mit Filter + CSV;
+Abbrechen nur fuer wartende Auftraege, Erneut (nach "unklar" mit
+Rueckfrage), Beitrag verknuepfen; Link im Warnhinweis.  Apache neu
+gestartet, Texte in allen Sprachen sichtbar (Operator 2026-11-04).  Der
+Block "Steht an" ist live erst mit einer Sendung mit "Archive
+automatically" in den naechsten 7 Tagen zu sehen (geprueft per
+Rollback-Probe).
+
+Nachtrag 2026-11-04 (Operator-Kosmetik, Empfehlungen gewählt): Analytics
+geteilt in People Involved + Programme Minutes; "Number of involved
+people" unter "Own production" (nur sichtbar mit Häkchen, zählt nur für
+Eigenproduktionen, Wert bleibt); Archiving in Edit Instance nur lesbar;
+Alerts je Kanal ein Häkchen statt Hauptschalter (§23.87).  Apache,
+PLAYOUT und API neu gestartet, Sichtprobe bestanden (Operator
+2026-11-04); Alerts im Settings-Menü unter Local Machine.
+
+### 💡 Ersatzprogramm statt Live-Sendung erkennen (Archivierung, Operator 2026-11-03: spaeter)
+
+Die Automatik archiviert die Aufzeichnung auch dann, wenn statt einer
+Live-Sendung das Ersatzprogramm lief (Moderation kam nicht).  RASTATIME
+speichert keinen Verlauf, welche Quelle je Instanz on air war.  Idee: das
+Playout meldet je Instanz die Sekunden mit Ersatzprogramm (Quellen-
+Umschalter, Option d), die Automatik ueberspringt ab einer Schwelle.
+Aufwand ~1-2 Tage, braucht einen PLAYOUT-Neustart.  Vorbedingung: die
+Automatik hat sich bewaehrt und der Fall kommt tatsaechlich vor.
+
+### 💡 Apple Podcasts / Spotify direkt fuer internationale Stationen (Operator 2026-11-03: Backlog)
+
+Oesterreichische Stationen erreichen Apple/Spotify ueber den CBA-Podcast-Feed
+(CBA-Anbindung Stufe 4, kein Code).  Stationen ausserhalb Oesterreichs haben
+keine CBA; fuer sie braeuchte RASTATIME einen eigenen oeffentlichen
+Podcast-Feed je Sendung (RSS 2.0 mit iTunes-Namensraum: Episoden aus den
+Aufzeichnungen, Episodenbild/-text aus der CBA-Stufe 1, Enclosure-URLs
+oeffentlich erreichbar) und die einmalige Einreichung bei Apple/Spotify.
+Vorbedingungen: CBA-Anbindung Stufe 1-2 (Episodendaten), Entscheidung ueber
+oeffentliches Hosting der Audiodateien (Bandbreite, Speicher, Reverse Proxy;
+siehe "Oeffentliche Studio-Instanz").  Die bestehende Station-Podcast-Seite
+("My Podcast") waere der naheliegende Ausgangspunkt.
+
+### 💡 CBA: Musik- und Wortabschnitte als `regions` mitschicken (Operator 2026-11-03: Backlog)
+
+Der zipupload nimmt `regions` (start/end/type music|spokenword, Titel,
+Interpret, Lizenz) sowie `contains_copyright` und
+`remove_copyright_regions`.  Die Abschnitte liessen sich aus dem
+Sendeverlauf (cc_playout_history) der Instanz bilden, Line-In/Webstream als
+Wort.  Vorbedingung: Antwort von CBA, was mit den Angaben geschieht (wird
+AKM-Musik aus der oeffentlichen Fassung entfernt?), und CBA-Stufe 2.
+~1 Tag.
+
+### 💡 Segmente fuers 7-Days-Back-Archiv: Beschreibungen je Abschnitt einer Sendung (Operator 2026-11-02: vorerst Backlog)
+
+Operator-Notiz: Medienbeschreibung fuer Cue-Punkt-Abschnitte (oder ueber den
+Sendeverlauf editierbar), damit das Catch-up-Archiv Segmente innerhalb einer
+Sendung darstellen kann.  Skizze: eigene Tabelle (Instanz, Von, Bis, Titel,
+Text), aus cc_playout_history vorbefuellt, im Kalender editierbar, Ausgabe im
+Catch-up-Widget und optional als Kapitelmarken im Feed.  ~500 Zeilen, 2 Tage.
+Siehe auch "Record-per-Hour (Vorstufe fuer 7-Tage-Catchup)" oben.
+
+## Operator-Punkte 2026-11-03 (Jahresbericht, Alarme, Instanz-Autoloading)
+
+### ✅ Jahresbericht: Sendeminuten „Eigenproduktion“ + Teilnehmende - gebaut 2026-11-03 (Go 2026-11-03, Architektur §23.83)
+
+Häkchen „Own production“ je Sendung (einmalig oder wiederholend), Analytics →
+Yearly Report mit Jahresauswahl: Minuten der markierten Sendungen (geplante
+Dauer der gesendeten Instanzen), Erstausstrahlungen und Wiederholungen
+getrennt, Monatstabelle, CSV; Teilnehmenden-Übersicht darunter.  Antwort auf
+die Participants-Frage: der Sendungswert gilt je Episode, ein Episodenwert
+ersetzt ihn nur für diese Episode in „Participations“; „People involved“
+bleibt der Sendungswert.  Migration 0077 live 2026-11-04 08:36; Abnahme 2026-11-04
+bestanden (Häkchen gesetzt, Minuten korrekt).  Alle vier Operator-Punkte vom
+2026-11-03 sind damit abgenommen.
+
+### ✅ Alarme per SMTP-Mail und Telegram bei Dead Air und Ausfällen - gebaut 2026-11-03 (Go 2026-11-03, nur Stufe 1, Architektur §23.84)
+
+Kanäle: SMTP mit Anmeldung/TLS (PHP mail() ohne Anmeldung reicht nicht) und
+Telegram-Bot; Auslöser Stille-Ersatzquelle, Dienste, Preflight-Warnungen,
+Archiv-Fehler; Entprellung, Unterdrückung bei geplanten Neustarts, Entwarnung,
+Testknopf, Settings → Alerts.  Signal/WhatsApp/SMS abgelehnt bzw. später.
+Gebaut 2026-11-03: blank.detect auf dem Bus -> /audio-event, Playout-Monitor
+(Dienste, Preflight), API-Wächter für das Playout, Settings → Alerts mit
+Tests.  Abnahme 2026-11-04: Dienste neu gestartet, Dead Air erzeugt, E-Mail
+angekommen; Telegram-Test nach dem TLS-Fix 67a09305 (certifi) erfolgreich.
+Stufe 1 komplett abgenommen.
+
+### 🟡 Alarme Stufe 2: SMS (Gateway oder GSM-Stick für den Uplink-Ausfall), Signal, WhatsApp - DEFER (Operator 2026-11-03: nur Stufe 1)
+
+Internet-Kanäle schweigen bei totem Uplink; ein GSM-Stick (~30 EUR, AT-Befehle)
+wäre der einzige Kanal dafür.  Signal nur über signal-cli (Java, eigene
+Nummer), WhatsApp nur über Metas Cloud-API (Business-Konto, Vorlagen, Kosten
+je Nachricht).  Push-Apps (ntfy, Pushover) als billiger Zusatzkanal möglich.
+
+### ✅ Edit Instance: Autoloading-Playlists je Instanz - gebaut 2026-11-03 (Go 2026-11-03, Regel „nur vor der Befüllung“, Architektur §23.85)
+
+Instanzspalten (Migration 0078, leer = Vorgabe der Sendung), Häkchen im
+Instanz-Formular, Befüllung löst Instanz → Sendung auf; nach der Befüllung
+nur Hinweis.  Migration 0078 live 2026-11-04 08:36; Abnahme 2026-11-04 an
+Route Rock 11:30 bestanden (nach dem Fix c08967ca: Werte auf die neue
+Instanzzeile).
+
+### 🟡 Archiv-Status-Seite (laufende Uploads, Historie, CSV) - in der Archivierungs-Sitzung bauen (Operator 2026-11-03)
+
+Daten in cc_cba_upload vorhanden; Seite mit Fortschritt, Wiederholen/Abbrechen,
+Historie und Filtern.  ~300 Zeilen, 1 Tag.
+
+## Verzögerter Start: Sichtbarkeit im Kalender (Befund 2026-11-04)
+
+### 💡 Kalender und Dialoge zeigen den verzögerten Start nicht erkennbar - IDEA (Operator-Befund 2026-11-04)
+
+Fall „Lebendige Stille" 1.11. 20:30 (Inhalt 30:32, Nachfolger mit „Allow
+delayed start"): Datenbank, Playout-Log, Playout History und Cue-Datei der
+Stundenaufnahme zeigen den Nachfolger ab 21:00:32, der Podcast lief
+vollständig.  Der Kalender rundet die Ereigniszeiten aber auf Minuten
+(„21:00 - 23:00"), darum sah es nach einem Schnitt aus.  Der Dialog „Show
+Content" liefert die Sekunden (Probe `C:/Temp/optd/show_content_probe.php
+<instance>`: 21:00:32, 21:05:03, …).  Idee: Kalender-Ereignis mit
+Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
+und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
+~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
+
+## Doppelter Queue-Push nach manuellem Liquidsoap-Neustart (Befund 2026-11-05, 11:00-Testshow)
+
+### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - EVALUIERT 2026-11-05, Go offen
 
 Hergang (playout-stdout.log, liquidsoap-stdout.log): 10:29:23 PLAYOUT-Neustart
 (Operator) rendert rastatime.liq neu (Brücken-Variablen) -> geplanter
@@ -7025,14 +12029,6 @@ leert die Queue -> die drei Jingles sind weg.  Showteaser danach per play
 frisch -> korrekt.  Playout History zeigt Zeilen, nicht das Gehörte.  Die
 7-Minuten-Verschiebung der AutoDJ-Show hat damit nichts zu tun.
 
-Vorschläge (je ~40-80 Zeilen, Tests im Replikat):
-1. Telnet: einen `push` nach Reconnect nicht wiederholen (nur lesende
-   Kommandos), oder vor dem Push `scheduled.queue` prüfen - kein Duplikat.
-2. Jeder Telnet-Reconnect prüft `uptime`; frische Instanz -> laufendes
-   Element neu einsetzen (wie beim eigenen Neustart 10:29:34).
-3. Uhr-Sanity: passt der Engine-Rest weder zum Vorgänger noch zum
-   Nachfolger (265 s Rest, Nachfolger 9,9 s) -> Skip auf die Zeile statt
-   "no skip".  Hätte 'World News' um 11:00:00 geschnitten.
 Betriebsregel bis dahin: nach einem PLAYOUT-Neustart LIQUIDSOAP nicht
 zusätzlich von Hand neu starten - das Playout tut es selbst an der
 Titelgrenze, wenn rastatime.liq sich geändert hat (Log "Planned Liquidsoap
