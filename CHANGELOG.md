@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-05
+
 ### Added
+
+- **Webstream-Puffer je Stream (2026-11-05, Go 2026-11-05)** — Webstream-Dialog:
+  **Buffer (s)** und **Buffer max (s)** mit Hilfe-Symbol-Tooltips (leer = Standard
+  5 s / 10 s), Import/Export `webstreams.csv` mit den Spalten `bridge_seconds` /
+  `bridge_max_seconds`.  Das Playout setzt `var.set webstream.bridge` /
+  `webstream.bridge_max` vor jedem `webstream.start`; der frische `buffer()` des
+  Slots wird damit gebaut.  Hintergrund (Messung 07:00-Slot 2026-11-05): die Brücke
+  füllt sich im 10-s-Vorlauf bis `max`, Verzug am Tor = Server-Burst 3,6 s + max
+  (13,8 s heute); `max_buffer` von input.http ist kein Hebel (Generator verwirft
+  nichts).  Migration 0079 (zwei NULL-Spalten an cc_webstream; Legacy toleriert
+  das Fehlen).  Manual WEBSTREAMS §6a ×4, ARCHITECTURE §23.88.  Wirksam: Legacy
+  sofort, API/PLAYOUT nach Neustart (PLAYOUT rendert rastatime.liq neu →
+  LIQUIDSOAP-Neustart).  Commit `8d8d90c9`.
+  Abnahme 2026-11-05 11:00 (Testshow, BBC News mit Buffer 3 / max 5, Playout-Log
+  „bridge=3.0s/5.0s (per stream)"): Verzug 8,6 s statt 13,8 s wie vorhergesagt,
+  Bulletin 4 s nach dem Einstieg statt 8,5 s, Ausstieg 0,4 s nach der Pause.
+  Migration 0079 live 10:2x, Dienste neu gestartet.
 
 - **Manual-Kapitel API (2026-11-05)** — `docs/manual/API.md` in EN/DE/FR/ES: wer was lesen
   darf, der Schalter „Public RASTATIME API" und die Widgets, die öffentlichen
@@ -15,18 +34,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now-playing-Form, Swagger nach Login, Api-Key-Nutzung und die Regel „Schlüssel nie
   weitergeben", curl-Beispiele, FAQ.  TOC in allen vier USER_MANUAL.md.
 
-### Security
+### Changed
 
-- **Öffentliche Lese-API: Metadaten-Whitelist und Schema-Sperre (2026-11-05, Go
-  2026-11-05)** — `/api/live-info`, `/api/live-info-v2` (mit „Public RASTATIME API")
-  lieferten die komplette cc_files-Zeile des laufenden Titels (filepath, owner_id,
-  md5, comments, lyrics, import_status, …); jetzt nur noch Credit-Felder
-  (`WidgetHelper::PUBLIC_TRACK_FIELDS`).  `/api/shows` ohne Autoloading-/Intro-/
-  Outro-IDs (`PUBLIC_SHOW_FIELDS`).  OpenAPI-Schema und Swagger-UI unter
-  `/api/v2/schema` nur noch mit Login (IsAuthenticated; Api-Key gilt für die
-  Endpunkte, nicht für die Doku).  Widgets unverändert (eigene now-playing-data).
-  Wirksam: Legacy sofort (live geprüft), Schema nach API-Neustart.  ARCHITECTURE
-  §23.90.  Commit `1d4be827`.
+- **README überarbeitet (2026-11-05)** — Block „What is different from LibreTime“ entfernt (Operator-
+  Wunsch); stattdessen Funktionen von heute (Planung, Befüllung, Playout, Quellen/Ausgänge,
+  Library, Archivierung/Auswertung, Betrieb), Voraussetzungen wie im Betrieb (PostgreSQL 17,
+  PHP 8.3+, Liquidsoap 2.4.6, Icecast 2.5.0, FFmpeg), Getting started als Kurzfassung mit
+  Verweis auf INSTALL.md, Upgrade-Hinweis (Dienste vor `pip install` stoppen — der laufende
+  Analyzer sperrt seine EXE, 2026-11-04), die acht Dienste, Doku-Übersicht, aktuelles
+  Repo-Layout und `scriptsun_tests.ps1`.  Commit `eadec826`.
 
 ### Fixed
 
@@ -56,24 +72,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dem Queue-Ahead, an der Sendegrenze): Erkennung per Telnet-Reconnect 1,3 s nach dem
   PLAY, Catch-up +4,9 s, Ton 13:15:05, nur eine Anfrage in der Queue.
 
-### Added
+### Security
 
-- **Webstream-Puffer je Stream (2026-11-05, Go 2026-11-05)** — Webstream-Dialog:
-  **Buffer (s)** und **Buffer max (s)** mit Hilfe-Symbol-Tooltips (leer = Standard
-  5 s / 10 s), Import/Export `webstreams.csv` mit den Spalten `bridge_seconds` /
-  `bridge_max_seconds`.  Das Playout setzt `var.set webstream.bridge` /
-  `webstream.bridge_max` vor jedem `webstream.start`; der frische `buffer()` des
-  Slots wird damit gebaut.  Hintergrund (Messung 07:00-Slot 2026-11-05): die Brücke
-  füllt sich im 10-s-Vorlauf bis `max`, Verzug am Tor = Server-Burst 3,6 s + max
-  (13,8 s heute); `max_buffer` von input.http ist kein Hebel (Generator verwirft
-  nichts).  Migration 0079 (zwei NULL-Spalten an cc_webstream; Legacy toleriert
-  das Fehlen).  Manual WEBSTREAMS §6a ×4, ARCHITECTURE §23.88.  Wirksam: Legacy
-  sofort, API/PLAYOUT nach Neustart (PLAYOUT rendert rastatime.liq neu →
-  LIQUIDSOAP-Neustart).  Commit `8d8d90c9`.
-  Abnahme 2026-11-05 11:00 (Testshow, BBC News mit Buffer 3 / max 5, Playout-Log
-  „bridge=3.0s/5.0s (per stream)"): Verzug 8,6 s statt 13,8 s wie vorhergesagt,
-  Bulletin 4 s nach dem Einstieg statt 8,5 s, Ausstieg 0,4 s nach der Pause.
-  Migration 0079 live 10:2x, Dienste neu gestartet.
+- **Öffentliche Lese-API: Metadaten-Whitelist und Schema-Sperre (2026-11-05, Go
+  2026-11-05)** — `/api/live-info`, `/api/live-info-v2` (mit „Public RASTATIME API")
+  lieferten die komplette cc_files-Zeile des laufenden Titels (filepath, owner_id,
+  md5, comments, lyrics, import_status, …); jetzt nur noch Credit-Felder
+  (`WidgetHelper::PUBLIC_TRACK_FIELDS`).  `/api/shows` ohne Autoloading-/Intro-/
+  Outro-IDs (`PUBLIC_SHOW_FIELDS`).  OpenAPI-Schema und Swagger-UI unter
+  `/api/v2/schema` nur noch mit Login (IsAuthenticated; Api-Key gilt für die
+  Endpunkte, nicht für die Doku).  Widgets unverändert (eigene now-playing-data).
+  Wirksam: Legacy sofort (live geprüft), Schema nach API-Neustart.  ARCHITECTURE
+  §23.90.  Commit `1d4be827`.
+
 
 ## [1.1.0] - 2026-11-04
 
@@ -10492,6 +10503,7 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/vibesbuilder/RASTATIME/releases/tag/v1.0.0
