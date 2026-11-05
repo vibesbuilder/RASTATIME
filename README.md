@@ -3,42 +3,180 @@
 [![python](https://github.com/vibesbuilder/RASTATIME/actions/workflows/python.yml/badge.svg)](https://github.com/vibesbuilder/RASTATIME/actions/workflows/python.yml)
 [![php](https://github.com/vibesbuilder/RASTATIME/actions/workflows/php.yml/badge.svg)](https://github.com/vibesbuilder/RASTATIME/actions/workflows/php.yml)
 
-**Windows-first radio automation — functional fork of [LibreTime](https://github.com/libretime/libretime) 4.5.0**
+**Radio automation for Windows: schedule, play out, stream and archive a
+radio station from one Windows 11 PC.**
 
-RASTATIME preserves the core user-visible feature set of LibreTime — schedule management, shows, playlists, media library, webstreams, podcasts, history and reporting — while replacing every Linux-bound runtime layer with components that run reliably on **Windows 11**.
+RASTATIME runs the whole on-air chain of a community or small station: a
+calendar of shows, a media library with playlists and smart blocks,
+automatic filling, a Liquidsoap playout engine with crossfades and
+loudness normalisation, live DJs, line-in hardware sources, webstreams,
+recording and streaming through Icecast.  Every part runs as a Windows
+service; the web interface and the user manual are available in English,
+German, French and Spanish.
+
+RASTATIME started as a fork of [LibreTime](https://github.com/libretime/libretime)
+4.5.0 and is developed for continuous 24/7 operation.
+
+**Latest release:** [GitHub Releases](https://github.com/vibesbuilder/RASTATIME/releases)
 
 ---
 
-## What is different from LibreTime
+## Features
 
-| LibreTime | RASTATIME |
-|---|---|
-| Liquidsoap (Linux build) | Liquidsoap (savonet Windows build) — the only playout engine since 2026-09-10 |
-| Celery background worker | Plain Python task runner |
-| Gunicorn WSGI server | Waitress (port **8765**) |
-| systemd / systemctl | NSSM Windows services |
-| ALSA / PortAudio / PulseAudio | Windows audio via Liquidsoap / FFmpeg (dshow inputs, Icecast outputs) |
-| Linux paths (`/etc`, `/srv`) | Windows paths (`C:\rastatime\…`) |
-| Linux-only installer | PowerShell bootstrap + NSSM scripts |
+**Scheduling**
+- Calendar with recurring shows, show templates, repeats that copy the
+  latest episode, linked shows and drag-and-drop.
+- Delayed show start: an opted-in show may start late when the show
+  before it overran.
+- Show ends stay on the wall clock across daylight-saving changes.
 
-New features not present in LibreTime:
+**Filling the air**
+- Autoloading playlists fill every episode exactly: intro, then outro,
+  then the playlist against the remaining time; a single episode can get
+  its own autoloading settings.
+- Auto DJ creates shows in calendar gaps and tops up incomplete ones.
+- Teasers for upcoming shows, song requests from a public widget and
+  short-notice traffic bulletins that air inside the running show.
 
-- **Line-In sources** — multiple local stereo hardware inputs, managed like webstreams
-- **Soundcard settings** — explicit local input/output device mapping (Settings → Soundcard)
-- **German UI** — built-in translation alongside the English default
+**Playout**
+- Liquidsoap 2.4 engine with separate track and show crossfades, cue
+  points and EBU R128 loudness normalisation (-23 LUFS).
+- A standby instance keeps listeners connected while the engine restarts;
+  optional planned restarts in a quiet moment for 24/7 programmes.
+- Optional Stereo Tool output processing.
+
+**Sources and outputs**
+- Files, webstreams (with a buffer per stream), several line-in hardware
+  inputs and live DJs over the Liquidsoap harbor, with DJ logins managed
+  in the web interface.
+- Up to four Icecast output streams with track metadata, plus local
+  sound-card output.
+- Recording per show or per hour; recordings can be copied into the
+  library.
+
+**Library**
+- Upload and drop-folder import with format normalisation (lossless to
+  MP3 320), tags from all common formats, cover art, cue-point detection,
+  *Re-read Tags* and a quarantine for failed uploads.
+
+**Archiving and reporting**
+- Episodes uploaded to [cba.media](https://cba.media) by hand or
+  automatically after the broadcast, with an archive status page.
+- Playout history and log sheets, listener statistics per stream and per
+  show, Programme Minutes and People Involved of the own productions for
+  the yearly reporting.
+
+**Operations**
+- Backups from the web interface and a nightly run; import and export of
+  users, shows, playlists, smart blocks, webstreams and podcasts as
+  CSV/JSON.
+- Alerts by e-mail and Telegram for dead air, stopped services and
+  pre-flight warnings.
+- Public embed widgets (now playing, weekly programme, player) and a
+  read-only public API; four user roles (Admin, Program Manager, DJ,
+  Guest).
 
 ---
 
 ## Requirements
 
-| Component | Minimum version | Notes |
+| Component | Version | Notes |
 |---|---|---|
-| Windows | 11 | Only supported platform |
-| Python | 3.11 | 3.13 tested and working |
-| PostgreSQL | 14 | Windows installer or Chocolatey |
-| RabbitMQ | 4.x | Requires Erlang OTP; vhost `/rastatime` |
-| PHP | 8.1 | For the legacy web frontend |
+| Windows | 11 (64-bit) | The only supported platform |
+| Python | 3.11 or later | Production runs 3.13; CI tests 3.11 and 3.13 |
+| PostgreSQL | 17 | The only database |
+| RabbitMQ | 4.x with Erlang OTP | vhost `/rastatime`; the analyzer queue |
+| Apache httpd | 2.4 with `mod_fcgid` | Web interface, wrapped by NSSM |
+| PHP | 8.3 or later | Production runs 8.5 |
+| Liquidsoap | 2.4.6 | Official `win64` build from savonet/liquidsoap |
+| Icecast | 2.5.0 | Streaming server |
+| FFmpeg | current release build | Expected in `C:\ffmpeg\bin` |
 | NSSM | 2.24 | Windows service wrapper |
+
+The installed versions and their update path are tracked in
+[`docs/operator/COMPONENTS.md`](docs/operator/COMPONENTS.md).
+
+---
+
+## Getting started
+
+The complete walkthrough is [`docs/operator/INSTALL.md`](docs/operator/INSTALL.md).
+In short:
+
+1. Install the prerequisites above (INSTALL §2).
+2. Get the code: clone the repository, or download a release (one wheel
+   per backend package plus the frontend zip with `vendor\`).
+3. Create the virtual environment and install the backend packages.
+4. Create `C:\rastatime\config\rastatime.conf` from
+   [`config/rastatime.conf.example`](config/rastatime.conf.example) and
+   change every secret (INSTALL Step 5).
+5. Create the PostgreSQL database and the RabbitMQ vhost, then apply the
+   migrations.
+6. Install the Windows services and check them.
+
+```powershell
+git clone https://github.com/vibesbuilder/RASTATIME.git C:\rastatime
+cd C:\rastatime
+python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass   # fresh Windows: scripts are blocked
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m pip install psycopg2-binary
+python -m pip install -e backend\shared -e backend\api-client -e backend\api -e backend\playout -e backend\analyzer
+```
+
+```powershell
+# After the services are installed (elevated PowerShell):
+powershell -ExecutionPolicy Bypass -File infra\nssm\status.ps1
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/health
+```
+
+Environment variables with the `RASTATIME_` prefix override values of
+`rastatime.conf` (e.g. `RASTATIME_GENERAL_API_KEY`).
+
+### Upgrading
+
+Follow [`docs/operator/UPGRADE.md`](docs/operator/UPGRADE.md): backup,
+stop all services, update the code, reinstall the packages, migrate,
+restart in order.  Stop the services before `pip install`: the running
+analyzer locks its executable and the reinstall fails halfway.
+
+---
+
+## Services
+
+| Service | Role |
+|---|---|
+| `RASTATIME-API` | Django REST API (Waitress, `127.0.0.1:8765`) |
+| `RASTATIME-PLAYOUT` | Scheduler: reads the schedule, renders the Liquidsoap script and drives the engine over telnet |
+| `RASTATIME-LIQUIDSOAP` | Playout engine: mixing, crossfades, loudness, line-in, harbor for live DJs, outputs |
+| `RASTATIME-STANDBY` | Second Liquidsoap instance that keeps listeners connected while the engine restarts |
+| `RASTATIME-ICECAST` | Streaming server |
+| `RASTATIME-APACHE` | Web interface (PHP) and reverse proxy for `/api/v2/` |
+| `RASTATIME-ANALYZER` | Analyses uploads (tags, loudness, cue points) from the RabbitMQ queue |
+| `RASTATIME-WORKER` | Background jobs: uploads to cba.media and the daily topic list |
+
+The services are installed by `infra\nssm\install-*.ps1` (API, worker,
+playout, analyzer, Apache, Icecast) and by
+`backend\playout\config\nssm-install-liquidsoap.ps1` /
+`nssm-install-standby.ps1`; `infra\nssm\status.ps1` shows all eight with
+HTTP probes.  All scripts need an elevated PowerShell prompt.  For the
+restart order and continuous operation see
+[`RESTART_ORDER.md`](docs/operator/RESTART_ORDER.md) and
+[`WINDOWS_24_7.md`](docs/operator/WINDOWS_24_7.md).
+
+---
+
+## Documentation
+
+| Document | Content |
+|---|---|
+| [User manual](USER_MANUAL.md) | Day-to-day operation, one chapter per area; also in [Deutsch](docs/manual/de/USER_MANUAL.md), [Français](docs/manual/fr/USER_MANUAL.md), [Español](docs/manual/es/USER_MANUAL.md) |
+| [Operator guides](docs/operator/) | Installation, upgrade, components, backup, 24/7 operation, crash recovery |
+| [Architecture](RASTATIME_ARCHITECTURE_DRAFT_v0.1.md) | Design and decisions, with a changelog per section; ADRs in [`docs/architecture/decisions`](docs/architecture/decisions) |
+| [Release notes](docs/releases/) | One file per release |
+| [`CHANGELOG.md`](CHANGELOG.md) | Detailed change history (German) |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Development setup, tests, releasing |
 
 ---
 
@@ -47,189 +185,44 @@ New features not present in LibreTime:
 ```
 RASTATIME/
 ├── backend/
-│   ├── api/           # Django REST API (Waitress, port 8765)
-│   ├── api-client/    # Python API client library
-│   ├── analyzer/      # Media file analyzer
-│   ├── playout/       # Playout scheduler (drives Liquidsoap over telnet)
-│   ├── shared/            # Shared config models and utilities
-│   └── rastatime_worker/  # Background task runner (runs via `python -m rastatime_worker`; not pip-installed)
+│   ├── api/               # Django REST API (Waitress, port 8765)
+│   ├── api-client/        # Python client for the API
+│   ├── analyzer/          # Media analyzer (RabbitMQ consumer)
+│   ├── playout/           # Playout scheduler, Liquidsoap script template, engine service installers
+│   ├── shared/            # Configuration, logging and alerts shared by the services
+│   └── rastatime_worker/  # Background jobs (python -m rastatime_worker, not pip-installed)
 ├── frontend/
-│   └── legacy/        # PHP/JS web UI (LibreTime-compatible)
-├── audio/
-│   └── soundcard/     # Windows audio device manager (WASAPI)
-├── infra/
-│   └── nssm/          # PowerShell scripts to install/remove Windows services
-├── config/
-│   └── rastatime.conf # Runtime configuration (created during setup)
+│   └── legacy/            # PHP web interface (Zend 1 / Propel)
+├── audio/                 # Line-in and sound-card device handling
+├── playout/, streams/     # Engine interface, now-playing state, stream types
+├── infra/                 # NSSM service scripts, Apache config, maintenance scripts, health checks
+├── config/                # Templates: rastatime.conf, icecast.xml, apache-site.conf; Stereo Tool preset
+├── scripts/               # Test runner, component update check, backup and log maintenance
 ├── docs/
-│   └── upstream/      # LibreTime reference documentation
+│   ├── manual/            # User manual (English; de/, fr/, es/)
+│   ├── operator/          # Installation and operation guides
+│   ├── architecture/      # Architecture notes and ADRs
+│   ├── releases/          # Release notes
+│   ├── dev/               # Developer notes
+│   └── upstream/          # LibreTime reference documentation
 └── tests/
-    └── unit/          # Cross-package verification tests
+    └── unit/              # Cross-package tests
 ```
-
----
-
-## Quick start
-
-### 1. Clone
-
-```powershell
-git clone https://github.com/vibesbuilder/RASTATIME.git C:\RASTATIME
-cd C:\RASTATIME
-```
-
-### 2. Create a Python virtual environment
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-### 3. Install backend packages
-
-```powershell
-pip install -r requirements.txt
-# psycopg2 is not declared by any backend package — install it explicitly:
-pip install psycopg2-binary
-
-pip install -e "backend\shared"
-pip install -e "backend\api-client"
-pip install -e "backend\api[dev]"
-pip install -e "backend\playout"
-pip install -e "backend\analyzer"
-# (backend\rastatime_worker has no pyproject — it runs via
-#  `python -m rastatime_worker` with C:\rastatime\backend on PYTHONPATH.)
-```
-
-### 3b. Install PHP dependencies (frontend)
-
-```powershell
-cd frontend\legacy
-php C:\Tools\composer\composer.phar install --no-dev --no-interaction --prefer-dist
-cd ..\..
-```
-
-Composer 2 (`composer.phar`) is a one-time download from getcomposer.org;
-the release frontend zip already contains `vendor\`.
-
-### 4. Create directories and configuration
-
-```powershell
-New-Item -ItemType Directory -Force -Path C:\rastatime\media
-New-Item -ItemType Directory -Force -Path C:\rastatime\config
-New-Item -ItemType Directory -Force -Path C:\rastatime\logs
-```
-
-Copy `config\rastatime.conf.example` to `C:\rastatime\config\rastatime.conf` and edit the database, RabbitMQ, and API key values.
-
-### 5. Set up the database
-
-```powershell
-# As the PostgreSQL superuser:
-psql -U postgres -c "CREATE USER rastatime WITH PASSWORD 'rastatime' CREATEDB;"
-psql -U postgres -c "CREATE DATABASE rastatime OWNER rastatime;"
-psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE rastatime TO rastatime;"
-```
-
-```powershell
-$env:RASTATIME_CONFIG_FILEPATH = "C:\rastatime\config\rastatime.conf"
-$env:DJANGO_SETTINGS_MODULE    = "rastatime_api.settings.prod"
-$env:PYTHONPATH = "C:\rastatime\backend\api;C:\rastatime\backend\shared;C:\rastatime"
-cd backend\api
-python rastatime_api\manage.py migrate
-```
-
-### 6. Install Windows services
-
-```powershell
-# Run each script from an elevated PowerShell prompt
-powershell -ExecutionPolicy Bypass -File infra\nssm\install-api.ps1
-powershell -ExecutionPolicy Bypass -File infra\nssm\install-worker.ps1
-powershell -ExecutionPolicy Bypass -File infra\nssm\install-playout.ps1
-powershell -ExecutionPolicy Bypass -File infra\nssm\install-analyzer.ps1
-powershell -ExecutionPolicy Bypass -File infra\nssm\install-apache.ps1
-powershell -ExecutionPolicy Bypass -File infra\nssm\install-icecast.ps1 -IcecastExe 'C:\Tools\Icecast\bin\icecast.exe'
-powershell -ExecutionPolicy Bypass -File backend\playout\config\nssm-install-liquidsoap.ps1
-# Full sequence incl. the playout engine env vars and the Liquidsoap
-# script handling: docs\operator\INSTALL.md §4 Step 9.
-```
-
-### 7. Verify
-
-```powershell
-# Check service status
-powershell -ExecutionPolicy Bypass -File infra\nssm\status.ps1
-
-# Test API health
-Invoke-WebRequest -Uri http://127.0.0.1:8765/health
-```
-
----
-
-## Service management
-
-| Script | Action |
-|---|---|
-| `infra\nssm\install-api.ps1` | Install RASTATIME-API service |
-| `infra\nssm\install-worker.ps1` | Install RASTATIME-WORKER service |
-| `infra\nssm\install-playout.ps1` | Install RASTATIME-PLAYOUT service |
-| `infra\nssm\status.ps1` | Show status of all seven services (incl. HTTP probes for API, Apache, Icecast) |
-| `infra\nssm\remove-api.ps1` | Uninstall RASTATIME-API service |
-| `infra\nssm\remove-worker.ps1` | Uninstall RASTATIME-WORKER service |
-| `infra\nssm\remove-playout.ps1` | Uninstall RASTATIME-PLAYOUT service |
-
-All scripts require an **elevated (Administrator) PowerShell** prompt.
 
 ---
 
 ## Running tests
 
-Unit tests do not require a running database or services:
+`scripts\run_tests.ps1` sets the environment the suites need and runs
+them; the unit suite needs neither a database nor running services:
 
 ```powershell
-python -m pytest tests\unit\ -v
+.\scripts\run_tests.ps1                # api + playout + unit
+.\scripts\run_tests.ps1 -Suite unit    # one suite: api, playout, unit, analyzer, shared
 ```
 
-Django API tests (require a running PostgreSQL instance):
-
-```powershell
-cd backend\api
-$env:DJANGO_SETTINGS_MODULE = "rastatime_api.settings.testing"
-python -m pytest tests\ -v
-```
-
----
-
-## Configuration reference
-
-The runtime configuration file (`C:\rastatime\config\rastatime.conf`) uses YAML:
-
-```yaml
-general:
-  public_url: http://localhost
-  api_key: change-before-production
-  secret_key: change-before-production
-  timezone: Europe/Berlin
-
-storage:
-  path: C:/rastatime/media
-
-database:
-  host: localhost
-  port: 5432
-  name: rastatime
-  user: rastatime
-  password: rastatime
-
-rabbitmq:
-  host: localhost
-  port: 5672
-  vhost: /rastatime
-  user: rastatime
-  password: rastatime
-```
-
-Environment variable overrides follow the `RASTATIME_` prefix convention, e.g. `RASTATIME_GENERAL_API_KEY`.
+The individual `pytest` commands are in
+[`CONTRIBUTING.md`](CONTRIBUTING.md#running-tests).
 
 ---
 
