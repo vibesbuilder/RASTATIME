@@ -7071,3 +7071,32 @@ test_bbc.liq.tmpl, venv C:/Temp/optd/venv-probe mit numpy):
   (run_probe.py, Start 06:59:35, 450 s, BBC direkt + 127.0.0.1:8000/
   rastatime, Fenster 07:01:30 und 07:04:00, Ausschnitte 07:00:50-07:01:30
   als WAV zum Anhören; Bericht C:/Temp/optd/wslat/report-*.txt).
+
+Produktionsmessung 2026-11-05 07:00-Slot (report-20261105-0700-bg.txt):
+- Verzug unseres Icecast-Ausgangs gegenüber der BBC-Server-Ausgabe:
+  13,78 s (07:01:30) und 13,76 s (07:04:00), Peaks scharf.  Nicht 8,8 s
+  wie im Testprozess: im Betrieb zieht niemand an der Brücke, bevor das
+  Tor öffnet, darum füllt sie sich in den 10 s Vorlauf bis `max` = 10 s.
+  Verzug am Tor = Burst 3,6 s + min(Brücken-max, Vorlauf) ~= 13,6 s.
+  Im Test hielt mksafe den Stand bei `buffer` = 5 s.  Der wirksame
+  Hebel ist also Brücken-MAX (Füllstand beim Toröffnen), nicht `buffer`
+  und nicht max_buffer.  Icecast-Hörerverzug jenseits des Bursts ~0.
+- Gleitfenster: BBC-Inhalt ab Serverzeit 07:00:52 bis 07:05:57,5 auf
+  unserem Stream (Tor 07:01:05,86 - 07:06:09,86).  BBC-Bulletin beginnt
+  Serverzeit 07:01:00,8 (Lücke 07:00:59,5-07:01:00,5), endet mit Fade
+  07:05:59,0-59,5, Stille bis 07:06:01,3, dann Folgeprogramm.
+  => Einstieg hört 8,5 s Vorlauf (Ausklang + Lücke) vor dem Bulletin,
+     Ausstieg schneidet die letzten ~3 s des Bulletins (Fade) ab.
+- Folgen je Brücken-max (Verzug = 3,6 + max; Reserve = Verzug):
+  | max | Verzug | Bulletin nach Tor | Zeile für Ausstieg in der Lücke |
+  | 10  | 13,6 s | +8,5 s            | (heute 5:04, schneidet 3 s)     |
+  | 5   |  8,6 s | +3,5 s            | 5:04 (5:02 schneidet 0,7 s Fade)|
+  | 3   |  6,6 s | +1,5 s            | 5:02                            |
+  | 2   |  5,6 s | +0,5 s            | 5:01                            |
+  `buffer` ~1 s unter `max` halten (max == buffer erzeugt Frame-Drops
+  im Betrieb).  Operator-Wunsch 3/5 -> 8,6 s; Empfehlung 2/3 -> 6,6 s
+  mit Zeile 5:02.  Eine Messung, BBC-Grenzen können je Stunde um ~1 s
+  schwanken.  Je-Webstream-Einstellung sinnvoll: DJ-Streams
+  (cloud:3000) sollen ihre 10 s Reserve behalten.
+- Hörprobe: C:/Temp/optd/wslat/probe-20261105-0700-bg-ours-entry.wav
+  (07:00:50-07:01:30 Icecast-Zeit; Tor bei ~16 s, Bulletin bei 24,8 s).
