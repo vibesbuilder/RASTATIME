@@ -7002,6 +7002,33 @@ Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
 
+## Vorbefüllte Instanzen blockieren das Autoloading (Befund 2026-11-05, BBC News 14:00)
+
+Hergang: 2026-10-22 13:00:24-34 wurde ein Smart Block auf die damals
+verknüpfte Show „BBC News (Live)" (Donnerstag 14:00) gelegt; eine
+verknüpfte Show verteilt Inhalt auf alle künftigen Instanzen (19430 bis
+19493, je 2-3 Zufallstitel, Zeilen-IDs 15571 ff.).  Später bekam die Show
+die Autoloading-Playlist „BBC News 14h" und wurde entknüpft; die
+Instanzen der anderen Wochentage entstanden danach (28xxx) und sind
+sauber.  Autoloading füllt nur den freien Rest und ersetzt nichts: am
+2026-11-05 13:00:51 „auto 0 rows, 3,4 s frei" -> 14:00 liefen drei
+Musiktitel statt Jingle + BBC (vermutlich auch 2026-10-29).
+Behoben 2026-11-05 14:12 (Operator-Go): C:/Temp/optd/clear_prefilled_bbc.php
+--live leerte 60 künftige Donnerstags-Instanzen (136 Zeilen, time_filled
+zurück, ein Schedule-Push); 19433 (12.11.) war schon leer.  Autoloading
+baut sie nun eine Stunde vor Beginn.
+Dead Air 13:45-14:00 am selben Tag: eine Mitschnitt-Show ohne
+Autoloading-Playlist) wurde bis 3.11. von Auto-DJ „fill incomplete shows"
+gefüllt; seit Auto-DJ aus ist sie leer.  Operator entscheidet: Playlist
+zuweisen oder Auto-DJ an.
+
+### 💡 Warnung beim Bau: fremde Zeilen in einer Autoloading-Show - IDEA (2026-11-05)
+AutoPlaylistManager::fillInstance: hat die Show eine Autoloading-Playlist
+und die Instanz schon Zeilen, obwohl autoplaylist_built=false, dann WARN
+im Fill-Log + Preflight-Hinweis (oder Option „vorhandene Zeilen ersetzen").
+~40 Zeilen, 2 h.  Dazu: Showbuilder-Drop auf eine verknüpfte Show mit
+Autoloading-Playlist bestätigen lassen.
+
 ## Öffentliche API und Widgets (Operator-Frage 2026-11-05, Bestandsaufnahme)
 
 Ist-Zustand (curl von außen, 2026-11-05 13:30):
