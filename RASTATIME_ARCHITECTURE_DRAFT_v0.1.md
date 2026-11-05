@@ -9004,3 +9004,59 @@ Windows build) and `max_buffer` as a setting (no effect).
 API → PLAYOUT (renders rastatime.liq) → LIQUIDSOAP; legacy live at once.
 Rollback: `git revert`; the columns may stay.
 
+### 23.89 Restart Detection on Telnet Reconnect, Adopting the Running Request, Clock Sanity in PLAY (2026-11-05)
+
+**Incident (11:00 bbc-test show).** PLAYOUT was restarted at 10:29:23
+(migration 0079 rollout); it re-rendered rastatime.liq and performed its
+planned Liquidsoap restart at 10:29:29-34 with a correct catch-up.  At
+10:30:05 the operator restarted LIQUIDSOAP by hand as well.  The
+process-table detector runs on the ~2-minute poll and noticed the fresh
+instance only at 10:31:29; in between (10:30:09) the queue-ahead for
+'Transatlantic Love Affair' had landed in the fresh, empty queue and
+played at once.  The detector then assumed "the fresh instance plays
+nothing" (`_forget_current_after_restart`, the 2026-11-02 silence fix)
+and re-armed the same track as a catch-up at +75 s - `play()` pushes,
+so the copy queued BEHIND the playing one and played from 10:35:59.
+From there the file chain ran 4:27 late; every PLAY found "more audio
+left than the predecessor can have" and took the no-skip branch ("the
+queue is on the successor").  At 11:00:00 'World News' of the previous
+show kept playing, the three jingles queued behind it, the clock-driven
+webstream gate opened at 11:01:05 and `webstream_start`'s queue clear
+dropped them.
+
+**Fix (three guards, `playout_scheduler.py`, `liquidsoap_engine.py`,
+`liquidsoap_telnet.py`).**
+
+1. *Reconnect hook.* `LiquidsoapTelnetClient` counts reconnects inside
+   `send_command` (attempt 2) and fires `on_reconnect` on a daemon
+   thread; the engine forwards `set_reconnect_listener`; the scheduler
+   registers `_on_engine_reconnected`, which runs
+   `_maybe_reinit_after_liquidsoap_restart()` after 1 s (coalesced, at
+   most every 20 s - Liquidsoap drops idle telnet connections) and
+   schedules a refresh when a restart was handled.  The detector
+   functions now return bool.
+2. *Adopt instead of re-arm.* `_forget_current_after_restart` first asks
+   `engine.running_after_restart()`: `scheduled.remaining` gives the
+   playing RID and seconds, `request.metadata <rid>` its `filename`;
+   `uri_match` compares with the file the engine believed on air.  On a
+   match (or, without a file name, when the remaining is within
+   BUFFER + 3 s of what the rows predict) `engine.adopt_running(rid)`
+   binds the mirror to that RID and flushes the pending queue; the
+   scheduler keeps its bookkeeping.  Otherwise the old path (forget +
+   catch-up) runs.
+3. *Clock sanity.* In PLAY's "cannot belong to the predecessor" branch
+   the remaining is also checked against the successor: more than its
+   clip + max(BUFFER + 2, `STALE_CHAIN_SLACK_SECONDS` = 20) means the
+   engine plays something stale - the PLAY keeps the measured value, so
+   the normal overbook logic cuts to the row (adopt_queued with
+   skip_current, or play with skip).  The 20 s slack keeps the 20:05:35
+   case (214.9 s reported for a successor cross had pulled) untouched.
+
+**Tests.** `backend/playout/tests/test_restart_adopt.py` (reconnect
+listener, rate limit, adopt by file / by timing, re-arm when nothing or
+another file plays, engine parsing, stale cut, successor trust).
+
+**Rollout.** PLAYOUT restart only (rastatime.liq unchanged).  Operating
+rule: after a PLAYOUT restart do not restart LIQUIDSOAP by hand; the
+playout restarts it at the next track boundary when the script changed.
+

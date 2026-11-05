@@ -115,6 +115,11 @@ QUEUE_AHEAD_MARGIN_SECONDS = 5.0
 # so a start can run up to 1 s early - the rehearsal measured 3.56 s left
 # for a 3 s overlap; 0.3 s tolerance turned that into a skip.
 SKIP_TOLERANCE_SECONDS = 1.5
+# RASTATIME 2026-11-05 - clock sanity in PLAY: the engine's remaining may
+# exceed the successor's clip by a little (the queue reports against the
+# file, the rows against the cue points); only far beyond it the chain is
+# stale (a copy pushed twice after a restart: 265 s before a 9.9 s jingle).
+STALE_CHAIN_SLACK_SECONDS = 20.0
 # RASTATIME 2026-09-29 - a pre-warmed webstream / line-in that follows a
 # file track opens its gate when the track's audio is over (minus the
 # overlap of the pair), not on the whole second its timer fires at: the
@@ -184,6 +189,19 @@ class PlayoutScheduler:
     ) -> None:
         self._engine = engine
         self._api_client = api_client
+        # RASTATIME 2026-11-05 - a telnet reconnect runs the restart
+        # detector within a second (the process-table poll alone noticed
+        # the 10:30 manual restart 84 s later).  Rate-limited: Liquidsoap
+        # drops idle telnet connections, so reconnects are routine.
+        self._reconnect_check_lock = threading.Lock()
+        self._reconnect_check_pending = False
+        self._reconnect_check_last = 0.0
+        register = getattr(engine, "set_reconnect_listener", None)
+        if callable(register):
+            try:
+                register(self._on_engine_reconnected)
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.debug("engine reconnect listener not registered: %s", exc)
         # Legacy v1 API client used to drive the dashboard "On Air" light:
         # /api/notify-media-item-start-play marks cc_schedule.media_item_played
         # which the dashboard polls to flip the indicator red.
@@ -1285,6 +1303,15 @@ class PlayoutScheduler:
         like a PLAYOUT start does.  A pre-warmed source died with the old
         instance as well.
         """
+        # RASTATIME 2026-11-05 - look before re-arming: a queue-ahead that
+        # landed in the fresh instance (pushed between the restart and its
+        # detection, 10:30:09 -> 10:31:29) IS the running item.  Adopting it
+        # instead of pushing a catch-up copy behind it is what keeps the
+        # title from playing twice.
+        if self._adopt_running_after_restart(why):
+            with self._lock:
+                self._prepared = None  # a pre-warmed source died with the old instance
+            return
         with self._lock:
             current = self._current_event
             self._prepared = None
@@ -1300,6 +1327,65 @@ class PlayoutScheduler:
                 getattr(current, "track_title", None) or getattr(current, "uri", None) or current,
             )
         self._forget_engine_playback_state(why)
+
+    def _adopt_running_after_restart(self, why: str) -> bool:
+        """
+        True when the fresh instance already plays the file this scheduler
+        believes on air (same file per request metadata, or - without a
+        file name - the same amount of audio left as the rows predict);
+        the engine then binds to that request and flushes its pending
+        queue, and the bookkeeping stays.
+        """
+        with self._lock:
+            current = self._current_event
+            started_at = self._current_started_at
+            clip = self._current_clip_seconds
+        if not isinstance(current, FileEvent):
+            return False
+        probe = getattr(self._engine, "running_after_restart", None)
+        adopt = getattr(self._engine, "adopt_running", None)
+        if not callable(probe) or not callable(adopt):
+            return False
+        try:
+            snap = probe()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("%s: running_after_restart raised: %s", why, exc)
+            return False
+        if not isinstance(snap, dict) or not snap.get("rid"):
+            return False
+        remaining = float(snap.get("remaining") or 0.0)
+        expected = None
+        if started_at is not None and clip is not None:
+            expected = max(0.0, float(clip) - (datetime.utcnow() - started_at).total_seconds())
+        timing_ok = (
+            expected is not None and abs(remaining - expected) <= self._cross_buffer_seconds + 3.0
+        )
+        match = snap.get("uri_match")
+        if match is True or (match is None and timing_ok):
+            logger.warning(
+                "%s: the fresh instance already plays %r (rid %s, %.1f s left, rows expect %s) "
+                "- adopting it, no catch-up copy.",
+                why,
+                getattr(current, "track_title", None) or "-",
+                snap["rid"],
+                remaining,
+                f"{expected:.1f} s" if expected is not None else "unknown",
+            )
+            try:
+                adopt(snap["rid"])
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                logger.warning("%s: adopting the running request failed: %s", why, exc)
+                return False
+            return True
+        logger.info(
+            "%s: the fresh instance plays %s (rid %s, %.1f s left) - not %r, re-arming.",
+            why,
+            snap.get("filename") or "something",
+            snap["rid"],
+            remaining,
+            getattr(current, "track_title", None) or "-",
+        )
+        return False
 
     def _forget_engine_playback_state(self, why: str) -> None:
         """
@@ -1352,10 +1438,46 @@ class PlayoutScheduler:
         """
         self._schedule_refresh_soon(why, delay)
 
-    def _maybe_reinit_after_liquidsoap_restart(self) -> None:
+    def _on_engine_reconnected(self) -> None:
+        """
+        RASTATIME 2026-11-05 - the engine's telnet client reconnected:
+        check for a fresh instance in ~1 s (coalesced, at most every 20 s)
+        and, if it restarted, refresh right away so the running item is
+        adopted or re-armed before the next queue-ahead lands in the
+        fresh instance.
+        """
+        with self._reconnect_check_lock:
+            if self._reconnect_check_pending:
+                return
+            if time.monotonic() - self._reconnect_check_last < 20.0:
+                return
+            self._reconnect_check_pending = True
+        t = threading.Timer(1.0, self._check_restart_after_reconnect)
+        t.daemon = True
+        t.start()
+
+    def _check_restart_after_reconnect(self) -> None:
+        with self._reconnect_check_lock:
+            self._reconnect_check_pending = False
+            self._reconnect_check_last = time.monotonic()
+        try:
+            self._cycle_process_infos = None
+            self._cycle_process_cache_enabled = True
+            restarted = self._maybe_reinit_after_liquidsoap_restart()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("restart check after telnet reconnect failed: %s", exc)
+            return
+        if restarted:
+            self._schedule_refresh_soon("Liquidsoap restarted (telnet reconnect)", 0.5)
+        else:
+            logger.debug("telnet reconnected: Liquidsoap instance unchanged.")
+
+    def _maybe_reinit_after_liquidsoap_restart(self) -> bool:
         """
         Detect a Liquidsoap restart and re-apply the initial state
-        (recording sentinel stop + gates).  Called each refresh.
+        (recording sentinel stop + gates).  Called each refresh and after
+        a telnet reconnect (2026-11-05).  Returns True when a restart was
+        detected and handled.
 
         RASTATIME 2026-09-09: the process table is the primary signal -
         a new PID, or a younger age of the main instance than last cycle
@@ -1367,15 +1489,14 @@ class PlayoutScheduler:
         """
         ident = self._liquidsoap_process_identity()
         if ident is not None:
-            self._maybe_reinit_by_process(ident)
-            return
+            return self._maybe_reinit_by_process(ident)
         if not hasattr(self._engine, "liquidsoap_uptime_seconds"):
-            return
+            return False
         uptime = self._engine.liquidsoap_uptime_seconds()
         # Contract is float|None; anything else (unreachable telnet, a
         # loosely-mocked engine) is treated as "unknown" and ignored.
         if not isinstance(uptime, (int, float)) or isinstance(uptime, bool):
-            return
+            return False
         prev = self._last_liquidsoap_uptime
         if isinstance(prev, (int, float)) and not isinstance(prev, bool) and uptime + 5.0 < prev:
             logger.warning(
@@ -1390,14 +1511,15 @@ class PlayoutScheduler:
                     "Post-restart re-init failed (telnet not ready yet?): %s - retrying next poll.",
                     exc,
                 )
-                return
+                return False
             self._forget_queued_ahead("Liquidsoap restarted")
             self._forget_current_after_restart("Liquidsoap restarted")
             self._request_source_reconcile()
-        else:
-            self._last_liquidsoap_uptime = uptime
+            return True
+        self._last_liquidsoap_uptime = uptime
+        return False
 
-    def _maybe_reinit_by_process(self, ident: tuple[int, float]) -> None:
+    def _maybe_reinit_by_process(self, ident: tuple[int, float]) -> bool:
         """
         Process-table restart detector (2026-09-09): a new PID, or the
         same PID with a younger age than last cycle, is a fresh instance.
@@ -1407,11 +1529,11 @@ class PlayoutScheduler:
         prev = self._last_liquidsoap_process
         if prev is None:
             self._last_liquidsoap_process = ident
-            return
+            return False
         prev_pid, prev_age = prev
         if pid == prev_pid and age + 5.0 >= prev_age:
             self._last_liquidsoap_process = ident
-            return
+            return False
         logger.warning(
             "Liquidsoap restarted under PLAYOUT (pid %d, %.0f s old; before pid "
             "%d, %.0f s) - re-sending recording.stop and reopening the gates.",
@@ -1426,11 +1548,12 @@ class PlayoutScheduler:
                 "Post-restart re-init failed (telnet not ready yet?): %s - retrying next poll.",
                 exc,
             )
-            return  # baseline kept -> detected again next cycle
+            return False  # baseline kept -> detected again next cycle
         self._last_liquidsoap_process = ident
         self._forget_queued_ahead("Liquidsoap restarted")
         self._forget_current_after_restart("Liquidsoap restarted")
         self._request_source_reconcile()
+        return True
 
     def ensure_liquidsoap_initial_state(
         self,
@@ -2698,16 +2821,40 @@ class PlayoutScheduler:
                 # predecessor can possibly have = the hand-over happened.
                 bound = self._plausible_remaining(now, prev_started_at, prev_clip)
                 if bound is not None and measured > bound:
-                    logger.info(
-                        "PLAY  %s: the engine's %.1f s left cannot belong to %r "
-                        "(at most %.1f s of its audio is left) - the queue is on "
-                        "the successor, no skip.",
-                        key,
-                        measured,
-                        getattr(prev_event, "track_title", None) or "-",
-                        bound,
+                    # RASTATIME 2026-11-05 - clock sanity: more audio than
+                    # THIS track has either means the engine plays
+                    # something stale (a copy pushed twice after a restart;
+                    # 11:00:00: 265 s left before a 9.9 s jingle) - cut to
+                    # the row.  A successor cross already pulled never has
+                    # more than its own clip left.
+                    succ_clip = float(event.cue_out or 0.0) - float(event.cue_in or 0.0)
+                    succ_bound = (
+                        succ_clip + max(self._cross_buffer_seconds + 2.0, STALE_CHAIN_SLACK_SECONDS)
+                        if succ_clip > 0
+                        else None
                     )
-                    measured = 0.0
+                    if succ_bound is not None and measured > succ_bound:
+                        logger.warning(
+                            "PLAY  %s: the engine's %.1f s left belong neither to %r "
+                            "(at most %.1f s) nor to this track (at most %.1f s) - the "
+                            "file chain is stale, cutting to the row.",
+                            key,
+                            measured,
+                            getattr(prev_event, "track_title", None) or "-",
+                            bound,
+                            succ_bound,
+                        )
+                    else:
+                        logger.info(
+                            "PLAY  %s: the engine's %.1f s left cannot belong to %r "
+                            "(at most %.1f s of its audio is left) - the queue is on "
+                            "the successor, no skip.",
+                            key,
+                            measured,
+                            getattr(prev_event, "track_title", None) or "-",
+                            bound,
+                        )
+                        measured = 0.0
                 if abs(measured - prev_remaining) > 1.0:
                     logger.info(
                         "PLAY  %s: predecessor has %.1f s of audio left (engine), "

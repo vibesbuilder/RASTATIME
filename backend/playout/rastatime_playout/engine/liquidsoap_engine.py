@@ -66,6 +66,7 @@ import logging
 import os
 import re
 import threading
+from collections.abc import Callable
 from typing import Optional
 
 from ..liquidsoap_config import (
@@ -544,6 +545,97 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         self._state = PlayoutState.STOPPED
         self._current_uri = None
         self._current_request_id = None
+
+    def set_reconnect_listener(self, listener: Optional[Callable[[], None]]) -> None:
+        """RASTATIME 2026-11-05 - forward the telnet reconnect hook."""
+        setter = getattr(self._telnet, "set_reconnect_listener", None)
+        if callable(setter):
+            setter(listener)
+
+    def running_after_restart(self) -> Optional[dict]:
+        """
+        RASTATIME 2026-11-05 - what does the (fresh) instance play right
+        now?  ``{"rid", "remaining", "filename", "uri_match"}`` or None
+        when its queue plays nothing.  ``uri_match`` compares the
+        request's file with the file this engine believed on air (True /
+        False, None when the metadata gives no file name).
+
+        Why: the 10:30 incident.  A queue-ahead pushed seconds after an
+        unplanned restart landed in the fresh instance and played; the
+        restart detector then assumed "the fresh instance plays nothing"
+        and re-armed the same track as a catch-up BEHIND it - the title
+        played twice and the file chain ran 4:27 late for the rest of the
+        hour.
+        """
+        try:
+            raw = self._telnet.request_queue_remaining().strip().splitlines()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Liquidsoap remaining could not be read: %s", exc)
+            return None
+        rid = None
+        remaining = None
+        for line in raw:
+            parts = line.strip().split()
+            if len(parts) < 2:
+                continue
+            try:
+                remaining = float(parts[-1])
+            except ValueError:
+                continue
+            rid = parts[0]
+            break
+        if rid is None or remaining is None or remaining <= 0:
+            return None
+        filename = None
+        try:
+            meta = self._telnet.request_metadata(rid)
+            for line in meta.splitlines():
+                key, sep, value = line.partition("=")
+                if sep and key.strip() in ("filename", "initial_uri"):
+                    filename = value.strip().strip('"')
+                    if key.strip() == "filename":
+                        break
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("Liquidsoap request.metadata %s not read: %s", rid, exc)
+        believed = self._current_uri
+        uri_match = None
+        if filename and believed:
+            uri_match = self._same_file(filename, believed)
+        return {"rid": rid, "remaining": remaining, "filename": filename, "uri_match": uri_match}
+
+    @staticmethod
+    def _same_file(a: str, b: str) -> bool:
+        def norm(p: str) -> str:
+            p = p.strip().strip('"')
+            for prefix in ("file:///", "file://"):
+                if p.lower().startswith(prefix):
+                    p = p[len(prefix) :]
+            return p.replace("\\", "/").lower().rstrip("/")
+
+        return norm(a) == norm(b)
+
+    def adopt_running(self, rid: str) -> None:
+        """
+        RASTATIME 2026-11-05 - the fresh instance already plays the item
+        this engine believed on air: bind the mirror to its request id and
+        drop every PENDING request (a copy queued behind it would play a
+        second time).  The scheduler re-queues the successor at its row.
+        """
+        with self._stop_lock:
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
+            self._stop_requested = False
+            self._current_request_id = str(rid)
+            self._state = PlayoutState.PLAYING
+            self._queued_uri = None
+            self._queued_request_id = None
+        logger.info(
+            "Liquidsoap restarted: adopting the running request %s (%s) - pending queue flushed.",
+            rid,
+            self._redact(self._current_uri or "-"),
+        )
+        self.flush_queued()
 
     def forget_playback_state(self, why: str = "Liquidsoap restarted") -> None:
         """

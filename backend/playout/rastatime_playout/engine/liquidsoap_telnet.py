@@ -57,6 +57,7 @@ from __future__ import annotations
 import logging
 import socket
 import threading
+from collections.abc import Callable
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -104,11 +105,19 @@ class LiquidsoapTelnetClient:
         port: int = DEFAULT_PORT,
         timeout: float = DEFAULT_TIMEOUT,
         queue_id: str = DEFAULT_QUEUE_ID,
+        on_reconnect: Optional[Callable[[], None]] = None,
     ) -> None:
         self._host = host
         self._port = port
         self._timeout = timeout
         self._queue_id = queue_id
+        # RASTATIME 2026-11-05 - a reconnect inside send_command is the
+        # earliest sign of a Liquidsoap restart under PLAYOUT (the 10:30
+        # incident: the process-table poll noticed it 84 s later, after a
+        # queue-ahead had already landed in the fresh instance).  The
+        # listener runs on its own thread, never under the socket lock.
+        self._on_reconnect = on_reconnect
+        self.reconnects = 0
         self._socket: Optional[socket.socket] = None
         # Mutex around all socket I/O so two threads can't interleave
         # commands on the same TCP stream.
@@ -184,12 +193,37 @@ class LiquidsoapTelnetClient:
             try:
                 self._connect_locked()
                 self._socket.sendall(cmd_bytes)
-                return self._read_until_end_locked()
+                response = self._read_until_end_locked()
+                self._note_reconnect()
+                return response
             except (OSError, ConnectionError) as exc:
                 self._close_locked(send_quit=False)
                 raise ConnectionError(
                     f"Telnet command {command.strip()!r} failed after reconnect: {exc}"
                 ) from exc
+
+    def set_reconnect_listener(self, listener: Optional[Callable[[], None]]) -> None:
+        """RASTATIME 2026-11-05 - called (on a daemon thread) after every
+        successful reconnect inside :meth:`send_command`."""
+        self._on_reconnect = listener
+
+    def _note_reconnect(self) -> None:
+        self.reconnects += 1
+        listener = self._on_reconnect
+        if listener is None:
+            return
+        t = threading.Timer(0.0, listener)
+        t.daemon = True
+        t.start()
+
+    def request_metadata(self, rid: str) -> str:
+        """
+        RASTATIME 2026-11-05 - ``request.metadata <rid>``: the metadata of
+        one request as ``key="value"`` lines (``filename``, ``initial_uri``,
+        ...).  Lets the scheduler check WHICH file a fresh instance plays
+        before it re-arms a catch-up copy behind it.
+        """
+        return self.send_command(f"request.metadata {rid}")
 
     # ---- Higher-level convenience wrappers --------------------------
 

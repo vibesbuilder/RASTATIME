@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Playout: Neustart-Erkennung und Uhr-Sanity nach dem 11:00-Vorfall (2026-11-05, Go
+  2026-11-05)** — Drei Schutzmechanismen gegen eine doppelt gespielte Datei nach einem
+  ungeplanten Liquidsoap-Neustart: (1) jeder Telnet-Reconnect lässt den
+  Neustart-Detektor binnen einer Sekunde laufen (statt beim 2-Minuten-Poll, 10:30:
+  84 s zu spät); (2) der Detektor fragt die frische Instanz, was sie spielt
+  (`scheduled.remaining` + `request.metadata`), und übernimmt die laufende Anfrage,
+  wenn es das geglaubte Element ist, statt eine Catch-up-Kopie dahinter zu pushen
+  (Queue wird geleert); (3) PLAY schneidet auf die Zeile, wenn der Engine-Rest weder
+  zum Vorgänger noch zum Nachfolger passt (Nachfolger-Clip + 20 s Spiel;
+  11:00:00: 265 s vor einem 9,9-s-Jingle).  Tests `test_restart_adopt.py` (9),
+  Suite 885 grün.  Kein Liquidsoap-Neustart nötig, PLAYOUT-Neustart genügt.
+  ARCHITECTURE §23.89.
+
 ### Added
 
 - **Webstream-Puffer je Stream (2026-11-05, Go 2026-11-05)** — Webstream-Dialog:
