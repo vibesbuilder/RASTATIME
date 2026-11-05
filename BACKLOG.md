@@ -7030,14 +7030,14 @@ Ist-Zustand (curl von außen, 2026-11-05 13:30):
   Sendung (playout.now_playing default_state) - Endpunkt offenbar nicht
   gespeist; Widgets nutzen ihn nicht.
 
-### 🟡 Metadaten-Whitelist für die öffentlichen Lese-Endpunkte - DEFER (Go offen)
+### ✅ Metadaten-Whitelist für die öffentlichen Lese-Endpunkte - GEBAUT 2026-11-05 (Go 2026-11-05, §23.90, live geprüft)
 live-info / live-info-v2 / track geben nur noch: title, artist, album,
 year, genre, length, starts/ends, artwork/has_artwork, track_type, url
 (info_url/buy_this_url).  ~40 Zeilen ApiController + Test, 2 h.  Risiko:
 ein externer Nutzer, der heute auf ein anderes Feld zugreift, verliert es
 (Widgets geprüft).  Rückfall git revert.
 
-### 🟡 Schema und Swagger nur mit Login/Api-Key - DEFER (Go offen)
+### ✅ Schema und Swagger nur mit Login - GEBAUT 2026-11-05 (Go 2026-11-05, §23.90; wirksam nach API-Neustart)
 permission_classes auf den beiden Spectacular-Views, 5 Zeilen, 30 min.
 Alternative: bewusst offen lassen, wenn die API Dritten angeboten wird.
 

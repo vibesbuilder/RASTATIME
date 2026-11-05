@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Öffentliche Lese-API: Metadaten-Whitelist und Schema-Sperre (2026-11-05, Go
+  2026-11-05)** — `/api/live-info`, `/api/live-info-v2` (mit „Public RASTATIME API")
+  lieferten die komplette cc_files-Zeile des laufenden Titels (filepath, owner_id,
+  md5, comments, lyrics, import_status, …); jetzt nur noch Credit-Felder
+  (`WidgetHelper::PUBLIC_TRACK_FIELDS`).  `/api/shows` ohne Autoloading-/Intro-/
+  Outro-IDs (`PUBLIC_SHOW_FIELDS`).  OpenAPI-Schema und Swagger-UI unter
+  `/api/v2/schema` nur noch mit Login (IsAuthenticated; Api-Key gilt für die
+  Endpunkte, nicht für die Doku).  Widgets unverändert (eigene now-playing-data).
+  Wirksam: Legacy sofort (live geprüft), Schema nach API-Neustart.  ARCHITECTURE
+  §23.90.
+
 ### Fixed
 
 - **Playout: Neustart-Erkennung und Uhr-Sanity nach dem 11:00-Vorfall (2026-11-05, Go

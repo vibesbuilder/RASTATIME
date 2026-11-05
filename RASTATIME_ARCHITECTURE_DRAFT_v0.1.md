@@ -9060,3 +9060,37 @@ another file plays, engine parsing, stale cut, successor trust).
 rule: after a PLAYOUT restart do not restart LIQUIDSOAP by hand; the
 playout restarts it at the next track boundary when the script changed.
 
+### 23.90 Public Read API: Metadata Allow-List, Schema Behind Login (2026-11-05)
+
+**Inventory (operator question "may we offer the API publicly?").**
+`/api/v2/` is behind session/basic auth or the Api-Key (403 without),
+except version, info (station name), now-playing and the song-request
+search/submit (by design).  The legacy `/api/*` read endpoints
+(live-info, live-info-v2, week-info, station-metadata, show-schedules,
+shows, show-tracks, track, track-types, show-logo, stream-m3u) are public
+while Settings → General "Public RASTATIME API" is on - the embed widgets
+depend on that switch; everything else needs the single Api-Key
+(`general.api_key`, full access, no per-client tokens).  No throttling on
+the read endpoints.
+
+**Finding.** live-info(-v2) returned the whole cc_files row of the
+playing track (filepath = server path, owner_id, md5, comments, lyrics,
+import_status, lptime ...), an upstream inheritance, to every visitor.
+The OpenAPI schema (211 KB) and the Swagger UI were readable without a
+login.
+
+**Change.** `WidgetHelper::PUBLIC_TRACK_FIELDS` (credit information:
+title, artist, album, year, genre, length, track/disc number, composer,
+conductor, lyricist, label, copyright, ISRC, bpm, mood, urls, artwork,
+track_type_id, description) applied by `restrictLiveInfo()` to the
+previous/current/next metadata of both live-info variants;
+`PUBLIC_SHOW_FIELDS` for `/api/shows` (no autoplaylist / intro / outro
+ids).  `EmbedController` builds its own `now-playing-data` from the
+Schedule model and is untouched; `/api/track` only serves artwork.
+`urls.py`: the two Spectacular views get `permission_classes=[IsAuthenticated]`
+(Django test client: 403 anonymous, 200 as admin).
+
+**Not changed (BACKLOG).** Manual chapter API ×4, per-client read
+tokens, cache/throttle for week-info, `/api/v2/now-playing` reporting
+idle while a show plays (side finding).
+

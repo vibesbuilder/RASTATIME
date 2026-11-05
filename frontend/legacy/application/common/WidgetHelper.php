@@ -189,6 +189,60 @@ class WidgetHelper
      *
      * @param unknown $arr the array to search
      */
+    /**
+     * RASTATIME 2026-11-05 - the public read endpoints (live-info,
+     * live-info-v2 with "Public RASTATIME API" on) carried the complete
+     * cc_files row of the playing track: filepath (the server path),
+     * owner_id, md5, comments, lyrics, import_status, lptime ...  Only the
+     * credit information a listener may see stays.  The widgets read
+     * title / artist / album / times / artwork (EmbedController builds
+     * its own now-playing-data from the Schedule model, untouched).
+     */
+    public const PUBLIC_TRACK_FIELDS = [
+        'id', 'track_title', 'artist_name', 'album_title', 'year', 'genre',
+        'language', 'length', 'track_number', 'disc_number', 'composer',
+        'conductor', 'lyricist', 'original_artist', 'original_lyricist',
+        'label', 'copyright', 'isrc_number', 'bpm', 'mood', 'info_url',
+        'buy_this_url', 'artist_url', 'artwork', 'artwork_url', 'track_type_id',
+        'description', 'radio_station_name', 'radio_station_url', 'name',
+    ];
+
+    /** The /api/shows fields a listener may see (no autoloading / playlist ids). */
+    public const PUBLIC_SHOW_FIELDS = [
+        'id', 'name', 'description', 'genre', 'url', 'color', 'background_color',
+        'image_path', 'linked',
+    ];
+
+    public static function publicTrackMetadata(array $metadata): array
+    {
+        return array_intersect_key($metadata, array_flip(self::PUBLIC_TRACK_FIELDS));
+    }
+
+    /** Strip the previous / current / next track metadata of a live-info result in place. */
+    public static function restrictLiveInfo(&$result): void
+    {
+        if (!is_array($result)) {
+            return;
+        }
+        foreach (['previous', 'current', 'next'] as $slot) {
+            if (isset($result[$slot]['metadata']) && is_array($result[$slot]['metadata'])) {
+                $result[$slot]['metadata'] = self::publicTrackMetadata($result[$slot]['metadata']);
+            }
+        }
+        if (isset($result['tracks']) && is_array($result['tracks'])) {
+            foreach (['previous', 'current', 'next'] as $slot) {
+                if (isset($result['tracks'][$slot]['metadata']) && is_array($result['tracks'][$slot]['metadata'])) {
+                    $result['tracks'][$slot]['metadata'] = self::publicTrackMetadata($result['tracks'][$slot]['metadata']);
+                }
+            }
+        }
+    }
+
+    public static function publicShowInfo(array $show): array
+    {
+        return array_intersect_key($show, array_flip(self::PUBLIC_SHOW_FIELDS));
+    }
+
     public static function findAndConvertPaths(&$arr)
     {
         foreach ($arr as &$a) {

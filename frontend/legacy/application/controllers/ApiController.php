@@ -445,6 +445,9 @@ class ApiController extends Zend_Controller_Action
             $result['timezone'] = $upcase ? strtoupper($timezone) : $timezone;
             $result['timezoneOffset'] = Application_Common_DateHelper::getTimezoneOffset($timezone);
 
+            // RASTATIME 2026-11-05 - public readers see credit fields only
+            WidgetHelper::restrictLiveInfo($result);
+
             // XSS exploit prevention
             SecurityHelper::htmlescape_recursive($result);
 
@@ -521,6 +524,9 @@ class ApiController extends Zend_Controller_Action
 
             // apply user-defined timezone, or default to station
             $this->applyLiveTimezoneAdjustments($result, $timezone, $upcase);
+
+            // RASTATIME 2026-11-05 - public readers see credit fields only
+            WidgetHelper::restrictLiveInfo($result);
 
             // XSS exploit prevention
             SecurityHelper::htmlescape_recursive($result);
@@ -1641,14 +1647,18 @@ class ApiController extends Zend_Controller_Action
             $showId = $request->getParam('show_id', null);
             $results = [];
 
+            // RASTATIME 2026-11-05 - a public listing: no autoloading /
+            // intro / outro playlist ids (planning internals).
             if (empty($showId)) {
                 $shows = CcShowQuery::create()->find();
                 foreach ($shows as $show) {
-                    $results[] = $show->getShowInfo();
+                    $results[] = WidgetHelper::publicShowInfo($show->getShowInfo());
                 }
             } else {
                 $show = CcShowQuery::create()->findPK($showId);
-                $results[] = $show->getShowInfo();
+                if ($show) {
+                    $results[] = WidgetHelper::publicShowInfo($show->getShowInfo());
+                }
             }
 
             $this->_helper->json->sendJson($results);

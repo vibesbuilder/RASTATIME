@@ -7,6 +7,7 @@ https://docs.djangoproject.com/en/3.2/topics/http/urls/
 
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework.permissions import IsAuthenticated
 
 from .audio_devices import audio_devices
 from .core.router import urls as core_urls
@@ -103,14 +104,17 @@ urlpatterns = [
     ),
     path("api/browser/", include("rest_framework.urls", namespace="rest_framework")),
     path("api/v2/", include(api_urls)),
+    # RASTATIME 2026-11-05 - the OpenAPI schema (211 KB, every endpoint) and
+    # the Swagger UI were readable without a login; now a session or basic
+    # auth is needed (the Api-Key is for the endpoints, not the docs).
     path(
         "api/v2/schema",
-        SpectacularAPIView.as_view(),
+        SpectacularAPIView.as_view(permission_classes=[IsAuthenticated]),
         name="schema",
     ),
     path(
         "api/v2/schema/swagger-ui",
-        SpectacularSwaggerView.as_view(url_name="schema"),
+        SpectacularSwaggerView.as_view(url_name="schema", permission_classes=[IsAuthenticated]),
         name="swagger-ui",
     ),
 ]
