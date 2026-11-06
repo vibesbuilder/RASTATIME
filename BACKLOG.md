@@ -7002,6 +7002,20 @@ Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
 
+## ICY-Titel blieb beim Sendungsstart 08:15 stehen (Befund 2026-11-06, Beobachtung läuft)
+
+Operator sah in foobar2000 beim Start der Datei-Show um 08:15 (taglose
+75-min-Datei, Titel = Dateiname, kein Interpret) weiter den Titel des
+Vorgängertracks.  Geprüft: die Titelmarke kam 08:15:00 auf dem Bus an
+(Stunden-Aufnahme cues.json), Label-Format war damals „Artist - Title";
+um 11:00 lief ein weiterer Titel ohne Interpret („KVAntike"), Icecast und
+ICY-Mitschnitt (C:/Temp/optd/icy_watch.py) zeigten den Titel korrekt,
+foobar2000 ebenfalls.  Vermutung „kein Interpret = kein Titel" widerlegt.
+Offen: welcher Mount (OGG trägt Titel in-band, nicht per ICY), Einzelfall
+oder Show-Crossfade-Eigenheit.  Operator beobachtet weiter; bei
+Wiederholung Mount + Uhrzeit, dann icy_watch.py über den Übergang laufen
+lassen.
+
 ## Vorbefüllte Instanzen blockieren das Autoloading (Befund 2026-11-05, BBC News 14:00)
 
 Hergang: 2026-10-22 13:00:24-34 wurde ein Smart Block auf die damals
