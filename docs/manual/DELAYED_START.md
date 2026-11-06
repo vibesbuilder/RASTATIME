@@ -316,6 +316,14 @@ of up to 0.3 s is left alone.  Before this change a predecessor could
 run up to about 4.5 s into the next show.  Shows *with* the switch keep
 the gentle hand-over described above.
 
+**A show never starts early either (since 2026-11-07).**  When the
+show before yours ends its last track a few seconds before your slot (an
+autoloading playlist often leaves a second or three free at the end),
+the playout no longer pulls your first track forward to fill the gap.
+The old show fades out as usual, the gap is **silence**, and your first
+track starts exactly on its row - with or without "Allow delayed start".
+Gaps shorter than 0.3 s are still bridged seamlessly.
+
 
 - **An already-shifted show is not itself a slide origin.** A show
   the task has moved (`delayed_start_from` set) is never treated as

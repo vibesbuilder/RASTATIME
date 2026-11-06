@@ -51,6 +51,7 @@ def test_play_sets_the_shape_pushes_and_skips_afterwards():
         "var_set",
         "var_set",
         "var_set",
+        "var_set",
         "request_queue_push",
         "request_queue_skip",
     ]
@@ -59,6 +60,7 @@ def test_play_sets_the_shape_pushes_and_skips_afterwards():
         ("rt_nofade", "-"),
         ("rt_dur", "-1.00"),
         ("rt_cut", "0.00"),
+        ("rt_hold", "0.00"),
     ]
 
 
@@ -85,12 +87,20 @@ def test_enqueue_pushes_behind_the_playing_track():
     eng._state = PlayoutState.PLAYING
     eng._current_uri = "C:/m/a.mp3"
     assert eng.enqueue("C:/m/b.mp3", cue_in=1.0, cue_out=30.0, transition="show/old") is True
-    assert _names(telnet) == ["var_set", "var_set", "var_set", "var_set", "request_queue_push"]
+    assert _names(telnet) == [
+        "var_set",
+        "var_set",
+        "var_set",
+        "var_set",
+        "var_set",
+        "request_queue_push",
+    ]
     assert [c.args for c in telnet.var_set.call_args_list] == [
         ("rt_cross", "show"),
         ("rt_nofade", "old"),
         ("rt_dur", "-1.00"),
         ("rt_cut", "0.00"),
+        ("rt_hold", "0.00"),
     ]
     assert eng._queued_uri == "C:/m/b.mp3" and eng._queued_request_id == "42"
     assert eng._current_uri == "C:/m/a.mp3"  # untouched
@@ -116,8 +126,15 @@ def test_adopt_queued_cancels_the_deferred_stop_and_skips_on_overbook():
     eng.adopt_queued("C:/m/b.mp3", skip_current=True, transition="show_skip")
     assert eng._stop_timer is None and eng._stop_requested is False
     assert pending.finished.is_set()  # cancelled
-    assert _names(telnet)[-5:] == ["var_set", "var_set", "var_set", "var_set", "request_queue_skip"]
-    assert telnet.var_set.call_args_list[-4].args == ("rt_cross", "show_skip")
+    assert _names(telnet)[-6:] == [
+        "var_set",
+        "var_set",
+        "var_set",
+        "var_set",
+        "var_set",
+        "request_queue_skip",
+    ]
+    assert telnet.var_set.call_args_list[-5].args == ("rt_cross", "show_skip")
     assert eng._current_uri == "C:/m/b.mp3" and eng._current_request_id == "42"
     assert eng._queued_uri is None
     assert eng.get_state() == PlayoutState.PLAYING
@@ -670,10 +687,11 @@ def test_engine_sends_the_overlap_of_the_transition():
         ("rt_nofade", "-"),
         ("rt_dur", "0.00"),
         ("rt_cut", "0.00"),
+        ("rt_hold", "0.00"),
     ]
     telnet.var_set.reset_mock()
     eng.enqueue("C:/m/c.mp3", transition="track/new")  # back to the house value
-    assert telnet.var_set.call_args_list[-2].args == ("rt_dur", "-1.00")
+    assert telnet.var_set.call_args_list[-3].args == ("rt_dur", "-1.00")
 
 
 def test_queue_ahead_sends_the_pair_overlap(sched):
@@ -756,4 +774,106 @@ def test_engine_sends_the_boundary_cut():
         ("rt_nofade", "-"),
         ("rt_dur", "-1.00"),
         ("rt_cut", "1.20"),
+        ("rt_hold", "0.00"),
+    ]
+
+
+# ---- RASTATIME 2026-11-07 - a show never starts before its row ---------------
+
+
+def _hold_of(transition: str) -> float:
+    return float(transition.split("/")[4]) if transition.count("/") >= 4 else 0.0
+
+
+def test_queue_ahead_holds_silence_when_the_predecessor_ends_before_the_show(sched):
+    """Operator rule 2026-11-07: the predecessor's audio ends 3 s before the
+    next show's first row -> the "show" transition holds 3.00 s of silence
+    (5th mode component), whether or not the show allows a delayed start."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=175), 1, instance=1, seconds=180)  # rows: 5 s left
+    nxt = _file(now + timedelta(seconds=8), 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    engine.playing_remaining_seconds.return_value = 5.0
+    s._on_file_queue_ahead("n", nxt)
+    assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/0.00/3.00"
+    assert s._queued_ahead_hold == 3.0
+    engine.enqueue.reset_mock()
+    s._queued_ahead = None
+    nxt2 = _file(now + timedelta(seconds=8), 3, instance=3)
+    nxt2.allow_delayed_start = True
+    s._on_file_queue_ahead("n2", nxt2)
+    assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/0.00/3.00"
+
+
+def test_queue_ahead_hold_uses_the_rows_without_a_measurement_and_keeps_the_tolerance(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=175), 1, instance=1, seconds=180)  # rows: 5 s left
+    nxt = _file(now + timedelta(seconds=8), 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    engine.playing_remaining_seconds.return_value = None
+    s._on_file_queue_ahead("n", nxt)
+    assert abs(_hold_of(engine.enqueue.call_args.kwargs["transition"]) - 3.0) < 0.05
+    engine.enqueue.reset_mock()
+    s._queued_ahead = None
+    engine.playing_remaining_seconds.return_value = 7.8  # 0.2 s gap: swallowed as before
+    s._on_file_queue_ahead("n", nxt)
+    assert engine.enqueue.call_args.kwargs["transition"] == "show/-"
+
+
+def test_queue_ahead_hold_is_a_show_boundary_matter_only(sched):
+    """Inside a show a gap between rows stays gapless (not part of the rule)."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=175), 1, instance=1, seconds=180)
+    nxt = _file(now + timedelta(seconds=8), 2, instance=1)
+    s._current_event, s._playing_key = prev, "p"
+    engine.playing_remaining_seconds.return_value = 5.0
+    s._on_file_queue_ahead("n", nxt)
+    assert engine.enqueue.call_args.kwargs["transition"] == "track/-"
+
+
+def test_queue_ahead_with_an_open_tail_window_leaves_the_show_to_its_row(sched):
+    """The hold rides with the transition, which cross builds BUFFER s
+    before the old track's end: with that window (nearly) open the successor
+    is not queued - it starts the normal way at its row, silence between."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=176), 1, instance=1, seconds=180)
+    nxt = _file(now + timedelta(seconds=8), 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    engine.playing_remaining_seconds.return_value = 2.5  # gap 5.5 s, window opens at BUFFER
+    s._on_file_queue_ahead("n", nxt)
+    engine.enqueue.assert_not_called()
+    assert s._queued_ahead is None
+
+
+def test_adopt_after_a_hold_keeps_the_chain_on_the_rows(sched):
+    """At the row start the queued track is already cross's partner; the
+    held silence is NOT a swallowed gap, so the chain lag stays ~0."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=183), 1, instance=1, seconds=180)  # audio ended 3 s ago
+    nxt = _file(now, 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev, s._queued_ahead_hold = ("n", nxt), prev, 3.0
+    s._file_chain_lag = 0.0
+    engine.playing_remaining_seconds.return_value = None
+    s._on_file_start("n", nxt)
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": False, "transition": None}
+    assert abs(s._file_chain_lag) < 0.1
+    assert s._queued_ahead_hold == 0.0
+
+
+def test_engine_sends_the_boundary_hold():
+    eng, telnet = _engine()
+    eng._state = PlayoutState.PLAYING
+    eng.enqueue("C:/m/b.mp3", transition="show/-/-/0.00/3.00")
+    assert [c.args for c in telnet.var_set.call_args_list] == [
+        ("rt_cross", "show"),
+        ("rt_nofade", "-"),
+        ("rt_dur", "-1.00"),
+        ("rt_cut", "0.00"),
+        ("rt_hold", "3.00"),
     ]

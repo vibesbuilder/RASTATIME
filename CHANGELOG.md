@@ -72,6 +72,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rastatime.liq, geplanter Liquidsoap-Neustart an der nächsten Titelgrenze).  Manual
   DELAYED_START §7 ×4, ARCHITECTURE §23.92.  Commit `9369725e`.  Live seit 2026-11-06 13:51;
   Grenzen 14:00 und 14:07 ohne Überlauf, Mode-String mit Schnittwert 0.0 im Liquidsoap-Log.
+- **Sendungsgrenze: eine Sendung beginnt nie vor ihrer Startzeit (2026-11-07, Go Option B
+  2026-11-07)** — Befund an der Grenze 00:00: die Zeilen der Vorgängersendung endeten 3 s vor
+  der Grenze (Autoloading-Rest), das Queue-Ahead ließ `cross` am Audio-Ende des Vorgängers
+  übergeben, die neue Sendung lief 3 s zu früh.  Operator-Regel: nie früher, lieber Stille.
+  Das Playout misst beim Queue-Ahead jetzt auch die Lücke zwischen dem Audio-Ende des
+  Vorgängers und dem Zeilenstart des Nachfolgers (Engine-Rest, Zeilen als Rückfall) und
+  meldet sie als fünfte Mode-Komponente (`show/-/-/0.00/3.00` -> `var.set rt_hold`); die
+  Show-Form wird zu Fade-out, Stille in Länge der Lücke, neuer Titel genau auf der Zeile.
+  Gilt an jeder Sendungsgrenze Datei -> Datei, mit und ohne „Allow delayed start"; Toleranz
+  0,3 s wie beim Schnitt; innerhalb einer Sendung bleibt es lückenlos.  Liegt der Vorgänger
+  beim Queue-Ahead schon in seinem Schwanzfenster (Lücke > ~4 s), wird der Nachfolger nicht
+  gequeued und startet den normalen Weg auf seiner Zeile (Stille in der Lücke, ohne
+  Show-Fade-out).  Die Kettenverzug-Buchführung rechnet die gehaltene Stille heraus (vorher
+  stand bei verschluckter Lücke der Klemmwert -1,00 im Log).  Tests 901 grün, Template per
+  `liquidsoap --check` am Live-Skript geprüft.  Wirksam nach PLAYOUT-Neustart (rendert
+  rastatime.liq, geplanter Liquidsoap-Neustart im nächsten ruhigen Moment; nicht von Hand
+  starten).  Manual DELAYED_START §7 ×4, ARCHITECTURE §23.94, BACKLOG.
 
 ## [1.2.0] - 2026-11-05
 

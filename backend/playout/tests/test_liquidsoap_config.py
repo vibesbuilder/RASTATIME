@@ -737,6 +737,14 @@ def test_crossfade_block_track_and_show_shapes():
         in block
     )
     assert "s_cut = if old_nf then 0.05 else 2.5 end" in block
+    # RASTATIME 2026-11-07 - a show never starts early: rt_hold holds silence
+    # between the old track's end and the new show's row start
+    assert 'rt_hold = interactive.float("rt_hold", 0.0)' in block
+    assert "hold = rt_hold()" in block
+    assert (
+        "elsif hold > 0.05 then\n    sequence([fade.out(duration=s_out, delay=s_delay, old_s), blank(duration=hold), new.source])"
+        in block
+    )
     # in-show skip trims the tail to the track crossfade
     assert "fade.out(duration=t_cut, max_duration(t_cut, old_s))" in block
     assert "t_cut = if old_nf then 0.05 else fd end" in block

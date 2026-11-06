@@ -356,6 +356,16 @@ prédécesseur pouvait déborder d'environ 4,5 s dans l'émission suivante.
 Les émissions *avec* l'option gardent le passage en douceur décrit
 plus haut.
 
+**Une émission ne commence jamais en avance non plus (depuis le
+2026-11-07).**  Lorsque le dernier titre de l'émission précédente se
+termine quelques secondes avant votre créneau (une playlist de
+chargement automatique laisse souvent une à trois secondes libres à la
+fin), le playout n'avance plus votre premier titre pour combler le
+vide.  L'ancienne émission se fond comme d'habitude, le vide est du
+**silence**, et votre premier titre démarre exactement sur sa ligne -
+avec ou sans « Allow delayed start ».  Les vides de moins de 0,3 s
+restent comblés sans couture.
+
 
 - **Une émission que vous avez déplacée à la main n'est pas
   elle-même une origine de glissement.** Si vous glissez une

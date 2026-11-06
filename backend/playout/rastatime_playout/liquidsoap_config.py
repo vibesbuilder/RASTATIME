@@ -2160,7 +2160,10 @@ def _render_crossfade_block(
                   plays out and the new track follows (sequence).
       show        show boundary, natural end: the old show's last track
                   fades out over its last SHOW seconds, the new show's
-                  first track follows at the old track's end.
+                  first track follows at the old track's end.  2026-11-07:
+                  with ``rt_hold`` > 0 (the old track ends BEFORE the new
+                  show's row start) silence of that length sits between
+                  the two - a show never starts early.
       track_skip  in-show skip (rare - the row layout was off): old
                   fades from NOW over TRACK, new fades in over TRACK.
       show_skip   overbook at a show boundary: the new show's first
@@ -2211,9 +2214,17 @@ def _render_crossfade_block(
     # the new one FOLLOWS (no overlap - the boundary is the old track's end)
     if show < 0.05:
         show_natural = "    sequence([old_s, new.source])\n"
+        show_hold = "    sequence([old_s, blank(duration=hold), new.source])\n"
     else:
         show_natural = (
             "    sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])\n"
+        )
+        # RASTATIME 2026-11-07 - the old track ends before the new show's row
+        # start: hold silence for the gap (rt_hold), the new show starts on
+        # its row instead of at the old track's end
+        show_hold = (
+            "    sequence([fade.out(duration=s_out, delay=s_delay, old_s), "
+            "blank(duration=hold), new.source])\n"
         )
     if show < 0.05:
         show_skip = "    rt_instant(old_s, new.source)\n"
@@ -2259,6 +2270,9 @@ def _render_crossfade_block(
         "# rt_cut: strict show boundary (2026-11-06) - seconds the ending track would run\n"
         "# past the show end; > 0 = its tail is cut 0.3 s before the boundary (0 = none)\n"
         'rt_cut = interactive.float("rt_cut", 0.0)\n'
+        "# rt_hold: show boundary (2026-11-07) - seconds the ending track's audio ends\n"
+        "# BEFORE the next show's row start; > 0 = silence until the row (0 = none)\n"
+        'rt_hold = interactive.float("rt_hold", 0.0)\n'
         f"# track crossfade {f(track)} s, show crossfade {f(show)} s, tail buffer {f(buf)} s\n"
         "def rt_instant(old_s, new_s) =\n"
         "  add(normalize=false, [fade.in(duration=0.05, new_s), fade.out(duration=0.05, old_s)])\n"
@@ -2281,7 +2295,8 @@ def _render_crossfade_block(
         "  wait = buf - d\n"
         "  fd = if d < 0.05 then 0.05 else d end\n"
         "  cut = rt_cut()\n"
-        '  log(level=3, label="rt_cross", "#{mode}/#{nofade}/#{d}/#{cut}: #{old.metadata[\\"title\\"]} -> '
+        "  hold = rt_hold()\n"
+        '  log(level=3, label="rt_cross", "#{mode}/#{nofade}/#{d}/#{cut}/#{hold}: #{old.metadata[\\"title\\"]} -> '
         '#{new.metadata[\\"title\\"]} (tail #{rem} s)")\n'
         "  t_in = if new_nf then 0.05 else fd end\n"
         f"  t_out = if old_nf then {nofade} else fd end\n"
@@ -2316,6 +2331,10 @@ def _render_crossfade_block(
         + "      else\n"
         + "        sequence([fade.out(duration=0.3, delay=play, max_duration(play + 0.3, old_s)), new.source])\n"
         + "      end\n"
+        # 2026-11-07 a show never starts early: the old track ends `hold`
+        # seconds before the new show's row start - silence in between.
+        + "    elsif hold > 0.05 then\n"
+        + show_hold
         + "    else\n"
         + show_natural
         + "    end\n"

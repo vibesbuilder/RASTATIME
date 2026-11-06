@@ -343,6 +343,15 @@ Zeile beginnt; ein Überlauf bis 0,3 s bleibt unangetastet.  Vor dieser
 hineinlaufen.  Sendungen *mit* dem Schalter behalten die oben
 beschriebene sanfte Übergabe.
 
+**Eine Sendung beginnt auch nie zu früh (seit 2026-11-07).**  Endet der
+letzte Titel der Vorgängersendung einige Sekunden vor Ihrem Slot (eine
+Autoloading-Playlist lässt am Ende oft ein bis drei Sekunden frei),
+zieht das Playout Ihren ersten Titel nicht mehr vor, um die Lücke zu
+füllen.  Die alte Sendung blendet wie gewohnt aus, die Lücke ist
+**Stille**, und Ihr erster Titel beginnt genau auf seiner Zeile - mit
+oder ohne „Allow delayed start".  Lücken unter 0,3 s werden weiterhin
+nahtlos überbrückt.
+
 
 - **Eine von Hand verschobene Sendung ist nicht selbst ein
   Verschiebungs-Ursprung.** Eine vom Task verschobene Sendung

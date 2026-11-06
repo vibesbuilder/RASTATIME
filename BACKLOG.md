@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Sendung beginnt bis zu ~8 s VOR ihrer Startzeit, wenn die Vorgänger-Zeilen früher enden (Befund 2026-11-07 00:00, Operator-Regel: nie früher - lieber Stille)
+### ✅ Sendung beginnt bis zu ~8 s VOR ihrer Startzeit, wenn die Vorgänger-Zeilen früher enden - GEBAUT 2026-11-07 (Befund 2026-11-07 00:00, Operator-Regel: nie früher - lieber Stille, Go Option B 2026-11-07)
 
 Befund an der Grenze 00:00 (2026-11-06/07): die letzte Zeile der Vorgängersendung endete
 23:59:56,99 (Autoloading: „3,0 s frei am Ende"), die Nachfolgesendung stand mit 00:00:00 in den
@@ -110,8 +110,13 @@ Liquidsoap-Neustart (geplanter Neustart an der Titelgrenze, nicht von Hand).  Bl
 ist im Template schon in Gebrauch (Wartebranch der Track-Form); Dead-Air-Alarm greift erst ab 30 s.
 **Risiko:** gering - beide Wege ändern nur Grenzen mit Lücke; Rückfall = Commit zurück +
 Neustart.  B berührt das Template (Liquidsoap-Neustart im ruhigen Fenster), A nur PLAYOUT.
-**Vorbedingungen:** Operator-Go (A oder B), ruhiges Fenster für den Neustart, Probe an der
-nächsten Grenze mit Lücke (Log: Queue-Ahead-Zeile mit hold, rt_cross-Form, PLAY-Lag ≈ 0,0 s).
+**Gebaut 2026-11-07 (Option B, Commit siehe CHANGELOG, §23.94):** `_show_boundary` +
+`_boundary_hold` im Scheduler, fünfte Mode-Komponente -> `var.set rt_hold`, Show-Form
+`sequence([fade.out(old), blank(duration=hold), new])`; Schwanzfenster-Guard (Rest < Puffer + 1 s
+beim Queue-Ahead -> nicht queuen, normaler Start auf der Zeile), Kettenverzug rechnet die
+gehaltene Stille heraus.  Tests 901 grün, `liquidsoap --check` am Live-Skript bestanden.
+**Abnahme offen:** nächste Sendungsgrenze mit Lücke im Log (Queue-Ahead-Zeile „holds silence",
+`[rt_cross] show/-/3.0/0.0/<hold>`, PLAY-Lag ≈ 0,0 s statt -1,00).
 
 ### 💡 Auto-DJ-Fill-Pass und Handplanung sperren sich gegenseitig (Deadlock in cc_files.is_scheduled, Befund 2026-11-06 16:09-16:13)
 

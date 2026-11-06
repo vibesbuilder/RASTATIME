@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.119
-Date: 2026-11-06
+Draft version: 0.120
+Date: 2026-11-07
 
 > **Revision history**
+> - **0.120 (2026-11-07)** - **A show never starts early** (§23.94): the queue-ahead measures
+>   the gap between the predecessor's audio end and the next show's row start and sends it
+>   as `rt_hold`; the "show" transition holds silence for it (00:00 finding: 3 s early).
 > - **0.119 (2026-11-06)** - **Library feed** (§23.93): UNION ALL + teaser join (default
 >   page 355 -> 85 ms), covers as cacheable URLs instead of Data URIs (feed 339 -> 92 KB),
 >   one draw and one layout request on open (1.26 -> 0.70 s); mod_fcgid 1-s burst steps noted.
@@ -9225,3 +9228,62 @@ conf outside the repo): `FcgidMinProcessesPerClass` 6-8 and
 
 **Rollback.** `git revert`; no restart (OPcache off, assets versioned by
 mtime).
+
+### 23.94 A Show Never Starts Before Its Row: Held Silence at the Boundary (2026-11-07)
+
+**Rule (operator 2026-11-07).** A show must never start before its row
+start; silence in the gap is right.  (§23.92 covers the other
+direction - the predecessor running past the boundary.)
+
+**Finding (00:00, 2026-11-07).** The predecessor's last row ended at
+23:59:56.99 (autoloading had left 3.0 s free), the successor's row
+began at 00:00:00.  The queue-ahead put the first track of the new show
+behind the playing one and `cross` handed over at the old track's audio
+end: the new show was on air from ~23:59:57, three seconds early.  The
+chain log said "-1.00 s behind the rows" - the clamp in
+`_carry_file_chain_lag`, not the real value (~-3 s).  Mechanics:
+`_on_file_queue_ahead` enqueues as soon as the predecessor still has
+>= 0.5 s of audio; a gap between the rows was swallowed.  Gaps longer
+than the lead window (BUFFER + 5 s, ~8 s) were already silence plus a
+normal start.
+
+**Now.**
+- `_show_boundary(prev, nxt)` (file -> file, different instance) next
+  to `_strict_boundary` (= show boundary without the flag).
+- Queue-ahead: after the cache copy the engine's remaining is read
+  once; at a strict boundary it yields the cut (§23.92), otherwise
+  `_boundary_hold()` = successor row start - predecessor audio end
+  (rows as the fallback).  Above `SHOW_HOLD_TOLERANCE_SECONDS` (0.3 s)
+  it travels as the 5th component of the mode string
+  (`show/-/-/0.00/3.00`); `_set_cross_mode` sets `var.set rt_hold`
+  (0.00 otherwise, so nothing leaks into the next transition).  The
+  hold applies with and without "Allow delayed start" - early is never
+  right.
+- Template (`_render_crossfade_block`): `rt_hold = interactive.float`;
+  mode "show" with hold > 0.05 renders
+  `sequence([fade.out(old tail), blank(duration=hold), new.source])` -
+  the show fade-out stays, the new show begins on its row.  A `blank`
+  inside a `sequence` plays exactly one track of that length (the
+  track-shape wait branch uses the same construct).  `blank.detect`
+  (dead-air alert) counts from 30 s and ignores holds of a few seconds.
+  Verified with `liquidsoap --check` against the live script.
+- The hold rides with the transition, which cross builds when the old
+  track enters its tail window (BUFFER before its end) - set after that
+  it is ignored.  With less than BUFFER + `SHOW_HOLD_WINDOW_MARGIN_SECONDS`
+  (1 s) of the predecessor left at the queue-ahead the successor is NOT
+  queued: it starts the normal way at its row (silence in the gap, no
+  show fade-out, ~0.25 s push lag).  With the 8-s lead window this
+  covers gaps of roughly 4-8 s; the common autoloading rest of 0-3 s
+  takes the hold.
+- Adopt at the row start: `_queued_ahead_hold` is carried into
+  `_carry_file_chain_lag` - the held gap is no longer a swallowed one,
+  the lag stays on the rows instead of clamping to -1.00.
+- Gaps between rows inside a show stay gapless (not part of the rule).
+
+**Rollout.** Restart PLAYOUT (re-renders rastatime.liq; the planned
+Liquidsoap restart follows in the next quiet moment - never start
+Liquidsoap by hand, §23.89).  Acceptance: the next show boundary with a
+gap - log "Queue-ahead ...: show boundary - ... ends X s before the
+show start, the queue holds silence until the boundary", Liquidsoap
+`[rt_cross] show/-/3.0/0.0/X`, PLAY lag ~0.0 s instead of -1.00.
+Rollback: `git revert` + PLAYOUT restart.

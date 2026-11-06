@@ -338,6 +338,15 @@ Antes de este cambio un predecesor podía invadir unos 4,5 s el programa
 siguiente.  Los programas *con* el interruptor conservan el traspaso
 suave descrito arriba.
 
+**Un programa tampoco empieza nunca antes de tiempo (desde 2026-11-07).**
+Cuando la última pista del programa anterior termina unos segundos
+antes de su slot (una playlist de carga automática suele dejar de uno a
+tres segundos libres al final), el playout ya no adelanta su primera
+pista para rellenar el hueco.  El programa anterior se funde como
+siempre, el hueco es **silencio**, y su primera pista empieza
+exactamente en su fila - con o sin «Allow delayed start».  Los huecos
+de menos de 0,3 s se siguen cubriendo sin costura.
+
 
 - **Un programa que movió a mano no es por sí mismo un origen de
   deslizamiento.** Un programa ya desplazado por la tarea
