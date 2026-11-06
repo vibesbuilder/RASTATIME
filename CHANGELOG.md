@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   0,1 s; nach 100 s Leerlauf standen 6 statt 3 Worker, je ~42 MB).  INSTALL_APACHE.md
   gleichgezogen.  Hinweis: ein Schub, der größer ist als der warme Pool, wartet
   weiterhin eine Sekunde - der Pool wächst nur bei Bedarf und bleibt dann bis zu fünf
-  Minuten stehen.  Commit: Hash im Folge-Commit.
+  Minuten stehen.  Commit `d5092f55`.
 
 - **Library-Feed schneller und schlanker (2026-11-06, Go 2026-11-06)** — Der
   Dashboard-Tab „Tracks" lud mit 100 Zeilen in 1,26 s und zog 330 KB je Draw, davon
