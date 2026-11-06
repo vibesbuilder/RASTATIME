@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Tests 889 grün, Template per `liquidsoap --check` geprüft.  Wirksam nach Neustart
   **API zuerst** (sonst gelten alle Grenzen als strikt), dann PLAYOUT (rendert
   rastatime.liq, geplanter Liquidsoap-Neustart an der nächsten Titelgrenze).  Manual
-  DELAYED_START §7 ×4, ARCHITECTURE §23.92.  Commit `9369725e`.
+  DELAYED_START §7 ×4, ARCHITECTURE §23.92.  Commit `9369725e`.  Live seit 2026-11-06 13:51;
+  Grenzen 14:00 und 14:07 ohne Überlauf, Mode-String mit Schnittwert 0.0 im Liquidsoap-Log.
 
 ## [1.2.0] - 2026-11-05
 
