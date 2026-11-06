@@ -12340,3 +12340,84 @@ Produktionsmessung 2026-11-05 07:00-Slot (report-20261105-0700-bg.txt):
   (cloud:3000) sollen ihre 10 s Reserve behalten.
 - Hörprobe: C:/Temp/optd/wslat/probe-20261105-0700-bg-ours-entry.wav
   (07:00:50-07:01:30 Icecast-Zeit; Tor bei ~16 s, Bulletin bei 24,8 s).
+
+### 🟡 Library-Feed schneller und schlanker (UNION ALL, Teaser-Join, Cover nur bei sichtbarer Spalte, Doppel-Draw) - EVALUIERT 2026-11-06, Go offen
+
+Operator-Frage 2026-11-06: „Das Laden der Library dauert relativ lange. Kann
+man dabei noch etwas optimieren?"
+
+Messung 2026-11-06 (Sonden C:/Temp/optd/libperf_probe.php,
+libperf_sql_probe.php, Chrome auf der Maschine, 100 Zeilen je Seite):
+- Ein Tabellen-Draw auf der Maschine: 0,25 s (Server 0,18 s, Rendern
+  0,07 s).  Seitenaufruf Dashboard: load 1,26 s + ZWEI Feed-Abrufe
+  (Init-Draw der DataTable und `setCurrentTable(..., redraw=true)` beim
+  Anwenden des Hash `#tracks`).
+- Nutzlast je Feed 330 KB, davon 72 % Cover-Data-URIs (66 von 100 Zeilen
+  mit Cover, je ~3,6 KB) - die Cover-Spalte ist in der Operator-Ansicht
+  gar nicht sichtbar.  Über WAN zählt diese Größe, nicht die Serverzeit.
+- Datenbank (Standardseite, alle Medien, 25 Zeilen): Zeilen-Abfrage
+  178 ms + Zähl-Abfrage 176 ms.  Ursachen: `UNION` (Dedupe-Sort aller
+  25.376 Zeilen × 39 Spalten, 8 MB auf Platte) und die Teaser-Spalte als
+  skalare Unterabfrage je Datei-Zeile.  Varianten gemessen:
+  UNION ALL 131/123 ms; + Teaser als gruppierter Join 40/34 ms;
+  + ohne play_count-Join 35/28 ms.  Suche „love": 341 -> 202 ms.
+  „Nur Dateien" (type=1) braucht heute schon 43 ms.
+- Nebenbefund: jedes Öffnen eines Playlist-Tabs zieht einen Library-Draw
+  nach (09:26:29: 7 Tabs -> 7 identische Feeds in einer Sekunde).
+
+Vorschlag (Reihenfolge nach Nutzen/Risiko):
+1. SQL: `UNION ALL` statt `UNION` (Zeilen unterschiedlicher Quellen sind nie
+   identisch - jede trägt ihre id + ftype, Dedupe ist wirkungslos) und die
+   Teaser-Spalte als `LEFT JOIN (SELECT file_id, string_agg(...) GROUP BY
+   file_id)` wie play_count.  ~15 Zeilen StoredFile.php, Serverzeit -80 %.
+2. Cover-Data-URIs nur liefern, wenn die Spalte sichtbar ist (Client
+   schickt `artwork=1` mit, Feed lässt `artwork_data` sonst weg), oder
+   als URL statt Data-URI (cachebar).  ~40-60 Zeilen PHP+JS, Nutzlast
+   -70 %.
+3. Doppel-Draw beim Öffnen vermeiden (Init-Draw unterdrücken, wenn
+   `setCurrentTable` ohnehin zeichnet).  ~10 Zeilen.
+Dauer gesamt ~1/2 Tag inkl. Live-Verifikation.  Risiko gering (nur
+Legacy-Feed, kein Neustart, OPcache aus); Rückfall `git revert`.  Sinn:
+auf der Maschine kaum spürbar (0,25 s), über WAN deutlich (Nutzlast,
+Doppelabruf); DB-Last je Feed sinkt auf ein Fünftel.
+
+### 🟡 Mehrfach-Löschen in der Library: 2 s je Datei durch die Wiederholungs-Prüfung, kein Busy-Hinweis - EVALUIERT 2026-11-06, Go offen
+
+Operator-Befund 2026-11-06: 50-60 Tracks löschen dauert Minuten, kein
+Hinweis, dass im Hintergrund gelöscht wird.
+
+Messung 2026-11-06 (legacy.log, Sonde libperf_probe.php,
+repeat_query_probe.php):
+- Heute 09:21-09:24: 66 Dateien in 214 s, Takt ~2 s je Datei; der
+  Block 09:23:02 (52 Dateien) brauchte 101 s in EINEM POST.
+- Je Datei: `RepeatFillService::neededByPendingRepeat` 1,8-2,0 s
+  (Seq-Scan über 18.113 cc_show_instances mit korrelierter
+  „letzte Instanz"-Unterabfrage; das `OR` auf sch.file_id/a.file_id
+  verhindert den Index).  Alles andere zusammen < 30 ms (Zukunftsprüfung
+  0,02 ms, DELETE mit allen FK-Kaskaden 2,7 ms, unlink 3 ms).
+- Umschreibung gemessen: Datei-Filter als `EXISTS (SELECT 1 FROM
+  cc_schedule sch WHERE sch.instance_id = a.id AND sch.file_id = :id)`
+  -> 75 Datei-Ids verglichen (19 mit Treffer), Ergebnisse identisch,
+  Mittel 1970 ms -> 33 ms (schlimmster Fall 240 ms: cc_show_instances hat
+  keinen Index auf show_id; `(show_id, ends)` würde das auf ms bringen).
+- Zeitlimits: FcgidIOTimeout 120 s, max_execution_time 300 s.  Ab ~60
+  Dateien bekommt der Browser einen Fehler, PHP löscht weiter; ab ~150
+  bricht PHP mitten im Stapel ab.  Heute war es mit 101 s knapp.
+- UI: nur der Delete-Knopf ist während des POST deaktiviert; das
+  DataTables-„Processing"-Overlay existiert (bProcessing), wird beim
+  Löschen aber nicht gezeigt.
+
+Vorschlag:
+1. Abfrage umschreiben wie gemessen (~10 Zeilen RepeatFillService.php):
+   60 Dateien in ~3 s statt 2 min; optional Index
+   cc_show_instances(show_id, ends) per Migration.
+2. Sichtbarer Busy-Zustand beim Löschen: Processing-Overlay der Tabelle
+   + Knopftext „Deleting N tracks…", Cursor wait; bei Fehler/Timeout
+   Meldung statt stillem Ende (~15 Zeilen library.js).
+3. Optional (Defer, wenn 1 reicht): Löschen in Blöcken à 10 je Anfrage
+   mit Fortschritt „n von N" - nimmt das 120-s-Risiko bei Hunderten
+   (~40 Zeilen JS + Controller unverändert).
+Risiko: Löschen ist irreversibel - Umschreibung ist semantisch gleich
+(75 Ids geprüft), trotzdem erst an einer Wegwerf-Datei live prüfen;
+Legacy-only, kein Neustart.  Empfehlung: Go 1+2, 3 Defer.
+
