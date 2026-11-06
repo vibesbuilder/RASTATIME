@@ -131,9 +131,14 @@ LoadModule fcgid_module modules/mod_fcgid.so
     FcgidMaxRequestLen 536870912
     FcgidConnectTimeout 20
     FcgidIOTimeout 120
-    # RASTATIME: keep the fcgid pool small and short-lived so PHP
-    # workers get recycled regularly.  Defaults are 300 / 3600 s.
-    FcgidIdleTimeout 60
+    # RASTATIME 2026-11-06: keep a warm pool.  A request that finds no
+    # free php-cgi sleeps 1 s in mod_fcgid and a new process takes ~1 s
+    # to start; with the default 3 workers, reaped after 60 s idle, every
+    # parallel burst (dashboard open, cover images over h2) arrived in
+    # 1-s steps.  Eight workers (~42 MB each) stay for five quiet minutes;
+    # the life time still recycles them.  Defaults: 3 / 300 / 3600 s.
+    FcgidMinProcessesPerClass 8
+    FcgidIdleTimeout 300
     FcgidProcessLifeTime 600
 </IfModule>
 ```

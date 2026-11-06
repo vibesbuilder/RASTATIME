@@ -12382,7 +12382,17 @@ Offen aus derselben Messung:
 - Erster Draw ohne Browser-Cache: 66 Cover-Anfragen auf einmal (h2); kalt
   kommen sie in 1-s-Stufen (siehe nächster Eintrag), warm in 1,4 s.
 
-### 🟡 mod_fcgid bedient Schübe paralleler Anfragen in 1-s-Stufen - BEFUND 2026-11-06, Go offen (Apache-Konfiguration, Operator)
+### ✅ mod_fcgid bedient Schübe paralleler Anfragen in 1-s-Stufen - UMGESETZT 2026-11-06 (Go 2026-11-06: FcgidMinProcessesPerClass 8, FcgidIdleTimeout 300)
+
+Umgesetzt 2026-11-06 20:12: httpd.conf (Sicherung httpd.conf.bak-2026-11-06),
+`httpd -t` OK, Dienst RASTATIME-APACHE neu gestartet, Login 200 in 0,1 s.
+Prüfung: direkt nach dem Neustart wuchs der Pool je Schub (5 → 7 → 10
+parallele Abrufe: 2, 3, 7 sofort), nach 100 s Leerlauf standen 6 Worker
+(alt: 3 nach 60 s), je ~42 MB.  Ein Schub über den warmen Pool hinaus
+wartet weiter eine Sekunde - das ist mod_fcgid-Mechanik, kein Fehler.
+INSTALL_APACHE.md gleichgezogen.  Rückfall: Sicherungsdatei zurück +
+Neustart.
+
 
 Befund 2026-11-06 beim Library-Feed: 5 parallele `get-library-columns` →
 zwei in 102 ms, drei in ~1.120 ms; 66 Cover-Anfragen kalt in Wellen

@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Apache: warmer php-cgi-Pool (2026-11-06, Go 2026-11-06)** — Beim Library-Feed fiel
+  auf, dass mod_fcgid Schübe paralleler Anfragen in 1-s-Stufen bedient: eine Anfrage ohne
+  freien php-cgi schläft eine Sekunde, ein neuer Prozess braucht ~1 s zum Start, und
+  `FcgidIdleTimeout 60` räumte den Pool nach einer ruhigen Minute auf drei zurück (5
+  parallele Abrufe: zwei in 0,1 s, drei in 1,2 s; 66 Cover kalt in Wellen bis 5,3 s).
+  httpd.conf: `FcgidMinProcessesPerClass 8`, `FcgidIdleTimeout 300` (Sicherung
+  httpd.conf.bak-2026-11-06, `httpd -t` OK, Dienst 20:12 neu gestartet, Login 200 in
+  0,1 s; nach 100 s Leerlauf standen 6 statt 3 Worker, je ~42 MB).  INSTALL_APACHE.md
+  gleichgezogen.  Hinweis: ein Schub, der größer ist als der warme Pool, wartet
+  weiterhin eine Sekunde - der Pool wächst nur bei Bedarf und bleibt dann bis zu fünf
+  Minuten stehen.  Commit: Hash im Folge-Commit.
+
 - **Library-Feed schneller und schlanker (2026-11-06, Go 2026-11-06)** — Der
   Dashboard-Tab „Tracks" lud mit 100 Zeilen in 1,26 s und zog 330 KB je Draw, davon
   72 % Cover als Data-URIs; ohne Hash in der URL kamen zwei identische Feeds.  Drei
