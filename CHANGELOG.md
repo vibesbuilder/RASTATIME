@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   php-cgi-Prozess wartete.  Gemessen auf der Maschine: Seitenaufruf 1,26 s → 0,70 s,
   ein Feed, 92 KB.  Nebenbefund: mod_fcgid bedient einen Schub paralleler Anfragen
   in 1-s-Stufen, sobald die warmen Worker ausgehen (BACKLOG).  ARCHITECTURE §23.93.
-  Commit: Hash im Folge-Commit.
+  Commit `a59aa072`.
 
 - **Sendungsgrenze ohne „Allow delayed start": Vorgänger endet an der Grenze (2026-11-06,
   Go 2026-11-06)** — Bisher wurde ein Vorgänger an der Sendungsgrenze nur geschnitten,
