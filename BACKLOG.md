@@ -7036,6 +7036,35 @@ Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
 
+## Sendungsgrenze ohne Delayed Start: Vorgänger hart am Show-Ende schneiden (Operator-Regel 2026-11-06)
+
+### 🟡 Strikte Sendungsgrenze - EVALUIERT 2026-11-06, Go offen
+
+Regel des Operators: ein Titel darf nur dann über das Show-Ende laufen,
+wenn die Folgeshow „Allow delayed start" hat; sonst Schnitt am Show-Ende.
+Ist-Stand (playout_scheduler PLAY, rt_transition „show"): an der Grenze
+wird der Vorgänger nur geschnitten, wenn er mehr als Puffer 3 s +
+SKIP_TOLERANCE 1,5 s = 4,5 s Rest hat; darunter spielt die Form „show"
+seinen gepufferten Schwanz zu Ende (2 s + 1 s Fade) und die Show beginnt
+bis zu ~4,5 s zu spät.  „show_skip" fadet 1 s NACH der Grenze.  Geplante
+Überläufe fängt das Autoloading (Zeile am Show-Ende gekappt) bzw. der
+ShowShift (Delayed Start, 15 min vorher) ab; Laufzeit-Verzug (späte
+Starts, Hand-Inhalt) nicht.
+Plan: (1) Playout kennt allow_delayed_start der Folgeshow (API Show-Feld
++ Payload); (2) Grenze ohne Flag: Toleranz 0,3 s statt 4,5 s, und beim
+Queue-Ahead den erwarteten Überlauf X (Vorgänger-Ende minus Zeilenstart,
+0,3..3 s) per `var.set rt_cut = X` melden; (3) Template-Form „show" mit
+rt_cut > 0: Schwanz (3 − X − 0,3 s) spielen, 0,3 s ausblenden, Folgetitel
+exakt an der Grenze; X > 3 s: show_skip mit 0,3-s-Fade statt 1 s;
+(4) Grenze MIT Flag: heutiges Verhalten.  ~90 Zeilen Playout + 15 Zeilen
+Template + Tests; 0,5-1 Tag; Liquidsoap-Neustart (Template).  Sinn: TOH
+pünktlich zur vollen Stunde.  Risiko: mehr hörbare Schnitte, wenn die
+Kette spät ist (gewollt); Fehlerbild = Doppelübergang, Replikat-Probe an
+drei Grenzen; Rückfall git revert + Neustart.
+Hinweis zur Messung: der Stundenanfang der 24/7-Aufnahme ist bis ~1,5 s
+ungenau (Pipe-Neustart) - Pünktlichkeit über Playout-Log „file chain
+runs ±x s" oder Zeitstempel im Stream messen, nicht über t=0 der Datei.
+
 ## Firewall-Wächter sperrte den Operator aus (Vorfall 2026-11-06 10:47, behoben)
 
 Kalender-Tab mit veraltetem CSRF-Token (Sitzung in anderem Tab erneuert)
