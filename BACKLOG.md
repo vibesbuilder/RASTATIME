@@ -80,6 +80,35 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Kommentar je Allowed Address (neu 2026-11-06, Operator: kein Go, Defer)
+
+Wunsch: jede Zeile unter *System Status → Allowed addresses* bekommt einen Kommentar (wem
+die Adresse gehört, warum sie erlaubt ist).  Heute: cc_pref `allowed_addresses` = JSON-Liste
+von Strings (`Application_Model_AllowedAddresses`), gespiegelt nach `config/allowlist.txt`
+für PLAYOUT (`dj_auth.AllowList`) und `rt-firewall-watch.ps1`; beide Leser kennen nur
+ganze `#`-Zeilen, ein Kommentar hinter der Adresse würde die Zeile unbrauchbar machen.
+**Option A (Empfehlung):** zweiter cc_pref-Schlüssel `allowed_address_notes` (JSON-Objekt
+Eintrag → Kommentar); Liste und Spiegeldatei unverändert, PLAYOUT und Wächter unberührt;
+Remove löscht den Kommentar mit.  UI: Spalte „Comment", Kommentarfeld neben „Add",
+Bearbeiten per Klick; „Allow" aus der Sperrliste legt ohne Kommentar an.  ~1–2 h inkl.
+Manual USERS_AND_ROLES ×4, keine Migration, nur Apache-Neustart (Übersetzungen).
+**Option B:** `allowed_addresses` auf Objekte {entry, comment} umbauen - alle Leser inkl.
+LoginAttempts betroffen, altes Format muss lesbar bleiben; ein Lesefehler bremst erlaubte
+Adressen wieder (Aussperrung wie 2026-11-06).  ~3 h, nicht empfohlen.
+**Vorbedingungen:** Operator-Go (Option A oder B).
+
+### 💡 Wiederholungen eigener Produktionen zählen nicht als eigene Wiederholung - IDEA (Befund 2026-11-06)
+
+Befund (Liste der aktiven Shows 2026-11-06, Probe `C:/Temp/optd/wh_repeat_flags.php`):
+Analytics → Programme Minutes zählt Wiederholungsminuten nur für Shows, die *selbst*
+„Own production" tragen (`YearlyReportService`, `sh.own_production` + `is_repeat`).
+Keine der 22 aktiven (WH)-Shows ist angehakt, 18 davon wiederholen eine eigene Produktion →
+ihre Minuten landen unter „andere".  Zwei (WH)-Shows (IDs 1153, 1202) fehlt zudem
+`repeat_of_show_id` (würden angehakt als Erstsendung zählen).
+Wege: (a) Operator hakt die 18 an und setzt die zwei Verknüpfungen (kein Code);
+(b) der Bericht erbt den Haken über `repeat_of_show_id` von der Original-Show
+(~10 Zeilen SQL + Test + Manual ANALYTICS ×4, ~1 h).  Vorbedingung: Operator-Entscheidung.
+
 ### 🟡 Öffentliche Studio-Instanz führt zum Betreiber (neu 2026-11-02; Paket 1 gebaut 2026-11-02, Mounts offen)
 
 Die Weboberfläche der Studio-Instanz ist aus dem Internet erreichbar und zeigt im Login, im
