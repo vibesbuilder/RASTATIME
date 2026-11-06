@@ -746,9 +746,12 @@ function setupUI() {
   // initial visibility is already set server-side from the
   // persisted checkbox value so this just keeps it in sync on
   // runtime toggles.
-  var $excludeChk = $("#sp_exclude_played_lately");
-  var $excludeWrap = $("#sp_exclude_played_lately_minutes_wrap");
-  var $excludeHours = $("#sp_exclude_played_lately_minutes");
+  // RASTATIME 2026-11-06 - scoped to the active tab: with several smart
+  // blocks open, the bare id selectors hit the FIRST dialog in the DOM and
+  // the Minutes row of the others never appeared (operator 2026-11-06).
+  var $excludeChk = activeTab.find("#sp_exclude_played_lately");
+  var $excludeWrap = activeTab.find("#sp_exclude_played_lately_minutes_wrap");
+  var $excludeHours = activeTab.find("#sp_exclude_played_lately_minutes");
 
   function syncExcludeLatelyVisibility() {
     if ($excludeChk.is(":checked")) {
@@ -771,9 +774,9 @@ function setupUI() {
   // exclude-artists-played-lately filter (cc_files.artist_name
   // match in last N hours).  Same default-24 auto-fill on
   // master-on so the active state is never visually empty.
-  var $excludeArtistsChk   = $("#sp_exclude_artists_played_lately");
-  var $excludeArtistsWrap  = $("#sp_exclude_artists_played_lately_minutes_wrap");
-  var $excludeArtistsHours = $("#sp_exclude_artists_played_lately_minutes");
+  var $excludeArtistsChk   = activeTab.find("#sp_exclude_artists_played_lately");
+  var $excludeArtistsWrap  = activeTab.find("#sp_exclude_artists_played_lately_minutes_wrap");
+  var $excludeArtistsHours = activeTab.find("#sp_exclude_artists_played_lately_minutes");
 
   function syncExcludeArtistsLatelyVisibility() {
     if ($excludeArtistsChk.is(":checked")) {
