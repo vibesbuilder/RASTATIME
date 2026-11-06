@@ -7038,7 +7038,7 @@ und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 
 ## Sendungsgrenze ohne Delayed Start: Vorgänger hart am Show-Ende schneiden (Operator-Regel 2026-11-06)
 
-### 🟡 Strikte Sendungsgrenze - EVALUIERT 2026-11-06, Go offen
+### ✅ Strikte Sendungsgrenze - GEBAUT 2026-11-06 (Go 2026-11-06, §23.92; wirksam nach Neustart API -> PLAYOUT; Abnahme an drei Grenzen offen)
 
 Regel des Operators: ein Titel darf nur dann über das Show-Ende laufen,
 wenn die Folgeshow „Allow delayed start" hat; sonst Schnitt am Show-Ende.

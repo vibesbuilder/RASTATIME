@@ -307,6 +307,16 @@ The task is **idempotent and forward-only**:
 
 ## 7. Things to know
 
+**Shows without the switch end their predecessor at the boundary
+(since 2026-11-06).**  The playout takes "Allow delayed start" literally:
+before a show that does *not* allow it, whatever is still playing is
+ended at the show start.  The ending track's last seconds are faded out
+over 0.3 s so that the new show begins exactly on its row; an overrun
+of up to 0.3 s is left alone.  Before this change a predecessor could
+run up to about 4.5 s into the next show.  Shows *with* the switch keep
+the gentle hand-over described above.
+
+
 - **An already-shifted show is not itself a slide origin.** A show
   the task has moved (`delayed_start_from` set) is never treated as
   the *source* of a new ripple, and a deleted occurrence

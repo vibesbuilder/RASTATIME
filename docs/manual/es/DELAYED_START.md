@@ -328,6 +328,17 @@ La tarea es **idempotente y solo hacia adelante**:
 
 ## 7. Cosas que conviene saber
 
+**Los programas sin el interruptor terminan a su predecesor en el
+límite (desde 2026-11-06).**  El playout toma «Allow delayed start» al
+pie de la letra: antes de un programa que *no* lo permite, lo que aún
+suena se termina al inicio del programa.  Los últimos segundos de la
+pista que acaba se funden en 0,3 s para que el nuevo programa empiece
+exactamente en su fila; un exceso de hasta 0,3 s se deja como está.
+Antes de este cambio un predecesor podía invadir unos 4,5 s el programa
+siguiente.  Los programas *con* el interruptor conservan el traspaso
+suave descrito arriba.
+
+
 - **Un programa que movió a mano no es por sí mismo un origen de
   deslizamiento.** Un programa ya desplazado por la tarea
   (`delayed_start_from` puesto) nunca se trata como la *fuente* de una

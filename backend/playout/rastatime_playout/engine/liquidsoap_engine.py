@@ -463,18 +463,26 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
         bare shape means no flag.
         """
         shape, _, rest = mode.partition("/")
-        nofade, _, overlap = rest.partition("/")
+        nofade, _, rest = rest.partition("/")
+        overlap, _, cut = rest.partition("/")
         # 2026-09-29: "<shape>/<side>/<seconds>" carries the overlap of this
         # transition (crossfade per track type / Exclude from Crossover);
         # without it the rendered house value applies (rt_dur = -1).
+        # 2026-11-06: a 4th component "<cut>" = seconds the predecessor would
+        # run past a strict show boundary (rt_cut; 0 = none).
         try:
-            seconds = float(overlap) if overlap else -1.0
+            seconds = float(overlap) if overlap and overlap != "-" else -1.0
         except ValueError:
             seconds = -1.0
+        try:
+            cut_seconds = float(cut) if cut else 0.0
+        except ValueError:
+            cut_seconds = 0.0
         try:
             self._telnet.var_set("rt_cross", shape)
             self._telnet.var_set("rt_nofade", nofade or "-")
             self._telnet.var_set("rt_dur", f"{seconds:.2f}")
+            self._telnet.var_set("rt_cut", f"{cut_seconds:.2f}")
             self._cross_mode = mode
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("Liquidsoap rt_cross=%s could not be set: %s", mode, exc)

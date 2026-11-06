@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Sendungsgrenze ohne „Allow delayed start": Vorgänger endet an der Grenze (2026-11-06,
+  Go 2026-11-06)** — Bisher wurde ein Vorgänger an der Sendungsgrenze nur geschnitten,
+  wenn er mehr als Crossfade-Puffer 3 s + 1,5 s Toleranz Rest hatte; darunter spielte die
+  Show-Form seinen Schwanz zu Ende und die Folgeshow begann bis zu ~4,5 s zu spät.  Jetzt
+  gilt die Operator-Regel: Vor einer Show OHNE „Allow delayed start" wird der Vorgänger
+  an der Grenze beendet.  Das Playout misst beim Queue-Ahead den Überlauf (Engine-Rest,
+  Zeilen als Rückfall) und meldet ihn als `rt_cut`; die Show-Form spielt den Schwanz bis
+  0,3 s vor der Grenze, blendet 0,3 s aus und startet den Folgetitel genau zur Grenze;
+  Überläufe > Puffer schneiden mit 0,3-s-Fade (show_skip), Toleranz 0,3 s.  Vor einer
+  Show MIT dem Flag bleibt das bisherige Verhalten.  Neu dafür: API `Show.allow_delayed_start`
+  im Payload, `FileEvent.allow_delayed_start`, Mode-String `<shape>/<nofade>/<overlap>/<cut>`.
+  Tests 889 grün, Template per `liquidsoap --check` geprüft.  Wirksam nach Neustart
+  **API zuerst** (sonst gelten alle Grenzen als strikt), dann PLAYOUT (rendert
+  rastatime.liq, geplanter Liquidsoap-Neustart an der nächsten Titelgrenze).  Manual
+  DELAYED_START §7 ×4, ARCHITECTURE §23.92.
+
 ## [1.2.0] - 2026-11-05
 
 ### Added

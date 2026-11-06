@@ -9113,3 +9113,44 @@ tests run without a database).  Keys: is_playing, now, source,
 started_at, item, show, next.  Django 5 note: `django.utils.timezone.utc`
 is gone - `datetime.timezone.utc`.
 
+### 23.92 Strict Show Boundary Unless the Show Allows a Delayed Start (2026-11-06)
+
+**Rule (operator 2026-11-06).** A track may run past the show end only
+when the show that starts has "Allow delayed start"; otherwise it ends
+at the boundary.
+
+**Before.** At a show boundary PLAY cut the predecessor only when it had
+more than BUFFER (3 s) + SKIP_TOLERANCE (1.5 s) of audio left; below that
+the "show" transition played the whole buffered tail (2 s + 1 s fade),
+so a show could start up to ~4.5 s late.  Planned overbooking was
+already handled elsewhere (autoloading clips the last row at the show
+end; the ShowShift moves delayed-start shows 15 min ahead); runtime lag
+and hand-scheduled overhang slipped through.
+
+**Now.**
+- API: `Show.allow_delayed_start` (cc_show column of migration 0056) in
+  the show payload; `FileEvent.allow_delayed_start` from it.
+- `PlayoutScheduler._strict_boundary(prev, nxt)`: file -> file, different
+  instance, successor's show without the flag.  `_skip_threshold`: 0.3 s
+  (`STRICT_BOUNDARY_TOLERANCE_SECONDS`) at a strict boundary, BUFFER +
+  1.5 s elsewhere.
+- Queue-ahead (T-7.9 s): `_boundary_cut()` = how far the predecessor will
+  run past the successor's row start - from the engine's remaining while
+  cross has not pulled the successor yet (rows as the fallback).  Above
+  the tolerance it travels as the 4th component of the mode string
+  (`show/-/-/1.20`); `LiquidsoapPlayoutEngine._set_cross_mode` sets
+  `var.set rt_cut` (0.00 otherwise, so nothing leaks).
+- Template (`_render_crossfade_block`): `rt_cut = interactive.float`; in
+  mode "show" with cut > 0.05 the tail plays `rem - cut - 0.3` s, fades
+  0.3 s and the new show starts at the boundary (cut >= rem - 0.3: a
+  0.05-s hand-over at once); `show_skip` uses a 0.3-s fade instead of the
+  show crossfade when cut > 0.  Verified with `liquidsoap --check`.
+- PLAY at the boundary: remaining > 0.3 s (strict) -> skip with the
+  short fade; remaining 0 (cross already on the shaped tail) -> nothing
+  to do.
+
+**Rollout.** Restart API first (without the field every boundary counts
+as strict), then PLAYOUT (re-renders rastatime.liq; planned Liquidsoap
+restart at the next track boundary).  Rollback: `git revert` + the same
+restarts.
+

@@ -333,6 +333,17 @@ Der Task ist **idempotent und arbeitet nur vorwärts**:
 
 ## 7. Wissenswertes
 
+**Sendungen ohne den Schalter beenden ihren Vorgänger an der Grenze
+(seit 2026-11-06).**  Das Playout nimmt „Allow delayed start" wörtlich:
+Vor einer Sendung, die es *nicht* erlaubt, wird das, was noch läuft, zum
+Sendungsbeginn beendet.  Die letzten Sekunden des ablaufenden Titels
+werden über 0,3 s ausgeblendet, sodass die neue Sendung genau auf ihrer
+Zeile beginnt; ein Überlauf bis 0,3 s bleibt unangetastet.  Vor dieser
+Änderung konnte ein Vorgänger bis etwa 4,5 s in die Folgesendung
+hineinlaufen.  Sendungen *mit* dem Schalter behalten die oben
+beschriebene sanfte Übergabe.
+
+
 - **Eine von Hand verschobene Sendung ist nicht selbst ein
   Verschiebungs-Ursprung.** Eine vom Task verschobene Sendung
   (`delayed_start_from` gesetzt) gilt nie als *Quelle* einer neuen

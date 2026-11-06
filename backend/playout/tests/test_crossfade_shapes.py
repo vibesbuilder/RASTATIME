@@ -46,11 +46,19 @@ def test_play_sets_the_shape_pushes_and_skips_afterwards():
     eng._state = PlayoutState.PLAYING
     eng.play("C:/m/a.mp3", transition="show_skip", skip_current=True)
     names = _names(telnet)
-    assert names == ["var_set", "var_set", "var_set", "request_queue_push", "request_queue_skip"]
+    assert names == [
+        "var_set",
+        "var_set",
+        "var_set",
+        "var_set",
+        "request_queue_push",
+        "request_queue_skip",
+    ]
     assert [c.args for c in telnet.var_set.call_args_list] == [
         ("rt_cross", "show_skip"),
         ("rt_nofade", "-"),
         ("rt_dur", "-1.00"),
+        ("rt_cut", "0.00"),
     ]
 
 
@@ -77,11 +85,12 @@ def test_enqueue_pushes_behind_the_playing_track():
     eng._state = PlayoutState.PLAYING
     eng._current_uri = "C:/m/a.mp3"
     assert eng.enqueue("C:/m/b.mp3", cue_in=1.0, cue_out=30.0, transition="show/old") is True
-    assert _names(telnet) == ["var_set", "var_set", "var_set", "request_queue_push"]
+    assert _names(telnet) == ["var_set", "var_set", "var_set", "var_set", "request_queue_push"]
     assert [c.args for c in telnet.var_set.call_args_list] == [
         ("rt_cross", "show"),
         ("rt_nofade", "old"),
         ("rt_dur", "-1.00"),
+        ("rt_cut", "0.00"),
     ]
     assert eng._queued_uri == "C:/m/b.mp3" and eng._queued_request_id == "42"
     assert eng._current_uri == "C:/m/a.mp3"  # untouched
@@ -107,8 +116,8 @@ def test_adopt_queued_cancels_the_deferred_stop_and_skips_on_overbook():
     eng.adopt_queued("C:/m/b.mp3", skip_current=True, transition="show_skip")
     assert eng._stop_timer is None and eng._stop_requested is False
     assert pending.finished.is_set()  # cancelled
-    assert _names(telnet)[-4:] == ["var_set", "var_set", "var_set", "request_queue_skip"]
-    assert telnet.var_set.call_args_list[-3].args == ("rt_cross", "show_skip")
+    assert _names(telnet)[-5:] == ["var_set", "var_set", "var_set", "var_set", "request_queue_skip"]
+    assert telnet.var_set.call_args_list[-4].args == ("rt_cross", "show_skip")
     assert eng._current_uri == "C:/m/b.mp3" and eng._current_request_id == "42"
     assert eng._queued_uri is None
     assert eng.get_state() == PlayoutState.PLAYING
@@ -219,7 +228,7 @@ def test_queue_ahead_enqueues_behind_a_playing_file(sched):
     s._current_event, s._playing_key = prev, "p"
     s._on_file_queue_ahead("n", nxt)
     engine.enqueue.assert_called_once()
-    assert engine.enqueue.call_args.kwargs["transition"] == "show/-"
+    assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/2.00"  # 10 s left, row in 8 s
     assert s._queued_ahead == ("n", nxt)
 
 
@@ -319,7 +328,7 @@ def test_file_start_adopts_the_queued_track_with_skip_on_overbook(sched):
     s._on_file_start("n", nxt)
     assert engine.adopt_queued.call_args.kwargs == {
         "skip_current": True,
-        "transition": "show_skip/-",
+        "transition": "show_skip/-/-/120.00",
     }
     engine.play.assert_not_called()
 
@@ -365,7 +374,7 @@ def test_file_start_uses_the_natural_end_not_the_clipped_row_end(sched):
     s._on_file_start("n", nxt)
     assert engine.adopt_queued.call_args.kwargs == {
         "skip_current": True,
-        "transition": "show_skip/-",
+        "transition": "show_skip/-/-/45.00",
     }
 
 
@@ -381,7 +390,7 @@ def test_file_start_after_the_predecessors_stop_still_knows_the_predecessor(sche
     s._on_file_start("n", nxt)
     assert engine.adopt_queued.call_args.kwargs == {
         "skip_current": True,
-        "transition": "show_skip/-",
+        "transition": "show_skip/-/-/45.00",
     }
     engine.play.assert_not_called()
 
@@ -415,7 +424,7 @@ def test_file_start_prefers_the_engines_measured_remaining(sched):
     s._on_file_start("n", nxt)
     assert engine.adopt_queued.call_args.kwargs == {
         "skip_current": True,
-        "transition": "show_skip/-",
+        "transition": "show_skip/-/-/47.00",
     }
     # and the other way round: rows say overbook, the engine says the tail window is open
     engine.adopt_queued.reset_mock()
@@ -660,10 +669,11 @@ def test_engine_sends_the_overlap_of_the_transition():
         ("rt_cross", "track"),
         ("rt_nofade", "-"),
         ("rt_dur", "0.00"),
+        ("rt_cut", "0.00"),
     ]
     telnet.var_set.reset_mock()
     eng.enqueue("C:/m/c.mp3", transition="track/new")  # back to the house value
-    assert telnet.var_set.call_args_list[-1].args == ("rt_dur", "-1.00")
+    assert telnet.var_set.call_args_list[-2].args == ("rt_dur", "-1.00")
 
 
 def test_queue_ahead_sends_the_pair_overlap(sched):
@@ -674,3 +684,76 @@ def test_queue_ahead_sends_the_pair_overlap(sched):
     s._current_event, s._playing_key = prev, "p"
     s._on_file_queue_ahead("n", jingle)
     assert engine.enqueue.call_args.kwargs["transition"] == "track/-/0.00"
+
+
+# ---- RASTATIME 2026-11-06 - strict show boundary -----------------------------
+
+
+def test_strict_boundary_cuts_a_small_overrun_unless_delayed_start_is_allowed(sched):
+    """Operator rule 2026-11-06: before a show WITHOUT 'Allow delayed start'
+    the predecessor is cut at the boundary (tolerance 0.3 s); before a show
+    WITH it the old threshold (tail + 1.5 s) applies."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=178), 1, instance=1, seconds=180)
+    nxt = _file(now, 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
+    engine.playing_remaining_seconds.return_value = 1.2  # 1.2 s past the boundary
+    s._on_file_start("n", nxt)
+    assert engine.adopt_queued.call_args.kwargs == {
+        "skip_current": True,
+        "transition": "show_skip/-/-/1.20",
+    }
+    engine.adopt_queued.reset_mock()
+    nxt2 = _file(now, 3, instance=3)
+    nxt2.allow_delayed_start = True
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev = ("n2", nxt2), prev
+    engine.playing_remaining_seconds.return_value = 1.2
+    s._on_file_start("n2", nxt2)
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": False, "transition": None}
+
+
+def test_strict_boundary_within_tolerance_is_left_alone(sched):
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=178), 1, instance=1, seconds=180)
+    nxt = _file(now, 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    s._queued_ahead, s._queued_ahead_prev = ("n", nxt), prev
+    engine.playing_remaining_seconds.return_value = 0.2
+    s._on_file_start("n", nxt)
+    assert engine.adopt_queued.call_args.kwargs == {"skip_current": False, "transition": None}
+
+
+def test_queue_ahead_reports_the_boundary_cut_from_the_engine_measurement(sched):
+    """At the queue-ahead the engine's remaining (still reliable) wins over
+    the rows: 11 s left, row in 8 s -> 3.00 s cut; a show that allows a
+    delayed start gets the plain shape."""
+    s, engine = sched
+    now = datetime.utcnow()
+    prev = _file(now - timedelta(seconds=170), 1, instance=1, seconds=180)  # rows: 10 s left
+    nxt = _file(now + timedelta(seconds=8), 2, instance=2)
+    s._current_event, s._playing_key = prev, "p"
+    engine.playing_remaining_seconds.return_value = 11.0
+    s._on_file_queue_ahead("n", nxt)
+    assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/3.00"
+    engine.enqueue.reset_mock()
+    s._queued_ahead = None
+    nxt2 = _file(now + timedelta(seconds=8), 3, instance=3)
+    nxt2.allow_delayed_start = True
+    s._on_file_queue_ahead("n2", nxt2)
+    assert engine.enqueue.call_args.kwargs["transition"] == "show/-"
+
+
+def test_engine_sends_the_boundary_cut():
+    eng, telnet = _engine()
+    eng._state = PlayoutState.PLAYING
+    eng.enqueue("C:/m/b.mp3", transition="show/-/-/1.20")
+    assert [c.args for c in telnet.var_set.call_args_list] == [
+        ("rt_cross", "show"),
+        ("rt_nofade", "-"),
+        ("rt_dur", "-1.00"),
+        ("rt_cut", "1.20"),
+    ]

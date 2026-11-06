@@ -724,7 +724,16 @@ def test_crossfade_block_track_and_show_shapes():
     assert "s_delay = if old_nf then 999999.0 else 0.0 end" in block
     # overbook at a show boundary: new at once, old fades under it
     assert (
-        'elsif mode == "show_skip" then\n    add(normalize=false, [fade.in(duration=0.05, new.source),\n                          fade.out(duration=s_cut, max_duration(s_cut, old_s))])'
+        'elsif mode == "show_skip" then\n    s_cut2 = if cut > 0.05 then 0.3 else s_cut end\n    add(normalize=false, [fade.in(duration=0.05, new.source),\n                          fade.out(duration=s_cut2, max_duration(s_cut2, old_s))])'
+        in block
+    )
+    # RASTATIME 2026-11-06 - strict show boundary: rt_cut shapes the natural
+    # show transition so the old tail ends 0.3 s before the boundary
+    assert 'rt_cut = interactive.float("rt_cut", 0.0)' in block
+    assert "cut = rt_cut()" in block
+    assert "play = rem - cut - 0.3" in block
+    assert (
+        "sequence([fade.out(duration=0.3, delay=play, max_duration(play + 0.3, old_s)), new.source])"
         in block
     )
     assert "s_cut = if old_nf then 0.05 else 2.5 end" in block

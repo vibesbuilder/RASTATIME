@@ -345,6 +345,18 @@ La tâche est **idempotente et à sens unique** :
 
 ## 7. À savoir
 
+**Les émissions sans l'option mettent fin à leur prédécesseur à la
+limite (depuis le 2026-11-06).**  Le playout prend « Allow delayed
+start » au pied de la lettre : avant une émission qui ne l'autorise
+*pas*, ce qui joue encore est arrêté au début de l'émission.  Les
+dernières secondes du titre finissant sont fondues sur 0,3 s afin que la
+nouvelle émission commence exactement sur sa ligne ; un dépassement
+jusqu'à 0,3 s est laissé tel quel.  Avant ce changement, un
+prédécesseur pouvait déborder d'environ 4,5 s dans l'émission suivante.
+Les émissions *avec* l'option gardent le passage en douceur décrit
+plus haut.
+
+
 - **Une émission que vous avez déplacée à la main n'est pas
   elle-même une origine de glissement.** Si vous glissez une
   émission déjà décalée par la tâche (`delayed_start_from` posé)

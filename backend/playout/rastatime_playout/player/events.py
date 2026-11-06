@@ -144,6 +144,11 @@ class FileEvent(BaseEvent):
     # (the track's icy_forward, else the type's preset).
     icy_hidden: bool = False
 
+    # RASTATIME 2026-11-06 - the show's "Allow delayed start".  At a show
+    # boundary the predecessor is cut hard at the boundary unless THIS
+    # track's show allows a delayed start (operator rule 2026-11-06).
+    allow_delayed_start: bool = False
+
     file_ready: bool = False
 
     @property

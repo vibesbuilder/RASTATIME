@@ -2219,8 +2219,11 @@ def _render_crossfade_block(
         show_skip = "    rt_instant(old_s, new.source)\n"
     else:
         show_skip = (
+            # 2026-11-06: at a strict boundary (rt_cut > 0) the old side gets
+            # the short boundary fade, not the show crossfade
+            "    s_cut2 = if cut > 0.05 then 0.3 else s_cut end\n"
             "    add(normalize=false, [fade.in(duration=0.05, new.source),\n"
-            "                          fade.out(duration=s_cut, max_duration(s_cut, old_s))])\n"
+            "                          fade.out(duration=s_cut2, max_duration(s_cut2, old_s))])\n"
         )
     # RASTATIME 2026-09-29 - the in-show shapes take the overlap of THIS
     # transition from rt_dur (crossfade per track type / Exclude from
@@ -2253,6 +2256,9 @@ def _render_crossfade_block(
         'rt_cross = interactive.string("rt_cross", "track")\n'
         'rt_nofade = interactive.string("rt_nofade", "-")\n'
         'rt_dur = interactive.float("rt_dur", -1.0)\n'
+        "# rt_cut: strict show boundary (2026-11-06) - seconds the ending track would run\n"
+        "# past the show end; > 0 = its tail is cut 0.3 s before the boundary (0 = none)\n"
+        'rt_cut = interactive.float("rt_cut", 0.0)\n'
         f"# track crossfade {f(track)} s, show crossfade {f(show)} s, tail buffer {f(buf)} s\n"
         "def rt_instant(old_s, new_s) =\n"
         "  add(normalize=false, [fade.in(duration=0.05, new_s), fade.out(duration=0.05, old_s)])\n"
@@ -2274,7 +2280,8 @@ def _render_crossfade_block(
         "  d = if d1 > buf then buf else d1 end\n"
         "  wait = buf - d\n"
         "  fd = if d < 0.05 then 0.05 else d end\n"
-        '  log(level=3, label="rt_cross", "#{mode}/#{nofade}/#{d}: #{old.metadata[\\"title\\"]} -> '
+        "  cut = rt_cut()\n"
+        '  log(level=3, label="rt_cross", "#{mode}/#{nofade}/#{d}/#{cut}: #{old.metadata[\\"title\\"]} -> '
         '#{new.metadata[\\"title\\"]} (tail #{rem} s)")\n'
         "  t_in = if new_nf then 0.05 else fd end\n"
         f"  t_out = if old_nf then {nofade} else fd end\n"
@@ -2297,7 +2304,21 @@ def _render_crossfade_block(
         + '  elsif mode == "track_skip" then\n'
         + track_skip
         + '  elsif mode == "show" then\n'
+        # 2026-11-06 strict show boundary: the ending track would run `cut`
+        # seconds past the show end (PLAYOUT measured it at the queue-ahead);
+        # its buffered tail plays until 0.3 s before the boundary, fades out
+        # and the new show starts exactly at the boundary.
+        + "    if cut > 0.05 then\n"
+        + "      play = rem - cut - 0.3\n"
+        + "      if play < 0.05 then\n"
+        + "        add(normalize=false, [fade.in(duration=0.05, new.source),\n"
+        + "                              fade.out(duration=0.05, max_duration(0.05, old_s))])\n"
+        + "      else\n"
+        + "        sequence([fade.out(duration=0.3, delay=play, max_duration(play + 0.3, old_s)), new.source])\n"
+        + "      end\n"
+        + "    else\n"
         + show_natural
+        + "    end\n"
         + "  else\n"
         + track_natural
         + "  end\n"

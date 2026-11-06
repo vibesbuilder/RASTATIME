@@ -261,6 +261,8 @@ def generate_file_events(
         exclude_crossfade=bool(file.get("exclude_crossfade") or False),
         # RASTATIME 2026-10-14 - stream metadata forwarded or hidden
         icy_hidden=_effective_icy_hidden(file),
+        # RASTATIME 2026-11-06 - strict show boundary unless the show allows a delayed start
+        allow_delayed_start=bool(show.get("allow_delayed_start") or False),
     )
 
     event.replay_gain = file_gain_db(file, stream_preferences)

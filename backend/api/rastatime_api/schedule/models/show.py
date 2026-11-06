@@ -31,6 +31,10 @@ class Show(models.Model):
         null=True,
         db_column="live_stream_using_airtime_auth",
     )
+    # RASTATIME 2026-11-06 - "Allow delayed start" (migration 0056): the
+    # playout cuts a predecessor hard at the show boundary unless the show
+    # that starts allows a delayed start (ARCHITECTURE 23.92).
+    allow_delayed_start = models.BooleanField(default=False, blank=True, null=True)
     live_auth_custom = models.BooleanField(
         default=False,
         blank=True,
