@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mehrfach-Löschen in der Library: 2 s je Datei und kein Busy-Hinweis (2026-11-06,
+  Go 2026-11-06)** — 66 Dateien brauchten heute 214 s, ein 52er-Block 101 s in einem
+  POST (FcgidIOTimeout 120 s).  Ursache: die Lösch-Sperre „noch von einer unbefüllten
+  Wiederholung gebraucht" (`RepeatFillService::neededByPendingRepeat`) filterte über
+  einen LEFT JOIN mit OR und ließ den Planer alle 18.113 Instanzen samt korrelierter
+  „letzte Instanz"-Unterabfrage durchgehen: 1,8-2,0 s je Datei.  Der Filter läuft jetzt
+  als EXISTS über die indizierten cc_schedule-Spalten (Datei und Stream): 1970 ms ->
+  33 ms im Mittel, Ergebnisse auf 75 Ids identisch.  Dazu ein sichtbarer Busy-Zustand
+  im Library-Löschen: Processing-Overlay der Tabelle, Knopftext „Deleting N item(s)…",
+  Fortschritts-Cursor, Meldung bei Fehler/Zeitüberschreitung (vorher blieb der Knopf
+  nur stumm deaktiviert).  Manual LIBRARY ×4, Strings de/fr/es.
+
 ### Changed
 
 - **Sendungsgrenze ohne „Allow delayed start": Vorgänger endet an der Grenze (2026-11-06,

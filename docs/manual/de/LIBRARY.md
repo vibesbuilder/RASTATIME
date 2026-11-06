@@ -294,6 +294,15 @@ der Track gerade in einer kommenden Sendung eingeplant ist,
 erhalten Sie eine Warnung und können abbrechen oder
 fortfahren (die Schedule-Zeilen werden ebenfalls entfernt).
 
+Während der Server löscht, zeigt die Tabelle ihre Lade-Überlagerung
+und der Knopf **Löschen** lautet „%s Element(e) werden gelöscht…";
+beides verschwindet, sobald die Anfrage beendet ist.  Viele Tracks
+auf einmal zu löschen geht schnell (seit 2026-11-06 dauert die
+Prüfung, ob eine Wiederholung den Track noch braucht, Millisekunden
+statt etwa zwei Sekunden je Datei).  Schlägt die Anfrage fehl oder
+läuft sie in eine Zeitüberschreitung, bittet eine Meldung darum, die
+Seite neu zu laden, um zu sehen, welche Elemente entfernt wurden.
+
 > **Wie es unter der Haube funktioniert.** Löschen entfernt
 > die `cc_files`-Zeile und alle `cc_playlistcontents` /
 > `cc_schedule`-Zeilen, die darauf verweisen (CASCADE). Die

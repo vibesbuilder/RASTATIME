@@ -303,6 +303,15 @@ partie. Si la piste est actuellement planifiée dans une
 choisir d'annuler ou de continuer (les lignes de schedule
 sont aussi retirées).
 
+Pendant que le serveur supprime, le tableau affiche sa superposition
+de chargement et le bouton **Supprimer** indique « Suppression de
+N élément(s)… » ; les deux disparaissent une fois la requête
+terminée.  Supprimer beaucoup de pistes d'un coup est rapide (depuis
+le 2026-11-06, la vérification qu'une rediffusion a encore besoin de
+la piste prend des millisecondes au lieu d'environ deux secondes par
+fichier).  Si la requête échoue ou expire, un message vous invite à
+recharger la page pour voir quels éléments ont été retirés.
+
 > **Comment ça marche sous le capot.** Supprimer enlève la
 > ligne `cc_files` et toutes les lignes
 > `cc_playlistcontents` / `cc_schedule` qui la

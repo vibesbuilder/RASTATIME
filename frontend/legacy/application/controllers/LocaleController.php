@@ -169,6 +169,9 @@ final class LocaleController extends Zend_Controller_Action
             'Edit metadata of the selected tracks' => _('Edit metadata of the selected tracks'),
             'Apply' => _('Apply'),
             'Updated %s track(s).' => _('Updated %s track(s).'),
+            // library/library.js - busy state of a bulk delete (RASTATIME 2026-11-06)
+            'Deleting %s item(s)...' => _('Deleting %s item(s)...'),
+            'Deleting failed or timed out. Reload the page to see which items were removed.' => _('Deleting failed or timed out. Reload the page to see which items were removed.'),
             'No permission for %s track(s).' => _('No permission for %s track(s).'),
             'Fill at least one field; empty fields stay unchanged.' => _('Fill at least one field; empty fields stay unchanged.'),
             '%s of %s tracks' => _('%s of %s tracks'),

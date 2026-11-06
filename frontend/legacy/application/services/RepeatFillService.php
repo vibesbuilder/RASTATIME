@@ -277,11 +277,19 @@ class Application_Service_RepeatFillService
             return null;
         }
         // RASTATIME 2026-10-20 - stage 2: a file is also needed as the recording of
-        // the source instance (a.file_id), which stands in for its live rows
-        $cond = $fileId ? '(sch.file_id = :id OR a.file_id = :id)' : 'sch.stream_id = :id';
+        // the source instance (a.file_id), which stands in for its live rows.
+        // RASTATIME 2026-11-06 - the filter as EXISTS on the indexed cc_schedule
+        // columns instead of a LEFT JOIN with an OR filter: the join made the
+        // planner scan all instances and run the correlated "last instance"
+        // subquery for each of them - 1.8-2.0 s per file, minutes for a bulk
+        // delete (measured 2026-11-06: 1970 ms -> 33 ms, results identical on
+        // 75 ids).  Same semantics: an instance qualifies when it recorded the
+        // file or one of its rows played the file / stream.
+        $cond = $fileId
+            ? '(a.file_id = :id OR EXISTS (SELECT 1 FROM cc_schedule sch WHERE sch.instance_id = a.id AND sch.file_id = :id))'
+            : 'EXISTS (SELECT 1 FROM cc_schedule sch WHERE sch.instance_id = a.id AND sch.stream_id = :id)';
         $sql = "SELECT b.name, MIN(bi.starts) AS starts
                   FROM cc_show_instances a
-                  LEFT JOIN cc_schedule sch ON sch.instance_id = a.id
                   JOIN cc_show b ON b.repeat_of_show_id = a.show_id
                   JOIN cc_show_instances bi ON bi.show_id = b.id
                  WHERE {$cond}

@@ -8023,3 +8023,11 @@ msgstr "muss eine Zahl in Sekunden sein"
 
 msgid "must not exceed Buffer max"
 msgstr "darf Puffer max nicht überschreiten"
+
+#: public/js/airtime/library/library.js
+msgid "Deleting %s item(s)..."
+msgstr "%s Element(e) werden gelöscht..."
+
+#: public/js/airtime/library/library.js
+msgid "Deleting failed or timed out. Reload the page to see which items were removed."
+msgstr "Löschen fehlgeschlagen oder Zeitüberschreitung. Laden Sie die Seite neu, um zu sehen, welche Elemente entfernt wurden."

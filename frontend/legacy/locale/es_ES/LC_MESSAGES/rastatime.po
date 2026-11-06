@@ -8216,3 +8216,11 @@ msgstr "debe ser un número de segundos"
 
 msgid "must not exceed Buffer max"
 msgstr "no debe superar Búfer máx."
+
+#: public/js/airtime/library/library.js
+msgid "Deleting %s item(s)..."
+msgstr "Eliminando %s elemento(s)..."
+
+#: public/js/airtime/library/library.js
+msgid "Deleting failed or timed out. Reload the page to see which items were removed."
+msgstr "La eliminación falló o se agotó el tiempo. Recargue la página para ver qué elementos se eliminaron."

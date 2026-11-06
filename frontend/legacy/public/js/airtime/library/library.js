@@ -603,6 +603,29 @@ var AIRTIME = (function (AIRTIME) {
   mod.fnDeleteItems = function (aMedia, podcastId) {
     //Prevent the user from spamming the delete button while the AJAX request is in progress
     AIRTIME.button.disableButton("btn-group #sb-delete", false);
+    // RASTATIME 2026-11-06 - a visible busy state while the server deletes
+    // (operator finding: a bulk delete took minutes with no sign of
+    // progress): the table's processing overlay, the button text with the
+    // count, a progress cursor, and a message when the request fails or
+    // times out (before, the button simply stayed disabled).
+    var $deleteLabel = $("#sb-delete span"),
+      deleteLabelText = $deleteLabel.text(),
+      $deleteProcessing = oTable
+        .closest(".dataTables_wrapper")
+        .find(".dataTables_processing"),
+      deleteCount = aMedia ? aMedia.length : 0;
+    $deleteLabel.text(
+      $.i18n._("Deleting %s item(s)...").replace("%s", deleteCount),
+    );
+    $deleteProcessing.css("display", "block");
+    $("body").css("cursor", "progress");
+    var restoreDeleteState = function () {
+      $deleteProcessing.css("display", "none");
+      $("body").css("cursor", "");
+      $deleteLabel.text(deleteLabelText);
+      //Re-enable the delete button
+      AIRTIME.button.enableButton("btn-group #sb-delete", false);
+    };
     var openTabObjectIds = $(".obj_id"),
       mediaIds = [];
     for (var i in aMedia) {
@@ -618,11 +641,10 @@ var AIRTIME = (function (AIRTIME) {
       }
     });
 
-    $.post(
-      baseUrl + "library/delete",
-      { format: "json", media: aMedia },
-      function (json) {
-        if (json.message !== undefined) {
+    $.post(baseUrl + "library/delete", { format: "json", media: aMedia })
+      .done(function (json) {
+        restoreDeleteState();
+        if (json && json.message !== undefined) {
           alert(json.message);
         }
 
@@ -634,11 +656,18 @@ var AIRTIME = (function (AIRTIME) {
           AIRTIME.podcast.episodeTables[podcastId].reload(this.podcast_id);
           AIRTIME.podcast.episodeTables[podcastId].clearSelection();
         }
-
-        //Re-enable the delete button
-        AIRTIME.button.enableButton("btn-group #sb-delete", false);
-      },
-    );
+      })
+      .fail(function () {
+        restoreDeleteState();
+        alert(
+          $.i18n._(
+            "Deleting failed or timed out. Reload the page to see which items were removed.",
+          ),
+        );
+        if (typeof podcastId === "undefined") {
+          oTable.fnStandingRedraw();
+        }
+      });
     mod.selectNone();
   };
 

@@ -240,6 +240,15 @@ el menú de acción de la fila.
 Fila → **Eliminar**. La pista se retira de la biblioteca
 *y* de cualquier playlist de la que era parte.
 
+Mientras el servidor elimina, la tabla muestra su capa de carga y el
+botón **Eliminar** dice «Eliminando N elemento(s)…»; ambos
+desaparecen cuando la petición termina.  Eliminar muchas pistas a la
+vez es rápido (desde 2026-11-06 la comprobación de si una repetición
+aún necesita la pista tarda milisegundos en lugar de unos dos
+segundos por archivo).  Si la petición falla o se agota el tiempo, un
+mensaje le pide recargar la página para ver qué elementos se
+eliminaron.
+
 > **Cómo funciona bajo el capó.** Eliminar quita la fila
 > `cc_files` y todas las filas `cc_playlistcontents` /
 > `cc_schedule` que la referencian (CASCADE). El archivo

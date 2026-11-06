@@ -12353,8 +12353,9 @@ libperf_sql_probe.php, Chrome auf der Maschine, 100 Zeilen je Seite):
   (Init-Draw der DataTable und `setCurrentTable(..., redraw=true)` beim
   Anwenden des Hash `#tracks`).
 - Nutzlast je Feed 330 KB, davon 72 % Cover-Data-URIs (66 von 100 Zeilen
-  mit Cover, je ~3,6 KB) - die Cover-Spalte ist in der Operator-Ansicht
-  gar nicht sichtbar.  Über WAN zählt diese Größe, nicht die Serverzeit.
+  mit Cover, je ~3,6 KB).  Die Cover-Spalte IST eingeblendet (Operator
+  2026-11-06; ihr Spaltenkopf wurde früher entfernt, daher der erste
+  Fehlschluss).  Über WAN zählt diese Größe, nicht die Serverzeit.
 - Datenbank (Standardseite, alle Medien, 25 Zeilen): Zeilen-Abfrage
   178 ms + Zähl-Abfrage 176 ms.  Ursachen: `UNION` (Dedupe-Sort aller
   25.376 Zeilen × 39 Spalten, 8 MB auf Platte) und die Teaser-Spalte als
@@ -12370,10 +12371,14 @@ Vorschlag (Reihenfolge nach Nutzen/Risiko):
    identisch - jede trägt ihre id + ftype, Dedupe ist wirkungslos) und die
    Teaser-Spalte als `LEFT JOIN (SELECT file_id, string_agg(...) GROUP BY
    file_id)` wie play_count.  ~15 Zeilen StoredFile.php, Serverzeit -80 %.
-2. Cover-Data-URIs nur liefern, wenn die Spalte sichtbar ist (Client
-   schickt `artwork=1` mit, Feed lässt `artwork_data` sonst weg), oder
-   als URL statt Data-URI (cachebar).  ~40-60 Zeilen PHP+JS, Nutzlast
-   -70 %.
+2. Cover als URL statt Data-URI: der Feed trägt nur noch die Datei-Id,
+   der Browser lädt `library/artwork?id=…&size=32` (neue kleine Action
+   mit Cache-Headern, Login-pflichtig) und cacht jedes Cover - Feed-JSON
+   -70 % (330 -> ~90 KB), Tabelle steht vor den Bildern, bei jedem
+   weiteren Draw (Sortieren, Blättern, Tab-Bursts, nach dem Löschen)
+   kommen die Bilder aus dem Cache.  Server spart 66 Dateilesungen +
+   Base64 je Feed.  ~40-60 Zeilen PHP+JS.  „Nur wenn Spalte sichtbar"
+   entfällt (Spalte ist sichtbar).
 3. Doppel-Draw beim Öffnen vermeiden (Init-Draw unterdrücken, wenn
    `setCurrentTable` ohnehin zeichnet).  ~10 Zeilen.
 Dauer gesamt ~1/2 Tag inkl. Live-Verifikation.  Risiko gering (nur
@@ -12381,7 +12386,7 @@ Legacy-Feed, kein Neustart, OPcache aus); Rückfall `git revert`.  Sinn:
 auf der Maschine kaum spürbar (0,25 s), über WAN deutlich (Nutzlast,
 Doppelabruf); DB-Last je Feed sinkt auf ein Fünftel.
 
-### 🟡 Mehrfach-Löschen in der Library: 2 s je Datei durch die Wiederholungs-Prüfung, kein Busy-Hinweis - EVALUIERT 2026-11-06, Go offen
+### ✅ Mehrfach-Löschen in der Library: 2 s je Datei durch die Wiederholungs-Prüfung, kein Busy-Hinweis - GEBAUT 2026-11-06 (Go 2026-11-06 für Punkte 1+2; Punkt 3 Blöcke mit Fortschritt DEFER; Index cc_show_instances(show_id, ends) offen)
 
 Operator-Befund 2026-11-06: 50-60 Tracks löschen dauert Minuten, kein
 Hinweis, dass im Hintergrund gelöscht wird.

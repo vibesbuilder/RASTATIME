@@ -276,6 +276,14 @@ from any playlist it was a part of. If the track is currently
 scheduled in any upcoming show, you get a warning and can choose
 to abort or proceed (the schedule rows are removed too).
 
+While the server deletes, the table shows its loading overlay and
+the **Delete** button reads "Deleting N item(s)…"; both clear when
+the request has finished.  Deleting many tracks at once is quick
+(since 2026-11-06 the check whether a repeat still needs a track
+takes milliseconds instead of about two seconds per file).  Should
+the request fail or time out, a message asks you to reload the page
+to see which items were removed.
+
 > **How it works under the hood.** Delete removes the
 > `cc_files` row and any `cc_playlistcontents` / `cc_schedule`
 > rows that reference it (CASCADE). The file on disk is moved
