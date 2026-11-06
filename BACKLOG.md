@@ -136,6 +136,43 @@ hilft nicht gegen 40001; (c) Fill-Pass überspringt eine Instanz, deren
 nächsten Lauf wieder - ~20 Zeilen, sauberste Trennung.  Empfehlung: (a) + (b) zusammen, ~1 h
 mit Probe.  **Vorbedingungen:** Operator-Go; nur Legacy-PHP (live ohne Neustart, OPcache aus).
 
+### 💡 Widget für Producers („Editorial Teams") - IDEA (Operator 2026-11-07, noch nicht recherchiert)
+
+Frage des Operators: die Editorial Teams als Widget anbieten (für die Stations-Website).
+Hinweis: „Editorial Teams" heißen in RASTATIME seit 2026-11-04 **Producers** (Abschnitt
+CBA-Anbindung, Nachtrag 2026-11-04).  Offen: was das Widget zeigt, welche Angaben öffentlich
+sein dürfen (Namen, Sendungen, Kontakt), Anschluss an die öffentlichen Lesepfade und den
+Schalter *Public RASTATIME API* (Abschnitt „Öffentliche API und Widgets").
+**Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
+
+### 💡 RASTATIME über GitHub aktualisieren - IDEA (Operator 2026-11-07, noch nicht recherchiert)
+
+Wunsch: RASTATIME direkt aus den GitHub-Releases aktualisieren können.  Ein Plan dafür steht
+schon im Abschnitt „Veröffentlichung auf GitHub, Releases, Update-Weg": Stufe 2 `rt-update.ps1`
+(UPGRADE.md automatisiert, Rollback auf den vorigen Tag + DB) und Stufe 3 Knopf in der UI
+(Settings → Updates, Versionsprüfung gegen die Releases-API), beide 🟡.  Releases selbst gibt es
+seit v1.0.0 (aktuell v1.2.0).  Bei Wiederaufnahme dort weiterführen, keinen zweiten Plan anlegen.
+**Vorbedingungen:** Operator-Go für Stufe 2; Stufe 3 erst, wenn zwei echte Releases über Stufe 2
+gelaufen sind.
+
+### 💡 Anmeldung per LDAP / SSO - IDEA (Operator 2026-11-07, noch nicht recherchiert)
+
+Frage des Operators: LDAP- oder SSO-Anmeldung hinzufügen?  Bekannt: der geerbte Legacy-Code
+kennt LDAP/FreeIPA/Header-Anmeldung, auf der Station ist `general.auth` = local, nicht aktiv und
+nicht getestet (Rollen-Audit 2026-10-25); die API kennt nur API-Key + PHP-Sitzung (Eintrag
+„SSO / OAuth für API").  Offen: welcher Dienst (Active Directory, Keycloak, Google/Microsoft),
+Zuordnung auf die vier Rollen, lokaler `admin` als Notzugang.
+**Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
+
+### 💡 Aufnahme je Sendung: Vorlauf und Nachlauf einstellbar - IDEA (Operator 2026-11-07, noch nicht recherchiert)
+
+Wunsch: je Sendung einstellen, wie viele Sekunden die Aufnahme vor dem Sendungsstart beginnt
+und nach dem Sendungsende weiterläuft; manche Sendungen brauchen 5-10 s.  Bezug: Recording je
+Sendung (`cc_show_days.record` → `cc_show_instances.record`), Kopie der Aufnahme in die Library
+(§23.66), Archivierung zu cba.media.  Offen: Standard 0 s, Obergrenze, Überlappung mit der
+Vorgänger- und Nachfolgesendung, Wirkung auf Länge und Metadaten von Kopie und Archiv.
+**Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
+
 ### 🟡 Kommentar je Allowed Address (neu 2026-11-06, Operator: kein Go, Defer)
 
 Wunsch: jede Zeile unter *System Status → Allowed addresses* bekommt einen Kommentar (wem
