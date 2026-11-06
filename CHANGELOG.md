@@ -42,9 +42,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PHP 8.3+, Liquidsoap 2.4.6, Icecast 2.5.0, FFmpeg), Getting started als Kurzfassung mit
   Verweis auf INSTALL.md, Upgrade-Hinweis (Dienste vor `pip install` stoppen — der laufende
   Analyzer sperrt seine EXE, 2026-11-04), die acht Dienste, Doku-Übersicht, aktuelles
-  Repo-Layout und `scriptsun_tests.ps1`.  Commit `eadec826`.
+  Repo-Layout und `scripts
+un_tests.ps1`.  Commit `eadec826`.
 
 ### Fixed
+
+- **Smart Block: Minuten-Feld bei mehreren offenen Dialogen (2026-11-06)** — Die Kästchen
+  „Exclude tracks played lately" / „Exclude artists played lately" blendeten die
+  Minuten-Zeile nur im ERSTEN geöffneten Smart Block ein; bei weiteren offenen Dialogen
+  trafen die id-Selektoren den falschen.  Jetzt auf den aktiven Tab begrenzt
+  (`smart_blockbuilder.js`, `activeTab.find`).  Live mit zwei Dialogen geprüft.  Commit `553c942a`.
+
+- **Startseite: Textfarbe je Browser (2026-11-06)** — Wochenprogramm und Player auf der
+  Radio-Startseite liefen im Widget-Thema „auto" und folgten dem Farbschema des
+  Browsers; im Hell-Modus stand dunkler Text auf dem dunklen Foto.  Beide iframes sind
+  jetzt auf `theme=dark` festgelegt (`index/index.phtml`).  In beiden Schemata geprüft.  Commit `a1deb9ee`.
 
 - **API: `/api/v2/now-playing` liest den Sendeplan (2026-11-05, Go 2026-11-05)** — Der
   Endpunkt las ein prozessinternes Singleton, das im Betrieb (Playout und API als
