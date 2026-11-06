@@ -47,6 +47,19 @@ un_tests.ps1`.  Commit `eadec826`.
 
 ### Fixed
 
+- **Firewall-Wächter sperrte den Operator aus: CSRF-Abweisung eines veralteten Tabs
+  (2026-11-06, Go 2026-11-06)** — Ein Kalender-Tab, dessen Sitzung sich geändert hatte
+  (Neu-Login in einem anderen Tab), fragte minütlich den event-feed ab, bekam 52 × 403
+  „CSRF token mismatch" und der Wächter sperrte die WAN-Adresse des Operators um 10:47
+  für 24 h (VNC und Web-UI von außen weg, LAN und Playout unberührt).  Jetzt: ein
+  vorhandenes, aber falsches Token (veralteter Tab) antwortet **401** mit Header
+  `X-RASTATIME-Refused: csrf-stale`, das der Wächter wie „nicht angemeldet" ignoriert
+  und das der globale ajaxError-Handler (common.js) in „alle Polls stoppen" umsetzt; ein
+  fehlendes Token bleibt 403 (`csrf-missing`), stoppt die Polls aber ebenfalls.  Live mit
+  falschem, fehlendem und richtigem Token geprüft (401 / 403 / 200).  Entsperren:
+  System Status → Blocked addresses oder `rt-blocks.ps1 -Unblock <ip>`; feste Adressen
+  unter Allowed addresses.
+
 - **Smart Block: Minuten-Feld bei mehreren offenen Dialogen (2026-11-06)** — Die Kästchen
   „Exclude tracks played lately" / „Exclude artists played lately" blendeten die
   Minuten-Zeile nur im ERSTEN geöffneten Smart Block ein; bei weiteren offenen Dialogen

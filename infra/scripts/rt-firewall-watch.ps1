@@ -16,7 +16,9 @@
       * answered 4xx 50 times or more (401 "not signed in" does not count:
         a browser tab whose session expired polls the dashboard every
         minute and collected 60 x 401 in an hour - operator locked out
-        2026-10-07), or
+        2026-10-07; since 2026-11-06 a CSRF refusal of a stale tab answers
+        401 too - the calendar tab's event-feed collected 52 x 403 and
+        locked the operator out at 10:47), or
       * asked for 3 or more typical scanner paths (/.git, /.env, /wp-, ...), or
       * had 5 or more DJ logins rejected for a WRONG PASSWORD
         (too-early logins - "no-show" / "not-host" - never count).

@@ -9,8 +9,17 @@ var previewWidth = 482,
 // goes to the login).
 window.rtPollTimers = window.rtPollTimers || [];
 window.rtSessionGone = false;
+// RASTATIME 2026-11-06 - a CSRF refusal counts as well: a stale token
+// (session changed in another tab) answers 401 since today, a missing one
+// 403 with the X-RASTATIME-Refused header; both stop the polls.
 $(document).ajaxError(function (event, xhr) {
-  if (xhr && xhr.status === 401 && !window.rtSessionGone) {
+  var refused = false;
+  try {
+    refused = !!(xhr && xhr.getResponseHeader && xhr.getResponseHeader("X-RASTATIME-Refused"));
+  } catch (e) {
+    refused = false;
+  }
+  if (xhr && (xhr.status === 401 || (xhr.status === 403 && refused)) && !window.rtSessionGone) {
     window.rtSessionGone = true;
     $.each(window.rtPollTimers, function (_, t) {
       clearInterval(t);

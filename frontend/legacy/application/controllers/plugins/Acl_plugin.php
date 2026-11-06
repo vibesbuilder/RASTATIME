@@ -343,9 +343,22 @@ class Zend_Controller_Plugin_Acl extends Zend_Controller_Plugin_Abstract
         ));
 
         if (self::LEGACY_CSRF_ENFORCE) {
+            // RASTATIME 2026-11-06 - a token that is PRESENT but wrong is a
+            // tab whose session changed (re-login elsewhere, session
+            // rotation): the calendar tab kept polling event-feed every
+            // minute, collected 52 x 403 in an hour and the firewall
+            // watcher locked the operator's WAN address out (10:47).  Such
+            // a tab is "not signed in" for this session -> 401, which the
+            // browser's ajaxError handler (common.js) turns into "stop all
+            // polls" and the watcher never counts.  A MISSING token (a
+            // sender that is not our UI) stays 403.
+            $stale = !empty($token);
             $this->getResponse()
-                ->setHttpResponseCode(403)
-                ->appendBody('ERROR: CSRF token mismatch.')
+                ->setHttpResponseCode($stale ? 401 : 403)
+                ->setHeader('X-RASTATIME-Refused', $stale ? 'csrf-stale' : 'csrf-missing')
+                ->appendBody($stale
+                    ? 'ERROR: CSRF token mismatch - the session changed, please sign in again.'
+                    : 'ERROR: CSRF token mismatch.')
                 ->sendResponse();
 
             exit;

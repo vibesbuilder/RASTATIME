@@ -7002,6 +7002,20 @@ Verschiebungs-Marke („+32 s", Tooltip „delayed start, originally 21:00")
 und Hinweiszeile im Dialog „Show Content" aus `delayed_start_from`.
 ~60 Zeilen (eventFeed + Dialog + CSS), 2 h.  Kein Go.
 
+## Firewall-Wächter sperrte den Operator aus (Vorfall 2026-11-06 10:47, behoben)
+
+Kalender-Tab mit veraltetem CSRF-Token (Sitzung in anderem Tab erneuert)
+pollte event-feed minütlich -> 52 × 403 in 60 min -> Regel
+„RASTATIME-Block <WAN-IP>" für 24 h -> VNC + HTTPS von außen tot, LAN ok.
+Der Wächter zählt 4xx außer 401.  Fix (Go 2026-11-06): Acl_plugin
+antwortet bei vorhandenem-aber-falschem Token 401 + Header
+X-RASTATIME-Refused: csrf-stale (fehlendes Token: 403 csrf-missing);
+common.js stoppt bei 401 oder 403-mit-Header alle Poll-Timer.  Operator
+trug seine Adresse unter Allowed addresses ein.  Entsperren von Hand:
+rt-blocks.ps1 -Unblock <ip> (Admin) oder System Status -> Blocked
+addresses.  Hinweis: das Entfernen einer Firewall-Regel ist für die
+Assistenz-Sitzung gesperrt (Auto-Modus), der Operator macht es selbst.
+
 ## ICY-Titel blieb beim Sendungsstart 08:15 stehen (Befund 2026-11-06, Beobachtung läuft)
 
 Operator sah in foobar2000 beim Start der Datei-Show um 08:15 (taglose
