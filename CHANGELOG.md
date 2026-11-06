@@ -88,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stand bei verschluckter Lücke der Klemmwert -1,00 im Log).  Tests 901 grün, Template per
   `liquidsoap --check` am Live-Skript geprüft.  Wirksam nach PLAYOUT-Neustart (rendert
   rastatime.liq, geplanter Liquidsoap-Neustart im nächsten ruhigen Moment; nicht von Hand
-  starten).  Manual DELAYED_START §7 ×4, ARCHITECTURE §23.94, BACKLOG.
+  starten).  Manual DELAYED_START §7 ×4, ARCHITECTURE §23.94, BACKLOG.  Commit `674463f5`.
 
 ## [1.2.0] - 2026-11-05
 
