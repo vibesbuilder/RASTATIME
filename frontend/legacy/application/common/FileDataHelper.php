@@ -16,7 +16,7 @@ class FileDataHelper
      * Files imported via legacy paths (e.g. the podcast downloader) are
      * stored with a leading slash, so we strip both ends defensively.
      */
-    private static function joinStoragePath($storageRoot, $relPath)
+    public static function joinStoragePath($storageRoot, $relPath)
     {
         return rtrim($storageRoot, '/\\') . '/' . ltrim($relPath, '/\\');
     }

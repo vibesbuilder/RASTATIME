@@ -55,7 +55,13 @@ class UsersettingsController extends Zend_Controller_Action
 
     public function getLibraryDatatableAction()
     {
-        $this->_helper->json(Application_Model_Preference::getDatatableSetting($this->libraryDatatableKey()));
+        // RASTATIME 2026-11-06 - the column profiles ride along with the
+        // layout (rtColumnProfiles, taken out again by library.js): one
+        // synchronous request on open instead of two - the second one used
+        // to wait ~1 s for a free PHP worker while the first feed ran.
+        $state = Application_Model_Preference::getDatatableSetting($this->libraryDatatableKey()) ?? new stdClass();
+        $state->rtColumnProfiles = Application_Model_Preference::getDatatableSetting($this->libraryColumnsKey()) ?? new stdClass();
+        $this->_helper->json($state);
     }
 
     // RASTATIME 2026-10-24 - the library's visible columns per media type

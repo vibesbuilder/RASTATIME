@@ -1277,10 +1277,13 @@ SQL;
                 // "Show name (today)"; NULL for everything that is no teaser
                 $plSelect[] = 'NULL::text AS ' . $key;
                 $blSelect[] = 'NULL::text AS ' . $key;
-                // scalar subquery, not a JOIN: cc_show has genre / description
-                // columns too and the file branch selects those bare
+                // RASTATIME 2026-11-06 - grouped LEFT JOIN ($teaserJoin below)
+                // instead of a scalar subquery per file row (default page
+                // 178 -> ~40 ms); the derived table exposes only file_id and
+                // names, so the bare genre / description of the file branch
+                // stay unambiguous (cc_show has both columns too)
                 $fileSelect[] = self::teaserColumnsReady($con)
-                    ? "((SELECT string_agg(ts.name, ', ' ORDER BY ts.name) FROM cc_file_teaser ft JOIN cc_show ts ON ts.id = ft.show_id WHERE ft.file_id = FILES.id)"
+                    ? '(tz.names'
                       . " || CASE WHEN FILES.teaser_type IN ('today', 'tomorrow') THEN ' Â· ' || FILES.teaser_type ELSE '' END)::text AS " . $key
                     : 'NULL::text AS ' . $key;
                 $streamSelect[] = 'NULL::text AS ' . $key;
@@ -1456,7 +1459,11 @@ SQL;
         $blTable = "({$blSelect} FROM cc_block AS BL LEFT JOIN cc_subjs AS sub ON (sub.id = BL.creator_id))";
         // RASTATIME 2026-10-07 - play_count: one grouped pass over the playout history per query
         $playCountJoin = 'LEFT JOIN (SELECT file_id, COUNT(*) AS play_count FROM cc_playout_history WHERE file_id IS NOT NULL GROUP BY file_id) AS ph ON (ph.file_id = FILES.id)';
-        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
+        // RASTATIME 2026-11-06 - teaser names: one grouped pass over the link table
+        $teaserJoin = self::teaserColumnsReady($con)
+            ? "LEFT JOIN (SELECT ft.file_id, string_agg(ts.name, ', ' ORDER BY ts.name) AS names FROM cc_file_teaser ft JOIN cc_show ts ON ts.id = ft.show_id GROUP BY ft.file_id) AS tz ON (tz.file_id = FILES.id)"
+            : '';
+        $fileTable = "({$fileSelect} FROM cc_files AS FILES LEFT JOIN cc_subjs AS sub ON (sub.id = FILES.owner_id) {$playCountJoin} {$teaserJoin} WHERE file_exists = 'TRUE' AND hidden='FALSE')";
         // $fileTable = "({$fileSelect} FROM cc_files AS FILES WHERE file_exists = 'TRUE')";
         // RASTATIME 2026-10-25 (role audit, operator) - DJs and guests work
         // with tracks only: webstreams and Line-Ins are not listed for them.
@@ -1465,7 +1472,11 @@ SQL;
         $noRows = $tracksOnly ? ' WHERE FALSE' : '';
         $streamTable = "({$streamSelect} FROM cc_webstream AS ws LEFT JOIN cc_subjs AS sub ON (sub.id = ws.creator_id){$noRows})";
         $lineinTable = "({$lineinSelect} FROM rastatime_linein AS li WHERE li.enabled = TRUE" . ($tracksOnly ? ' AND FALSE' : '') . ')';
-        $unionTable = "({$plTable} UNION {$blTable} UNION {$fileTable} UNION {$streamTable} UNION {$lineinTable}) AS RESULTS";
+        // RASTATIME 2026-11-06 - UNION ALL: every branch carries its own id and
+        // ftype literal, so no two rows can be equal and the duplicate
+        // elimination of UNION (a sort of all 25,000 rows x 39 columns, 8 MB
+        // on disk, per feed) did nothing but cost time.
+        $unionTable = "({$plTable} UNION ALL {$blTable} UNION ALL {$fileTable} UNION ALL {$streamTable} UNION ALL {$lineinTable}) AS RESULTS";
 
         // choose which table we need to select data from.
         switch ($type) {
@@ -1507,7 +1518,7 @@ SQL;
         $displayTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
         $utcTimezone = new DateTimeZone('UTC');
 
-        $fp = Application_Common_Storage::root();
+        $basePath = Config::getBasePath();
 
         foreach ($results['aaData'] as &$row) {
             $row['id'] = intval($row['id']);
@@ -1556,8 +1567,14 @@ SQL;
                 $formatter = new BitrateFormatter($row['bit_rate']);
                 $row['bit_rate'] = $formatter->format();
 
-                $get_artwork = FileDataHelper::getArtworkData($row['artwork'], 32, $fp);
-                $row['artwork_data'] = $get_artwork;
+                // RASTATIME 2026-11-06 - the cover as a cacheable URL
+                // (library/artwork) instead of a Data URI per row: the Data
+                // URIs were 72 % of a 330 KB feed and travelled again with
+                // every draw.  v changes with the cover (path + mtime), so
+                // the browser may keep the image; no cover -> no request.
+                $row['artwork_data'] = ($row['artwork'] !== null && $row['artwork'] !== '')
+                    ? $basePath . 'library/artwork?id=' . $row['id'] . '&v=' . substr(md5($row['artwork'] . '|' . $row['mtime']), 0, 8)
+                    : null;
 
                 // for audio preview
                 $row['audioFile'] = $row['id'] . '.' . pathinfo($row['filepath'], PATHINFO_EXTENSION);

@@ -166,8 +166,12 @@ function getDatatablesStrings(overrideDict) {
  * once: ColReorder restores the saved column order only on the first draw,
  * so all but the last carried the default order, and whichever the server
  * handled last won - a column order never survived the next page load.
+ *
+ * RASTATIME 2026-11-06 - onLoad(state) sees the raw response before the
+ * layout check, so a caller can take extra data out of it (the library's
+ * column profiles travel with the layout).
  */
-function rtDatatableServerState(getUrl, setUrl, params) {
+function rtDatatableServerState(getUrl, setUrl, params, onLoad) {
   var lastSaved = null;
   var pendingState = null; // the newest layout not yet posted
   var saveTimer = null;
@@ -218,6 +222,9 @@ function rtDatatableServerState(getUrl, setUrl, params) {
       var loaded = null;
       $.ajax({ url: getUrl, data: params, dataType: "json", async: false })
         .done(function (state) {
+          if (typeof onLoad === "function") {
+            onLoad(state);
+          }
           if (state && state.time) {
             lastSaved = layoutOf(state);
             loaded = state;

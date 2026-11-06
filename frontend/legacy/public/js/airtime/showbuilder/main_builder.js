@@ -127,7 +127,15 @@ AIRTIME = (function (AIRTIME) {
     $(".media_type_selector:first").addClass("highlight");
     var selected;
     if (location.hash === "") {
-      location.hash = "tracks";
+      // RASTATIME 2026-11-06 - set the hash without a hashchange event: the
+      // handler below would draw the library a second time on top of the
+      // table's own first draw (two identical feeds on every open without a
+      // hash); libraryInit reads the hash itself.
+      if (window.history && history.replaceState) {
+        history.replaceState(null, "", "#tracks");
+      } else {
+        location.hash = "tracks";
+      }
       selected = $("a[href$='#tracks']");
     } else {
       selected = $("a[href$='" + location.hash + "']");

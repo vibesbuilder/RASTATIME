@@ -23,6 +23,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Library-Feed schneller und schlanker (2026-11-06, Go 2026-11-06)** — Der
+  Dashboard-Tab „Tracks" lud mit 100 Zeilen in 1,26 s und zog 330 KB je Draw, davon
+  72 % Cover als Data-URIs; ohne Hash in der URL kamen zwei identische Feeds.  Drei
+  Hebel: (1) `UNION ALL` statt `UNION` (die Dedupe-Sortierung über 25.000 Zeilen × 39
+  Spalten konnte nie etwas zusammenlegen, jede Zeile trägt id + ftype) und die
+  Teaser-Spalte als gruppierter `LEFT JOIN` statt skalarer Unterabfrage je Dateizeile
+  — Standardseite 178 + 176 ms → 46 + 39 ms, Join auf allen 24.962 Dateien identisch
+  mit der Unterabfrage (51 Teaser, 0 Abweichungen).  (2) Cover als cachebare URL
+  (`library/artwork?id=&size=&v=`, neue Action, `v` aus Pfad + mtime, ein Jahr
+  `immutable`, 304 bei If-Modified-Since, No-Cover-Bild statt leerer Antwort,
+  PHP-Session-Header `Pragma`/`Expires` entfernt) statt 3,6-KB-Data-URI je Zeile:
+  Feed 339 → 92 KB, beim zweiten Draw kommen alle 66 Cover in 19 ms aus dem Cache.
+  (3) Beim Öffnen ohne Hash `history.replaceState('#tracks')` statt `location.hash`
+  (kein hashchange → kein zweiter Draw) und die Spaltenprofile reisen mit dem
+  Tabellen-Layout in einer Antwort (`rtColumnProfiles`) statt in einer zweiten
+  synchronen Anfrage, die hinter dem laufenden Feed bis ~1,1 s auf einen freien
+  php-cgi-Prozess wartete.  Gemessen auf der Maschine: Seitenaufruf 1,26 s → 0,70 s,
+  ein Feed, 92 KB.  Nebenbefund: mod_fcgid bedient einen Schub paralleler Anfragen
+  in 1-s-Stufen, sobald die warmen Worker ausgehen (BACKLOG).  ARCHITECTURE §23.93.
+  Commit: Hash im Folge-Commit.
+
 - **Sendungsgrenze ohne „Allow delayed start": Vorgänger endet an der Grenze (2026-11-06,
   Go 2026-11-06)** — Bisher wurde ein Vorgänger an der Sendungsgrenze nur geschnitten,
   wenn er mehr als Crossfade-Puffer 3 s + 1,5 s Toleranz Rest hatte; darunter spielte die

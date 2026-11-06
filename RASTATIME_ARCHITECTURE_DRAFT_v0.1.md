@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.118
-Date: 2026-11-04
+Draft version: 0.119
+Date: 2026-11-06
 
 > **Revision history**
+> - **0.119 (2026-11-06)** - **Library feed** (§23.93): UNION ALL + teaser join (default
+>   page 355 -> 85 ms), covers as cacheable URLs instead of Data URIs (feed 339 -> 92 KB),
+>   one draw and one layout request on open (1.26 -> 0.70 s); mod_fcgid 1-s burst steps noted.
 > - **0.118 (2026-11-04)** - **Operator cosmetics** (§23.87): the "Yearly Report" split into
 >   Analytics -> People Involved and Programme Minutes; the number of people involved moved
 >   from Archiving to What (below "Own production", shown while ticked) and counts for own
@@ -9154,3 +9157,71 @@ as strict), then PLAYOUT (re-renders rastatime.liq; planned Liquidsoap
 restart at the next track boundary).  Rollback: `git revert` + the same
 restarts.
 
+### 23.93 Library Feed: UNION ALL, Teaser Join, Covers as URLs, One Draw on Open (2026-11-06)
+
+**Operator question (2026-11-06).** "Loading the library takes rather
+long - can anything be optimised?"  Measured on the machine with 100
+rows per page: a draw 0.25 s (server 0.18 s), 330 KB of JSON per draw of
+which 72 % were cover Data URIs, page open 1.26 s, two identical feeds
+when the page was opened without a hash.
+
+**Feed SQL (`StoredFile::searchLibraryFiles`).**
+- `UNION ALL` instead of `UNION`: every branch (playlist, block, file,
+  stream, line-in) selects its own id plus an ftype literal, so no two
+  rows can ever be equal; the duplicate elimination sorted all 25,000
+  rows x 39 columns (8 MB on disk) per feed for nothing.
+- The teaser column ("Show name (type)") as a grouped `LEFT JOIN`
+  (`tz`: file_id, string_agg of the linked show names) instead of a
+  scalar subquery per file row.  The derived table exposes only two
+  columns, so the bare `genre` / `description` of the file branch stay
+  unambiguous (cc_show has both too - the reason the subquery was chosen
+  in §23.63).  Equality checked over all 24,962 files: 51 teasers, 0
+  differences.
+- Default page: rows 178 -> 46 ms, count 176 -> 39 ms.  A search
+  ("love", ILIKE over all searchable columns) stays at ~210 ms - that
+  is the ILIKE, not the UNION.
+
+**Covers (`LibraryController::artworkAction`).**  `artwork_data` of a
+file row is now a URL, `library/artwork?id=<file>&size=32&v=<8 hex of
+md5(path|mtime)>`, or null without a cover (the renderer then shows
+no-cover.jpg without a request).  The action serves `<base>-<size>.jpg`
+from under the storage root (realpath check), `Cache-Control: private,
+max-age=31536000, immutable`, `Last-Modified`, 304 on
+`If-Modified-Since`; a missing file answers with no-cover.jpg and one
+hour of cache (never an empty 200, which leaves an `<img>` hanging).
+The PHP session start adds `Pragma: no-cache` and `Expires: 1981`;
+`header_remove()` takes them off, otherwise Chrome fetched every cover
+anew on every draw.  `v` changes with the cover (set / remove artwork
+touch mtime), so a cached image can never be stale.  Feed 339 -> 92 KB;
+on the second draw all 66 covers of a page come from the cache in
+19 ms.  `loading="lazy"` was tried and dropped: in the library's scroll
+container Chrome did not load the covers of the visible rows.
+
+**Open (`main_builder.js`, `common.js`, `UsersettingsController`).**
+- Without a hash the dashboard set `location.hash = "tracks"`, the
+  `hashchange` handler redrew the library on top of the table's own
+  first draw: two identical feeds.  Now `history.replaceState(null, "",
+  "#tracks")` (no event); `libraryInit` reads the hash itself.
+- `applyColumnProfile` fetched the per-type column profiles with a
+  second synchronous request while the first feed was running.  With
+  only two warm php-cgi workers that request waited ~1.1 s for a fresh
+  process (see below) and blocked the page meanwhile.  The profiles now
+  travel inside the layout response (`rtColumnProfiles`, both for the
+  dashboard and for the Schedule Tracks dialog `table=builder`);
+  `rtDatatableServerState(getUrl, setUrl, params, onLoad)` hands the raw
+  response to the caller first, library.js takes the profiles out.
+- Page open on the machine: 1.26 s -> 0.70 s, one feed.
+
+**Side finding: mod_fcgid serves bursts in 1-second steps.**  With h2
+the browser fires all 66 cover requests at once.  Cold (after
+`FcgidIdleTimeout 60` reaped the pool to the minimum) they came back in
+waves of ~1.1 s (1.3 / 2.2 / 3.3 / 4.3 / 5.3 s): a request that finds
+no free php-cgi process sleeps one second before it tries again, and
+every new process costs ~1 s to start.  Warm (26 processes) the same 66
+took 1.4 s; cached, 19 ms.  The same mechanism delays every parallel XHR
+of a page open after a quiet minute.  Lever (operator decision, Apache
+conf outside the repo): `FcgidMinProcessesPerClass` 6-8 and
+`FcgidIdleTimeout` 300 keep a warm pool; noted in BACKLOG.
+
+**Rollback.** `git revert`; no restart (OPcache off, assets versioned by
+mtime).

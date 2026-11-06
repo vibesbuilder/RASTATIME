@@ -12341,50 +12341,69 @@ Produktionsmessung 2026-11-05 07:00-Slot (report-20261105-0700-bg.txt):
 - Hörprobe: C:/Temp/optd/wslat/probe-20261105-0700-bg-ours-entry.wav
   (07:00:50-07:01:30 Icecast-Zeit; Tor bei ~16 s, Bulletin bei 24,8 s).
 
-### 🟡 Library-Feed schneller und schlanker (UNION ALL, Teaser-Join, Cover nur bei sichtbarer Spalte, Doppel-Draw) - EVALUIERT 2026-11-06, Go offen
+### ✅ Library-Feed schneller und schlanker (UNION ALL, Teaser-Join, Cover als URL, ein Draw beim Öffnen) - GEBAUT 2026-11-06 (Go 2026-11-06 für alle drei Hebel)
 
 Operator-Frage 2026-11-06: „Das Laden der Library dauert relativ lange. Kann
 man dabei noch etwas optimieren?"
 
-Messung 2026-11-06 (Sonden C:/Temp/optd/libperf_probe.php,
+Messung vorher 2026-11-06 (Sonden C:/Temp/optd/libperf_probe.php,
 libperf_sql_probe.php, Chrome auf der Maschine, 100 Zeilen je Seite):
-- Ein Tabellen-Draw auf der Maschine: 0,25 s (Server 0,18 s, Rendern
-  0,07 s).  Seitenaufruf Dashboard: load 1,26 s + ZWEI Feed-Abrufe
-  (Init-Draw der DataTable und `setCurrentTable(..., redraw=true)` beim
-  Anwenden des Hash `#tracks`).
-- Nutzlast je Feed 330 KB, davon 72 % Cover-Data-URIs (66 von 100 Zeilen
-  mit Cover, je ~3,6 KB).  Die Cover-Spalte IST eingeblendet (Operator
-  2026-11-06; ihr Spaltenkopf wurde früher entfernt, daher der erste
-  Fehlschluss).  Über WAN zählt diese Größe, nicht die Serverzeit.
-- Datenbank (Standardseite, alle Medien, 25 Zeilen): Zeilen-Abfrage
-  178 ms + Zähl-Abfrage 176 ms.  Ursachen: `UNION` (Dedupe-Sort aller
-  25.376 Zeilen × 39 Spalten, 8 MB auf Platte) und die Teaser-Spalte als
-  skalare Unterabfrage je Datei-Zeile.  Varianten gemessen:
-  UNION ALL 131/123 ms; + Teaser als gruppierter Join 40/34 ms;
-  + ohne play_count-Join 35/28 ms.  Suche „love": 341 -> 202 ms.
-  „Nur Dateien" (type=1) braucht heute schon 43 ms.
-- Nebenbefund: jedes Öffnen eines Playlist-Tabs zieht einen Library-Draw
-  nach (09:26:29: 7 Tabs -> 7 identische Feeds in einer Sekunde).
+- Ein Tabellen-Draw 0,25 s (Server 0,18 s), Seitenaufruf 1,26 s; ohne Hash
+  in der URL ZWEI Feed-Abrufe (Init-Draw + hashchange-Draw).
+- Nutzlast je Feed 330 KB, davon 72 % Cover-Data-URIs (66 von 100 Zeilen,
+  je ~3,6 KB).  Die Cover-Spalte ist eingeblendet (nur die Überschrift wurde
+  entfernt) - Korrektur des Operators, der Hebel wurde zu „Cover als URL".
+- DB Standardseite: Zeilen 178 ms + Zählung 176 ms (`UNION`-Dedupe über
+  25.376 Zeilen × 39 Spalten, Teaser als skalare Unterabfrage je Dateizeile).
+- Die Spaltenprofile kamen in einer zweiten SYNCHRONEN Anfrage, die hinter
+  dem laufenden Feed bis ~1,1 s auf einen freien php-cgi wartete (das war
+  der größte Teil der 1,26 s).
 
-Vorschlag (Reihenfolge nach Nutzen/Risiko):
-1. SQL: `UNION ALL` statt `UNION` (Zeilen unterschiedlicher Quellen sind nie
-   identisch - jede trägt ihre id + ftype, Dedupe ist wirkungslos) und die
-   Teaser-Spalte als `LEFT JOIN (SELECT file_id, string_agg(...) GROUP BY
-   file_id)` wie play_count.  ~15 Zeilen StoredFile.php, Serverzeit -80 %.
-2. Cover als URL statt Data-URI: der Feed trägt nur noch die Datei-Id,
-   der Browser lädt `library/artwork?id=…&size=32` (neue kleine Action
-   mit Cache-Headern, Login-pflichtig) und cacht jedes Cover - Feed-JSON
-   -70 % (330 -> ~90 KB), Tabelle steht vor den Bildern, bei jedem
-   weiteren Draw (Sortieren, Blättern, Tab-Bursts, nach dem Löschen)
-   kommen die Bilder aus dem Cache.  Server spart 66 Dateilesungen +
-   Base64 je Feed.  ~40-60 Zeilen PHP+JS.  „Nur wenn Spalte sichtbar"
-   entfällt (Spalte ist sichtbar).
-3. Doppel-Draw beim Öffnen vermeiden (Init-Draw unterdrücken, wenn
-   `setCurrentTable` ohnehin zeichnet).  ~10 Zeilen.
-Dauer gesamt ~1/2 Tag inkl. Live-Verifikation.  Risiko gering (nur
-Legacy-Feed, kein Neustart, OPcache aus); Rückfall `git revert`.  Sinn:
-auf der Maschine kaum spürbar (0,25 s), über WAN deutlich (Nutzlast,
-Doppelabruf); DB-Last je Feed sinkt auf ein Fünftel.
+Gebaut 2026-11-06 (ARCHITECTURE §23.93):
+1. SQL: `UNION ALL`; Teaser als gruppierter `LEFT JOIN` (auf allen 24.962
+   Dateien identisch mit der Unterabfrage, 51 Teaser, 0 Abweichungen).
+   Standardseite 178 + 176 ms → 46 + 39 ms.  Suche „love" bleibt ~210 ms
+   (ILIKE über alle Spalten, nicht der UNION).
+2. Cover als cachebare URL `library/artwork?id=&size=&v=` (neue Action, ein
+   Jahr `immutable`, 304, No-Cover-Rückfall, Session-Header `Pragma`/
+   `Expires` entfernt).  Feed 339 → 92 KB; zweiter Draw: 66 Cover in 19 ms
+   aus dem Cache.  `loading="lazy"` probiert und verworfen (sichtbare Cover
+   luden im Scroll-Container nicht).
+3. Öffnen: `history.replaceState('#tracks')` statt `location.hash` (kein
+   zweiter Draw); Spaltenprofile reisen im Layout (`rtColumnProfiles`) statt
+   in einer zweiten synchronen Anfrage.  Seitenaufruf 1,26 → 0,70 s, ein Feed.
+Nachher gemessen 2026-11-06 19:40 im angemeldeten Chrome: load 697 ms, ein
+Feed 182 ms / 92 KB, 100/100 Bilder geladen, Suche + Zurücksetzen OK.
+
+Offen aus derselben Messung:
+- Jedes Öffnen eines Playlist-Tabs zieht einen Library-Draw nach (7 Tabs ->
+  7 identische Feeds in einer Sekunde) - mit 92 KB je Feed jetzt billiger,
+  Ursache nicht untersucht.
+- Erster Draw ohne Browser-Cache: 66 Cover-Anfragen auf einmal (h2); kalt
+  kommen sie in 1-s-Stufen (siehe nächster Eintrag), warm in 1,4 s.
+
+### 🟡 mod_fcgid bedient Schübe paralleler Anfragen in 1-s-Stufen - BEFUND 2026-11-06, Go offen (Apache-Konfiguration, Operator)
+
+Befund 2026-11-06 beim Library-Feed: 5 parallele `get-library-columns` →
+zwei in 102 ms, drei in ~1.120 ms; 66 Cover-Anfragen kalt in Wellen
+1,3 / 2,2 / 3,3 / 4,3 / 5,3 s, warm (26 php-cgi) in 1,4 s.  Mechanik:
+eine Anfrage ohne freien php-cgi-Prozess schläft in mod_fcgid 1 s und
+versucht es erneut; ein neuer Prozess braucht ~1 s zum Start;
+`FcgidIdleTimeout 60` räumt den Pool nach einer ruhigen Minute auf das
+Minimum (Default `FcgidMinProcessesPerClass 3`) zurück.  Betroffen ist
+jeder Seitenaufruf mit mehreren parallelen XHR nach einer Pause
+(Dashboard: Feed, Timeline-Layout, Builder-Feed, Track-Typen, Cover).
+
+Vorschlag (httpd.conf, Block „mod_fcgid + PHP" in INSTALL_APACHE.md):
+- `FcgidMinProcessesPerClass 8` - acht warme Worker bleiben stehen
+  (Speicher je Prozess vor dem Go messen; der Rechner hat Reserve).
+- `FcgidIdleTimeout 300` - erst nach fünf ruhigen Minuten abräumen.
+- `FcgidProcessLifeTime 600` kann bleiben (begrenzt das Alter, nicht den Pool).
+Eingriff: zwei Zeilen httpd.conf + `httpd -k restart` (kurze Unterbrechung
+der UI, nicht des Sendebetriebs - Liquidsoap/PLAYOUT hängen nicht an
+Apache).  Prüfung danach: 5 parallele Abrufe alle ~100 ms.  Risiko gering;
+Rückfall: alte Werte.  Ohne Go bleibt es wie es ist - die UI funktioniert,
+nur der erste Schub nach einer Pause stuft.
 
 ### ✅ Mehrfach-Löschen in der Library: 2 s je Datei durch die Wiederholungs-Prüfung, kein Busy-Hinweis - GEBAUT 2026-11-06 (Go 2026-11-06 für Punkte 1+2; Punkt 3 Blöcke mit Fortschritt DEFER; Index cc_show_instances(show_id, ends) offen)
 

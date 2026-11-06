@@ -770,6 +770,68 @@ class LibraryController extends Zend_Controller_Action
         $this->view->files = SecurityHelper::htmlescape_recursive($r['aaData']);
     }
 
+    /**
+     * RASTATIME 2026-11-06 - the cover of a track as a cacheable image
+     * (library feed: a URL per row instead of a 3.6 KB Data URI - the Data
+     * URIs were 72 % of the feed and travelled again with every draw).
+     * ?id=<file id>&size=32|64|128|256|512&v=<hash of path + mtime>; v
+     * changes with the cover, so the browser may keep the image for a year.
+     * Without a cover file the no-cover image is sent (never an empty 200,
+     * which leaves an <img> hanging - see EmbedController).
+     */
+    public function artworkAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $response = $this->getResponse();
+        // the session start added "Pragma: no-cache" and "Expires: 1981";
+        // with them the browser fetched every cover anew on every draw
+        header_remove('Pragma');
+        header_remove('Expires');
+
+        $id = (int) $this->_getParam('id', 0);
+        $size = (int) $this->_getParam('size', 32);
+        if (!in_array($size, [32, 64, 128, 256, 512], true)) {
+            $size = 32;
+        }
+
+        $path = null;
+        if ($id > 0) {
+            $file = CcFilesQuery::create()->findPk($id);
+            $artwork = $file ? (string) $file->getDbArtwork() : '';
+            if ($artwork !== '') {
+                $root = realpath(Application_Common_Storage::root());
+                $candidate = realpath(FileDataHelper::joinStoragePath(Application_Common_Storage::root(), $artwork . '-' . $size . '.jpg'));
+                // the cover lives under the storage root, whatever the column says
+                if ($root !== false && $candidate !== false && strpos($candidate, $root) === 0 && is_file($candidate)) {
+                    $path = $candidate;
+                }
+            }
+        }
+
+        if ($path === null) {
+            // short-lived: the track may get a cover later
+            $path = realpath(__DIR__ . '/../../public/css/images/no-cover.jpg');
+            $response->setHeader('Cache-Control', 'private, max-age=3600', true);
+        } else {
+            $response->setHeader('Cache-Control', 'private, max-age=31536000, immutable', true);
+        }
+
+        $mtime = @filemtime($path) ?: time();
+        $lastModified = gmdate('D, d M Y H:i:s', $mtime) . ' GMT';
+        $since = $this->getRequest()->getHeader('If-Modified-Since');
+        if ($since && strtotime($since) >= $mtime) {
+            $response->setHttpResponseCode(304);
+
+            return;
+        }
+
+        $response->setHeader('Content-Type', 'image/jpeg', true)
+            ->setHeader('Last-Modified', $lastModified, true)
+            ->setHeader('Content-Length', (string) filesize($path), true)
+            ->setBody((string) file_get_contents($path));
+    }
+
     public function editFileMdAction()
     {
         $user = Application_Model_User::getCurrentUser();

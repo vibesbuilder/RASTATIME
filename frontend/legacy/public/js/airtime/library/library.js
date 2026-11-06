@@ -1022,11 +1022,14 @@ var AIRTIME = (function (AIRTIME) {
       if (row.ftype !== "audioclip") {
         return "";
       }
+      // RASTATIME 2026-11-06 - artwork_data is a cacheable URL (library/artwork),
+      // no longer a Data URI (no loading="lazy": the covers of the visible
+      // rows did not load with it in the scroll container)
       if (row.artwork_data) {
         return (
           '<img class="img_small" id="' +
           row.id +
-          '" width="28" height="28" src="' +
+          '" width="28" height="28" decoding="async" src="' +
           row.artwork_data +
           '">'
         );
@@ -1703,6 +1706,15 @@ var AIRTIME = (function (AIRTIME) {
         baseUrl + "usersettings/get-library-datatable",
         baseUrl + "usersettings/set-library-datatable",
         onDashboard ? {} : { table: "builder" },
+        // RASTATIME 2026-11-06 - the column profiles travel with the layout
+        // (one synchronous request on open instead of two; the second used to
+        // wait ~1 s for a free PHP worker while the first feed was running)
+        function (state) {
+          if (state && state.rtColumnProfiles) {
+            mod.setColumnProfiles(state.rtColumnProfiles);
+            delete state.rtColumnProfiles;
+          }
+        },
       ),
     );
 
@@ -2563,6 +2575,11 @@ var AIRTIME = (function (AIRTIME) {
   function columnProfileParams() {
     return columnProfileTable ? { table: columnProfileTable } : {};
   }
+
+  // RASTATIME 2026-11-06 - profiles delivered with the layout (see libraryInit)
+  mod.setColumnProfiles = function (profiles) {
+    columnProfiles = profiles && typeof profiles === "object" ? profiles : {};
+  };
 
   function loadColumnProfiles() {
     if (columnProfiles !== null) {
