@@ -80,6 +80,57 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Sendung beginnt bis zu ~8 s VOR ihrer Startzeit, wenn die Vorgänger-Zeilen früher enden (Befund 2026-11-07 00:00, Operator-Regel: nie früher - lieber Stille)
+
+Befund an der Grenze 00:00 (2026-11-06/07): die letzte Zeile der Vorgängersendung endete
+23:59:56,99 (Autoloading: „3,0 s frei am Ende"), die Nachfolgesendung stand mit 00:00:00 in den
+Zeilen.  Das Queue-Ahead legte den ersten Titel der neuen Sendung hinter den laufenden Titel,
+`cross` übergab am Audio-Ende des Vorgängers - die neue Sendung lief ab ≈23:59:57, drei Sekunden
+vor der Wanduhr.  Log: „file chain runs -1.00 s behind the rows" ist der Klemmwert
+(`max(-1.0, …)` in `playout_scheduler.py`), real ≈ -3 s.  Mechanik: `_on_file_queue_ahead`
+queued den Nachfolger, sobald der Vorgänger noch ≥ 0,5 s hat; die Lücke zwischen Zeilenende und
+Zeilenstart wird verschluckt.  Lücken > ≈ BUFFER + 5 s (≈ 8 s) sind schon heute Stille + normaler
+Start („the predecessor is over: a gap follows, normal start").  Betroffen sind also nur Lücken
+von 0,3 … ≈ 8 s an Sendungsgrenzen (Autoloading-Rest, Handplanung mit Luft).
+**Operator-Regel 2026-11-07:** eine Sendung darf nie vor ihrer Startzeit beginnen; Stille in der
+Lücke ist richtig.  Innerhalb einer Sendung bleibt es lückenlos (Annahme, nicht Teil der Regel).
+**Option A - PLAYOUT überspringt das Queue-Ahead über eine Sendungsgrenze mit Lücke:** endet der
+Vorgänger (Engine-Rest, sonst Zeilen) mehr als 0,3 s vor dem Zeilenstart des Nachfolgers, kein
+Enqueue; der erste Titel startet den bewährten normalen Weg am Zeilenstart (`_wait_for_exact_time`
++ Push, ≈ 0,25 s Kettenverzug → Start ≈ 0,2-0,3 s nach der Grenze).  Nur PLAYOUT, ~15 Zeilen +
+Test, PLAYOUT-Neustart (Liquidsoap danach NICHT von Hand).  Nachteil: ohne Partner in der Queue
+läuft die Endtransition allein - der letzte Titel der alten Sendung spielt bis zu seinem Ende
+ohne den 1-s-Show-Fade-out.
+**Option B - Haltezeit in der Show-Transition (Empfehlung):** PLAYOUT misst am Queue-Ahead die
+Lücke (wie `rt_cut`: Engine-Rest gegen `start_exact`) und setzt `var.set rt_hold = <s>`; die
+„show"-Form wird `sequence([fade.out(old), blank(duration=hold), new.source])`.  Fade-out bleibt,
+Start sample-genau am Zeilenstart (kein Push-Verzug), begrenzt auf ≈ 8 s durch das
+Queue-Ahead-Fenster.  ~40 Zeilen PLAYOUT + ~10 Zeilen Template + Tests; braucht einen
+Liquidsoap-Neustart (geplanter Neustart an der Titelgrenze, nicht von Hand).  Blank im Sequence
+ist im Template schon in Gebrauch (Wartebranch der Track-Form); Dead-Air-Alarm greift erst ab 30 s.
+**Risiko:** gering - beide Wege ändern nur Grenzen mit Lücke; Rückfall = Commit zurück +
+Neustart.  B berührt das Template (Liquidsoap-Neustart im ruhigen Fenster), A nur PLAYOUT.
+**Vorbedingungen:** Operator-Go (A oder B), ruhiges Fenster für den Neustart, Probe an der
+nächsten Grenze mit Lücke (Log: Queue-Ahead-Zeile mit hold, rt_cross-Form, PLAY-Lag ≈ 0,0 s).
+
+### 💡 Auto-DJ-Fill-Pass und Handplanung sperren sich gegenseitig (Deadlock in cc_files.is_scheduled, Befund 2026-11-06 16:09-16:13)
+
+`legacy.log` 2026-11-06: Instanz 23883 blieb nach dem Autoloading-Lauf 16:07:46 mit 480 s frei
+(0 Zeilen gefüllt); `AutoDjService::runFillPass` scheiterte danach viermal (16:09:28, 16:09:43,
+2× 16:13:11) an `UPDATE cc_files SET is_scheduled … WHERE id IN (…)` mit `40P01 Deadlock
+detected` bzw. `40001 Serialization failure`.  Dazwischen „adjusting start, end times … show
+instance #23883" (16:08:56, 16:12:22): die Instanz wurde zeitgleich von Hand geplant.  Zwei
+Transaktionen (Fill-Pass, Scheduler-Edit) setzen `is_scheduled` auf überlappenden Dateimengen in
+verschiedener Reihenfolge; das Fill-Ergebnis wurde zurückgerollt (korrekt, keine halbe Füllung),
+aber ohne Wiederholung.  Kein Sendeausfall (der Operator hatte die Sendung selbst befüllt).
+**Optionen:** (a) Fill-Pass bei 40P01 / 40001 nach 1-3 s zufälliger Pause einmal wiederholen
+(Transaktion ist atomar, Wiederholung gefahrlos) - ~15 Zeilen; (b) `is_scheduled`-Updates in
+Fill-Pass und Scheduler nach `id` sortiert absetzen (klassische Deadlock-Vermeidung) - ~10 Zeilen,
+hilft nicht gegen 40001; (c) Fill-Pass überspringt eine Instanz, deren
+`cc_show_instances`-Zeile gerade gesperrt ist (`SELECT … FOR UPDATE SKIP LOCKED`) und kommt beim
+nächsten Lauf wieder - ~20 Zeilen, sauberste Trennung.  Empfehlung: (a) + (b) zusammen, ~1 h
+mit Probe.  **Vorbedingungen:** Operator-Go; nur Legacy-PHP (live ohne Neustart, OPcache aus).
+
 ### 🟡 Kommentar je Allowed Address (neu 2026-11-06, Operator: kein Go, Defer)
 
 Wunsch: jede Zeile unter *System Status → Allowed addresses* bekommt einen Kommentar (wem
