@@ -97,7 +97,12 @@ LoginAttempts betroffen, altes Format muss lesbar bleiben; ein Lesefehler bremst
 Adressen wieder (Aussperrung wie 2026-11-06).  ~3 h, nicht empfohlen.
 **Vorbedingungen:** Operator-Go (Option A oder B).
 
-### 💡 Wiederholungen eigener Produktionen zählen nicht als eigene Wiederholung - IDEA (Befund 2026-11-06)
+### ✅ Wiederholungen eigener Produktionen zählen nicht als eigene Wiederholung - ERLEDIGT 2026-11-06 durch den Operator, Weg (a) (Befund 2026-11-06)
+
+**Erledigt 2026-11-06:** Operator hat die 18 (WH)-Shows angehakt und die zwei fehlenden
+„Repeat of"-Verknüpfungen gesetzt; Probe bestätigt 22/22 (WH) mit `repeat_of_show_id` und
+Own production.  Weg (b) (Erben im Bericht) damit nicht nötig.  Der Bericht liest den
+aktuellen Haken, gilt also rückwirkend für das ganze Jahr.
 
 Befund (Liste der aktiven Shows 2026-11-06, Probe `C:/Temp/optd/wh_repeat_flags.php`):
 Analytics → Programme Minutes zählt Wiederholungsminuten nur für Shows, die *selbst*
