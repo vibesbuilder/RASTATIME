@@ -58,7 +58,7 @@ un_tests.ps1`.  Commit `eadec826`.
   fehlendes Token bleibt 403 (`csrf-missing`), stoppt die Polls aber ebenfalls.  Live mit
   falschem, fehlendem und richtigem Token geprüft (401 / 403 / 200).  Entsperren:
   System Status → Blocked addresses oder `rt-blocks.ps1 -Unblock <ip>`; feste Adressen
-  unter Allowed addresses.
+  unter Allowed addresses.  Commit `6f84d866`.
 
 - **Smart Block: Minuten-Feld bei mehreren offenen Dialogen (2026-11-06)** — Die Kästchen
   „Exclude tracks played lately" / „Exclude artists played lately" blendeten die
