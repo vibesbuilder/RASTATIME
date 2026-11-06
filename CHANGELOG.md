@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   33 ms im Mittel, Ergebnisse auf 75 Ids identisch.  Dazu ein sichtbarer Busy-Zustand
   im Library-Löschen: Processing-Overlay der Tabelle, Knopftext „Deleting N item(s)…",
   Fortschritts-Cursor, Meldung bei Fehler/Zeitüberschreitung (vorher blieb der Knopf
-  nur stumm deaktiviert).  Manual LIBRARY ×4, Strings de/fr/es.
+  nur stumm deaktiviert).  Manual LIBRARY ×4, Strings de/fr/es.  Commit 7c28fe02.
 
 ### Changed
 
