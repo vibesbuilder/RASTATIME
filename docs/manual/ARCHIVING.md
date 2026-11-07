@@ -117,8 +117,9 @@ lets others reuse samples, the whole work only non-commercially;
 
 The number of people involved is not in this section any more (since
 2026-11-04): it sits in the section **What**, below **Own production**,
-as **Number of involved people** (0-999), and appears once **Own
-production** is ticked - it counts in Analytics → People Involved (§6).
+as **Hosts involved** (0-999; called *Number of involved people* until
+2026-11-07), and appears once **Own production** is ticked - it counts
+in Analytics → People Involved (§6).
 
 In **Edit Instance** the section is shown **read-only** with the values
 of the show (since 2026-11-04; before, it was not shown): it belongs to
@@ -143,7 +144,7 @@ broadcast - for Admins, Program Managers and the hosts of the show.
 | **Title** | Empty: the show's name and the date, shown greyed as a suggestion. |
 | **Teaser** | A short summary. Empty: the show's default teaser. |
 | **Description** | The text of the episode, on cba.media the text of the post. Empty: the description of the show, or the show name when the show has none (shown greyed). This is the only place to edit it (Edit Instance no longer shows it). |
-| **People involved** | Only when this episode differs from the show, e.g. with guests. The show's value is shown greyed. |
+| **Guests involved** | The guests of this one episode (0-999), counted on top of the show's hosts (since 2026-11-07; before, the field was called *People involved* and replaced the show's value). Empty means no guests; the line below the field shows the show's hosts. |
 | **Production date** | Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier. |
 | **Do not archive this episode automatically** | For tests, cancelled episodes or rights problems. Takes effect with automatic archiving (§5); archiving by hand stays possible. |
 | **Episode image** | Optional, JPG or PNG up to 10 MB. Choosing a file uploads it at once; **Remove image** deletes it. Without an image, cba.media shows the image of the podcast. |
@@ -260,35 +261,44 @@ and Admins find a link to **Analytics → Archive Status** (§7) there.
 **Analytics → People Involved** counts the people involved per own
 production and year (station time) - the figures for the yearly
 statistics.  Only shows with **Own production** (Edit Show → What)
-count; their number is the **Number of involved people** right below
-it (since 2026-11-04; before, the field was in this section and every
-show counted).  A show whose tick is removed keeps its number but is
-left out.
+count.  A show whose tick is removed keeps its numbers but is left out.
+
+Since 2026-11-07 the count follows the people, not the episodes:
+
+* **Hosts involved** (Edit Show → What, right below **Own production**)
+  are the people who are the same in every episode.  They count **once
+  per show and year**, however many episodes aired.
+* **Guests involved** (Archive Online in the calendar) are the guests of
+  one episode.  They count **in every episode** and add up.
+* **People involved** = hosts + guests.
+
+Example: a weekly show with 2 hosts aired 40 times; three episodes had
+guests (1, 2 and 1).  People involved: 2 + 4 = 6.
 
 * **Year** - the current year shows the count so far.
 * **Only shows without a value** - the own productions that aired but
-  have no *Number of involved people* yet.  Work through this list
-  once; set `0` for automated or relayed programmes.
+  have no *Hosts involved* yet.  Work through this list once; set `0`
+  for automated or relayed programmes.
 * **Download CSV** - the table and the totals as a spreadsheet file.
 
 Counted are the episodes that **aired** in the year (ended, not
-deleted).  Rebroadcasts of the old LibreTime kind are left out; shows
+deleted).  Rebroadcasts of the old LibreTime kind are left out.  Shows
 set up as [Repeat of another show](./CALENDAR.md) are listed with the
-tag **Repeat** - set their value to `0` when their people already count
-in the original.
+tag **Repeat** and count nothing: their people were already counted
+with the original.  They never appear under *Shows without a value*.
 
 | Column / total | Meaning |
 |---|---|
-| **Own productions aired** (total) | Own productions with at least one aired episode in the year. |
+| **Own productions aired** (total) | Own productions with at least one aired episode in the year, repeats included. |
 | **Episodes aired** | Episodes of the show in the year. |
-| **People involved** | The show's value; the total adds the values of all shows. |
-| **Episodes with own value** | Episodes whose dialog sets a different number. |
-| **Participations** | The people of every episode added up (an episode with its own value counts with that value). |
-| **Shows without a value** (total) | Shown in orange while there are any. |
+| **Hosts involved** | The show's hosts, once per year; the total adds the hosts of all shows. |
+| **Guests involved** | The guests of all aired episodes of the show added up. |
+| **People involved** | Hosts + guests; the total is the figure for the statistics. |
+| **Shows without a value** (total) | Own productions (no repeats) without *Hosts involved*; shown in orange while there are any. |
 
-A person in several shows counts once per show in **People involved**.
-The producers are not counted - the figure for the statistics is the
-number of people.
+A person in several shows counts once per show; a guest who comes back
+counts in every episode.  The figures are numbers, not names - RASTATIME
+cannot tell that two shows share a host.  The producers are not counted.
 
 Program Managers and Admins open this page.
 

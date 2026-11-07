@@ -330,8 +330,9 @@ class Application_Service_ArchivingService
     }
 
     /**
-     * The number of people involved (What, below "Own production", since
-     * 2026-11-04), kept in cc_show_archiving next to the archiving defaults.
+     * The number of hosts involved (What, below "Own production", since
+     * 2026-11-04; "Hosts involved" since 2026-11-07, counted once per show
+     * and year), kept in cc_show_archiving next to the archiving defaults.
      * Kept when "Own production" is cleared - it only stops counting.
      */
     public static function saveParticipants(int $showId, $value): void
@@ -1312,11 +1313,19 @@ class Application_Service_ArchivingService
 
     /**
      * Per show: the instances that aired in $year (station time, ended by
-     * now, not deleted, no rebroadcast), the show's participants value, how
-     * many episodes override it and the sum over the episodes ("person
-     * episodes"); totals below.  Since 2026-11-04 own productions only
-     * (operator: the number belongs to "Own production"; every show while
-     * migration 0077 is missing).
+     * now, not deleted, no rebroadcast), the show's hosts, the guests of
+     * its episodes and the people involved; totals below.  Since
+     * 2026-11-04 own productions only (operator: the number belongs to
+     * "Own production"; every show while migration 0077 is missing).
+     *
+     * Since 2026-11-07 (operator: the count is about unique persons) the
+     * show value (cc_show_archiving.participants, "Hosts involved") counts
+     * once per show and year, however many episodes aired, and the episode
+     * value (cc_episode.participants, "Guests involved") adds up per
+     * episode on top of it - it no longer replaces the show value.  People
+     * involved = hosts + guests.  "Repeat of" shows (§23.65) rebroadcast
+     * the same people: listed with their tag, counted with nothing and
+     * never "without a value".
      */
     public static function participantsReport(int $year): array
     {
@@ -1336,17 +1345,16 @@ class Application_Service_ArchivingService
             : "''";
         $rows = self::query(
             "WITH inst AS (
-                SELECT si.id, si.show_id, p.participants AS show_value, e.participants AS own_value,
-                       COALESCE(e.participants, p.participants) AS eff
+                SELECT si.id, si.show_id, p.participants AS hosts, e.participants AS guests
                   FROM cc_show_instances si {$epJoin}
                  WHERE si.modified_instance = FALSE
                    AND COALESCE(si.rebroadcast, 0) = 0
                    AND si.starts >= ? AND si.starts < ?
                    AND si.ends <= (now() AT TIME ZONE 'UTC')
              )
-             SELECT s.id, s.name, count(i.id) AS episodes, max(i.show_value) AS participants,
-                    count(i.own_value) AS overrides, sum(i.eff) AS person_episodes,
-                    count(i.eff) AS episodes_with_value, (s.repeat_of_show_id IS NOT NULL) AS is_repeat,
+             SELECT s.id, s.name, count(i.id) AS episodes, max(i.hosts) AS hosts,
+                    COALESCE(sum(i.guests), 0) AS guests, count(i.guests) AS episodes_with_guests,
+                    (s.repeat_of_show_id IS NOT NULL) AS is_repeat,
                     {$team} AS team
                FROM inst i JOIN cc_show s ON s.id = i.show_id
               {$ownOnly}
@@ -1355,21 +1363,26 @@ class Application_Service_ArchivingService
             [$from, $to]
         );
         // the producers are not counted (operator 2026-11-03: only the people involved)
-        $totals = ['shows' => 0, 'episodes' => 0, 'participants' => 0, 'person_episodes' => 0, 'missing' => 0];
+        $totals = ['shows' => 0, 'episodes' => 0, 'hosts' => 0, 'guests' => 0, 'people' => 0, 'missing' => 0];
         foreach ($rows as &$r) {
             $r['id'] = (int) $r['id'];
             $r['episodes'] = (int) $r['episodes'];
-            $r['participants'] = $r['participants'] === null ? null : (int) $r['participants'];
-            $r['overrides'] = (int) $r['overrides'];
-            $r['person_episodes'] = $r['person_episodes'] === null ? null : (int) $r['person_episodes'];
-            $r['episodes_with_value'] = (int) $r['episodes_with_value'];
+            $r['hosts'] = $r['hosts'] === null ? null : (int) $r['hosts'];
+            $r['guests'] = (int) $r['guests'];
+            $r['episodes_with_guests'] = (int) $r['episodes_with_guests'];
             $r['is_repeat'] = (bool) $r['is_repeat'];
             $r['team'] = (string) $r['team'];
+            // hosts once per show and year, guests per episode; a repeat show counts nothing
+            $r['people'] = $r['is_repeat'] ? 0 : (int) $r['hosts'] + $r['guests'];
+            $r['missing'] = !$r['is_repeat'] && $r['hosts'] === null;
             ++$totals['shows'];
             $totals['episodes'] += $r['episodes'];
-            $totals['participants'] += (int) $r['participants'];
-            $totals['person_episodes'] += (int) $r['person_episodes'];
-            $totals['missing'] += $r['participants'] === null ? 1 : 0;
+            if (!$r['is_repeat']) {
+                $totals['hosts'] += (int) $r['hosts'];
+                $totals['guests'] += $r['guests'];
+            }
+            $totals['people'] += $r['people'];
+            $totals['missing'] += $r['missing'] ? 1 : 0;
         }
         unset($r);
 

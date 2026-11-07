@@ -2,20 +2,22 @@
 // RASTATIME 2026-11-03 - archiving stage 1: Analytics → People Involved
 // (menu entry since 2026-11-04, before: part of the Yearly Report).
 // People involved per own production for one year (station time):
-// episodes that aired (ended, not deleted, no legacy rebroadcast), the
-// show's value, how many episodes have their own value, and the sum over
-// the episodes.  Only shows with "Own production" count (operator
-// 2026-11-04; all shows while migration 0077 is missing).
+// episodes that aired (ended, not deleted, no legacy rebroadcast).  Only
+// shows with "Own production" count (operator 2026-11-04; all shows while
+// migration 0077 is missing).  Since 2026-11-07 (operator: unique persons)
+// the show's hosts count once per year and the guests of every episode
+// add up on top: people involved = hosts + guests; "Repeat of" shows are
+// listed but count nothing.
 $h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $base = Config::getBasePath();
 $r = $this->report;
 $t = $r['totals'];
-$rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['participants'] === null) : $r['rows'];
+$rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['missing']) : $r['rows'];
 ?>
 <div class="ui-widget prefpanel clearfix padded-strong rt-participants">
     <h2><?php echo _("People Involved"); ?></h2>
     <p class="rt-participants-note">
-        <?php echo _("People involved in the station's own productions, for the yearly statistics. The number is set per show (Edit Show → What → \"Own production\" → \"Number of involved people\") and can differ for a single episode (Archive Online in the calendar). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out."); ?>
+        <?php echo _("People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Archive Online in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."); ?>
     </p>
     <?php if (!$this->ready): ?>
         <p class="rt-participants-warn"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
@@ -38,12 +40,13 @@ $rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['participant
     <div class="rt-participants-totals">
         <div><strong><?php echo (int) $t['shows']; ?></strong><span><?php echo _("Own productions aired"); ?></span></div>
         <div><strong><?php echo (int) $t['episodes']; ?></strong><span><?php echo _("Episodes aired"); ?></span></div>
-        <div><strong><?php echo (int) $t['participants']; ?></strong><span><?php echo _("People involved (sum over the shows)"); ?></span></div>
-        <div><strong><?php echo (int) $t['person_episodes']; ?></strong><span><?php echo _("Participations"); ?></span></div>
+        <div><strong><?php echo (int) $t['hosts']; ?></strong><span><?php echo _("Hosts involved (once per show)"); ?></span></div>
+        <div><strong><?php echo (int) $t['guests']; ?></strong><span><?php echo _("Guests involved (per episode)"); ?></span></div>
+        <div><strong><?php echo (int) $t['people']; ?></strong><span><?php echo _("People involved"); ?></span></div>
         <div class="<?php echo $t['missing'] ? 'rt-participants-missing' : ''; ?>"><strong><?php echo (int) $t['missing']; ?></strong><span><?php echo _("Shows without a value"); ?></span></div>
     </div>
     <p class="rt-participants-note">
-        <?php echo _("A person in several shows counts once per show in \"People involved\". Participations add up the people of every episode."); ?>
+        <?php echo _("People involved = hosts + guests. A host counts once per show and year, however many episodes aired; a guest counts in every episode with guests. A person in several shows counts once per show."); ?>
     </p>
 
     <?php if (empty($rows)): ?>
@@ -54,20 +57,26 @@ $rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['participant
                 <tr>
                     <th><?php echo _("Show name"); ?></th>
                     <th class="num"><?php echo _("Episodes aired"); ?></th>
+                    <th class="num"><?php echo _("Hosts involved"); ?></th>
+                    <th class="num"><?php echo _("Guests involved"); ?></th>
                     <th class="num"><?php echo _("People involved"); ?></th>
-                    <th class="num"><?php echo _("Episodes with own value"); ?></th>
-                    <th class="num"><?php echo _("Participations"); ?></th>
                     <th><?php echo _("Producer"); ?></th>
                 </tr>
             </thead>
             <tbody>
                 <?php $i = 0; foreach ($rows as $row): ?>
                     <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
-                        <td><?php echo $h($row['name']); ?><?php if ($row['is_repeat']): ?> <span class="rt-participants-tag"><?php echo _("Repeat"); ?></span><?php endif; ?></td>
+                        <td><?php echo $h($row['name']); ?><?php if ($row['is_repeat']): ?> <span class="rt-participants-tag" title="<?php echo $h(_("Repeat show: its people were counted with the original.")); ?>"><?php echo _("Repeat"); ?></span><?php endif; ?></td>
                         <td class="num"><?php echo (int) $row['episodes']; ?></td>
-                        <td class="num<?php echo $row['participants'] === null ? ' rt-participants-missing' : ''; ?>"><?php echo $row['participants'] === null ? '&ndash;' : (int) $row['participants']; ?></td>
-                        <td class="num"><?php echo $row['overrides'] ?: ''; ?></td>
-                        <td class="num"><?php echo $row['person_episodes'] === null ? '&ndash;' : (int) $row['person_episodes']; ?></td>
+                        <?php if ($row['is_repeat']): ?>
+                            <td class="num">&ndash;</td>
+                            <td class="num">&ndash;</td>
+                            <td class="num">0</td>
+                        <?php else: ?>
+                            <td class="num<?php echo $row['missing'] ? ' rt-participants-missing' : ''; ?>"><?php echo $row['hosts'] === null ? '&ndash;' : (int) $row['hosts']; ?></td>
+                            <td class="num"><?php echo $row['guests'] ?: ''; ?></td>
+                            <td class="num"><?php echo (int) $row['people']; ?></td>
+                        <?php endif; ?>
                         <td><?php echo $h($row['team']); ?></td>
                     </tr>
                 <?php endforeach; ?>

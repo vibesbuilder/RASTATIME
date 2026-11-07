@@ -128,9 +128,10 @@ droit.
 
 Le nombre de participants ne se trouve plus dans cette section (depuis
 le 2026-11-04) : il se trouve dans la section **What**, sous
-**Production propre**, comme **Nombre de participants** (0-999), et
-apparaît dès que **Production propre** est cochée - il compte dans
-Statistiques → Participants (§6).
+**Production propre**, comme **Animateurs** (Hosts involved, 0-999 ;
+*Nombre de participants* jusqu'au 2026-11-07), et apparaît dès que
+**Production propre** est cochée - il compte dans Statistiques →
+Participants (§6).
 
 Dans **Modifier l'occurrence**, la section s'affiche **en lecture
 seule** avec les valeurs de l'émission (depuis le 2026-11-04 ; avant,
@@ -156,7 +157,7 @@ l'émission.
 | **Titre** | Vide : le nom de l'émission et la date, affichés en gris comme suggestion. |
 | **Accroche** | Un court résumé. Vide : l'accroche par défaut de l'émission. |
 | **Description** | Le texte de l'épisode, sur cba.media le texte de l'article. Vide : la description de l'émission ou, si elle n'en a pas, le nom de l'émission (affiché en gris). C'est le seul endroit pour la modifier (Modifier l'occurrence ne l'affiche plus). |
-| **Participants** | Seulement si cet épisode diffère de l'émission, p. ex. avec des invités. La valeur de l'émission apparaît en gris. |
+| **Invités** (Guests involved) | Les invités de cet épisode (0-999), comptés en plus des animateurs de l'émission (depuis le 2026-11-07 ; avant, le champ s'appelait *Participants* et remplaçait la valeur de l'émission). Vide signifie aucun invité ; la ligne sous le champ indique les animateurs de l'émission. |
 | **Date de production** | Exigée par cba.media. Vide : le jour de la diffusion. À renseigner si l'épisode a été produit plus tôt. |
 | **Ne pas archiver cet épisode automatiquement** | Pour les tests, les épisodes annulés ou les problèmes de droits. S'applique avec l'archivage automatique (§5) ; l'archivage manuel reste possible. |
 | **Image de l'épisode** | Facultative, JPG ou PNG jusqu'à 10 Mo. Choisir un fichier le téléverse aussitôt ; **Retirer l'image** le supprime. Sans image, cba.media affiche celle du podcast. |
@@ -284,39 +285,52 @@ lié ; les Program Managers et les Admins y trouvent un lien vers
 **Statistiques → Participants** compte les participants par production
 propre et par année (heure de la station) - les chiffres des
 statistiques annuelles.  Seules les émissions avec **Production
-propre** (Modifier l'émission → What) comptent ; leur nombre est le
-**Nombre de participants** juste en dessous (depuis le 2026-11-04 ;
-avant, le champ se trouvait dans cette section et chaque émission
-comptait).  Une émission dont la case est décochée garde son nombre
-mais est laissée de côté.
+propre** (Modifier l'émission → What) comptent.  Une émission dont la
+case est décochée garde ses nombres mais est laissée de côté.
+
+Depuis le 2026-11-07, le décompte suit les personnes, pas les épisodes :
+
+* Les **Animateurs** (Hosts involved ; Modifier l'émission → What, juste
+  sous **Production propre**) sont les personnes présentes dans chaque
+  épisode.  Ils comptent **une fois par émission et par an**, quel que
+  soit le nombre d'épisodes diffusés.
+* Les **Invités** (Guests involved ; Archiver en ligne dans le
+  calendrier) sont les invités d'un épisode.  Ils comptent **dans
+  chaque épisode** et s'additionnent.
+* **Participants** = animateurs + invités.
+
+Exemple : une émission hebdomadaire avec 2 animateurs a été diffusée
+40 fois ; trois épisodes avaient des invités (1, 2 et 1).
+Participants : 2 + 4 = 6.
 
 * **Année** - l'année en cours montre le décompte à ce jour.
 * **Seulement les émissions sans valeur** - les productions propres
-  diffusées qui n'ont pas encore de *Nombre de participants*.  Traitez
-  cette liste une fois ; mettez `0` pour les programmes automatisés ou
-  relayés.
+  diffusées qui n'ont pas encore d'*Animateurs*.  Traitez cette liste
+  une fois ; mettez `0` pour les programmes automatisés ou relayés.
 * **Télécharger le CSV** - le tableau et les totaux comme fichier de
   tableur.
 
 Comptent les épisodes **diffusés** dans l'année (terminés, non
-supprimés).  Les rediffusions de l'ancien type LibreTime sont exclues ;
-les émissions configurées comme [répétition d'une autre
-émission](./CALENDAR.md) apparaissent avec la mention **Rediffusion** -
-mettez leur valeur à `0` si leurs personnes comptent déjà dans
-l'original.
+supprimés).  Les rediffusions de l'ancien type LibreTime sont exclues.
+Les émissions configurées comme [répétition d'une autre
+émission](./CALENDAR.md) apparaissent avec la mention **Rediffusion** et
+ne comptent rien : leurs personnes sont déjà comptées avec l'original.
+Elles n'apparaissent jamais sous *Émissions sans valeur*.
 
 | Colonne / total | Signification |
 |---|---|
-| **Productions propres diffusées** (total) | Productions propres avec au moins un épisode diffusé dans l'année. |
+| **Productions propres diffusées** (total) | Productions propres avec au moins un épisode diffusé dans l'année, rediffusions comprises. |
 | **Épisodes diffusés** | Épisodes de l'émission dans l'année. |
-| **Participants** | La valeur de l'émission ; le total additionne les valeurs de toutes les émissions. |
-| **Épisodes avec valeur propre** | Épisodes dont la boîte de dialogue fixe un autre nombre. |
-| **Participations** | Les participants de chaque épisode additionnés (un épisode avec sa propre valeur compte avec celle-ci). |
-| **Émissions sans valeur** (total) | En orange tant qu'il y en a. |
+| **Animateurs** | Les animateurs de l'émission, une fois par an ; le total additionne les animateurs de toutes les émissions. |
+| **Invités** | Les invités de tous les épisodes diffusés de l'émission additionnés. |
+| **Participants** | Animateurs + invités ; le total est le chiffre pour les statistiques. |
+| **Émissions sans valeur** (total) | Productions propres (sans rediffusions) sans *Animateurs* ; en orange tant qu'il y en a. |
 
 Une personne présente dans plusieurs émissions compte une fois par
-émission dans **Participants**.  Les producteurs ne sont pas comptés -
-pour les statistiques compte le nombre de personnes.
+émission ; un invité qui revient compte dans chaque épisode.  Les
+chiffres sont des nombres, pas des noms - RASTATIME ne peut pas savoir
+que deux émissions partagent un animateur.  Les producteurs ne sont pas
+comptés.
 
 Les Program Managers et les Admins ouvrent cette page.
 

@@ -124,9 +124,9 @@ fines comerciales; *Dominio público* no conserva ningún derecho.
 
 El número de participantes ya no está en esta sección (desde el
 2026-11-04): se encuentra en la sección **What**, debajo de **Producción
-propia**, como **Número de participantes** (0-999), y aparece en cuanto
-se marca **Producción propia**; cuenta en Estadísticas → Participantes
-(§6).
+propia**, como **Presentadores** (Hosts involved, 0-999; *Número de
+participantes* hasta el 2026-11-07), y aparece en cuanto se marca
+**Producción propia**; cuenta en Estadísticas → Participantes (§6).
 
 En **Editar emisión** la sección se muestra **de solo lectura** con los
 valores del programa (desde el 2026-11-04; antes no aparecía): pertenece
@@ -152,7 +152,7 @@ Admins, Program Managers y los presentadores del programa.
 | **Título** | Vacío: el nombre del programa y la fecha, en gris como sugerencia. |
 | **Teaser** | Un breve resumen. Vacío: el teaser predeterminado del programa. |
 | **Descripción** | El texto del episodio, en cba.media el texto de la entrada. Vacío: la descripción del programa o, si no tiene, el nombre del programa (en gris). Es el único lugar para editarla (Editar emisión ya no la muestra). |
-| **Participantes** | Solo si este episodio difiere del programa, p. ej. con invitados. El valor del programa aparece en gris. |
+| **Invitados** (Guests involved) | Los invitados de este episodio (0-999), contados además de los presentadores del programa (desde el 2026-11-07; antes el campo se llamaba *Participantes* y sustituía el valor del programa). Vacío significa sin invitados; la línea bajo el campo muestra los presentadores del programa. |
 | **Fecha de producción** | La exige cba.media. Vacía: el día de la emisión. Indíquela si el episodio se produjo antes. |
 | **No archivar este episodio automáticamente** | Para pruebas, episodios cancelados o problemas de derechos. Se aplica con el archivo automático (§5); archivar a mano sigue siendo posible. |
 | **Imagen del episodio** | Opcional, JPG o PNG de hasta 10 MB. Elegir un archivo lo sube enseguida; **Quitar imagen** lo borra. Sin imagen, cba.media muestra la del pódcast. |
@@ -277,37 +277,50 @@ Estado del archivo** (§7).
 **Estadísticas → Participantes** cuenta los participantes por
 producción propia y año (hora de la estación): las cifras de la
 estadística anual.  Solo cuentan los programas con **Producción propia**
-(Editar programa → What); su número es el **Número de participantes**
-justo debajo (desde el 2026-11-04; antes el campo estaba en esta sección
-y contaba cada programa).  Un programa al que se le quita la casilla
-conserva su número, pero queda fuera.
+(Editar programa → What).  Un programa al que se le quita la casilla
+conserva sus números, pero queda fuera.
+
+Desde el 2026-11-07 el recuento sigue a las personas, no a los episodios:
+
+* Los **Presentadores** (Hosts involved; Editar programa → What, justo
+  debajo de **Producción propia**) son las personas que están en cada
+  episodio.  Cuentan **una vez por programa y año**, sin importar
+  cuántos episodios se emitieron.
+* Los **Invitados** (Guests involved; Archivar en línea en el
+  calendario) son los invitados de un episodio.  Cuentan **en cada
+  episodio** y se suman.
+* **Participantes** = presentadores + invitados.
+
+Ejemplo: un programa semanal con 2 presentadores se emitió 40 veces;
+tres episodios tuvieron invitados (1, 2 y 1).  Participantes: 2 + 4 = 6.
 
 * **Año**: el año en curso muestra el recuento hasta hoy.
 * **Solo programas sin valor**: las producciones propias que se
-  emitieron pero aún no tienen *Número de participantes*.  Revise esta
-  lista una vez; ponga `0` en los programas automatizados o
-  retransmitidos.
+  emitieron pero aún no tienen *Presentadores*.  Revise esta lista una
+  vez; ponga `0` en los programas automatizados o retransmitidos.
 * **Descargar CSV**: la tabla y los totales como archivo de hoja de
   cálculo.
 
 Cuentan los episodios **emitidos** en el año (terminados, no
 eliminados).  Las retransmisiones del antiguo tipo LibreTime quedan
-fuera; los programas configurados como [repetición de otro
-programa](./CALENDAR.md) aparecen con la marca **Repetición**: ponga su
-valor en `0` si sus personas ya cuentan en el original.
+fuera.  Los programas configurados como [repetición de otro
+programa](./CALENDAR.md) aparecen con la marca **Repetición** y no
+cuentan nada: sus personas ya se contaron con el original.  Nunca
+aparecen en *Programas sin valor*.
 
 | Columna / total | Significado |
 |---|---|
-| **Producciones propias emitidas** (total) | Producciones propias con al menos un episodio emitido en el año. |
+| **Producciones propias emitidas** (total) | Producciones propias con al menos un episodio emitido en el año, repeticiones incluidas. |
 | **Episodios emitidos** | Episodios del programa en el año. |
-| **Participantes** | El valor del programa; el total suma los valores de todos los programas. |
-| **Episodios con valor propio** | Episodios cuyo diálogo fija otro número. |
-| **Participaciones** | Los participantes de cada episodio sumados (un episodio con valor propio cuenta con ese valor). |
-| **Programas sin valor** (total) | En naranja mientras haya alguno. |
+| **Presentadores** | Los presentadores del programa, una vez al año; el total suma los presentadores de todos los programas. |
+| **Invitados** | Los invitados de todos los episodios emitidos del programa sumados. |
+| **Participantes** | Presentadores + invitados; el total es la cifra para la estadística. |
+| **Programas sin valor** (total) | Producciones propias (sin repeticiones) sin *Presentadores*; en naranja mientras haya alguno. |
 
-Una persona en varios programas cuenta una vez por programa en
-**Participantes**.  Los productores no se cuentan: para la estadística
-cuenta el número de personas.
+Una persona en varios programas cuenta una vez por programa; un
+invitado que vuelve cuenta en cada episodio.  Las cifras son números, no
+nombres: RASTATIME no puede saber que dos programas comparten un
+presentador.  Los productores no se cuentan.
 
 Los Program Managers y los Admins abren esta página.
 

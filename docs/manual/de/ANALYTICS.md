@@ -191,14 +191,16 @@ Program Managers und Admins öffnen diese Seite.
 ## 6. Teilnehmende (seit 2026-11-03)
 
 **Analytics → People Involved** (Teilnehmende) zählt die Menschen, die
-die **Eigenproduktionen** des Senders in einem Jahr gemacht haben: je
-Sendung ihre **Number of involved people** (Anzahl Teilnehmende; Edit
-Show → What, unter **Own production**; das Feld erscheint, sobald das
-Kästchen angekreuzt ist), wie viele Episoden einen eigenen Wert haben
-(Archive Online bzw. Online archivieren im Kalender) und die Teilnahmen
-(die Menschen aller Episoden zusammengezählt).  Nur Sendungen mit **Own
-production** zählen - eine Sendung ohne Häkchen behält ihre Zahl, bleibt
-aber außen vor, bis sie wieder angekreuzt ist.  **Only shows without a
+die **Eigenproduktionen** des Senders in einem Jahr gemacht haben.  Seit
+2026-11-07 gilt: **People involved** (Teilnehmende) = die **Hosts
+involved** (Moderierende; Edit Show → What, unter **Own production**;
+das Feld erscheint, sobald das Kästchen angekreuzt ist), gezählt
+**einmal pro Jahr**, + die **Guests involved** (Gäste) jeder gesendeten
+Episode (Archive Online bzw. Online archivieren im Kalender), gezählt
+**je Episode**.  Nur Sendungen mit **Own production** zählen - eine
+Sendung ohne Häkchen behält ihre Zahl, bleibt aber außen vor, bis sie
+wieder angekreuzt ist; Wiederholungssendungen (*Repeat of*) stehen in
+der Liste, zählen aber nichts.  **Only shows without a
 value** (Nur Sendungen ohne Wert) und **Download CSV** (CSV
 herunterladen) helfen bei der Jahresmeldung.  Die Einzelheiten stehen in
 [Archivierung](./ARCHIVING.md) § 6.

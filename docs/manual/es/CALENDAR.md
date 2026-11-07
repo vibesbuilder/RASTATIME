@@ -104,7 +104,7 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Entrada Live Stream** | Permitir a presentadores remotos tomar el programa vía Show DJ. |
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
 | **Own production** (producción propia) | Marcar en las producciones propias de la emisora: los minutos emitidos del programa cuentan en Analytics → [Minutos de programa](./ANALYTICS.md), sus personas en Analytics → Participantes (desde 2026-11-03).  Está en la sección **Qué** (*What* en la interfaz); el icono de ayuda junto a la casilla la explica en breve. |
-| **Number of involved people** (número de participantes) | Aparece debajo de **Own production** en cuanto se marca (desde 2026-11-04; antes en **Archivo** como *Participantes*): cuántas personas participan normalmente en un episodio, 0-999. Cuenta en Analytics → [Participantes](./ANALYTICS.md); un episodio concreto puede diferir (Archivar en línea). Quitar la casilla conserva el número; solo deja de contar. |
+| **Hosts involved** (presentadores) | Aparece debajo de **Own production** en cuanto se marca (desde 2026-11-04; *Number of involved people* hasta el 2026-11-07): cuántos presentadores participan en cada episodio, 0-999. Cuenta una vez al año en Analytics → [Participantes](./ANALYTICS.md), sin importar cuántos episodios se emitieron; los invitados de un solo episodio se introducen en Archivar en línea (**Guests involved**) y se suman. Quitar la casilla conserva el número; solo deja de contar. |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |
 | **Quién** | Presentadores adicionales. |
 | **Archivo** | Productor, cuenta de CBA, valores de cba.media y archivo automático del programa (de solo lectura en Editar instancia desde el 2026-11-04). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
@@ -135,7 +135,7 @@ acción.
 | **Guardar como plantilla** | Guardar la configuración actual como nueva plantilla. | Siempre |
 | **Ver** | Vista de solo lectura de los metadatos + programación del programa. *Start* y *Length* de cada fila son la fila de programación tal como queda colocada (Length = cue-out menos cue-in, como en el show builder; desde el 2026-10-23); los totales de abajo son la longitud colocada del contenido (con puntos de cue y solapes de crossfade) frente a la duración del programa. | Siempre |
 | **Teasers** | Los jingles que anuncian este programa: cambiar tipos, desvincular, vincular más; véase [Automatización de teasers](./TEASERS.md). Desde 2026-10-16. | Admin / PM |
-| **Archivar en línea** | Título, teaser, descripción, imagen y participantes de este episodio, antes o después de emitirse, y «Archivar en línea ahora» en cba.media; véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03 (primero llamado *Episodio...*). | Admin / PM / presentadores del programa (archivar: Admin / PM) |
+| **Archivar en línea** | Título, teaser, descripción, imagen e invitados de este episodio, antes o después de emitirse, y «Archivar en línea ahora» en cba.media; véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03 (primero llamado *Episodio...*). | Admin / PM / presentadores del programa (archivar: Admin / PM) |
 | **Editar programa** | Editar la definición de programa. | Programas futuros o actuales |
 | **Editar instancia** | Editar solo esta ocurrencia de un programa recurrente. | Programas recurrentes solamente |
 | **Cancelar programa** | Terminar el programa *ahora*. | Programa actual solamente |

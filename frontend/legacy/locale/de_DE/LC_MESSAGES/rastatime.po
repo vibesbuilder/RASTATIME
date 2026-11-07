@@ -8031,3 +8031,51 @@ msgstr "%s Element(e) werden gelöscht..."
 #: public/js/airtime/library/library.js
 msgid "Deleting failed or timed out. Reload the page to see which items were removed."
 msgstr "Löschen fehlgeschlagen oder Zeitüberschreitung. Laden Sie die Seite neu, um zu sehen, welche Elemente entfernt wurden."
+
+#: application/forms/AddShowWhat.php
+msgid "Hosts involved:"
+msgstr "Moderierende:"
+
+#: application/forms/AddShowWhat.php
+msgid "How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Archive Online in the calendar → \"Guests involved\"."
+msgstr "Wie viele Moderierende in jeder Episode mitwirken. Zählt einmal pro Jahr unter Statistiken → Teilnehmende, egal wie viele Episoden gesendet wurden. Gäste einer einzelnen Episode: Online archivieren im Kalender → \"Gäste\"."
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Guests involved"
+msgstr "Gäste"
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Guests of this episode only, on top of the show's hosts. Every episode adds its guests in Analytics → People Involved (own productions); the hosts count once per year."
+msgstr "Nur die Gäste dieser Episode, zusätzlich zu den Moderierenden der Sendung. Jede Episode zählt ihre Gäste unter Statistiken → Teilnehmende dazu (Eigenproduktionen); die Moderierenden zählen einmal pro Jahr."
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "The show has no hosts value yet."
+msgstr "Die Sendung hat noch keine Zahl der Moderierenden."
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Hosts of the show: %s"
+msgstr "Moderierende der Sendung: %s"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Archive Online in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."
+msgstr "Teilnehmende an den Eigenproduktionen des Senders, für die Jahresstatistik: die Moderierenden einer Sendung zählen einmal pro Jahr (Sendung ändern → What → \"Eigenproduktion\" → \"Moderierende\"), die Gäste jeder Episode werden dazugezählt (Online archivieren im Kalender → \"Gäste\"). Es zählen nur Sendungen mit \"Eigenproduktion\"; gezählt werden gesendete Episoden, alte Wiederholungen (Rebroadcast) bleiben außen vor, und Wiederholungssendungen (\"Repeat of\") zählen nichts, weil ihre Personen schon beim Original gezählt sind."
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Hosts involved (once per show)"
+msgstr "Moderierende (einmal je Sendung)"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Guests involved (per episode)"
+msgstr "Gäste (je Episode)"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "People involved = hosts + guests. A host counts once per show and year, however many episodes aired; a guest counts in every episode with guests. A person in several shows counts once per show."
+msgstr "Teilnehmende = Moderierende + Gäste. Moderierende zählen einmal je Sendung und Jahr, egal wie viele Episoden gesendet wurden; Gäste zählen in jeder Episode mit Gästen. Wer in mehreren Sendungen mitwirkt, zählt einmal je Sendung."
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Hosts involved"
+msgstr "Moderierende"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Repeat show: its people were counted with the original."
+msgstr "Wiederholungssendung: ihre Personen sind beim Original gezählt."

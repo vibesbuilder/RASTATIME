@@ -8388,3 +8388,51 @@ msgstr "Suppression de %s élément(s)..."
 #: public/js/airtime/library/library.js
 msgid "Deleting failed or timed out. Reload the page to see which items were removed."
 msgstr "La suppression a échoué ou a expiré. Rechargez la page pour voir quels éléments ont été retirés."
+
+#: application/forms/AddShowWhat.php
+msgid "Hosts involved:"
+msgstr "Animateurs :"
+
+#: application/forms/AddShowWhat.php
+msgid "How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Archive Online in the calendar → \"Guests involved\"."
+msgstr "Combien d'animateurs participent à chaque épisode. Compté une fois par an dans Statistiques → Participants, quel que soit le nombre d'épisodes diffusés. Invités d'un seul épisode : Archiver en ligne dans le calendrier → \"Invités\"."
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Guests involved"
+msgstr "Invités"
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Guests of this episode only, on top of the show's hosts. Every episode adds its guests in Analytics → People Involved (own productions); the hosts count once per year."
+msgstr "Seulement les invités de cet épisode, en plus des animateurs de l'émission. Chaque épisode ajoute ses invités dans Statistiques → Participants (productions propres) ; les animateurs comptent une fois par an."
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "The show has no hosts value yet."
+msgstr "L'émission n'a pas encore de nombre d'animateurs."
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Hosts of the show: %s"
+msgstr "Animateurs de l'émission : %s"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Archive Online in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."
+msgstr "Participants aux productions propres de la station, pour les statistiques annuelles : les animateurs d'une émission comptent une fois par an (Édition de l'émission → What → \"Production propre\" → \"Animateurs\"), les invités de chaque épisode s'ajoutent (Archiver en ligne dans le calendrier → \"Invités\"). Seules les émissions avec \"Production propre\" comptent ; sont comptés les épisodes diffusés, les anciennes rediffusions (rebroadcast) sont exclues, et les émissions de rediffusion (\"Repeat of\") ne comptent rien, car leurs personnes sont déjà comptées avec l'original."
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Hosts involved (once per show)"
+msgstr "Animateurs (une fois par émission)"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Guests involved (per episode)"
+msgstr "Invités (par épisode)"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "People involved = hosts + guests. A host counts once per show and year, however many episodes aired; a guest counts in every episode with guests. A person in several shows counts once per show."
+msgstr "Participants = animateurs + invités. Un animateur compte une fois par émission et par an, quel que soit le nombre d'épisodes diffusés ; un invité compte dans chaque épisode avec invités. Une personne présente dans plusieurs émissions compte une fois par émission."
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Hosts involved"
+msgstr "Animateurs"
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Repeat show: its people were counted with the original."
+msgstr "Émission de rediffusion : ses personnes sont comptées avec l'original."

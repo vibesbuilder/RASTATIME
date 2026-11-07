@@ -60,6 +60,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **People Involved zählt Personen statt Episoden: Hosts einmal, Gäste je Episode
+  (2026-11-07, Operator-Vorgabe)** — Für die Jahresbilanz geht es um eindeutige Personen.
+  Bisher zählte der Show-Wert einmal je Sendung, und ein Episoden-Wert *ersetzte* ihn für
+  diese Episode. Neu: das Feld im Show-Formular (Edit Show → What, unter *Own production*)
+  heißt **Hosts involved** (vorher *Number of involved people*) und zählt einmal je Sendung
+  und Jahr, egal wie viele Episoden liefen. Das Feld in *Archive Online* heißt **Guests
+  involved** (vorher *People involved*) und zählt je Episode zusätzlich. **People
+  involved = Hosts + Gäste.** „Repeat of"-Sendungen stehen weiter mit Merkmal in der Liste,
+  zählen aber nichts (ihre Personen zählen beim Original) und gelten nie als „ohne Wert"
+  (vorher 19 Sendungen ohne Wert, davon 15 Wiederholungen; jetzt 4).
+  Analytics → People Involved: Summen *Hosts involved (once per show)*, *Guests involved
+  (per episode)*, *People involved*; Spalten Hosts / Guests / People statt *Episodes with own
+  value* / *Participations*; CSV gleich aufgebaut. Archive Online: Platzhalter 0, Hinweis
+  „Hosts of the show: N". Keine Migration (cc_show_archiving.participants = Hosts,
+  cc_episode.participants = Gäste); bisher hatte keine Episode einen eigenen Wert, die Zahlen
+  bleiben also gleich (2026: 46 Hosts, 0 Gäste, 46 People involved). Neue Texte DE/FR/ES,
+  Handbuch ARCHIVING §6 / ANALYTICS §6 / CALENDAR ×4, Architektur §23.97. Proben
+  `participants_report_probe.php`, `participants_guest_probe.php` (Gäste in zurückgerollter
+  Transaktion: 1 Host + 3 + 2 Gäste = 6, Wiederholung 0), Live-Prüfung Seite, CSV,
+  Show-Formular und Episoden-Dialog (200). Übersetzungen nach Apache-Neustart.
+
 - **Apache: warmer php-cgi-Pool (2026-11-06, Go 2026-11-06)** — Beim Library-Feed fiel
   auf, dass mod_fcgid Schübe paralleler Anfragen in 1-s-Stufen bedient: eine Anfrage ohne
   freien php-cgi schläft eine Sekunde, ein neuer Prozess braucht ~1 s zum Start, und

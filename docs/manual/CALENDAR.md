@@ -137,7 +137,7 @@ The form is divided into collapsible sections. **What** and
 | **Live Stream Input** | Allow remote hosts to take the show via Show DJ (per-show username + password). |
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
 | **Own production** | Tick for the station's own productions: the show's aired minutes count in Analytics → [Programme Minutes](./ANALYTICS.md), its people in Analytics → People Involved (since 2026-11-03).  Sits in the section **What**; the help icon next to it explains it in short. |
-| **Number of involved people** | Appears below **Own production** once it is ticked (since 2026-11-04; before, in **Archiving** as *People involved*): how many people usually take part in an episode, 0-999. Counts in Analytics → [People Involved](./ANALYTICS.md); a single episode can differ (Archive Online). Removing the tick keeps the number, it just stops counting. |
+| **Hosts involved** | Appears below **Own production** once it is ticked (since 2026-11-04; called *Number of involved people* until 2026-11-07): how many hosts take part in every episode, 0-999. Counts once per year in Analytics → [People Involved](./ANALYTICS.md), however many episodes aired; the guests of a single episode are entered under Archive Online (**Guests involved**) and added on top. Removing the tick keeps the number, it just stops counting. |
 | **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Who** | Additional hosts beyond the primary one set under What. |
 | **Archiving** | Producer, CBA account, the cba.media defaults and automatic archiving of the show (read-only in Edit Instance since 2026-11-04). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
@@ -183,7 +183,7 @@ Click the show → context menu → choose an action.
 | **Save as Template** | Save the current show settings as a new template. | Always |
 | **View** | Read-only view of the show's metadata + schedule. Each row's *Start* and *Length* are the laid-out schedule row (Length = cue-out minus cue-in, as in the show builder; since 2026-10-23); the totals at the bottom are the laid-out content length (incl. cue points and crossfade overlaps) against the show's duration. | Always |
 | **Teasers** | The jingles that announce this show - change types, unlink, link more; see [Teaser Automation](./TEASERS.md). Since 2026-10-16. | Admin / PM |
-| **Archive Online** | Title, teaser, description, image and people involved of this one episode, before or after it aired, and "Archive online now" to cba.media; see [Archiving](./ARCHIVING.md). Since 2026-11-03 (first named *Episode...*). | Admin / PM / hosts of the show (archiving: Admin / PM) |
+| **Archive Online** | Title, teaser, description, image and guests involved of this one episode, before or after it aired, and "Archive online now" to cba.media; see [Archiving](./ARCHIVING.md). Since 2026-11-03 (first named *Episode...*). | Admin / PM / hosts of the show (archiving: Admin / PM) |
 | **Edit Show** | Edit the show definition (name, time, repeats, etc.). | Future or current shows |
 | **Edit Instance** | Edit only this one occurrence of a recurring show. | Recurring shows only |
 | **Cancel Show** | End the show *now* — only meaningful for the currently-playing show. | Current show only |

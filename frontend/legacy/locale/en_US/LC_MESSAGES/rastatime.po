@@ -1351,3 +1351,51 @@ msgstr ""
 
 msgid "Telegram alerts need a bot token and at least one chat id."
 msgstr ""
+
+#: application/forms/AddShowWhat.php
+msgid "Hosts involved:"
+msgstr ""
+
+#: application/forms/AddShowWhat.php
+msgid "How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Archive Online in the calendar → \"Guests involved\"."
+msgstr ""
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Guests involved"
+msgstr ""
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Guests of this episode only, on top of the show's hosts. Every episode adds its guests in Analytics → People Involved (own productions); the hosts count once per year."
+msgstr ""
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "The show has no hosts value yet."
+msgstr ""
+
+#: application/views/scripts/schedule/episode-dialog.phtml
+msgid "Hosts of the show: %s"
+msgstr ""
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Archive Online in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."
+msgstr ""
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Hosts involved (once per show)"
+msgstr ""
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Guests involved (per episode)"
+msgstr ""
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "People involved = hosts + guests. A host counts once per show and year, however many episodes aired; a guest counts in every episode with guests. A person in several shows counts once per show."
+msgstr ""
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Hosts involved"
+msgstr ""
+
+#: application/views/scripts/archiving/participants.phtml
+msgid "Repeat show: its people were counted with the original."
+msgstr ""

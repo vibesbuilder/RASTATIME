@@ -224,15 +224,17 @@ class ArchivingController extends Zend_Controller_Action
         $report = Application_Service_ArchivingService::participantsReport($year);
         $out = fopen('php://temp', 'w+');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, [_('Show name'), _('Episodes aired'), _('People involved'), _('Episodes with own value'),
-            _('Participations'), _('Repeat'), _('Producer')], ',', '"', '');
+        // since 2026-11-07: hosts once per show and year + guests per episode = people involved;
+        // a repeat show counts nothing (its hosts and guests stay empty)
+        fputcsv($out, [_('Show name'), _('Episodes aired'), _('Hosts involved'), _('Guests involved'),
+            _('People involved'), _('Repeat'), _('Producer')], ',', '"', '');
         foreach ($report['rows'] as $r) {
-            fputcsv($out, [$r['name'], $r['episodes'], $r['participants'] ?? '', $r['overrides'],
-                $r['person_episodes'] ?? '', $r['is_repeat'] ? _('yes') : '', $r['team']], ',', '"', '');
+            fputcsv($out, [$r['name'], $r['episodes'], $r['is_repeat'] ? '' : ($r['hosts'] ?? ''),
+                $r['is_repeat'] ? '' : $r['guests'], $r['people'], $r['is_repeat'] ? _('yes') : '', $r['team']], ',', '"', '');
         }
         $t = $report['totals'];
         // the teams are not counted (operator 2026-11-03: only the people involved)
-        fputcsv($out, [_('Total'), $t['episodes'], $t['participants'], '', $t['person_episodes'], '', ''], ',', '"', '');
+        fputcsv($out, [_('Total'), $t['episodes'], $t['hosts'], $t['guests'], $t['people'], '', ''], ',', '"', '');
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);

@@ -61,9 +61,12 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
             'required' => false,
             'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-own-production']]],
         ]);
+        // 2026-11-07 (operator): "Hosts involved" - the hosts who are the
+        // same in every episode, counted once per show and year; the guests
+        // of a single episode are added on top (Archive Online).
         $this->addElement('text', 'add_show_participants', [
-            'label' => _('Number of involved people:'),
-            'description' => _('How many people usually take part in an episode, counted in Analytics → People Involved. A single episode can differ: Archive Online in the calendar.'),
+            'label' => _('Hosts involved:'),
+            'description' => _('How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Archive Online in the calendar → "Guests involved".'),
             'class' => 'input_text',
             'required' => false,
             'filters' => ['StringTrim'],

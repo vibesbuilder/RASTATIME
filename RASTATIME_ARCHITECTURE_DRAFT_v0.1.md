@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.122
+Draft version: 0.123
 Date: 2026-11-07
 
 > **Revision history**
+> - **0.123 (2026-11-07)** - **People Involved counts persons** (§23.97): the show value is
+>   "Hosts involved" (once per show and year), the episode value "Guests involved" (added per
+>   episode instead of replacing the show value); people involved = hosts + guests; "Repeat
+>   of" shows count nothing.  No schema change.
 > - **0.122 (2026-11-07)** - **Boundary measurements on the rows model** (§23.96): the queue's
 >   `remaining` is read ~3 s ahead of the air (cross buffer) - hold came out 3.07 s instead of 1 s,
 >   the strict cut missed a 2-s overrun; cut and hold now use `_file_audio_end` (rows + chain lag).
@@ -9386,3 +9390,57 @@ the next file -> file boundaries - 12:15 (expected hold of the
 autoloading rest, show on its row), 17:15 (rows run 3 s past the
 boundary: the first live strict cut, `rt_cross show/.../3.0x/0.0`).
 Rollback: `git revert` + PLAYOUT restart.
+
+### 23.97 People Involved: Hosts Once per Show, Guests per Episode (2026-11-07)
+
+**Why.**  Operator 2026-11-07: the yearly figure is about unique
+persons.  Until now `participantsReport()` (§23.83/§23.87) took the
+show value (`cc_show_archiving.participants`) once per show as "people
+involved" and, per episode, `COALESCE(cc_episode.participants, show
+value)` as "participations" - an episode value *replaced* the show
+value.  A weekly show with two hosts counted 2 people, but a guest
+episode overwrote the hosts instead of adding the guest.
+
+**Now.**  Same two columns, new meaning, no migration:
+
+* `cc_show_archiving.participants` = **Hosts involved** (show form,
+  What, below *Own production*; label was "Number of involved
+  people").  Counted once per show and year if the show aired at
+  least once.
+* `cc_episode.participants` = **Guests involved** (Archive Online;
+  label was "People involved").  Summed over the aired episodes of
+  the year, on top of the hosts.
+* People involved = hosts + guests, per show and in the totals.
+* Shows with `repeat_of_show_id` (§23.65) rebroadcast the same people:
+  listed with the *Repeat* tag, `people = 0`, left out of the host and
+  guest totals and never "without a value" (`missing` = own, not a
+  repeat, hosts NULL).  The legacy-rebroadcast filter
+  (`rebroadcast = 0`) is unchanged.
+
+`participantsReport()` returns per row `hosts` (NULL = not set),
+`guests`, `episodes_with_guests`, `people`, `missing`, `is_repeat`;
+totals `shows`, `episodes`, `hosts`, `guests`, `people`, `missing`
+(the keys `participants`, `overrides`, `person_episodes` are gone; the
+only readers were `archiving/participants.phtml` and
+`ArchivingController::participantsCsvAction`).  The CSV columns are
+Show name, Episodes aired, Hosts involved, Guests involved, People
+involved, Repeat, Producer (+ a Total row).  The episode dialog shows
+placeholder `0` and "Hosts of the show: N" instead of the show value as
+a placeholder.
+
+The figures are counts, not identities: a person who hosts two shows
+counts twice, a returning guest once per episode.  True de-duplication
+would need names per show and episode (not planned).
+
+**Data at the switch.**  No episode had a value, so the totals did not
+move (2026: 46 hosts, 0 guests, 46 people involved); "without a value"
+went from 19 to 4 because the 15 repeat shows dropped out.
+
+**Rollout.**  Legacy PHP only (live on the next request, OPcache off);
+the new strings (DE/FR/ES) after an Apache restart.  Proof:
+`participants_report_probe.php` (totals, hosts + guests = people),
+`participants_guest_probe.php` (guest values written in a transaction
+that is rolled back: 1 host + 3 + 2 guests = 6, a repeat with guests
+stays 0), live: page, CSV, show form (`populate-show-form`) and
+episode dialog (`episode-dialog?format=json`) 200 with the new labels.
+Rollback: `git revert` (tag `live-2026-11-07b`).

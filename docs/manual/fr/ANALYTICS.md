@@ -197,15 +197,16 @@ Les Program Managers et les Admins ouvrent cette page.
 ## 6. Participants (depuis le 2026-11-03)
 
 **Analytics → People Involved** (participants) compte les personnes qui
-ont fait les **productions propres** de la station dans une année : par
-émission son **Number of involved people** (nombre de participants ;
-Edit Show → What, sous **Own production** ; le champ apparaît dès que la
-case est cochée), le nombre d'épisodes qui ont leur propre valeur
-(Archive Online dans le calendrier) et les participations (les
-personnes de chaque épisode additionnées).  Seules les émissions avec
-**Own production** comptent - une émission sans la case garde son
-nombre mais est laissée de côté jusqu'à ce qu'elle soit de nouveau
-cochée.  **Only shows without a value** et **Download CSV** aident pour
+ont fait les **productions propres** de la station dans une année.
+Depuis le 2026-11-07 : **People involved** (participants) = les **Hosts
+involved** (animateurs ; Edit Show → What, sous **Own production** ; le
+champ apparaît dès que la case est cochée), comptés **une fois par
+an**, + les **Guests involved** (invités) de chaque épisode diffusé
+(Archive Online dans le calendrier), comptés **par épisode**.  Seules
+les émissions avec **Own production** comptent - une émission sans la
+case garde son nombre mais est laissée de côté jusqu'à ce qu'elle soit
+de nouveau cochée ; les émissions de rediffusion (*Repeat of*)
+apparaissent dans la liste mais ne comptent rien.  **Only shows without a value** et **Download CSV** aident pour
 la déclaration annuelle.  Les détails se trouvent dans
 [Archivage](./ARCHIVING.md) § 6.
 

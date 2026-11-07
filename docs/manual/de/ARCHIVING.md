@@ -127,9 +127,9 @@ nicht-kommerziell; *Gemeinfrei* behält keinerlei Rechte.
 
 Die Zahl der Teilnehmenden steht nicht mehr in diesem Abschnitt (seit
 2026-11-04): Sie steht im Abschnitt **What**, unter **Eigenproduktion**,
-als **Anzahl Teilnehmende** (0-999) und erscheint, sobald
-**Eigenproduktion** angehakt ist - sie zählt in Statistiken →
-Teilnehmende (§6).
+als **Moderierende** (Hosts involved, 0-999; bis 2026-11-07 *Anzahl
+Teilnehmende*) und erscheint, sobald **Eigenproduktion** angehakt ist -
+sie zählt in Statistiken → Teilnehmende (§6).
 
 In **Instanz bearbeiten** wird der Abschnitt **schreibgeschützt** mit
 den Werten der Sendung angezeigt (seit 2026-11-04; vorher fehlte er):
@@ -154,7 +154,7 @@ für Admins, Programm-Manager und die Hosts der Sendung.
 | **Titel** | Leer: Name der Sendung und Datum, grau als Vorschlag angezeigt. |
 | **Teaser** | Eine kurze Zusammenfassung. Leer: der Standard-Teaser der Sendung. |
 | **Beschreibung** | Der Text der Episode, auf cba.media der Text des Beitrags. Leer: die Beschreibung der Sendung oder, wenn die Sendung keine hat, der Name der Sendung (grau angezeigt). Hier ist die einzige Stelle dafür (Instanz bearbeiten zeigt das Feld nicht mehr). |
-| **Teilnehmende** | Nur wenn diese Episode von der Sendung abweicht, z. B. mit Gästen. Der Wert der Sendung steht grau im Feld. |
+| **Gäste** (Guests involved) | Die Gäste dieser einen Episode (0-999), gezählt zusätzlich zu den Moderierenden der Sendung (seit 2026-11-07; vorher hieß das Feld *Teilnehmende* und ersetzte den Wert der Sendung). Leer bedeutet keine Gäste; die Zeile unter dem Feld zeigt die Moderierenden der Sendung. |
 | **Produktionsdatum** | Von cba.media verlangt. Leer: der Sendetag. Setzen Sie es, wenn die Episode früher produziert wurde. |
 | **Diese Episode nicht automatisch archivieren** | Für Tests, ausgefallene Episoden oder Rechteprobleme. Wirkt mit der automatischen Archivierung (§5); von Hand archivieren bleibt möglich. |
 | **Episodenbild** | Optional, JPG oder PNG bis 10 MB. Die Auswahl einer Datei lädt sie sofort hoch; **Bild entfernen** löscht sie. Ohne Bild zeigt cba.media das Bild des Podcasts. |
@@ -278,37 +278,50 @@ Archiv-Status** (§7).
 **Statistiken → Teilnehmende** zählt die Teilnehmenden je
 Eigenproduktion und Jahr (Stationszeit) - die Zahlen für die
 Jahresstatistik.  Nur Sendungen mit **Eigenproduktion** (Sendung ändern
-→ What) zählen; ihre Zahl ist die **Anzahl Teilnehmende** direkt
-darunter (seit 2026-11-04; vorher stand das Feld in diesem Abschnitt
-und jede Sendung zählte).  Eine Sendung, deren Häkchen entfernt wird,
-behält ihre Zahl, bleibt aber außen vor.
+→ What) zählen.  Eine Sendung, deren Häkchen entfernt wird, behält ihre
+Zahlen, bleibt aber außen vor.
+
+Seit 2026-11-07 folgt die Zählung den Menschen, nicht den Episoden:
+
+* **Moderierende** (Hosts involved; Sendung ändern → What, direkt unter
+  **Eigenproduktion**) sind die Menschen, die in jeder Episode dieselben
+  sind.  Sie zählen **einmal je Sendung und Jahr**, egal wie viele
+  Episoden gesendet wurden.
+* **Gäste** (Guests involved; Online archivieren im Kalender) sind die
+  Gäste einer Episode.  Sie zählen **in jeder Episode** und werden
+  zusammengezählt.
+* **Teilnehmende** = Moderierende + Gäste.
+
+Beispiel: eine Wochensendung mit 2 Moderierenden lief 40-mal; drei
+Episoden hatten Gäste (1, 2 und 1).  Teilnehmende: 2 + 4 = 6.
 
 * **Jahr** - das laufende Jahr zeigt den Stand bis heute.
 * **Nur Sendungen ohne Wert** - die Eigenproduktionen, die gelaufen
-  sind, aber noch keine *Anzahl Teilnehmende* haben.  Arbeiten Sie diese
-  Liste einmal durch; setzen Sie `0` für automatisierte oder übernommene
+  sind, aber noch keine *Moderierenden* haben.  Arbeiten Sie diese Liste
+  einmal durch; setzen Sie `0` für automatisierte oder übernommene
   Programme.
 * **CSV herunterladen** - Tabelle und Summen als Tabellen-Datei.
 
 Gezählt werden die Episoden, die im Jahr **gesendet** wurden (beendet,
 nicht gelöscht).  Rebroadcasts der alten LibreTime-Art bleiben außen
-vor; Sendungen, die als [Wiederholung einer anderen Sendung](./CALENDAR.md)
-angelegt sind, stehen mit dem Merkmal **Wiederholung** in der Liste -
-setzen Sie ihren Wert auf `0`, wenn ihre Menschen schon im Original
-zählen.
+vor.  Sendungen, die als [Wiederholung einer anderen Sendung](./CALENDAR.md)
+angelegt sind, stehen mit dem Merkmal **Wiederholung** in der Liste und
+zählen nichts: ihre Menschen sind schon beim Original gezählt.  Sie
+erscheinen nie unter *Sendungen ohne Wert*.
 
 | Spalte / Summe | Bedeutung |
 |---|---|
-| **Gesendete Eigenproduktionen** (Summe) | Eigenproduktionen mit mindestens einer gesendeten Episode im Jahr. |
+| **Gesendete Eigenproduktionen** (Summe) | Eigenproduktionen mit mindestens einer gesendeten Episode im Jahr, Wiederholungen eingeschlossen. |
 | **Gesendete Episoden** | Episoden der Sendung im Jahr. |
-| **Teilnehmende** | Der Wert der Sendung; die Summe addiert die Werte aller Sendungen. |
-| **Episoden mit eigenem Wert** | Episoden, deren Dialog eine andere Zahl setzt. |
-| **Teilnahmen** | Die Teilnehmenden jeder Episode zusammengezählt (eine Episode mit eigenem Wert zählt mit diesem Wert). |
-| **Sendungen ohne Wert** (Summe) | Orange, solange es welche gibt. |
+| **Moderierende** | Die Moderierenden der Sendung, einmal pro Jahr; die Summe addiert die Moderierenden aller Sendungen. |
+| **Gäste** | Die Gäste aller gesendeten Episoden der Sendung zusammengezählt. |
+| **Teilnehmende** | Moderierende + Gäste; die Summe ist die Zahl für die Statistik. |
+| **Sendungen ohne Wert** (Summe) | Eigenproduktionen (ohne Wiederholungen) ohne *Moderierende*; orange, solange es welche gibt. |
 
-Wer in mehreren Sendungen mitwirkt, zählt bei **Teilnehmende** einmal
-je Sendung.  Die Produzenten werden nicht gezählt - für die Statistik
-zählt die Zahl der Menschen.
+Wer in mehreren Sendungen mitwirkt, zählt einmal je Sendung; ein Gast,
+der wiederkommt, zählt in jeder Episode.  Die Zahlen sind Anzahlen,
+keine Namen - RASTATIME kann nicht erkennen, dass zwei Sendungen
+dieselbe Moderation haben.  Die Produzenten werden nicht gezählt.
 
 Programm-Manager und Admins öffnen diese Seite.
 

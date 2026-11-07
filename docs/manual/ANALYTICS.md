@@ -172,14 +172,15 @@ Program Managers and Admins open this page.
 ## 6. People Involved (since 2026-11-03)
 
 **Analytics → People Involved** counts the people who made the
-station's **own productions** in a year: per show its **Number of
-involved people** (Edit Show → What, below **Own production**; the field
-appears once the box is ticked), how many episodes have a value of their
-own (Archive Online in the calendar) and the participations (the people
-of every episode added up).  Only shows with **Own production** count -
-a show without the tick keeps its number but is left out until it is
-ticked again.  **Only shows without a value** and **Download CSV**
-help with the yearly reporting.  The details are in
-[Archiving](./ARCHIVING.md) § 6.
+station's **own productions** in a year.  Since 2026-11-07:
+**People involved** = the show's **Hosts involved** (Edit Show → What,
+below **Own production**; the field appears once the box is ticked),
+counted **once per year**, + the **Guests involved** of every aired
+episode (Archive Online in the calendar), counted **per episode**.
+Only shows with **Own production** count - a show without the tick
+keeps its number but is left out until it is ticked again; repeat shows
+(*Repeat of*) are listed but count nothing.  **Only shows without a
+value** and **Download CSV** help with the yearly reporting.  The
+details are in [Archiving](./ARCHIVING.md) § 6.
 
 Program Managers and Admins open this page.
