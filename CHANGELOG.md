@@ -79,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Handbuch ARCHIVING §6 / ANALYTICS §6 / CALENDAR ×4, Architektur §23.97. Proben
   `participants_report_probe.php`, `participants_guest_probe.php` (Gäste in zurückgerollter
   Transaktion: 1 Host + 3 + 2 Gäste = 6, Wiederholung 0), Live-Prüfung Seite, CSV,
-  Show-Formular und Episoden-Dialog (200). Übersetzungen nach Apache-Neustart.
+  Show-Formular und Episoden-Dialog (200). Übersetzungen nach Apache-Neustart. Commit
+  `38355907`.
 
 - **Apache: warmer php-cgi-Pool (2026-11-06, Go 2026-11-06)** — Beim Library-Feed fiel
   auf, dass mod_fcgid Schübe paralleler Anfragen in 1-s-Stufen bedient: eine Anfrage ohne
