@@ -266,6 +266,30 @@ Sendung (`cc_show_days.record` → `cc_show_instances.record`), Kopie der Aufnah
 Vorgänger- und Nachfolgesendung, Wirkung auf Länge und Metadaten von Kopie und Archiv.
 **Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
 
+### 💡 Alarm-Entwarnung geht bei einem PLAYOUT-Neustart verloren - IDEA (Befund 2026-11-07, Update auf 1.3.0)
+
+Befund 19:51:42: Der Analyzer war für die Paket-Neuinstallation gestoppt, PLAYOUT meldete
+`alert raised: service:RASTATIME-ANALYZER` (Mail/Telegram gehen dabei raus, kein Fehler im
+Log).  21 s später wurde PLAYOUT neu gestartet.  Die offenen Alarme liegen nur im Speicher
+(`AlertManager._open` in `rastatime_shared/alerts.py`), die neue Instanz kennt den Alarm nicht
+und schickt deshalb nie die Entwarnung „OK", obwohl der Analyzer wieder läuft.  Ideen: offene
+Alarme in eine kleine JSON-Datei neben dem Scheduler-Cache schreiben und beim Start prüfen
+(Bedingung weg → Entwarnung senden); oder geplante Neustarts per `suppress()` ankündigen.
+Bezug §23.84.
+**Vorbedingungen:** Evaluierung auf Operator-Wunsch.
+
+### 💡 PLAYOUT-Neustart ohne Sendelücke - IDEA (Befund 2026-11-07, Update auf 1.3.0)
+
+Ein PLAYOUT-Neustart schickt beim Herunterfahren `engine.stop()` (`PlayoutScheduler.shutdown`)
+und stoppt damit den laufenden Titel in Liquidsoap.  Bis die neue Instanz den Sendeplan geholt
+hat (Abruf ~8,4 s) und per Catch-up am Offset weiterspielt, läuft `silence_fallback`.  Gemessen
+2026-11-07: Stille 19:52:03 → 19:52:16, ~13 s.  Dokumentiert als „brief audio gap"
+(`docs/operator/RESTART_ORDER.md`).  Idee: beim Herunterfahren den laufenden Titel in
+Liquidsoap weiterlaufen lassen (nur Timer abbrechen, Aufnahme schließen) und beim Start den
+spielenden Titel per Catch-up übernehmen statt neu zu starten.  Fallstricke: Webstream- und
+Line-In-Zeilen, vorgelegter Nachfolger in der Queue, Neustart-Schutz §23.89.
+**Vorbedingungen:** Evaluierung auf Operator-Wunsch.
+
 ### 🟡 Kommentar je Allowed Address (neu 2026-11-06, Operator: kein Go, Defer)
 
 Wunsch: jede Zeile unter *System Status → Allowed addresses* bekommt einen Kommentar (wem
