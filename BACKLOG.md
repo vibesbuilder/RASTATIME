@@ -80,6 +80,26 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 💡 Hörer-Aussetzer beim Sendungsstart 12:07 (foobar2000, Stream 1 über den Apache-Proxy) - Befund 2026-11-07, Analyse offen, gemeinsamer Test 2026-11-08 Mittag
+
+Operator hörte beim Start der 12:07-Sendung: erster Titel ~1 s hörbar, dann 2-3 s nichts, dann weiter.
+Ausgeschlossen: Playout (kein Hold, Kette -0,04 s), Liquidsoap (normale show/old-Transition, keine
+Meldung), Sendebus (24/7-Stundenaufnahme lückenlos, nur 0,25 s natürliche Lücke 12:06:59,98), Icecast
+(kein Hörer-Disconnect 12:05-12:30, Fehlerlog leer), Apache-Fehlerlog leer.  Aufnahme und Stream 1 lesen
+denselben prozessierten Bus (Stereo Tool, Limiter, icy_rewrite, blank.detect davor).  Mitschnitte von
+Stream 1 (Audio + ICY-Rohbytes): zwei In-Show-Crossfades 12:33/12:35 und die Grenze 13:45 sauber (keine
+Stille, keine Encoder-Köpfe mitten im Strom, keine Dekoder-Warnung); Hörer-Simulation 13:48-13:56 direkt
+und über /stream/rastatime identisch, 0 Transport-Stillstände.  Einziges Ereignis am Moment: ICY-Update
+12:06:59 (2x admin/metadata, Streams 1+2) und bus_show-Metadatum beim Sendungsstart.  Hörweg des
+Operators: foobar2000 -> https /stream/rastatime (Apache mod_proxy) -> Icecast.
+**Offen:** Reproduktion mit Hörer.  Werkzeuge: `stream_stall_probe.py` (Hörer-Simulation mit ICY,
+Stillstände/Titel/Stille) und `stream_capture_check.py` im Scratchpad dieser Sitzung; Hintergrundlauf
+2026-11-08 11:58:30-12:20 (12:00 Webstream -> 12:07 Hinweis-Sendung -> 12:15 Musiksendung, gleiche Struktur
+wie heute) auf beiden Wegen.  **Operator:** morgen Mittag mit foobar2000 über Stream 1 mithören, vorher
+View -> Console öffnen und die Zeile zum Zeitpunkt des Aussetzers notieren.  Verdächtige, falls der Strom
+sauber bleibt: foobar2000-Verhalten beim ICY-Titelwechsel / Netzwerkpuffer; falls der Proxy-Weg stockt:
+Apache mod_proxy (ProxyIOBufferSize/flushpackets) oder der WAN-Weg.
+
 ### 🟡 Fill-Pass auf einer verknüpften Sendung befüllt alle künftigen Instanzen; Task-Manager-Lock läuft während langer Zyklen ab; 429 vorbefüllte Instanzen (Befund 2026-11-07, wartet auf Go)
 
 Hinter dem Deadlock vom 2026-11-06 (unten, ✅) steckt ein zweiter Befund: die 17:07-Sendung
