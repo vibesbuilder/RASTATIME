@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   worden).  Jetzt rechnen `_boundary_cut` und `_boundary_hold` mit dem Zeilenmodell
   `_file_audio_end` (Zeilenstart + Clip + Kettenverzug), der Engine-Rest fließt dort nicht mehr
   ein; der Schwanzfenster-Guard ebenso.  Tests 895 grün.  Wirksam nach PLAYOUT-Neustart
-  (Template unverändert, kein Liquidsoap-Neustart).  ARCHITECTURE §23.96, BACKLOG.
+  (Template unverändert, kein Liquidsoap-Neustart).  ARCHITECTURE §23.96, BACKLOG.  Commit `f8da7d35`.
 - **Mehrfach-Löschen in der Library: 2 s je Datei und kein Busy-Hinweis (2026-11-06,
   Go 2026-11-06)** — 66 Dateien brauchten heute 214 s, ein 52er-Block 101 s in einem
   POST (FcgidIOTimeout 120 s).  Ursache: die Lösch-Sperre „noch von einer unbefüllten
