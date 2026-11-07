@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mit derselben Datei sich nicht verklemmen.  Probe mit zweiter Verbindung
   (C:/Temp/optd/fill_lock_probe.php): Skip-Modus 55003 nach 10 ms, Normalmodus wartet,
   nach Freigabe sofort durch, `addPlaylistToShow(skipIfBusy)` ohne offene Transaktion.
-  Live ohne Neustart (OPcache aus).  Manual AUTO_DJ §4 ×4, ARCHITECTURE §23.95, BACKLOG.
+  Live ohne Neustart (OPcache aus).  Manual AUTO_DJ §4 ×4, ARCHITECTURE §23.95, BACKLOG.  Commit `9231a211`.
 
 ### Changed
 
