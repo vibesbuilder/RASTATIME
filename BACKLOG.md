@@ -152,8 +152,9 @@ gehaltene Stille heraus.  Tests 901 grün, `liquidsoap --check` am Live-Skript b
 Sendung ~2 s zu spät, und der strikte Schnitt griff um 08:15 trotz ~2-3 s Verzug nicht: der
 Engine-Rest (`<queue>.remaining`) läuft dem Sendeton um den cross-Puffer (~3 s) voraus.  Beide
 Messungen auf das Zeilenmodell `_file_audio_end` umgestellt (§23.96, Commit siehe CHANGELOG).
-**Abnahme erneut offen:** 12:15 (Haltezeit, Sendung auf der Zeile) und 17:15 (erster echter
-strikter Schnitt, Zeilen 3 s über der Grenze).
+**Abnahme Haltezeit bestanden 2026-11-07** (live seit 10:26): 12:00 Hold 0,6 s -> Kette 0,00 s, 12:07
+-0,04 s, 12:15 Lücke 0,05 s -> kein Hold, pünktlich; vorher 10:00/10:07 noch Hold 3,0 s und Kette ~2,9 s
+spät.  **Offen:** 17:15 erster echter strikter Schnitt (Zeilen 3 s über der Grenze).
 
 ### ✅ Auto-DJ-Fill-Pass und Handplanung sperren sich gegenseitig - GEBAUT 2026-11-07 (c)+(b) (Deadlock in cc_files.is_scheduled, Befund 2026-11-06 16:09-16:13, Go 2026-11-07)
 
