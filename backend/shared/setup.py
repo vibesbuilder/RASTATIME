@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version = "1.2.0"  # x-release-please-version
+version = "1.3.0"  # x-release-please-version
 
 setup(
     name="rastatime-shared",

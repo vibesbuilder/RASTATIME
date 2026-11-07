@@ -7,56 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- **Sendungsgrenze: Schnitt und Haltezeit nach den Zeilen statt nach dem Engine-Rest (2026-11-07,
-  Befund 08:07/08:15)** — Erste Live-Grenzen mit der Haltezeit: um 08:07 errechnete das
-  Queue-Ahead 3,07 s Stille, die Zeilen sagten 0,95 s - die Sendung begann rund 2 s zu spät; um
-  08:15 lief die Kette dadurch ~2-3 s hinter den Zeilen, und der strikte Schnitt griff trotzdem
-  nicht (Schnittwert 0,0).  Ursache: `<queue>.remaining` misst an der Request-Queue, die der
-  `cross`-Operator um seinen Puffer (~3 s) vor dem Sendeton liest - innerhalb von Sendungen steht
-  seit je „engine 0,2-0,8 s, rows said 2,6-3,2 s" im Log.  Haltezeit zu lang, Überlauf um
-  denselben Betrag unterschätzt (darum war der Schnittpfad seit 2026-11-06 nie ausgelöst
-  worden).  Jetzt rechnen `_boundary_cut` und `_boundary_hold` mit dem Zeilenmodell
-  `_file_audio_end` (Zeilenstart + Clip + Kettenverzug), der Engine-Rest fließt dort nicht mehr
-  ein; der Schwanzfenster-Guard ebenso.  Tests 895 grün.  Wirksam nach PLAYOUT-Neustart
-  (Template unverändert, kein Liquidsoap-Neustart).  ARCHITECTURE §23.96, BACKLOG.  Commit `f8da7d35`.
-  Live seit 2026-11-07 10:26; Abnahme bestanden: 12:00 Haltezeit 0,6 s nach Zeilen -> Kette 0,00 s,
-  12:07 -0,04 s, 12:15 Lücke 0,05 s -> keine Haltezeit, Übergabe pünktlich (vor dem Fix um 10:00
-  und 10:07 noch 3,0 s Haltezeit und Kette 2,8-3,0 s spät).
-- **Mehrfach-Löschen in der Library: 2 s je Datei und kein Busy-Hinweis (2026-11-06,
-  Go 2026-11-06)** — 66 Dateien brauchten heute 214 s, ein 52er-Block 101 s in einem
-  POST (FcgidIOTimeout 120 s).  Ursache: die Lösch-Sperre „noch von einer unbefüllten
-  Wiederholung gebraucht" (`RepeatFillService::neededByPendingRepeat`) filterte über
-  einen LEFT JOIN mit OR und ließ den Planer alle 18.113 Instanzen samt korrelierter
-  „letzte Instanz"-Unterabfrage durchgehen: 1,8-2,0 s je Datei.  Der Filter läuft jetzt
-  als EXISTS über die indizierten cc_schedule-Spalten (Datei und Stream): 1970 ms ->
-  33 ms im Mittel, Ergebnisse auf 75 Ids identisch.  Dazu ein sichtbarer Busy-Zustand
-  im Library-Löschen: Processing-Overlay der Tabelle, Knopftext „Deleting N item(s)…",
-  Fortschritts-Cursor, Meldung bei Fehler/Zeitüberschreitung (vorher blieb der Knopf
-  nur stumm deaktiviert).  Manual LIBRARY ×4, Strings de/fr/es.  Commit 7c28fe02.
-- **Auto-DJ-Fill-Pass: parallele Scheduler-Transaktionen sperrten sich gegenseitig (2026-11-07,
-  Go (c)+(b) 2026-11-07)** — Befund 2026-11-06 16:07-16:13 (Deutung am 2026-11-07 korrigiert,
-  kein Operator-Eingriff): das Autoloading der 17:07-Sendung lieferte nichts (ihre
-  Autoloading-Playlist ist leer, 480 s frei), der Fill-Pass („Automatically fill any show")
-  hängte die Auto-DJ-Playlist an - und weil die Sendung *verknüpft* ist, schrieb der Scheduler
-  die Zeilen in alle 429 künftigen Instanzen bis Januar 2028 (1.092 „adjusting"-Zeilen, 5,5 min
-  Transaktion).  Der Task-Manager-Lock läuft nach 30 s ab, also starteten weitere Zyklen
-  parallele Fill-Pässe derselben Sendung; die setzen `cc_files.is_scheduled` auf überlappenden
-  Dateien in verschiedener Reihenfolge -> viermal `40P01 Deadlock detected` / `40001
-  Serialization failure`, bis der letzte Durchlauf 16:13:11 gewann.  Dieselbe Kollision trifft
-  genauso einen Drop des Operators, der zeitgleich an der Sendung arbeitet.  Jetzt (c): jede Scheduler-Transaktion (einfügen, verschieben, entfernen,
-  Autoloading-Build) sperrt als Erstes die Zeilen der betroffenen Sendungsinstanzen (verknüpfte
-  Sendung: alle künftigen Instanzen) in Id-Reihenfolge; ein zweiter Bearbeiter wartet.  Der
-  Fill-Pass wartet nicht (`FOR UPDATE NOWAIT`), lässt eine Sendung in Bearbeitung in Ruhe
-  (`Scheduler::ERR_INSTANCE_BUSY`, Info-Zeile statt Warnung) und kommt in der nächsten Minute
-  wieder.  Und (b): vor jedem Setzen von `is_scheduled` werden die Dateizeilen in
-  Id-Reihenfolge gesperrt (`Scheduler::lockFilesInOrder`, auch in
-  `StoredFile::updatePastFilesIsScheduled`), damit zwei Bearbeiter verschiedener Sendungen
-  mit derselben Datei sich nicht verklemmen.  Probe mit zweiter Verbindung
-  (C:/Temp/optd/fill_lock_probe.php): Skip-Modus 55003 nach 10 ms, Normalmodus wartet,
-  nach Freigabe sofort durch, `addPlaylistToShow(skipIfBusy)` ohne offene Transaktion.
-  Live ohne Neustart (OPcache aus).  Manual AUTO_DJ §4 ×4, ARCHITECTURE §23.95, BACKLOG.  Commit `9231a211`.
+## [1.3.0] - 2026-11-07
 
 ### Changed
 
@@ -149,6 +100,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rastatime.liq, geplanter Liquidsoap-Neustart im nächsten ruhigen Moment; nicht von Hand
   starten).  Manual DELAYED_START §7 ×4, ARCHITECTURE §23.94, BACKLOG.  Commit `674463f5`.
 
+### Fixed
+
+- **Sendungsgrenze: Schnitt und Haltezeit nach den Zeilen statt nach dem Engine-Rest (2026-11-07,
+  Befund 08:07/08:15)** — Erste Live-Grenzen mit der Haltezeit: um 08:07 errechnete das
+  Queue-Ahead 3,07 s Stille, die Zeilen sagten 0,95 s - die Sendung begann rund 2 s zu spät; um
+  08:15 lief die Kette dadurch ~2-3 s hinter den Zeilen, und der strikte Schnitt griff trotzdem
+  nicht (Schnittwert 0,0).  Ursache: `<queue>.remaining` misst an der Request-Queue, die der
+  `cross`-Operator um seinen Puffer (~3 s) vor dem Sendeton liest - innerhalb von Sendungen steht
+  seit je „engine 0,2-0,8 s, rows said 2,6-3,2 s" im Log.  Haltezeit zu lang, Überlauf um
+  denselben Betrag unterschätzt (darum war der Schnittpfad seit 2026-11-06 nie ausgelöst
+  worden).  Jetzt rechnen `_boundary_cut` und `_boundary_hold` mit dem Zeilenmodell
+  `_file_audio_end` (Zeilenstart + Clip + Kettenverzug), der Engine-Rest fließt dort nicht mehr
+  ein; der Schwanzfenster-Guard ebenso.  Tests 895 grün.  Wirksam nach PLAYOUT-Neustart
+  (Template unverändert, kein Liquidsoap-Neustart).  ARCHITECTURE §23.96, BACKLOG.  Commit `f8da7d35`.
+  Live seit 2026-11-07 10:26; Abnahme bestanden: 12:00 Haltezeit 0,6 s nach Zeilen -> Kette 0,00 s,
+  12:07 -0,04 s, 12:15 Lücke 0,05 s -> keine Haltezeit, Übergabe pünktlich (vor dem Fix um 10:00
+  und 10:07 noch 3,0 s Haltezeit und Kette 2,8-3,0 s spät).
+- **Mehrfach-Löschen in der Library: 2 s je Datei und kein Busy-Hinweis (2026-11-06,
+  Go 2026-11-06)** — 66 Dateien brauchten heute 214 s, ein 52er-Block 101 s in einem
+  POST (FcgidIOTimeout 120 s).  Ursache: die Lösch-Sperre „noch von einer unbefüllten
+  Wiederholung gebraucht" (`RepeatFillService::neededByPendingRepeat`) filterte über
+  einen LEFT JOIN mit OR und ließ den Planer alle 18.113 Instanzen samt korrelierter
+  „letzte Instanz"-Unterabfrage durchgehen: 1,8-2,0 s je Datei.  Der Filter läuft jetzt
+  als EXISTS über die indizierten cc_schedule-Spalten (Datei und Stream): 1970 ms ->
+  33 ms im Mittel, Ergebnisse auf 75 Ids identisch.  Dazu ein sichtbarer Busy-Zustand
+  im Library-Löschen: Processing-Overlay der Tabelle, Knopftext „Deleting N item(s)…",
+  Fortschritts-Cursor, Meldung bei Fehler/Zeitüberschreitung (vorher blieb der Knopf
+  nur stumm deaktiviert).  Manual LIBRARY ×4, Strings de/fr/es.  Commit 7c28fe02.
+- **Auto-DJ-Fill-Pass: parallele Scheduler-Transaktionen sperrten sich gegenseitig (2026-11-07,
+  Go (c)+(b) 2026-11-07)** — Befund 2026-11-06 16:07-16:13 (Deutung am 2026-11-07 korrigiert,
+  kein Operator-Eingriff): das Autoloading der 17:07-Sendung lieferte nichts (ihre
+  Autoloading-Playlist ist leer, 480 s frei), der Fill-Pass („Automatically fill any show")
+  hängte die Auto-DJ-Playlist an - und weil die Sendung *verknüpft* ist, schrieb der Scheduler
+  die Zeilen in alle 429 künftigen Instanzen bis Januar 2028 (1.092 „adjusting"-Zeilen, 5,5 min
+  Transaktion).  Der Task-Manager-Lock läuft nach 30 s ab, also starteten weitere Zyklen
+  parallele Fill-Pässe derselben Sendung; die setzen `cc_files.is_scheduled` auf überlappenden
+  Dateien in verschiedener Reihenfolge -> viermal `40P01 Deadlock detected` / `40001
+  Serialization failure`, bis der letzte Durchlauf 16:13:11 gewann.  Dieselbe Kollision trifft
+  genauso einen Drop des Operators, der zeitgleich an der Sendung arbeitet.  Jetzt (c): jede Scheduler-Transaktion (einfügen, verschieben, entfernen,
+  Autoloading-Build) sperrt als Erstes die Zeilen der betroffenen Sendungsinstanzen (verknüpfte
+  Sendung: alle künftigen Instanzen) in Id-Reihenfolge; ein zweiter Bearbeiter wartet.  Der
+  Fill-Pass wartet nicht (`FOR UPDATE NOWAIT`), lässt eine Sendung in Bearbeitung in Ruhe
+  (`Scheduler::ERR_INSTANCE_BUSY`, Info-Zeile statt Warnung) und kommt in der nächsten Minute
+  wieder.  Und (b): vor jedem Setzen von `is_scheduled` werden die Dateizeilen in
+  Id-Reihenfolge gesperrt (`Scheduler::lockFilesInOrder`, auch in
+  `StoredFile::updatePastFilesIsScheduled`), damit zwei Bearbeiter verschiedener Sendungen
+  mit derselben Datei sich nicht verklemmen.  Probe mit zweiter Verbindung
+  (C:/Temp/optd/fill_lock_probe.php): Skip-Modus 55003 nach 10 ms, Normalmodus wartet,
+  nach Freigabe sofort durch, `addPlaylistToShow(skipIfBusy)` ohne offene Transaktion.
+  Live ohne Neustart (OPcache aus).  Manual AUTO_DJ §4 ×4, ARCHITECTURE §23.95, BACKLOG.  Commit `9231a211`.
+
+- **Firewall-Wächter sperrte den Operator aus: CSRF-Abweisung eines veralteten Tabs
+  (2026-11-06, Go 2026-11-06)** — Ein Kalender-Tab, dessen Sitzung sich geändert hatte
+  (Neu-Login in einem anderen Tab), fragte minütlich den event-feed ab, bekam 52 × 403
+  „CSRF token mismatch" und der Wächter sperrte die WAN-Adresse des Operators um 10:47
+  für 24 h (VNC und Web-UI von außen weg, LAN und Playout unberührt).  Jetzt: ein
+  vorhandenes, aber falsches Token (veralteter Tab) antwortet **401** mit Header
+  `X-RASTATIME-Refused: csrf-stale`, das der Wächter wie „nicht angemeldet" ignoriert
+  und das der globale ajaxError-Handler (common.js) in „alle Polls stoppen" umsetzt; ein
+  fehlendes Token bleibt 403 (`csrf-missing`), stoppt die Polls aber ebenfalls.  Live mit
+  falschem, fehlendem und richtigem Token geprüft (401 / 403 / 200).  Entsperren:
+  System Status → Blocked addresses oder `rt-blocks.ps1 -Unblock <ip>`; feste Adressen
+  unter Allowed addresses.  Commit `6f84d866`.
+
+- **Smart Block: Minuten-Feld bei mehreren offenen Dialogen (2026-11-06)** — Die Kästchen
+  „Exclude tracks played lately" / „Exclude artists played lately" blendeten die
+  Minuten-Zeile nur im ERSTEN geöffneten Smart Block ein; bei weiteren offenen Dialogen
+  trafen die id-Selektoren den falschen.  Jetzt auf den aktiven Tab begrenzt
+  (`smart_blockbuilder.js`, `activeTab.find`).  Live mit zwei Dialogen geprüft.  Commit `553c942a`.
+
+- **Startseite: Textfarbe je Browser (2026-11-06)** — Wochenprogramm und Player auf der
+  Radio-Startseite liefen im Widget-Thema „auto" und folgten dem Farbschema des
+  Browsers; im Hell-Modus stand dunkler Text auf dem dunklen Foto.  Beide iframes sind
+  jetzt auf `theme=dark` festgelegt (`index/index.phtml`).  In beiden Schemata geprüft.  Commit `a1deb9ee`.
+
 ## [1.2.0] - 2026-11-05
 
 ### Added
@@ -184,34 +210,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PHP 8.3+, Liquidsoap 2.4.6, Icecast 2.5.0, FFmpeg), Getting started als Kurzfassung mit
   Verweis auf INSTALL.md, Upgrade-Hinweis (Dienste vor `pip install` stoppen — der laufende
   Analyzer sperrt seine EXE, 2026-11-04), die acht Dienste, Doku-Übersicht, aktuelles
-  Repo-Layout und `scripts
-un_tests.ps1`.  Commit `eadec826`.
+  Repo-Layout und `scripts\run_tests.ps1`.  Commit `eadec826`.
 
 ### Fixed
-
-- **Firewall-Wächter sperrte den Operator aus: CSRF-Abweisung eines veralteten Tabs
-  (2026-11-06, Go 2026-11-06)** — Ein Kalender-Tab, dessen Sitzung sich geändert hatte
-  (Neu-Login in einem anderen Tab), fragte minütlich den event-feed ab, bekam 52 × 403
-  „CSRF token mismatch" und der Wächter sperrte die WAN-Adresse des Operators um 10:47
-  für 24 h (VNC und Web-UI von außen weg, LAN und Playout unberührt).  Jetzt: ein
-  vorhandenes, aber falsches Token (veralteter Tab) antwortet **401** mit Header
-  `X-RASTATIME-Refused: csrf-stale`, das der Wächter wie „nicht angemeldet" ignoriert
-  und das der globale ajaxError-Handler (common.js) in „alle Polls stoppen" umsetzt; ein
-  fehlendes Token bleibt 403 (`csrf-missing`), stoppt die Polls aber ebenfalls.  Live mit
-  falschem, fehlendem und richtigem Token geprüft (401 / 403 / 200).  Entsperren:
-  System Status → Blocked addresses oder `rt-blocks.ps1 -Unblock <ip>`; feste Adressen
-  unter Allowed addresses.  Commit `6f84d866`.
-
-- **Smart Block: Minuten-Feld bei mehreren offenen Dialogen (2026-11-06)** — Die Kästchen
-  „Exclude tracks played lately" / „Exclude artists played lately" blendeten die
-  Minuten-Zeile nur im ERSTEN geöffneten Smart Block ein; bei weiteren offenen Dialogen
-  trafen die id-Selektoren den falschen.  Jetzt auf den aktiven Tab begrenzt
-  (`smart_blockbuilder.js`, `activeTab.find`).  Live mit zwei Dialogen geprüft.  Commit `553c942a`.
-
-- **Startseite: Textfarbe je Browser (2026-11-06)** — Wochenprogramm und Player auf der
-  Radio-Startseite liefen im Widget-Thema „auto" und folgten dem Farbschema des
-  Browsers; im Hell-Modus stand dunkler Text auf dem dunklen Foto.  Beide iframes sind
-  jetzt auf `theme=dark` festgelegt (`index/index.phtml`).  In beiden Schemata geprüft.  Commit `a1deb9ee`.
 
 - **API: `/api/v2/now-playing` liest den Sendeplan (2026-11-05, Go 2026-11-05)** — Der
   Endpunkt las ein prozessinternes Singleton, das im Betrieb (Playout und API als
@@ -10670,7 +10671,8 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/vibesbuilder/RASTATIME/releases/tag/v1.0.0
