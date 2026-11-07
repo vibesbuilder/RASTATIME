@@ -2377,20 +2377,19 @@ class PlayoutScheduler:
         # RASTATIME 2026-11-07 - and the other direction: the predecessor
         # ends BEFORE the boundary - the transition holds silence until the
         # row start (rt_hold), a show never starts early.
+        # RASTATIME 2026-11-07 (08:07 / 08:15 boundaries) - both are measured
+        # on the ROWS + the chain lag (_file_audio_end), not on the engine's
+        # remaining: ``<queue>.remaining`` is read at the queue, which the
+        # cross operator pulls BUFFER (~3 s) ahead of the air, so it said
+        # "4.9 s left" for a jingle that had 7 s to play - the hold came out
+        # 3.07 s instead of 1 s and the show started late; the same offset
+        # hid a 2-s overrun from the strict cut.
         cut = 0.0
         hold = 0.0
         if self._show_boundary(prev, event):
             now = datetime.utcnow()  # the cache copy above may have taken a moment
-            measured = self._engine.playing_remaining_seconds()
-            measured = (
-                float(measured)
-                if isinstance(measured, (int, float))
-                and not isinstance(measured, bool)
-                and measured > 0
-                else None
-            )
             if self._strict_boundary(prev, event):
-                cut = self._boundary_cut(prev, event, now, measured)
+                cut = self._boundary_cut(prev, event)
                 if cut > 0:
                     logger.info(
                         "Queue-ahead %s: strict show boundary - %r would run %.1f s past the "
@@ -2400,13 +2399,9 @@ class PlayoutScheduler:
                         cut,
                     )
             if cut <= 0:
-                hold = self._boundary_hold(prev, event, now, measured)
+                hold = self._boundary_hold(prev, event)
             if hold > 0:
-                left = (
-                    measured
-                    if measured is not None
-                    else (self._natural_end(prev) - now).total_seconds()
-                )
+                left = (self._file_audio_end(prev) - now).total_seconds()
                 if left < self._cross_buffer_seconds + SHOW_HOLD_WINDOW_MARGIN_SECONDS:
                     # cross builds the transition (and reads rt_hold) when the
                     # old track enters its tail window - too late to hold
@@ -2468,42 +2463,32 @@ class PlayoutScheduler:
         """
         return cls._show_boundary(prev, nxt) and not getattr(nxt, "allow_delayed_start", False)
 
-    def _boundary_cut(
-        self, prev: object, nxt: FileEvent, now: datetime, measured: Optional[float] = None
-    ) -> float:
+    def _boundary_cut(self, prev: object, nxt: FileEvent) -> float:
         """
-        Seconds the predecessor would run past nxt's row start at a strict
-        boundary (0.0 = none / not strict / within tolerance).  ``measured``
-        = the engine's remaining audio of the predecessor right now, when
-        it is still reliable (before cross pulled the successor).
+        Seconds the predecessor's audio would run past nxt's row start at a
+        strict boundary (0.0 = none / not strict / within tolerance), from
+        the rows + the chain lag (:meth:`_file_audio_end`).  2026-11-07:
+        no longer from the engine's remaining - the queue is read BUFFER
+        seconds ahead of the air, which hid overruns of up to ~2.5 s.
         """
         if not self._strict_boundary(prev, nxt):
             return 0.0
         start = nxt.start_exact or nxt.start
-        if measured is not None and measured > 0:
-            overrun = measured - (start - now).total_seconds()
-        else:
-            overrun = (self._natural_end(prev) - start).total_seconds()
+        overrun = (self._file_audio_end(prev) - start).total_seconds()
         return round(overrun, 2) if overrun > STRICT_BOUNDARY_TOLERANCE_SECONDS else 0.0
 
-    def _boundary_hold(
-        self, prev: object, nxt: FileEvent, now: datetime, measured: Optional[float] = None
-    ) -> float:
+    def _boundary_hold(self, prev: object, nxt: FileEvent) -> float:
         """
         RASTATIME 2026-11-07 - seconds the predecessor's audio ends BEFORE
         nxt's row start at a show boundary (0.0 = none / not a show boundary
-        / within tolerance).  The "show" transition holds silence for that
-        long, so the new show starts at its row and never early - whether
-        or not it allows a delayed start.  ``measured`` as in
-        :meth:`_boundary_cut`.
+        / within tolerance), from the rows + the chain lag.  The "show"
+        transition holds silence for that long, so the new show starts at
+        its row and never early - whether or not it allows a delayed start.
         """
         if not self._show_boundary(prev, nxt):
             return 0.0
         start = nxt.start_exact or nxt.start
-        if measured is not None and measured > 0:
-            gap = (start - now).total_seconds() - measured
-        else:
-            gap = (start - self._natural_end(prev)).total_seconds()
+        gap = (start - self._file_audio_end(prev)).total_seconds()
         return round(gap, 2) if gap > SHOW_HOLD_TOLERANCE_SECONDS else 0.0
 
     def _cross_mode(

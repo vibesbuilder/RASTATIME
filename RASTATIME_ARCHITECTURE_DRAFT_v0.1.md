@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.121
+Draft version: 0.122
 Date: 2026-11-07
 
 > **Revision history**
+> - **0.122 (2026-11-07)** - **Boundary measurements on the rows model** (§23.96): the queue's
+>   `remaining` is read ~3 s ahead of the air (cross buffer) - hold came out 3.07 s instead of 1 s,
+>   the strict cut missed a 2-s overrun; cut and hold now use `_file_audio_end` (rows + chain lag).
 > - **0.121 (2026-11-07)** - **Scheduler locks the show instance first** (§23.95): the Auto
 >   DJ fill pass and a manual edit of the same show deadlocked on cc_files.is_scheduled;
 >   now instance row locks in id order (fill pass NOWAIT -> skipped), files locked in id order.
@@ -9350,3 +9353,36 @@ side effects (429 pre-filled instances, 982 files flagged
 
 **Rollout.** Legacy PHP only, live on the next request (OPcache off);
 no migration, no restart.  Rollback: `git revert`.
+
+### 23.96 Boundary Cut and Hold Measured on the Rows Model, Not on the Queue's Remaining (2026-11-07)
+
+**Finding (08:07 and 08:15, 2026-11-07 - the first live boundaries with
+the hold of §23.94).** At the 08:07 queue-ahead the scheduler computed
+a hold of 3.07 s ("ends 3.1 s before the show start") while the rows
+said 0.95 s; Liquidsoap held 3.07 s of silence and the show began
+about 2 s late.  At 08:15 the chain therefore ran ~2-3 s behind the
+rows, yet the strict cut of §23.92 did not fire (`rt_cross
+show/-/3.0/0.0/0.0`).  Both come from the same source:
+`<queue>.remaining` (telnet) reports the request queue's position, and
+the `cross` operator reads the queue BUFFER (~3 s) ahead of the air
+to keep its tail buffer.  The in-show PLAY lines have shown it all
+along: "predecessor has 0.2-0.8 s of audio left (engine), rows said
+2.6-3.2 s".  So the engine value under-states the remaining audio by
+~2.5 s: the hold came out too long, an overrun of up to ~2.5 s stayed
+invisible to the cut - which is why the cut path had never fired live
+since 2026-11-06.
+
+**Now.** `_boundary_cut` and `_boundary_hold` take the predecessor's
+audio end from the rows model `_file_audio_end` (exact row start +
+clip + the measured chain lag, the same model the lag bookkeeping and
+the gate timing use); the queue-ahead no longer reads the engine for
+them, and the tail-window guard of §23.94 uses the same model.  The
+PLAY-time skip decision keeps its engine check (there the queued rid
+and the BUFFER + 1.5 s threshold absorb the offset).  Unit tests pin
+the chain lag explicitly (0.25 s default when unknown).
+
+**Rollout.** PLAYOUT restart only (no template change).  Acceptance:
+the next file -> file boundaries - 12:15 (expected hold of the
+autoloading rest, show on its row), 17:15 (rows run 3 s past the
+boundary: the first live strict cut, `rt_cross show/.../3.0x/0.0`).
+Rollback: `git revert` + PLAYOUT restart.

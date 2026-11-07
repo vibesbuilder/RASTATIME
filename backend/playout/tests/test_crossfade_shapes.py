@@ -243,6 +243,7 @@ def test_queue_ahead_enqueues_behind_a_playing_file(sched):
     prev = _file(now - timedelta(seconds=170), 1, instance=1, seconds=180)  # 10 s left
     nxt = _file(now + timedelta(seconds=8), 2, instance=2)
     s._current_event, s._playing_key = prev, "p"
+    s._file_chain_lag = 0.0  # 2026-11-07: the cut counts the chain lag (0.25 s when unknown)
     s._on_file_queue_ahead("n", nxt)
     engine.enqueue.assert_called_once()
     assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/2.00"  # 10 s left, row in 8 s
@@ -745,16 +746,18 @@ def test_strict_boundary_within_tolerance_is_left_alone(sched):
     assert engine.adopt_queued.call_args.kwargs == {"skip_current": False, "transition": None}
 
 
-def test_queue_ahead_reports_the_boundary_cut_from_the_engine_measurement(sched):
-    """At the queue-ahead the engine's remaining (still reliable) wins over
-    the rows: 11 s left, row in 8 s -> 3.00 s cut; a show that allows a
-    delayed start gets the plain shape."""
+def test_queue_ahead_reports_the_boundary_cut_from_the_rows_and_the_chain_lag(sched):
+    """At the queue-ahead the cut comes from the rows + the chain lag, not
+    from the engine (2026-11-07: the queue is read ~3 s ahead of the air):
+    rows 10 s left + lag 1.0 s, row in 8 s -> 3.00 s cut; a show that allows
+    a delayed start gets the plain shape."""
     s, engine = sched
     now = datetime.utcnow()
     prev = _file(now - timedelta(seconds=170), 1, instance=1, seconds=180)  # rows: 10 s left
     nxt = _file(now + timedelta(seconds=8), 2, instance=2)
     s._current_event, s._playing_key = prev, "p"
-    engine.playing_remaining_seconds.return_value = 11.0
+    s._file_chain_lag = 1.0
+    engine.playing_remaining_seconds.return_value = 4.0  # queue-side value: ignored
     s._on_file_queue_ahead("n", nxt)
     assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/3.00"
     engine.enqueue.reset_mock()
@@ -794,7 +797,8 @@ def test_queue_ahead_holds_silence_when_the_predecessor_ends_before_the_show(sch
     prev = _file(now - timedelta(seconds=175), 1, instance=1, seconds=180)  # rows: 5 s left
     nxt = _file(now + timedelta(seconds=8), 2, instance=2)
     s._current_event, s._playing_key = prev, "p"
-    engine.playing_remaining_seconds.return_value = 5.0
+    s._file_chain_lag = 0.0
+    engine.playing_remaining_seconds.return_value = 2.5  # queue-side value: ignored
     s._on_file_queue_ahead("n", nxt)
     assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/0.00/3.00"
     assert s._queued_ahead_hold == 3.0
@@ -806,18 +810,22 @@ def test_queue_ahead_holds_silence_when_the_predecessor_ends_before_the_show(sch
     assert engine.enqueue.call_args.kwargs["transition"] == "show/-/-/0.00/3.00"
 
 
-def test_queue_ahead_hold_uses_the_rows_without_a_measurement_and_keeps_the_tolerance(sched):
+def test_queue_ahead_hold_includes_the_chain_lag_and_keeps_the_tolerance(sched):
+    """The chain runs 0.8 s late -> the audio ends 0.8 s later than the rows
+    say, the hold shrinks by that much; a 0.2 s gap is swallowed as before."""
     s, engine = sched
     now = datetime.utcnow()
     prev = _file(now - timedelta(seconds=175), 1, instance=1, seconds=180)  # rows: 5 s left
     nxt = _file(now + timedelta(seconds=8), 2, instance=2)
     s._current_event, s._playing_key = prev, "p"
-    engine.playing_remaining_seconds.return_value = None
+    s._file_chain_lag = 0.8
     s._on_file_queue_ahead("n", nxt)
-    assert abs(_hold_of(engine.enqueue.call_args.kwargs["transition"]) - 3.0) < 0.05
+    assert abs(_hold_of(engine.enqueue.call_args.kwargs["transition"]) - 2.2) < 0.01
     engine.enqueue.reset_mock()
     s._queued_ahead = None
-    engine.playing_remaining_seconds.return_value = 7.8  # 0.2 s gap: swallowed as before
+    s._file_chain_lag = 0.0
+    prev2 = _file(now - timedelta(seconds=172.2), 3, instance=1, seconds=180)  # ends 0.2 s early
+    s._current_event = prev2
     s._on_file_queue_ahead("n", nxt)
     assert engine.enqueue.call_args.kwargs["transition"] == "show/-"
 
@@ -829,7 +837,7 @@ def test_queue_ahead_hold_is_a_show_boundary_matter_only(sched):
     prev = _file(now - timedelta(seconds=175), 1, instance=1, seconds=180)
     nxt = _file(now + timedelta(seconds=8), 2, instance=1)
     s._current_event, s._playing_key = prev, "p"
-    engine.playing_remaining_seconds.return_value = 5.0
+    s._file_chain_lag = 0.0
     s._on_file_queue_ahead("n", nxt)
     assert engine.enqueue.call_args.kwargs["transition"] == "track/-"
 
@@ -840,11 +848,11 @@ def test_queue_ahead_with_an_open_tail_window_leaves_the_show_to_its_row(sched):
     is not queued - it starts the normal way at its row, silence between."""
     s, engine = sched
     now = datetime.utcnow()
-    prev = _file(now - timedelta(seconds=176), 1, instance=1, seconds=180)
+    prev = _file(now - timedelta(seconds=178.5), 1, instance=1, seconds=180)  # 1.5 s left
     nxt = _file(now + timedelta(seconds=8), 2, instance=2)
     s._current_event, s._playing_key = prev, "p"
-    engine.playing_remaining_seconds.return_value = 2.5  # gap 5.5 s, window opens at BUFFER
-    s._on_file_queue_ahead("n", nxt)
+    s._file_chain_lag = 0.0
+    s._on_file_queue_ahead("n", nxt)  # gap 6.5 s, but the tail window is open
     engine.enqueue.assert_not_called()
     assert s._queued_ahead is None
 

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sendungsgrenze: Schnitt und Haltezeit nach den Zeilen statt nach dem Engine-Rest (2026-11-07,
+  Befund 08:07/08:15)** — Erste Live-Grenzen mit der Haltezeit: um 08:07 errechnete das
+  Queue-Ahead 3,07 s Stille, die Zeilen sagten 0,95 s - die Sendung begann rund 2 s zu spät; um
+  08:15 lief die Kette dadurch ~2-3 s hinter den Zeilen, und der strikte Schnitt griff trotzdem
+  nicht (Schnittwert 0,0).  Ursache: `<queue>.remaining` misst an der Request-Queue, die der
+  `cross`-Operator um seinen Puffer (~3 s) vor dem Sendeton liest - innerhalb von Sendungen steht
+  seit je „engine 0,2-0,8 s, rows said 2,6-3,2 s" im Log.  Haltezeit zu lang, Überlauf um
+  denselben Betrag unterschätzt (darum war der Schnittpfad seit 2026-11-06 nie ausgelöst
+  worden).  Jetzt rechnen `_boundary_cut` und `_boundary_hold` mit dem Zeilenmodell
+  `_file_audio_end` (Zeilenstart + Clip + Kettenverzug), der Engine-Rest fließt dort nicht mehr
+  ein; der Schwanzfenster-Guard ebenso.  Tests 895 grün.  Wirksam nach PLAYOUT-Neustart
+  (Template unverändert, kein Liquidsoap-Neustart).  ARCHITECTURE §23.96, BACKLOG.
 - **Mehrfach-Löschen in der Library: 2 s je Datei und kein Busy-Hinweis (2026-11-06,
   Go 2026-11-06)** — 66 Dateien brauchten heute 214 s, ein 52er-Block 101 s in einem
   POST (FcgidIOTimeout 120 s).  Ursache: die Lösch-Sperre „noch von einer unbefüllten

@@ -148,8 +148,12 @@ Neustart.  B berührt das Template (Liquidsoap-Neustart im ruhigen Fenster), A n
 `sequence([fade.out(old), blank(duration=hold), new])`; Schwanzfenster-Guard (Rest < Puffer + 1 s
 beim Queue-Ahead -> nicht queuen, normaler Start auf der Zeile), Kettenverzug rechnet die
 gehaltene Stille heraus.  Tests 901 grün, `liquidsoap --check` am Live-Skript bestanden.
-**Abnahme offen:** nächste Sendungsgrenze mit Lücke im Log (Queue-Ahead-Zeile „holds silence",
-`[rt_cross] show/-/3.0/0.0/<hold>`, PLAY-Lag ≈ 0,0 s statt -1,00).
+**Abnahme 08:07/08:15 2026-11-07:** Mode-Komponente kommt an, aber Haltezeit 3,07 s statt 0,95 s -
+Sendung ~2 s zu spät, und der strikte Schnitt griff um 08:15 trotz ~2-3 s Verzug nicht: der
+Engine-Rest (`<queue>.remaining`) läuft dem Sendeton um den cross-Puffer (~3 s) voraus.  Beide
+Messungen auf das Zeilenmodell `_file_audio_end` umgestellt (§23.96, Commit siehe CHANGELOG).
+**Abnahme erneut offen:** 12:15 (Haltezeit, Sendung auf der Zeile) und 17:15 (erster echter
+strikter Schnitt, Zeilen 3 s über der Grenze).
 
 ### ✅ Auto-DJ-Fill-Pass und Handplanung sperren sich gegenseitig - GEBAUT 2026-11-07 (c)+(b) (Deadlock in cc_files.is_scheduled, Befund 2026-11-06 16:09-16:13, Go 2026-11-07)
 
