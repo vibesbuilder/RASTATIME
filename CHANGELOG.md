@@ -20,13 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   im Library-Löschen: Processing-Overlay der Tabelle, Knopftext „Deleting N item(s)…",
   Fortschritts-Cursor, Meldung bei Fehler/Zeitüberschreitung (vorher blieb der Knopf
   nur stumm deaktiviert).  Manual LIBRARY ×4, Strings de/fr/es.  Commit 7c28fe02.
-- **Auto-DJ-Fill-Pass und Handplanung sperrten sich gegenseitig (2026-11-07, Go (c)+(b)
-  2026-11-07)** — Befund 2026-11-06 16:09-16:13: während der Operator eine Sendung von Hand
-  befüllte, versuchte der Fill-Pass („Automatically fill any show") im Minutentakt dieselbe
-  Sendung aufzufüllen; beide setzen `cc_files.is_scheduled` auf überlappenden Dateien in
-  verschiedener Reihenfolge -> viermal `40P01 Deadlock detected` / `40001 Serialization
-  failure`, zufällig immer beim Fill-Pass, genauso gut hätte es den Drop des Operators
-  treffen können.  Jetzt (c): jede Scheduler-Transaktion (einfügen, verschieben, entfernen,
+- **Auto-DJ-Fill-Pass: parallele Scheduler-Transaktionen sperrten sich gegenseitig (2026-11-07,
+  Go (c)+(b) 2026-11-07)** — Befund 2026-11-06 16:07-16:13 (Deutung am 2026-11-07 korrigiert,
+  kein Operator-Eingriff): das Autoloading der 17:07-Sendung lieferte nichts (ihre
+  Autoloading-Playlist ist leer, 480 s frei), der Fill-Pass („Automatically fill any show")
+  hängte die Auto-DJ-Playlist an - und weil die Sendung *verknüpft* ist, schrieb der Scheduler
+  die Zeilen in alle 429 künftigen Instanzen bis Januar 2028 (1.092 „adjusting"-Zeilen, 5,5 min
+  Transaktion).  Der Task-Manager-Lock läuft nach 30 s ab, also starteten weitere Zyklen
+  parallele Fill-Pässe derselben Sendung; die setzen `cc_files.is_scheduled` auf überlappenden
+  Dateien in verschiedener Reihenfolge -> viermal `40P01 Deadlock detected` / `40001
+  Serialization failure`, bis der letzte Durchlauf 16:13:11 gewann.  Dieselbe Kollision trifft
+  genauso einen Drop des Operators, der zeitgleich an der Sendung arbeitet.  Jetzt (c): jede Scheduler-Transaktion (einfügen, verschieben, entfernen,
   Autoloading-Build) sperrt als Erstes die Zeilen der betroffenen Sendungsinstanzen (verknüpfte
   Sendung: alle künftigen Instanzen) in Id-Reihenfolge; ein zweiter Bearbeiter wartet.  Der
   Fill-Pass wartet nicht (`FOR UPDATE NOWAIT`), lässt eine Sendung in Bearbeitung in Ruhe

@@ -80,6 +80,39 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Fill-Pass auf einer verknüpften Sendung befüllt alle künftigen Instanzen; Task-Manager-Lock läuft während langer Zyklen ab; 429 vorbefüllte Instanzen (Befund 2026-11-07, wartet auf Go)
+
+Hinter dem Deadlock vom 2026-11-06 (unten, ✅) steckt ein zweiter Befund: die 17:07-Sendung
+(show 1225, die 8-min-Hinweis-Sendung) ist **verknüpft**, ihre Autoloading-Playlist (id 10) ist
+**leer**, also füllt sie der Auto-DJ-Fill-Pass jeden Tag mit Zufallstiteln der Auto-DJ-Playlist.
+`Scheduler::insertAfter` verteilt einen Insert in eine verknüpfte Sendung auf ALLE künftigen
+Instanzen: am 2026-11-06 16:07-16:13 bekamen 429 Instanzen bis 2028-01-09 je 2-3 Musikzeilen
+(time_filled ≈ 8:00, autoplaylist_built = false), 982 Dateien stehen seitdem auf `is_scheduled`
+(Library „scheduled", Löschsperre).  Folge wie beim BBC-Fall vom 2026-11-05: sobald Playlist 10
+Inhalt bekommt, findet das Autoloading diese Instanzen voll und plant die Hinweise NICHT
+(„Autoloading ersetzt nichts").  Zweiter Mechanismus: `TaskManager::TASK_INTERVAL_SECONDS` = 30
+ist ein Zeitstempel, kein gehaltener Lock - ein Zyklus länger als 30 s lässt den nächsten Request
+einen zweiten Zyklus starten (drei RequestablePoolSync-Zeilen in derselben Sekunde 16:13:12).
+Seit 9231a211 (Instanz-Sperre, Fill-Pass NOWAIT) verklemmen sich parallele Fill-Pässe nicht mehr,
+die Verteilung auf 429 Instanzen und der ablaufende Lock bleiben.
+**Option B2 (Empfehlung):** der Fill-Pass füllt auch bei verknüpften Sendungen nur die EINE
+Instanz - Scheduler-Flag `setLinkedExpansion(false)`, in `insertAfter` ausgewertet (~15 Zeilen);
+Autoloading-Builds prüfen, ob sie denselben Pfad nehmen (Verdacht: ja, bisher nur deshalb ohne
+Schaden, weil Playlist 10 leer ist).  **Option B1:** Fill-Pass überspringt verknüpfte Sendungen
+(`AND NOT s.linked`, 1 Zeile) - dann liefe die 17:07-Sendung leer, solange Playlist 10 leer ist
+(Dead Air); nur zusammen mit Inhalt für Playlist 10.
+**Option C:** Task-Manager hält für die Dauer des Zyklus einen Session-Advisory-Lock
+(`pg_try_advisory_lock`) statt des 30-s-Zeitstempels - keine parallelen Zyklen mehr (~20 Zeilen).
+**Option A (Bereinigung, Live-Datenänderung):** die 429 vorbefüllten Instanzen von show 1225
+leeren (wie `clear_prefilled_bbc.php`: DELETE cc_schedule, time_filled 0, ein PushSchedule) und
+`updatePastFilesIsScheduled` laufen lassen (982 Flags).  Reihenfolge: erst B2 (sonst befüllt der
+nächste Fill-Pass wieder alle 429), dann A; die heutige 17:07-Instanz (23947, 3 Zeilen, 3 s
+Überlauf = erster Live-Test des strikten Schnitts um 17:15) wäre mit betroffen.
+**Aufwand:** B2 + C ≈ 1,5 h mit Probe, A ≈ 30 min (Dry-Run, dann --live).  **Risiko:** B2/C
+gering (Legacy-PHP, Revert); A ist ein Massen-Delete auf künftigen Zeilen, Dry-Run zuerst, Backup
+der Nacht vorhanden.  **Vorbedingungen:** Operator-Go je Option; Entscheidung, ob Playlist 10
+Inhalt bekommt oder die Sendung weiter vom Auto-DJ leben soll.
+
 ### ✅ Sendung beginnt bis zu ~8 s VOR ihrer Startzeit, wenn die Vorgänger-Zeilen früher enden - GEBAUT 2026-11-07 (Befund 2026-11-07 00:00, Operator-Regel: nie früher - lieber Stille, Go Option B 2026-11-07)
 
 Befund an der Grenze 00:00 (2026-11-06/07): die letzte Zeile der Vorgängersendung endete
@@ -123,11 +156,13 @@ gehaltene Stille heraus.  Tests 901 grün, `liquidsoap --check` am Live-Skript b
 `legacy.log` 2026-11-06: Instanz 23883 blieb nach dem Autoloading-Lauf 16:07:46 mit 480 s frei
 (0 Zeilen gefüllt); `AutoDjService::runFillPass` scheiterte danach viermal (16:09:28, 16:09:43,
 2× 16:13:11) an `UPDATE cc_files SET is_scheduled … WHERE id IN (…)` mit `40P01 Deadlock
-detected` bzw. `40001 Serialization failure`.  Dazwischen „adjusting start, end times … show
-instance #23883" (16:08:56, 16:12:22): die Instanz wurde zeitgleich von Hand geplant.  Zwei
-Transaktionen (Fill-Pass, Scheduler-Edit) setzen `is_scheduled` auf überlappenden Dateimengen in
-verschiedener Reihenfolge; das Fill-Ergebnis wurde zurückgerollt (korrekt, keine halbe Füllung),
-aber ohne Wiederholung.  Kein Sendeausfall (der Operator hatte die Sendung selbst befüllt).
+detected` bzw. `40001 Serialization failure`.  Korrektur 2026-11-07: KEIN Operator-Eingriff - die 1.092 „adjusting"-Zeilen 16:07:47-16:13:11
+sind der Fill-Pass selbst, der die Auto-DJ-Playlist in alle 429 künftigen Instanzen der
+*verknüpften* Sendung schrieb (5,5 min); der Task-Manager-Lock (30-s-Zeitstempel) lief ab,
+weitere Zyklen starteten parallele Fill-Pässe derselben Sendung, die sich gegenseitig auf
+`is_scheduled` verklemmten, bis der Lauf 16:13:11 gewann.  Kein Sendeausfall; Folgebefund
+(429 vorbefüllte Instanzen, Verteilung auf verknüpfte Sendungen, Lock-Ablauf) siehe eigenen
+🟡-Eintrag oben.
 **Optionen:** (a) Fill-Pass bei 40P01 / 40001 nach 1-3 s zufälliger Pause einmal wiederholen
 (Transaktion ist atomar, Wiederholung gefahrlos) - ~15 Zeilen; (b) `is_scheduled`-Updates in
 Fill-Pass und Scheduler nach `id` sortiert absetzen (klassische Deadlock-Vermeidung) - ~10 Zeilen,

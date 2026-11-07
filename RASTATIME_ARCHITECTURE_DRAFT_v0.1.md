@@ -9293,19 +9293,27 @@ Rollback: `git revert` + PLAYOUT restart.
 
 ### 23.95 Scheduler Transactions Lock the Show Instance First; Fill Pass Skips a Busy Show (2026-11-07)
 
-**Finding (2026-11-06 16:07-16:13).** The autoloading run of an
-8-minute show left it empty (480 s free); the operator filled it by
-hand (16:08:56, 16:12:22: "adjusting start, end times").  In between,
-the Auto DJ fill pass ("Automatically fill any show", every 60 s, every
-show of the next hour with > 5 s unfilled) tried to top up the same
-instance and failed four times: `40P01 deadlock detected` (3x) and
-`40001 could not serialize access due to concurrent update` (1x), all
-on `UPDATE cc_files SET is_scheduled ... WHERE id IN (...)`.  Both
-paths run the same `Application_Model_Scheduler` transaction
-(SERIALIZABLE, no explicit row locks); which side loses is chance -
-the operator's drop could have failed just as well.  The fill pass
-rolled back cleanly and stopped once the show was full; nothing
-reached the air.
+**Finding (2026-11-06 16:07-16:13; reading corrected 2026-11-07 - no
+operator was involved).** The autoloading run of the 17:07 8-minute
+show produced nothing (its autoloading playlist is empty: 480 s free),
+so the Auto DJ fill pass ("Automatically fill any show", every cycle,
+every show of the next hour with > 5 s unfilled) appended the Auto DJ
+playlist.  The show is *linked*, and `insertAfter` spreads an insert
+into a linked show over ALL its future instances: 429 instances up to
+2028-01-09, 1,092 "adjusting start, end times" lines, a 5.5-minute
+transaction.  The task-manager lock (`cc_pref task_manager_lock`) is a
+30-s timestamp, not a held lock: the next requests started further
+cycles while the first still ran, so several fill passes of the same
+show raced each other and failed four times on `UPDATE cc_files SET
+is_scheduled ... WHERE id IN (...)` - `40P01 deadlock detected` (3x),
+`40001 could not serialize access due to concurrent update` (1x) -
+until the pass of 16:13:11 won and wrote everything (three parallel
+cycles ended in the same second).  All paths run the same
+`Application_Model_Scheduler` transaction (SERIALIZABLE, no explicit
+row locks); which side loses is chance - an operator's drop into the
+same show would fail just as well.  Nothing reached the air; the
+side effects (429 pre-filled instances, 982 files flagged
+`is_scheduled`) are a finding of their own (BACKLOG, awaiting a Go).
 
 **Now.**
 - `Scheduler::lockInstances(items)` - called first thing in every
