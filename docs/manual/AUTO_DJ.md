@@ -229,6 +229,19 @@ Tightening the fill-pass threshold to e.g. 1 s would
 constantly top up shows that were already optimally filled —
 wasteful and annoying.
 
+### Fill-pass leaves a show you are editing alone (since 2026-11-07)
+
+While you drag tracks into a show in the calendar or the show
+builder, that show is yours: every scheduling action now locks the
+show instance first, and the fill-pass does not wait for that lock.
+It skips the show for this cycle, writes an information line to the
+log ("is being edited right now - left alone until the next pass")
+and looks again a minute later.  Once your edit is saved and the show
+is still more than 5 seconds short, the fill-pass tops it up as
+before.  Before this change both ran at the same time and could
+collide in the database (deadlock) - the loser was random, so an
+operator's drop could fail with an error message.
+
 ### Fill-pass never modifies the show definition
 
 The fill-pass only inserts **schedule items** into the

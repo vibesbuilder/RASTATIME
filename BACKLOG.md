@@ -118,7 +118,7 @@ gehaltene Stille heraus.  Tests 901 grün, `liquidsoap --check` am Live-Skript b
 **Abnahme offen:** nächste Sendungsgrenze mit Lücke im Log (Queue-Ahead-Zeile „holds silence",
 `[rt_cross] show/-/3.0/0.0/<hold>`, PLAY-Lag ≈ 0,0 s statt -1,00).
 
-### 💡 Auto-DJ-Fill-Pass und Handplanung sperren sich gegenseitig (Deadlock in cc_files.is_scheduled, Befund 2026-11-06 16:09-16:13)
+### ✅ Auto-DJ-Fill-Pass und Handplanung sperren sich gegenseitig - GEBAUT 2026-11-07 (c)+(b) (Deadlock in cc_files.is_scheduled, Befund 2026-11-06 16:09-16:13, Go 2026-11-07)
 
 `legacy.log` 2026-11-06: Instanz 23883 blieb nach dem Autoloading-Lauf 16:07:46 mit 480 s frei
 (0 Zeilen gefüllt); `AutoDjService::runFillPass` scheiterte danach viermal (16:09:28, 16:09:43,
@@ -133,8 +133,15 @@ aber ohne Wiederholung.  Kein Sendeausfall (der Operator hatte die Sendung selbs
 Fill-Pass und Scheduler nach `id` sortiert absetzen (klassische Deadlock-Vermeidung) - ~10 Zeilen,
 hilft nicht gegen 40001; (c) Fill-Pass überspringt eine Instanz, deren
 `cc_show_instances`-Zeile gerade gesperrt ist (`SELECT … FOR UPDATE SKIP LOCKED`) und kommt beim
-nächsten Lauf wieder - ~20 Zeilen, sauberste Trennung.  Empfehlung: (a) + (b) zusammen, ~1 h
-mit Probe.  **Vorbedingungen:** Operator-Go; nur Legacy-PHP (live ohne Neustart, OPcache aus).
+nächsten Lauf wieder - ~20 Zeilen, sauberste Trennung.
+**Gebaut 2026-11-07 (Go (c)+(b), (a) verworfen - hilft nur dem Fill-Pass; Commit siehe CHANGELOG,
+§23.95):** `Scheduler::lockInstances` als erster Schritt jeder Scheduler-Transaktion (FOR UPDATE in
+Id-Reihenfolge, verknüpfte Sendung = alle künftigen Instanzen), Fill-Pass mit NOWAIT ->
+`ERR_INSTANCE_BUSY` -> Info-Zeile und nächster Lauf; `Scheduler::lockFilesInOrder` vor beiden
+is_scheduled-Schreibern.  Probe C:/Temp/optd/fill_lock_probe.php bestanden.  Live ohne Neustart.
+**Rest (💡, kein Go gefragt):** SERIALIZABLE-Abbruch auf Operator-Seite bleibt theoretisch
+möglich, wenn der Fill-Pass eine gerade gelesene Datei in einer anderen Sendung kippt; ganz weg
+nur mit Ausschluss von Hand geplanter Sendungen aus „Automatically fill any show" (je Sendung).
 
 ### 💡 Widget für Producers („Editorial Teams") - IDEA (Operator 2026-11-07, noch nicht recherchiert)
 

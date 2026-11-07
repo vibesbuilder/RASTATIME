@@ -249,6 +249,20 @@ Fill-Pass-Schwellenwerts auf z.B. 1 s würde ständig
 Sendungen auffüllen, die bereits optimal gefüllt waren —
 verschwenderisch und nervig.
 
+### Der Fill-Pass lässt eine Sendung in Bearbeitung in Ruhe (seit 2026-11-07)
+
+Während Sie im Kalender oder im Show Builder Titel in eine Sendung
+ziehen, gehört diese Sendung Ihnen: Jede Planungsaktion sperrt jetzt
+zuerst die Sendungsinstanz, und der Fill-Pass wartet nicht auf diese
+Sperre.  Er überspringt die Sendung in diesem Zyklus, schreibt eine
+Informationszeile ins Log („is being edited right now - left alone
+until the next pass") und schaut eine Minute später wieder nach.
+Sobald Ihre Bearbeitung gespeichert ist und der Sendung weiterhin mehr
+als 5 Sekunden fehlen, füllt der Fill-Pass sie wie gewohnt auf.  Vor
+dieser Änderung liefen beide gleichzeitig und konnten in der Datenbank
+kollidieren (Deadlock) - wer verlor, war Zufall, sodass auch ein Drop
+des Operators mit einer Fehlermeldung scheitern konnte.
+
 ### Der Fill-Pass modifiziert nie die Sendungsdefinition
 
 Der Fill-Pass fügt nur **Schedule-Items** in die bestehende

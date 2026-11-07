@@ -20,6 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   im Library-Löschen: Processing-Overlay der Tabelle, Knopftext „Deleting N item(s)…",
   Fortschritts-Cursor, Meldung bei Fehler/Zeitüberschreitung (vorher blieb der Knopf
   nur stumm deaktiviert).  Manual LIBRARY ×4, Strings de/fr/es.  Commit 7c28fe02.
+- **Auto-DJ-Fill-Pass und Handplanung sperrten sich gegenseitig (2026-11-07, Go (c)+(b)
+  2026-11-07)** — Befund 2026-11-06 16:09-16:13: während der Operator eine Sendung von Hand
+  befüllte, versuchte der Fill-Pass („Automatically fill any show") im Minutentakt dieselbe
+  Sendung aufzufüllen; beide setzen `cc_files.is_scheduled` auf überlappenden Dateien in
+  verschiedener Reihenfolge -> viermal `40P01 Deadlock detected` / `40001 Serialization
+  failure`, zufällig immer beim Fill-Pass, genauso gut hätte es den Drop des Operators
+  treffen können.  Jetzt (c): jede Scheduler-Transaktion (einfügen, verschieben, entfernen,
+  Autoloading-Build) sperrt als Erstes die Zeilen der betroffenen Sendungsinstanzen (verknüpfte
+  Sendung: alle künftigen Instanzen) in Id-Reihenfolge; ein zweiter Bearbeiter wartet.  Der
+  Fill-Pass wartet nicht (`FOR UPDATE NOWAIT`), lässt eine Sendung in Bearbeitung in Ruhe
+  (`Scheduler::ERR_INSTANCE_BUSY`, Info-Zeile statt Warnung) und kommt in der nächsten Minute
+  wieder.  Und (b): vor jedem Setzen von `is_scheduled` werden die Dateizeilen in
+  Id-Reihenfolge gesperrt (`Scheduler::lockFilesInOrder`, auch in
+  `StoredFile::updatePastFilesIsScheduled`), damit zwei Bearbeiter verschiedener Sendungen
+  mit derselben Datei sich nicht verklemmen.  Probe mit zweiter Verbindung
+  (C:/Temp/optd/fill_lock_probe.php): Skip-Modus 55003 nach 10 ms, Normalmodus wartet,
+  nach Freigabe sofort durch, `addPlaylistToShow(skipIfBusy)` ohne offene Transaktion.
+  Live ohne Neustart (OPcache aus).  Manual AUTO_DJ §4 ×4, ARCHITECTURE §23.95, BACKLOG.
 
 ### Changed
 

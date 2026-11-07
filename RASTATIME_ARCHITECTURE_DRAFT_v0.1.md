@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.120
+Draft version: 0.121
 Date: 2026-11-07
 
 > **Revision history**
+> - **0.121 (2026-11-07)** - **Scheduler locks the show instance first** (§23.95): the Auto
+>   DJ fill pass and a manual edit of the same show deadlocked on cc_files.is_scheduled;
+>   now instance row locks in id order (fill pass NOWAIT -> skipped), files locked in id order.
 > - **0.120 (2026-11-07)** - **A show never starts early** (§23.94): the queue-ahead measures
 >   the gap between the predecessor's audio end and the next show's row start and sends it
 >   as `rt_hold`; the "show" transition holds silence for it (00:00 finding: 3 s early).
@@ -9287,3 +9290,55 @@ gap - log "Queue-ahead ...: show boundary - ... ends X s before the
 show start, the queue holds silence until the boundary", Liquidsoap
 `[rt_cross] show/-/3.0/0.0/X`, PLAY lag ~0.0 s instead of -1.00.
 Rollback: `git revert` + PLAYOUT restart.
+
+### 23.95 Scheduler Transactions Lock the Show Instance First; Fill Pass Skips a Busy Show (2026-11-07)
+
+**Finding (2026-11-06 16:07-16:13).** The autoloading run of an
+8-minute show left it empty (480 s free); the operator filled it by
+hand (16:08:56, 16:12:22: "adjusting start, end times").  In between,
+the Auto DJ fill pass ("Automatically fill any show", every 60 s, every
+show of the next hour with > 5 s unfilled) tried to top up the same
+instance and failed four times: `40P01 deadlock detected` (3x) and
+`40001 could not serialize access due to concurrent update` (1x), all
+on `UPDATE cc_files SET is_scheduled ... WHERE id IN (...)`.  Both
+paths run the same `Application_Model_Scheduler` transaction
+(SERIALIZABLE, no explicit row locks); which side loses is chance -
+the operator's drop could have failed just as well.  The fill pass
+rolled back cleanly and stopped once the show was full; nothing
+reached the air.
+
+**Now.**
+- `Scheduler::lockInstances(items)` - called first thing in every
+  scheduler transaction (`scheduleAfter`, `scheduleFilesAfter`,
+  `moveItem`, `removeItems`; `cancelShow` goes through `removeItems`):
+  `SELECT id FROM cc_show_instances WHERE id IN (...) ORDER BY id FOR
+  UPDATE` over the instances of the request (a linked show: all its
+  future instances).  Two editors of one show are now serialized: the
+  second waits for the first instead of racing it to the file rows.
+- `setSkipBusyInstances(true)` (the fill pass, via
+  `ShowInstance::addPlaylistToShow(..., $skipIfBusy)`) adds `NOWAIT`:
+  a held instance raises `55P03`, translated into an `Exception` with
+  code `Scheduler::ERR_INSTANCE_BUSY` (55003) before anything was
+  read or written.  `AutoDjService::runFillPass` logs it at INFO
+  ("is being edited right now - left alone until the next pass") and
+  moves on; its next minute tries again.
+- `Scheduler::lockFilesInOrder(ids, con)` - `SELECT id FROM cc_files
+  WHERE id IN (...) ORDER BY id FOR UPDATE` before the two writers of
+  `is_scheduled` (the insert in `insertAfter`, the sweep in
+  `StoredFile::updatePastFilesIsScheduled`).  An `UPDATE ... WHERE id
+  IN (...)` locks rows in scan order, not list order; the explicit
+  ordered select makes two editors of *different* shows that share a
+  track lock the files in the same order - no deadlock there either.
+  The remaining residue - a SERIALIZABLE abort of the operator's
+  transaction when the fill pass flips a file it has just read - is
+  rare and surfaces as an ordinary error in the calendar; the fix
+  would be excluding hand-planned shows from the fill pass (BACKLOG).
+- Probe `C:/Temp/optd/fill_lock_probe.php` (second PDO connection
+  holds a future instance; everything rolled back): skip mode refuses
+  after 10 ms with 55003, wait mode blocks (lock_timeout 700 ms ->
+  55P03), after the release it locks at once, `addPlaylistToShow`
+  surfaces 55003 with no open transaction, `lockFilesInOrder` returns
+  the distinct ids sorted.
+
+**Rollout.** Legacy PHP only, live on the next request (OPcache off);
+no migration, no restart.  Rollback: `git revert`.

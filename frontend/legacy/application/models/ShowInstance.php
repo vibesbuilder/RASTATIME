@@ -243,14 +243,18 @@ SQL;
      *              ``$pl_id`` cannot consume slots that the caller
      *              intends to fill afterwards (e.g. an outro
      *              playlist).  Default 0 = pre-existing behaviour.
+     * @param bool  $skipIfBusy RASTATIME 2026-11-07 - do not wait for an
+     *              editor who holds this instance (the Auto DJ fill pass):
+     *              the scheduler throws Scheduler::ERR_INSTANCE_BUSY instead.
      */
-    public function addPlaylistToShow($pl_id, $checkUserPerm = true, $reservedSecs = 0)
+    public function addPlaylistToShow($pl_id, $checkUserPerm = true, $reservedSecs = 0, $skipIfBusy = false)
     {
         $ts = intval($this->_showInstance->getDbLastScheduled('U')) ?: 0;
         $id = $this->_showInstance->getDbId();
         $lastid = $this->getLastAudioItemId();
         $scheduler = new Application_Model_Scheduler($checkUserPerm);
         $scheduler->setReservedSeconds($reservedSecs);
+        $scheduler->setSkipBusyInstances($skipIfBusy);
         $scheduler->scheduleAfter(
             [['id' => $lastid, 'instance' => $id, 'timestamp' => $ts]],
             [['id' => $pl_id, 'type' => 'playlist']]

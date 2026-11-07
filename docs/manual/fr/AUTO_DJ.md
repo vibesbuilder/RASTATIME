@@ -200,6 +200,21 @@ fill-pass à par exemple 1 s compléterait constamment les
 émissions qui étaient déjà optimalement remplies —
 gaspilleur et ennuyeux.
 
+### Le fill-pass laisse tranquille une émission en cours d'édition (depuis le 2026-11-07)
+
+Pendant que vous glissez des titres dans une émission, dans le
+calendrier ou le show builder, cette émission est à vous : chaque
+action de planification verrouille d'abord l'instance d'émission, et
+le fill-pass n'attend pas ce verrou.  Il saute l'émission pour ce
+cycle, écrit une ligne d'information dans le journal (« is being
+edited right now - left alone until the next pass ») et revient une
+minute plus tard.  Une fois votre modification enregistrée, si
+l'émission manque toujours de plus de 5 secondes, le fill-pass la
+complète comme avant.  Avant ce changement, les deux tournaient en
+même temps et pouvaient entrer en collision dans la base de données
+(interblocage) - le perdant était aléatoire, et un dépôt de
+l'opérateur pouvait donc échouer avec un message d'erreur.
+
 ### Le fill-pass ne modifie jamais la définition d'émission
 
 Le fill-pass n'insère que des **items de planning** dans

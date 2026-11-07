@@ -32,6 +32,12 @@ final class Application_Model_Scheduler
     // inserted yet.  Default 0 = pre-2026-05-20 behaviour.
     private $reservedSecs = 0;
 
+    // RASTATIME 2026-11-07 - code of the exception lockInstances() throws
+    // when a show instance is being edited by somebody else and this
+    // scheduler was told not to wait (the Auto DJ fill pass).
+    public const ERR_INSTANCE_BUSY = 55003;
+    private $skipBusyInstances = false;
+
     public function __construct($checkUserPermissions = true)
     {
         $this->con = Propel::getConnection(CcSchedulePeer::DATABASE_NAME);
@@ -1548,6 +1554,9 @@ final class Application_Model_Scheduler
                         }
                     }
 
+                    // RASTATIME 2026-11-07 - lock the files in id order first
+                    // (deadlock-free against any other editor of the flag)
+                    $fileIds = self::lockFilesInOrder($fileIds, $this->con);
                     $selectCriteria = new Criteria();
                     $selectCriteria->add(CcFilesPeer::ID, $fileIds, Criteria::IN);
                     $selectCriteria->addAnd(CcFilesPeer::IS_SCHEDULED, false);
@@ -1655,6 +1664,98 @@ final class Application_Model_Scheduler
         return [$ccShowInstance];
     }
 
+    /**
+     * RASTATIME 2026-11-07 - a background filler (the Auto DJ fill pass)
+     * must not wait for, or fight with, an operator who is editing the
+     * same show: with this flag lockInstances() takes its locks NOWAIT
+     * and throws ERR_INSTANCE_BUSY instead of blocking.
+     */
+    public function setSkipBusyInstances($flag)
+    {
+        $this->skipBusyInstances = (bool) $flag;
+    }
+
+    /**
+     * RASTATIME 2026-11-07 - lock the show instances a request edits FIRST,
+     * before anything else in the transaction (a linked show: all its
+     * future instances), in id order.  Two editors of the same instance -
+     * the operator in the calendar and the Auto DJ fill pass - used to run
+     * side by side and flip cc_files.is_scheduled on overlapping files in
+     * different orders: deadlocks and serialization failures on 2026-11-06
+     * (16:09-16:13, four fill passes lost, the operator's drops could have
+     * lost just as well).  Now the second editor waits for the first; the
+     * fill pass (setSkipBusyInstances) does not even wait, it leaves a show
+     * somebody is working on alone and comes back on its next minute.
+     *
+     * @param array $items rows with an 'instance' key (schedule locations)
+     */
+    private function lockInstances(array $items)
+    {
+        $ids = [];
+        foreach ($items as $item) {
+            $instanceId = isset($item['instance']) ? (int) $item['instance'] : 0;
+            if ($instanceId <= 0 || isset($ids[$instanceId])) {
+                continue;
+            }
+            $ids[$instanceId] = true;
+            $ccShowInstance = CcShowInstancesQuery::create()->findPk($instanceId, $this->con);
+            if ($ccShowInstance !== null && $ccShowInstance->getCcShow()->isLinked()) {
+                foreach ($ccShowInstance->getCcShow()->getFutureCcShowInstancess() as $linked) {
+                    $ids[(int) $linked->getDbId()] = true;
+                }
+            }
+        }
+        if (count($ids) === 0) {
+            return;
+        }
+        $sorted = array_keys($ids);
+        sort($sorted);
+        $sql = 'SELECT id FROM cc_show_instances WHERE id IN (' . implode(',', $sorted) . ') ORDER BY id FOR UPDATE'
+            . ($this->skipBusyInstances ? ' NOWAIT' : '');
+
+        try {
+            $stmt = $this->con->query($sql);
+            $stmt->fetchAll();
+            $stmt->closeCursor();
+        } catch (PDOException $e) {
+            // 55P03 lock_not_available: somebody holds the row (NOWAIT)
+            if ($this->skipBusyInstances
+                && ((string) $e->getCode() === '55P03' || strpos((string) $e->getMessage(), '55P03') !== false)) {
+                throw new Exception(
+                    'show instance(s) ' . implode(',', $sorted) . ' are being edited right now',
+                    self::ERR_INSTANCE_BUSY
+                );
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * RASTATIME 2026-11-07 - take the row locks of the files whose
+     * is_scheduled flag is about to change in id order, so two editors
+     * that touch overlapping files (different shows, same track) lock them
+     * in the same order and cannot deadlock.  An UPDATE ... WHERE id IN
+     * (...) locks rows in scan order, which is not the list order.
+     *
+     * @param int[] $fileIds
+     * @param PDO   $con
+     *
+     * @return int[] the distinct ids, sorted
+     */
+    public static function lockFilesInOrder(array $fileIds, $con)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $fileIds))));
+        sort($ids);
+        if (count($ids) > 0) {
+            $stmt = $con->query('SELECT id FROM cc_files WHERE id IN (' . implode(',', $ids) . ') ORDER BY id FOR UPDATE');
+            $stmt->fetchAll();
+            $stmt->closeCursor();
+        }
+
+        return $ids;
+    }
+
     /*
      * @param array $scheduleItems (schedule_id and instance_id it belongs to)
      * @param array $mediaItems (file|block|playlist|webstream)
@@ -1667,6 +1768,7 @@ final class Application_Model_Scheduler
             // Increase the transaction isolation level to prevent two concurrent requests from potentially resulting
             // in tracks scheduled at the same time.
             $this->con->exec('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
+            $this->lockInstances($scheduleItems); // RASTATIME 2026-11-07
 
             $this->validateMediaItems($mediaItems); // Check for missing files, etc.
             $this->validateRequest($scheduleItems, true);
@@ -1723,6 +1825,7 @@ final class Application_Model_Scheduler
 
         try {
             $this->con->exec('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
+            $this->lockInstances($scheduleItems); // RASTATIME 2026-11-07
             $this->validateRequest($scheduleItems, true);
             $this->insertAfter($scheduleItems, [], $files, true);
             $this->con->commit();
@@ -1750,6 +1853,7 @@ final class Application_Model_Scheduler
             // Increase the transaction isolation level to prevent two concurrent requests from potentially resulting
             // in tracks scheduled at the same time.
             $this->con->exec('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
+            $this->lockInstances(array_merge($selectedItems, $afterItems)); // RASTATIME 2026-11-07
 
             $this->validateItemMove($selectedItems, $afterItems[0]);
             $this->validateRequest($selectedItems);
@@ -1839,6 +1943,7 @@ final class Application_Model_Scheduler
         $this->con->beginTransaction();
 
         try {
+            $this->lockInstances($scheduledItems); // RASTATIME 2026-11-07
             $this->validateRequest($scheduledItems, true, true);
 
             $scheduledIds = [];

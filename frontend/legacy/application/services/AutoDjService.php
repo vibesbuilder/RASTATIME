@@ -173,8 +173,20 @@ class Application_Service_AutoDjService
                 // task-manager polling context; reserve = 0 because
                 // there is no outro to protect (fill-pass runs *after*
                 // the autoplaylist build, including outro insertion).
-                $si->addPlaylistToShow((int) $playlistId, false, 0);
+                // RASTATIME 2026-11-07 - skipIfBusy: a show the operator is
+                // editing right now is left alone (next pass in a minute);
+                // before, both ran side by side and deadlocked on
+                // cc_files.is_scheduled (2026-11-06 16:09-16:13).
+                $si->addPlaylistToShow((int) $playlistId, false, 0, true);
             } catch (Throwable $e) {
+                if ((int) $e->getCode() === Application_Model_Scheduler::ERR_INSTANCE_BUSY) {
+                    Logging::info(
+                        'AutoDjService::runFillPass: instance_id=' . $instanceId
+                        . ' is being edited right now - left alone until the next pass.'
+                    );
+
+                    continue;
+                }
                 Logging::warn(
                     'AutoDjService::runFillPass: failed to fill '
                     . 'instance_id=' . $instanceId . ': ' . $e->getMessage()

@@ -158,6 +158,20 @@ playlist de Auto DJ (26/10/2026, «Vinyl Hour»: llenado a las
 La reserva de outro deja intencionalmente hasta 5 s de
 juego para que la auto-construcción no se desborde.
 
+### El fill-pass deja en paz un programa que está editando (desde 2026-11-07)
+
+Mientras arrastra pistas a un programa en el calendario o en el show
+builder, ese programa es suyo: cada acción de planificación bloquea
+primero la instancia del programa, y el fill-pass no espera a ese
+bloqueo.  Omite el programa en este ciclo, escribe una línea
+informativa en el registro («is being edited right now - left alone
+until the next pass») y vuelve a mirar un minuto después.  Una vez
+guardada su edición, si al programa le siguen faltando más de 5
+segundos, el fill-pass lo completa como antes.  Antes de este cambio
+ambos corrían a la vez y podían chocar en la base de datos
+(interbloqueo) - el perdedor era aleatorio, así que una colocación del
+operador podía fallar con un mensaje de error.
+
 ### El fill-pass nunca modifica la definición del programa
 
 El fill-pass solo inserta **items de planning** en la

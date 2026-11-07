@@ -1912,6 +1912,9 @@ SQL;
         $diff = array_diff($filesCurrentlySetWithIsScheduled, $filesScheduledInFuture);
 
         $con = Propel::getConnection(CcFilesPeer::DATABASE_NAME);
+        // RASTATIME 2026-11-07 - same lock order as the scheduler's insert
+        // (Scheduler::lockFilesInOrder): deadlock-free against a parallel editor
+        $diff = Application_Model_Scheduler::lockFilesInOrder($diff, $con);
         $selectCriteria = new Criteria();
         $selectCriteria->add(CcFilesPeer::ID, $diff, Criteria::IN);
         $updateCriteria = new Criteria();
