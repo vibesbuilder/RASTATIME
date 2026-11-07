@@ -80,6 +80,29 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung (Befund 2026-11-07, seit etwa 2026-11-01, wartet auf Go)
+
+Icecast-Zugriffslog (`/admin/metadata` = Titel-Update von Liquidsoap): an den Datei->Datei-Sendungsgrenzen
+08:15 / 12:15 / 17:15 kam bis Ende Oktober täglich ein Update; ab 2026-11-01 fehlt es zunehmend (17:15
+ab 11-02 durchgehend, 12:15 11-01/11-06/11-07, 08:15 11-06), am 2026-11-06 alle drei, heute 12:15, 13:45
+und 17:15.  Folge: der Stream-Titel bleibt beim ersten Titel der neuen Sendung auf dem Vortitel stehen
+(heute 17:15-17:17:49), Live Text und Aufnahme-Tags ebenso (keine „Live Text"-Zeile im Playout-Log zu
+diesen Momenten, also kam gar kein Metadaten-Paket der neuen Sendung bis zu den Ausgängen).  Updates
+kommen dagegen zuverlässig bei: Webstream->Datei, Teaser->Datei (show/old), Grenzen mit Haltezeit
+(show_hold mit blank, 08:07/10:00/10:07/12:00) und heute 08:15 (show/- mit 3 s verspäteter Kette) - also
+nicht streng an die Transitionsform gebunden, eher an das Timing zwischen cross-Vorpufferung (3 s
+Analyse des neuen Kopfes) und dem Metadaten-Paket der Anfrage.  Innerhalb der Sendung (track-Form, add
+mit neuem Titel zuerst) immer ok.  Kein Zusammenhang mit den heutigen Änderungen (gestern 08:15 schon
+betroffen, vor §23.92).  Kandidaten für den Auslöser um den 2026-11-01: Rollouts 2026-11-01/02
+(a30b0abb §23.78, Engine-Zustandsspiegel c795a320, Öffentliche-Flächen-Paket) - noch nicht eingegrenzt.
+**Option (a) Replikat-Probe:** zweite Liquidsoap-Instanz mit cross + show-Formen und `on_metadata`-Log,
+Übergänge mit/ohne Tail, ~1-2 h.  **Option (b) Template:** in den show-Formen die Metadaten des neuen
+Titels explizit einspeisen (`new.metadata` per insert_metadata am Beginn von `new.source` bzw. `add` mit
+neuem Titel zuerst wie bei track_natural), ~30 min + geplanter Liquidsoap-Neustart; heilt das Symptom
+auch ohne die Ursache zu kennen.  **Empfehlung:** (b) zuerst, (a) wenn (b) nicht reicht.
+**Vorbedingungen:** Operator-Go.  Diagnose-Tabelle: Scratchpad-Skript dieser Sitzung (Icecast access.log,
+Fenster -6..+12 s um die Grenzen).
+
 ### 💡 Hörer-Aussetzer beim Sendungsstart 12:07 (foobar2000, Stream 1 über den Apache-Proxy) - Befund 2026-11-07, Analyse offen, gemeinsamer Test 2026-11-08 Mittag
 
 Operator hörte beim Start der 12:07-Sendung: erster Titel ~1 s hörbar, dann 2-3 s nichts, dann weiter.
@@ -174,7 +197,10 @@ Engine-Rest (`<queue>.remaining`) läuft dem Sendeton um den cross-Puffer (~3 s)
 Messungen auf das Zeilenmodell `_file_audio_end` umgestellt (§23.96, Commit siehe CHANGELOG).
 **Abnahme Haltezeit bestanden 2026-11-07** (live seit 10:26): 12:00 Hold 0,6 s -> Kette 0,00 s, 12:07
 -0,04 s, 12:15 Lücke 0,05 s -> kein Hold, pünktlich; vorher 10:00/10:07 noch Hold 3,0 s und Kette ~2,9 s
-spät.  **Offen:** 17:15 erster echter strikter Schnitt (Zeilen 3 s über der Grenze).
+spät.  **17:15 2026-11-07:** KEIN Schnitt nötig - die API kappt bei überbuchten Zeilen den Cue-Out an der
+Sendungsgrenze (Queue-Ahead sah den Vorgänger um 17:14:59,97 enden, Übergabe pünktlich).  Der
+rt_cut-Pfad greift damit nur bei Laufzeitverzug der Kette (> 0,3 s an einer strikten Grenze), was mit dem
+Zeilenmodell selten ist - er bleibt live ungesehen, und das ist in Ordnung.
 
 ### ✅ Auto-DJ-Fill-Pass und Handplanung sperren sich gegenseitig - GEBAUT 2026-11-07 (c)+(b) (Deadlock in cc_files.is_scheduled, Befund 2026-11-06 16:09-16:13, Go 2026-11-07)
 
