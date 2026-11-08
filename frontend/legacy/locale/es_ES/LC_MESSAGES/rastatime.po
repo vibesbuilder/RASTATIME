@@ -8300,3 +8300,143 @@ msgstr "Sí: los bloques inteligentes ya no eligen las pistas seleccionadas. No:
 #: application/controllers/LocaleController.php
 msgid "Cleared the passed expiry date of %s track(s)."
 msgstr "Fecha de caducidad alcanzada vaciada en %s pista(s)."
+
+#: application/forms/EditAudioMD.php
+msgid "Enabled From:"
+msgstr "Activo desde:"
+
+#: application/forms/EditAudioMD.php
+msgid "Format: YYYY-MM-DD.  The track stays disabled until this day.  Empty = no enable date."
+msgstr "Formato: AAAA-MM-DD.  La pista permanece desactivada hasta ese día.  Vacío = sin fecha de activación."
+
+#: application/forms/EditAudioMD.php
+msgid "Enable date must be in YYYY-MM-DD format or empty."
+msgstr "La fecha de activación debe tener el formato AAAA-MM-DD o estar vacía."
+
+#: application/forms/EditAudioMD.php
+msgid "A disabled track is no longer picked by smart blocks. Shows that already have it keep playing it, and it can still be scheduled by hand. Ticked automatically while the enable date lies ahead and once the expiry date is reached. Changing or clearing these dates enables the track again, unless it was disabled by hand."
+msgstr "Una pista desactivada ya no es elegida por los bloques inteligentes. Los programas que ya la contienen la siguen emitiendo y aún puede programarse a mano. Se marca automáticamente mientras la fecha de activación está por llegar y en cuanto se alcanza la fecha de caducidad. Cambiar o borrar estas fechas vuelve a activar la pista, salvo que se haya desactivado a mano."
+
+#: application/forms/EditAudioMD.php
+msgid "The enable date lies ahead, so the track would stay disabled. Empty the field or set an earlier date."
+msgstr "La fecha de activación está por llegar, así que la pista seguiría desactivada. Vacíe el campo o elija una fecha anterior."
+
+#: application/forms/EditAudioMD.php
+msgid "The enable date must lie before the expiry date."
+msgstr "La fecha de activación debe ser anterior a la fecha de caducidad."
+
+#: application/forms/EditAudioMD.php
+msgid "Country:"
+msgstr "País:"
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Enable date must be in YYYY-MM-DD format, \"none\" to clear it, or empty."
+msgstr "La fecha de activación debe tener el formato AAAA-MM-DD, \"none\" para borrarla, o estar vacía."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Format: YYYY-MM-DD. Enter \"none\" to clear the enable date of the selected tracks."
+msgstr "Formato: AAAA-MM-DD. Escriba \"none\" para borrar la fecha de activación de las pistas seleccionadas."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Yes: smart blocks no longer pick the selected tracks. No: they are picked again; an expiry date that has passed and an enable date still ahead are cleared."
+msgstr "Sí: los bloques inteligentes ya no eligen las pistas seleccionadas. No: vuelven a elegirse; se borran una fecha de caducidad alcanzada y una fecha de activación aún por llegar."
+
+#: application/controllers/LocaleController.php
+msgid "Cleared the pending enable date of %s track(s)."
+msgstr "Fecha de activación pendiente borrada en %s pista(s)."
+
+#: application/controllers/LocaleController.php
+msgid "Expiry Date"
+msgstr "Fecha de caducidad"
+
+#: application/controllers/LocaleController.php
+msgid "Enabled From"
+msgstr "Activo desde"
+
+#: application/models/Criteria.php
+msgid "Country"
+msgstr "País"
+
+#: application/configs/navigation.php
+msgid "Music by Country"
+msgstr "Música por país"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Where the music that aired comes from, for the music quota. Counted are the plays in the playout history of tracks with the track type \"%s\", with the country of the track (Edit Track → Country, read from the COUNTRY tag on import). Tracks without a country count as \"No country\". Music played live by DJs, line-ins and webstreams are not in the playout history."
+msgstr "De dónde viene la música emitida, para la cuota musical. Se cuentan las emisiones del historial de emisión de las pistas con el tipo \"%s\", con el país de la pista (Edit Track → País, leído de la etiqueta COUNTRY al importar). Las pistas sin país cuentan como \"Sin país\". La música que los DJ tocan en directo, las entradas de línea y los webstreams no están en el historial."
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "The playout history of this year starts on %s."
+msgstr "El historial de emisión de este año empieza el %s."
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "The column for the country is missing - run the database migration 0081 first. Until then every track counts as \"No country\"."
+msgstr "Falta la columna del país: ejecute primero la migración de base de datos 0081. Hasta entonces cada pista cuenta como \"Sin país\"."
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "There is no track type with the code \"music\" (Settings → Track Types), so no track counts as music."
+msgstr "No hay ningún tipo de pista con el código \"music\" (Settings → Track Types), así que ninguna pista cuenta como música."
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Minutes of music"
+msgstr "Minutos de música"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Plays"
+msgstr "Emisiones"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Countries"
+msgstr "Países"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Share of minutes with a country"
+msgstr "Proporción de minutos con país"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "No music aired in this year."
+msgstr "No se emitió música este año."
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Share of plays"
+msgstr "Proporción de emisiones"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Share of minutes"
+msgstr "Proporción de minutos"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "No country"
+msgstr "Sin país"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Minutes with a country"
+msgstr "Minutos con país"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Share with a country"
+msgstr "Proporción con país"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Most played music without a country"
+msgstr "Música más emitida sin país"
+
+#: application/views/scripts/yearlyreport/country.phtml
+msgid "Enter the country in Edit Track (or for several tracks at once in the bulk editor); the report counts it for the past plays too."
+msgstr "Introduzca el país en Edit Track (o para varias pistas a la vez en la edición múltiple); el informe lo cuenta también para las emisiones pasadas."
+
+#: application/controllers/YearlyreportController.php
+msgid "Share of plays (%)"
+msgstr "Proporción de emisiones (%)"
+
+#: application/controllers/YearlyreportController.php
+msgid "Share of minutes (%)"
+msgstr "Proporción de minutos (%)"
+
+#: application/controllers/YearlyreportController.php
+msgid "Share with a country (%)"
+msgstr "Proporción con país (%)"
+
+#: application/controllers/YearlyreportController.php
+msgid "Minutes per month"
+msgstr "Minutos por mes"
