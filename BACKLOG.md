@@ -7330,6 +7330,22 @@ im Fill-Log + Preflight-Hinweis (oder Option „vorhandene Zeilen ersetzen").
 ~40 Zeilen, 2 h.  Dazu: Showbuilder-Drop auf eine verknüpfte Show mit
 Autoloading-Playlist bestätigen lassen.
 
+**Dritter Fall 2026-11-08 (Operator-Frage „funktioniert Allow Repeated Tracks nicht?"):**
+Sendung 1229 (08:07, nicht verknüpft), Instanz 24103.  Um 02:01:48 wurde die
+Autoloading-Playlist 10 (Intro-Datei + Smart Block 357, 8 min, repeat_tracks=0) von Hand
+über den Kalender in die noch ungebaute Instanz gelegt (`showbuilder/schedule-add`), um
+07:07:33 hängte das Autoloading sie ein zweites Mal an („auto 5 rows") und füllte mit dem
+Outro auf → Intro + vier Hinweise doppelt.  Allow Repeated Tracks arbeitet richtig: es gilt
+je Block-Auswertung (jede Auswertung lieferte vier verschiedene Titel), nicht gegen Zeilen,
+die schon in der Sendung stehen.  „Exclude tracks played lately" zählt geplante Zeilen
+(§23.63) und hätte die vier Hinweise beim zweiten Mal ausgeschlossen, die feste Intro-Datei
+der Playlist aber nicht.  Zusätzliche Varianten zur Warnung: (c) beim Hinzufügen von Inhalt
+in eine ungebaute Autoloading-Episode nachfragen („Autoloading füllt diese Episode um HH:MM -
+für diese Episode abschalten?", Edit Instance §23.85); (b) vorhandene Zeilen als Inhalt
+werten und Schritt 3 auslassen (Verhaltensänderung: ein bewusst vorab gelegter Einzeltitel
+würde dann das Autoloading unterdrücken).
+**Vorbedingungen:** Evaluierung auf Operator-Wunsch.
+
 ## Öffentliche API und Widgets (Operator-Frage 2026-11-05, Bestandsaufnahme)
 
 Ist-Zustand (curl von außen, 2026-11-05 13:30):
