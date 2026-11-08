@@ -363,7 +363,9 @@ class StationPodcastTask implements AirtimeTask
  * RASTATIME 2026-05-16 - Shared pruner for the Track-Expiry and
  * Podcast-Auto-Expiry features.  Once per hour, walks cc_files for
  * rows where expires_at < NOW() and disabled = false, and flips
- * disabled = true.  Disabled tracks remain visible in the Library
+ * disabled = true (since 2026-11-08 / migration 0080: recomputes the
+ * derived disabled flag in both directions, which also frees tracks
+ * whose enable date has come).  Disabled tracks remain visible in the Library
  * and in already-built Smartblocks (so already-scheduled shows keep
  * playing them); they are excluded from NEW Smartblock evaluations
  * via a "disabled = false" filter on the criteria query.
@@ -386,19 +388,37 @@ class TrackExpiryTask implements AirtimeTask
     {
         try {
             $con = Propel::getConnection();
-            // Atomic SQL: disable every still-enabled file whose
-            // expires_at has passed.  Returns the count for logging.
-            $stmt = $con->prepare(
-                'UPDATE cc_files
-                 SET disabled = true
-                 WHERE expires_at IS NOT NULL
-                   AND expires_at < NOW()
-                   AND disabled = false'
-            );
-            $stmt->execute();
-            $rows = $stmt->rowCount();
-            if ($rows > 0) {
-                Logging::info("TrackExpiryTask: disabled {$rows} expired files");
+            if (Application_Model_StoredFile::trackDatesReady($con)) {
+                // RASTATIME 2026-11-08 - disabled is derived (migration 0080,
+                // StoredFile::DISABLED_SQL): recompute it in both directions,
+                // so an enable date that has come frees its track and an
+                // expiry that has come disables it.  Only rows that change.
+                $expr = Application_Model_StoredFile::DISABLED_SQL;
+                $rows = $con->query(
+                    "UPDATE cc_files SET disabled = {$expr}
+                     WHERE disabled IS DISTINCT FROM {$expr}
+                     RETURNING disabled"
+                )->fetchAll(PDO::FETCH_COLUMN);
+                $disabled = count(array_filter($rows, [Application_Model_StoredFile::class, 'flagValue']));
+                $enabled = count($rows) - $disabled;
+                if ($rows) {
+                    Logging::info("TrackExpiryTask: disabled {$disabled}, enabled {$enabled} files (expiry / enable date)");
+                }
+            } else {
+                // Atomic SQL: disable every still-enabled file whose
+                // expires_at has passed.  Returns the count for logging.
+                $stmt = $con->prepare(
+                    'UPDATE cc_files
+                     SET disabled = true
+                     WHERE expires_at IS NOT NULL
+                       AND expires_at < NOW()
+                       AND disabled = false'
+                );
+                $stmt->execute();
+                $rows = $stmt->rowCount();
+                if ($rows > 0) {
+                    Logging::info("TrackExpiryTask: disabled {$rows} expired files");
+                }
             }
         } catch (Exception $exc) {
             Logging::error('TrackExpiryTask failed: ' . $exc->getMessage());

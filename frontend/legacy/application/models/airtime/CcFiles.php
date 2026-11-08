@@ -377,33 +377,76 @@ class CcFiles extends BaseCcFiles
             // ISO 8601 date / datetime strings from the analyzer's
             // _extract_expiry_tag.  Empty / null leaves the existing
             // value untouched.
-            if (
-                isset($fileArray['expires_at'])
-                && is_string($fileArray['expires_at'])
-                && trim($fileArray['expires_at']) !== ''
-            ) {
-                $expRaw = trim($fileArray['expires_at']);
+            //
+            // RASTATIME 2026-11-08 - the same for enabled_from (tag "Enable
+            // Date", migration 0080); disabled is then derived as everywhere
+            // (StoredFile::DISABLED_SQL).  Both dates arrive as YYYY-MM-DD.
+            $con = Propel::getConnection();
+            $datesReady = Application_Model_StoredFile::trackDatesReady($con);
+            $dateKeys = $datesReady ? ['expires_at', 'enabled_from'] : ['expires_at'];
+            $datesSet = [];
+            foreach ($dateKeys as $dateKey) {
+                if (
+                    !isset($fileArray[$dateKey])
+                    || !is_string($fileArray[$dateKey])
+                    || !preg_match('/^\d{4}-\d{2}-\d{2}/', trim($fileArray[$dateKey]))
+                ) {
+                    continue;
+                }
+                $dateRaw = trim($fileArray[$dateKey]);
                 try {
-                    $con = Propel::getConnection();
-                    $stmt = $con->prepare(
-                        'UPDATE cc_files
-                         SET expires_at = :exp,
-                             disabled = (CAST(:exp AS TIMESTAMP) < NOW())
-                         WHERE id = :id'
-                    );
-                    $stmt->bindValue(':exp', $expRaw, PDO::PARAM_STR);
+                    $stmt = $con->prepare("UPDATE cc_files SET {$dateKey} = :d WHERE id = :id");
+                    $stmt->bindValue(':d', $dateRaw, PDO::PARAM_STR);
                     $stmt->bindValue(':id', $file->getDbId(), PDO::PARAM_INT);
                     $stmt->execute();
-                    Logging::info(
-                        'CcFiles::updateFromArray: set expires_at='
-                        . $expRaw . ' for file id=' . $file->getDbId()
-                    );
+                    $datesSet[] = "{$dateKey}={$dateRaw}";
                 } catch (Exception $exc) {
                     Logging::warn(
                         'CcFiles::updateFromArray: failed to persist '
-                        . 'expires_at=' . $expRaw . ' for file id='
+                        . "{$dateKey}={$dateRaw} for file id="
                         . $file->getDbId() . ': ' . $exc->getMessage()
                     );
+                }
+            }
+            if ($datesSet) {
+                try {
+                    $stmt = $con->prepare(
+                        'UPDATE cc_files SET disabled = '
+                        . ($datesReady ? Application_Model_StoredFile::DISABLED_SQL : '(expires_at IS NOT NULL AND expires_at <= NOW())')
+                        . ' WHERE id = :id'
+                    );
+                    $stmt->bindValue(':id', $file->getDbId(), PDO::PARAM_INT);
+                    $stmt->execute();
+                    Logging::info(
+                        'CcFiles::updateFromArray: set ' . implode(', ', $datesSet)
+                        . ' for file id=' . $file->getDbId()
+                    );
+                } catch (Exception $exc) {
+                    Logging::warn('CcFiles::updateFromArray: disabled not derived for file id='
+                        . $file->getDbId() . ': ' . $exc->getMessage());
+                }
+            }
+
+            // RASTATIME 2026-11-08 - the COUNTRY tag (migration 0081).  Only an
+            // empty country is filled: a value set in RASTATIME stays (Re-read
+            // Tags is the way to take the file's value on purpose).
+            if (
+                isset($fileArray['country'])
+                && is_string($fileArray['country'])
+                && trim($fileArray['country']) !== ''
+                && Application_Model_StoredFile::fileColumnReady('country', $con)
+            ) {
+                $country = mb_substr(preg_replace('/\s+/u', ' ', trim($fileArray['country'])), 0, 64);
+                try {
+                    $stmt = $con->prepare(
+                        "UPDATE cc_files SET country = :c WHERE id = :id AND (country IS NULL OR country = '')"
+                    );
+                    $stmt->bindValue(':c', $country, PDO::PARAM_STR);
+                    $stmt->bindValue(':id', $file->getDbId(), PDO::PARAM_INT);
+                    $stmt->execute();
+                } catch (Exception $exc) {
+                    Logging::warn('CcFiles::updateFromArray: failed to persist country for file id='
+                        . $file->getDbId() . ': ' . $exc->getMessage());
                 }
             }
         } catch (RastatimeFileNotFoundException $e) {

@@ -290,52 +290,58 @@ class Application_Model_StoredFile
             }
         }
 
-        // RASTATIME 2026-05-16 - Track Expiry (expires_at).  Propel
-        // classes are not regenerated for the new column, so we apply
-        // the value via raw SQL after the regular save.  Accepts
-        // YYYY-MM-DD; empty string clears.  Also re-enables the row
-        // (disabled = false) when the operator picks a future date or
-        // clears the expiry — symmetric to the pruner which only ever
-        // flips disabled to true.
-        //
-        // RASTATIME 2026-11-08 - "Track disabled" (operator): the editor's
-        // checkbox sets cc_files.disabled by hand, and an expiry date that
-        // has passed always disables (as the hourly TrackExpiryTask does):
-        //   - 'disabled' posted (editor checkbox, bulk edit yes / no):
-        //     disabled = the posted flag OR the expiry has passed;
-        //   - not posted (bulk edit "unchanged", other callers): a track
-        //     disabled by hand (disabled while its expiry has not passed)
-        //     stays disabled; a track the expiry disabled is enabled again
-        //     once its expiry moves ahead or is cleared (as before).
+        // RASTATIME 2026-05-16 / 2026-11-08 - expiry date, enable date and
+        // "Track disabled" (raw SQL: Propel is not regenerated for these
+        // columns).  The dates take YYYY-MM-DD, an empty string clears.
+        // Since migration 0080 the box ticked by a person is stored on its
+        // own (disabled_by_hand) and disabled is derived from it, the
+        // expiry and the enable date (DISABLED_SQL, ARCHITECTURE 23.99):
+        //   - 'disabled_by_hand' posted (the single editor, whose dialog
+        //     knows who ticked the box): that value, unless 'disabled'
+        //     comes unticked;
+        //   - only 'disabled' posted (bulk edit yes / no, other callers):
+        //     yes = disabled by hand, no = not by hand;
+        //   - neither (a date change alone): the stored value stays.
         // (Single placeholders only: PostgreSQL's native prepares reject the
         // same named token bound twice - 2026-05-18.)
-        $expiryPosted = is_array($p_md) && array_key_exists('expires_at', $p_md);
-        $disabledPosted = is_array($p_md) && array_key_exists('disabled', $p_md);
-        if ($expiryPosted || $disabledPosted) {
+        $posted = is_array($p_md) ? $p_md : [];
+        $expiryPosted = array_key_exists('expires_at', $posted);
+        $enablePosted = array_key_exists('enabled_from', $posted);
+        $disabledPosted = array_key_exists('disabled', $posted);
+        $handPosted = array_key_exists('disabled_by_hand', $posted);
+        if ($expiryPosted || $enablePosted || $disabledPosted || $handPosted) {
             $fileId = (int) $this->_file->getDbId();
+            $dates = self::trackDatesReady($this->_con);
             $before = self::disabledState($this->_con, $fileId);
             if ($expiryPosted) {
-                $raw = trim((string) $p_md['expires_at']);
-                if ($raw === '') {
-                    $stmt = $this->_con->prepare('UPDATE cc_files SET expires_at = NULL WHERE id = :id');
-                    $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
-                    $stmt->execute();
-                } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
-                    $stmt = $this->_con->prepare('UPDATE cc_files SET expires_at = :exp WHERE id = :id');
-                    $stmt->bindValue(':exp', $raw, PDO::PARAM_STR);
-                    $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
-                    $stmt->execute();
-                }
+                self::writeDateColumn($this->_con, $fileId, 'expires_at', $posted['expires_at']);
             }
-            $byHand = $disabledPosted
-                ? self::flagValue($p_md['disabled'])
-                : ($before['disabled'] && !$before['expired']);
-            $stmt = $this->_con->prepare(
-                'UPDATE cc_files
-                 SET disabled = (CAST(:hand AS BOOLEAN) OR (expires_at IS NOT NULL AND expires_at < NOW()))
-                 WHERE id = :id'
-            );
-            $stmt->bindValue(':hand', $byHand ? 'true' : 'false', PDO::PARAM_STR);
+            if ($enablePosted && $dates) {
+                self::writeDateColumn($this->_con, $fileId, 'enabled_from', $posted['enabled_from']);
+            }
+            if ($handPosted) {
+                $byHand = self::flagValue($posted['disabled_by_hand'])
+                    && (!$disabledPosted || self::flagValue($posted['disabled']));
+            } elseif ($disabledPosted) {
+                $byHand = self::flagValue($posted['disabled']);
+            } else {
+                $byHand = $before['by_hand'];
+            }
+            if ($dates) {
+                $stmt = $this->_con->prepare('UPDATE cc_files SET disabled_by_hand = CAST(:hand AS BOOLEAN) WHERE id = :id');
+                $stmt->bindValue(':hand', $byHand ? 'true' : 'false', PDO::PARAM_STR);
+                $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
+                $stmt->execute();
+                $stmt = $this->_con->prepare('UPDATE cc_files SET disabled = ' . self::DISABLED_SQL . ' WHERE id = :id');
+            } else {
+                // before migration 0080: by hand OR expiry reached
+                $stmt = $this->_con->prepare(
+                    'UPDATE cc_files
+                     SET disabled = (CAST(:hand AS BOOLEAN) OR (expires_at IS NOT NULL AND expires_at <= NOW()))
+                     WHERE id = :id'
+                );
+                $stmt->bindValue(':hand', $byHand ? 'true' : 'false', PDO::PARAM_STR);
+            }
             $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
             $stmt->execute();
         }
@@ -468,21 +474,108 @@ class Application_Model_StoredFile
     }
 
     /**
-     * RASTATIME 2026-11-08 - "Track disabled": the file's disabled flag,
-     * whether its expiry date has passed (which disables it, see
-     * TrackExpiryTask) and today's date as the database sees it
-     * (YYYY-MM-DD, the session time zone the expiry comparison uses).
+     * RASTATIME 2026-11-08 - cc_files.disabled as derived from its causes
+     * (migration 0080, ARCHITECTURE 23.99): the "Track disabled" box ticked
+     * by a person, the expiry reached (counted from 00:00 of that day) or
+     * an enable date still ahead.  Every save and the hourly TrackExpiryTask
+     * recompute it; everything else keeps reading disabled.
+     */
+    public const DISABLED_SQL = '(disabled_by_hand'
+        . ' OR (expires_at IS NOT NULL AND expires_at <= NOW())'
+        . ' OR (enabled_from IS NOT NULL AND enabled_from > NOW()))';
+
+    /** @var null|array<string, int> cc_files column names (flipped), per request */
+    private static $fileColumns;
+
+    /**
+     * RASTATIME 2026-11-08 - true once the migration that adds $column to
+     * cc_files ran (0080 disabled_by_hand / enabled_from, 0081 country).
+     * One catalogue query per request.
+     *
+     * @param string   $column
+     * @param null|PDO $con
+     *
+     * @return bool
+     */
+    public static function fileColumnReady($column, $con = null)
+    {
+        if (self::$fileColumns === null) {
+            try {
+                $con = $con ?: Propel::getConnection(CcFilesPeer::DATABASE_NAME);
+                $stmt = $con->query("SELECT column_name FROM information_schema.columns WHERE table_name = 'cc_files'");
+                self::$fileColumns = array_flip($stmt->fetchAll(PDO::FETCH_COLUMN));
+            } catch (Exception $exc) {
+                return false; // asked again next time
+            }
+        }
+
+        return isset(self::$fileColumns[$column]);
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - migration 0080 ran (disabled_by_hand, enabled_from).
+     *
+     * @param null|PDO $con
+     *
+     * @return bool
+     */
+    public static function trackDatesReady($con = null)
+    {
+        return self::fileColumnReady('disabled_by_hand', $con) && self::fileColumnReady('enabled_from', $con);
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - write a date column of the track editor:
+     * YYYY-MM-DD sets it (00:00 of that day), '' clears it, anything else
+     * leaves it alone (the forms validate before).
+     *
+     * @param PDO    $con
+     * @param int    $fileId
+     * @param string $column expires_at | enabled_from
+     * @param mixed  $value
+     */
+    private static function writeDateColumn($con, $fileId, $column, $value)
+    {
+        if (!in_array($column, ['expires_at', 'enabled_from'], true)) {
+            return;
+        }
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            $stmt = $con->prepare("UPDATE cc_files SET {$column} = NULL WHERE id = :id");
+        } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+            $stmt = $con->prepare("UPDATE cc_files SET {$column} = :d WHERE id = :id");
+            $stmt->bindValue(':d', $raw, PDO::PARAM_STR);
+        } else {
+            return;
+        }
+        $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - "Track disabled": the file's disabled flag, the
+     * box ticked by a person (by_hand), whether its expiry date has been
+     * reached (expired) or its enable date still lies ahead (waiting) - both
+     * disable it, see DISABLED_SQL - and today's date as the database sees
+     * it (YYYY-MM-DD, the session time zone the date comparisons use).
+     * Before migration 0080 by_hand is inferred (disabled, expiry not
+     * reached) and waiting is false.
      *
      * @param PDO $con
      * @param int $fileId
      *
-     * @return array ['disabled' => bool, 'expired' => bool, 'today' => string]
+     * @return array ['disabled' => bool, 'by_hand' => bool, 'expired' => bool, 'waiting' => bool, 'today' => string]
      */
     public static function disabledState($con, $fileId)
     {
+        $expired = '(expires_at IS NOT NULL AND expires_at <= NOW())';
+        $causes = self::trackDatesReady($con)
+            ? 'disabled_by_hand AS by_hand, (enabled_from IS NOT NULL AND enabled_from > NOW()) AS waiting'
+            : "(disabled AND NOT {$expired}) AS by_hand, FALSE AS waiting";
+
         try {
             $stmt = $con->prepare(
-                "SELECT disabled, (expires_at IS NOT NULL AND expires_at < NOW()) AS expired,
+                "SELECT disabled, {$expired} AS expired, {$causes},
                         TO_CHAR(NOW(), 'YYYY-MM-DD') AS today
                  FROM cc_files WHERE id = :id"
             );
@@ -492,7 +585,9 @@ class Application_Model_StoredFile
             if ($row) {
                 return [
                     'disabled' => self::flagValue($row['disabled']),
+                    'by_hand' => self::flagValue($row['by_hand']),
                     'expired' => self::flagValue($row['expired']),
+                    'waiting' => self::flagValue($row['waiting']),
                     'today' => (string) $row['today'],
                 ];
             }
@@ -500,7 +595,7 @@ class Application_Model_StoredFile
             Logging::warn('disabledState: ' . $exc->getMessage());
         }
 
-        return ['disabled' => false, 'expired' => false, 'today' => self::expiryToday()];
+        return ['disabled' => false, 'by_hand' => false, 'expired' => false, 'waiting' => false, 'today' => self::expiryToday()];
     }
 
     /**
@@ -531,6 +626,22 @@ class Application_Model_StoredFile
         $date = trim((string) $date);
 
         return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1 && strcmp($date, (string) $today) <= 0;
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - an enable date (YYYY-MM-DD) frees the track from
+     * 00:00 of that day, so only a date after today still holds it back.  Pure.
+     *
+     * @param string $date
+     * @param string $today YYYY-MM-DD
+     *
+     * @return bool
+     */
+    public static function enableAhead($date, $today)
+    {
+        $date = trim((string) $date);
+
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1 && strcmp($date, (string) $today) > 0;
     }
 
     /**
@@ -628,21 +739,29 @@ class Application_Model_StoredFile
         // SQL (Propel class not regenerated for the column).  Format as
         // YYYY-MM-DD for the edit form's date input.  NULL => empty
         // string so the form shows an empty field.
+        // RASTATIME 2026-11-08 - the enable date the same way (migration 0080)
         try {
             $stmt = $this->_con->prepare(
-                "SELECT TO_CHAR(expires_at, 'YYYY-MM-DD') FROM cc_files WHERE id = :id"
+                "SELECT TO_CHAR(expires_at, 'YYYY-MM-DD') AS expires_at, "
+                . (self::trackDatesReady($this->_con) ? "TO_CHAR(enabled_from, 'YYYY-MM-DD')" : 'NULL')
+                . ' AS enabled_from FROM cc_files WHERE id = :id'
             );
             $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
             $stmt->execute();
-            $value = $stmt->fetchColumn();
-            $md['expires_at'] = ($value === false || $value === null) ? '' : (string) $value;
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $md['expires_at'] = (string) ($row['expires_at'] ?? '');
+            $md['enabled_from'] = (string) ($row['enabled_from'] ?? '');
         } catch (Exception $exc) {
-            Logging::warn('getDbColMetadata: could not read expires_at: ' . $exc->getMessage());
+            Logging::warn('getDbColMetadata: could not read expires_at / enabled_from: ' . $exc->getMessage());
             $md['expires_at'] = '';
+            $md['enabled_from'] = '';
         }
 
-        // RASTATIME 2026-11-08 - "Track disabled" checkbox, '1' / '0'
-        $md['disabled'] = self::disabledState($this->_con, (int) $this->_file->getDbId())['disabled'] ? '1' : '0';
+        // RASTATIME 2026-11-08 - "Track disabled" checkbox, '1' / '0', and
+        // who ticked it (the editor's hidden field, migration 0080)
+        $state = self::disabledState($this->_con, (int) $this->_file->getDbId());
+        $md['disabled'] = $state['disabled'] ? '1' : '0';
+        $md['disabled_by_hand'] = $state['by_hand'] ? '1' : '0';
 
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060),
         // raw SQL like expires_at; '1' / '0' for the form checkbox.
@@ -1298,6 +1417,9 @@ SQL;
             'cuein', 'cueout', 'description', 'artwork', 'track_type_id',
             // RASTATIME 2026-05-16 - Track Expiry feature columns.
             'expires_at', 'disabled',
+            // RASTATIME 2026-11-08 - enable date (migration 0080) and the
+            // COUNTRY tag (migration 0081)
+            'enabled_from', 'country',
             // RASTATIME 2026-10-07 - times aired (rows of cc_playout_history)
             'play_count',
             // RASTATIME 2026-10-16 - "Show name (type)" of a teaser jingle
@@ -1434,6 +1556,19 @@ SQL;
                 $blSelect[] = 'NULL::TIMESTAMP AS ' . $key;
                 $fileSelect[] = $key;
                 $streamSelect[] = 'NULL::TIMESTAMP AS ' . $key;
+            } elseif ($key === 'enabled_from') {
+                // RASTATIME 2026-11-08 - TIMESTAMP like expires_at; NULL before
+                // migration 0080
+                $plSelect[] = 'NULL::TIMESTAMP AS ' . $key;
+                $blSelect[] = 'NULL::TIMESTAMP AS ' . $key;
+                $fileSelect[] = self::trackDatesReady($con) ? "FILES.{$key}" : 'NULL::TIMESTAMP AS ' . $key;
+                $streamSelect[] = 'NULL::TIMESTAMP AS ' . $key;
+            } elseif ($key === 'country') {
+                // RASTATIME 2026-11-08 - text, searchable; NULL before migration 0081
+                $plSelect[] = 'NULL::text AS ' . $key;
+                $blSelect[] = 'NULL::text AS ' . $key;
+                $fileSelect[] = self::fileColumnReady('country', $con) ? "FILES.{$key}::text AS {$key}" : 'NULL::text AS ' . $key;
+                $streamSelect[] = 'NULL::text AS ' . $key;
             } elseif ($key === 'disabled') {
                 // RASTATIME 2026-05-31: disabled is BOOLEAN in cc_files — same
                 // UNION-type fix as expires_at above (was NULL::text via else).
@@ -1527,6 +1662,7 @@ SQL;
                     $lineinSelect[] = "NULL::VARCHAR AS {$key}";
                     break;
                 case 'expires_at':
+                case 'enabled_from':
                     // RASTATIME 2026-05-31: match cc_files.expires_at TIMESTAMP
                     // type across the UNION (see searchLibraryFiles fix).
                     $lineinSelect[] = "NULL::TIMESTAMP AS {$key}";

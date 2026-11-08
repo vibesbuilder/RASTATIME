@@ -24,8 +24,71 @@ class Application_Form_EditAudioMD extends Zend_Form
             $this->getElement('expires_at')->addError(self::passedExpiryMessage());
             $ok = false;
         }
+        // RASTATIME 2026-11-08 - the same for an enable date still ahead, and
+        // an enable date on or after the expiry date never lets the track play
+        if ($this->getElement('enabled_from')) {
+            if (self::enableWithPendingDate($data)) {
+                $this->getElement('enabled_from')->addError(self::pendingEnableMessage());
+                $ok = false;
+            }
+            if (!self::datesInOrder($data)) {
+                $this->getElement('enabled_from')->addError(self::datesOrderMessage());
+                $ok = false;
+            }
+        }
 
         return $ok;
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - true when $data enables the track ('disabled'
+     * posted and off) while its enable date (posted) still lies ahead.
+     *
+     * @param array       $data
+     * @param null|string $today YYYY-MM-DD, the database's date by default
+     *
+     * @return bool
+     */
+    public static function enableWithPendingDate(array $data, $today = null)
+    {
+        if (!array_key_exists('disabled', $data) || Application_Model_StoredFile::flagValue($data['disabled'])) {
+            return false;
+        }
+        $enable = trim((string) ($data['enabled_from'] ?? ''));
+        if ($enable === '') {
+            return false;
+        }
+
+        return Application_Model_StoredFile::enableAhead($enable, $today ?? Application_Model_StoredFile::expiryToday());
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - false when both dates are posted and the enable
+     * date is not before the expiry date.  Pure.
+     *
+     * @param array $data
+     *
+     * @return bool
+     */
+    public static function datesInOrder(array $data)
+    {
+        $enable = trim((string) ($data['enabled_from'] ?? ''));
+        $expiry = trim((string) ($data['expires_at'] ?? ''));
+        $isDate = static fn ($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) === 1;
+
+        return !($isDate($enable) && $isDate($expiry) && strcmp($enable, $expiry) >= 0);
+    }
+
+    /** RASTATIME 2026-11-08 - shared by the single and the bulk editor */
+    public static function pendingEnableMessage()
+    {
+        return _('The enable date lies ahead, so the track would stay disabled. Empty the field or set an earlier date.');
+    }
+
+    /** RASTATIME 2026-11-08 - shared by the single and the bulk editor */
+    public static function datesOrderMessage()
+    {
+        return _('The enable date must lie before the expiry date.');
     }
 
     /**
@@ -322,6 +385,25 @@ class Application_Form_EditAudioMD extends Zend_Form
         $cueOut->setValidators([$cueOutValidator]);
         $this->addElement($cueOut);
 
+        // RASTATIME 2026-11-08 - "Enabled From" (cc_files.enabled_from,
+        // migration 0080, raw SQL in StoredFile): the track stays disabled
+        // until 00:00 of that day.  Also read from the "Enable Date" tag on
+        // import.  Not offered before the migration ran.
+        if (Application_Model_StoredFile::trackDatesReady()) {
+            $enabledFrom = new Zend_Form_Element_Text('enabled_from');
+            $enabledFrom->class = 'input_text';
+            $enabledFrom->setLabel(_('Enabled From:'));
+            $enabledFrom->setDescription(_('Format: YYYY-MM-DD.  The track stays disabled until this day.  Empty = no enable date.'));
+            $enabledFrom->setFilters(['StringTrim']);
+            $enabledFrom->setValidators([
+                Application_Form_Helper_ValidationTypes::overrideRegexValidator(
+                    '/^(\d{4}-\d{2}-\d{2})?$/',
+                    _('Enable date must be in YYYY-MM-DD format or empty.')
+                ),
+            ]);
+            $this->addElement($enabledFrom);
+        }
+
         // RASTATIME 2026-05-16 - Track Expiry: manual override of the
         // expires_at value.  Accepts ISO 8601 date (YYYY-MM-DD) or empty
         // (clears the expiry).  Auto-Expiry from a parent podcast will
@@ -348,8 +430,21 @@ class Application_Form_EditAudioMD extends Zend_Form
         // carries the key.
         $disabled = new Zend_Form_Element_Checkbox('disabled');
         $disabled->setLabel(_('Track disabled:'));
-        $disabled->setDescription(_('A disabled track is no longer picked by smart blocks. Shows that already have it keep playing it, and it can still be scheduled by hand. Ticked automatically when the expiry date is reached. Moving the expiry date ahead or clearing it enables the track again, unless it was disabled by hand.'));
+        if (Application_Model_StoredFile::trackDatesReady()) {
+            $disabled->setDescription(_('A disabled track is no longer picked by smart blocks. Shows that already have it keep playing it, and it can still be scheduled by hand. Ticked automatically while the enable date lies ahead and once the expiry date is reached. Changing or clearing these dates enables the track again, unless it was disabled by hand.'));
+        } else {
+            $disabled->setDescription(_('A disabled track is no longer picked by smart blocks. Shows that already have it keep playing it, and it can still be scheduled by hand. Ticked automatically when the expiry date is reached. Moving the expiry date ahead or clearing it enables the track again, unless it was disabled by hand.'));
+        }
         $this->addElement($disabled);
+
+        // RASTATIME 2026-11-08 - who ticked the box (cc_files.disabled_by_hand,
+        // migration 0080): kept by the dialog script in edit-file-md.phtml,
+        // since a box the dates ticked looks the same as one ticked by hand
+        if (Application_Model_StoredFile::trackDatesReady()) {
+            $byHand = new Zend_Form_Element_Hidden('disabled_by_hand');
+            $byHand->setDecorators(['ViewHelper']);
+            $this->addElement($byHand);
+        }
 
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (cc_files.
         // no_fade_crossfade, migrations 0059/0060, raw SQL in StoredFile).

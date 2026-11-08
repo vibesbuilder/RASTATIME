@@ -1598,6 +1598,29 @@ SQL;
      * @param string $modifier is | is not
      * @param string $value
      */
+    /**
+     * RASTATIME 2026-11-08 - SQL that is true for a cc_files row a smart
+     * block may pick for a slot airing at $slot: not disabled by hand, the
+     * expiry not reached at $slot, the enable date reached at $slot.  The
+     * date columns are timestamps without time zone (00:00 of the day),
+     * compared in the session time zone like DISABLED_SQL compares them
+     * with NOW().
+     *
+     * @param DateTime $slot
+     *
+     * @return string
+     */
+    public static function availableAtSql(DateTime $slot)
+    {
+        $at = clone $slot;
+        $at->setTimezone(new DateTimeZone('UTC'));
+        $ts = "TIMESTAMPTZ '" . $at->format('Y-m-d H:i:s') . "+00'";
+
+        return "(NOT cc_files.disabled_by_hand"
+            . " AND (cc_files.expires_at IS NULL OR cc_files.expires_at > {$ts})"
+            . " AND (cc_files.enabled_from IS NULL OR cc_files.enabled_from <= {$ts}))";
+    }
+
     public static function teaserCriterionSql($key, $modifier, $value)
     {
         if (!Application_Model_StoredFile::teaserColumnsReady()) {
@@ -2363,7 +2386,17 @@ SQL;
         // evaluations.  Already-built blocks keep their entries (the
         // pruner only flips the flag; it does not touch cc_blockcontents),
         // so currently-scheduled shows continue to play normally.
-        $qry->add('disabled', 'false', Criteria::EQUAL);
+        // RASTATIME 2026-11-08 - judged at the air time of the slot being
+        // filled (fill context, ARCHITECTURE 23.99) instead of the stored
+        // flag: autoloading fills an hour ahead, so a track whose enable
+        // date is the day of a 00:07 show is picked for it, and a track
+        // whose expiry is that day is not.  Without a fill context the slot
+        // is now, which is the stored flag's own rule (DISABLED_SQL).
+        if (Application_Model_StoredFile::trackDatesReady()) {
+            $qry->add('disabled', self::availableAtSql(self::fillContext()['slot']), Criteria::CUSTOM);
+        } else {
+            $qry->add('disabled', 'false', Criteria::EQUAL);
+        }
 
         $sortTracks = 'random';
         if (isset($storedCrit['sort'])) {

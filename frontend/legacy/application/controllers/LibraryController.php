@@ -452,19 +452,26 @@ class LibraryController extends Zend_Controller_Action
         if (isset($changes['expires_at']) && $changes['expires_at'] === 'none') {
             $changes['expires_at'] = '';
         }
+        // RASTATIME 2026-11-08 - the enable date the same way
+        if (isset($changes['enabled_from']) && $changes['enabled_from'] === 'none') {
+            $changes['enabled_from'] = '';
+        }
         // RASTATIME 2026-10-16 - "None" among the selected shows clears the links
         if (isset($changes['teaser_show_id']) && in_array('none', (array) $changes['teaser_show_id'], true)) {
             $changes['teaser_show_id'] = [];
             $changes['teaser_shows_sent'] = '1';
         }
 
-        // RASTATIME 2026-11-08 - "Track disabled: No - enable" without an
-        // expiry change clears the expiry dates that have passed (the model
+        // RASTATIME 2026-11-08 - "Track disabled: No - enable" clears, per
+        // track, an expiry date that has passed and an enable date still
+        // ahead when the dialog did not set that date itself (the model
         // would keep such a track disabled, and so would the hourly run)
-        $enableClearsExpiry = isset($changes['disabled'])
-            && !Application_Model_StoredFile::flagValue($changes['disabled'])
-            && !array_key_exists('expires_at', $changes);
+        $enabling = isset($changes['disabled']) && !Application_Model_StoredFile::flagValue($changes['disabled']);
+        $enableClearsExpiry = $enabling && !array_key_exists('expires_at', $changes);
+        $enableClearsEnable = $enabling && !array_key_exists('enabled_from', $changes)
+            && Application_Model_StoredFile::trackDatesReady();
         $expiryCleared = 0;
+        $enableCleared = 0;
 
         $updated = 0;
         $denied = 0;
@@ -488,11 +495,16 @@ class LibraryController extends Zend_Controller_Action
             // one save per track through the single editor's path (it also
             // handles expires_at, which is not a Propel column)
             $trackChanges = $changes;
-            if ($enableClearsExpiry
-                && Application_Model_StoredFile::disabledState(Propel::getConnection(), (int) $id)['expired']
-            ) {
-                $trackChanges['expires_at'] = '';
-                ++$expiryCleared;
+            if ($enableClearsExpiry || $enableClearsEnable) {
+                $state = Application_Model_StoredFile::disabledState(Propel::getConnection(), (int) $id);
+                if ($enableClearsExpiry && $state['expired']) {
+                    $trackChanges['expires_at'] = '';
+                    ++$expiryCleared;
+                }
+                if ($enableClearsEnable && $state['waiting']) {
+                    $trackChanges['enabled_from'] = '';
+                    ++$enableCleared;
+                }
             }
             $file->setDbColMetadata($trackChanges);
             ++$updated;
@@ -500,9 +512,10 @@ class LibraryController extends Zend_Controller_Action
         Logging::info(sprintf(
             'bulk-edit: user %s set %s on %d track(s) (%d denied, %d missing%s)',
             $user->getLogin(), implode(',', array_keys($changes)), $updated, $denied, $missing,
-            $expiryCleared ? sprintf(', %d passed expiry date(s) cleared', $expiryCleared) : ''
+            ($expiryCleared ? sprintf(', %d passed expiry date(s) cleared', $expiryCleared) : '')
+            . ($enableCleared ? sprintf(', %d pending enable date(s) cleared', $enableCleared) : '')
         ));
-        $this->_helper->json->sendJson(['ok' => true, 'updated' => $updated, 'denied' => $denied, 'missing' => $missing, 'expiry_cleared' => $expiryCleared, 'fields' => array_keys($changes)]);
+        $this->_helper->json->sendJson(['ok' => true, 'updated' => $updated, 'denied' => $denied, 'missing' => $missing, 'expiry_cleared' => $expiryCleared, 'enable_cleared' => $enableCleared, 'fields' => array_keys($changes)]);
     }
 
     /**
@@ -865,8 +878,9 @@ class LibraryController extends Zend_Controller_Action
         $form->startForm($file_id);
         $form->populate($file->getDbColMetadata());
         // RASTATIME 2026-11-08 - "Track disabled": the dialog script needs the
-        // database's date (an expiry date up to today has passed) and whether
-        // the expiry, not the operator, disabled the track
+        // database's date (an expiry date up to today has passed, an enable
+        // date after today is still ahead) and, before migration 0080 (no
+        // disabled_by_hand field), whether the expiry disabled the track
         $state = Application_Model_StoredFile::disabledState(Propel::getConnection(), (int) $file_id);
         $form->getElement('disabled')
             ->setAttrib('data-today', $state['today'])

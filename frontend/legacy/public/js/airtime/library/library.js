@@ -36,6 +36,7 @@ var AIRTIME = (function (AIRTIME) {
     play_count: "n",
     id: "n",
     teaser: "s",
+    country: "s",
     disc_number: "n",
     encoded_by: "s",
     genre: "s",
@@ -889,6 +890,14 @@ var AIRTIME = (function (AIRTIME) {
                             ._("Cleared the passed expiry date of %s track(s).")
                             .replace("%s", json.expiry_cleared);
                       }
+                      // RASTATIME 2026-11-08 - ... and enable dates still ahead
+                      if (json.enable_cleared) {
+                        msg +=
+                          " " +
+                          $.i18n
+                            ._("Cleared the pending enable date of %s track(s).")
+                            .replace("%s", json.enable_cleared);
+                      }
                       alert(msg);
                       $dialog.dialog("close");
                       oTable.fnStandingRedraw();
@@ -1190,6 +1199,14 @@ var AIRTIME = (function (AIRTIME) {
         sClass: "library_copyright",
         sWidth: "125px",
       },
+      /* Country - RASTATIME 2026-11-08: the COUNTRY tag (cc_files.country,
+         migration 0081), hidden by default, searchable as text. */ {
+        sTitle: $.i18n._("Country"),
+        mDataProp: "country",
+        bVisible: false,
+        sClass: "library_country",
+        sWidth: "110px",
+      },
       /* Cue In */ {
         sTitle: $.i18n._("Cue In"),
         mDataProp: "cuein",
@@ -1267,6 +1284,14 @@ var AIRTIME = (function (AIRTIME) {
       /* Expiry Date - share class + width with Last Modified / Last
          Played so the header stays single-line and the column lines
          up visually with its siblings. */
+      /* Enabled From - RASTATIME 2026-11-08: the enable date (migration
+         0080), hidden by default, shaped like Expiry Date. */ {
+        sTitle: $.i18n._("Enabled From"),
+        mDataProp: "enabled_from",
+        bVisible: false,
+        sClass: "library_modified_time",
+        sWidth: "155px",
+      },
       {
         sTitle: $.i18n._("Expiry Date"),
         mDataProp: "expires_at",
@@ -1408,7 +1433,19 @@ var AIRTIME = (function (AIRTIME) {
       );
     }
 
-    var colExclude = onDashboard ? [0, 1, 2, 3, 35] : [0, 1, 2];
+    // RASTATIME 2026-11-08 - column indices by name: the fixed numbers of
+    // LibreTime 4.5 (35 = Actions, 29 = the default sort) drifted as
+    // columns were added (35 had become Website, which the column picker
+    // then left out, while Actions could be hidden)
+    var colIndex = function (prop) {
+      for (var i = 0; i < cols.length; i++) {
+        if (cols[i].mDataProp === prop) {
+          return i;
+        }
+      }
+      return 0;
+    };
+    var colExclude = onDashboard ? [0, 1, 2, 3, colIndex("options")] : [0, 1, 2];
 
     /*  ############################################
                             DATATABLES
@@ -1673,7 +1710,7 @@ var AIRTIME = (function (AIRTIME) {
       },
       fnDrawCallback: AIRTIME.library.fnDrawCallback,
 
-      aaSorting: [[29, "desc"]],
+      aaSorting: [[colIndex("owner_id"), "desc"]], // index 29 since 2026-10-16
       sPaginationType: "full_numbers",
       bJQueryUI: true,
       bAutoWidth: false,
@@ -3036,6 +3073,7 @@ var validationTypes = {
   play_count: "i",
   id: "i",
   teaser: "s",
+  country: "s",
   disc_number: "i",
   genre: "s",
   isrc_number: "s",

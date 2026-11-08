@@ -104,6 +104,26 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
         $this->addElement($teaserShow);
 
 
+        // RASTATIME 2026-11-08 - "Enabled From" as in the single editor
+        // (migration 0080); YYYY-MM-DD sets it, "none" clears it, empty
+        // leaves it
+        if (Application_Model_StoredFile::trackDatesReady()) {
+            $enabledFrom = new Zend_Form_Element_Text('enabled_from');
+            $enabledFrom->class = 'input_text';
+            $enabledFrom->setLabel(_('Enabled From:'))
+                ->setRequired(false)
+                ->setFilters(['StringTrim', 'StringToLower'])
+                ->setValidators([
+                    Application_Form_Helper_ValidationTypes::overrideRegexValidator(
+                        '/^(\d{4}-\d{2}-\d{2}|none)?$/',
+                        _('Enable date must be in YYYY-MM-DD format, "none" to clear it, or empty.')
+                    ),
+                ])
+                ->setAttrib('placeholder', _('Leave unchanged'))
+                ->setDescription(_('Format: YYYY-MM-DD. Enter "none" to clear the enable date of the selected tracks.'));
+            $this->addElement($enabledFrom);
+        }
+
         // RASTATIME 2026-10-08 (operator): the expiry date as in the single
         // editor; YYYY-MM-DD sets it, "none" clears it, empty leaves it
         $expiresAt = new Zend_Form_Element_Text('expires_at');
@@ -122,9 +142,9 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
         $this->addElement($expiresAt);
 
         // RASTATIME 2026-11-08 - "Track disabled" for many tracks at once
-        // (operator): '' leaves it alone, '1' disables, '0' enables and
-        // clears expiry dates that have passed (LibraryController), since
-        // the hourly expiry run would disable such a track again.
+        // (operator): '' leaves it alone, '1' disables by hand, '0' enables
+        // and clears expiry dates that have passed and enable dates still
+        // ahead (LibraryController), since either keeps the track disabled.
         $disabled = new Zend_Form_Element_Select('disabled');
         $disabled->class = 'input_text';
         $disabled->setLabel(_('Track disabled:'))
@@ -134,7 +154,9 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
                 '1' => _('Yes - disable the tracks'),
                 '0' => _('No - enable the tracks'),
             ])
-            ->setDescription(_('Yes: smart blocks no longer pick the selected tracks. No: they are picked again; an expiry date that has passed is cleared.'));
+            ->setDescription(Application_Model_StoredFile::trackDatesReady()
+                ? _('Yes: smart blocks no longer pick the selected tracks. No: they are picked again; an expiry date that has passed and an enable date still ahead are cleared.')
+                : _('Yes: smart blocks no longer pick the selected tracks. No: they are picked again; an expiry date that has passed is cleared.'));
         $this->addElement($disabled);
 
         $description = new Zend_Form_Element_Textarea('description');
@@ -164,12 +186,22 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             $this->getElement('expires_at')->addError(Application_Form_EditAudioMD::passedExpiryMessage());
             $ok = false;
         }
+        if ($this->getElement('enabled_from')) {
+            if (Application_Form_EditAudioMD::enableWithPendingDate($data)) {
+                $this->getElement('enabled_from')->addError(Application_Form_EditAudioMD::pendingEnableMessage());
+                $ok = false;
+            }
+            if (!Application_Form_EditAudioMD::datesInOrder($data)) {
+                $this->getElement('enabled_from')->addError(Application_Form_EditAudioMD::datesOrderMessage());
+                $ok = false;
+            }
+        }
 
         return $ok;
     }
 
     public static function fieldOrder()
     {
-        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_type', 'teaser_show_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'disabled', 'description'];
+        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_type', 'teaser_show_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'enabled_from', 'expires_at', 'disabled', 'description'];
     }
 }

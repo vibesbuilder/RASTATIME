@@ -129,6 +129,10 @@ final class LocaleController extends Zend_Controller_Action
             'Mood' => _('Mood'),
             'Owner' => _('Owner'),
             'Play Count' => _('Play Count'),
+            // RASTATIME 2026-11-08 - library columns (Expiry Date had no JS string yet)
+            'Expiry Date' => _('Expiry Date'),
+            'Enabled From' => _('Enabled From'),
+            'Country' => _('Country'),
             // RASTATIME 2026-10-16 - library column: database id of a file
             'ID' => _('ID'),
             // RASTATIME 2026-10-16 - teaser automation (library column, block editor selects)
@@ -176,6 +180,7 @@ final class LocaleController extends Zend_Controller_Action
             'Fill at least one field; empty fields stay unchanged.' => _('Fill at least one field; empty fields stay unchanged.'),
             // RASTATIME 2026-11-08 - "Track disabled" in the bulk editor
             'Cleared the passed expiry date of %s track(s).' => _('Cleared the passed expiry date of %s track(s).'),
+            'Cleared the pending enable date of %s track(s).' => _('Cleared the pending enable date of %s track(s).'),
             '%s of %s tracks' => _('%s of %s tracks'),
             '%s of %s playlists' => _('%s of %s playlists'),
             '%s of %s smart blocks' => _('%s of %s smart blocks'),
