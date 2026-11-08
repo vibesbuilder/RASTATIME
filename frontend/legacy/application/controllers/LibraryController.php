@@ -458,6 +458,14 @@ class LibraryController extends Zend_Controller_Action
             $changes['teaser_shows_sent'] = '1';
         }
 
+        // RASTATIME 2026-11-08 - "Track disabled: No - enable" without an
+        // expiry change clears the expiry dates that have passed (the model
+        // would keep such a track disabled, and so would the hourly run)
+        $enableClearsExpiry = isset($changes['disabled'])
+            && !Application_Model_StoredFile::flagValue($changes['disabled'])
+            && !array_key_exists('expires_at', $changes);
+        $expiryCleared = 0;
+
         $updated = 0;
         $denied = 0;
         $missing = 0;
@@ -479,14 +487,22 @@ class LibraryController extends Zend_Controller_Action
             }
             // one save per track through the single editor's path (it also
             // handles expires_at, which is not a Propel column)
-            $file->setDbColMetadata($changes);
+            $trackChanges = $changes;
+            if ($enableClearsExpiry
+                && Application_Model_StoredFile::disabledState(Propel::getConnection(), (int) $id)['expired']
+            ) {
+                $trackChanges['expires_at'] = '';
+                ++$expiryCleared;
+            }
+            $file->setDbColMetadata($trackChanges);
             ++$updated;
         }
         Logging::info(sprintf(
-            'bulk-edit: user %s set %s on %d track(s) (%d denied, %d missing)',
-            $user->getLogin(), implode(',', array_keys($changes)), $updated, $denied, $missing
+            'bulk-edit: user %s set %s on %d track(s) (%d denied, %d missing%s)',
+            $user->getLogin(), implode(',', array_keys($changes)), $updated, $denied, $missing,
+            $expiryCleared ? sprintf(', %d passed expiry date(s) cleared', $expiryCleared) : ''
         ));
-        $this->_helper->json->sendJson(['ok' => true, 'updated' => $updated, 'denied' => $denied, 'missing' => $missing, 'fields' => array_keys($changes)]);
+        $this->_helper->json->sendJson(['ok' => true, 'updated' => $updated, 'denied' => $denied, 'missing' => $missing, 'expiry_cleared' => $expiryCleared, 'fields' => array_keys($changes)]);
     }
 
     /**
@@ -848,6 +864,13 @@ class LibraryController extends Zend_Controller_Action
         $form->teaserCurrentShowIds = Application_Model_StoredFile::teaserOf(Propel::getConnection(), $file_id)[0];
         $form->startForm($file_id);
         $form->populate($file->getDbColMetadata());
+        // RASTATIME 2026-11-08 - "Track disabled": the dialog script needs the
+        // database's date (an expiry date up to today has passed) and whether
+        // the expiry, not the operator, disabled the track
+        $state = Application_Model_StoredFile::disabledState(Propel::getConnection(), (int) $file_id);
+        $form->getElement('disabled')
+            ->setAttrib('data-today', $state['today'])
+            ->setAttrib('data-by-expiry', ($state['disabled'] && $state['expired']) ? '1' : '0');
 
         $this->view->permissionDenied = false;
         if (!$isAdminOrPM && $file->getFileOwnerId() != $user->getId()) {

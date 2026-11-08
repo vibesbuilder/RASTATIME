@@ -13,6 +13,33 @@
     float: none;
 }
 
+/* RASTATIME 2026-11-08 - a refused save keeps the Edit Track tab open and
+   lists the reasons above the fields (spl.js); light text on a dark red
+   panel, readable on the dark theme */
+.edit-md-dialog .rt-md-save-errors {
+    clear: both;
+    margin: 0 0 12px 0;
+    padding: 8px 12px;
+    border: 1px solid #c83f3f;
+    border-left-width: 4px;
+    background: rgba(200, 63, 63, 0.18);
+    color: #f3d6d6;
+    font-size: 14px;
+}
+
+/* .side_playlist ul / li float left (top of this file) - not here */
+.edit-md-dialog .rt-md-save-errors ul {
+    float: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.edit-md-dialog .rt-md-save-errors li {
+    float: none;
+    padding: 2px 0;
+}
+
 .edit-md-dialog dd input.input_text {
     width: 100%;
 }

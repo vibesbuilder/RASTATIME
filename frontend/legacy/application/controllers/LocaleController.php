@@ -174,6 +174,8 @@ final class LocaleController extends Zend_Controller_Action
             'Deleting failed or timed out. Reload the page to see which items were removed.' => _('Deleting failed or timed out. Reload the page to see which items were removed.'),
             'No permission for %s track(s).' => _('No permission for %s track(s).'),
             'Fill at least one field; empty fields stay unchanged.' => _('Fill at least one field; empty fields stay unchanged.'),
+            // RASTATIME 2026-11-08 - "Track disabled" in the bulk editor
+            'Cleared the passed expiry date of %s track(s).' => _('Cleared the passed expiry date of %s track(s).'),
             '%s of %s tracks' => _('%s of %s tracks'),
             '%s of %s playlists' => _('%s of %s playlists'),
             '%s of %s smart blocks' => _('%s of %s smart blocks'),

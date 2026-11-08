@@ -1365,21 +1365,57 @@ var AIRTIME = (function (AIRTIME) {
       newTab.close();
     });
 
+    // RASTATIME 2026-11-08 - the tab closes only once the save went through;
+    // a refused save (form invalid: a date in the wrong format, "Track
+    // disabled" unticked with an expiry date that has passed, ...) used to
+    // close it as if saved.  The refusal shows the form's messages above the
+    // fields and the tab stays open.
     newTab.contents.find(".md-save").on("click", function () {
-      var data = newTab.wrapper.find(".edit-md-dialog form").serializeArray();
+      var $save = $(this);
+      if ($save.prop("disabled")) {
+        return;
+      }
+      var $mdForm = newTab.wrapper.find(".edit-md-dialog form");
+      var data = $mdForm.serializeArray();
+      $mdForm.find(".rt-md-save-errors").remove();
+      $save.prop("disabled", true);
       $.post(
         baseUrl + "library/edit-file-md",
         { format: "json", id: fileId, data: data },
-        function () {
+        function (resp) {
+          $save.prop("disabled", false);
+          if (resp && resp.status === false) {
+            var $list = $("<ul></ul>");
+            $("<div>" + (resp.html || "") + "</div>")
+              .find("ul.errors")
+              .each(function () {
+                var label = $.trim($(this).closest("dd").prev("dt").text()).replace(/:$/, "");
+                $(this)
+                  .find("li")
+                  .each(function () {
+                    $("<li></li>")
+                      .text((label ? label + ": " : "") + $(this).text())
+                      .appendTo($list);
+                  });
+              });
+            if ($list.children().length === 0) {
+              $("<li></li>").text($.i18n._("The metadata could not be saved.")).appendTo($list);
+            }
+            $('<div class="rt-md-save-errors"></div>').append($list).prependTo($mdForm);
+            newTab.wrapper.find(".edit-md-dialog").scrollTop(0);
+            return;
+          }
           // don't redraw the library table if we are on calendar page
           // we would be on calendar if viewing recorded file metadata
           if ($("#schedule_calendar").length === 0) {
             oTable.fnStandingRedraw();
           }
+          newTab.close();
         },
-      );
-
-      newTab.close();
+      ).fail(function () {
+        $save.prop("disabled", false);
+        alert($.i18n._("The metadata could not be saved."));
+      });
     });
 
     newTab.contents.find(".md-publish").on("click", function () {

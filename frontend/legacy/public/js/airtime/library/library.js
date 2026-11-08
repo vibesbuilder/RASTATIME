@@ -881,12 +881,29 @@ var AIRTIME = (function (AIRTIME) {
                       if (json.denied) {
                         msg += " " + $.i18n._("No permission for %s track(s).").replace("%s", json.denied);
                       }
+                      // RASTATIME 2026-11-08 - "Track disabled: No" clears passed expiry dates
+                      if (json.expiry_cleared) {
+                        msg +=
+                          " " +
+                          $.i18n
+                            ._("Cleared the passed expiry date of %s track(s).")
+                            .replace("%s", json.expiry_cleared);
+                      }
                       alert(msg);
                       $dialog.dialog("close");
                       oTable.fnStandingRedraw();
                       mod.selectNone();
                     } else if (json && json.error === "nothing-to-change") {
                       alert($.i18n._("Fill at least one field; empty fields stay unchanged."));
+                    } else if (json && json.error === "invalid" && json.messages) {
+                      // RASTATIME 2026-11-08 - say what was refused
+                      var lines = [];
+                      $.each(json.messages, function (field, errs) {
+                        $.each(errs, function (key, text) {
+                          lines.push(text);
+                        });
+                      });
+                      alert($.i18n._("The metadata could not be saved.") + "\n\n" + lines.join("\n"));
                     } else {
                       alert($.i18n._("The metadata could not be saved."));
                     }

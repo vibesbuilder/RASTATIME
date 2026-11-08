@@ -87,6 +87,49 @@ $baseUrl = Config::getBasePath();
   $type.on("change", sync);
   sync();
 })(jQuery);
+(function ($) {
+  // RASTATIME 2026-11-08 - "Track disabled" and the expiry date keep each
+  // other in step before the save (operator rules): an expiry date that has
+  // passed ticks the box; moving it ahead or clearing it unticks the box
+  // only when the expiry (not the operator) had ticked it; unticking the box
+  // empties an expiry date that has passed (the hourly expiry run would
+  // disable the track again).  An expiry date counts from 00:00 of that day.
+  var $form = $("#track_edit_<?php echo (int) $this->id; ?>");
+  var $box = $form.find('input[type="checkbox"][name="disabled"]');
+  var $expiry = $form.find('input[name="expires_at"]');
+  if ($box.length === 0 || $expiry.length === 0) {
+    return;
+  }
+  var today = $box.attr("data-today") || "";
+  var byExpiry = $box.attr("data-by-expiry") === "1";
+  var isDate = function (v) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(v);
+  };
+  var passed = function (v) {
+    return isDate(v) && today !== "" && v <= today;
+  };
+  $expiry.on("input change", function () {
+    var v = $.trim($expiry.val());
+    if (v !== "" && !isDate(v)) {
+      return; // still typing
+    }
+    if (passed(v)) {
+      if (!$box.prop("checked")) {
+        $box.prop("checked", true);
+        byExpiry = true;
+      }
+    } else if (byExpiry && $box.prop("checked")) {
+      $box.prop("checked", false);
+      byExpiry = false;
+    }
+  });
+  $box.on("change", function () {
+    byExpiry = false; // the operator decides from here
+    if (!$box.prop("checked") && passed($.trim($expiry.val()))) {
+      $expiry.val("");
+    }
+  });
+})(jQuery);
 </script>
   <div class="collapsible-header collapsible-header-<?php echo $this->id;?> closed"><span class="arrow-icon"></span><?php echo _("Cue Point Editor"); ?></div>
     <div class="visual-waveform-editor visual-waveform-editor-<?php echo $this->id;?>" style="clear:both;padding:18px 24px 0 0;">

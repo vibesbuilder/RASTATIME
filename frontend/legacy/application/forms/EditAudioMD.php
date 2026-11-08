@@ -17,8 +17,43 @@ class Application_Form_EditAudioMD extends Zend_Form
             $this->getElement('teaser_type')->addError(_('Choose a teaser type before you pick shows'));
             $ok = false;
         }
+        // RASTATIME 2026-11-08 - "Track disabled" unticked with an expiry date
+        // that has passed: the track would stay disabled (and the hourly
+        // expiry run disables it anyway), so the save is refused.
+        if (self::enableWithPassedExpiry($data)) {
+            $this->getElement('expires_at')->addError(self::passedExpiryMessage());
+            $ok = false;
+        }
 
         return $ok;
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - true when $data enables the track ('disabled'
+     * posted and off) while its expiry date (posted) has passed.
+     *
+     * @param array       $data
+     * @param null|string $today YYYY-MM-DD, the database's date by default
+     *
+     * @return bool
+     */
+    public static function enableWithPassedExpiry(array $data, $today = null)
+    {
+        if (!array_key_exists('disabled', $data) || Application_Model_StoredFile::flagValue($data['disabled'])) {
+            return false;
+        }
+        $expiry = trim((string) ($data['expires_at'] ?? ''));
+        if ($expiry === '') {
+            return false;
+        }
+
+        return Application_Model_StoredFile::expiryPassed($expiry, $today ?? Application_Model_StoredFile::expiryToday());
+    }
+
+    /** RASTATIME 2026-11-08 - shared by the single and the bulk editor */
+    public static function passedExpiryMessage()
+    {
+        return _('The expiry date has passed, so the track would stay disabled. Set a later date or empty the field.');
     }
 
     public function init() {}
@@ -304,6 +339,17 @@ class Application_Form_EditAudioMD extends Zend_Form
             ),
         ]);
         $this->addElement($expiresAt);
+
+        // RASTATIME 2026-11-08 - "Track disabled" (operator; cc_files.disabled,
+        // raw SQL in StoredFile): tick it by hand, or the hourly expiry run
+        // ticks it once the expiry date is reached.  The dialog script in
+        // edit-file-md.phtml keeps it and the expiry date in step; Zend
+        // renders the unchecked value as a hidden input, so the POST always
+        // carries the key.
+        $disabled = new Zend_Form_Element_Checkbox('disabled');
+        $disabled->setLabel(_('Track disabled:'));
+        $disabled->setDescription(_('A disabled track is no longer picked by smart blocks. Shows that already have it keep playing it, and it can still be scheduled by hand. Ticked automatically when the expiry date is reached. Moving the expiry date ahead or clearing it enables the track again, unless it was disabled by hand.'));
+        $this->addElement($disabled);
 
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (cc_files.
         // no_fade_crossfade, migrations 0059/0060, raw SQL in StoredFile).

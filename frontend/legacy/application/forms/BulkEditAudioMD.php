@@ -121,6 +121,22 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             ->setDescription(_('Format: YYYY-MM-DD. Enter "none" to clear the expiry of the selected tracks.'));
         $this->addElement($expiresAt);
 
+        // RASTATIME 2026-11-08 - "Track disabled" for many tracks at once
+        // (operator): '' leaves it alone, '1' disables, '0' enables and
+        // clears expiry dates that have passed (LibraryController), since
+        // the hourly expiry run would disable such a track again.
+        $disabled = new Zend_Form_Element_Select('disabled');
+        $disabled->class = 'input_text';
+        $disabled->setLabel(_('Track disabled:'))
+            ->setRequired(false)
+            ->setMultiOptions([
+                '' => _('Leave unchanged'),
+                '1' => _('Yes - disable the tracks'),
+                '0' => _('No - enable the tracks'),
+            ])
+            ->setDescription(_('Yes: smart blocks no longer pick the selected tracks. No: they are picked again; an expiry date that has passed is cleared.'));
+        $this->addElement($disabled);
+
         $description = new Zend_Form_Element_Textarea('description');
         $description->class = 'input_text';
         $description->setLabel(_('Description:'))
@@ -142,12 +158,18 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             $this->getElement('teaser_type')->addError(_('Choose a teaser type before you pick shows'));
             $ok = false;
         }
+        // RASTATIME 2026-11-08 - "No - enable" together with an expiry date
+        // that has passed contradicts itself
+        if (Application_Form_EditAudioMD::enableWithPassedExpiry($data)) {
+            $this->getElement('expires_at')->addError(Application_Form_EditAudioMD::passedExpiryMessage());
+            $ok = false;
+        }
 
         return $ok;
     }
 
     public static function fieldOrder()
     {
-        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_type', 'teaser_show_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'description'];
+        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_type', 'teaser_show_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'expires_at', 'disabled', 'description'];
     }
 }

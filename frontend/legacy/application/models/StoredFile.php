@@ -297,38 +297,47 @@ class Application_Model_StoredFile
         // (disabled = false) when the operator picks a future date or
         // clears the expiry — symmetric to the pruner which only ever
         // flips disabled to true.
-        if (is_array($p_md) && array_key_exists('expires_at', $p_md)) {
-            $raw = trim((string) $p_md['expires_at']);
-            $fileId = $this->_file->getDbId();
-            if ($raw === '') {
-                $stmt = $this->_con->prepare(
-                    'UPDATE cc_files
-                     SET expires_at = NULL, disabled = false
-                     WHERE id = :id'
-                );
-                $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
-                $stmt->execute();
-            } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
-                // RASTATIME 2026-05-18 — split into two named placeholders.
-                // PostgreSQL's native prepared statements (PDO with
-                // ATTR_EMULATE_PREPARES=false, the default) reject the
-                // same `:exp` token bound twice, which silently throws
-                // away the entire UPDATE — the operator sees the form
-                // close as if saved, but the DB never gets the new value.
-                // Two distinct placeholders bound with the same value
-                // sidestep this PDO quirk while keeping the SQL
-                // semantics identical.
-                $stmt = $this->_con->prepare(
-                    'UPDATE cc_files
-                     SET expires_at = :exp_set,
-                         disabled = (CAST(:exp_cmp AS TIMESTAMP) < NOW())
-                     WHERE id = :id'
-                );
-                $stmt->bindValue(':exp_set', $raw, PDO::PARAM_STR);
-                $stmt->bindValue(':exp_cmp', $raw, PDO::PARAM_STR);
-                $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
-                $stmt->execute();
+        //
+        // RASTATIME 2026-11-08 - "Track disabled" (operator): the editor's
+        // checkbox sets cc_files.disabled by hand, and an expiry date that
+        // has passed always disables (as the hourly TrackExpiryTask does):
+        //   - 'disabled' posted (editor checkbox, bulk edit yes / no):
+        //     disabled = the posted flag OR the expiry has passed;
+        //   - not posted (bulk edit "unchanged", other callers): a track
+        //     disabled by hand (disabled while its expiry has not passed)
+        //     stays disabled; a track the expiry disabled is enabled again
+        //     once its expiry moves ahead or is cleared (as before).
+        // (Single placeholders only: PostgreSQL's native prepares reject the
+        // same named token bound twice - 2026-05-18.)
+        $expiryPosted = is_array($p_md) && array_key_exists('expires_at', $p_md);
+        $disabledPosted = is_array($p_md) && array_key_exists('disabled', $p_md);
+        if ($expiryPosted || $disabledPosted) {
+            $fileId = (int) $this->_file->getDbId();
+            $before = self::disabledState($this->_con, $fileId);
+            if ($expiryPosted) {
+                $raw = trim((string) $p_md['expires_at']);
+                if ($raw === '') {
+                    $stmt = $this->_con->prepare('UPDATE cc_files SET expires_at = NULL WHERE id = :id');
+                    $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
+                    $stmt->execute();
+                } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+                    $stmt = $this->_con->prepare('UPDATE cc_files SET expires_at = :exp WHERE id = :id');
+                    $stmt->bindValue(':exp', $raw, PDO::PARAM_STR);
+                    $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
+                    $stmt->execute();
+                }
             }
+            $byHand = $disabledPosted
+                ? self::flagValue($p_md['disabled'])
+                : ($before['disabled'] && !$before['expired']);
+            $stmt = $this->_con->prepare(
+                'UPDATE cc_files
+                 SET disabled = (CAST(:hand AS BOOLEAN) OR (expires_at IS NOT NULL AND expires_at < NOW()))
+                 WHERE id = :id'
+            );
+            $stmt->bindValue(':hand', $byHand ? 'true' : 'false', PDO::PARAM_STR);
+            $stmt->bindValue(':id', $fileId, PDO::PARAM_INT);
+            $stmt->execute();
         }
 
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060):
@@ -459,6 +468,85 @@ class Application_Model_StoredFile
     }
 
     /**
+     * RASTATIME 2026-11-08 - "Track disabled": the file's disabled flag,
+     * whether its expiry date has passed (which disables it, see
+     * TrackExpiryTask) and today's date as the database sees it
+     * (YYYY-MM-DD, the session time zone the expiry comparison uses).
+     *
+     * @param PDO $con
+     * @param int $fileId
+     *
+     * @return array ['disabled' => bool, 'expired' => bool, 'today' => string]
+     */
+    public static function disabledState($con, $fileId)
+    {
+        try {
+            $stmt = $con->prepare(
+                "SELECT disabled, (expires_at IS NOT NULL AND expires_at < NOW()) AS expired,
+                        TO_CHAR(NOW(), 'YYYY-MM-DD') AS today
+                 FROM cc_files WHERE id = :id"
+            );
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                return [
+                    'disabled' => self::flagValue($row['disabled']),
+                    'expired' => self::flagValue($row['expired']),
+                    'today' => (string) $row['today'],
+                ];
+            }
+        } catch (Exception $exc) {
+            Logging::warn('disabledState: ' . $exc->getMessage());
+        }
+
+        return ['disabled' => false, 'expired' => false, 'today' => self::expiryToday()];
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - today's date as the database sees it (YYYY-MM-DD).
+     *
+     * @return string
+     */
+    public static function expiryToday()
+    {
+        try {
+            return (string) Propel::getConnection()->query("SELECT TO_CHAR(NOW(), 'YYYY-MM-DD')")->fetchColumn();
+        } catch (Exception $exc) {
+            return date('Y-m-d');
+        }
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - an expiry date (YYYY-MM-DD) counts from 00:00 of
+     * that day, so a date up to and including today has passed.  Pure.
+     *
+     * @param string $date
+     * @param string $today YYYY-MM-DD
+     *
+     * @return bool
+     */
+    public static function expiryPassed($date, $today)
+    {
+        $date = trim((string) $date);
+
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1 && strcmp($date, (string) $today) <= 0;
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - a checkbox / boolean value from a form, the
+     * bulk editor's select or PostgreSQL ('1', 'on', 'true', 't', true).  Pure.
+     *
+     * @param mixed $value
+     *
+     * @return bool
+     */
+    public static function flagValue($value)
+    {
+        return $value === true || $value === 1 || in_array(strtolower(trim((string) $value)), ['1', 'on', 'true', 't', 'yes'], true);
+    }
+
+    /**
      * RASTATIME 2026-09-29 - the crossover mode of a file: type | nofade | exclude.
      *
      * @param mixed $con
@@ -552,6 +640,9 @@ class Application_Model_StoredFile
             Logging::warn('getDbColMetadata: could not read expires_at: ' . $exc->getMessage());
             $md['expires_at'] = '';
         }
+
+        // RASTATIME 2026-11-08 - "Track disabled" checkbox, '1' / '0'
+        $md['disabled'] = self::disabledState($this->_con, (int) $this->_file->getDbId())['disabled'] ? '1' : '0';
 
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060),
         // raw SQL like expires_at; '1' / '0' for the form checkbox.
