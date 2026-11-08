@@ -477,6 +477,12 @@ For every file lying directly in the folder:
    A file modified within the last 60 seconds may still be being
    written (slow copy, FTP upload); the status line reports it as
    "still being copied" and a later scan picks it up.
+   A file whose modification date lies in the future (some sources
+   stamp files with their air date, and copying keeps that date) is
+   measured from the moment it arrived in the folder instead (since
+   2026-11-07); before, it waited until that date.  If that moment
+   cannot be read, the status line reports the file as
+   "with a modification date in the future".
 3. Every audio file at rest is handed to the **standard upload
    pipeline**: a library row is created, the file is **moved** (not
    copied) into the library's `organize` area, and the analyzer takes
@@ -695,6 +701,8 @@ Diagnostic order:
    while the UI sees traffic.  **Scan Now** forces a run.
 3. A file modified within the last 60 seconds counts as "still
    being copied" — wait a minute and scan again.
+   A file with a modification date in the future counts from the
+   moment it arrived in the folder.
 4. "N failed (moved to _failed)" in the status line means the
    hand-over failed and the file now lies in the `_failed` subfolder
    (see the next question).  Check the file in another player and

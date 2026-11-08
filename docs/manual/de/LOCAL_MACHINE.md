@@ -515,6 +515,13 @@ jede Datei, die direkt im Ordner liegt:
    Statuszeile meldet sie als „still being copied", ein späterer
    Durchlauf nimmt
    sie mit.
+   Eine Datei, deren Änderungsdatum in der Zukunft liegt (manche
+   Quellen stempeln Dateien mit dem Sendedatum, und das Kopieren
+   behält dieses Datum), wird stattdessen ab dem Zeitpunkt gemessen,
+   an dem sie im Ordner angekommen ist (seit 07.11.2026); vorher
+   wartete sie bis zu diesem Datum.  Lässt sich dieser Zeitpunkt
+   nicht lesen, meldet die Statuszeile die Datei als
+   „with a modification date in the future".
 3. Jede ruhende Audiodatei geht an die **Standard-Upload-Pipeline**:
    ein Bibliothekseintrag wird angelegt, die Datei wird in den
    `organize`-Bereich der Bibliothek **verschoben** (nicht kopiert),
@@ -750,6 +757,8 @@ Diagnose-Reihenfolge:
    erzwingt einen Durchlauf.
 3. Eine in den letzten 60 Sekunden veränderte Datei zählt als
    „still being copied" — eine Minute warten und erneut scannen.
+   Eine Datei mit einem Änderungsdatum in der Zukunft zählt ab dem
+   Zeitpunkt, an dem sie im Ordner angekommen ist.
 4. „N failed (moved to _failed)" in der Statuszeile heißt: die
    Übergabe schlug fehl, und die Datei liegt jetzt im Unterordner
    `_failed` (siehe nächste Frage).  Prüfen Sie die Datei in einem

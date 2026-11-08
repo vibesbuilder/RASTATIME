@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.123
-Date: 2026-11-07
+Draft version: 0.124
+Date: 2026-11-08
 
 > **Revision history**
+> - **0.124 (2026-11-08)** - **Import folder: future modification dates** (§23.12): a file
+>   whose mtime lies in the future is measured from its creation time instead of waiting
+>   until that date (`LocalImportScanTask::quietReference`).
 > - **0.123 (2026-11-07)** - **People Involved counts persons** (§23.97): the show value is
 >   "Hosts involved" (once per show and year), the episode value "Guests involved" (added per
 >   episode instead of replacing the show value); people involved = hosts + guests; "Repeat
@@ -2409,6 +2412,21 @@ edits a track's expiry — backwards-compatible.
 > counted as "settling" and picked up by a later scan.  Precondition
 > for network or FTP delivery into the folder: without it a slow upload
 > could be moved away mid-write and a failed attempt deletes the source.
+>
+> **2026-11-07 — future modification dates.**  Six files copied into the
+> folder kept their source's mtime, days ahead (stamped with their air
+> dates); `time() - mtime` was negative, so they waited as "still being
+> copied" until those dates.  `quietReference($mtime, $ctime, $now)`
+> (pure) now picks the moment the guard measures from: the mtime when it
+> is not in the future, otherwise `filectime()` - the creation time on
+> Windows (the inode change time elsewhere), i.e. when the copy arrived.
+> The guard still protects a copy in progress: while data is written the
+> mtime is fresh, and copy tools set the preserved date at the end
+> (robocopy measured 2026-11-08: fresh mtime while partial, the future
+> date only once the content was complete).  Without a usable creation
+> time the file keeps waiting and is reported separately ("with a
+> modification date in the future", result key `future`).  The import
+> log line notes when a file was measured from its creation time.
 
 > **2026-10-14 — `_failed` quarantine, one extension list (§23.57).**  A
 > failed hand-over no longer deletes the source: the file is moved to

@@ -623,6 +623,39 @@ class LocalImportScanTask implements AirtimeTask
     }
 
     /**
+     * RASTATIME 2026-11-07 - the moment the quiet-period guard measures
+     * from.  Normally the modification time.  A modification time in the
+     * future (copy tools keep the source's date, and some sources stamp
+     * files with their air date) held the file back until that date: the
+     * guard then measures from the creation time instead (Windows; the
+     * inode change time elsewhere), which is when the copy arrived in the
+     * folder.  A file still being written gets a fresh modification time
+     * with every write, so the guard keeps protecting it.  Pure (no file
+     * access).
+     *
+     * @param false|int $mtime filemtime(), false when it failed
+     * @param false|int $ctime filectime(), false when it failed or was not read
+     * @param int       $now
+     *
+     * @return array [int|null reference time, null = keep waiting;
+     *               bool the modification time lies in the future]
+     */
+    public static function quietReference($mtime, $ctime, $now)
+    {
+        if ($mtime === false) {
+            return [null, false];   // transient share hiccup: wait
+        }
+        if ($mtime <= $now) {
+            return [(int) $mtime, false];
+        }
+        if ($ctime === false || $ctime > $now) {
+            return [null, true];    // no usable date: wait for the modification date
+        }
+
+        return [(int) $ctime, true];
+    }
+
+    /**
      * Walk the given folder once, import every audio file, move a file
      * whose hand-over failed to _failed/ (RASTATIME 2026-10-14 - it was
      * deleted before), and persist the
@@ -633,7 +666,8 @@ class LocalImportScanTask implements AirtimeTask
      * importer logic.
      *
      * @param  string $folder absolute path on the RASTATIME host
-     * @return array  ['imported' => int, 'failed' => int, 'skipped' => int, 'settling' => int, 'waiting' => int]
+     * @return array  ['imported' => int, 'failed' => int, 'quarantined' => int, 'skipped' => int,
+     *                'settling' => int, 'future' => int, 'waiting' => int]
      */
     public static function scanOnce($folder)
     {
@@ -642,6 +676,7 @@ class LocalImportScanTask implements AirtimeTask
         $quarantined = 0;   // RASTATIME 2026-10-14 - failed files moved to _failed/
         $skipped = 0;
         $settling = 0;
+        $future = 0;        // RASTATIME 2026-11-07 - future date, no usable creation time
         $waiting = 0;
         $started = microtime(true);
         // RASTATIME 2026-10-09 - a browser that triggered the task manager
@@ -664,7 +699,7 @@ class LocalImportScanTask implements AirtimeTask
             $msg = 'Folder missing or unreadable: ' . $folder;
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'waiting');
+            return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'future', 'waiting');
         }
 
         // RASTATIME 2026-10-08 - the folder and every subfolder, files only,
@@ -696,7 +731,7 @@ class LocalImportScanTask implements AirtimeTask
             $msg = 'scan failed for: ' . $folder . ' (' . $exc->getMessage() . ')';
             Logging::warn('LocalImportScanTask: ' . $msg);
             Application_Model_Preference::setLocalImportLastStatus($msg);
-            return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'waiting');
+            return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'future', 'waiting');
         }
         sort($files, SORT_STRING);
 
@@ -716,8 +751,19 @@ class LocalImportScanTask implements AirtimeTask
             // mtime is younger than QUIET_SECONDS may still be being
             // written - leave it for the next scan.  filemtime failure
             // counts as settling too (transient share hiccup).
+            // RASTATIME 2026-11-07 - a modification time in the future is
+            // measured from the creation time (quietReference): six files
+            // stamped with their air dates (days ahead) waited as "still
+            // being copied" until those dates.
+            $now = time();
             $mtime = @filemtime($fullPath);
-            if ($mtime === false || (time() - $mtime) < self::QUIET_SECONDS) {
+            $ctime = ($mtime !== false && $mtime > $now) ? @filectime($fullPath) : false;
+            [$since, $futureDate] = self::quietReference($mtime, $ctime, $now);
+            if ($since === null && $futureDate) {
+                $future++;
+                continue;
+            }
+            if ($since === null || ($now - $since) < self::QUIET_SECONDS) {
                 $settling++;
                 continue;
             }
@@ -757,7 +803,11 @@ class LocalImportScanTask implements AirtimeTask
             try {
                 CcFiles::createFromImportFolder($fullPath, $name, false);
                 $imported++;
-                Logging::info('LocalImportScanTask: imported ' . $relative);
+                Logging::info(
+                    'LocalImportScanTask: imported ' . $relative
+                    . ($futureDate ? ' (modification date ' . date('Y-m-d H:i', (int) $mtime)
+                        . ' lies in the future, quiet period measured from the creation date)' : '')
+                );
             } catch (Exception $exc) {
                 $failed++;
                 [$target, $why] = self::quarantine($folder, $fullPath);
@@ -805,6 +855,10 @@ class LocalImportScanTask implements AirtimeTask
         if ($settling > 0) {
             $parts[] = sprintf('%d still being copied', $settling);
         }
+        if ($future > 0) {
+            // RASTATIME 2026-11-07 - rare: no creation time to fall back on
+            $parts[] = sprintf('%d with a modification date in the future (they wait for that date)', $future);
+        }
         if ($waiting > 0) {
             $parts[] = sprintf('%d waiting for the next run', $waiting);
         }
@@ -824,7 +878,7 @@ class LocalImportScanTask implements AirtimeTask
             Logging::info('LocalImportScanTask: ' . $status . sprintf(' (%.0f s)', microtime(true) - $started));
         }
 
-        return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'waiting');
+        return compact('imported', 'failed', 'quarantined', 'skipped', 'settling', 'future', 'waiting');
     }
 }
 

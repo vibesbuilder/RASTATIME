@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Import Folder: Dateien mit einem Änderungsdatum in der Zukunft blieben liegen
+  (2026-11-07)** — Sechs Dateien, die eine Quelle mit ihrem Sendedatum gestempelt hatte
+  (Tage in der Zukunft), behielten dieses Datum beim Kopieren in den Import-Ordner. Die
+  60-s-Ruheprüfung rechnete mit einer negativen Wartezeit, die Statuszeile meldete „still
+  being copied", und importiert worden wären sie erst an diesen Daten. Jetzt misst die
+  Prüfung bei einem Zukunftsdatum ab dem Zeitpunkt, an dem die Datei im Ordner angelegt
+  wurde (`LocalImportScanTask::quietReference`, Windows: Erstellzeit). Eine laufende Kopie
+  bleibt geschützt, weil sie beim Schreiben ein frisches Änderungsdatum trägt (mit robocopy
+  gemessen). Ohne lesbare Erstellzeit wartet die Datei weiter und steht in der Statuszeile
+  als „with a modification date in the future". Handbuch LOCAL_MACHINE ×4, Architektur
+  §23.12. Probe `C:/Temp/optd/import_future_date_probe.php` (12/12).
+
 ## [1.3.0] - 2026-11-07
 
 ### Changed

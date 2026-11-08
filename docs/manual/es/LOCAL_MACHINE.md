@@ -452,6 +452,12 @@ Now**).  Para cada archivo situado directamente en la carpeta:
    estado lo marca como «still being copied» y una pasada posterior
    lo
    recoge.
+   Un archivo cuya fecha de modificación está en el futuro (algunas
+   fuentes marcan los archivos con su fecha de emisión y la copia
+   conserva esa fecha) se mide desde el momento en que llegó a la
+   carpeta (desde el 07/11/2026); antes esperaba hasta esa fecha.  Si
+   ese momento no se puede leer, la línea de estado lo marca como
+   «with a modification date in the future».
 3. Cada archivo de audio en reposo pasa al **circuito estándar de
    subida**: se crea una entrada de biblioteca, el archivo se
    **mueve** (no se copia) a la zona `organize` de la biblioteca, y
@@ -679,6 +685,8 @@ Orden de diagnóstico:
    fuerza una pasada.
 3. Un archivo modificado en los últimos 60 segundos cuenta como
    «still being copied» — espere un minuto y escanee de nuevo.
+   Un archivo con fecha de modificación en el futuro cuenta desde su
+   llegada a la carpeta.
 4. «N failed (moved to _failed)» en la línea de estado significa
    que la entrega falló y el archivo está ahora en la subcarpeta
    `_failed` (vea la pregunta siguiente).  Pruebe el archivo en otro

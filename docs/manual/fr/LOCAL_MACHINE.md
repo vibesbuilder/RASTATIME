@@ -461,6 +461,13 @@ Le scanner s'exécute toutes les 5 minutes (et immédiatement avec
    la ligne d'état le signale comme « still being copied » et un
    passage
    ultérieur le reprend.
+   Un fichier dont la date de modification est dans le futur
+   (certaines sources datent les fichiers de leur date de diffusion,
+   et la copie conserve cette date) est mesuré à partir du moment où
+   il est arrivé dans le dossier (depuis le 07/11/2026) ; auparavant,
+   il attendait jusqu'à cette date.  Si ce moment est illisible, la
+   ligne d'état le signale comme
+   « with a modification date in the future ».
 3. Chaque fichier audio au repos est confié au **circuit d'envoi
    standard** : une entrée de bibliothèque est créée, le fichier est
    **déplacé** (pas copié) vers la zone `organize` de la
@@ -697,6 +704,8 @@ Ordre de diagnostic :
    force un passage.
 3. Un fichier modifié dans les 60 dernières secondes compte comme
    « still being copied » — attendez une minute et relancez.
+   Un fichier dont la date de modification est dans le futur compte
+   à partir de son arrivée dans le dossier.
 4. « N failed (moved to _failed) » dans la ligne d'état signifie
    que la remise a échoué et que le fichier se trouve maintenant dans
    le sous-dossier `_failed` (voir la question suivante).  Testez le
