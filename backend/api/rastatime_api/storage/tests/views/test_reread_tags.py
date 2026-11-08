@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 from model_bakery import baker
-from mutagen.id3 import ID3, TBPM, TIT2, TMOO, TPE1
+from mutagen.id3 import ID3, TBPM, TIT2, TMOO, TPE1, TXXX
 
 from rastatime_api._fixtures import AUDIO_FILENAME
 from rastatime_api.storage import root as sr
@@ -40,6 +40,8 @@ def _tagged_copy(root: Path, name: str, **tags) -> Path:
         id3.add(TBPM(encoding=3, text=str(tags["bpm"])))
     if "mood" in tags:
         id3.add(TMOO(encoding=3, text=tags["mood"]))
+    for desc, text in tags.get("txxx", {}).items():
+        id3.add(TXXX(encoding=3, desc=desc, text=text))
     id3.save(path)
     return path
 
@@ -119,3 +121,35 @@ def test_reread_rejects_bad_input(api_client, root):
         api_client.post("/api/v2/files/reread-tags", {"ids": ["x"]}, format="json").status_code
         == 400
     )
+
+
+@pytest.mark.django_db
+def test_reread_takes_the_country_but_not_the_dates(api_client, root):
+    # RASTATIME 2026-11-08 - operator decision: Re-read Tags takes the country
+    # from the file; expiry and enable date set in RASTATIME stay
+    _tagged_copy(
+        root,
+        "notice.mp3",
+        title="Notice",
+        artist="Station",
+        txxx={"COUNTRY": "Austria", "Expiry Date": "20300101", "Enable Date": "2029-01-01"},
+    )
+    file = baker.make(
+        "storage.File",
+        filepath="imported/notice.mp3",
+        exists=True,
+        mime="audio/mp3",
+        track_title="Notice",
+        artist_name="Station",
+        country="UK",
+        expires_at=None,
+        enabled_from=None,
+    )
+    response = api_client.post("/api/v2/files/reread-tags", {"ids": [file.id]}, format="json")
+    assert response.status_code == 200, response.content
+    changes = response.json()["files"][0]["changes"]
+    assert changes["country"] == ["UK", "Austria"]
+    assert "expires_at" not in changes and "enabled_from" not in changes
+    file.refresh_from_db()
+    assert file.country == "Austria"
+    assert file.expires_at is None and file.enabled_from is None

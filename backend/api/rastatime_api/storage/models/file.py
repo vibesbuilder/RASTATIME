@@ -41,6 +41,14 @@ class File(models.Model):
     # RASTATIME 2026-05-16 - Track Expiry feature.
     expires_at = models.DateTimeField(blank=True, null=True)
     disabled = models.BooleanField(default=False)
+    # RASTATIME 2026-11-08 - legacy migration 0080: disabled stays the
+    # column everything reads, derived from the box ticked by a person
+    # (disabled_by_hand), the expiry and enabled_from (disabled until
+    # that day); the legacy app and its hourly task keep it in step.
+    disabled_by_hand = models.BooleanField(default=False)
+    enabled_from = models.DateTimeField(blank=True, null=True)
+    # RASTATIME 2026-11-08 - legacy migration 0081: the COUNTRY tag
+    country = models.CharField(max_length=64, blank=True, null=True)
     # RASTATIME 2026-09-27 - "No Fade during Crossover" (legacy migrations 0059 + 0060)
     no_fade_crossfade = models.BooleanField(default=False)
     # RASTATIME 2026-09-29 - "Exclude from Crossover" (legacy migration 0062):

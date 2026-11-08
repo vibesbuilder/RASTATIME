@@ -10,9 +10,11 @@ selected ids here (via the legacy proxy that adds the API key).
 
 Per file the analyzer's own tag reader (``analyze_metadata``, the same
 mapping every import uses) is run on the stored file; only the columns a
-tag can carry are compared and written (``TAG_FIELDS``) - the columns
-RASTATIME owns (track type, teaser, cue points, loudness, expiry,
-requests, flags) are never touched.  The checksum, size and modification
+tag can carry are compared and written (``TAG_FIELDS``, the country since
+2026-11-08) - the columns RASTATIME owns (track type, teaser, cue points,
+loudness, expiry and enable date, requests, flags) are never touched,
+although the expiry and enable date come from tags on import too
+(operator decision 2026-11-08: a date set in RASTATIME stays).  The checksum, size and modification
 time follow the file so the duplicate check and the library stay in
 step.  Reading is harmless for a file that is on air; nothing is written
 to the file.
@@ -52,6 +54,8 @@ TAG_FIELDS: dict[str, str] = {
     "bpm": "bpm",
     "language": "language",
     "mood": "mood",
+    # RASTATIME 2026-11-08 - the COUNTRY tag (legacy migration 0081)
+    "country": "country",
 }
 # file facts that follow the file (never cleared)
 FILE_FIELDS: dict[str, str] = {
