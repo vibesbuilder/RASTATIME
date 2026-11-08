@@ -882,6 +882,8 @@ class LibraryController extends Zend_Controller_Action
         // date after today is still ahead) and, before migration 0080 (no
         // disabled_by_hand field), whether the expiry disabled the track
         $state = Application_Model_StoredFile::disabledState(Propel::getConnection(), (int) $file_id);
+        // RASTATIME 2026-11-08 - the countries in use, as suggestions
+        $this->view->countries = Application_Model_StoredFile::countriesInUse();
         $form->getElement('disabled')
             ->setAttrib('data-today', $state['today'])
             ->setAttrib('data-by-expiry', ($state['disabled'] && $state['expired']) ? '1' : '0');

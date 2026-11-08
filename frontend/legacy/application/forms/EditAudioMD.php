@@ -363,6 +363,21 @@ class Application_Form_EditAudioMD extends Zend_Form
             ]);
         $this->addElement($language);
 
+        // RASTATIME 2026-11-08 - country (cc_files.country, migration 0081,
+        // raw SQL in StoredFile): read from the COUNTRY tag on import, the
+        // base of Analytics -> Music by Country.  Suggestions from the values
+        // in use (datalist in edit-file-md.phtml).
+        if (Application_Model_StoredFile::fileColumnReady('country')) {
+            $country = new Zend_Form_Element_Text('country');
+            $country->class = 'input_text';
+            $country->setLabel(_('Country:'))
+                ->setFilters(['StringTrim'])
+                ->setValidators([new Zend_Validate_StringLength(['max' => 64])])
+                ->setAttrib('list', 'rt-country-list-' . (int) $p_id)
+                ->setAttrib('autocomplete', 'off');
+            $this->addElement($country);
+        }
+
         $validCuePattern = '/^(?:[0-9]{1,2}:)?(?:[0-9]{1,2}:)?[0-9]{1,6}(\.\d{1,6})?$/';
 
         $cueIn = new Zend_Form_Element_Text('cuein');

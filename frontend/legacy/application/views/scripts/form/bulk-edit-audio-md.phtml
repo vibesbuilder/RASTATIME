@@ -13,4 +13,7 @@
             </dd>
         <?php endforeach; ?>
     </dl>
+    <?php $countries = Application_Model_StoredFile::countriesInUse(); if ($countries) { /* RASTATIME 2026-11-08 */ ?>
+    <datalist id="rt-country-list-bulk"><?php foreach ($countries as $c) { ?><option value="<?php echo $this->escape($c); ?>"></option><?php } ?></datalist>
+    <?php } ?>
 </form>

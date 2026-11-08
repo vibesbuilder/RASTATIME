@@ -1621,6 +1621,48 @@ SQL;
             . " AND (cc_files.enabled_from IS NULL OR cc_files.enabled_from <= {$ts}))";
     }
 
+    /**
+     * RASTATIME 2026-11-08 - SQL of the virtual "Country" criterion
+     * (cc_files.country, migration 0081) with the string modifiers as the
+     * other text criteria apply them: "is" / "is not" exact, the others
+     * case-insensitive patterns; the negations include tracks without a
+     * country.
+     *
+     * @param string $modifier
+     * @param string $value
+     *
+     * @return string
+     */
+    public static function countryCriterionSql($modifier, $value)
+    {
+        if (!Application_Model_StoredFile::fileColumnReady('country')) {
+            return 'FALSE';
+        }
+        $con = Propel::getConnection();
+        $like = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+        switch (trim((string) $modifier)) {
+            case CriteriaModifier::IS:
+                return 'cc_files.country = ' . $con->quote($value);
+
+            case CriteriaModifier::IS_NOT:
+                return '(cc_files.country IS NULL OR cc_files.country <> ' . $con->quote($value) . ')';
+
+            case CriteriaModifier::STARTS_WITH:
+                return 'cc_files.country ILIKE ' . $con->quote($like . '%');
+
+            case CriteriaModifier::ENDS_WITH:
+                return 'cc_files.country ILIKE ' . $con->quote('%' . $like);
+
+            case CriteriaModifier::DOES_NOT_CONTAIN:
+                return '(cc_files.country IS NULL OR cc_files.country NOT ILIKE ' . $con->quote('%' . $like . '%') . ')';
+
+            case CriteriaModifier::CONTAINS:
+                return 'cc_files.country ILIKE ' . $con->quote('%' . $like . '%');
+        }
+
+        return 'FALSE';
+    }
+
     public static function teaserCriterionSql($key, $modifier, $value)
     {
         if (!Application_Model_StoredFile::teaserColumnsReady()) {
@@ -2253,6 +2295,10 @@ SQL;
                     $virtualSql = in_array($spCriteria, BlockCriteria::TEASER_KEYS, true)
                         ? self::teaserCriterionSql($spCriteria, $spCriteriaModifier, (string) $criteria['value'])
                         : null;
+                    // RASTATIME 2026-11-08 - the country criterion likewise
+                    if ($spCriteria === 'country') {
+                        $virtualSql = self::countryCriterionSql($spCriteriaModifier, (string) $criteria['value']);
+                    }
 
                     $column = CcFilesPeer::getTableMap()->getColumnByPhpName($allCriteria[$spCriteria]->peer);
 

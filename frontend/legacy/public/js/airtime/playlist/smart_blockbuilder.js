@@ -1189,6 +1189,7 @@ var criteriaTypes = {
   composer: "s",
   conductor: "s",
   copyright: "s",
+  country: "s",
   cuein: "n",
   cueout: "n",
   description: "s",

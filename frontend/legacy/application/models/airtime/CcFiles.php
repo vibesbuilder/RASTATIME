@@ -436,7 +436,7 @@ class CcFiles extends BaseCcFiles
                 && trim($fileArray['country']) !== ''
                 && Application_Model_StoredFile::fileColumnReady('country', $con)
             ) {
-                $country = mb_substr(preg_replace('/\s+/u', ' ', trim($fileArray['country'])), 0, 64);
+                $country = Application_Model_StoredFile::cleanCountry($fileArray['country']);
                 try {
                     $stmt = $con->prepare(
                         "UPDATE cc_files SET country = :c WHERE id = :id AND (country IS NULL OR country = '')"

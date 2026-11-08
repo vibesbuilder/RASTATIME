@@ -40,6 +40,9 @@ $baseUrl = Config::getBasePath();
   </div>
   <div style="height: 160px;"></div>
   <?php echo $this->form; ?>
+  <?php if (!empty($this->countries)) { /* RASTATIME 2026-11-08 - Country suggestions */ ?>
+  <datalist id="rt-country-list-<?php echo (int) $this->id; ?>"><?php foreach ($this->countries as $c) { ?><option value="<?php echo $this->escape($c); ?>"></option><?php } ?></datalist>
+  <?php } ?>
 <script>
 (function ($) {
   // RASTATIME 2026-10-16 - "Teaser for shows" as the Song-Request-Pool

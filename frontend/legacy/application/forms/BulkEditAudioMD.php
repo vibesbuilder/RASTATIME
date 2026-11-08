@@ -53,6 +53,22 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
             $this->addElement($el);
         }
 
+        // RASTATIME 2026-11-08 - country (migration 0081) like the text fields
+        // above, with the countries in use as suggestions (datalist in
+        // bulk-edit-audio-md.phtml)
+        if (Application_Model_StoredFile::fileColumnReady('country')) {
+            $country = new Zend_Form_Element_Text('country');
+            $country->class = 'input_text';
+            $country->setLabel(_('Country:'))
+                ->setRequired(false)
+                ->setFilters(['StringTrim'])
+                ->setValidators([new Zend_Validate_StringLength(['max' => 64])])
+                ->setAttrib('placeholder', _('Leave unchanged'))
+                ->setAttrib('list', 'rt-country-list-bulk')
+                ->setAttrib('autocomplete', 'off');
+            $this->addElement($country);
+        }
+
         $year = new Zend_Form_Element_Text('year');
         $year->class = 'input_text';
         $year->setLabel(_('Year:'))
@@ -202,6 +218,6 @@ class Application_Form_BulkEditAudioMD extends Zend_Form
 
     public static function fieldOrder()
     {
-        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_type', 'teaser_show_id', 'language', 'mood', 'label', 'composer', 'conductor', 'copyright', 'enabled_from', 'expires_at', 'disabled', 'description'];
+        return ['artist_name', 'album_title', 'genre', 'year', 'track_type_id', 'teaser_type', 'teaser_show_id', 'language', 'country', 'mood', 'label', 'composer', 'conductor', 'copyright', 'enabled_from', 'expires_at', 'disabled', 'description'];
     }
 }

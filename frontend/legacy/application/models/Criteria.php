@@ -165,6 +165,10 @@ class BlockCriteria
                 new BlockCriteria('composer', ModifierType::STRING, 'DbComposer', _('Composer')),
                 new BlockCriteria('conductor', ModifierType::STRING, 'DbConductor', _('Conductor')),
                 new BlockCriteria('copyright', ModifierType::STRING, 'DbCopyright', _('Copyright')),
+                // RASTATIME 2026-11-08 - virtual like the teaser criteria: Propel
+                // does not know cc_files.country (migration 0081), the peer only
+                // gives the validators a VARCHAR; Block::countryCriterionSql
+                new BlockCriteria('country', ModifierType::STRING, 'DbTrackTitle', _('Country')),
                 new BlockCriteria('cuein', ModifierType::NUMBER, 'DbCuein', _('Cue In')),
                 new BlockCriteria('cueout', ModifierType::NUMBER, 'DbCueout', _('Cue Out')),
                 new BlockCriteria('description', ModifierType::STRING, 'DbDescription', _('Description')),

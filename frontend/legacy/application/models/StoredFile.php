@@ -346,6 +346,16 @@ class Application_Model_StoredFile
             $stmt->execute();
         }
 
+        // RASTATIME 2026-11-08 - country (migration 0081), raw SQL like the
+        // dates; an empty value clears it
+        if (array_key_exists('country', $posted) && self::fileColumnReady('country', $this->_con)) {
+            $country = self::cleanCountry($posted['country']);
+            $stmt = $this->_con->prepare('UPDATE cc_files SET country = :c WHERE id = :id');
+            $stmt->bindValue(':c', $country === '' ? null : $country, $country === '' ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':id', (int) $this->_file->getDbId(), PDO::PARAM_INT);
+            $stmt->execute();
+        }
+
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060):
         // the checkbox posts '1' / '0'; only touched when the key is present
         // (the analyzer's metadata import never sends it).
@@ -510,6 +520,39 @@ class Application_Model_StoredFile
         }
 
         return isset(self::$fileColumns[$column]);
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - a country as stored: blanks collapsed, at most
+     * 64 characters (the column).  Pure.
+     *
+     * @param mixed $value
+     *
+     * @return string
+     */
+    public static function cleanCountry($value)
+    {
+        return mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $value)), 0, 64);
+    }
+
+    /**
+     * RASTATIME 2026-11-08 - the countries in use, A-Z, for the editors'
+     * suggestions (empty before migration 0081).
+     *
+     * @return string[]
+     */
+    public static function countriesInUse()
+    {
+        if (!self::fileColumnReady('country')) {
+            return [];
+        }
+        try {
+            return Propel::getConnection()->query(
+                "SELECT DISTINCT country FROM cc_files WHERE country IS NOT NULL AND country <> '' ORDER BY country"
+            )->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $exc) {
+            return [];
+        }
     }
 
     /**
@@ -755,6 +798,19 @@ class Application_Model_StoredFile
             Logging::warn('getDbColMetadata: could not read expires_at / enabled_from: ' . $exc->getMessage());
             $md['expires_at'] = '';
             $md['enabled_from'] = '';
+        }
+
+        // RASTATIME 2026-11-08 - country (migration 0081)
+        $md['country'] = '';
+        if (self::fileColumnReady('country', $this->_con)) {
+            try {
+                $stmt = $this->_con->prepare('SELECT country FROM cc_files WHERE id = :id');
+                $stmt->bindValue(':id', $this->_file->getDbId(), PDO::PARAM_INT);
+                $stmt->execute();
+                $md['country'] = (string) $stmt->fetchColumn();
+            } catch (Exception $exc) {
+                Logging::warn('getDbColMetadata: could not read country: ' . $exc->getMessage());
+            }
         }
 
         // RASTATIME 2026-11-08 - "Track disabled" checkbox, '1' / '0', and
