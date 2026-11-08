@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bleibt geschützt, weil sie beim Schreiben ein frisches Änderungsdatum trägt (mit robocopy
   gemessen). Ohne lesbare Erstellzeit wartet die Datei weiter und steht in der Statuszeile
   als „with a modification date in the future". Handbuch LOCAL_MACHINE ×4, Architektur
-  §23.12. Probe `C:/Temp/optd/import_future_date_probe.php` (12/12).
+  §23.12. Proben `C:/Temp/optd/import_future_date_probe.php` (12/12) und
+  `import_future_scan_probe.php` (scanOnce im Temp-Ordner). Commit `63733460`.
 
 ## [1.3.0] - 2026-11-07
 
