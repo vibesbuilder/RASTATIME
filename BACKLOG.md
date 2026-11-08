@@ -102,6 +102,20 @@ neuem Titel zuerst wie bei track_natural), ~30 min + geplanter Liquidsoap-Neusta
 auch ohne die Ursache zu kennen.  **Empfehlung:** (b) zuerst, (a) wenn (b) nicht reicht.
 **Vorbedingungen:** Operator-Go.  Diagnose-Tabelle: Scratchpad-Skript dieser Sitzung (Icecast access.log,
 Fenster -6..+12 s um die Grenzen).
+**Nachtrag 2026-11-08 Mittag (Hörer-Simulation 11:58-12:20 direkt + Proxy, ICY-Blöcke mitgeschrieben):**
+reproduziert - 12:00 TOH-Jingle (Line-in -> Datei, track/new): kein Titel, erst der zweite Titel 12:00:10;
+12:07 Intro (Teaser -> Datei, show/both): kein Titel und keine Live-Text-Zeile bis zum zweiten Titel
+12:07:09; 12:15 (show/-): bis 12:20 kein Titel.  Also: **der erste Titel nach einer Grenze verliert sein
+Metadaten-Paket**, der zweite trägt es.  Zweiter Befund: **während der Webstream-Slots steht der Off-Air-Text
+(„Back on air soon") als Stream-Titel und Live Text**, ausgelöst beim Öffnen des Webstream-Gates (heute
+07:01:06, 12:01:06; 08:01:06 sofort wieder überschrieben), erstmals 2026-11-04 (11 Treffer), davor nie.
+Primärer Kandidat: `4c7bcc39` (2026-11-02, „delayed off-air mark at the bus-arm transition"): die
+Off-Air-Marke wird 0,5 s nach der Bus-Arm-Transition gesetzt, wenn `scheduled_q` nicht bereit ist - im
+Webstream-Slot ist die Queue leer, also greift die Marke fälschlich; dieselbe Stelle ist verdächtig für das
+verlorene erste Paket.  Zweiter Kandidat: `a5bdc4da` (2026-11-03, `blank.detect` dead_air auf dem Bus hinter
+icy_rewrite, live seit 11-04).  **Vorschlag für die Evaluierung:** Off-Air-Marke nur setzen, wenn weder Queue
+noch ein Live-Arm (Webstream/Line-in/DJ-Gates) bereit ist, und die Metadaten des neuen Titels in den
+Show-Formen explizit einspeisen (Option (b)); Replikat-Probe davor, Liquidsoap-Neustart danach.
 
 ### 💡 Hörer-Aussetzer beim Sendungsstart 12:07 (foobar2000, Stream 1 über den Apache-Proxy) - Befund 2026-11-07, Analyse offen, gemeinsamer Test 2026-11-08 Mittag
 
