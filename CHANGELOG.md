@@ -7,7 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Track disabled von Hand: Checkbox in Edit Track und Feld in der Mehrfachbearbeitung
+  (2026-11-08, Operator-Wunsch)** — `cc_files.disabled` setzte bisher nur der stündliche
+  Ablauf-Lauf. Neu: Checkbox **Track disabled** in Edit Track (von Hand anhakbar, automatisch
+  angehakt, sobald das Ablaufdatum erreicht ist) und *Leave unchanged / Yes - disable / No -
+  enable* in der Mehrfachbearbeitung. Regeln: ein erreichtes Ablaufdatum deaktiviert immer;
+  ein späteres oder geleertes Datum aktiviert nur, was das Ablaufdatum deaktiviert hatte, ein
+  von Hand deaktivierter Track bleibt deaktiviert. Im Dialog folgen beide Felder einander vor
+  dem Speichern (erreichtes Datum hakt an, späteres/leeres nimmt einen Ablauf-Haken weg, Haken
+  weg leert ein erreichtes Datum); ohne Haken mit erreichtem Datum lehnt das Speichern ab.
+  Mehrfach *No* leert erreichte Ablaufdaten und meldet die Anzahl. Bedeutung unverändert:
+  Smart Blocks wählen deaktivierte Tracks nicht mehr, geplante Zeilen spielen weiter. Keine
+  Migration. Befund dazu: ein späteres Ablaufdatum aktivierte schon vorher wieder; das Datum
+  gilt ab 00:00 Uhr, ein Datum von heute lässt den Track also deaktiviert. Neue Texte
+  DE/FR/ES, Handbuch LIBRARY ×4, Architektur §23.98. Probe
+  `C:/Temp/optd/track_disabled_probe.php` (27/27, Transaktion mit Rollback). Commit `5542c828`.
+
 ### Fixed
+
+- **Edit Track schloss sich auch, wenn das Speichern abgelehnt wurde (2026-11-08)** — Der
+  Tab ging sofort nach dem Absenden zu, ein ungültiges Feld (etwa ein Datum im falschen
+  Format) ging ohne Hinweis verloren. Jetzt schließt er erst nach erfolgreichem Speichern;
+  eine Ablehnung nennt die Gründe über den Feldern. Die Mehrfachbearbeitung nennt die Gründe
+  ebenfalls statt nur „could not be saved". Commit `5542c828`.
 
 - **Import Folder: Dateien mit einem Änderungsdatum in der Zukunft blieben liegen
   (2026-11-07)** — Sechs Dateien, die eine Quelle mit ihrem Sendedatum gestempelt hatte

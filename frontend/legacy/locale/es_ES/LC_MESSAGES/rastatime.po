@@ -8272,3 +8272,31 @@ msgstr "Presentadores"
 #: application/views/scripts/archiving/participants.phtml
 msgid "Repeat show: its people were counted with the original."
 msgstr "Programa de repetición: sus personas se cuentan con el original."
+
+#: application/forms/EditAudioMD.php
+msgid "Track disabled:"
+msgstr "Pista desactivada:"
+
+#: application/forms/EditAudioMD.php
+msgid "A disabled track is no longer picked by smart blocks. Shows that already have it keep playing it, and it can still be scheduled by hand. Ticked automatically when the expiry date is reached. Moving the expiry date ahead or clearing it enables the track again, unless it was disabled by hand."
+msgstr "Los bloques inteligentes ya no eligen una pista desactivada. Los programas que ya la contienen la siguen emitiendo, y se puede seguir programando a mano. Se marca automáticamente al alcanzar la fecha de caducidad. Una fecha de caducidad posterior o vaciada vuelve a activar la pista, salvo que se haya desactivado a mano."
+
+#: application/forms/EditAudioMD.php
+msgid "The expiry date has passed, so the track would stay disabled. Set a later date or empty the field."
+msgstr "La fecha de caducidad ya se alcanzó, así que la pista seguiría desactivada. Indique una fecha posterior o vacíe el campo."
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Yes - disable the tracks"
+msgstr "Sí - desactivar las pistas"
+
+#: application/forms/BulkEditAudioMD.php
+msgid "No - enable the tracks"
+msgstr "No - activar las pistas"
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Yes: smart blocks no longer pick the selected tracks. No: they are picked again; an expiry date that has passed is cleared."
+msgstr "Sí: los bloques inteligentes ya no eligen las pistas seleccionadas. No: se vuelven a elegir; una fecha de caducidad alcanzada se vacía."
+
+#: application/controllers/LocaleController.php
+msgid "Cleared the passed expiry date of %s track(s)."
+msgstr "Fecha de caducidad alcanzada vaciada en %s pista(s)."

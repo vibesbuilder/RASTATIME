@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.124
+Draft version: 0.125
 Date: 2026-11-08
 
 > **Revision history**
+> - **0.125 (2026-11-08)** - **Track disabled by hand** (§23.98): checkbox in Edit Track and a
+>   select in the bulk editor; the expiry still disables, a later expiry re-enables only
+>   what the expiry disabled; a refused Edit Track save keeps the tab open.
 > - **0.124 (2026-11-08)** - **Import folder: future modification dates** (§23.12): a file
 >   whose mtime lies in the future is measured from its creation time instead of waiting
 >   until that date (`LocalImportScanTask::quietReference`).
@@ -9462,3 +9465,41 @@ that is rolled back: 1 host + 3 + 2 guests = 6, a repeat with guests
 stays 0), live: page, CSV, show form (`populate-show-form`) and
 episode dialog (`episode-dialog?format=json`) 200 with the new labels.
 Rollback: `git revert` (tag `live-2026-11-07b`).
+
+### 23.98 Track Disabled by Hand (2026-11-08)
+
+**Why.**  Operator 2026-11-08: `cc_files.disabled` could only be set by
+the hourly `TrackExpiryTask` (expiry date passed, §Track Expiry
+2026-05-16); there was no way to disable a track by hand or to see the
+flag in the editor, and re-enabling worked only through a later expiry
+date (which works - the date counts from 00:00 of that day, so a date of
+today keeps a track disabled).
+
+**Now.**  No schema change.
+
+* Edit Track has a checkbox **Track disabled** (`disabled`, raw SQL like
+  `expires_at`); the bulk editor a select *Leave unchanged / Yes - disable
+  / No - enable*.
+* Save rule (`StoredFile::setDbColMetadata`): with the flag posted,
+  `disabled = flag OR (expires_at < NOW())`; without it (bulk
+  "unchanged", other callers) a track disabled by hand (disabled while its
+  expiry has not passed - `disabledState()`) stays disabled, one the
+  expiry disabled is enabled again when the expiry moves ahead or is
+  cleared.  No reason column: "by hand" is inferred from the state before
+  the save; a track disabled by hand whose expiry later passes counts as
+  disabled by the expiry.
+* Unticked + a passed expiry date is refused by both forms
+  (`EditAudioMD::enableWithPassedExpiry`); bulk *No* without an expiry
+  change clears the passed expiry dates per track (count in the result).
+* The dialog script (edit-file-md.phtml) keeps the two fields in step
+  before the save, using the database's date (`data-today`) and whether
+  the expiry caused the flag (`data-by-expiry`).
+* Edit Track (spl.js) closes only after a successful save; a refused save
+  lists the form messages above the fields.  Before, every save closed the
+  tab as if it had worked.
+* Meaning unchanged: disabled tracks are left out of new smart block
+  evaluations (`Block.php`, `disabled = false`); scheduled rows keep
+  playing; manual scheduling stays possible.
+
+Probe `C:/Temp/optd/track_disabled_probe.php` (one transaction, rolled
+back; 27 checks).

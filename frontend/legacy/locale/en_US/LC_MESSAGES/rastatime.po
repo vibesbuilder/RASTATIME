@@ -1399,3 +1399,31 @@ msgstr ""
 #: application/views/scripts/archiving/participants.phtml
 msgid "Repeat show: its people were counted with the original."
 msgstr ""
+
+#: application/forms/EditAudioMD.php
+msgid "Track disabled:"
+msgstr ""
+
+#: application/forms/EditAudioMD.php
+msgid "A disabled track is no longer picked by smart blocks. Shows that already have it keep playing it, and it can still be scheduled by hand. Ticked automatically when the expiry date is reached. Moving the expiry date ahead or clearing it enables the track again, unless it was disabled by hand."
+msgstr ""
+
+#: application/forms/EditAudioMD.php
+msgid "The expiry date has passed, so the track would stay disabled. Set a later date or empty the field."
+msgstr ""
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Yes - disable the tracks"
+msgstr ""
+
+#: application/forms/BulkEditAudioMD.php
+msgid "No - enable the tracks"
+msgstr ""
+
+#: application/forms/BulkEditAudioMD.php
+msgid "Yes: smart blocks no longer pick the selected tracks. No: they are picked again; an expiry date that has passed is cleared."
+msgstr ""
+
+#: application/controllers/LocaleController.php
+msgid "Cleared the passed expiry date of %s track(s)."
+msgstr ""
