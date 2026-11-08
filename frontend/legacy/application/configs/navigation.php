@@ -319,6 +319,16 @@ $pages[] = [
             'resource' => 'yearlyreport',
         ],
         [
+            // RASTATIME 2026-11-08 - the music quota: plays and minutes of the
+            // music per country (Program Managers and Admins, like
+            // Programme Minutes)
+            'label' => 'Music by Country',
+            'module' => 'default',
+            'controller' => 'yearlyreport',
+            'action' => 'country',
+            'resource' => 'yearlyreport',
+        ],
+        [
             // RASTATIME 2026-11-04 - archive status: uploads to cba.media,
             // what the automatic archiving has ahead, problems, history
             // (Program Managers and Admins)
