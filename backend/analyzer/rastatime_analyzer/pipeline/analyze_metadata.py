@@ -1,5 +1,7 @@
 import logging
+import re
 import subprocess
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -38,34 +40,77 @@ if _MUTAGEN_AVAILABLE:
     EasyID3.RegisterKey("comment", comment_get)
 
 
-def _parse_expiry(raw: str, filepath: Path) -> Optional[datetime]:
-    """Parse an Expiry tag value (YYYY-MM-DD); None (with a warning) otherwise."""
-    try:
-        return datetime.strptime(raw, "%Y-%m-%d")
-    except ValueError:
-        logger.warning(
-            "Expiry tag value %r in %s is not ISO 8601 date (YYYY-MM-DD); ignoring",
-            raw,
-            filepath,
-        )
-        return None
+# RASTATIME 2026-11-08 - the custom tags read on import, by metadata key
+# (= cc_files column).  A tag name counts in any spelling: lower case,
+# without blanks, underscores and hyphens, so "Expiry Date", "EXPIRY_DATE"
+# and "expirydate" are one name (see _tag_name).
+_CUSTOM_TAGS: dict[str, tuple[str, ...]] = {
+    "expires_at": ("expiry", "expirydate"),
+    "enabled_from": ("enabledate", "enabledfrom"),
+    "country": ("country",),
+}
+_DATE_KEYS = ("expires_at", "enabled_from")
+_DATE_LABELS = {"expires_at": "Expiry", "enabled_from": "Enable Date"}
+# YYYY-MM-DD or YYYYMMDD, nothing else (2026-11-08 or 20261108)
+_DATE_FORMATS = (
+    (re.compile(r"^\d{4}-\d{2}-\d{2}$"), "%Y-%m-%d"),
+    (re.compile(r"^\d{8}$"), "%Y%m%d"),
+)
+_CUSTOM_KEY_BY_NAME = {name: key for key, names in _CUSTOM_TAGS.items() for name in names}
 
 
-def _extract_expiry_tag(filepath: Path) -> Optional[datetime]:
+def _tag_name(name: Any) -> str:
+    return re.sub(r"[\s_\-]+", "", str(name)).lower()
+
+
+def _parse_tag_date(raw: str, key: str, filepath: Path) -> Optional[str]:
+    """A date tag value as YYYY-MM-DD; None (with a warning) otherwise."""
+    text = str(raw).strip()
+    for pattern, fmt in _DATE_FORMATS:
+        if pattern.match(text):
+            try:
+                return datetime.strptime(text, fmt).strftime("%Y-%m-%d")
+            except ValueError:
+                break  # 2026-02-30, 20261340
+    logger.warning(
+        "%s tag value %r in %s is no date (YYYY-MM-DD or YYYYMMDD); ignoring",
+        _DATE_LABELS.get(key, key),
+        text,
+        filepath,
+    )
+    return None
+
+
+def _custom_tag_values(pairs: Iterable[tuple[Any, Any]], filepath: Path) -> dict[str, str]:
     """
-    RASTATIME 2026-05-16 - Read a custom ID3v2 TXXX frame named "Expiry"
-    and parse its value as an ISO-8601 date (YYYY-MM-DD).
+    {metadata key: value} from (tag name, value) pairs.  The first usable
+    value of a key wins; a date that does not parse counts as absent.
+    """
+    found: dict[str, str] = {}
+    for name, raw in pairs:
+        key = _CUSTOM_KEY_BY_NAME.get(_tag_name(name))
+        if key is None or key in found:
+            continue
+        text = " ".join(str(raw or "").split())
+        if not text:
+            continue
+        if key in _DATE_KEYS:
+            date_text = _parse_tag_date(text, key, filepath)
+            if date_text is not None:
+                found[key] = date_text
+        else:
+            found[key] = text
+    return found
 
-    Used by the Track-Expiry feature.  Returns a timezone-naive datetime
-    at midnight UTC on the parsed date, or None if:
-      * the file has no ID3v2 metadata,
-      * no TXXX frame with description "Expiry" exists,
-      * the value does not parse as YYYY-MM-DD.
 
-    Mutagen's EasyID3 does not expose generic TXXX frames, so we read
-    the raw ID3 here via mutagen.id3.ID3.  Other tag formats (Vorbis
-    comments in OGG/FLAC, MP4 atoms, the ID3 chunk of a WAV file) are read
-    from the ffprobe tags in analyze_metadata (RASTATIME 2026-10-14).
+def _read_txxx(filepath: Path) -> Optional[list[tuple[str, str]]]:
+    """
+    (description, first non-empty text) of every ID3v2 TXXX frame; None when
+    the file has no ID3v2 tag (OGG/FLAC/M4A, the ID3 chunk of a WAV file).
+
+    Mutagen's EasyID3 does not expose generic TXXX frames, so the raw ID3 is
+    read here.  Files without an ID3v2 tag get their custom tags from the
+    ffprobe pass (RASTATIME 2026-10-14).
     """
     if not _MUTAGEN_AVAILABLE:
         return None
@@ -79,22 +124,47 @@ def _extract_expiry_tag(filepath: Path) -> Optional[datetime]:
     try:
         id3 = ID3(filepath)
     except (ID3NoHeaderError, Exception):  # pylint: disable=broad-exception-caught
-        # File has no ID3v2 tag (typical for OGG/FLAC/M4A) — silently
-        # skip.  This is the dominant path for non-MP3 uploads.
         return None
 
+    pairs = []
     for frame in id3.getall("TXXX"):
         desc = getattr(frame, "desc", "") or ""
-        if desc.strip().lower() == "expiry":
-            # TXXX.text is a list[str]; we take the first non-empty entry.
-            for raw in frame.text:
-                raw = str(raw).strip()
-                if not raw:
-                    continue
-                return _parse_expiry(raw, filepath)
-            return None
+        text = next((str(t).strip() for t in frame.text if str(t).strip()), "")
+        if text:
+            pairs.append((desc, text))
+    return pairs
 
-    return None
+
+def read_custom_tags(filepath_: str) -> dict[str, str]:
+    """
+    RASTATIME 2026-11-08 - expires_at / enabled_from (YYYY-MM-DD) and country
+    from the file's own tags, without ffprobe and without a checksum: ID3v2
+    TXXX frames, MP4 freeform atoms, Vorbis comments.  Used by the one-time
+    country backfill; the import reads the same tags in analyze_metadata.
+    """
+    filepath = Path(filepath_)
+    pairs = _read_txxx(filepath)
+    if pairs is not None:
+        return _custom_tag_values(pairs, filepath)
+    if not _MUTAGEN_AVAILABLE:
+        return {}
+    try:
+        extracted = mutagen.File(filepath)
+    except Exception:  # pylint: disable=broad-exception-caught
+        return {}
+    if extracted is None or not extracted.tags:
+        return {}
+    pairs = []
+    for name, value in extracted.tags.items():
+        name = str(name)
+        if name.startswith("----:"):
+            name = name.rsplit(":", 1)[-1]  # ----:com.apple.iTunes:COUNTRY
+        if isinstance(value, list):
+            value = value[0] if value else ""
+        if isinstance(value, bytes):  # MP4FreeForm is a bytes subclass
+            value = bytes(value).decode("utf-8", "replace")
+        pairs.append((name, value))
+    return _custom_tag_values(pairs, filepath)
 
 
 # RASTATIME 2026-10-14 - fields still missing after the mutagen pass are
@@ -133,7 +203,7 @@ _FFPROBE_TIMEOUT_S = 60.0
 # Normal quality" are common in old rips, and the ffprobe pass now fills
 # encoder for almost every file - made PostgreSQL reject the import
 # callback, and the track ended as a failed import.
-_COLUMN_MAX_LENGTHS = {"encoder": 64}
+_COLUMN_MAX_LENGTHS = {"encoder": 64, "country": 64}
 
 
 def _clip_to_columns(metadata: dict[str, Any]) -> None:
@@ -268,15 +338,15 @@ def _fill_from_ffprobe(
         if mime:
             metadata["mime"] = mime
 
-    if "expires_at" not in metadata and tags.get("expiry"):
-        expiry = _parse_expiry(tags["expiry"], filepath)
-        if expiry is not None:
-            metadata["expires_at"] = expiry.strftime("%Y-%m-%d")
-            logger.info(
-                "Expiry tag found in %s: %s",
-                filepath,
-                metadata["expires_at"],
-            )
+
+def _fill_custom_tags_from_ffprobe(
+    filepath: Path, metadata: dict[str, Any], tags: dict[str, str]
+) -> None:
+    """Custom tags of a file without ID3v2 tag (Vorbis, MP4 freeform, WAV ID3 chunk)."""
+    for key, value in _custom_tag_values(tags.items(), filepath).items():
+        if _is_missing(metadata, key):
+            metadata[key] = value
+            logger.info("%s tag found in %s: %s", key, filepath, value)
 
 
 def _extract_with_mutagen(filepath: Path, metadata: dict[str, Any]) -> None:
@@ -393,24 +463,18 @@ def analyze_metadata(filepath_: str, metadata: dict[str, Any]):
     metadata["ftype"] = "audioclip"
     metadata["hidden"] = False
 
-    # RASTATIME 2026-05-16 - Track Expiry: read custom ID3 TXXX 'Expiry'
-    # tag if present.  ISO 8601 date (YYYY-MM-DD).  None ⇒ no expiry from
-    # tag (the parent Podcast service may still set one for auto-expiry
-    # podcasts, which takes precedence per design decision B).
-    #
-    # We emit the date as plain YYYY-MM-DD (not a full datetime).  Two
-    # reasons: (1) the EditAudioMD form validator expects exactly that
-    # format on the round-trip; (2) Expiry is a day-granularity concept,
-    # not a per-second one, and PostgreSQL's CAST(... AS TIMESTAMP)
-    # interprets the plain-date string as midnight on that date.
-    expiry = _extract_expiry_tag(filepath)
-    if expiry is not None:
-        metadata["expires_at"] = expiry.strftime("%Y-%m-%d")
-        logger.info(
-            "Expiry tag found in %s: %s",
-            filepath,
-            metadata["expires_at"],
-        )
+    # RASTATIME 2026-05-16 / 2026-11-08 - custom ID3 TXXX tags: "Expiry" /
+    # "Expiry Date" (Track Expiry), "Enable Date" / "Enabled From" (the track
+    # stays disabled until that day) and "Country" (Music by Country).
+    # The dates go out as plain YYYY-MM-DD (also when the tag says
+    # YYYYMMDD): the EditAudioMD form validator expects exactly that on the
+    # round-trip, the concept is a day, and PostgreSQL's
+    # CAST(... AS TIMESTAMP) reads the plain date as midnight on that date.
+    txxx = _read_txxx(filepath)
+    if txxx is not None:
+        for key, value in _custom_tag_values(txxx, filepath).items():
+            metadata[key] = value
+            logger.info("%s tag found in %s: %s", key, filepath, value)
 
     # Get file properties
     metadata["filesize"] = filepath.stat().st_size
@@ -422,6 +486,10 @@ def analyze_metadata(filepath_: str, metadata: dict[str, Any]):
     probe = _probe_with_ffprobe(filepath)
     if probe is not None:
         _fill_from_ffprobe(filepath, metadata, probe)
+        # a file WITH an ID3v2 tag was read above; ffprobe shows the same
+        # TXXX frames, which would only repeat an invalid date's warning
+        if txxx is None:
+            _fill_custom_tags_from_ffprobe(filepath, metadata, probe[2])
 
     _clip_to_columns(metadata)
     return metadata

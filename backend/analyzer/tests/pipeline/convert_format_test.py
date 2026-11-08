@@ -52,6 +52,8 @@ TAGS = {
     "bpm": "123",
     "language": "deu",
     "expires_at": "2027-02-28",
+    "enabled_from": "2027-01-15",
+    "country": "Austria",
 }
 
 
@@ -225,6 +227,8 @@ def test_flac_with_cover_to_mp3_keeps_cover_and_tags(tmp_path: Path):
     assert str(id3["TBPM"]) == "123"
     assert str(id3["TLAN"]) == "deu"
     assert str(id3["TXXX:Expiry"]) == "2027-02-28"
+    assert str(id3["TXXX:Enable Date"]) == "2027-01-15"
+    assert str(id3["TXXX:COUNTRY"]) == "Austria"
     pictures = id3.getall("APIC")
     assert len(pictures) == 1
     assert pictures[0].mime == "image/png"
@@ -233,7 +237,16 @@ def test_flac_with_cover_to_mp3_keeps_cover_and_tags(tmp_path: Path):
 
     # the import reads the new file back the same way
     again = analyze_metadata(new_path, {})
-    for key in ("track_title", "artist_name", "album_title", "isrc", "label", "expires_at"):
+    for key in (
+        "track_title",
+        "artist_name",
+        "album_title",
+        "isrc",
+        "label",
+        "expires_at",
+        "enabled_from",
+        "country",
+    ):
         assert again[key] == TAGS[key]
 
 
@@ -350,6 +363,8 @@ def test_raw_adts_is_always_repacked_to_m4a(tmp_path: Path, convert_lossless: bo
             TIT2(encoding=3, text="Aac Title"),
             TPE1(encoding=3, text="Aac Artist"),
             TXXX(encoding=3, desc="Expiry", text="2027-03-31"),
+            TXXX(encoding=3, desc="Enable Date", text="20270301"),
+            TXXX(encoding=3, desc="COUNTRY", text="UK"),
         ],
     )
     source_stream = audio_stream(src)
@@ -374,7 +389,12 @@ def test_raw_adts_is_always_repacked_to_m4a(tmp_path: Path, convert_lossless: bo
     assert mp4["©nam"] == ["Aac Title"]
     assert mp4["©ART"] == ["Aac Artist"]
     assert bytes(mp4["----:com.apple.iTunes:Expiry"][0]) == b"2027-03-31"
-    assert analyze_metadata(new_path, {})["expires_at"] == "2027-03-31"
+    assert bytes(mp4["----:com.apple.iTunes:Enable Date"][0]) == b"2027-03-01"
+    assert bytes(mp4["----:com.apple.iTunes:COUNTRY"][0]) == b"UK"
+    again = analyze_metadata(new_path, {})
+    assert again["expires_at"] == "2027-03-31"
+    assert again["enabled_from"] == "2027-03-01"
+    assert again["country"] == "UK"
 
 
 @requires_ffmpeg

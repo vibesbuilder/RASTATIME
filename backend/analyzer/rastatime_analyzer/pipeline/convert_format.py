@@ -277,7 +277,7 @@ def _first_text(tags: dict[str, Any], *keys: str) -> Optional[str]:
 
 
 def _expiry_text(value: Any) -> Optional[str]:
-    """expires_at as YYYY-MM-DD (the analyzer emits that, the DB a timestamp)."""
+    """expires_at / enabled_from as YYYY-MM-DD (the analyzer emits that, the DB a timestamp)."""
     if isinstance(value, (datetime, date)):
         return value.strftime("%Y-%m-%d")
     text = _text(value)
@@ -339,6 +339,9 @@ def _write_id3_tags(path: Path, tags: dict[str, Any]) -> None:
             _first_text(tags, "comment", "comments", "description"),
         ),
         (partial(TXXX, desc="Expiry"), _expiry_text(tags.get("expires_at"))),
+        # RASTATIME 2026-11-08 - read back by analyze_metadata on the new file
+        (partial(TXXX, desc="Enable Date"), _expiry_text(tags.get("enabled_from"))),
+        (partial(TXXX, desc="COUNTRY"), _first_text(tags, "country")),
     ]
     for make_frame, text in frames:
         if not text:
@@ -383,6 +386,8 @@ def _write_mp4_tags(path: Path, tags: dict[str, Any]) -> None:
 
     freeform = [
         ("Expiry", _expiry_text(tags.get("expires_at"))),
+        ("Enable Date", _expiry_text(tags.get("enabled_from"))),
+        ("COUNTRY", _first_text(tags, "country")),
         ("ISRC", _first_text(tags, "isrc")),
         ("LABEL", _first_text(tags, "label")),
         ("LANGUAGE", _first_text(tags, "language")),
