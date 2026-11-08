@@ -418,7 +418,8 @@ Was der Import mit jeder Datei macht:
   Lossless wird umgewandelt, eine `.wav` mit MP3-Daten nicht.
 - **Tags und Cover wandern mit.**  Titel, Interpret, Album, Genre,
   Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Sprache,
-  Kommentar und das **Expiry**-Datum werden in die MP3 geschrieben, ein
+  Kommentar, **Expiry**- und **Enable**-Datum sowie das **Land** werden
+  in die MP3 geschrieben, ein
   eingebettetes JPEG- oder PNG-Cover bleibt erhalten.  Die Datei behält
   ihren Namen mit der neuen Endung (`Interview.wav` wird zu
   `Interview.mp3`); eine Datei ohne Titel-Tag zeigt diesen neuen Namen

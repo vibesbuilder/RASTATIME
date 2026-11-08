@@ -193,14 +193,15 @@ antes de archivarlo:
   se convierte a **MP3 de 320 kbps** mientras Configuración →
   **Máquina local** → **Formato de importación** esté activado (por
   defecto).  El original sin pérdida no se conserva; las etiquetas,
-  la fecha Expiry y una carátula incrustada se mantienen.  Si una
+  las fechas Expiry y Enable, el país y una carátula incrustada se
+  mantienen.  Si una
   conversión falla, el original se importa sin cambios.  Detalles:
   [Máquina local](./LOCAL_MACHINE.md), sección 5.
 - **Las etiquetas se leen en todos los formatos.**  Además del ID3 de
   los archivos MP3, el analyzer lee las etiquetas de los archivos WAV
   (bloque ID3 y RIFF INFO), los comentarios de los archivos FLAC, OGG
   y Opus y los campos de los archivos M4A, incluidos descripción /
-  comentario y la fecha **Expiry** (`YYYY-MM-DD`).  Antes del
+  comentario, las fechas y el país (sección siguiente).  Antes del
   2026-10-14 las etiquetas de los archivos WAV no se leían, y un
   `.aac` en bruto con etiqueta ID3 fallaba al importar.
 
@@ -211,6 +212,33 @@ Desde el 2026-10-24 cada episodio descargado se **mide en sonoridad**
 su ganancia real por pista en lugar de una aproximación. Los episodios
 anteriores a esa fecha se recuperan con **Settings → Streams → Measure
 loudness**, que solo mide archivos sin valores.
+
+### Fechas y país desde las etiquetas (desde 2026-11-08)
+
+Tres campos del editor de pista se rellenan al importar desde las
+etiquetas del archivo: tramas ID3 `TXXX` en los archivos MP3, y los
+mismos nombres como comentarios de los archivos FLAC, OGG y Opus,
+campos libres de los archivos M4A o en el bloque ID3 de un archivo WAV:
+
+| Nombre de la etiqueta | Campo | Formato |
+|---|---|---|
+| `Expiry` o `Expiry Date` | **Fecha de caducidad** | `2026-11-08` o `20261108` |
+| `Enable Date` o `Enabled From` | **Activo desde** | `2026-11-08` o `20261108` |
+| `Country` | **País** | texto libre como en la etiqueta, p. ej. `Austria` |
+
+Mayúsculas y minúsculas, espacios, guiones bajos y guiones en el nombre
+de la etiqueta no importan (`EXPIRY_DATE` es `Expiry Date`).  Una fecha
+en otro formato se ignora; el registro del analyzer nombra el archivo.
+Una fecha de caducidad alcanzada o una fecha de activación aún por
+llegar desactiva la pista de inmediato.  El país solo se rellena si la
+pista aún no tiene ninguno.
+
+**Releer etiquetas** también toma el país del archivo (un archivo sin
+la etiqueta lo borra), pero nunca las dos fechas: una fecha fijada en
+RASTATIME se mantiene.  Las pistas importadas antes del 2026-11-08
+reciben su país una sola vez desde sus etiquetas con
+`manage.py backfill_country --yes` en el equipo del estudio; el comando
+solo rellena países vacíos y, sin `--yes`, solo cuenta.
 
 ### Editar metadatos de pista
 
@@ -224,6 +252,7 @@ el menú de acción de la fila.  Si se rechaza el guardado (por ejemplo, una fec
 | **Álbum** | `cc_files.album_title` |
 | **Género** | `cc_files.genre` |
 | **Año** | `cc_files.year` |
+| **País** (desde 2026-11-08) | `cc_files.country` - texto libre, desde la etiqueta `Country` al importar; el campo sugiere los países ya usados. La base de Analytics → [Music by Country](./ANALYTICS.md); los smart blocks pueden filtrar por él (criterio *País*). Columna de la biblioteca *País* (oculta por defecto, se puede buscar). |
 | **BPM** | `cc_files.bpm` |
 | **Tipo de pista** | `cc_files.track_type` — usado por filtros smart-block |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar. Desde el 30/09/2026 los valores se mantienen dentro del archivo: un cue out más allá de la duración se limita a la duración, un cue in negativo pasa a cero. Un cambio se copia en las filas de los programas futuros que programan la pista (las filas ya iniciadas no se tocan) y esos programas se recalculan - no hace falta volver a llenarlos. |
@@ -234,8 +263,9 @@ el menú de acción de la fila.  Si se rechaza el guardado (por ejemplo, una fec
 | **Teaser** / **Teaser para los programas**, **Tipo de teaser** | El programa o programas que anuncia un jingle y cómo (teaser de programa, teaser del día «hoy», teaser del día «mañana»); dos campos del editor de pista y de la edición masiva, mostrados como `Nombre del programa · today` en la columna *Teaser* (oculta por defecto, buscable). Los bloques inteligentes eligen los jingles adecuados con el criterio *Teaser: encaja con la parrilla*; véase [Automatización de teasers](./TEASERS.md). Desde 2026-10-16. |
 | **Crossover** | Cómo se encuentra esta pista con sus vecinas (desde el 2026-09-29 un campo de tres opciones; las dos excepciones se excluyen entre sí). **As the track type** (como el tipo de pista, por defecto): la pista se solapa y funde según indique su tipo de pista - Settings → Track Types → *Crossfade Duration* - o, sin valor allí, según la Default Track Crossfade Duration; desde 2026-09-30 hereda también el preajuste *No Fade during Crossover* del tipo. **No Fade during Crossover** (sin fundido durante el crossover, `cc_files.no_fade_crossfade`): el solapamiento se mantiene, pero esta pista conserva su nivel completo mientras la otra se funde; en un límite de programa sobrepasado, una pista saliente marcada se corta en vez de fundirse. **Exclude from Crossover** (excluir del crossover, `cc_files.exclude_crossfade`): esta pista nunca se solapa con una vecina - empieza al final de la pista anterior y la siguiente empieza a su final. Cambiar a *Exclude* o volver de él recalcula las filas de los programas futuros que programan la pista. |
 | **Metadatos del stream** (desde 2026-10-14) | Si el artista y el título de esta pista llegan a los reproductores de los oyentes (ICY) y al Live Text. **Como el tipo de pista** (por defecto): el ajuste previo de Settings → Track Types → *Forward Metadata to the Stream*. **Enviar al stream** / **No enviar**: la elección propia de la pista. Mientras suena una pista sin envío, el stream muestra «Nombre de la emisora - Nombre del programa» en todos los formatos de Stream Label, como una fuente en directo sin metadatos. Pensado para jingles, identificaciones y promos; el historial de emisión no cambia. |
-| **Fecha de caducidad** | `cc_files.expires_at`, formato AAAA-MM-DD, vacío = sin caducidad. La fecha cuenta desde las 00:00 de ese día: al alcanzarla, la pasada horaria de caducidad marca **Pista desactivada**. Una fecha posterior o vaciada vuelve a activar la pista, salvo que se haya desactivado a mano. |
-| **Pista desactivada** (desde 2026-11-08) | `cc_files.disabled`. Márquela a mano, o se marca automáticamente al alcanzar la fecha de caducidad. Los bloques inteligentes ya no eligen una pista desactivada; los programas que ya la contienen la siguen emitiendo, y puede seguir programándola a mano. En el editor los dos campos se siguen antes de guardar: una fecha de caducidad hasta hoy inclusive marca la casilla; una fecha posterior o vaciada la desmarca si la había marcado la caducidad; si desmarca la casilla, se vacía una fecha de caducidad alcanzada. Guardar sin la marca y con una fecha de caducidad alcanzada se rechaza con un mensaje. Columna *Desactivado* de la biblioteca (oculta por defecto, selector de columnas). |
+| **Activo desde** (desde 2026-11-08) | `cc_files.enabled_from`, formato AAAA-MM-DD, vacío = sin fecha de activación. La pista permanece desactivada hasta las 00:00 de ese día; después la pasada horaria la activa, salvo que se haya desactivado a mano. Debe ser anterior a la fecha de caducidad. Desde la etiqueta `Enable Date` al importar. Columna de la biblioteca *Activo desde* (oculta por defecto). |
+| **Fecha de caducidad** | `cc_files.expires_at`, formato AAAA-MM-DD, vacío = sin caducidad. La fecha cuenta desde las 00:00 de ese día: al alcanzarla, la pasada horaria de caducidad marca **Pista desactivada**. Una fecha posterior o vaciada vuelve a activar la pista, salvo que se haya desactivado a mano. Desde la etiqueta `Expiry` / `Expiry Date` al importar. |
+| **Pista desactivada** (desde 2026-11-08) | `cc_files.disabled`. Márquela a mano, o se marca automáticamente mientras la fecha de activación está por llegar y en cuanto se alcanza la fecha de caducidad. Los bloques inteligentes ya no eligen una pista desactivada; los programas que ya la tienen la siguen emitiendo, y aún puede programarla a mano. En el editor los campos se siguen antes de guardar: una fecha de caducidad hasta hoy incluido o una fecha de activación posterior a hoy marca la casilla; cambiar o borrar las fechas la desmarca de nuevo, salvo que usted la haya marcado a mano; desmarcar la casilla vacía una fecha de caducidad alcanzada y una fecha de activación aún por llegar. Guardar sin la marca se rechaza con un mensaje mientras una fecha siga desactivando la pista. Una marca a mano se guarda aparte (`cc_files.disabled_by_hand`), así que una pista que usted desactivó sigue desactivada cuando cambian sus fechas. Columna de la biblioteca *Desactivado* (oculta por defecto, selector de columnas). |
 
 ### Eliminar una pista
 
@@ -275,7 +305,7 @@ Biblioteca → **+ Nuevo** → **Smart Block**.
 |---|---|
 | **Nombre** | Visible en biblioteca y calendario. |
 | **Tipo** | **Estático** — elige una vez al crear; el conjunto nunca cambia. **Dinámico** — re-elige cada vez que el block se planifica. |
-| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm está en el rango de 100 a 130*, etc. Las filas se combinan con Y; el **+** junto a una fila añade una alternativa para el mismo campo (O), p. ej. *género es pop* **+** *género es rock*. Detalles en [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm está en el rango de 100 a 130*, etc. Las filas se combinan con Y; el **+** junto a una fila añade una alternativa para el mismo campo (O), p. ej. *género es pop* **+** *género es rock*. Desde 2026-11-08 también *País* (p. ej. *país es Austria*; *es* y *no es* comparan exactamente, *no es* y *no contiene* incluyen las pistas sin país). Detalles en [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limitar a** | **Número de pistas** (ej. 10), **Duración en tiempo** (ej. 30:00), **Tiempo restante en el programa**. |
 | **Ordenar** | Aleatorio / más reciente primero / por artista / por número de reproducciones / etc. |
 
@@ -289,6 +319,13 @@ Los smart blocks buscan en **toda la biblioteca** para todos
 los roles - el smart block de un DJ también toma pistas de
 otros usuarios.  Para limitar un bloque a sus propias
 pistas, añada el criterio **Owner**.
+
+**Las pistas desactivadas** nunca se eligen.  Desde 2026-11-08 un
+smart block lo juzga a la hora de emisión de la franja, no en el
+momento de rellenarla: el autoloading rellena un programa una hora
+antes, así que una pista cuyo **Activo desde** es el día de un programa
+de las 00:07 se elige para él, y una pista cuya **Fecha de caducidad**
+es ese día, no.  Una pista desactivada a mano nunca se elige.
 
 > **Cómo funciona bajo el capó.** Los criterios están
 > almacenados en `cc_blockcriteria`. En momento de build,
@@ -467,10 +504,10 @@ la tabla:
 |---|---|
 | **Añadir a playlist** | Añadir las filas seleccionadas a una playlist existente de su elección. |
 | **Eliminar** | Eliminar las filas seleccionadas. |
-| **Editar** | Una pista seleccionada: su pestaña de edición, como antes. **Dos o más pistas seleccionadas (desde 2026-10-08): un solo diálogo para todas** - creador, álbum, género, año, tipo de pista, idioma, mood, sello, compositor, director, copyright, fecha de caducidad (`none` la borra), pista desactivada (*Sí* / *No*; desde 2026-11-08, *No* también vacía las fechas de caducidad alcanzadas), descripción. Los campos vacíos no cambian; un campo relleno se escribe en cada pista seleccionada; título, número de pista, BPM, puntos de cue y carátula siguen siendo por pista. Solo base de datos, como el editor individual (las etiquetas de los archivos se leen al importar y nunca se reescriben). Las pistas que no puede editar se omiten y se cuentan en el resultado. |
+| **Editar** | Una pista seleccionada: su pestaña de edición, como antes. **Dos o más pistas seleccionadas (desde 2026-10-08): un solo diálogo para todas** - creador, álbum, género, año, tipo de pista, idioma, mood, sello, compositor, director, copyright, país (desde 2026-11-08), activo desde y fecha de caducidad (`none` las borra), pista desactivada (*Sí* / *No*; desde 2026-11-08, *No* también vacía las fechas de caducidad alcanzadas y las fechas de activación aún por llegar), descripción. Los campos vacíos no cambian; un campo relleno se escribe en cada pista seleccionada; título, número de pista, BPM, puntos de cue y carátula siguen siendo por pista. Solo base de datos, como el editor individual (las etiquetas de los archivos se leen al importar y nunca se reescriben). Las pistas que no puede editar se omiten y se cuentan en el resultado. |
 | **Transferir propietario** | Reasignar propiedad (solo Admins). |
 | **Cue Points** | Detecta los puntos de cue de las pistas seleccionadas a partir del audio (la misma detección de silencio que el analizador ejecuta al importar: por debajo de −60 dB durante al menos 0,3 s al inicio o al final) y los guarda. Los programas futuros que programan esas pistas adoptan los nuevos valores y se recalculan. Las pistas de más de 15 minutos se omiten - la acción está pensada para jingles y otros elementos cortos. Desde el 30/09/2026. |
-| **Releer etiquetas** *(desde 2026-10-21)* | Vuelve a leer las etiquetas de las pistas seleccionadas desde los archivos en disco, para archivos editados en Windows después de la importación.  RASTATIME nunca relee un archivo por sí mismo: la base de datos es la verdad para la biblioteca y el playout.  El botón sustituye título, artista, álbum, género, año, número de pista, compositor, copyright, sello, ISRC, BPM, mood, idioma y comentario por lo que contiene el archivo (una etiqueta ausente vacía la columna) y actualiza la suma de comprobación y el tamaño; todo lo que se define solo en RASTATIME (tipo de pista, teaser, puntos de cue, sonoridad, caducidad, peticiones) se mantiene.  Administradores y gestores de programación para cualquier archivo, los demás para los suyos.  El archivo solo se lee, así que una pista en antena está a salvo; pero edite un archivo en Windows solo mientras no esté programado, el playout reproduce directamente desde la biblioteca. |
+| **Releer etiquetas** *(desde 2026-10-21)* | Vuelve a leer las etiquetas de las pistas seleccionadas desde los archivos en disco, para archivos editados en Windows después de la importación.  RASTATIME nunca relee un archivo por sí mismo: la base de datos es la verdad para la biblioteca y el playout.  El botón sustituye título, artista, álbum, género, año, número de pista, compositor, copyright, sello, ISRC, BPM, mood, idioma, comentario y (desde 2026-11-08) país por lo que contiene el archivo (una etiqueta ausente vacía la columna) y actualiza la suma de comprobación y el tamaño; todo lo que se define solo en RASTATIME (tipo de pista, teaser, puntos de cue, sonoridad, fechas de caducidad y de activación, peticiones) se mantiene.  Administradores y gestores de programación para cualquier archivo, los demás para los suyos.  El archivo solo se lee, así que una pista en antena está a salvo; pero edite un archivo en Windows solo mientras no esté programado, el playout reproduce directamente desde la biblioteca. |
 
 ---
 

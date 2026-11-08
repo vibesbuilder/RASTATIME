@@ -244,15 +244,15 @@ de le classer :
 - **L'audio sans perte** - WAV, FLAC, AU, Apple Lossless en M4A - est
   converti en **MP3 à 320 kbit/s** tant que Paramètres → **Machine
   locale** → **Format d'import** est activé (par défaut).  L'original
-  sans perte n'est pas conservé ; les tags, la date Expiry et une
-  pochette intégrée sont repris.  Si une conversion échoue, l'original
+  sans perte n'est pas conservé ; les tags, les dates Expiry et Enable,
+  le pays et une pochette intégrée sont repris.  Si une conversion échoue, l'original
   est importé sans modification.  Détails :
   [Machine locale](./LOCAL_MACHINE.md), section 5.
 - **Les tags sont lus dans tous les formats.**  Outre l'ID3 des
   fichiers MP3, l'analyzer lit les tags des fichiers WAV (bloc ID3 et
   RIFF INFO), les commentaires des fichiers FLAC, OGG et Opus et les
-  champs des fichiers M4A, y compris description / commentaire et la
-  date **Expiry** (`YYYY-MM-DD`).  Avant le 2026-10-14, les tags des
+  champs des fichiers M4A, y compris description / commentaire, les
+  dates et le pays (section suivante).  Avant le 2026-10-14, les tags des
   fichiers WAV n'étaient pas lus, et un `.aac` brut avec un tag ID3
   échouait à l'import.
 
@@ -264,6 +264,33 @@ la diffusion applique son vrai gain par piste au lieu d'une
 approximation. Les épisodes antérieurs à cette date se rattrapent
 avec **Settings → Streams → Measure loudness**, qui ne mesure que les
 fichiers sans valeurs.
+
+### Dates et pays depuis les tags (depuis le 2026-11-08)
+
+Trois champs de l'éditeur de piste sont remplis à l'import à partir des
+tags du fichier - trames ID3 `TXXX` des fichiers MP3, et les mêmes noms
+comme commentaires des fichiers FLAC, OGG et Opus, champs libres des
+fichiers M4A ou dans le bloc ID3 d'un fichier WAV :
+
+| Nom du tag | Champ | Format |
+|---|---|---|
+| `Expiry` ou `Expiry Date` | **Date d'expiration** | `2026-11-08` ou `20261108` |
+| `Enable Date` ou `Enabled From` | **Actif à partir du** | `2026-11-08` ou `20261108` |
+| `Country` | **Pays** | texte libre comme dans le tag, p. ex. `Austria` |
+
+Majuscules et minuscules, espaces, tirets bas et traits d'union dans le
+nom du tag n'ont pas d'importance (`EXPIRY_DATE` vaut `Expiry Date`).
+Une date dans un autre format est ignorée ; le journal de l'analyzer
+nomme le fichier.  Une date d'expiration atteinte ou une date
+d'activation encore à venir désactive la piste aussitôt.  Le pays n'est
+rempli que si la piste n'en a pas encore.
+
+**Relire les tags** reprend aussi le pays depuis le fichier (un fichier
+sans le tag l'efface), mais jamais les deux dates : une date définie
+dans RASTATIME reste.  Les pistes importées avant le 2026-11-08
+reçoivent leur pays une seule fois depuis leurs tags avec
+`manage.py backfill_country --yes` sur le poste du studio ; la commande
+ne remplit que les pays vides et, sans `--yes`, se contente de compter.
 
 ### Modifier les métadonnées de piste
 
@@ -277,6 +304,7 @@ métadonnées** dans le menu d'action de la ligne.  Si l'enregistrement est refu
 | **Album** | `cc_files.album_title` |
 | **Genre** | `cc_files.genre` |
 | **Année** | `cc_files.year` |
+| **Pays** (depuis le 2026-11-08) | `cc_files.country` - texte libre, depuis le tag `Country` à l'import ; le champ propose les pays déjà utilisés. La base d'Analytics → [Music by Country](./ANALYTICS.md) ; les blocs intelligents peuvent filtrer dessus (critère *Pays*). Colonne de la bibliothèque *Pays* (masquée par défaut, cherchable). |
 | **BPM** | `cc_files.bpm` |
 | **Type de piste** | `cc_files.track_type` — utilisé par les filtres smart-block |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — couper le début / la fin sans re-encodage. Depuis le 30/09/2026, les valeurs restent à l'intérieur du fichier : un cue out au-delà de la longueur est ramené à la longueur, un cue in négatif devient zéro. Une modification est copiée dans les lignes des émissions à venir qui programment la piste (les lignes déjà commencées ne sont pas touchées), et ces émissions sont recalculées - pas besoin de les remplir à nouveau. |
@@ -287,8 +315,9 @@ métadonnées** dans le menu d'action de la ligne.  Si l'enregistrement est refu
 | **Teaser** / **Teaser pour les émissions**, **Type de teaser** | La ou les émissions qu'un jingle annonce et comment (teaser d'émission, teaser du jour « aujourd'hui », teaser du jour « demain ») ; deux champs de l'éditeur de piste et de l'édition groupée, affichés `Nom de l'émission · today` dans la colonne *Teaser* (masquée par défaut, recherchable). Les smart blocks choisissent les jingles qui conviennent avec le critère *Teaser : correspond à la grille* - voir [Automatisation des teasers](./TEASERS.md). Depuis le 2026-10-16. |
 | **Crossover** | Comment ce titre rencontre ses voisins (depuis le 2026-09-29 un champ à trois choix ; les deux exceptions s'excluent mutuellement). **As the track type** (comme le type de piste, par défaut) : le titre se chevauche et s'enchaîne selon son type de piste - Settings → Track Types → *Crossfade Duration* - ou, sans valeur à cet endroit, selon la Default Track Crossfade Duration ; depuis le 2026-09-30 il hérite aussi du préréglage *No Fade during Crossover* du type. **No Fade during Crossover** (pas de fondu pendant le crossover, `cc_files.no_fade_crossfade`) : le chevauchement reste, mais ce titre garde son niveau plein pendant que l'autre s'estompe ; à une limite d'émission dépassée, un titre sortant marqué est coupé au lieu d'être fondu. **Exclude from Crossover** (exclure du crossover, `cc_files.exclude_crossfade`) : ce titre ne chevauche jamais un voisin - il démarre à la fin du titre précédent et le suivant démarre à sa fin. Passer à *Exclude* ou en revenir recalcule les lignes des émissions à venir qui programment le titre. |
 | **Métadonnées du flux** (depuis le 2026-10-14) | Si l'artiste et le titre de cette piste parviennent aux lecteurs des auditeurs (ICY) et au Live Text. **Comme le type de piste** (défaut) : le préréglage de Settings → Track Types → *Forward Metadata to the Stream*. **Transmettre au flux** / **Ne pas transmettre** : le choix propre de la piste. Pendant une piste sans transmission, le flux affiche « Nom de la station - Nom de l'émission » dans chaque format de Stream Label, comme une source live sans métadonnées. Pour les jingles, identifiants et promos ; l'historique de diffusion n'est pas concerné. |
-| **Date d'expiration** | `cc_files.expires_at`, format AAAA-MM-JJ, vide = pas d'expiration. La date compte à partir de 00:00 ce jour-là : une fois atteinte, le passage horaire d'expiration coche **Piste désactivée**. Une date plus tardive ou vidée réactive la piste, sauf si elle a été désactivée à la main. |
-| **Piste désactivée** (depuis le 2026-11-08) | `cc_files.disabled`. Cochez-la à la main, ou elle est cochée automatiquement quand la date d'expiration est atteinte. Une piste désactivée n'est plus choisie par les blocs intelligents ; les émissions qui la contiennent déjà continuent de la diffuser, et vous pouvez toujours la programmer à la main. Dans l'éditeur, les deux champs se suivent avant l'enregistrement : une date d'expiration jusqu'à aujourd'hui inclus coche la case ; une date plus tardive ou vidée la décoche si c'est l'expiration qui l'avait cochée ; si vous décochez la case, une date d'expiration atteinte est vidée. Un enregistrement sans la coche et avec une date d'expiration atteinte est refusé avec un message. Colonne *Désactivé* de la bibliothèque (masquée par défaut, sélecteur de colonnes). |
+| **Actif à partir du** (depuis le 2026-11-08) | `cc_files.enabled_from`, format AAAA-MM-JJ, vide = pas de date d'activation. La piste reste désactivée jusqu'à 00:00 ce jour-là ; ensuite le passage horaire la réactive, sauf si elle a été désactivée à la main. Doit précéder la date d'expiration. Depuis le tag `Enable Date` à l'import. Colonne de la bibliothèque *Actif à partir du* (masquée par défaut). |
+| **Date d'expiration** | `cc_files.expires_at`, format AAAA-MM-JJ, vide = pas d'expiration. La date compte à partir de 00:00 ce jour-là : une fois atteinte, le passage horaire d'expiration coche **Piste désactivée**. Une date plus tardive ou vidée réactive la piste, sauf si elle a été désactivée à la main. Depuis le tag `Expiry` / `Expiry Date` à l'import. |
+| **Piste désactivée** (depuis le 2026-11-08) | `cc_files.disabled`. Cochez-la à la main, ou elle est cochée automatiquement tant que la date d'activation est à venir et dès que la date d'expiration est atteinte. Une piste désactivée n'est plus choisie par les blocs intelligents ; les émissions qui la contiennent déjà continuent de la diffuser, et vous pouvez toujours la programmer à la main. Dans l'éditeur, les champs se suivent avant même l'enregistrement : une date d'expiration jusqu'à aujourd'hui inclus ou une date d'activation après aujourd'hui coche la case ; modifier ou effacer les dates la décoche, sauf si vous l'avez cochée à la main ; décocher la case vide une date d'expiration atteinte et une date d'activation encore à venir. L'enregistrement sans la coche est refusé avec un message tant qu'une date désactive encore la piste. Une coche à la main est enregistrée à part (`cc_files.disabled_by_hand`), si bien qu'une piste que vous avez désactivée reste désactivée quand ses dates changent. Colonne de la bibliothèque *Désactivé* (masquée par défaut, sélecteur de colonnes). |
 
 > **Conseil opérateur.** Définissez **Cue In** sur les
 > promos radio / stings qui ont quelques secondes de
@@ -344,7 +373,7 @@ Bibliothèque → **+ Nouveau** → **Smart Block**.
 |---|---|
 | **Nom** | Visible dans la bibliothèque et sur le calendrier. |
 | **Type** | **Statique** — choisit une fois au moment de la création ; l'ensemble ne change jamais. **Dynamique** — re-choisit chaque fois que le block est planifié. |
-| **Critères** | Ajouter des lignes : *artiste contient "Bowie"*, *bpm est dans le champ 100 à 130*, *genre est pop*, etc. Les lignes se combinent en ET ; le **+** à côté d'une ligne ajoute une alternative pour le même champ (OU), ex. *genre est pop* **+** *genre est rock*. Détails sous [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Critères** | Ajouter des lignes : *artiste contient "Bowie"*, *bpm est dans le champ 100 à 130*, *genre est pop*, etc. Les lignes se combinent en ET ; le **+** à côté d'une ligne ajoute une alternative pour le même champ (OU), ex. *genre est pop* **+** *genre est rock*. Depuis le 2026-11-08 aussi *Pays* (p. ex. *pays est Austria* ; *est* et *n'est pas* comparent exactement, *n'est pas* et *ne contient pas* incluent les pistes sans pays). Détails sous [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limiter à** | L'un de : **Nombre de pistes** (ex. 10), **Durée en temps** (ex. 30:00), **Temps restant dans l'émission** (laisse le smart block remplir exactement jusqu'à la fin de l'émission). |
 | **Trier** | Aléatoire / plus récent en premier / par artiste / par nombre de lectures / etc. |
 
@@ -366,6 +395,14 @@ vos propres pistes, ajoutez le critère **Owner**.
 Si vous définissez "Limiter à 10 pistes" mais seulement 4
 pistes dans la bibliothèque correspondent aux critères,
 vous obtenez 4. Le block ne s'arrête pas en erreur.
+
+**Les pistes désactivées** ne sont jamais choisies.  Depuis le
+2026-11-08, un bloc intelligent en juge à l'heure de diffusion de la
+case, et non au moment du remplissage : l'autoloading remplit une
+émission environ une heure à l'avance, donc une piste dont **Actif à
+partir du** est le jour d'une émission de 00:07 est choisie pour elle,
+et une piste dont la **Date d'expiration** est ce jour-là ne l'est pas.
+Une piste désactivée à la main n'est jamais choisie.
 
 > **Comment ça marche sous le capot.** Les critères sont
 > stockés dans `cc_blockcriteria`. Au moment du build,
@@ -579,10 +616,10 @@ barre d'outils qui apparaît au bas du tableau :
 |---|---|
 | **Ajouter à une playlist** | Ajouter les lignes sélectionnées à une playlist existante de votre choix. |
 | **Supprimer** | Supprimer les lignes sélectionnées. Même sémantique de confirmation-si-planifié que la suppression d'une seule ligne. |
-| **Modifier** | Une piste sélectionnée : son onglet d'édition, comme avant. **Deux pistes ou plus sélectionnées (depuis le 2026-10-08) : un seul dialogue pour toutes** - créateur, album, genre, année, type de piste, langue, mood, label, compositeur, chef d'orchestre, copyright, date d'expiration (`none` l'efface), piste désactivée (*Oui* / *Non* ; depuis le 2026-11-08, *Non* vide aussi les dates d'expiration atteintes), description. Les champs vides restent inchangés, un champ rempli est écrit dans chaque piste sélectionnée ; titre, numéro de piste, BPM, points de repère et pochette restent par piste. Base de données seulement, comme l'éditeur simple (les tags dans les fichiers sont lus à l'import et jamais réécrits). Les pistes que vous ne pouvez pas modifier sont ignorées et comptées dans le résultat. |
+| **Modifier** | Une piste sélectionnée : son onglet d'édition, comme avant. **Deux pistes ou plus sélectionnées (depuis le 2026-10-08) : un seul dialogue pour toutes** - créateur, album, genre, année, type de piste, langue, mood, label, compositeur, chef d'orchestre, copyright, pays (depuis le 2026-11-08), actif à partir du et date d'expiration (`none` les efface), piste désactivée (*Oui* / *Non* ; depuis le 2026-11-08, *Non* vide aussi les dates d'expiration atteintes et les dates d'activation encore à venir), description. Les champs vides restent inchangés, un champ rempli est écrit dans chaque piste sélectionnée ; titre, numéro de piste, BPM, points de repère et pochette restent par piste. Base de données seulement, comme l'éditeur simple (les tags dans les fichiers sont lus à l'import et jamais réécrits). Les pistes que vous ne pouvez pas modifier sont ignorées et comptées dans le résultat. |
 | **Transférer le propriétaire** | Réassigner la propriété (Admins seulement). Utilisé quand un DJ part et que ses fichiers doivent passer au compte de la station. |
 | **Cue Points** | Détecte les points de repère des pistes sélectionnées à partir de l'audio (la même détection de silence que l'analyseur exécute à l'import : moins de −60 dB pendant au moins 0,3 s au début ou à la fin) et les enregistre. Les émissions à venir qui programment ces pistes reprennent les nouvelles valeurs et sont recalculées. Les pistes de plus de 15 minutes sont ignorées - l'action est prévue pour les jingles et autres éléments courts. Depuis le 30/09/2026. |
-| **Relire les tags** *(depuis le 2026-10-21)* | Relit les tags des pistes sélectionnées depuis les fichiers sur le disque - pour les fichiers que vous avez modifiés dans Windows après l'import.  RASTATIME ne relit jamais un fichier de lui-même : la base de données est la vérité pour la bibliothèque et le playout.  Le bouton remplace titre, artiste, album, genre, année, numéro de piste, compositeur, copyright, label, ISRC, BPM, humeur, langue et commentaire par le contenu du fichier (un tag absent du fichier vide la colonne) et met à jour la somme de contrôle et la taille ; tout ce qui est défini uniquement dans RASTATIME (type de piste, teaser, points de repère, sonie, expiration, demandes) est conservé.  Administrateurs et responsables de programme pour chaque fichier, les autres pour les leurs.  Le fichier est seulement lu, une piste à l'antenne ne risque rien - mais ne modifiez un fichier dans Windows que s'il n'est pas programmé, le playout lit directement la bibliothèque. |
+| **Relire les tags** *(depuis le 2026-10-21)* | Relit les tags des pistes sélectionnées depuis les fichiers sur le disque - pour les fichiers que vous avez modifiés dans Windows après l'import.  RASTATIME ne relit jamais un fichier de lui-même : la base de données est la vérité pour la bibliothèque et le playout.  Le bouton remplace titre, artiste, album, genre, année, numéro de piste, compositeur, copyright, label, ISRC, BPM, humeur, langue, commentaire et (depuis le 2026-11-08) pays par le contenu du fichier (un tag absent du fichier vide la colonne) et met à jour la somme de contrôle et la taille ; tout ce qui est défini uniquement dans RASTATIME (type de piste, teaser, points de repère, sonie, dates d'expiration et d'activation, demandes) est conservé.  Administrateurs et responsables de programme pour chaque fichier, les autres pour les leurs.  Le fichier est seulement lu, une piste à l'antenne ne risque rien - mais ne modifiez un fichier dans Windows que s'il n'est pas programmé, le playout lit directement la bibliothèque. |
 
 ---
 

@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enabled From: Track erst ab einem Datum aktiv (2026-11-08, Operator-Go Option A + Zusatz)**
+  — Neues Feld **Enabled From** in Edit Track (vor dem Ablaufdatum) und in der
+  Mehrfachbearbeitung (`none` leert): bis 00:00 Uhr dieses Tages ist der Track deaktiviert.
+  Der Haken „von Hand" wird jetzt eigens gespeichert (`cc_files.disabled_by_hand`,
+  Migration 0080); `disabled` ist abgeleitet = von Hand ODER Ablauf erreicht ODER Enable-Datum
+  in der Zukunft, der stündliche Lauf rechnet in beide Richtungen nach (gibt Tracks am
+  Enable-Tag frei). Dialog: das Kästchen zeigt Hand-Haken oder Daten, Haken weg leert ein
+  erreichtes Ablauf- und ein künftiges Enable-Datum; abgelehnt werden „ohne Haken mit
+  künftigem Enable-Datum" und „Enable-Datum nicht vor dem Ablaufdatum"; Mehrfach *No* leert
+  auch künftige Enable-Daten. **Zusatz:** Smart Blocks beurteilen die Verfügbarkeit zur
+  Sendezeit der Zeile statt nach dem gespeicherten Flag - eine 00:07-Sendung am Enable-Tag
+  bekommt den Track, am Ablauftag nicht mehr (Autoloading befüllt eine Stunde vorher).
+  Library-Spalte *Enabled From* (ausgeblendet). Rückfüllung 0080: 1 Track „von Hand",
+  Nachrechnen-Trockenlauf 0 Änderungen. Probe `C:/Temp/optd/enabled_from_probe.php` (40/40,
+  Rollback). Commits `a4b2fe58`, `bb123875`.
+- **Tags beim Import: Expiry Date, Enable Date, Country (2026-11-08, Operator-Go)** — Der
+  Analyzer liest `Expiry` und `Expiry Date` (bisher nur `Expiry`), neu `Enable Date` /
+  `Enabled From` und `Country`; Groß-/Kleinschreibung, Leer-, Binde- und Unterstriche im
+  Namen egal; Datum als `2026-11-08` oder `20261108`, anderes wird mit einer Warnung
+  übergangen. ID3-TXXX, Vorbis-Kommentare, M4A-Freiform, WAV-ID3-Block; die Umwandlung
+  verlustfrei→MP3 / ADTS→M4A trägt alle drei weiter. Das Land wird nur gefüllt, wenn der
+  Track keines hat. Wirksam nach ANALYZER-Neustart. Commit `6c2f66c8`.
+- **Country und Analytics → Music by Country (2026-11-08, Operator-Go, Kombinationen als
+  eigene Zeile)** — `cc_files.country` (Migration 0081), Feld in Edit Track und
+  Mehrfachbearbeitung mit Vorschlägen, Library-Spalte (ausgeblendet, durchsuchbar),
+  Smart-Block-Kriterium *Country*. 5.512 vorhandene Tracks bekamen ihr Land einmalig aus dem
+  COUNTRY-Tag (`manage.py backfill_country`, nur leere Werte; ein Wert „OUNTRY" ist ein
+  Tippfehler in einer Datei). Bericht **Music by Country**: Ausstrahlungen und Minuten der
+  Musik (Track-Typ-Code `music`, Abspielverlauf) je Land mit Anteilen, „No country" zuletzt,
+  Monatstabelle, die 25 meistgespielten Musiktitel ohne Land, CSV mit Land×Monat. Stand
+  2026: 51,3 % der Musikminuten mit Land, Austria 35,4 %. **Re-read Tags** übernimmt jetzt
+  das Land aus der Datei, die beiden Daten nie (Operator). Wirksam: Bericht und Editor
+  sofort, Re-read Tags nach API-Neustart. Proben `country_probe.php` (22/22),
+  `country_block_probe.php`, `music_country_probe.php`. Commits `a4b2fe58`, `d56d97a0`,
+  `9fa11ab8`, Texte `c824734e`.
+
 - **Track disabled von Hand: Checkbox in Edit Track und Feld in der Mehrfachbearbeitung
   (2026-11-08, Operator-Wunsch)** — `cc_files.disabled` setzte bisher nur der stündliche
   Ablauf-Lauf. Neu: Checkbox **Track disabled** in Edit Track (von Hand anhakbar, automatisch
@@ -26,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `C:/Temp/optd/track_disabled_probe.php` (27/27, Transaktion mit Rollback). Commit `5542c828`.
 
 ### Fixed
+
+- **Library: Spaltenauswahl und Standard-Sortierung zeigten auf falsche Spalten
+  (2026-11-08)** — Die festen Indizes aus LibreTime 4.5 (35 = Actions, 29 = Sortierung) waren
+  mit jeder neuen Spalte verrutscht: die Spaltenauswahl ließ *Website* aus, *Actions* ließ
+  sich ausblenden. Jetzt nach Spaltennamen. Der Spaltentitel *Expiry Date* hatte keinen
+  JS-Text und blieb unübersetzt. Commit `bb123875`.
 
 - **Edit Track schloss sich auch, wenn das Speichern abgelehnt wurde (2026-11-08)** — Der
   Tab ging sofort nach dem Absenden zu, ein ungültiges Feld (etwa ein Datum im falschen

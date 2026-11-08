@@ -1,10 +1,19 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.125
+Draft version: 0.127
 Date: 2026-11-08
 
 > **Revision history**
+> - **0.127 (2026-11-08)** - **Country and Music by Country** (§23.100): `cc_files.country`
+>   (migration 0081) from the COUNTRY tag, editors, a virtual smart block criterion, a one-time
+>   backfill command, Re-read Tags takes it; Analytics → Music by Country from the playout
+>   history.
+> - **0.126 (2026-11-08)** - **Enabled From, a stored "by hand", slot-time availability**
+>   (§23.99): migration 0080 (`disabled_by_hand`, `enabled_from`), `disabled` derived and
+>   recomputed both ways each hour, smart blocks judge availability at the slot's air time;
+>   the analyzer reads Expiry / Expiry Date / Enable Date / Country in any spelling and both
+>   date formats.
 > - **0.125 (2026-11-08)** - **Track disabled by hand** (§23.98): checkbox in Edit Track and a
 >   select in the bulk editor; the expiry still disables, a later expiry re-enables only
 >   what the expiry disabled; a refused Edit Track save keeps the tab open.
@@ -9503,3 +9512,77 @@ today keeps a track disabled).
 
 Probe `C:/Temp/optd/track_disabled_probe.php` (one transaction, rolled
 back; 27 checks).
+
+### 23.99 Enabled From, Disabled by Hand, Availability at Air Time (2026-11-08)
+
+**Why.**  Operator go 2026-11-08 (option A + the slot-time addition): a
+track should stay disabled until a date ("Enabled From"), also from a
+tag on import, and the expiry tag should be read under the name "Expiry
+Date" too.  §23.98 inferred "by hand" from the state (disabled while the
+expiry has not passed); with an enable date a still-waiting track looks
+the same, and the hourly run could never free it.
+
+**Now.**  Migration 0080: `cc_files.disabled_by_hand BOOLEAN NOT NULL
+DEFAULT FALSE` (backfill: disabled and expiry not reached - 1 track) and
+`cc_files.enabled_from TIMESTAMP` (00:00 of the day, like `expires_at`).
+
+* `disabled` stays the column everything reads and is derived:
+  `StoredFile::DISABLED_SQL` = by hand OR `expires_at <= NOW()` OR
+  `enabled_from > NOW()` (session time zone, as before).  Every save and
+  the import callback recompute it; `TrackExpiryTask` updates the rows
+  where it differs, in both directions (log: disabled n, enabled m).
+* Save rule (`setDbColMetadata`): the single editor posts a hidden
+  `disabled_by_hand` its dialog keeps (a box ticked by the dates looks
+  like one ticked by hand), unless the box comes unticked; bulk *Yes* /
+  *No* = by hand / not; a date change alone keeps the stored value.
+  Refused: unticked while a date disables, enable date not before the
+  expiry.  Bulk *No* clears reached expiry dates and enable dates ahead.
+* Smart blocks (`Block::availableAtSql`) judge at the fill context's slot
+  instead of the stored flag: `NOT disabled_by_hand AND (expires_at IS NULL
+  OR expires_at > slot) AND (enabled_from IS NULL OR enabled_from <= slot)`.
+  Autoloading fills about an hour ahead, so the flag at build time was
+  wrong for slots after midnight.  Without a fill context the slot is now.
+* The analyzer reads the custom tags through one table
+  (`analyze_metadata._CUSTOM_TAGS`): names compared without case, blanks,
+  underscores and hyphens; dates `YYYY-MM-DD` or `YYYYMMDD`, anything
+  else one warning; ID3 TXXX first, ffprobe tags only for files without
+  an ID3v2 tag.  The format conversion writes `Enable Date` and `COUNTRY`
+  back.  Re-read Tags never touches the two dates (operator).
+* Everything tolerates the absence of the columns before 0080
+  (`StoredFile::fileColumnReady`, one catalogue query per request).
+
+Probes `C:/Temp/optd/enabled_from_probe.php` (40 checks) and
+`track_disabled_probe.php` (27), both in a rolled-back transaction.
+
+### 23.100 Country and Music by Country (2026-11-08)
+
+**Why.**  Operator go 2026-11-08: the COUNTRY tag (5,512 files) into the
+database and a yearly overview of the music's origin ("music quota"),
+tracks of type Music only, tracks without a country as "No country",
+combinations such as "Germany/Switzerland" as rows of their own.
+
+**Now.**  Migration 0081: `cc_files.country VARCHAR(64)`.
+
+* Import: the analyzer sends `country`; the callback fills it only when
+  empty (blanks collapsed, 64 characters).  Existing files:
+  `manage.py backfill_country [--yes] [--ids]` reads the tag without
+  ffprobe or checksum (`read_custom_tags`) and fills empty values only,
+  mtime unchanged.  Re-read Tags has `country` in `TAG_FIELDS` (replaces,
+  a missing tag clears).
+* Edit Track / bulk editor field with a datalist of the values in use;
+  library column (searchable); smart block criterion *Country*, virtual
+  like the teaser criteria (`Block::countryCriterionSql`, quoted, `is` /
+  `is not` exact, patterns case-insensitive with literal `%` / `_`, the
+  negations include NULL).
+* Analytics → Music by Country (`YearlyreportController::countryAction`,
+  `Application_Service_MusicCountryReportService`): `cc_playout_history`
+  joined to the file and its track type (code `music`), seconds from
+  starts to ends, station-time year and month; the country as it is today.
+  Plays, minutes and shares per country, months, the 25 most played
+  untagged music tracks, CSV with a country x month matrix.  Live music
+  (DJs, line-ins, webstreams) and deleted files are not in the history.
+* The library's column picker and default sort use column names instead
+  of LibreTime's fixed indices, which had drifted.
+
+Probes `C:/Temp/optd/country_probe.php` (22 checks, rolled back),
+`country_block_probe.php`, `music_country_probe.php` (read-only).

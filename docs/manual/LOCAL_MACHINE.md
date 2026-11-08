@@ -389,7 +389,8 @@ What the import does with each file:
   Apple Lossless is converted; a `.wav` that holds MP3 data is not.
 - **Tags and cover travel along.**  Title, artist, album, genre, year,
   track number, composer, copyright, label, ISRC, BPM, language,
-  comment and the **Expiry** date are written into the MP3, and an
+  comment, the **Expiry** and **Enable** dates and the **Country**
+  are written into the MP3, and an
   embedded JPEG or PNG cover is kept.  The file keeps its name with
   the new extension (`Interview.wav` becomes `Interview.mp3`); a file
   without a title tag shows that new name as its title, like any

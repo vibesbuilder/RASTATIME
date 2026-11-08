@@ -284,7 +284,7 @@ Sendung (`cc_show_days.record` → `cc_show_instances.record`), Kopie der Aufnah
 Vorgänger- und Nachfolgesendung, Wirkung auf Länge und Metadaten von Kopie und Archiv.
 **Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
 
-### 💡 Expiry Date aus dem Tag beim Import - EVALUIERT 2026-11-08, Empfehlung Go, wartet auf Go + Beispieldatei
+### ✅ Expiry Date aus dem Tag beim Import - GEBAUT 2026-11-08 (Go: Namen `Expiry` und `Expiry Date`, Formate `2026-11-08` und `20261108`; `6c2f66c8`, wirksam nach ANALYZER-Neustart)
 
 Gibt es schon (2026-05-16): der Analyzer liest einen ID3-TXXX-Frame namens **„Expiry"** (ohne
 Groß-/Kleinschreibung, nur dieser Name) bzw. den ffprobe-Tag `expiry` bei anderen Formaten,
@@ -297,7 +297,7 @@ Tests, ~1 h, nur ANALYZER-Neustart.  Risiko gering (unbekannter Name/Format = wi
 Datum, Warnung im Log).  **Vorbedingungen:** Operator-Go; genauer Frame-Name und Datumsformat
 (Beispieldatei).
 
-### 💡 Enabled From (Track erst ab einem Datum aktiv) + Tag beim Import - EVALUIERT 2026-11-08, Empfehlung Go mit Option A, wartet auf Go
+### ✅ Enabled From (Track erst ab einem Datum aktiv) + Tag beim Import - GEBAUT 2026-11-08 (Go Option A + Zusatz Sendezeit; Migration 0080 live 14:22, `a4b2fe58`, `bb123875`, §23.99)
 
 Neues Feld `cc_files.enabled_from` (Migration 0080): bis zu diesem Tag (00:00) ist der Track
 deaktiviert.  Problem der heutigen Ableitung „von Hand = disabled und Ablauf nicht erreicht"
@@ -318,7 +318,7 @@ Apache-Neustart.  Risiko mittel-gering: ändert, welche Tracks Smart Blocks wäh
 Transaktion, Nachrechen-Abfrage vorher als Trockenlauf (erwartet 0 Änderungen), Rückweg
 Code-Revert + Migration rückwärts.  **Vorbedingungen:** Operator-Go, Wahl A/B, Frame-Name.
 
-### 💡 Country importieren + Jahresübersicht Musik nach Herkunft („Musikquote") - EVALUIERT 2026-11-08, Empfehlung Go, wartet auf Go
+### ✅ Country importieren + Jahresübersicht Musik nach Herkunft („Musikquote") - GEBAUT 2026-11-08 (Go, Kombinationen als eigene Zeile; Migration 0081 live 14:22, 5.512 Länder rückgefüllt, `d56d97a0`, `9fa11ab8`, §23.100; Re-read Tags übernimmt das Land, die Daten nicht)
 
 Scan 2026-11-08: `TXXX:COUNTRY` in 5.345 MP3 + 167 M4A (`----:com.apple.iTunes:COUNTRY`),
 saubere englische Ländernamen, 34 Werte (USA 1.214, Austria 1.040, UK 980, Germany 944, ...;

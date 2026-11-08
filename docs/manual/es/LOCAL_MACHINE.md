@@ -358,7 +358,8 @@ Lo que hace la importación con cada archivo:
   se convierte; un `.wav` con datos MP3 no.
 - **Etiquetas y carátula se conservan.**  Título, artista, álbum,
   género, año, número de pista, compositor, copyright, sello, ISRC,
-  BPM, idioma, comentario y la fecha **Expiry** se escriben en el MP3,
+  BPM, idioma, comentario, las fechas **Expiry** y **Enable** y el
+  **país** se escriben en el MP3,
   y una carátula JPEG o PNG incrustada se mantiene.  El archivo
   conserva su nombre con la nueva extensión (`Interview.wav` pasa a
   ser `Interview.mp3`); un archivo sin etiqueta de título muestra ese

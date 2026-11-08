@@ -7,7 +7,7 @@
 > behandelt den **Rückspiegel** — was tatsächlich gesendet wurde
 > und wie viele Menschen dabei zugehört haben.
 
-Das Menü **Analytics** in der oberen Navigation bündelt sieben
+Das Menü **Analytics** in der oberen Navigation bündelt acht
 Seiten:
 
 | Seite | Frage, die sie beantwortet |
@@ -18,6 +18,7 @@ Seiten:
 | **Show Listener Stats** | Wie hat jede *Sendung* bei den Hörerzahlen abgeschnitten? |
 | **People Involved** (Teilnehmende) | Wie viele Menschen haben die Eigenproduktionen des Senders in einem Jahr gemacht? Siehe § 6 und [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03, eigener Menüeintrag seit 2026-11-04). |
 | **Programme Minutes** (Sendeminuten) | Wie viele Minuten Eigenproduktion liefen in einem Jahr auf Sendung? Je ein Jahr, CSV. Siehe § 5 (seit 2026-11-03; bis 2026-11-04 Teil des „Jahresberichts"). |
+| **Music by Country** (Musik nach Land) | Woher kommt die gesendete Musik (Musikquote)? Je ein Jahr, CSV. Siehe § 7 (seit 2026-11-08). |
 | **Archive Status** (Archiv-Status) | Ist jede Episode auf cba.media angekommen? Laufende und wartende Uploads, was das automatische Archivieren vor sich hat, Probleme, Verlauf, CSV. Siehe [Archivierung](./ARCHIVING.md) § 7 (seit 2026-11-04). |
 
 Die ersten beiden existieren für die **Rechenschaftspflicht** —
@@ -204,5 +205,38 @@ der Liste, zählen aber nichts.  **Only shows without a
 value** (Nur Sendungen ohne Wert) und **Download CSV** (CSV
 herunterladen) helfen bei der Jahresmeldung.  Die Einzelheiten stehen in
 [Archivierung](./ARCHIVING.md) § 6.
+
+Program Managers und Admins öffnen diese Seite.
+
+## 7. Musik nach Land (seit 2026-11-08)
+
+**Analytics → Music by Country** (Musik nach Land) zeigt, woher die
+Musik kommt, die in einem Jahr auf Sendung ging - die Musikquote des
+Senders.  Je ein Jahr (Senderzeit; das laufende Jahr bis heute).
+
+Gezählt werden die Ausstrahlungen in der Playout History (§ 1) von
+Tracks, deren Track-Typ den Code `music` hat (Settings → Track Types);
+Tracks eines anderen Typs oder ohne Typ zählen nicht.  Jede
+Ausstrahlung zählt mit dem Land ihres Tracks, wie es heute eingetragen
+ist (Edit Track → **Land**, beim Import aus dem Tag `Country` gelesen -
+siehe [Bibliothek](./LIBRARY.md)); ein korrigiertes Land korrigiert also
+auch die vergangenen Ausstrahlungen.  Ein Track ohne Land zählt als
+**Kein Land**; eine Kombination wie `Germany/Switzerland` ist eine
+eigene Zeile.
+
+Die Seite zeigt die Minuten Musik, die Ausstrahlungen, die Zahl der
+Länder und den Anteil der Minuten mit Land; eine Tabelle je Land
+(Ausstrahlungen und Minuten mit ihren Anteilen, nach Minuten sortiert,
+*Kein Land* zuletzt); eine Tabelle je Monat (Ausstrahlungen, Minuten,
+Minuten mit Land und deren Anteil); und die **25 meistgespielten
+Musiktitel ohne Land** - tragen Sie deren Land ein, wird der Bericht
+vollständiger.  **CSV herunterladen** enthält zusätzlich die Minuten je
+Land und Monat.
+
+Nicht gezählt, weil sie nicht in der Playout History stehen: Musik, die
+DJs live spielen, Line-Ins und Webstreams sowie Ausstrahlungen von
+inzwischen gelöschten Tracks.  Die Historie beginnt mit der ersten
+protokollierten Ausstrahlung der Installation; beginnt sie später im
+Jahr, sagt die Seite das.
 
 Program Managers und Admins öffnen diese Seite.

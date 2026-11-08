@@ -7,7 +7,7 @@
 > **espejo retrovisor** — qué salió realmente al aire y cuántas
 > personas escuchaban mientras tanto.
 
-El menú **Analytics** de la barra de navegación agrupa siete
+El menú **Analytics** de la barra de navegación agrupa ocho
 páginas:
 
 | Página | Pregunta que responde |
@@ -18,6 +18,7 @@ páginas:
 | **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
 | **People Involved** (Participantes) | ¿Cuántas personas hicieron las producciones propias de la emisora en un año? Véase § 6 y [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03, entrada de menú propia desde el 2026-11-04). |
 | **Programme Minutes** (Minutos de programa) | ¿Cuántos minutos de producciones propias salieron al aire en un año? Un año cada vez, CSV. Véase § 5 (desde el 2026-11-03; hasta el 2026-11-04 parte del «Yearly Report», el informe anual). |
+| **Music by Country** (Música por país) | ¿De dónde viene la música emitida (cuota musical)? Un año cada vez, CSV. Véase § 7 (desde el 2026-11-08). |
 | **Archive Status** (estado del archivo) | ¿Llegó cada episodio a cba.media? Subidas en curso y en espera, lo que tiene por delante el archivo automático, problemas, historial, CSV. Véase [Archivo](./ARCHIVING.md) § 7 (desde el 2026-11-04). |
 
 Las dos primeras existen para la **rendición de cuentas** —
@@ -205,5 +206,37 @@ queda fuera hasta que se vuelva a marcar; los programas de repetición
 **Only shows without a value** (solo programas sin valor) y **Download
 CSV** (descargar CSV) ayudan con el informe anual.  Los detalles están
 en [Archivo](./ARCHIVING.md) § 6.
+
+Program Managers y Admins abren esta página.
+
+## 7. Música por país (desde 2026-11-08)
+
+**Analytics → Music by Country** (Música por país) muestra de dónde
+viene la música que salió al aire en un año: la cuota musical de la
+emisora.  Un año cada vez (hora de la emisora; el año en curso hasta
+hoy).
+
+Se cuentan las emisiones de la Playout History (§ 1) de las pistas cuyo
+tipo tiene el código `music` (Settings → Track Types); las pistas de
+otro tipo o sin tipo no cuentan.  Cada emisión cuenta con el país de su
+pista tal como está hoy (Edit Track → **País**, leído de la etiqueta
+`Country` al importar; véase [Biblioteca](./LIBRARY.md)), así que
+corregir un país corrige también las emisiones pasadas.  Una pista sin
+país cuenta como **Sin país**; una combinación como
+`Germany/Switzerland` es una fila propia.
+
+La página muestra los minutos de música, las emisiones, el número de
+países y la proporción de minutos con país; una tabla por país
+(emisiones y minutos con sus proporciones, ordenada por minutos, *Sin
+país* al final); una tabla por mes (emisiones, minutos, minutos con
+país y su proporción); y las **25 pistas de música más emitidas sin
+país**: introduzca su país para completar el informe.  **Descargar
+CSV** añade una tabla de los minutos por país y mes.
+
+No se cuentan, porque no están en la Playout History: la música que los
+DJ tocan en directo, las entradas de línea y los webstreams, ni las
+emisiones de pistas borradas desde entonces.  El historial empieza con
+la primera emisión registrada de la instalación; la página lo indica si
+empieza más tarde en el año.
 
 Program Managers y Admins abren esta página.

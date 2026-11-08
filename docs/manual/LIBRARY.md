@@ -218,14 +218,14 @@ file (not at its extension) before it files it:
 - **Lossless audio** - WAV, FLAC, AU, Apple Lossless in M4A - is
   converted to **MP3 at 320 kbps** while Settings → **Local
   Machine** → **Import Format** is on (the default).  The lossless
-  original is not kept; tags, the Expiry date and an embedded cover
-  are carried over.  If a conversion fails, the original is imported
+  original is not kept; tags, the Expiry and Enable dates, the
+  Country and an embedded cover are carried over.  If a conversion fails, the original is imported
   unchanged.  Details: [Local Machine](./LOCAL_MACHINE.md), section 5.
 - **Tags are read from every format.**  Besides ID3 in MP3 files, the
   analyzer reads the tags inside WAV files (ID3 chunk and RIFF INFO),
   the comments of FLAC, OGG and Opus files and the fields of M4A
-  files, including a description / comment and the **Expiry** date
-  (`YYYY-MM-DD`).  Before 2026-10-14 the tags inside WAV files were
+  files, including a description / comment, the dates and the
+  country (next section).  Before 2026-10-14 the tags inside WAV files were
   not read, and a raw `.aac` with an ID3 tag failed to import.
 
 Podcast episodes are not part of this: they are downloaded straight
@@ -236,6 +236,32 @@ applies its real per-track gain instead of an approximation.
 Episodes downloaded before that date are caught up with
 **Settings → Streams → Measure loudness**, which only measures
 files that have no values yet.
+
+### Dates and country from the tags (since 2026-11-08)
+
+Three fields of the track editor are filled from the file's own tags
+on import - ID3 `TXXX` frames in MP3 files, and the same names as FLAC,
+OGG and Opus comments, M4A freeform fields or in the ID3 chunk of a WAV
+file:
+
+| Tag name | Field | Format |
+|---|---|---|
+| `Expiry` or `Expiry Date` | **Expiry Date** | `2026-11-08` or `20261108` |
+| `Enable Date` or `Enabled From` | **Enabled From** | `2026-11-08` or `20261108` |
+| `Country` | **Country** | free text as in the tag, e.g. `Austria` |
+
+Upper and lower case, blanks, underscores and hyphens in the tag name
+do not matter (`EXPIRY_DATE` is `Expiry Date`).  A date in any other
+format is ignored; the analyzer log names the file.  An expiry date
+that has been reached or an enable date still ahead disables the track
+right away.  The country is only filled when the track has none yet.
+
+**Re-read Tags** takes the country from the file too (a file without
+the tag clears it), but never the two dates: a date set in RASTATIME
+stays.  Tracks imported before 2026-11-08 get their country from their
+tags once with `manage.py backfill_country --yes` on the station
+machine; it fills only empty countries, and without `--yes` it only
+counts.
 
 ### Editing track metadata
 
@@ -248,6 +274,7 @@ Click a track row → **Edit Metadata** in the row's action menu.  If a save is 
 | **Album** | `cc_files.album_title` |
 | **Genre** | `cc_files.genre` |
 | **Year** | `cc_files.year` |
+| **Country** (since 2026-11-08) | `cc_files.country` - free text, from the `Country` tag on import; the field suggests the countries already in use. The base of Analytics → [Music by Country](./ANALYTICS.md); smart blocks can filter on it (criterion *Country*). Library column *Country* (hidden by default, searchable). |
 | **BPM** | `cc_files.bpm` |
 | **Track type** | `cc_files.track_type` — used by smart-block filters |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — trim the start / end without re-encoding. Since 2026-09-30 the values are kept inside the file: a cue out past the file length is capped at the length, a cue in below zero becomes zero. A change is copied into the rows of the upcoming shows that schedule the track (rows that have already started are left alone), and those shows are laid out again - no refilling needed. |
@@ -258,8 +285,9 @@ Click a track row → **Edit Metadata** in the row's action menu.  If a save is 
 | **Teaser** / **Teaser for shows**, **Teaser type** | The show(s) a jingle announces and how (show teaser, day teaser "today", day teaser "tomorrow"); two fields of the track editor and the bulk edit, shown as `Show name · today` in the library column *Teaser* (hidden by default, searchable). Smart blocks pick the fitting jingles with the criterion *Teaser: fits the schedule* - see [Teaser Automation](./TEASERS.md). Since 2026-10-16. |
 | **Crossover** | How this track meets its neighbours (since 2026-09-29 one three-way field; the two exceptions exclude each other). **As the track type** (default): the track overlaps and fades as its track type says - Settings → Track Types → *Crossfade Duration* - or, without a value there, as the Default Track Crossfade Duration; since 2026-09-30 it also inherits the type's *No Fade during Crossover* preset. **No Fade during Crossover** (`cc_files.no_fade_crossfade`): the overlap stays, but this track keeps its full level while the other one fades; at an overbooked show boundary a flagged outgoing track is cut instead of faded. **Exclude from Crossover** (`cc_files.exclude_crossfade`): this track never overlaps a neighbour - it starts at the end of the previous track and the next one starts at its end. Changing to or from *Exclude* re-lays the rows of the upcoming shows that schedule the track. |
 | **Stream Metadata** (since 2026-10-14) | Whether artist and title of this track reach the listeners' players (ICY) and the Live Text. **As the track type** (default): the preset of Settings → Track Types → *Forward Metadata to the Stream*. **Forward to the stream** / **Do not forward**: the track's own choice. While a track without forwarding plays, the stream shows "Station name - Show name" in every Stream Label format, like a live source without metadata. Meant for jingles, station IDs and promos; the Playout History is not affected. |
-| **Expiry Date** | `cc_files.expires_at`, format YYYY-MM-DD, empty = no expiry. The date counts from 00:00 of that day: once it is reached, the hourly expiry run ticks **Track disabled**. A later or empty date enables the track again, unless it was disabled by hand. |
-| **Track disabled** (since 2026-11-08) | `cc_files.disabled`. Tick it by hand, or it is ticked automatically when the expiry date is reached. A disabled track is no longer picked by smart blocks; shows that already have it keep playing it, and you can still schedule it by hand. In the editor the two fields follow each other before you save: an expiry date up to and including today ticks the box; a later or empty date unticks it if the expiry had ticked it; unticking the box empties an expiry date that has passed. Saving without the tick and with a passed expiry date is refused with a message. Library column *Disabled* (hidden by default, columns picker). |
+| **Enabled From** (since 2026-11-08) | `cc_files.enabled_from`, format YYYY-MM-DD, empty = no enable date. The track stays disabled until 00:00 of that day; then the hourly run enables it, unless it was disabled by hand. Must lie before the expiry date. From the `Enable Date` tag on import. Library column *Enabled From* (hidden by default). |
+| **Expiry Date** | `cc_files.expires_at`, format YYYY-MM-DD, empty = no expiry. The date counts from 00:00 of that day: once it is reached, the hourly expiry run ticks **Track disabled**. A later or empty date enables the track again, unless it was disabled by hand. From the `Expiry` / `Expiry Date` tag on import. |
+| **Track disabled** (since 2026-11-08) | `cc_files.disabled`. Tick it by hand, or it is ticked automatically while the enable date lies ahead and once the expiry date is reached. A disabled track is no longer picked by smart blocks; shows that already have it keep playing it, and you can still schedule it by hand. In the editor the fields follow each other before you save: an expiry date up to and including today or an enable date after today ticks the box; changing or clearing the dates unticks it again unless you ticked it by hand; unticking the box empties an expiry date that has been reached and an enable date still ahead. Saving without the tick while a date still disables the track is refused with a message. A tick by hand is stored on its own (`cc_files.disabled_by_hand`), so a track you disabled stays disabled when its dates change. Library column *Disabled* (hidden by default, columns picker). |
 
 > **Operator tip.** Set **Cue In** on radio promos / stings that
 > have a few seconds of silence at the head. The cue point is
@@ -312,7 +340,7 @@ Library → **+ New** → **Smart Block**.
 |---|---|
 | **Name** | Visible in the library and on the calendar. |
 | **Type** | **Static** — picks once at creation time; the set never changes. **Dynamic** — re-picks every time the block is scheduled. |
-| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm is in the range 100 to 130*, *genre is pop*, etc. Rows combine with AND; the **+** next to a row adds an alternative for the same field (OR), e.g. *genre is pop* **+** *genre is rock*. Details under [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm is in the range 100 to 130*, *genre is pop*, etc. Rows combine with AND; the **+** next to a row adds an alternative for the same field (OR), e.g. *genre is pop* **+** *genre is rock*. Since 2026-11-08 also *Country* (e.g. *country is Austria*; *is* and *is not* compare exactly, *is not* and *does not contain* include tracks without a country). Details under [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limit to** | One of: **Number of tracks** (e.g. 10), **Duration in time** (e.g. 30:00), **Time remaining in show** (let the smart block fill exactly to the show's end). |
 | **Sort** | Random / newest first / by artist / by play count / etc. |
 
@@ -332,6 +360,13 @@ a block to your own tracks, add the **Owner** criterion.
 If you set "Limit to 10 tracks" but only 4 tracks in the
 library match the criteria, you get 4. The block does not
 error.
+
+**Disabled tracks** are never picked.  Since 2026-11-08 a smart
+block judges this at the time the slot airs, not at the time it is
+filled: autoloading fills a show about an hour ahead, so a track
+whose **Enabled From** is the day of a 00:07 show is picked for it,
+and a track whose **Expiry Date** is that day is not.  A track
+disabled by hand is never picked.
 
 > **How it works under the hood.** Criteria are stored in
 > `cc_blockcriteria`. At build time, `BlockExpander.expand()`
@@ -527,10 +562,10 @@ toolbar that appears at the bottom of the table:
 |---|---|
 | **Add to Playlist** | Append the selected rows to an existing playlist of your choice. |
 | **Delete** | Delete the selected rows. Same confirm-on-scheduled-use semantics as single-row delete. |
-| **Edit** | One track selected: its editor tab, as before. **Two or more tracks selected (since 2026-10-08): one dialog for all of them** - creator, album, genre, year, track type, language, mood, label, composer, conductor, copyright, expiry date (`none` clears it), track disabled (*Yes* / *No*; since 2026-11-08, *No* also clears expiry dates that have passed), description. Empty fields stay unchanged, a filled field is written to every selected track; title, track number, BPM, cue points and artwork stay per track. Database only, like the single editor (tags inside the files are read at import and never rewritten). Tracks you may not edit are skipped and counted in the result. |
+| **Edit** | One track selected: its editor tab, as before. **Two or more tracks selected (since 2026-10-08): one dialog for all of them** - creator, album, genre, year, track type, language, mood, label, composer, conductor, copyright, country (since 2026-11-08), enabled from and expiry date (`none` clears them), track disabled (*Yes* / *No*; since 2026-11-08, *No* also clears expiry dates that have been reached and enable dates still ahead), description. Empty fields stay unchanged, a filled field is written to every selected track; title, track number, BPM, cue points and artwork stay per track. Database only, like the single editor (tags inside the files are read at import and never rewritten). Tracks you may not edit are skipped and counted in the result. |
 | **Move to Owner** | Reassign ownership (Admins only). Used when a DJ leaves and their files should pass to the station account. |
 | **Cue Points** | Detect the cue points of the selected tracks from their audio (the same silence detection the analyzer runs at import: quieter than −60 dB for at least 0.3 s at the head or the tail) and store them. Upcoming shows that schedule the tracks follow the new values and are laid out again. Tracks longer than 15 minutes are skipped - the action is meant for jingles and other short elements. Since 2026-09-30. |
-| **Re-read Tags** *(since 2026-10-21)* | Re-read the tags of the selected tracks from the files on disk - for files you edited in Windows after the import.  RASTATIME never re-reads a file on its own: the database is the truth for the library and the playout.  The button replaces title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment with what the file carries (a tag missing in the file clears the column) and refreshes the checksum and size; everything set only in RASTATIME (track type, teaser, cue points, loudness, expiry, requests) stays.  Admins and programme managers for every file, others for their own.  The file is only read, so a track on air is safe - but edit a file in Windows only while it is not scheduled, the playout plays straight from the library. |
+| **Re-read Tags** *(since 2026-10-21)* | Re-read the tags of the selected tracks from the files on disk - for files you edited in Windows after the import.  RASTATIME never re-reads a file on its own: the database is the truth for the library and the playout.  The button replaces title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, comment and (since 2026-11-08) country with what the file carries (a tag missing in the file clears the column) and refreshes the checksum and size; everything set only in RASTATIME (track type, teaser, cue points, loudness, expiry and enable date, requests) stays.  Admins and programme managers for every file, others for their own.  The file is only read, so a track on air is safe - but edit a file in Windows only while it is not scheduled, the playout plays straight from the library. |
 
 ---
 

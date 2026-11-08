@@ -237,15 +237,16 @@ Audio in der Datei (nicht ihre Endung), bevor er sie ablegt:
   wird in **MP3 mit 320 kbit/s** umgewandelt, solange Einstellungen →
   **Lokale Maschine** → **Importformat** eingeschaltet ist (der
   Standard).  Das verlustfreie Original wird nicht aufbewahrt; Tags,
-  das Expiry-Datum und ein eingebettetes Cover werden übernommen.
+  Expiry- und Enable-Datum, das Land und ein eingebettetes Cover werden
+  übernommen.
   Schlägt eine Umwandlung fehl, wird das Original unverändert
   importiert.  Einzelheiten: [Lokale Maschine](./LOCAL_MACHINE.md),
   Abschnitt 5.
 - **Tags werden aus jedem Format gelesen.**  Neben ID3 in MP3-Dateien
   liest der Analyzer die Tags in WAV-Dateien (ID3-Block und RIFF
   INFO), die Kommentare von FLAC-, OGG- und Opus-Dateien und die Felder
-  von M4A-Dateien, einschließlich Beschreibung / Kommentar und des
-  **Expiry**-Datums (`YYYY-MM-DD`).  Vor dem 2026-10-14 wurden die Tags
+  von M4A-Dateien, einschließlich Beschreibung / Kommentar, der Daten und des
+  Landes (nächster Abschnitt).  Vor dem 2026-10-14 wurden die Tags
   in WAV-Dateien nicht gelesen, und eine rohe `.aac` mit ID3-Tag
   scheiterte beim Import.
 
@@ -256,6 +257,33 @@ nach dem Download auf **Lautheit gemessen** (EBU R128), damit das
 Playout ihre echte Titelverstärkung anwendet statt einer Näherung.
 Episoden von vor diesem Datum holen Sie mit **Settings → Streams →
 Measure loudness** nach; der Knopf misst nur Dateien ohne Werte.
+
+### Daten und Land aus den Tags (seit 2026-11-08)
+
+Drei Felder des Track-Editors werden beim Import aus den Tags der Datei
+gefüllt - ID3-`TXXX`-Frames in MP3-Dateien, und dieselben Namen als
+Kommentare von FLAC-, OGG- und Opus-Dateien, als Freiform-Felder in
+M4A-Dateien oder im ID3-Block einer WAV-Datei:
+
+| Tag-Name | Feld | Format |
+|---|---|---|
+| `Expiry` oder `Expiry Date` | **Ablaufdatum** | `2026-11-08` oder `20261108` |
+| `Enable Date` oder `Enabled From` | **Aktiv ab** | `2026-11-08` oder `20261108` |
+| `Country` | **Land** | freier Text wie im Tag, z. B. `Austria` |
+
+Groß- und Kleinschreibung, Leerzeichen, Unter- und Bindestriche im
+Tag-Namen spielen keine Rolle (`EXPIRY_DATE` ist `Expiry Date`).  Ein
+Datum in einem anderen Format wird übergangen; das Analyzer-Log nennt
+die Datei.  Ein erreichtes Ablaufdatum oder ein noch in der Zukunft
+liegendes Aktivierungsdatum deaktiviert den Track sofort.  Das Land
+wird nur gefüllt, wenn der Track noch keines hat.
+
+**Tags neu einlesen** übernimmt das Land ebenfalls aus der Datei (eine
+Datei ohne den Tag leert es), aber nie die beiden Daten: Ein in
+RASTATIME gesetztes Datum bleibt.  Vor dem 2026-11-08 importierte
+Tracks erhalten ihr Land einmalig aus ihren Tags mit
+`manage.py backfill_country --yes` auf dem Studiorechner; der Befehl
+füllt nur leere Länder und zählt ohne `--yes` nur.
 
 ### Track-Metadaten bearbeiten
 
@@ -269,6 +297,7 @@ im Aktionsmenü der Zeile.  Wird das Speichern abgelehnt (etwa ein Datum im fals
 | **Album** | `cc_files.album_title` |
 | **Genre** | `cc_files.genre` |
 | **Jahr** | `cc_files.year` |
+| **Land** (seit 2026-11-08) | `cc_files.country` - freier Text, beim Import aus dem Tag `Country`; das Feld schlägt die schon verwendeten Länder vor. Grundlage von Analytics → [Music by Country](./ANALYTICS.md); Smart Blocks können danach filtern (Kriterium *Land*). Library-Spalte *Land* (standardmäßig ausgeblendet, durchsuchbar). |
 | **BPM** | `cc_files.bpm` |
 | **Track-Typ** | `cc_files.track_type` — von Smart-Block-Filtern verwendet |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — Anfang / Ende ohne Neu-Kodierung trimmen. Seit dem 30.09.2026 bleiben die Werte innerhalb der Datei: ein Cue Out hinter der Dateilänge wird auf die Länge gekappt, ein Cue In unter null wird null. Eine Änderung wird in die Zeilen der kommenden Sendungen kopiert, die den Track enthalten (bereits gestartete Zeilen bleiben unberührt), und diese Sendungen werden neu ausgelegt - kein Neu-Befüllen nötig. |
@@ -279,8 +308,9 @@ im Aktionsmenü der Zeile.  Wird das Speichern abgelehnt (etwa ein Datum im fals
 | **Teaser** / **Teaser für Sendungen**, **Teaser-Typ** | Die Sendung(en), die ein Jingle ankündigt, und wie (Showteaser, Tagesteaser „heute", Tagesteaser „morgen"); zwei Felder des Track-Editors und der Mehrfach-Bearbeitung, in der Bibliotheksspalte *Teaser* (standardmäßig ausgeblendet, durchsuchbar) als `Sendungsname · today`. Smart Blocks wählen die passenden Jingles mit dem Kriterium *Teaser: passt zum Sendeplan* - siehe [Teaser-Automatik](./TEASERS.md). Seit 2026-10-16. |
 | **Crossover** | Wie dieser Titel auf seine Nachbarn trifft (seit 2026-09-29 ein Dreiwege-Feld; die beiden Ausnahmen schließen einander aus). **As the track type** (Wie der Track-Typ, Vorgabe): Der Titel überlappt und überblendet so, wie sein Track-Typ es vorgibt - Settings → Track Types → *Crossfade Duration* - oder, ohne Wert dort, mit der Default Track Crossfade Duration; seit 2026-09-30 erbt er auch die Typ-Vorgabe *No Fade during Crossover*. **No Fade during Crossover** (Kein Fade beim Crossover, `cc_files.no_fade_crossfade`): Die Überlappung bleibt, aber dieser Titel behält seinen vollen Pegel, während der andere blendet; an einer überzogenen Sendungsgrenze wird ein markierter abgehender Titel geschnitten statt ausgeblendet. **Exclude from Crossover** (Vom Crossover ausnehmen, `cc_files.exclude_crossfade`): Dieser Titel überlappt nie mit einem Nachbarn - er startet am Ende des vorherigen Titels, und der nächste startet an seinem Ende. Ein Wechsel zu oder von *Exclude* legt die Zeilen der kommenden Sendungen, die den Titel enthalten, neu aus. |
 | **Stream-Metadaten** (seit 2026-10-14) | Ob Interpret und Titel dieses Titels in die Player der Hörer (ICY) und in den Live Text gelangen. **Wie der Track-Typ** (Standard): die Voreinstellung aus Settings → Track Types → *Forward Metadata to the Stream*. **An den Stream weitergeben** / **Nicht weitergeben**: die eigene Wahl des Titels. Solange ein Titel ohne Weitergabe läuft, zeigt der Stream in jedem Stream-Label-Format „Sendername - Sendungsname", wie eine Live-Quelle ohne Metadaten. Gedacht für Jingles, Station-IDs und Promos; das Sendeprotokoll bleibt unberührt. |
-| **Ablaufdatum** | `cc_files.expires_at`, Format JJJJ-MM-TT, leer = kein Ablauf. Das Datum gilt ab 00:00 Uhr dieses Tages: Ist es erreicht, hakt der stündliche Ablauf-Lauf **Track deaktiviert** an. Ein späteres oder geleertes Datum aktiviert den Track wieder, außer er wurde von Hand deaktiviert. |
-| **Track deaktiviert** (seit 2026-11-08) | `cc_files.disabled`. Haken Sie es von Hand an, oder es wird automatisch angehakt, wenn das Ablaufdatum erreicht ist. Ein deaktivierter Track wird von Smart Blocks nicht mehr ausgewählt; Sendungen, in denen er schon steht, spielen ihn weiter, und Sie können ihn weiterhin von Hand einplanen. Im Editor folgen die beiden Felder einander schon vor dem Speichern: Ein Ablaufdatum bis einschließlich heute hakt das Kästchen an; ein späteres oder geleertes Datum nimmt den Haken weg, wenn das Ablaufdatum ihn gesetzt hatte; nehmen Sie den Haken weg, wird ein erreichtes Ablaufdatum geleert. Ohne Haken und mit erreichtem Ablaufdatum lehnt das Speichern mit einer Meldung ab. Library-Spalte *Deaktiviert* (standardmäßig ausgeblendet, Spaltenauswahl). |
+| **Aktiv ab** (seit 2026-11-08) | `cc_files.enabled_from`, Format JJJJ-MM-TT, leer = kein Aktivierungsdatum. Der Track bleibt bis 00:00 Uhr dieses Tages deaktiviert; dann aktiviert ihn der stündliche Lauf, außer er wurde von Hand deaktiviert. Muss vor dem Ablaufdatum liegen. Beim Import aus dem Tag `Enable Date`. Library-Spalte *Aktiv ab* (standardmäßig ausgeblendet). |
+| **Ablaufdatum** | `cc_files.expires_at`, Format JJJJ-MM-TT, leer = kein Ablauf. Das Datum gilt ab 00:00 Uhr dieses Tages: Ist es erreicht, hakt der stündliche Ablauf-Lauf **Track deaktiviert** an. Ein späteres oder geleertes Datum aktiviert den Track wieder, außer er wurde von Hand deaktiviert. Beim Import aus dem Tag `Expiry` / `Expiry Date`. |
+| **Track deaktiviert** (seit 2026-11-08) | `cc_files.disabled`. Haken Sie es von Hand an, oder es wird automatisch angehakt, solange das Aktivierungsdatum in der Zukunft liegt und sobald das Ablaufdatum erreicht ist. Ein deaktivierter Track wird von Smart Blocks nicht mehr ausgewählt; Sendungen, in denen er schon steht, spielen ihn weiter, und Sie können ihn weiterhin von Hand einplanen. Im Editor folgen die Felder einander schon vor dem Speichern: Ein Ablaufdatum bis einschließlich heute oder ein Aktivierungsdatum nach heute hakt das Kästchen an; ändern oder leeren Sie die Daten, verschwindet der Haken wieder, außer Sie haben ihn von Hand gesetzt; nehmen Sie den Haken weg, werden ein erreichtes Ablaufdatum und ein noch in der Zukunft liegendes Aktivierungsdatum geleert. Ohne Haken lehnt das Speichern mit einer Meldung ab, solange ein Datum den Track noch deaktiviert. Ein Haken von Hand wird eigens gespeichert (`cc_files.disabled_by_hand`), daher bleibt ein von Ihnen deaktivierter Track deaktiviert, wenn sich seine Daten ändern. Library-Spalte *Deaktiviert* (standardmäßig ausgeblendet, Spaltenauswahl). |
 
 > **Operator-Tipp.** Setzen Sie **Cue In** auf
 > Radio-Promos / Stings, die ein paar Sekunden Stille am
@@ -334,7 +364,7 @@ Bibliothek → **+ Neu** → **Smart Block**.
 |---|---|
 | **Name** | Sichtbar in der Bibliothek und im Kalender. |
 | **Typ** | **Statisch** — wählt einmalig zum Erstellungszeitpunkt; die Menge ändert sich nie. **Dynamisch** — wählt jedes Mal neu, wenn der Block eingeplant wird. |
-| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Details unter [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Seit 2026-11-08 auch *Land* (z. B. *Land ist Austria*; *ist* und *ist nicht* vergleichen genau, *ist nicht* und *enthält nicht* schließen Tracks ohne Land ein). Details unter [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Begrenzen auf** | Eines von: **Anzahl Tracks** (z.B. 10), **Dauer in Zeit** (z.B. 30:00), **Verbleibende Zeit in der Sendung** (lässt den Smart Block exakt bis zum Ende der Sendung füllen). |
 | **Sortieren** | Zufällig / neueste zuerst / nach Künstler / nach Spielzahl / etc. |
 
@@ -356,6 +386,14 @@ zu beschränken, fügen Sie das Kriterium **Owner** hinzu.
 Wenn Sie "Begrenzen auf 10 Tracks" setzen, aber nur 4 Tracks
 in der Bibliothek die Kriterien erfüllen, erhalten Sie 4.
 Der Block scheitert nicht.
+
+**Deaktivierte Tracks** werden nie ausgewählt.  Seit 2026-11-08
+beurteilt ein Smart Block das zur Sendezeit der Zeile, nicht zum
+Zeitpunkt der Befüllung: Das Autoloading befüllt eine Sendung etwa eine
+Stunde vorher, daher wird ein Track, dessen **Aktiv ab** der Tag einer
+00:07-Sendung ist, für sie ausgewählt, und ein Track, dessen
+**Ablaufdatum** dieser Tag ist, nicht.  Ein von Hand deaktivierter
+Track wird nie ausgewählt.
 
 > **Wie es unter der Haube funktioniert.** Kriterien sind
 > in `cc_blockcriteria` gespeichert. Zur Build-Zeit baut
@@ -568,10 +606,10 @@ Tabelle erscheint:
 |---|---|
 | **Zu Playlist hinzufügen** | Die ausgewählten Zeilen an eine bestehende Playlist Ihrer Wahl anhängen. |
 | **Löschen** | Die ausgewählten Zeilen löschen. Gleiche Confirm-on-Scheduled-Use-Semantik wie beim Einzelzeilen-Löschen. |
-| **Bearbeiten** | Ein Track ausgewählt: sein Editor-Tab wie bisher. **Zwei oder mehr Tracks ausgewählt (seit 2026-10-08): ein Dialog für alle** - Interpret, Album, Genre, Jahr, Track-Typ, Sprache, Mood, Label, Komponist, Dirigent, Copyright, Ablaufdatum (`none` löscht es), Track deaktiviert (*Ja* / *Nein*; seit 2026-11-08, *Nein* leert auch erreichte Ablaufdaten), Beschreibung. Leere Felder bleiben unverändert, ein ausgefülltes Feld wird in jeden ausgewählten Track geschrieben; Titel, Track-Nummer, BPM, Cue-Punkte und Cover bleiben je Track. Nur Datenbank, wie der Einzel-Editor (Tags in den Dateien werden beim Import gelesen und nie zurückgeschrieben). Tracks ohne Bearbeitungsrecht werden übersprungen und im Ergebnis gezählt. |
+| **Bearbeiten** | Ein Track ausgewählt: sein Editor-Tab wie bisher. **Zwei oder mehr Tracks ausgewählt (seit 2026-10-08): ein Dialog für alle** - Interpret, Album, Genre, Jahr, Track-Typ, Sprache, Mood, Label, Komponist, Dirigent, Copyright, Land (seit 2026-11-08), Aktiv ab und Ablaufdatum (`none` löscht sie), Track deaktiviert (*Ja* / *Nein*; seit 2026-11-08, *Nein* leert auch erreichte Ablaufdaten und noch in der Zukunft liegende Aktivierungsdaten), Beschreibung. Leere Felder bleiben unverändert, ein ausgefülltes Feld wird in jeden ausgewählten Track geschrieben; Titel, Track-Nummer, BPM, Cue-Punkte und Cover bleiben je Track. Nur Datenbank, wie der Einzel-Editor (Tags in den Dateien werden beim Import gelesen und nie zurückgeschrieben). Tracks ohne Bearbeitungsrecht werden übersprungen und im Ergebnis gezählt. |
 | **Besitz übertragen** | Besitz neu zuweisen (nur Admins). Verwendet, wenn ein DJ ausscheidet und seine Dateien an das Stations-Konto übergehen sollen. |
 | **Cue Points** | Erkennt die Cue-Punkte der ausgewählten Tracks aus dem Audio (dieselbe Stille-Erkennung, die der Analyzer beim Import ausführt: leiser als −60 dB für mindestens 0,3 s am Anfang oder Ende) und speichert sie. Kommende Sendungen, die die Tracks enthalten, übernehmen die neuen Werte und werden neu ausgelegt. Tracks über 15 Minuten werden übersprungen - die Aktion ist für Jingles und andere kurze Elemente gedacht. Seit dem 30.09.2026. |
-| **Tags neu einlesen** *(seit 2026-10-21)* | Liest die Tags der ausgewählten Tracks neu aus den Dateien - für Dateien, die Sie nach dem Import in Windows bearbeitet haben.  RASTATIME liest eine Datei nie von sich aus erneut: Die Datenbank ist die Wahrheit für Bibliothek und Playout.  Der Knopf ersetzt Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache und Kommentar durch den Inhalt der Datei (ein in der Datei fehlender Tag leert die Spalte) und zieht Prüfsumme und Größe nach; alles, was nur in RASTATIME gesetzt wird (Track-Typ, Teaser, Cue-Punkte, Lautheit, Ablaufdatum, Anfragen), bleibt.  Admins und Programm-Manager für jede Datei, andere für ihre eigenen.  Die Datei wird nur gelesen, ein laufender Titel ist also sicher - bearbeiten Sie eine Datei in Windows aber nur, solange sie nicht geplant ist, das Playout spielt direkt aus der Bibliothek. |
+| **Tags neu einlesen** *(seit 2026-10-21)* | Liest die Tags der ausgewählten Tracks neu aus den Dateien - für Dateien, die Sie nach dem Import in Windows bearbeitet haben.  RASTATIME liest eine Datei nie von sich aus erneut: Die Datenbank ist die Wahrheit für Bibliothek und Playout.  Der Knopf ersetzt Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache, Kommentar und (seit 2026-11-08) Land durch den Inhalt der Datei (ein in der Datei fehlender Tag leert die Spalte) und zieht Prüfsumme und Größe nach; alles, was nur in RASTATIME gesetzt wird (Track-Typ, Teaser, Cue-Punkte, Lautheit, Ablauf- und Aktivierungsdatum, Anfragen), bleibt.  Admins und Programm-Manager für jede Datei, andere für ihre eigenen.  Die Datei wird nur gelesen, ein laufender Titel ist also sicher - bearbeiten Sie eine Datei in Windows aber nur, solange sie nicht geplant ist, das Playout spielt direkt aus der Bibliothek. |
 
 ---
 

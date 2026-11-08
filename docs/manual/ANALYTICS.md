@@ -7,7 +7,7 @@
 > **rear-view mirror** — what actually went on air, and how many
 > people were listening while it did.
 
-The **Analytics** menu in the top navigation bundles seven pages:
+The **Analytics** menu in the top navigation bundles eight pages:
 
 | Page | Question it answers |
 |---|---|
@@ -17,6 +17,7 @@ The **Analytics** menu in the top navigation bundles seven pages:
 | **Show Listener Stats** | How did each *show* perform in listener numbers? |
 | **People Involved** | How many people made the station's own productions in a year? See § 6 and [Archiving](./ARCHIVING.md) § 6 (since 2026-11-03, own menu entry since 2026-11-04). |
 | **Programme Minutes** | How many minutes of own productions went on air in a year? One year at a time, CSV. See § 5 (since 2026-11-03; until 2026-11-04 part of the "Yearly Report"). |
+| **Music by Country** | Where does the music that aired come from (music quota)? One year at a time, CSV. See § 7 (since 2026-11-08). |
 | **Archive Status** | Did every episode reach cba.media? Uploads running and waiting, what the automatic archiving has ahead, problems, history, CSV. See [Archiving](./ARCHIVING.md) § 7 (since 2026-11-04). |
 
 The first two exist for **accountability** — royalty reporting,
@@ -182,5 +183,35 @@ keeps its number but is left out until it is ticked again; repeat shows
 (*Repeat of*) are listed but count nothing.  **Only shows without a
 value** and **Download CSV** help with the yearly reporting.  The
 details are in [Archiving](./ARCHIVING.md) § 6.
+
+Program Managers and Admins open this page.
+
+## 7. Music by Country (since 2026-11-08)
+
+**Analytics → Music by Country** shows where the music that went on
+air in a year comes from - the station's music quota.  One year at a
+time (station time; the current year up to today).
+
+Counted are the plays in the [Playout History](#1-playout-history) of
+tracks whose track type has the code `music` (Settings → Track Types);
+tracks of any other type or without a type do not count.  Each play
+counts with the country of its track as it is today (Edit Track →
+**Country**, read from the `Country` tag on import - see
+[Library](./LIBRARY.md)), so correcting a country corrects the past
+plays too.  A track without a country counts as **No country**; a
+combination such as `Germany/Switzerland` is a row of its own.
+
+The page shows the minutes of music, the plays, the number of
+countries and the share of minutes with a country; a table per country
+(plays and minutes with their shares, sorted by minutes, *No country*
+last); a table per month (plays, minutes, minutes with a country and
+their share); and the **25 most played music tracks without a
+country** - enter their country to make the report more complete.
+**Download CSV** adds a table of the minutes per country and month.
+
+Not counted, because they are not in the Playout History: music DJs
+play live, line-ins and webstreams, and plays of tracks deleted since.
+The history begins with the first play logged on the installation; the
+page says so when it starts later in the year.
 
 Program Managers and Admins open this page.

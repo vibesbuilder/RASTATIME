@@ -365,7 +365,8 @@ Ce que l'import fait de chaque fichier :
   MP3 ne l'est pas.
 - **Tags et pochette suivent.**  Titre, artiste, album, genre, année,
   numéro de piste, compositeur, copyright, label, ISRC, BPM, langue,
-  commentaire et la date **Expiry** sont écrits dans le MP3, et une
+  commentaire, les dates **Expiry** et **Enable** et le **pays** sont
+  écrits dans le MP3, et une
   pochette JPEG ou PNG intégrée est conservée.  Le fichier garde son
   nom avec la nouvelle extension (`Interview.wav` devient
   `Interview.mp3`) ; un fichier sans tag de titre affiche ce nouveau
