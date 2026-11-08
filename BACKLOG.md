@@ -155,6 +155,10 @@ nächste Fill-Pass wieder alle 429), dann A; die heutige 17:07-Instanz (23947, 3
 gering (Legacy-PHP, Revert); A ist ein Massen-Delete auf künftigen Zeilen, Dry-Run zuerst, Backup
 der Nacht vorhanden.  **Vorbedingungen:** Operator-Go je Option; Entscheidung, ob Playlist 10
 Inhalt bekommt oder die Sendung weiter vom Auto-DJ leben soll.
+**Stand 2026-11-08:** Playlist 10 hat jetzt Inhalt (Intro-Datei + Smart Block 357), die
+08:07-Schwester (show 1229, nicht verknüpft) spielt die Hinweise.  Die 17:07-Instanzen von
+show 1225 bleiben vorbefüllt (428 ab heute, je 2-3 Musikzeilen, voll) - das Autoloading findet
+keinen Platz, dort laufen weiter Musiktitel statt Hinweise.  Operator 2026-11-08: kein Go.
 
 ### ✅ Sendung beginnt bis zu ~8 s VOR ihrer Startzeit, wenn die Vorgänger-Zeilen früher enden - GEBAUT 2026-11-07 (Befund 2026-11-07 00:00, Operator-Regel: nie früher - lieber Stille, Go Option B 2026-11-07)
 
