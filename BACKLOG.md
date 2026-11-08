@@ -270,6 +270,61 @@ Sendung (`cc_show_days.record` → `cc_show_instances.record`), Kopie der Aufnah
 Vorgänger- und Nachfolgesendung, Wirkung auf Länge und Metadaten von Kopie und Archiv.
 **Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
 
+### 💡 Expiry Date aus dem Tag beim Import - EVALUIERT 2026-11-08, Empfehlung Go, wartet auf Go + Beispieldatei
+
+Gibt es schon (2026-05-16): der Analyzer liest einen ID3-TXXX-Frame namens **„Expiry"** (ohne
+Groß-/Kleinschreibung, nur dieser Name) bzw. den ffprobe-Tag `expiry` bei anderen Formaten,
+Format nur JJJJ-MM-TT; `CcFiles::updateFromArray` schreibt `expires_at` und `disabled`
+(zuletzt 2026-10-25, Datei 25557).  Ein Frame **„Expiry Date"** greift nicht.  Scan der
+Bibliothek 2026-11-08 (24.974 Dateien): kein Datei-Tag mit Expiry/Enable.
+Plan: Frame-Namen normalisieren (Kleinbuchstaben, ohne Leer-/Binde-/Unterstriche: `expiry`,
+`expirydate`, ...), optional weitere Datumsformate (TT.MM.JJJJ); Analyzer-Tests.  ~25 Zeilen +
+Tests, ~1 h, nur ANALYZER-Neustart.  Risiko gering (unbekannter Name/Format = wie bisher kein
+Datum, Warnung im Log).  **Vorbedingungen:** Operator-Go; genauer Frame-Name und Datumsformat
+(Beispieldatei).
+
+### 💡 Enabled From (Track erst ab einem Datum aktiv) + Tag beim Import - EVALUIERT 2026-11-08, Empfehlung Go mit Option A, wartet auf Go
+
+Neues Feld `cc_files.enabled_from` (Migration 0080): bis zu diesem Tag (00:00) ist der Track
+deaktiviert.  Problem der heutigen Ableitung „von Hand = disabled und Ablauf nicht erreicht"
+(§23.98): wird das Enable-Datum erreicht, sieht ein noch gesperrter Track wie „von Hand" aus,
+der stündliche Lauf könnte ihn nicht freigeben.  **Option A (Empfehlung):** zusätzlich
+`disabled_by_hand` (Migration, Rückfüllung aus der heutigen Ableitung), `disabled` wird zum
+abgeleiteten Wert `von Hand ODER Ablauf erreicht ODER Enable-Datum in der Zukunft`, der
+stündliche Lauf rechnet in beide Richtungen nach.  **Option B:** ohne Grund-Spalte, der Lauf gibt
+frei, was seit dem letzten Lauf sein Enable-Datum erreicht hat (Zeitfenster, bei ausgefallenem
+Lauf fragil).  **Zusatz (empfohlen):** Smart Blocks beim Befüllen nach der Sendezeit der Zeile
+beurteilen (Fill-Kontext, wie §23.63) statt nach `disabled` zur Bauzeit: Autoloading baut eine
+Stunde vorher, eine 00:07-Sendung am Enable-Tag würde den Track sonst nicht bekommen, und ein
+Track mit Ablauf um 00:00 kann heute noch für eine 00:07-Sendung gewählt werden.  Dazu: Feld in
+Edit Track + Mehrfachbearbeitung, Dialog-Regeln wie beim Ablaufdatum, Library-Spalte, Prüfung
+Enable < Expiry, Analyzer-Tag (Namen wie oben, z. B. „Enable Date", „Enabled From").
+~350-450 Zeilen, 1-1,5 Tage; Migration (Backup, außerhalb von Sendungsgrenzen), API-, ANALYZER-,
+Apache-Neustart.  Risiko mittel-gering: ändert, welche Tracks Smart Blocks wählen; Probe in
+Transaktion, Nachrechen-Abfrage vorher als Trockenlauf (erwartet 0 Änderungen), Rückweg
+Code-Revert + Migration rückwärts.  **Vorbedingungen:** Operator-Go, Wahl A/B, Frame-Name.
+
+### 💡 Country importieren + Jahresübersicht Musik nach Herkunft („Musikquote") - EVALUIERT 2026-11-08, Empfehlung Go, wartet auf Go
+
+Scan 2026-11-08: `TXXX:COUNTRY` in 5.345 MP3 + 167 M4A (`----:com.apple.iTunes:COUNTRY`),
+saubere englische Ländernamen, 34 Werte (USA 1.214, Austria 1.040, UK 980, Germany 944, ...;
+eine Kombination „Germany/Switzerland" 18, ein Tippfehler 1).  „MusicBrainz Album Release
+Country" (11.099, ISO/XW/XE) ist das Veröffentlichungsland des Albums, nicht die Herkunft -
+kein Ersatz.  Abschätzung ab 2026-10-01: 5.968 Musik-Ausstrahlungen, **68,5 % ohne Country**,
+Austria 9,9 %, USA 6,6 %, UK 5,0 %, Germany 4,4 %.  Abspielverlauf erst ab 2026-05-08, Lücken
+Juni-September → 2026 unvollständig, ab 2027 vollständig.  Live gespielte Musik (DJs, Line-In,
+Webstreams) steht nicht im Verlauf und zählt nicht.
+Plan: `cc_files.country` (Migration), Analyzer liest COUNTRY (ID3 + ffprobe für andere
+Formate), einmalige Rückfüllung NUR leerer Werte aus den Datei-Tags (nicht über Re-read Tags,
+das alle Tag-Felder ersetzt; Re-read Tags bekommt country künftig dazu), Feld in Edit Track +
+Mehrfachbearbeitung (Vorschläge aus vorhandenen Werten), Library-Spalte + Suche, Smart-Block-
+Kriterium „Country".  Bericht Analytics → „Music by Country": Jahr, Ausstrahlungen und Minuten je
+Land mit Anteil, Zeile „No country", Monatsübersicht, CSV, dazu die meistgespielten Musiktitel
+ohne Country (zum Nachtragen).  Basis: `cc_playout_history` × Track-Typ Code `music`, Land wie
+heute in der Library.  ~550-650 Zeilen, 1,5-2 Tage; Migration, ANALYZER-, Apache-Neustart.
+Risiko gering (neue Spalte, Bericht nur lesend, Rückfüllung schreibt nur leere Werte).
+**Vorbedingungen:** Operator-Go; Kombinationen als eigene Zeile oder aufteilen.
+
 ### 💡 Alarm-Entwarnung geht bei einem PLAYOUT-Neustart verloren - IDEA (Befund 2026-11-07, Update auf 1.3.0)
 
 Befund 19:51:42: Der Analyzer war für die Paket-Neuinstallation gestoppt, PLAYOUT meldete
