@@ -169,6 +169,19 @@ verlorene erste Paket.  Zweiter Kandidat: `a5bdc4da` (2026-11-03, `blank.detect`
 icy_rewrite, live seit 11-04).  **Vorschlag für die Evaluierung:** Off-Air-Marke nur setzen, wenn weder Queue
 noch ein Live-Arm (Webstream/Line-in/DJ-Gates) bereit ist, und die Metadaten des neuen Titels in den
 Show-Formen explizit einspeisen (Option (b)); Replikat-Probe davor, Liquidsoap-Neustart danach.
+**Ursachenanalyse 2026-11-09 (Replik + Live-Statistik):** Statistik 2026-11-03..09, jede Queue-Übergabe
+(Liquidsoap rt_cross) gegen Icecast /admin/metadata: Überblendung mit neuem Titel zuerst in `add` 1346/0
+verloren, track_skip 17/0, **Abfolge-Formen** (Jingles mit 0,0 s = `sequence([old, new])`) 447/813 = 55 %
+verloren, **Show-Formen** (`sequence`) 56/141 = 40 %, **nach Webstream/Line-in** 72/93 = 77 %.  Alle drei
+Ausgänge (Icecast, 24/7-Aufnahme, Studio) haben dieselbe Metadaten-Historie (Telnet `<output>.metadata`)
+-> Verlust in der gemeinsamen Kette.  Replik (zweite Liquidsoap-Instanz 2.4.6, Blöcke aus dem Live-Skript,
+volle Kette inkl. Stereo Tool / icy_rewrite / blank.detect, Telnet 1239, C:/Temp/optd/meta_replica_*):
+(1) **Bus-Umschaltung reproduziert** - `bus_transition` / `bus_dj` = `add([fade.out(old), fade.in(new)])`,
+`add` reicht nur die Metadaten der ERSTEN Quelle weiter -> erster Titel nach Webstream/Line-in verloren
+(0/3), mit neuem Arm zuerst 3/3; dieselbe Reihenfolge lässt die Off-Air-Marke des auslaufenden Datei-Arms
+im Webstream-Slot gewinnen (Befund 2).  (2) **Abfolge-Formen in der Replik NICHT reproduziert** (alle
+Pakete kommen an) - Mechanismus live-spezifisch, noch offen.  Ursache NICHT 4c7bcc39 (betrifft nur die
+Off-Air-Marke beim Wechsel auf den leeren Datei-Arm).
 
 ### 💡 Hörer-Aussetzer beim Sendungsstart 12:07 (foobar2000, Stream 1 über den Apache-Proxy) - Befund 2026-11-07, Analyse offen, gemeinsamer Test 2026-11-08 Mittag
 
