@@ -11,10 +11,13 @@ selected ids here (via the legacy proxy that adds the API key).
 Per file the analyzer's own tag reader (``analyze_metadata``, the same
 mapping every import uses) is run on the stored file; only the columns a
 tag can carry are compared and written (``TAG_FIELDS``, the country since
-2026-11-08) - the columns RASTATIME owns (track type, teaser, cue points,
-loudness, expiry and enable date, requests, flags) are never touched,
-although the expiry and enable date come from tags on import too
-(operator decision 2026-11-08: a date set in RASTATIME stays).  The checksum, size and modification
+2026-11-08) - the columns RASTATIME owns (teaser, cue points, loudness,
+expiry and enable date, requests, flags) are never touched, although the
+expiry and enable date come from tags on import too (operator decision
+2026-11-08: a date set in RASTATIME stays).  The track type follows a
+Media Type tag (ID3 TMED) that names a visible track type, by code or name
+(operator decision 2026-11-09, the import's rule); an unknown or missing
+tag leaves the type as it is.  The checksum, size and modification
 time follow the file so the duplicate check and the library stay in
 step.  Reading is harmless for a file that is on air; nothing is written
 to the file.
@@ -28,11 +31,12 @@ from pathlib import Path
 from typing import Any, Optional
 
 from django.db import transaction
+from rastatime_shared.track_types import match_track_type
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import File
+from ..models import File, Library
 from ..root import get_storage_root
 
 logger = logging.getLogger(__name__)
@@ -87,8 +91,13 @@ def _normalise(field: str, value: Any) -> Any:
     return text or None
 
 
-def _reread_one(file: File, root: Path) -> tuple[dict[str, list[Any]], Optional[str]]:
-    """(changes {field: [old, new]}, skip reason)."""
+def _reread_one(
+    file: File, root: Path, track_types: Optional[list[Library]] = None
+) -> tuple[dict[str, list[Any]], Optional[str]]:
+    """
+    (changes {field: [old, new]}, skip reason).  A track type change is
+    reported as ``track_type`` with the two codes.
+    """
     from rastatime_analyzer.pipeline.analyze_metadata import analyze_metadata
 
     rel = (file.filepath or "").lstrip("/").replace("\\", "/")
@@ -114,6 +123,12 @@ def _reread_one(file: File, root: Path) -> tuple[dict[str, list[Any]], Optional[
         old = _normalise(field, getattr(file, field))
         if new is not None and new != old:
             changes[field] = [old, new]
+    # RASTATIME 2026-11-09 - Media Type tag -> track type (visible types only)
+    types = track_types or []
+    tagged = match_track_type(found.get("media_type"), [t for t in types if t.enabled])
+    if tagged is not None and tagged.pk != file.library_id:
+        old_code = next((t.code for t in types if t.pk == file.library_id), None)
+        changes["track_type"] = [old_code, tagged.code]
     return changes, None
 
 
@@ -132,15 +147,21 @@ class RereadTagsView(APIView):
         except (TypeError, ValueError):
             return Response({"errors": ["ids: integers only"]}, status=status.HTTP_400_BAD_REQUEST)
         root = Path(str(get_storage_root()))
+        track_types = list(Library.objects.all())
+        by_code = {t.code: t for t in track_types}
         report = []
         changed_files = 0
         for file in File.objects.filter(pk__in=ids).order_by("pk"):
-            changes, skip = _reread_one(file, root)
+            changes, skip = _reread_one(file, root, track_types)
             entry: dict[str, Any] = {"id": file.pk, "title": file.track_title or file.name}
             if skip:
                 entry["skipped"] = skip
             elif changes:
-                values = {field: new for field, (_, new) in changes.items()}
+                values = {
+                    field: new for field, (_, new) in changes.items() if field != "track_type"
+                }
+                if "track_type" in changes:
+                    values["library"] = by_code[changes["track_type"][1]]
                 values["updated_at"] = datetime.now(UTC)
                 with transaction.atomic():
                     File.objects.filter(pk=file.pk).update(**values)

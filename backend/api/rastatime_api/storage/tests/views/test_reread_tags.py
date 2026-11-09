@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 from model_bakery import baker
-from mutagen.id3 import ID3, TBPM, TIT2, TMOO, TPE1, TXXX
+from mutagen.id3 import ID3, TBPM, TIT2, TMED, TMOO, TPE1, TXXX
 
 from rastatime_api._fixtures import AUDIO_FILENAME
 from rastatime_api.storage import root as sr
@@ -40,6 +40,8 @@ def _tagged_copy(root: Path, name: str, **tags) -> Path:
         id3.add(TBPM(encoding=3, text=str(tags["bpm"])))
     if "mood" in tags:
         id3.add(TMOO(encoding=3, text=tags["mood"]))
+    if "media_type" in tags:
+        id3.add(TMED(encoding=3, text=tags["media_type"]))
     for desc, text in tags.get("txxx", {}).items():
         id3.add(TXXX(encoding=3, desc=desc, text=text))
     id3.save(path)
@@ -153,3 +155,85 @@ def test_reread_takes_the_country_but_not_the_dates(api_client, root):
     file.refresh_from_db()
     assert file.country == "Austria"
     assert file.expires_at is None and file.enabled_from is None
+
+
+def _types():
+    # codes no seeded track type uses
+    return (
+        baker.make(
+            "storage.Library", code="t_music", description="", name="Test Music", enabled=True
+        ),
+        baker.make(
+            "storage.Library", code="t_jngl", description="", name="Test Jingles", enabled=True
+        ),
+        baker.make(
+            "storage.Library", code="t_off", description="", name="Test Hidden", enabled=False
+        ),
+    )
+
+
+def _typed_file(root: Path, name: str, media_type: str, library) -> File:
+    _tagged_copy(root, name, title="Jingle", artist="Station", media_type=media_type)
+    return baker.make(
+        "storage.File",
+        filepath=f"imported/{name}",
+        exists=True,
+        mime="audio/mp3",
+        track_title="Jingle",
+        artist_name="Station",
+        library=library,
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("media_type", ["Test Jingles", "TEST JINGLES", "t_jngl", " t_JNGL "])
+def test_reread_takes_the_track_type_from_the_media_type_tag(api_client, root, media_type):
+    # RASTATIME 2026-11-09 - operator decision: code or name, any case
+    music, jngl, _ = _types()
+    file = _typed_file(root, "jingle.mp3", media_type, music)
+    response = api_client.post("/api/v2/files/reread-tags", {"ids": [file.id]}, format="json")
+    assert response.status_code == 200, response.content
+    assert response.json()["files"][0]["changes"]["track_type"] == ["t_music", "t_jngl"]
+    file.refresh_from_db()
+    assert file.library_id == jngl.pk
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("media_type", ["Test Jingle", "CD", "Digital Media", "Test Hidden"])
+def test_reread_keeps_the_track_type_for_an_unknown_or_hidden_type(api_client, root, media_type):
+    music, _, _ = _types()
+    file = _typed_file(root, "other.mp3", media_type, music)
+    response = api_client.post("/api/v2/files/reread-tags", {"ids": [file.id]}, format="json")
+    assert response.status_code == 200, response.content
+    assert "track_type" not in response.json()["files"][0].get("changes", {})
+    file.refresh_from_db()
+    assert file.library_id == music.pk
+
+
+@pytest.mark.django_db
+def test_reread_without_media_type_keeps_the_track_type(api_client, root):
+    music, _, _ = _types()
+    _tagged_copy(root, "plain.mp3", title="Plain", artist="Station")
+    file = baker.make(
+        "storage.File",
+        filepath="imported/plain.mp3",
+        exists=True,
+        mime="audio/mp3",
+        track_title="Old",
+        artist_name="Station",
+        library=music,
+    )
+    response = api_client.post("/api/v2/files/reread-tags", {"ids": [file.id]}, format="json")
+    assert "track_type" not in response.json()["files"][0]["changes"]
+    file.refresh_from_db()
+    assert file.library_id == music.pk
+
+
+@pytest.mark.django_db
+def test_reread_sets_a_type_on_a_track_without_one(api_client, root):
+    _, jngl, _ = _types()
+    file = _typed_file(root, "untyped.mp3", "Test Jingles", None)
+    response = api_client.post("/api/v2/files/reread-tags", {"ids": [file.id]}, format="json")
+    assert response.json()["files"][0]["changes"]["track_type"] == [None, "t_jngl"]
+    file.refresh_from_db()
+    assert file.library_id == jngl.pk
