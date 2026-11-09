@@ -134,6 +134,7 @@ einer getaggten Datei.  Nebenbei dokumentiert: *Analyze cue points* je Track-Typ
 die Track-Typen-Liste zeigt die Einstellung nicht.
 
 ### ✅ ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung - GEBAUT 2026-11-09 (Go Stufe 1+2, §23.102; Abnahme offen: Statistik + `[rt_meta]`-Zeilen nach 24 h) (Befund 2026-11-07, seit etwa 2026-11-01)
+**Live seit 2026-11-09 21:22:13; erste Stunde (21:22-22:05):** 15 Queue-Übergaben, 0 ohne Titel bei Icecast (8 Abfolgen, 7 Überblendungen).  Der Wächter speiste 6 der 8 Abfolgen nach, alle mit `crossfade output: no` -> live verlässt das Paket bei `sequence`-Formen den Cross-Operator gar nicht (Verlust IN cross, nicht dahinter); Titel kommt dort ~1 s nach dem hörbaren Start.  Offen: 24-h-Statistik, Webstream-Slots (erster Titel danach, kein Off-Air-Text) ab 2026-11-10 morgens.
 
 Icecast-Zugriffslog (`/admin/metadata` = Titel-Update von Liquidsoap): an den Datei->Datei-Sendungsgrenzen
 08:15 / 12:15 / 17:15 kam bis Ende Oktober täglich ein Update; ab 2026-11-01 fehlt es zunehmend (17:15
