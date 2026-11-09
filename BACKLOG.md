@@ -80,6 +80,22 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Sendestationen (Exstreamer / DEVA) bekommen ein zu leises Signal (Befund 2026-11-09, wartet auf Go)
+
+Operator 2026-11-09: „Einstellung von -23 auf -16 ändern?"  Befund: die -23 ist das
+R128-Ziel von RASTATIME (Settings → Streams), nicht Stereo Tool; das Preset
+`rastatime-r128-transparent.sts` ändert den Programmpegel um 0,0 dB (nur Spitzen über -1 dBTP).
+Seit R128 (2026-09-29) läuft der Stream bei ≈ -23 LUFS, vorher im ReplayGain-Modus ≈ -13 … -16
+→ 7–10 dB leiser.  Messung 10:51–10:53 (dynamische Sendungsdatei, integriert -24,1, wegen
+True-Peak-Deckel nicht angehoben): -29,6 / -29,2 LUFS, TP -6,7 dBTP.  Tascam-Endpunkt in
+Windows 100 % / 0 dB.  Kein Exstreamer/DEVA im Icecast- oder Apache-Log → die Sender holen
+das Signal über einen anderen Weg (offen: welcher).
+Optionen: **A** lauteres Stereo-Tool-Preset (-16 LUFS / -1 dBTP; empfohlen, deckt sich mit der
+Entscheidung 2026-11-05), **B** R128-Ziel -16 (True-Peak-Deckel bremst ~7.700 leisere Titel,
+Webstream-/Line-In-Gains neu), **C** Pegel an den Empfängern/Sendern, **D** eigener
+Sender-Mount mit eigenem Processing.  **Vorbedingungen:** Operator-Go; seit wann leise,
+Zuführungsweg zu den Sendern, Processing am Senderstandort.
+
 ### ✅ Track Type aus dem Tag „Media Type" (ID3 TMED) beim Import - GEBAUT 2026-11-09 (Go Option A: TMED statt eigenem „Content Type", Code und Name, Re-read Tags ja; `3bbe55b6`, `72708fa4`, `1bf18e1c`, §23.101; wirksam nach ANALYZER-/API-Neustart)
 
 Wunsch: trägt eine Datei ein Tag „Content Type" mit einem bekannten Track Type, landet der Track
