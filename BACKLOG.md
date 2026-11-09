@@ -133,7 +133,7 @@ Type"; `MEDIATYPE`/`MEDIA` in anderen Formaten), Abgleich gegen Code und Name, R
 einer getaggten Datei.  Nebenbei dokumentiert: *Analyze cue points* je Track-Typ (SETTINGS),
 die Track-Typen-Liste zeigt die Einstellung nicht.
 
-### 🟡 ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung (Befund 2026-11-07, seit etwa 2026-11-01, wartet auf Go)
+### ✅ ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung - GEBAUT 2026-11-09 (Go Stufe 1+2, §23.102; Abnahme offen: Statistik + `[rt_meta]`-Zeilen nach 24 h) (Befund 2026-11-07, seit etwa 2026-11-01)
 
 Icecast-Zugriffslog (`/admin/metadata` = Titel-Update von Liquidsoap): an den Datei->Datei-Sendungsgrenzen
 08:15 / 12:15 / 17:15 kam bis Ende Oktober täglich ein Update; ab 2026-11-01 fehlt es zunehmend (17:15

@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.129
+Draft version: 0.130
 Date: 2026-11-09
 
 > **Revision history**
+> - **0.130 (2026-11-09)** - **Metadata at transitions** (§23.102): the bus shapes mix the new
+>   arm first (add forwards the first source's metadata only), and a metadata guard re-inserts
+>   a new track's packet that did not reach the bus (sequence shapes lost about half live).
 > - **0.129 (2026-11-09)** - **Stereo Tool preset "16 LUFS clean"** (§23.47): +7 dB in front of
 >   the transparent true-peak limiter, -16 LUFS / -1 dBTP without an AGC; the stream leaves R128,
 >   an R128 feed gets a mount of its own; offline harness through ctypes (one library instance).
@@ -9660,3 +9663,65 @@ No migration.  Tests: shared 19, analyzer (names, MP3 / FLAC / M4A / WAV,
 TMED before TXXX, conversion, cue decision with a spied
 `analyze_cuepoint`), API 10 more Re-read Tags cases.  Probe
 `C:/Temp/optd/tracktype_tag_probe.php` (19 checks, rolled back).
+
+### 23.102 Metadata at Transitions: New Arm First on the Bus, Metadata Guard in the Queue (2026-11-09)
+
+**Finding (2026-11-07/08).** The first track after a show boundary often
+left the stream title, the Live Text and the recording tags on the
+previous track, and the BBC slots showed the off-air text.  Statistics
+2026-11-03..09 (every queue transition in the Liquidsoap log against
+Icecast `/admin/metadata`, window -1..+6 s):
+
+| transition shape | ok | lost |
+|---|---|---|
+| overlap, new track first in `add` | 1346 | 0 |
+| track_skip | 17 | 0 |
+| no-overlap jingle (`sequence([old_s, new.source])`) | 366 | 447 |
+| show shapes (`sequence`) | 85 | 56 |
+| first track after webstream / line-in (bus switch) | 21 | 72 |
+
+The telnet histories `output.icecast.metadata`, `recording_hourly.metadata`
+and `output.portaudio.metadata` were identical: the packet was lost in
+the shared chain, before the outputs.
+
+**Bus switch (cause found).** `bus_transition`, `bus_dj` and
+`bus_instant` were `add([fade.out(old), fade.in(new)])`.  `add`
+forwards the metadata of its FIRST source only (bench 2026-09-28): the
+first track of the incoming file arm lost its packet, and the off-air
+mark that the outgoing file arm's silence fallback inserts when the
+queue runs empty travelled on and overwrote the show-name packet of a
+starting webstream.  Now the new arm is first; `normalize=false`
+without weights makes the order audio-neutral.  Replica (second
+Liquidsoap 2.4.6 instance generated from the live blocks, queue ->
+cross -> fallback -> bus switch -> limit -> Stereo Tool -> icy_rewrite
+-> blank.detect, telnet 1239, `C:/Temp/optd/meta_replica_*`): first
+track after a webstream 0/3 before, 3/3 after.
+
+**Queue sequences (cause open).** The `sequence` shapes lost about half
+of the packets live, but none in the replica (with and without Stereo
+Tool, full tag decoding, the live shape variables).  Instead of a
+blind rewrite of the shapes a guard:
+- `rt_transition` computes `at`, the moment the new track becomes
+  audible in the chosen shape (show: `rem`, `rem + hold`, `rem - cut`;
+  no-overlap track: `rem`; blank-first add: `wait`; else 0), binds the
+  shape to `s` and returns `rt_meta_guard(s, at, new.metadata)`.
+- `rt_meta_guard` schedules a check `at + 1 s` later
+  (`thread.run(delay=...)`): if the newest rid seen on the bus
+  (`rt_seen_max`, set by `bus.on_metadata(rt_meta_seen)` at the Live
+  Text tap) is below the new track's rid, it re-inserts the metadata on
+  the transition source and logs `[rt_meta] ... (crossfade output:
+  yes/no) - re-inserted`; `rt_x_max` (set at the cross output) tells
+  whether the packet left cross.  rids grow monotonically: a newer
+  track already on the bus is never overwritten.
+- Replica: without loss no re-insert (no duplicate); with the metadata
+  dropped artificially in every shape (`source.drop.metadata(s)`)
+  every title arrived through the guard at the audible start (+1 s).
+
+**Measurement.** The `[rt_meta]` lines count the losses live and say
+whether they happen inside cross or between cross and the bus; the
+statistics script (Icecast log per shape) should show no loss after
+the rollout.
+
+**Rollout.** PLAYOUT restart (re-renders rastatime.liq; the planned
+Liquidsoap restart follows at a track boundary - never by hand,
+§23.89).  Rollback: `git revert` + PLAYOUT restart.

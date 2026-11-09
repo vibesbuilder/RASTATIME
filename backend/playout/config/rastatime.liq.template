@@ -505,6 +505,10 @@ ${STEREOTOOL_BLOCK}
 # rewrite, so the raw fields are seen) becomes one POST to PLAYOUT when the
 # feature is on (livetext_report in the ICY block above).
 bus.on_metadata(synchronous=true, livetext_report)
+# RASTATIME 2026-11-09 - metadata guard (CROSSFADE_BLOCK): the newest track
+# whose packet reached this point; a queue transition re-inserts a packet
+# that did not arrive here.
+bus.on_metadata(synchronous=true, rt_meta_seen)
 bus = metadata.map(id="icy_rewrite", update=true, strip=false, insert_missing=false, icy_rewrite, bus)
 
 ${ALERT_BLANK_BLOCK}

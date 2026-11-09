@@ -89,6 +89,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Stream-Titel, Live Text und Off-Air-Text an Übergängen (2026-11-09, Go Stufe 1+2
+  2026-11-09)** — Befund 2026-11-07/08: der erste Titel nach einer Sendungsgrenze hatte oft
+  keinen Stream-Titel, und während der BBC-Slots stand „Back on air soon".  Statistik
+  2026-11-03..09 (jede Queue-Übergabe gegen Icecast /admin/metadata): Überblendungen mit
+  neuem Titel zuerst 0 von 1346 verloren, Jingle-Abfolgen ohne Überblendung 447 von 813,
+  Show-Formen 56 von 141, erster Titel nach Webstream/Line-in 72 von 93.  Alle drei Ausgänge
+  zeigten dieselbe Metadaten-Historie, der Verlust lag in der gemeinsamen Kette.
+  **Stufe 1:** Die Bus-Übergänge (`bus_transition`, `bus_dj`, `bus_instant`) mischen den
+  neuen Arm zuerst - `add` reicht nur die Metadaten seiner ersten Quelle weiter.  Damit
+  kommt der erste Titel nach Webstream/Line-in an, und die Off-Air-Marke des auslaufenden
+  Datei-Arms überschreibt den Sendungsnamen eines startenden Webstreams nicht mehr.  Klang
+  unverändert.  In einer Replik (zweite Liquidsoap-Instanz 2.4.6 aus den Live-Blöcken)
+  nachgestellt: vorher 0 von 3, nachher 3 von 3.  **Stufe 2:** Metadaten-Wächter in der
+  Übergangsfunktion - eine Sekunde nach dem hörbaren Start des neuen Titels prüft er, ob
+  dessen Paket den Bus erreicht hat, speist es sonst nach und schreibt
+  `[rt_meta] <Titel> (rid N): no packet on the bus ... (crossfade output: yes/no) -
+  re-inserted` ins Liquidsoap-Log; ein neuerer Titel wird nie überschrieben (rid steigt).
+  Der Verlust bei Abfolgen ließ sich in der Replik nicht nachstellen, die Logzeile zeigt live,
+  wo das Paket verschwindet.  Replik: ohne Verlust kein Nachspeisen, mit künstlich
+  verschluckten Metadaten jeder Titel nachgespeist.  Tests 898 grün, `liquidsoap --check`
+  bestanden.  Wirksam nach PLAYOUT-Neustart (geplanter Liquidsoap-Neustart an der nächsten
+  Titelgrenze).  ARCHITECTURE §23.102, BACKLOG.
 - **Library: Spaltenauswahl und Standard-Sortierung zeigten auf falsche Spalten
   (2026-11-08)** — Die festen Indizes aus LibreTime 4.5 (35 = Actions, 29 = Sortierung) waren
   mit jeder neuen Spalte verrutscht: die Spaltenauswahl ließ *Website* aus, *Actions* ließ

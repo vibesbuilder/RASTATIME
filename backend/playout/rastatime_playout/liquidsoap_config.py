@@ -2274,6 +2274,40 @@ def _render_crossfade_block(
         "# BEFORE the next show's row start; > 0 = silence until the row (0 = none)\n"
         'rt_hold = interactive.float("rt_hold", 0.0)\n'
         f"# track crossfade {f(track)} s, show crossfade {f(show)} s, tail buffer {f(buf)} s\n"
+        # RASTATIME 2026-11-09 - metadata guard.  Transitions built as a
+        # sequence (no-overlap jingles, the show shapes) lost about half of
+        # the new tracks' metadata packets on the live bus (2026-11-03..09:
+        # 447 of 813 and 56 of 141; overlapping add shapes 0 of 1346) - not
+        # reproduced in a replica, so the mechanism is still open.  The
+        # guard checks AT seconds + 1 after the transition started (AT = when
+        # the new track becomes audible in the shape) whether the bus has
+        # seen the new track's rid; if not, it re-inserts the metadata on
+        # the transition source and logs where the packet was last seen.
+        # rids grow monotonically: a newer track already on the bus is
+        # never overwritten.
+        "# metadata guard (2026-11-09): rt_seen_max = newest rid seen on the bus,\n"
+        "# rt_x_max = newest rid seen at the crossfade output\n"
+        "rt_seen_max = ref(-1)\n"
+        "rt_x_max = ref(-1)\n"
+        'def rt_rid(m) = int_of_string(default=-1, m["rid"]) end\n'
+        "def rt_meta_seen(m) =\n"
+        "  r = rt_rid(m)\n"
+        "  if r > rt_seen_max() then rt_seen_max := r end\n"
+        "end\n"
+        "def rt_meta_guard(s, at, m) =\n"
+        "  r = rt_rid(m)\n"
+        "  if r >= 0 then\n"
+        "    wait_s = (if at > 0. then at else 0. end) + 1.0\n"
+        "    thread.run(delay=wait_s, fun () ->\n"
+        "      if rt_seen_max() < r then\n"
+        '        x = if rt_x_max() >= r then "yes" else "no" end\n'
+        '        log(level=3, label="rt_meta", "#{m[\\"title\\"]} (rid #{r}): no packet on the bus '
+        '#{wait_s} s after the transition (crossfade output: #{x}) - re-inserted")\n'
+        "        s.insert_metadata(m)\n"
+        "      end)\n"
+        "  end\n"
+        "  s\n"
+        "end\n"
         "def rt_instant(old_s, new_s) =\n"
         "  add(normalize=false, [fade.in(duration=0.05, new_s), fade.out(duration=0.05, old_s)])\n"
         "end\n"
@@ -2306,6 +2340,16 @@ def _render_crossfade_block(
         f"  t_delay = if old_nf then {never} else wait end\n"
         f"  s_delay = if old_nf then {never} else {f(max(0.0, buf - show))} end\n"
         "  ignore(t_in) ignore(t_out) ignore(s_out) ignore(t_cut) ignore(s_cut) ignore(t_delay) ignore(s_delay) ignore(wait)\n"
+        "  # 2026-11-09 metadata guard: when the new track becomes audible in the shape\n"
+        "  at =\n"
+        '    if mode == "show" then\n'
+        "      if cut > 0.05 then (if rem - cut - 0.3 < 0.05 then 0. else rem - cut end)\n"
+        "      elsif hold > 0.05 then rem + hold\n"
+        "      else rem end\n"
+        '    elsif mode == "track" and rem >= 0.15 then\n'
+        "      if d < 0.05 then rem elsif wait >= 0.01 then wait else 0. end\n"
+        "    else 0. end\n"
+        "  s =\n"
         # 2026-10-01: no `old.db_level < -50.` shortcut any more.  It skipped
         # the whole buffered tail of a track that ends quietly (BUFFER
         # seconds, not just the silence): the successor started up to 3 s
@@ -2341,6 +2385,7 @@ def _render_crossfade_block(
         + "  else\n"
         + track_natural
         + "  end\n"
+        + "  rt_meta_guard(s, at, new.metadata)\n"
         + "end\n"
         # RASTATIME 2026-09-29 - the per-track gain (ReplayGain / EBU R128,
         # annotate replaygain_track_gain) is applied HERE, on the queue, in
@@ -2353,6 +2398,8 @@ def _render_crossfade_block(
         + "# per-track gain (ReplayGain / EBU R128) on the queue, before the crossfade\n"
         + 'scheduled_g = amplify(id="track_gain", override="replaygain_track_gain", 1., scheduled_q)\n'
         + f'scheduled_x = cross(id="scheduled_x", duration={f(buf)}, rt_transition, scheduled_g)\n'
+        + "scheduled_x.on_metadata(synchronous=true, fun (m) ->\n"
+        + "  if rt_rid(m) > rt_x_max() then rt_x_max := rt_rid(m) end)\n"
     )
 
 
@@ -2505,19 +2552,27 @@ def _render_bus_source_block(
     dj = max(0.0, float(dj_fade_seconds))
     dj_len = dj if dj >= 0.05 else 0.05
     del duck_fade_seconds  # accepted for older callers, no longer shapes anything
+    # RASTATIME 2026-11-09 - the NEW arm is the first element of every add:
+    # add() forwards the metadata of its first source only.  With the old
+    # arm first, the first track after a webstream / line-in lost its title
+    # (77 % of those transitions 2026-11-03..09) and the off-air mark of the
+    # outgoing file arm overwrote the show name of a starting webstream
+    # ("back on air soon" during the BBC slots).  The order does not change
+    # the audio (normalize=false, no weights).
     transition_fn = (
         "# input switch (Default Show Crossfade Duration): new source at\n"
-        "# full level at once, old fades out UNDER it\n"
+        "# full level at once, old fades out UNDER it; the new source goes\n"
+        "# first - add() forwards the first source's metadata only (2026-11-09)\n"
         "def bus_transition(old, new) =\n"
-        f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(fade_len)}, old),\n"
-        "                        fade.in(duration=0.05, new)])\n"
+        "  add(normalize=false, [fade.in(duration=0.05, new),\n"
+        f"                        fade.out(duration={_format_crossfade_duration(fade_len)}, old)])\n"
         "end\n"
         "# DJ hand-over / hand-back (Settings -> Streams, Switch Transition Fade):\n"
         "# the DJ is on air at once and the programme fades out under it; when the\n"
         "# DJ leaves, the DJ fades out and the programme is at full level at once\n"
         "def bus_dj(old, new) =\n"
-        f"  add(normalize=false, [fade.out(duration={_format_crossfade_duration(dj_len)}, old),\n"
-        "                        fade.in(duration=0.05, new)])\n"
+        "  add(normalize=false, [fade.in(duration=0.05, new),\n"
+        f"                        fade.out(duration={_format_crossfade_duration(dj_len)}, old)])\n"
         "end\n"
     )
     shape = (
@@ -2539,7 +2594,7 @@ def _render_bus_source_block(
         "# through the list -- 2.4.4 rejected the mixed list at load (live\n"
         "# outage 2026-09-04 19:26; DJ arms were never in the verify render).\n"
         "def bus_instant(old, new) =\n"
-        "  add(normalize=false, [fade.out(duration=0.05, old), fade.in(duration=0.05, new)])\n"
+        "  add(normalize=false, [fade.in(duration=0.05, new), fade.out(duration=0.05, old)])\n"
         "end\n" + transition_fn + "\n" + "".join(wrappers) + "\n"
         "bus = switch(\n"
         "  track_sensitive=false,\n"

@@ -608,7 +608,11 @@ def test_full_render_threads_the_dj_fade_into_the_bus():
         harbor_show_password="b",
         dj_fade_seconds=1.5,
     )
-    assert "def bus_dj(old, new) =\n  add(normalize=false, [fade.out(duration=1.5, old)," in out
+    # 2026-11-09: the new arm first - add() forwards the first source's metadata only
+    assert (
+        "def bus_dj(old, new) =\n  add(normalize=false, [fade.in(duration=0.05, new),\n"
+        "                        fade.out(duration=1.5, old)])" in out
+    )
 
 
 def test_resolve_show_crossfade_prefers_the_preference(monkeypatch):

@@ -808,7 +808,9 @@ def test_full_render_show_crossfade_reaches_block_and_bus():
         show_crossfade_duration=3.0,
     )
     assert "# track crossfade 1.0 s, show crossfade 3.0 s, tail buffer 3.0 s" in out
-    assert "fade.out(duration=3.0, old)," in out  # bus input switches
+    assert (
+        "fade.out(duration=3.0, old)])" in out
+    )  # bus input switches (new arm first since 2026-11-09)
     assert "${CROSSFADE_BLOCK}" not in out
 
 
@@ -1446,3 +1448,57 @@ def test_full_render_show_recording_uses_chosen_encoder():
     assert 'codec="aac"' in rec_block
     assert 'b="192k"' in rec_block
     assert "${SHOW_RECORDING_ENCODER}" not in out
+
+
+# ---- RASTATIME 2026-11-09 - metadata: bus order + guard ----------------------
+
+
+def _bus(**kw):
+    return lc._render_bus_source_block(
+        main_enabled=True, show_enabled=True, webstream_enabled=True, linein_enabled=True, **kw
+    )
+
+
+def test_bus_shapes_put_the_new_arm_first():
+    """add() forwards the first source's metadata only: with the old arm first
+    the first track after a webstream / line-in lost its title and the
+    outgoing file arm's off-air mark overwrote a starting webstream's show."""
+    block = _bus(transition_seconds=1.0, dj_fade_seconds=1.5)
+    for name in ("bus_instant", "bus_transition", "bus_dj"):
+        body = block.split(f"def {name}(old, new) =\n", 1)[1].split("end\n", 1)[0]
+        assert body.index("new)") < body.index("old)"), (name, body)
+        assert "fade.in(duration=0.05, new)" in body
+    assert "fade.out(duration=1.0, old)" in block.split("def bus_transition", 1)[1]
+    assert "fade.out(duration=1.5, old)" in block.split("def bus_dj", 1)[1]
+
+
+def test_crossfade_block_metadata_guard():
+    block = lc._render_crossfade_block(3.0, 1.0)
+    # the guard: rid bookkeeping, delayed check, re-insert on the transition source
+    assert "rt_seen_max = ref(-1)" in block and "rt_x_max = ref(-1)" in block
+    assert 'def rt_rid(m) = int_of_string(default=-1, m["rid"]) end' in block
+    assert "if rt_seen_max() < r then" in block  # a newer track on the bus is never overwritten
+    assert "s.insert_metadata(m)" in block
+    assert 'label="rt_meta"' in block
+    # every shape goes through it, with the moment the new track becomes audible
+    assert block.count("  rt_meta_guard(s, at, new.metadata)\n") == 1
+    assert '  s =\n  if mode == "instant" or rem < 0.15 then' in block
+    assert "if cut > 0.05 then (if rem - cut - 0.3 < 0.05 then 0. else rem - cut end)" in block
+    assert "elsif hold > 0.05 then rem + hold" in block
+    assert "if d < 0.05 then rem elsif wait >= 0.01 then wait else 0. end" in block
+    # the crossfade output records what left cross
+    assert block.rstrip().endswith("if rt_rid(m) > rt_x_max() then rt_x_max := rt_rid(m) end)")
+
+
+def test_template_taps_the_bus_for_the_guard():
+    out = lc.render_rastatime_liq(
+        [{"type": "mp3", "host": "h", "port": 8000, "mount": "m", "pass": "x", "bitrate": 128}],
+        harbor_main_password="a",
+        harbor_show_password="b",
+    )
+    tap = "bus.on_metadata(synchronous=true, rt_meta_seen)"
+    assert tap in out
+    # where the Live Text sees the packets, before the ICY rewrite, after the guard's definition
+    assert out.index("def rt_meta_seen(m) =") < out.index(tap)
+    assert out.index("bus.on_metadata(synchronous=true, livetext_report)") < out.index(tap)
+    assert out.index(tap) < out.index('bus = metadata.map(id="icy_rewrite"')
