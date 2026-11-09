@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.128
+Draft version: 0.129
 Date: 2026-11-09
 
 > **Revision history**
+> - **0.129 (2026-11-09)** - **Stereo Tool preset "16 LUFS clean"** (§23.47): +7 dB in front of
+>   the transparent true-peak limiter, -16 LUFS / -1 dBTP without an AGC; the stream leaves R128,
+>   an R128 feed gets a mount of its own; offline harness through ctypes (one library instance).
 > - **0.128 (2026-11-09)** - **Track type from the Media Type tag** (§23.101): the import
 >   message carries the visible track types, the analyzer matches the ID3 TMED / MEDIATYPE
 >   value against code and name (`rastatime_shared.track_types`), the matched type decides the
@@ -6497,6 +6500,26 @@ mode` is a loudness ceiling and was rejected).  Loudness conformity
 for webstreams and line-ins.  Harness `C:/Temp/optd/stpreset/st_run.liq`
 + `st_measure.sh`; README next to the preset.  The Liquidsoap limiter
 ahead of Stereo Tool stays as the safety net of the fallback path.
+
+**Preset "16 LUFS clean" (2026-11-09).**  The transmitter sites (stream
+receivers in front of transmitters with their own processing) got a
+signal 7-10 dB quieter than before the R128 switch of 2026-09-29.
+Operator go for a -16 LUFS stream without an AGC:
+`config/stereotool/rastatime-16-clean.sts` = the transparent preset with
+`[Common] Pre amplifier` 2.2387 (+7 dB) and `[HD] R128 mode=0`.  The
+per-track R128 levelling at -23 LUFS stays (the balance between sources
+is unchanged); Stereo Tool lifts the whole bus by 7 dB and holds true
+peaks at -1 dBTP.  Offline on 311 s of real programme: -16.0 LUFS,
+-1.0 dBTP, LRA 11.8 LU, gain ride 0.0 dB.  Rejected after measuring:
+`[HD] R128 mode` (a loudness ceiling: -18.3 LUFS, up to 5.7 dB riding)
+and the factory AGC (`[Pre Compressor]`, engages only with >= +12 dB
+input gain, rides 1.7-3.4 dB inside a song); its speed keys freeze it at
+once in a preset file, so AGC tuning stays in the application.  The
+stream leaves R128 conformity; the R128 feed gets a separate mount.
+Harness: `st_host.py` loads the library once through ctypes (signatures
+from Liquidsoap's `src/stereotool/stereotool.ml`, load type totalinit
+10387; `stereoTool_Reset` must come before `stereoTool_LoadPreset`) -
+each Liquidsoap harness run left an unkillable process of ~1 GB.
 
 ### 23.48 Catch-up after a Planned Restart at a Track Boundary (2026-10-02)
 

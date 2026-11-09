@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stereo-Tool-Preset „16 LUFS clean" (2026-11-09, Operator-Go C1)** — Die Sendestationen
+  bekamen seit der R128-Umstellung (2026-09-29) ein um 7–10 dB leiseres Signal. Neues Preset
+  `config/stereotool/rastatime-16-clean.sts`: das transparente Preset mit +7 dB vor demselben
+  True-Peak-Limiter - das auf -23 LUFS eingepegelte Programm verlässt das Studio mit -16 LUFS,
+  Spitzen -1 dBTP, ohne AGC/Kompressor (kein Pumpen, die Dynamik bleibt), `[HD] R128 mode=0`.
+  Offline gemessen (311 s echtes Programm mit den Titel-Gains): -16,0 LUFS / -1,0 dBTP,
+  Gain-Streuung 0,0 dB; verworfen: Stereo-Tool-R128-Modus (-18,3 LUFS, bis 5,7 dB Regeln) und
+  Werks-AGC (1,7–3,4 dB Regeln in Musik). Aktiv, sobald der Pfad in Settings → Streams steht
+  (geplanter Liquidsoap-Neustart). Der Stream ist dann nicht mehr R128-konform; die
+  R128-Zuführung bekommt einen eigenen Mount.
 - **Track Type aus dem Tag „Media Type" (ID3 TMED) beim Import und bei Re-read Tags
   (2026-11-09, Operator-Go Option A)** — Nennt das Tag einen sichtbaren Track Type per Code
   oder Name (ohne Groß-/Kleinschreibung: `Jingles`, `jngl`), landet der Track genau in diesem

@@ -41,7 +41,49 @@ AGC or compressor sections here - this preset is meant to stay
 transparent.  For a processed sound, build a separate preset in the
 Stereo Tool application and point the setting at that file instead.
 
+## `rastatime-16-clean.sts` (since 2026-11-09)
+
+The transparent preset plus **+7 dB** in front of the same true-peak
+limiter: the programme RASTATIME levels to −23 LUFS leaves at
+**−16 LUFS** with true peaks at −1 dBTP - loud enough for stream
+receivers that feed transmitters, and the usual level of web streams.
+No AGC, no compressor: nothing rides the gain, a programme keeps its
+dynamics (quiet passages get the same +7 dB as everything else).
+`[HD] R128 mode` stays 0: it is a loudness *ceiling* - set to −16 it
+pulled the programme down to −18.3 LUFS and rode the gain by up to
+5.7 dB in quiet music.
+
+With this preset the stream is no longer EBU R128 conformant
+(−23 LUFS); an R128 feed needs a mount of its own.
+
+Measurements (2026-11-09, offline through the library, 311 s of real
+programme with the per-track gains of the Loudness Normalization):
+
+| Signal | In | Out |
+|---|---|---|
+| Whole programme | −23.0 LUFS / −2.3 dBTP / LRA 11.9 LU | −16.0 LUFS / −1.0 dBTP / LRA 11.8 LU |
+| Rock, 60 s | −23.9 LUFS / −14.2 dBTP | −16.9 LUFS / −7.2 dBTP |
+| Speech show, 90 s | −23.5 LUFS / −10.5 dBTP | −16.5 LUFS / −3.5 dBTP |
+| Quiet acoustic music, 60 s | −21.7 LUFS / −2.3 dBTP | −14.7 LUFS / −1.0 dBTP |
+| 1 kHz sine, −41 LUFS | −41.1 LUFS | −34.1 LUFS |
+| 997 Hz square, full scale | +3.8 LUFS / +2.1 dBTP | +0.6 LUFS / −0.9 dBTP |
+
+Gain ride (output minus input momentary loudness) inside each piece:
+0.0 dB standard deviation (0.05 dB in the quiet piece, whose peaks the
+limiter catches).  Compared on the same programme: Stereo Tool's AGC
+(`[Pre Compressor]`) only engages with at least +12 dB input gain and
+with its factory times rides 1.7–3.4 dB inside a song (audible pumping);
+a light setting rode 0.6–1.0 dB.  Tune an AGC by ear in the Stereo Tool
+application and measure the saved preset before using it.
+
 Test harness: `C:/Temp/optd/stpreset/st_run.liq` (offline run through
 the library: `liquidsoap st_run.liq -- <tag> <preset> all_settings
 [input.wav]`) and `st_measure.sh` (integrated loudness and true peak of
 the three test segments).
+
+Test harness since 2026-11-09: `C:/Temp/optd/stpreset/st_host.py` hosts
+ONE library instance through ctypes and processes job files - a
+Liquidsoap harness run per preset left an unkillable process holding
+about 1 GB every time.  `st_eval.py` measures loudness, true peak and
+the gain ride per segment.  Note: `stereoTool_Reset` after
+`stereoTool_LoadPreset` throws the loaded settings away - reset first.

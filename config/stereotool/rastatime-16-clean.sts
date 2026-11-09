@@ -1,0 +1,18 @@
+[Preset info]
+Name=RASTATIME 16 LUFS clean
+Description=+7 dB on the R128-levelled programme (-23 to -16 LUFS), true-peak limiter at -1 dBTP, no AGC, R128 mode off. RASTATIME 2026-11-09.
+Author=RASTATIME
+[Final Limiter]
+Difference=0
+Enabled=1
+Pre-amp=1.135010
+Pre-limiter enabled=0
+Reduced CPU processing=0
+[Common]
+Hard limit output=1
+Oversample limiters=1
+Pre amplifier=2.238721
+Post amplifier=0.881049
+Post amplifier - Limit at 0 dB=1
+[HD]
+R128 mode=0

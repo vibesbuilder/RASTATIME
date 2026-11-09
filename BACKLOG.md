@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Sendestationen (Exstreamer / DEVA) bekommen ein zu leises Signal (Befund 2026-11-09, wartet auf Go)
+### ✅ Sendestationen (Exstreamer / DEVA) bekommen ein zu leises Signal - Preset GEBAUT 2026-11-09 (Go C1, R128 mode 0; `config/stereotool/rastatime-16-clean.sts`, aktiv nach Pfad-Eintrag in Settings → Streams; offen: eigener Mount für die R128-Zuführung)
 
 Operator 2026-11-09: „Einstellung von -23 auf -16 ändern?"  Befund: die -23 ist das
 R128-Ziel von RASTATIME (Settings → Streams), nicht Stereo Tool; das Preset
