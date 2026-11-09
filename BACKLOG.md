@@ -95,6 +95,14 @@ Entscheidung 2026-11-05), **B** R128-Ziel -16 (True-Peak-Deckel bremst ~7.700 le
 Webstream-/Line-In-Gains neu), **C** Pegel an den Empfängern/Sendern, **D** eigener
 Sender-Mount mit eigenem Processing.  **Vorbedingungen:** Operator-Go; seit wann leise,
 Zuführungsweg zu den Sendern, Processing am Senderstandort.
+**Antworten 2026-11-09:** vermutlich seit Ende September; der gemietete Streaming-Server relayt unseren Stream ohne
+Processing - offizieller Output für Hörer UND Sendestationen; an den Standorten gibt es
+Processor/AGC; die Einspeisung bei **ORF Sound muss EBU-R128-konform sein** (-23 LUFS).
+Go für A mit -16 nur unter Vorbehalt: -16 auf dem einzigen Stream bricht R128 für ORF Sound
+(R128 war 2026-10-02 auch der Grund für Stereo Tool) → Rückfrage: zwei Mounts (R128 -23 für
+ORF Sound, -16 für Hörer/Sender; zweite Bearbeitungsstufe im Studio + zweiter Relay-Mount beim
+Streaming-Anbieter) oder ein R128-Stream und Pegel an den Standorten (C).  Preset-Inhalt erklärt
+(nur Final Limiter, netto 0 dB; Stereo Tools R128-Modus ist eine Obergrenze, kein Normalisierer).
 
 ### ✅ Track Type aus dem Tag „Media Type" (ID3 TMED) beim Import - GEBAUT 2026-11-09 (Go Option A: TMED statt eigenem „Content Type", Code und Name, Re-read Tags ja; `3bbe55b6`, `72708fa4`, `1bf18e1c`, §23.101; wirksam nach ANALYZER-/API-Neustart)
 
