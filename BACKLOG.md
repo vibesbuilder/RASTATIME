@@ -103,6 +103,13 @@ Go für A mit -16 nur unter Vorbehalt: -16 auf dem einzigen Stream bricht R128 f
 ORF Sound, -16 für Hörer/Sender; zweite Bearbeitungsstufe im Studio + zweiter Relay-Mount beim
 Streaming-Anbieter) oder ein R128-Stream und Pegel an den Standorten (C).  Preset-Inhalt erklärt
 (nur Final Limiter, netto 0 dB; Stereo Tools R128-Modus ist eine Obergrenze, kein Normalisierer).
+**Offline-Messung 2026-11-09** (Operator: ORF-R128 kommt aus dem Processing am Relay; Go A mit -16;
+311 s echtes Programm mit R128-Gains): C1 *+7 dB + True-Peak-Limiter* = -16,0 LUFS, TP -1,0,
+kein Regeln (Dynamik bleibt); Stereo-Tool-R128-Modus auf -16 = nur -18,3 LUFS und bis 5,7 dB
+Regeln (aus lassen); AGC greift erst mit heißem Eingang, Werkszeiten regeln in Musik 1,7–3,4 dB
+(Pumpen); leichte AGC L12 = -16,2 LUFS, 0,6–1,0 dB.  Empfehlung C1, AGC-Feintuning nur in der
+Stereo-Tool-Oberfläche nach Gehör.  Offen: Operator-Wahl C1/L12 nach Hörprobe, dann Preset ins
+Repo + Pfad in Settings → Streams.
 
 ### ✅ Track Type aus dem Tag „Media Type" (ID3 TMED) beim Import - GEBAUT 2026-11-09 (Go Option A: TMED statt eigenem „Content Type", Code und Name, Re-read Tags ja; `3bbe55b6`, `72708fa4`, `1bf18e1c`, §23.101; wirksam nach ANALYZER-/API-Neustart)
 
