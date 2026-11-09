@@ -48,6 +48,12 @@ _CUSTOM_TAGS: dict[str, tuple[str, ...]] = {
     "expires_at": ("expiry", "expirydate"),
     "enabled_from": ("enabledate", "enabledfrom"),
     "country": ("country",),
+    # RASTATIME 2026-11-09 - "Media Type": the ID3 frame TMED (read as
+    # "tmed" first, see _read_txxx), MEDIATYPE in Vorbis / MP4 / Mp3tag,
+    # MEDIA as MusicBrainz Picard names it there, and the "tmed" key ffprobe
+    # gives the ID3 chunk of a WAV file.  The raw text; the pipeline (and
+    # Re-read Tags) turn it into a track type (rastatime_shared.track_types).
+    "media_type": ("tmed", "mediatype", "media"),
 }
 _DATE_KEYS = ("expires_at", "enabled_from")
 _DATE_LABELS = {"expires_at": "Expiry", "enabled_from": "Enable Date"}
@@ -105,8 +111,11 @@ def _custom_tag_values(pairs: Iterable[tuple[Any, Any]], filepath: Path) -> dict
 
 def _read_txxx(filepath: Path) -> Optional[list[tuple[str, str]]]:
     """
-    (description, first non-empty text) of every ID3v2 TXXX frame; None when
-    the file has no ID3v2 tag (OGG/FLAC/M4A, the ID3 chunk of a WAV file).
+    (description, first non-empty text) of every ID3v2 TXXX frame, after
+    ("TMED", text) of the standard frame TMED (Media Type, RASTATIME
+    2026-11-09) so the standard frame wins over a TXXX of the same name;
+    None when the file has no ID3v2 tag (OGG/FLAC/M4A, the ID3 chunk of a
+    WAV file).
 
     Mutagen's EasyID3 does not expose generic TXXX frames, so the raw ID3 is
     read here.  Files without an ID3v2 tag get their custom tags from the
@@ -127,6 +136,10 @@ def _read_txxx(filepath: Path) -> Optional[list[tuple[str, str]]]:
         return None
 
     pairs = []
+    for frame in id3.getall("TMED"):
+        text = next((str(t).strip() for t in frame.text if str(t).strip()), "")
+        if text:
+            pairs.append(("TMED", text))
     for frame in id3.getall("TXXX"):
         desc = getattr(frame, "desc", "") or ""
         text = next((str(t).strip() for t in frame.text if str(t).strip()), "")
@@ -137,9 +150,10 @@ def _read_txxx(filepath: Path) -> Optional[list[tuple[str, str]]]:
 
 def read_custom_tags(filepath_: str) -> dict[str, str]:
     """
-    RASTATIME 2026-11-08 - expires_at / enabled_from (YYYY-MM-DD) and country
-    from the file's own tags, without ffprobe and without a checksum: ID3v2
-    TXXX frames, MP4 freeform atoms, Vorbis comments.  Used by the one-time
+    RASTATIME 2026-11-08 - expires_at / enabled_from (YYYY-MM-DD), country
+    and (2026-11-09) media_type from the file's own tags, without ffprobe and
+    without a checksum: ID3v2 TMED / TXXX frames, MP4 freeform atoms, Vorbis
+    comments.  Used by the one-time
     country backfill; the import reads the same tags in analyze_metadata.
     """
     filepath = Path(filepath_)
@@ -465,7 +479,8 @@ def analyze_metadata(filepath_: str, metadata: dict[str, Any]):
 
     # RASTATIME 2026-05-16 / 2026-11-08 - custom ID3 TXXX tags: "Expiry" /
     # "Expiry Date" (Track Expiry), "Enable Date" / "Enabled From" (the track
-    # stays disabled until that day) and "Country" (Music by Country).
+    # stays disabled until that day) and "Country" (Music by Country);
+    # 2026-11-09 the frame TMED ("Media Type", the track type on import).
     # The dates go out as plain YYYY-MM-DD (also when the tag says
     # YYYYMMDD): the EditAudioMD form validator expects exactly that on the
     # round-trip, the concept is a day, and PostgreSQL's

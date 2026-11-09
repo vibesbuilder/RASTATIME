@@ -54,6 +54,7 @@ TAGS = {
     "expires_at": "2027-02-28",
     "enabled_from": "2027-01-15",
     "country": "Austria",
+    "media_type": "Jingles",
 }
 
 
@@ -229,6 +230,7 @@ def test_flac_with_cover_to_mp3_keeps_cover_and_tags(tmp_path: Path):
     assert str(id3["TXXX:Expiry"]) == "2027-02-28"
     assert str(id3["TXXX:Enable Date"]) == "2027-01-15"
     assert str(id3["TXXX:COUNTRY"]) == "Austria"
+    assert str(id3["TMED"]) == "Jingles"
     pictures = id3.getall("APIC")
     assert len(pictures) == 1
     assert pictures[0].mime == "image/png"
@@ -246,6 +248,7 @@ def test_flac_with_cover_to_mp3_keeps_cover_and_tags(tmp_path: Path):
         "expires_at",
         "enabled_from",
         "country",
+        "media_type",
     ):
         assert again[key] == TAGS[key]
 
@@ -354,7 +357,7 @@ def test_lossy_files_are_never_reencoded(tmp_path: Path, name: str, args):
 @requires_ffmpeg
 @pytest.mark.parametrize("convert_lossless", [True, False])
 def test_raw_adts_is_always_repacked_to_m4a(tmp_path: Path, convert_lossless: bool):
-    from mutagen.id3 import TIT2, TPE1, TXXX
+    from mutagen.id3 import TIT2, TMED, TPE1, TXXX
     from mutagen.mp4 import MP4
 
     src = raw_adts_with_id3(
@@ -365,6 +368,7 @@ def test_raw_adts_is_always_repacked_to_m4a(tmp_path: Path, convert_lossless: bo
             TXXX(encoding=3, desc="Expiry", text="2027-03-31"),
             TXXX(encoding=3, desc="Enable Date", text="20270301"),
             TXXX(encoding=3, desc="COUNTRY", text="UK"),
+            TMED(encoding=3, text="news"),
         ],
     )
     source_stream = audio_stream(src)
@@ -391,10 +395,12 @@ def test_raw_adts_is_always_repacked_to_m4a(tmp_path: Path, convert_lossless: bo
     assert bytes(mp4["----:com.apple.iTunes:Expiry"][0]) == b"2027-03-31"
     assert bytes(mp4["----:com.apple.iTunes:Enable Date"][0]) == b"2027-03-01"
     assert bytes(mp4["----:com.apple.iTunes:COUNTRY"][0]) == b"UK"
+    assert bytes(mp4["----:com.apple.iTunes:MEDIATYPE"][0]) == b"news"
     again = analyze_metadata(new_path, {})
     assert again["expires_at"] == "2027-03-31"
     assert again["enabled_from"] == "2027-03-01"
     assert again["country"] == "UK"
+    assert again["media_type"] == "news"
 
 
 @requires_ffmpeg

@@ -1,7 +1,8 @@
 """
 RASTATIME 2026-11-08 - the custom tags read on import: "Expiry" /
 "Expiry Date", "Enable Date" / "Enabled From" and "Country", in any
-spelling of the name, with the dates as YYYY-MM-DD or YYYYMMDD.
+spelling of the name, with the dates as YYYY-MM-DD or YYYYMMDD; since
+2026-11-09 the "Media Type" (ID3 TMED, MEDIATYPE / MEDIA elsewhere).
 """
 
 import logging
@@ -162,3 +163,86 @@ def test_unreadable_file_has_no_custom_tags(tmp_path: Path):
     path.write_bytes(b"")
 
     assert not read_custom_tags(str(path))
+
+
+# RASTATIME 2026-11-09 - Media Type (the track type on import)
+@pytest.mark.parametrize(
+    "name", ["TMED", "tmed", "Media Type", "MEDIATYPE", "media_type", "MEDIA", "media"]
+)
+def test_media_type_names(name: str):
+    assert _custom_tag_values([(name, " Jingles ")], Path("x.mp3")) == {"media_type": "Jingles"}
+
+
+def _mp3_with_frames(path: Path, frames: list) -> Path:
+    from mutagen.id3 import ID3
+
+    sine(path, "-c:a", "libmp3lame")
+    id3 = ID3(path)
+    for frame in frames:
+        id3.add(frame)
+    id3.save(path)
+    return path
+
+
+@requires_ffmpeg
+def test_mp3_tmed(tmp_path: Path):
+    from mutagen.id3 import TMED
+
+    path = _mp3_with_frames(tmp_path / "jingle.mp3", [TMED(encoding=3, text="Jingles")])
+
+    assert analyze_metadata(str(path), {})["media_type"] == "Jingles"
+    assert read_custom_tags(str(path)) == {"media_type": "Jingles"}
+
+
+@requires_ffmpeg
+def test_mp3_tmed_wins_over_a_txxx_of_the_same_name(tmp_path: Path):
+    from mutagen.id3 import TMED, TXXX
+
+    path = _mp3_with_frames(
+        tmp_path / "both.mp3",
+        [TXXX(encoding=3, desc="MEDIATYPE", text="Music"), TMED(encoding=3, text="news")],
+    )
+
+    assert analyze_metadata(str(path), {})["media_type"] == "news"
+
+
+@requires_ffmpeg
+def test_mp3_empty_tmed_is_absent(tmp_path: Path):
+    from mutagen.id3 import TMED
+
+    path = _mp3_with_frames(tmp_path / "empty.mp3", [TMED(encoding=3, text=" ")])
+
+    assert "media_type" not in analyze_metadata(str(path), {})
+
+
+@requires_ffmpeg
+def test_flac_mediatype(tmp_path: Path):
+    path = sine(tmp_path / "n.flac", *("-metadata", "MEDIATYPE=News"))
+
+    assert analyze_metadata(str(path), {})["media_type"] == "News"
+
+
+@requires_ffmpeg
+def test_m4a_mediatype_freeform(tmp_path: Path):
+    from mutagen.mp4 import MP4, MP4FreeForm
+
+    path = sine(tmp_path / "a.m4a", "-c:a", "aac")
+    mp4 = MP4(path)
+    mp4["----:com.apple.iTunes:MEDIATYPE"] = [MP4FreeForm(b"ads")]
+    mp4.save()
+
+    assert analyze_metadata(str(path), {})["media_type"] == "ads"
+
+
+@requires_ffmpeg
+def test_wav_id3_chunk_tmed(tmp_path: Path):
+    from mutagen.id3 import TMED
+    from mutagen.wave import WAVE
+
+    path = sine(tmp_path / "w.wav")
+    wave = WAVE(path)
+    wave.add_tags()
+    wave.tags.add(TMED(encoding=3, text="Jingles"))
+    wave.save()
+
+    assert analyze_metadata(str(path), {})["media_type"] == "Jingles"

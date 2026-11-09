@@ -2,9 +2,10 @@ import logging
 import os
 from enum import Enum
 from queue import Queue
-from typing import Any, Protocol
+from typing import Any, Optional, Protocol
 
 from pydantic import BaseModel
+from rastatime_shared.track_types import match_track_type
 
 from .analyze_cuepoint import UnreadableFileError, analyze_cuepoint, analyze_duration
 from .analyze_loudness import analyze_loudness
@@ -29,12 +30,52 @@ class PipelineStatus(int, Enum):
     FAILED = 2
 
 
+class TrackTypeOption(BaseModel):
+    """One visible track type as the legacy app sends it (2026-11-09)."""
+
+    id: int
+    code: str
+    name: Optional[str] = None
+    analyze_cue_points: bool = False
+
+
 class PipelineOptions(BaseModel):
     analyze_cue_points: bool = False
     # RASTATIME 2026-10-14 - Settings -> Local Machine "convert_lossless_to_mp3"
     # (the legacy app sends it with every import message).  False when the
     # message does not carry it, so an old message behaves as before.
     convert_lossless: bool = False
+    # RASTATIME 2026-11-09 - the visible track types: a "Media Type" tag
+    # (ID3 TMED) that names one of them makes it the track's type, and that
+    # type decides the cue point analysis instead of analyze_cue_points
+    # (which belongs to the type chosen on upload).  Empty when the message
+    # does not carry them: the tag is then ignored, as before.
+    track_types: list[TrackTypeOption] = []
+
+
+def tagged_track_type(
+    metadata: dict[str, Any], options: PipelineOptions, filepath: str
+) -> Optional[TrackTypeOption]:
+    """
+    The track type the Media Type tag names, or None; logs what it decided.
+    Takes the raw tag text out of the metadata (it is no cc_files column);
+    convert_format has written it into a converted file before.
+    """
+    raw = metadata.pop("media_type", None)
+    if not raw or not options.track_types:
+        return None
+    found = match_track_type(raw, options.track_types)
+    if found is None:
+        logger.info("Media Type tag %r in %s names no track type; ignored", raw, filepath)
+        return None
+    logger.info(
+        "Media Type tag %r in %s: track type %s (cue points %s)",
+        raw,
+        filepath,
+        found.code,
+        "analyzed" if found.analyze_cue_points else "not analyzed",
+    )
+    return found
 
 
 class Pipeline:
@@ -114,9 +155,17 @@ class Pipeline:
                 convert_lossless=options.convert_lossless,
             )
             converted = audio_file_path != source_path
+            # RASTATIME 2026-11-09 - a Media Type tag naming a visible track
+            # type sets the type (the legacy callback checks the code again)
+            # and decides the cue point analysis.
+            tagged_type = tagged_track_type(metadata, options, audio_file_path)
+            analyze_cues = options.analyze_cue_points
+            if tagged_type is not None:
+                metadata["track_type_code"] = tagged_type.code
+                analyze_cues = tagged_type.analyze_cue_points
             try:
                 metadata = analyze_duration(audio_file_path, metadata)
-                if options.analyze_cue_points:
+                if analyze_cues:
                     metadata = analyze_cuepoint(audio_file_path, metadata)
                 metadata = analyze_replaygain(audio_file_path, metadata)
                 metadata = analyze_loudness(audio_file_path, metadata)

@@ -308,6 +308,7 @@ def _write_id3_tags(path: Path, tags: dict[str, Any]) -> None:
         TDRC,
         TIT2,
         TLAN,
+        TMED,
         TPE1,
         TPUB,
         TRCK,
@@ -342,6 +343,8 @@ def _write_id3_tags(path: Path, tags: dict[str, Any]) -> None:
         # RASTATIME 2026-11-08 - read back by analyze_metadata on the new file
         (partial(TXXX, desc="Enable Date"), _expiry_text(tags.get("enabled_from"))),
         (partial(TXXX, desc="COUNTRY"), _first_text(tags, "country")),
+        # RASTATIME 2026-11-09 - the Media Type tag as the original had it
+        (TMED, _first_text(tags, "media_type")),
     ]
     for make_frame, text in frames:
         if not text:
@@ -388,6 +391,7 @@ def _write_mp4_tags(path: Path, tags: dict[str, Any]) -> None:
         ("Expiry", _expiry_text(tags.get("expires_at"))),
         ("Enable Date", _expiry_text(tags.get("enabled_from"))),
         ("COUNTRY", _first_text(tags, "country")),
+        ("MEDIATYPE", _first_text(tags, "media_type")),
         ("ISRC", _first_text(tags, "isrc")),
         ("LABEL", _first_text(tags, "label")),
         ("LANGUAGE", _first_text(tags, "language")),

@@ -4,6 +4,8 @@ from queue import Queue
 
 import pytest
 from rastatime_analyzer.pipeline import Pipeline, PipelineOptions
+from rastatime_analyzer.pipeline import pipeline as pipeline_module
+from rastatime_analyzer.pipeline.pipeline import tagged_track_type
 
 from ..conftest import AUDIO_FILENAME, AUDIO_IMPORT_DEST
 from ._synth import requires_ffmpeg
@@ -140,3 +142,102 @@ def test_pipeline_options_convert_lossless():
     assert PipelineOptions(
         **{"analyze_cue_points": True, "convert_lossless": True}
     ).convert_lossless
+
+
+# RASTATIME 2026-11-09 - the Media Type tag (ID3 TMED) sets the track type
+TYPES = [
+    {"id": 2, "code": "music", "name": "Music", "analyze_cue_points": True},
+    {"id": 3, "code": "jngl", "name": "Jingles", "analyze_cue_points": True},
+    {"id": 4, "code": "news", "name": "News", "analyze_cue_points": False},
+]
+
+
+def test_pipeline_options_track_types():
+    # an import message without the key (older legacy app): no track types
+    assert PipelineOptions().track_types == []
+    options = PipelineOptions(**{"analyze_cue_points": True, "track_types": TYPES})
+    assert [t.code for t in options.track_types] == ["music", "jngl", "news"]
+    nameless = PipelineOptions(track_types=[{"id": 6, "code": "recs", "name": None}])
+    assert nameless.track_types[0].name is None
+
+
+@pytest.mark.parametrize(
+    "raw, code",
+    [("Jingles", "jngl"), ("jngl", "jngl"), ("NEWS", "news"), ("CD", None), ("", None)],
+)
+def test_tagged_track_type(raw, code):
+    metadata = {"media_type": raw, "track_title": "x"}
+    found = tagged_track_type(metadata, PipelineOptions(track_types=TYPES), "x.mp3")
+    assert (found.code if found else None) == code
+    assert metadata == {"track_title": "x"}  # the raw text never reaches the callback
+
+
+def test_tagged_track_type_needs_the_types():
+    metadata = {"media_type": "Jingles"}
+    assert tagged_track_type(metadata, PipelineOptions(), "x.mp3") is None
+    assert "media_type" not in metadata
+
+
+def _run_tagged(tmp_path: Path, dest_dir: Path, monkeypatch, tmed: str, options: PipelineOptions):
+    from mutagen.id3 import ID3, TMED
+
+    from ._synth import sine
+
+    src_dir = tmp_path / "organize"
+    src_dir.mkdir()
+    src = sine(src_dir / "7-Tagged.mp3", "-c:a", "libmp3lame")
+    id3 = ID3(src)
+    id3.add(TMED(encoding=3, text=tmed))
+    id3.save(src)
+    cue_calls = []
+
+    def fake_cuepoint(path, metadata):
+        cue_calls.append(path)
+        return metadata
+
+    monkeypatch.setattr(pipeline_module, "analyze_cuepoint", fake_cuepoint)
+    queue = Queue()
+    Pipeline.run_analysis(queue, str(src), str(dest_dir), "Tagged.mp3", options)
+    return queue.get(), cue_calls
+
+
+@requires_ffmpeg
+def test_tag_type_decides_the_cue_points(tmp_path: Path, dest_dir: Path, monkeypatch):
+    # uploaded as News (no cue points), tagged Jingles (cue points)
+    metadata, cue_calls = _run_tagged(
+        tmp_path,
+        dest_dir,
+        monkeypatch,
+        "Jingles",
+        PipelineOptions(analyze_cue_points=False, track_types=TYPES),
+    )
+    assert metadata["track_type_code"] == "jngl"
+    assert "media_type" not in metadata
+    assert len(cue_calls) == 1
+
+
+@requires_ffmpeg
+def test_tag_type_can_switch_cue_points_off(tmp_path: Path, dest_dir: Path, monkeypatch):
+    metadata, cue_calls = _run_tagged(
+        tmp_path,
+        dest_dir,
+        monkeypatch,
+        "news",
+        PipelineOptions(analyze_cue_points=True, track_types=TYPES),
+    )
+    assert metadata["track_type_code"] == "news"
+    assert cue_calls == []
+
+
+@requires_ffmpeg
+def test_unknown_tag_keeps_the_upload_type(tmp_path: Path, dest_dir: Path, monkeypatch):
+    metadata, cue_calls = _run_tagged(
+        tmp_path,
+        dest_dir,
+        monkeypatch,
+        "Digital Media",
+        PipelineOptions(analyze_cue_points=True, track_types=TYPES),
+    )
+    assert "track_type_code" not in metadata
+    assert "media_type" not in metadata
+    assert len(cue_calls) == 1
