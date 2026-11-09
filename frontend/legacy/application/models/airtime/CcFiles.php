@@ -262,10 +262,33 @@ class CcFiles extends BaseCcFiles
         $fileArray = self::removeBlacklistedFields($fileArray);
         $fileArray = self::stripTimeStampFromYearTag($fileArray);
 
+        // RASTATIME 2026-11-09 - the track type a Media Type tag (ID3 TMED)
+        // names, as the analyzer reports it (track_type_code, matched against
+        // the visible types the import message carried): taken only while that
+        // code is still a visible track type; it wins over the type chosen on
+        // upload.  A failed lookup costs the tag, never the import.
+        $taggedTypeId = null;
+        if (array_key_exists('track_type_code', $fileArray)) {
+            $taggedCode = is_scalar($fileArray['track_type_code']) ? (string) $fileArray['track_type_code'] : '';
+            unset($fileArray['track_type_code']);
+            try {
+                $taggedTypeId = Application_Model_Tracktype::visibleIdByCode($taggedCode);
+            } catch (Exception $exc) {
+                Logging::warn('CcFiles::updateFromArray: track type lookup failed: ' . $exc->getMessage());
+            }
+            if ($taggedTypeId === null) {
+                Logging::info("CcFiles::updateFromArray: file id={$fileId}: Media Type names track type '{$taggedCode}', which is no visible track type (any more); ignored");
+            }
+        }
+
         try {
             self::validateFileArray($fileArray);
             if ($file) {
                 $file->fromArray($fileArray, BasePeer::TYPE_FIELDNAME);
+                if ($taggedTypeId !== null) {
+                    $file->setDbTrackTypeId($taggedTypeId);
+                    Logging::info("CcFiles::updateFromArray: file id={$fileId}: track type '{$taggedCode}' from the Media Type tag");
+                }
 
                 // Our RESTful API takes "full_path" as a field, which we then split and translate to match
                 // our internal schema. Internally, file path is stored relative to a directory, with the directory

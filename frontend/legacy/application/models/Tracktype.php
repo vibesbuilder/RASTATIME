@@ -353,4 +353,65 @@ SQL;
             ':id' => $id,
         ], 'single');
     }
+
+    /**
+     * RASTATIME 2026-11-09 - the visible track types for the analyzer's import
+     * message (option track_types): a Media Type tag (ID3 TMED) that names
+     * one of them by code or name makes it the track's type, and that type's
+     * analyze_cue_points decides the cue point analysis.  Visible = the types
+     * the upload dialog offers.  An empty list (also on a database error)
+     * leaves the tag unused - the import itself never fails for it.
+     *
+     * @return array list of ['id' => int, 'code' => string, 'name' => ?string,
+     *               'analyze_cue_points' => bool]
+     */
+    public static function analyzerTrackTypes()
+    {
+        try {
+            $rows = Application_Common_Database::prepareAndExecute(
+                'SELECT id, code, type_name, analyze_cue_points FROM cc_track_types WHERE visibility ORDER BY id',
+                [],
+                'all'
+            );
+        } catch (Exception $e) {
+            Logging::warn('analyzerTrackTypes: ' . $e->getMessage());
+
+            return [];
+        }
+        $types = [];
+        foreach ((array) $rows as $row) {
+            $types[] = [
+                'id' => (int) $row['id'],
+                'code' => (string) $row['code'],
+                'name' => $row['type_name'] === null ? null : (string) $row['type_name'],
+                'analyze_cue_points' => (bool) $row['analyze_cue_points'],
+            ];
+        }
+
+        return $types;
+    }
+
+    /**
+     * RASTATIME 2026-11-09 - the id of the VISIBLE track type with exactly
+     * this code (the analyzer reports the Media Type tag's type by code), or
+     * null: a type deleted or hidden since the upload is no longer taken.
+     *
+     * @param mixed $code
+     *
+     * @return null|int
+     */
+    public static function visibleIdByCode($code)
+    {
+        $code = trim((string) $code);
+        if ($code === '') {
+            return null;
+        }
+        $id = Application_Common_Database::prepareAndExecute(
+            'SELECT id FROM cc_track_types WHERE code = :code AND visibility',
+            [':code' => $code],
+            Application_Common_Database::COLUMN
+        );
+
+        return ($id === false || $id === null) ? null : (int) $id;
+    }
 }

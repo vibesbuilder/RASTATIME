@@ -230,6 +230,12 @@ class Application_Model_RabbitMq
         // (SendLoudnessMeasurementToAnalyzer) never converts.
         $options->convert_lossless = (bool) Application_Model_Preference::getConvertLosslessToMp3();
 
+        // RASTATIME 2026-11-09 - the visible track types: a Media Type tag
+        // (ID3 TMED) naming one of them by code or name makes it the track's
+        // type and decides the cue point analysis; the callback reports it as
+        // track_type_code (CcFiles::updateFromArray checks it again).
+        $options->track_types = Application_Model_Tracktype::analyzerTrackTypes();
+
         $data['options'] = $options;
 
         self::publishAnalyzerMessage($data);
