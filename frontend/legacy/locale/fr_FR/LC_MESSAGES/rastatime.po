@@ -6826,8 +6826,8 @@ msgid "Re-read the tags of the selected files from the files on disk"
 msgstr "Relire les tags des fichiers sélectionnés depuis les fichiers sur le disque"
 
 #: RASTATIME 2026-10-21 re-read tags
-msgid "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays."
-msgstr "Relire les tags du ou des fichiers sélectionnés depuis les fichiers sur le disque ? Titre, artiste, album, genre, année, numéro de piste, compositeur, copyright, label, ISRC, BPM, humeur, langue et commentaire sont remplacés par le contenu du fichier ; tout ce qui est défini uniquement dans RASTATIME (type de piste, teaser, points de repère, sonie, expiration) est conservé."
+msgid "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, country and comment are replaced by what the file carries, and a Media Type tag that names a track type sets the track type; everything else you set in RASTATIME (teaser, cue points, loudness, expiry and enable date) stays."
+msgstr "Relire les tags du ou des fichiers sélectionnés depuis les fichiers sur le disque ? Titre, artiste, album, genre, année, numéro de piste, compositeur, copyright, label, ISRC, BPM, humeur, langue, pays et commentaire sont remplacés par le contenu du fichier, et un tag Media Type qui nomme un type de piste définit le type de piste ; tout le reste défini dans RASTATIME (teaser, points de repère, sonie, dates d’expiration et d’activation) est conservé."
 
 #: RASTATIME 2026-10-21 re-read tags
 msgid "The tags could not be re-read."

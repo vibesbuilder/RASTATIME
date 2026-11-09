@@ -413,7 +413,7 @@ var AIRTIME = (function (AIRTIME) {
     if (
       !confirm(
         $.i18n._(
-          "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays.",
+          "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, country and comment are replaced by what the file carries, and a Media Type tag that names a track type sets the track type; everything else you set in RASTATIME (teaser, cue points, loudness, expiry and enable date) stays.",
         ),
       )
     ) {

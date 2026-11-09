@@ -6469,8 +6469,8 @@ msgid "Re-read the tags of the selected files from the files on disk"
 msgstr "Tags der ausgewählten Dateien neu aus den Dateien einlesen"
 
 #: RASTATIME 2026-10-21 re-read tags
-msgid "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language and comment are replaced by what the file carries; everything you set in RASTATIME only (track type, teaser, cue points, loudness, expiry) stays."
-msgstr "Tags der ausgewählten Datei(en) neu aus den Dateien einlesen? Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache und Kommentar werden durch den Inhalt der Datei ersetzt; alles, was nur in RASTATIME gesetzt wird (Track-Typ, Teaser, Cue-Punkte, Lautheit, Ablaufdatum), bleibt."
+msgid "Re-read the tags of the selected file(s) from the files on disk? Title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, country and comment are replaced by what the file carries, and a Media Type tag that names a track type sets the track type; everything else you set in RASTATIME (teaser, cue points, loudness, expiry and enable date) stays."
+msgstr "Tags der ausgewählten Datei(en) neu aus den Dateien einlesen? Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache, Land und Kommentar werden durch den Inhalt der Datei ersetzt, und ein Media-Type-Tag, das einen Track-Typ nennt, setzt den Track-Typ; alles andere, was in RASTATIME gesetzt wird (Teaser, Cue-Punkte, Lautheit, Ablauf- und Aktivierungsdatum), bleibt."
 
 #: RASTATIME 2026-10-21 re-read tags
 msgid "The tags could not be re-read."
