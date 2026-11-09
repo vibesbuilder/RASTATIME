@@ -80,6 +80,25 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Track Type aus dem Tag „Content Type" beim Import (Operator-Wunsch 2026-11-09, evaluiert, wartet auf Go)
+
+Wunsch: trägt eine Datei ein Tag „Content Type" mit einem bekannten Track Type, landet der Track
+genau in diesem Typ; unbekannter oder leerer Wert wird verworfen.  Befund 2026-11-09: kein
+einziger der 24.979 Bibliotheks-Tracks trägt das Tag (voller Scan, TXXX / Vorbis / MP4); die
+sechs Typen (`show`, `music`, `jngl`, `news`, `ads`, `recs`) sind alle sichtbar.  Der Typ
+steuert heute schon VOR der Analyse, ob Cue-Punkte gemessen werden (`analyze_cue_points` je Typ,
+`RabbitMq::SendMessageToAnalyzer`) - ein Typwechsel erst im Rückruf käme dafür zu spät.
+Plan (Option A): Analyzer liest das Tag wie Country/Expiry (`_CUSTOM_TAGS`, jede Schreibweise),
+Legacy schickt die sichtbaren Typen (id, code, name, analyze_cue_points) in der Import-Nachricht
+mit, der Analyzer gleicht ab (code vor name, ohne Groß/Klein) und misst Cue-Punkte nach dem
+Tag-Typ; der Rückruf prüft den Typ noch einmal (existiert + sichtbar).  Formatumwandlung trägt
+das Tag mit; Re-read Tags optional.  Keine Migration, nur ANALYZER-/API-Neustart, Reihenfolge
+egal.  ~200 Zeilen + Tests, ~10 Dateien, ein halber Tag mit Doku ×4.  Option B (Legacy liest
+per getID3 vor der Übergabe) verworfen: zweiter Tag-Leser neben mutagen.
+**Vorbedingungen:** Operator-Go; Entscheidungen: eigenes Tag statt ID3-Standardframe TCON
+(= Genre, heißt im ID3-Standard „Content type"), Abgleich gegen Code und Name, Re-read Tags
+übernimmt den Typ ja/nein.
+
 ### 🟡 ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung (Befund 2026-11-07, seit etwa 2026-11-01, wartet auf Go)
 
 Icecast-Zugriffslog (`/admin/metadata` = Titel-Update von Liquidsoap): an den Datei->Datei-Sendungsgrenzen
