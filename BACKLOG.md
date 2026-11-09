@@ -80,7 +80,8 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### ✅ Sendestationen (Exstreamer / DEVA) bekommen ein zu leises Signal - Preset GEBAUT 2026-11-09 (Go C1, R128 mode 0; `config/stereotool/rastatime-16-clean.sts`, aktiv nach Pfad-Eintrag in Settings → Streams; offen: eigener Mount für die R128-Zuführung)
+### ✅ Sendestationen (Exstreamer / DEVA) bekommen ein zu leises Signal - Preset GEBAUT 2026-11-09 (Go C1, R128 mode 0; `config/stereotool/rastatime-16-clean.sts`, LIVE seit 2026-11-09 14:21 - Pfad vom Operator eingetragen, geplanter Liquidsoap-Neustart an der Titelgrenze; R128-Mount für ORF kommt vom Streaming-Anbieter, bei uns nichts zu bauen)
+**Abnahme-Messung 2026-11-09 14:22–14:52 (Stream):** 30 min -15,9 LUFS, TP -0,9 dBTP (MP3), LRA 6,5 LU; je 5 min -15,3 … -16,5 LUFS.
 
 Operator 2026-11-09: „Einstellung von -23 auf -16 ändern?"  Befund: die -23 ist das
 R128-Ziel von RASTATIME (Settings → Streams), nicht Stereo Tool; das Preset
