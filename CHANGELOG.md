@@ -110,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wo das Paket verschwindet.  Replik: ohne Verlust kein Nachspeisen, mit künstlich
   verschluckten Metadaten jeder Titel nachgespeist.  Tests 898 grün, `liquidsoap --check`
   bestanden.  Wirksam nach PLAYOUT-Neustart (geplanter Liquidsoap-Neustart an der nächsten
-  Titelgrenze).  ARCHITECTURE §23.102, BACKLOG.
+  Titelgrenze).  ARCHITECTURE §23.102, BACKLOG.  Commit `e45801be`.
 - **Library: Spaltenauswahl und Standard-Sortierung zeigten auf falsche Spalten
   (2026-11-08)** — Die festen Indizes aus LibreTime 4.5 (35 = Actions, 29 = Sortierung) waren
   mit jeder neuen Spalte verrutscht: die Spaltenauswahl ließ *Website* aus, *Actions* ließ
