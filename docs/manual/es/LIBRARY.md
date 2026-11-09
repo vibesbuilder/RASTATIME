@@ -240,6 +240,39 @@ reciben su país una sola vez desde sus etiquetas con
 `manage.py backfill_country --yes` en el equipo del estudio; el comando
 solo rellena países vacíos y, sin `--yes`, solo cuenta.
 
+### Tipo de pista desde la etiqueta Media Type (desde 2026-11-09)
+
+Un archivo puede traer su propio tipo de pista: si su etiqueta
+**Media Type** nombra un tipo de pista que RASTATIME conoce, la pista
+recibe exactamente ese tipo al importarse.
+
+- **Dónde está la etiqueta:** en la trama ID3 estándar `TMED`
+  (Media Type) de los archivos MP3; `MEDIATYPE` - o `MEDIA`, como la
+  escribe MusicBrainz Picard - en los comentarios FLAC, OGG y Opus y
+  en los campos libres de M4A; `TMED` en el bloque ID3 de un archivo
+  WAV.  El género (`TCON`) sigue siendo el género.
+- **Qué debe decir:** el código o el nombre de un tipo de pista, sin
+  distinguir mayúsculas - `Jingles`, `JINGLES` y `jngl` significan
+  todos *Jingles*.  Solo cuentan los tipos que ofrece el diálogo de
+  subida (Ajustes → Tipos de pista, *Visibility* activada).
+- **Sobre qué prevalece:** sobre el tipo elegido en el diálogo de
+  subida y sobre el Track Type Upload Default (que también usa la
+  carpeta de importación).
+- **Los puntos de cue lo siguen:** si la importación detecta puntos de
+  cue es un ajuste del tipo de pista (*Analyze cue points*); con la
+  etiqueta decide el tipo de la etiqueta.
+- **Todo lo demás se descarta:** una etiqueta vacía, un tipo mal
+  escrito (`Jingle`) o un valor como `CD` o `Digital Media`, que
+  MusicBrainz escribe en la misma trama, no cambia nada; la pista
+  recibe el tipo que tendría sin la etiqueta y el registro del
+  analizador nombra el archivo.
+
+**Releer etiquetas** también fija el tipo cuando la etiqueta nombra un
+tipo conocido; una etiqueta desconocida o ausente deja el tipo como
+está.  Un archivo sin pérdida convertido a MP3 conserva la etiqueta.
+El 2026-11-09 ninguna pista de la biblioteca llevaba esta etiqueta;
+las pistas existentes no cambian.
+
 ### Editar metadatos de pista
 
 Haga clic en una fila de pista → **Editar metadatos** en
@@ -507,7 +540,7 @@ la tabla:
 | **Editar** | Una pista seleccionada: su pestaña de edición, como antes. **Dos o más pistas seleccionadas (desde 2026-10-08): un solo diálogo para todas** - creador, álbum, género, año, tipo de pista, idioma, mood, sello, compositor, director, copyright, país (desde 2026-11-08), activo desde y fecha de caducidad (`none` las borra), pista desactivada (*Sí* / *No*; desde 2026-11-08, *No* también vacía las fechas de caducidad alcanzadas y las fechas de activación aún por llegar), descripción. Los campos vacíos no cambian; un campo relleno se escribe en cada pista seleccionada; título, número de pista, BPM, puntos de cue y carátula siguen siendo por pista. Solo base de datos, como el editor individual (las etiquetas de los archivos se leen al importar y nunca se reescriben). Las pistas que no puede editar se omiten y se cuentan en el resultado. |
 | **Transferir propietario** | Reasignar propiedad (solo Admins). |
 | **Cue Points** | Detecta los puntos de cue de las pistas seleccionadas a partir del audio (la misma detección de silencio que el analizador ejecuta al importar: por debajo de −60 dB durante al menos 0,3 s al inicio o al final) y los guarda. Los programas futuros que programan esas pistas adoptan los nuevos valores y se recalculan. Las pistas de más de 15 minutos se omiten - la acción está pensada para jingles y otros elementos cortos. Desde el 30/09/2026. |
-| **Releer etiquetas** *(desde 2026-10-21)* | Vuelve a leer las etiquetas de las pistas seleccionadas desde los archivos en disco, para archivos editados en Windows después de la importación.  RASTATIME nunca relee un archivo por sí mismo: la base de datos es la verdad para la biblioteca y el playout.  El botón sustituye título, artista, álbum, género, año, número de pista, compositor, copyright, sello, ISRC, BPM, mood, idioma, comentario y (desde 2026-11-08) país por lo que contiene el archivo (una etiqueta ausente vacía la columna) y actualiza la suma de comprobación y el tamaño; todo lo que se define solo en RASTATIME (tipo de pista, teaser, puntos de cue, sonoridad, fechas de caducidad y de activación, peticiones) se mantiene.  Administradores y gestores de programación para cualquier archivo, los demás para los suyos.  El archivo solo se lee, así que una pista en antena está a salvo; pero edite un archivo en Windows solo mientras no esté programado, el playout reproduce directamente desde la biblioteca. |
+| **Releer etiquetas** *(desde 2026-10-21)* | Vuelve a leer las etiquetas de las pistas seleccionadas desde los archivos en disco, para archivos editados en Windows después de la importación.  RASTATIME nunca relee un archivo por sí mismo: la base de datos es la verdad para la biblioteca y el playout.  El botón sustituye título, artista, álbum, género, año, número de pista, compositor, copyright, sello, ISRC, BPM, mood, idioma, comentario y (desde 2026-11-08) país por lo que contiene el archivo (una etiqueta ausente vacía la columna), fija el tipo de pista que nombra una etiqueta **Media Type** (desde 2026-11-09; una etiqueta desconocida o ausente deja el tipo) y actualiza la suma de comprobación y el tamaño; todo lo demás que se define solo en RASTATIME (teaser, puntos de cue, sonoridad, fechas de caducidad y de activación, peticiones) se mantiene.  Administradores y gestores de programación para cualquier archivo, los demás para los suyos.  El archivo solo se lee, así que una pista en antena está a salvo; pero edite un archivo en Windows solo mientras no esté programado, el playout reproduce directamente desde la biblioteca. |
 
 ---
 

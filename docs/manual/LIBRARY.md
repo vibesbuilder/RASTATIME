@@ -263,6 +263,35 @@ tags once with `manage.py backfill_country --yes` on the station
 machine; it fills only empty countries, and without `--yes` it only
 counts.
 
+### Track type from the Media Type tag (since 2026-11-09)
+
+A file can bring its own track type: when its **Media Type** tag names
+a track type RASTATIME knows, the track gets exactly that type on
+import.
+
+- **Where the tag sits:** the standard ID3 frame `TMED` (Media Type)
+  in MP3 files; `MEDIATYPE` - or `MEDIA`, as MusicBrainz Picard writes
+  it - in FLAC, OGG and Opus comments and M4A freeform fields; `TMED`
+  in the ID3 chunk of a WAV file.  The genre (`TCON`) stays the genre.
+- **What it must say:** the code or the name of a track type, in any
+  case - `Jingles`, `JINGLES` and `jngl` all mean *Jingles*.  Only the
+  types the upload dialog offers count (Settings → Track Types,
+  *Visibility* enabled).
+- **What it wins over:** the type chosen in the upload dialog and the
+  Track Type Upload Default (which the Import Folder uses too).
+- **Cue points follow it:** whether the import detects cue points is a
+  setting of the track type (*Analyze cue points*); with the tag, the
+  tagged type decides.
+- **Anything else is ignored:** an empty tag, a misspelt type
+  (`Jingle`) or a value like `CD` or `Digital Media`, which MusicBrainz
+  writes into the same frame, changes nothing; the track gets the type
+  it would get without the tag, and the analyzer log names the file.
+
+**Re-read Tags** sets the type too when the tag names a known type; an
+unknown or missing tag leaves the type as it is.  A lossless file that
+is converted to MP3 keeps the tag.  On 2026-11-09 no track in the
+library carried the tag, so existing tracks are unchanged.
+
 ### Editing track metadata
 
 Click a track row → **Edit Metadata** in the row's action menu.  If a save is refused (for example a date in the wrong format), the editor stays open and lists the reason above the fields (since 2026-11-08).
@@ -565,7 +594,7 @@ toolbar that appears at the bottom of the table:
 | **Edit** | One track selected: its editor tab, as before. **Two or more tracks selected (since 2026-10-08): one dialog for all of them** - creator, album, genre, year, track type, language, mood, label, composer, conductor, copyright, country (since 2026-11-08), enabled from and expiry date (`none` clears them), track disabled (*Yes* / *No*; since 2026-11-08, *No* also clears expiry dates that have been reached and enable dates still ahead), description. Empty fields stay unchanged, a filled field is written to every selected track; title, track number, BPM, cue points and artwork stay per track. Database only, like the single editor (tags inside the files are read at import and never rewritten). Tracks you may not edit are skipped and counted in the result. |
 | **Move to Owner** | Reassign ownership (Admins only). Used when a DJ leaves and their files should pass to the station account. |
 | **Cue Points** | Detect the cue points of the selected tracks from their audio (the same silence detection the analyzer runs at import: quieter than −60 dB for at least 0.3 s at the head or the tail) and store them. Upcoming shows that schedule the tracks follow the new values and are laid out again. Tracks longer than 15 minutes are skipped - the action is meant for jingles and other short elements. Since 2026-09-30. |
-| **Re-read Tags** *(since 2026-10-21)* | Re-read the tags of the selected tracks from the files on disk - for files you edited in Windows after the import.  RASTATIME never re-reads a file on its own: the database is the truth for the library and the playout.  The button replaces title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, comment and (since 2026-11-08) country with what the file carries (a tag missing in the file clears the column) and refreshes the checksum and size; everything set only in RASTATIME (track type, teaser, cue points, loudness, expiry and enable date, requests) stays.  Admins and programme managers for every file, others for their own.  The file is only read, so a track on air is safe - but edit a file in Windows only while it is not scheduled, the playout plays straight from the library. |
+| **Re-read Tags** *(since 2026-10-21)* | Re-read the tags of the selected tracks from the files on disk - for files you edited in Windows after the import.  RASTATIME never re-reads a file on its own: the database is the truth for the library and the playout.  The button replaces title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, comment and (since 2026-11-08) country with what the file carries (a tag missing in the file clears the column), sets the track type a **Media Type** tag names (since 2026-11-09; an unknown or missing tag leaves the type) and refreshes the checksum and size; everything else set only in RASTATIME (teaser, cue points, loudness, expiry and enable date, requests) stays.  Admins and programme managers for every file, others for their own.  The file is only read, so a track on air is safe - but edit a file in Windows only while it is not scheduled, the playout plays straight from the library. |
 
 ---
 

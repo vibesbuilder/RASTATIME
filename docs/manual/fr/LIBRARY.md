@@ -292,6 +292,40 @@ reçoivent leur pays une seule fois depuis leurs tags avec
 `manage.py backfill_country --yes` sur le poste du studio ; la commande
 ne remplit que les pays vides et, sans `--yes`, se contente de compter.
 
+### Type de piste depuis le tag Media Type (depuis le 2026-11-09)
+
+Un fichier peut apporter son propre type de piste : si son tag
+**Media Type** nomme un type de piste que RASTATIME connaît, la piste
+reçoit exactement ce type à l'import.
+
+- **Où se trouve le tag :** dans la trame ID3 standard `TMED`
+  (Media Type) des fichiers MP3 ; `MEDIATYPE` - ou `MEDIA`, comme
+  l'écrit MusicBrainz Picard - dans les commentaires FLAC, OGG et Opus
+  et les champs libres M4A ; `TMED` dans le bloc ID3 d'un fichier WAV.
+  Le genre (`TCON`) reste le genre.
+- **Ce qu'il doit contenir :** le code ou le nom d'un type de piste,
+  sans tenir compte de la casse - `Jingles`, `JINGLES` et `jngl`
+  désignent tous *Jingles*.  Seuls comptent les types que propose la
+  boîte de téléversement (Paramètres → Types de piste, *Visibility*
+  activée).
+- **Ce qu'il remplace :** le type choisi dans la boîte de
+  téléversement et le Track Type Upload Default (qu'utilise aussi le
+  dossier d'import).
+- **Les points de repère suivent :** la détection des points de repère
+  à l'import est un réglage du type de piste (*Analyze cue points*) ;
+  avec le tag, c'est le type du tag qui décide.
+- **Tout le reste est ignoré :** un tag vide, un type mal orthographié
+  (`Jingle`) ou une valeur comme `CD` ou `Digital Media`, que
+  MusicBrainz écrit dans la même trame, ne change rien ; la piste
+  reçoit le type qu'elle aurait sans le tag, et le journal de
+  l'analyseur nomme le fichier.
+
+**Relire les tags** définit aussi le type quand le tag nomme un type
+connu ; un tag inconnu ou absent laisse le type tel quel.  Un fichier
+sans perte converti en MP3 garde le tag.  Le 2026-11-09, aucune piste
+de la bibliothèque ne portait ce tag ; les pistes existantes sont donc
+inchangées.
+
 ### Modifier les métadonnées de piste
 
 Cliquez sur une ligne de piste → **Modifier les
@@ -619,7 +653,7 @@ barre d'outils qui apparaît au bas du tableau :
 | **Modifier** | Une piste sélectionnée : son onglet d'édition, comme avant. **Deux pistes ou plus sélectionnées (depuis le 2026-10-08) : un seul dialogue pour toutes** - créateur, album, genre, année, type de piste, langue, mood, label, compositeur, chef d'orchestre, copyright, pays (depuis le 2026-11-08), actif à partir du et date d'expiration (`none` les efface), piste désactivée (*Oui* / *Non* ; depuis le 2026-11-08, *Non* vide aussi les dates d'expiration atteintes et les dates d'activation encore à venir), description. Les champs vides restent inchangés, un champ rempli est écrit dans chaque piste sélectionnée ; titre, numéro de piste, BPM, points de repère et pochette restent par piste. Base de données seulement, comme l'éditeur simple (les tags dans les fichiers sont lus à l'import et jamais réécrits). Les pistes que vous ne pouvez pas modifier sont ignorées et comptées dans le résultat. |
 | **Transférer le propriétaire** | Réassigner la propriété (Admins seulement). Utilisé quand un DJ part et que ses fichiers doivent passer au compte de la station. |
 | **Cue Points** | Détecte les points de repère des pistes sélectionnées à partir de l'audio (la même détection de silence que l'analyseur exécute à l'import : moins de −60 dB pendant au moins 0,3 s au début ou à la fin) et les enregistre. Les émissions à venir qui programment ces pistes reprennent les nouvelles valeurs et sont recalculées. Les pistes de plus de 15 minutes sont ignorées - l'action est prévue pour les jingles et autres éléments courts. Depuis le 30/09/2026. |
-| **Relire les tags** *(depuis le 2026-10-21)* | Relit les tags des pistes sélectionnées depuis les fichiers sur le disque - pour les fichiers que vous avez modifiés dans Windows après l'import.  RASTATIME ne relit jamais un fichier de lui-même : la base de données est la vérité pour la bibliothèque et le playout.  Le bouton remplace titre, artiste, album, genre, année, numéro de piste, compositeur, copyright, label, ISRC, BPM, humeur, langue, commentaire et (depuis le 2026-11-08) pays par le contenu du fichier (un tag absent du fichier vide la colonne) et met à jour la somme de contrôle et la taille ; tout ce qui est défini uniquement dans RASTATIME (type de piste, teaser, points de repère, sonie, dates d'expiration et d'activation, demandes) est conservé.  Administrateurs et responsables de programme pour chaque fichier, les autres pour les leurs.  Le fichier est seulement lu, une piste à l'antenne ne risque rien - mais ne modifiez un fichier dans Windows que s'il n'est pas programmé, le playout lit directement la bibliothèque. |
+| **Relire les tags** *(depuis le 2026-10-21)* | Relit les tags des pistes sélectionnées depuis les fichiers sur le disque - pour les fichiers que vous avez modifiés dans Windows après l'import.  RASTATIME ne relit jamais un fichier de lui-même : la base de données est la vérité pour la bibliothèque et le playout.  Le bouton remplace titre, artiste, album, genre, année, numéro de piste, compositeur, copyright, label, ISRC, BPM, humeur, langue, commentaire et (depuis le 2026-11-08) pays par le contenu du fichier (un tag absent du fichier vide la colonne), définit le type de piste que nomme un tag **Media Type** (depuis le 2026-11-09 ; un tag inconnu ou absent laisse le type) et met à jour la somme de contrôle et la taille ; tout le reste défini uniquement dans RASTATIME (teaser, points de repère, sonie, dates d'expiration et d'activation, demandes) est conservé.  Administrateurs et responsables de programme pour chaque fichier, les autres pour les leurs.  Le fichier est seulement lu, une piste à l'antenne ne risque rien - mais ne modifiez un fichier dans Windows que s'il n'est pas programmé, le playout lit directement la bibliothèque. |
 
 ---
 

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Track Type aus dem Tag „Media Type" (ID3 TMED) beim Import und bei Re-read Tags
+  (2026-11-09, Operator-Go Option A)** — Nennt das Tag einen sichtbaren Track Type per Code
+  oder Name (ohne Groß-/Kleinschreibung: `Jingles`, `jngl`), landet der Track genau in diesem
+  Typ - vor der Auswahl im Upload-Dialog und dem Track Type Upload Default (auch Import-Ordner).
+  Unbekannte oder leere Werte (auch `CD` / `Digital Media` aus MusicBrainz) werden verworfen
+  und nur im Analyzer-Log genannt. Weil der Typ schon VOR der Analyse über die Cue-Punkt-Messung
+  entscheidet, schickt RASTATIME die sichtbaren Typen in der Import-Nachricht mit; der Analyzer
+  gleicht ab (`rastatime_shared.track_types`), misst Cue-Punkte nach dem Tag-Typ und meldet
+  `track_type_code`, der Rückruf prüft ihn noch einmal (sichtbar). Gelesen wird `TMED` in MP3
+  und WAV, `MEDIATYPE` bzw. `MEDIA` in FLAC/OGG/Opus/M4A; die MP3-Umwandlung trägt das Tag mit.
+  Re-read Tags übernimmt einen bekannten Typ, ein unbekannter oder fehlender lässt ihn stehen;
+  der Bestätigungstext nennt jetzt auch Land und Track Type (DE/FR/ES). Genre (TCON) bleibt
+  Genre. Scan 2026-11-09: keiner der 24.979 Tracks trägt das Tag. Keine Migration; wirksam
+  nach ANALYZER- und API-Neustart (Reihenfolge egal). Probe
+  `C:/Temp/optd/tracktype_tag_probe.php` (19/19, Rollback). Commits `3bbe55b6`, `72708fa4`,
+  `1bf18e1c`, `cacaef14`.
 - **Enabled From: Track erst ab einem Datum aktiv (2026-11-08, Operator-Go Option A + Zusatz)**
   — Neues Feld **Enabled From** in Edit Track (vor dem Ablaufdatum) und in der
   Mehrfachbearbeitung (`none` leert): bis 00:00 Uhr dieses Tages ist der Track deaktiviert.

@@ -285,6 +285,40 @@ Tracks erhalten ihr Land einmalig aus ihren Tags mit
 `manage.py backfill_country --yes` auf dem Studiorechner; der Befehl
 füllt nur leere Länder und zählt ohne `--yes` nur.
 
+### Track-Typ aus dem Media-Type-Tag (seit 2026-11-09)
+
+Eine Datei kann ihren Track-Typ selbst mitbringen: Nennt ihr Tag
+**Media Type** einen Track-Typ, den RASTATIME kennt, erhält der Track
+beim Import genau diesen Typ.
+
+- **Wo der Tag steht:** im ID3-Standardframe `TMED` (Media Type) in
+  MP3-Dateien; `MEDIATYPE` - oder `MEDIA`, wie MusicBrainz Picard ihn
+  schreibt - in FLAC-, OGG- und Opus-Kommentaren und
+  M4A-Freiform-Feldern; `TMED` im ID3-Block einer WAV-Datei.  Das
+  Genre (`TCON`) bleibt das Genre.
+- **Was drinstehen muss:** der Code oder der Name eines Track-Typs,
+  Groß- und Kleinschreibung egal - `Jingles`, `JINGLES` und `jngl`
+  meinen alle *Jingles*.  Es zählen nur die Typen, die der
+  Upload-Dialog anbietet (Einstellungen → Track-Typen, *Visibility*
+  aktiviert).
+- **Wogegen er gewinnt:** gegen den im Upload-Dialog gewählten Typ und
+  gegen den Track Type Upload Default (den auch der Import-Ordner
+  verwendet).
+- **Cue-Punkte folgen ihm:** Ob der Import Cue-Punkte erkennt, ist
+  eine Einstellung des Track-Typs (*Analyze cue points*); mit dem Tag
+  entscheidet der Typ aus dem Tag.
+- **Alles andere wird verworfen:** Ein leerer Tag, ein falsch
+  geschriebener Typ (`Jingle`) oder ein Wert wie `CD` oder
+  `Digital Media`, den MusicBrainz in denselben Frame schreibt, ändert
+  nichts; der Track erhält den Typ, den er ohne den Tag bekäme, und
+  das Analyzer-Log nennt die Datei.
+
+**Tags neu einlesen** setzt den Typ ebenfalls, wenn der Tag einen
+bekannten Typ nennt; ein unbekannter oder fehlender Tag lässt den Typ,
+wie er ist.  Eine verlustfreie Datei, die in MP3 umgewandelt wird,
+behält den Tag.  Am 2026-11-09 trug kein Track der Bibliothek diesen
+Tag; bestehende Tracks sind also unverändert.
+
 ### Track-Metadaten bearbeiten
 
 Klicken Sie auf eine Track-Zeile → **Metadaten bearbeiten**
@@ -609,7 +643,7 @@ Tabelle erscheint:
 | **Bearbeiten** | Ein Track ausgewählt: sein Editor-Tab wie bisher. **Zwei oder mehr Tracks ausgewählt (seit 2026-10-08): ein Dialog für alle** - Interpret, Album, Genre, Jahr, Track-Typ, Sprache, Mood, Label, Komponist, Dirigent, Copyright, Land (seit 2026-11-08), Aktiv ab und Ablaufdatum (`none` löscht sie), Track deaktiviert (*Ja* / *Nein*; seit 2026-11-08, *Nein* leert auch erreichte Ablaufdaten und noch in der Zukunft liegende Aktivierungsdaten), Beschreibung. Leere Felder bleiben unverändert, ein ausgefülltes Feld wird in jeden ausgewählten Track geschrieben; Titel, Track-Nummer, BPM, Cue-Punkte und Cover bleiben je Track. Nur Datenbank, wie der Einzel-Editor (Tags in den Dateien werden beim Import gelesen und nie zurückgeschrieben). Tracks ohne Bearbeitungsrecht werden übersprungen und im Ergebnis gezählt. |
 | **Besitz übertragen** | Besitz neu zuweisen (nur Admins). Verwendet, wenn ein DJ ausscheidet und seine Dateien an das Stations-Konto übergehen sollen. |
 | **Cue Points** | Erkennt die Cue-Punkte der ausgewählten Tracks aus dem Audio (dieselbe Stille-Erkennung, die der Analyzer beim Import ausführt: leiser als −60 dB für mindestens 0,3 s am Anfang oder Ende) und speichert sie. Kommende Sendungen, die die Tracks enthalten, übernehmen die neuen Werte und werden neu ausgelegt. Tracks über 15 Minuten werden übersprungen - die Aktion ist für Jingles und andere kurze Elemente gedacht. Seit dem 30.09.2026. |
-| **Tags neu einlesen** *(seit 2026-10-21)* | Liest die Tags der ausgewählten Tracks neu aus den Dateien - für Dateien, die Sie nach dem Import in Windows bearbeitet haben.  RASTATIME liest eine Datei nie von sich aus erneut: Die Datenbank ist die Wahrheit für Bibliothek und Playout.  Der Knopf ersetzt Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache, Kommentar und (seit 2026-11-08) Land durch den Inhalt der Datei (ein in der Datei fehlender Tag leert die Spalte) und zieht Prüfsumme und Größe nach; alles, was nur in RASTATIME gesetzt wird (Track-Typ, Teaser, Cue-Punkte, Lautheit, Ablauf- und Aktivierungsdatum, Anfragen), bleibt.  Admins und Programm-Manager für jede Datei, andere für ihre eigenen.  Die Datei wird nur gelesen, ein laufender Titel ist also sicher - bearbeiten Sie eine Datei in Windows aber nur, solange sie nicht geplant ist, das Playout spielt direkt aus der Bibliothek. |
+| **Tags neu einlesen** *(seit 2026-10-21)* | Liest die Tags der ausgewählten Tracks neu aus den Dateien - für Dateien, die Sie nach dem Import in Windows bearbeitet haben.  RASTATIME liest eine Datei nie von sich aus erneut: Die Datenbank ist die Wahrheit für Bibliothek und Playout.  Der Knopf ersetzt Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache, Kommentar und (seit 2026-11-08) Land durch den Inhalt der Datei (ein in der Datei fehlender Tag leert die Spalte), setzt den Track-Typ, den ein **Media-Type**-Tag nennt (seit 2026-11-09; ein unbekannter oder fehlender Tag lässt den Typ), und zieht Prüfsumme und Größe nach; alles andere, was nur in RASTATIME gesetzt wird (Teaser, Cue-Punkte, Lautheit, Ablauf- und Aktivierungsdatum, Anfragen), bleibt.  Admins und Programm-Manager für jede Datei, andere für ihre eigenen.  Die Datei wird nur gelesen, ein laufender Titel ist also sicher - bearbeiten Sie eine Datei in Windows aber nur, solange sie nicht geplant ist, das Playout spielt direkt aus der Bibliothek. |
 
 ---
 

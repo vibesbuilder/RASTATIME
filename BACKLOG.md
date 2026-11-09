@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Track Type aus dem Tag „Content Type" beim Import (Operator-Wunsch 2026-11-09, evaluiert, wartet auf Go)
+### ✅ Track Type aus dem Tag „Media Type" (ID3 TMED) beim Import - GEBAUT 2026-11-09 (Go Option A: TMED statt eigenem „Content Type", Code und Name, Re-read Tags ja; `3bbe55b6`, `72708fa4`, `1bf18e1c`, §23.101; wirksam nach ANALYZER-/API-Neustart)
 
 Wunsch: trägt eine Datei ein Tag „Content Type" mit einem bekannten Track Type, landet der Track
 genau in diesem Typ; unbekannter oder leerer Wert wird verworfen.  Befund 2026-11-09: kein
@@ -95,9 +95,11 @@ Tag-Typ; der Rückruf prüft den Typ noch einmal (existiert + sichtbar).  Format
 das Tag mit; Re-read Tags optional.  Keine Migration, nur ANALYZER-/API-Neustart, Reihenfolge
 egal.  ~200 Zeilen + Tests, ~10 Dateien, ein halber Tag mit Doku ×4.  Option B (Legacy liest
 per getID3 vor der Übergabe) verworfen: zweiter Tag-Leser neben mutagen.
-**Vorbedingungen:** Operator-Go; Entscheidungen: eigenes Tag statt ID3-Standardframe TCON
-(= Genre, heißt im ID3-Standard „Content type"), Abgleich gegen Code und Name, Re-read Tags
-übernimmt den Typ ja/nein.
+**Entscheidung 2026-11-09:** TCON bleibt Genre; Tag ist der Standardframe **TMED** („Media
+Type"; `MEDIATYPE`/`MEDIA` in anderen Formaten), Abgleich gegen Code und Name, Re-read Tags
+übernimmt einen bekannten Typ.  Gebaut wie geplant (Option A).  Offen: Operator-Abnahme mit
+einer getaggten Datei.  Nebenbei dokumentiert: *Analyze cue points* je Track-Typ (SETTINGS),
+die Track-Typen-Liste zeigt die Einstellung nicht.
 
 ### 🟡 ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung (Befund 2026-11-07, seit etwa 2026-11-01, wartet auf Go)
 

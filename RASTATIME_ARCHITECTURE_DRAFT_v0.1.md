@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.127
-Date: 2026-11-08
+Draft version: 0.128
+Date: 2026-11-09
 
 > **Revision history**
+> - **0.128 (2026-11-09)** - **Track type from the Media Type tag** (§23.101): the import
+>   message carries the visible track types, the analyzer matches the ID3 TMED / MEDIATYPE
+>   value against code and name (`rastatime_shared.track_types`), the matched type decides the
+>   cue point analysis and wins over the upload choice; Re-read Tags follows the same rule.
 > - **0.127 (2026-11-08)** - **Country and Music by Country** (§23.100): `cc_files.country`
 >   (migration 0081) from the COUNTRY tag, editors, a virtual smart block criterion, a one-time
 >   backfill command, Re-read Tags takes it; Analytics → Music by Country from the playout
@@ -9586,3 +9590,50 @@ combinations such as "Germany/Switzerland" as rows of their own.
 
 Probes `C:/Temp/optd/country_probe.php` (22 checks, rolled back),
 `country_block_probe.php`, `music_country_probe.php` (read-only).
+
+### 23.101 Track Type from the Media Type Tag (2026-11-09)
+
+**Why.**  Operator go 2026-11-09: a file whose *Media Type* tag (ID3
+`TMED`) names a track type RASTATIME knows lands in exactly that type;
+an unknown or empty value is dropped.  Code and name both count; Re-read
+Tags follows the same rule.  The genre (`TCON`, which the ID3 standard
+calls "Content type") stays the genre.  A full scan on 2026-11-09 found
+the tag on none of the 24,979 library files.
+
+**The catch.**  The track type is known before the analysis starts:
+`RabbitMq::SendMessageToAnalyzer` turns it into `analyze_cue_points`.
+Changing the type only in the callback would analyse a News upload
+tagged Music without cue points.  So the analyzer resolves the tag, not
+the callback.
+
+**Now.**
+
+* `rastatime_shared.track_types.match_track_type(value, types)`: blanks
+  collapsed, case folded; codes first, then names; a name two types share
+  names nothing.  Used by the analyzer and the API.
+* Legacy: the import message gets `options.track_types` = id, code, name,
+  `analyze_cue_points` of every visible type
+  (`Application_Model_Tracktype::analyzerTrackTypes`, visible = what the
+  upload dialog offers; empty on a database error).
+* Analyzer: `_CUSTOM_TAGS["media_type"]` = `tmed` / `mediatype` /
+  `media` (TMED frame read before the TXXX frames; Vorbis / MP4 freeform
+  names; the `tmed` key ffprobe gives a WAV ID3 chunk).  After
+  `convert_format` (which writes TMED / freeform MEDIATYPE into a
+  converted file) `pipeline.tagged_track_type` pops the raw text, matches
+  it, sets `track_type_code` and lets that type's `analyze_cue_points`
+  replace the option.  Without `track_types` (older legacy) nothing
+  changes; an older analyzer ignores the new option (pydantic drops
+  unknown fields).
+* Callback (`CcFiles::updateFromArray`): `track_type_code` is taken only
+  while it is a visible type (`Tracktype::visibleIdByCode`, exact code)
+  and set after `fromArray`, over the type chosen on upload or the upload
+  default the import folder uses; anything else is logged and dropped, a
+  failed lookup never fails the import.
+* Re-read Tags (`storage/views/reread_tags.py`): the matched visible type
+  replaces `track_type_id` (reported as `track_type` with both codes); an
+  unknown, hidden or missing tag leaves the type, unlike the text tags.
+
+No migration.  Tests: shared 19, analyzer (names, MP3 / FLAC / M4A / WAV,
+TMED before TXXX, conversion, cue decision with a spied
+`analyze_cuepoint`), API 10 more Re-read Tags cases.  Probe
+`C:/Temp/optd/tracktype_tag_probe.php` (19 checks, rolled back).
