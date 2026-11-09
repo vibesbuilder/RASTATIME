@@ -80,6 +80,37 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Kurze Abrisse an den Sendestationen (DEVA DB6400 schaltet auf Fallback) - Evaluierung 2026-11-09, wartet auf Zeitstempel der Geräte und Werte des Streaming-Anbieters
+
+**Kette:** Liquidsoap -> Icecast `/rastatime` (MP3 CBR 320 kbit/s = 40.000 B/s) -> Apache `/stream/rastatime`
+(HTTPS, mod_proxy) -> Relay des Streaming-Anbieters (Liquidsoap 2.4.0 auf Linux, holt seit 2026-11-05 15:00)
+-> Icecast des Anbieters -> DEVA.  Die Geräte verbinden sich NICHT mit unserem Icecast; Burst und Puffer, die
+sie sehen, kommen vom Server des Anbieters.
+
+**Unsere Werte** (`config/icecast.xml`, global; der Mount `/rastatime` überschreibt nichts): queue-size
+524.288 B (13,1 s bei 320k), burst-size 65.535 B (1,6 s), source-timeout 10 s, header-timeout 15 s,
+client-timeout 30 s, clients 100, sources 8; `/rastatime` fällt auf `/rastatime-standby` (fallback-override 1,
+fallback-when-full 1).  Apache: `ProxyPass ... retry=0 timeout=30`, Timeout 60 (Standard), ProxyIOBufferSize
+Standard.
+
+**Ereignisse auf unserer Seite seit dem Relay-Start** (Icecast-Logs): die Relay-Verbindung riss nur bei
+Apache-Neustarts (2026-11-07 15:57:41, 11-08 11:42:48, 11-08 14:51:28; Wiederverbindung nach 1-2 s) und am
+ersten Tag 11-05 15:29-16:00 (5x, Einrichtung beim Anbieter); seit 11-08 14:51:29 durchgehend verbunden.
+Liquidsoap-Neustarts schieben den Hörer auf den Standby-Mount, und der sendet **Stille** (`blank()` in
+`standby.liq`): 11-05 23:36:56 (14 s), 11-06 13:51:06 (5 s), 11-07 00:47:56 (4 s), 11-07 12:51:26 (5 s),
+11-09 14:20:59 (5 s), 11-09 21:22:12 (3 s).  Eine Stille-Erkennung am DEVA unter etwa 5 s schaltet dabei auf
+Fallback; Stille lässt sich nicht wegpuffern (sie ist Audio).
+
+**Vorbedingungen:** (1) Zeitstempel der DEVA-Umschaltungen aus dem Gerätelog gegen die Liste oben
+abgleichen (gab es Abrisse schon vor 2026-11-05 15:00, liegt es nicht an uns); (2) vom Anbieter: burst-size,
+queue-size, source-timeout, Fallback-Mount (was läuft, wenn das Relay uns verliert), Format und Bitrate des
+ausgelieferten Mounts (kodiert das Relay neu?), Puffer des Relays; (3) am DB6400: Prebuffer / Puffergröße,
+Audio-Loss-Schwelle und -Dauer, Recover-Zeit.  **Mögliche Maßnahmen bei uns** erst nach dem Abgleich:
+Standby sendet hörbares Material statt Stille; Relay holt direkt von Icecast statt über Apache (Firewall nur
+für die Anbieter-Adresse, Apache-Neustarts treffen das Relay nicht mehr); burst-size auf `/rastatime` 3-5 s
+(schnelleres Wiederauffüllen des Relays, braucht Icecast-Neustart); weniger Liquidsoap-Neustarts zur
+Sendezeit.  Unsere queue-size / burst-size allein zu ändern wirkt nicht auf die Geräte.
+
 ### ✅ Sendestationen (Exstreamer / DEVA) bekommen ein zu leises Signal - Preset GEBAUT 2026-11-09 (Go C1, R128 mode 0; `config/stereotool/rastatime-16-clean.sts`, LIVE seit 2026-11-09 14:21 - Pfad vom Operator eingetragen, geplanter Liquidsoap-Neustart an der Titelgrenze; R128-Mount für ORF kommt vom Streaming-Anbieter, bei uns nichts zu bauen)
 **Abnahme-Messung 2026-11-09 14:22–14:52 (Stream):** 30 min -15,9 LUFS, TP -0,9 dBTP (MP3), LRA 6,5 LU; je 5 min -15,3 … -16,5 LUFS.
 
