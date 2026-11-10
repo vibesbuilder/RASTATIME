@@ -139,6 +139,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Kalender: Extras → People Involved (2026-11-10)** — „Guests involved“ (Gäste einer Episode,
+  mit Hinweis auf die Hosts der Sendung) hat ein eigenes Fenster unter Extras → People Involved
+  und ist aus Archive Online verschwunden; Speichern in Archive Online lässt die Gäste
+  unverändert, der neue Dialog schreibt nur `cc_episode.participants`.  Rechte wie Archive
+  Online.  Hinweistexte (Edit Show, Edit Episode, People-Involved-Bericht) zeigen auf die neue
+  Stelle.  Manual CALENDAR / ARCHIVING / ANALYTICS ×4 (a6d3c39d, 442ccadd).
 - **„Episode“ statt „Instance“ (2026-11-10)** — Ein einzelnes Vorkommen einer Sendung heißt in
   Oberfläche und Handbuch jetzt überall Episode.  Kontextmenü: **Edit** [Edit Episode, Edit
   Show] (Episode zuerst), **Delete** [Delete Episode, Delete Episode and All Following]; dazu
