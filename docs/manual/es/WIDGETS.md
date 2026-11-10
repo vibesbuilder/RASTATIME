@@ -558,8 +558,16 @@ entradas webstream sin enlace de instancia el bloque
 de contexto se oculta.
 
 **Configuración → Widgets → Track History** aloja la
-etiqueta de estado vacío, vista previa en vivo, y dos
-snippets listos-para-usar (pagesize 10 + 50).
+etiqueta de estado vacío, el texto del botón Load more
+(**Load more button text**, vacío = valor traducido del
+idioma de la emisora, p. ej. «Cargar más»; desde
+2026-11-10), vista previa en vivo, y dos snippets
+listos-para-usar (pagesize 10 + 50).
+
+El widget ocupa exactamente la altura del iframe.  Si las
+filas no caben (pagesize mayor, Load more), la lista se
+desplaza con su propia barra; la cabecera y el botón Load
+more siguen visibles (desde 2026-11-10).
 
 ---
 

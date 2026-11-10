@@ -650,6 +650,14 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoTrackHistory($v)    { self::setValue('widget_no_track_history', (string) $v); }
 
+    // RASTATIME 2026-11-10 - text of the Track History widget's "Load more"
+    // button; empty = the translated default (station language).
+    public static function GetWidgetTrackHistoryLoadMore()
+    {
+        return trim((string) self::getValue('widget_track_history_load_more'));
+    }
+    public static function SetWidgetTrackHistoryLoadMore($v) { self::setValue('widget_track_history_load_more', trim((string) $v)); }
+
     // RASTATIME 2026-05-22 v14 — exclude tracks shorter than N
     // seconds from the Track History widget (operator-typical:
     // short fillers / jingles / silence-tail entries clutter

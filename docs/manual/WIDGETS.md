@@ -567,6 +567,10 @@ plus header + load-more footer):
   existing list.  Hidden when there are no more rows;
   disabled while a fetch is in flight.  Hard-capped at
   10 pages × 100 pagesize = 1000 rows total.
+- **Scrolling**: the widget fills exactly the iframe height;
+  when the rows do not fit (larger page size, Load more),
+  the list scrolls with its own scrollbar while the header
+  and the Load-more footer stay visible (since 2026-11-10).
 - **Modal**: opens on row click with title, artist, time
   range, a **"Played in the show:"** caption + the show
   name, and an "Open show page →" button when the parent
@@ -706,6 +710,9 @@ which the operator sets in the Line-In Library.
 
 **Settings → Widgets → Track History** hosts:
 - The operator-configurable empty-state label,
+- **Load more button text** — the caption of the Load-more
+  button (empty = the translated default of the station
+  language, e.g. "Mehr laden"; since 2026-11-10),
 - An **Exclude short tracks** checkbox (default on) plus
   the corresponding **Exclude tracks shorter than (s)**
   threshold (default 60 s, shown only when the checkbox is

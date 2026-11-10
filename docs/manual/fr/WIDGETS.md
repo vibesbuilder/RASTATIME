@@ -562,8 +562,17 @@ webstream sans liaison d'instance, le bloc contexte
 d'émission est masqué.
 
 **Paramètres → Widgets → Track History** héberge le libellé
-d'état vide, l'aperçu en direct, et deux snippets prêts à
-l'emploi (pagesize 10 + 50).
+d'état vide, le texte du bouton Load more (**Load more
+button text**, vide = valeur traduite de la langue de la
+station, p. ex. « Charger plus » ; depuis le 2026-11-10),
+l'aperçu en direct, et deux snippets prêts à l'emploi
+(pagesize 10 + 50).
+
+Le widget occupe exactement la hauteur de l'iframe.  Si
+les lignes ne tiennent pas (pagesize plus grand, Load
+more), la liste défile avec sa propre barre ; l'en-tête et
+le bouton Load more restent visibles (depuis le
+2026-11-10).
 
 ---
 

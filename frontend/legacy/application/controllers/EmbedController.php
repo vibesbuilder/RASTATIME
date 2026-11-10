@@ -1743,6 +1743,9 @@ class EmbedController extends Zend_Controller_Action
         $this->view->backgroundColor = $bgColor;
 
         $this->view->emptyLabel = Application_Model_Preference::GetWidgetNoTrackHistory();
+        // RASTATIME 2026-11-10 - operator text of the "Load more" button
+        $loadMore = Application_Model_Preference::GetWidgetTrackHistoryLoadMore();
+        $this->view->loadMoreLabel = $loadMore !== '' ? $loadMore : _('Load more');
 
         $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
         $this->view->widgetJs  = Assets::url('js/airtime/embed/track-history-widget.js');

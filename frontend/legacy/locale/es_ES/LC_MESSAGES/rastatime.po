@@ -8440,3 +8440,11 @@ msgstr "Proporción con país (%)"
 #: application/controllers/YearlyreportController.php
 msgid "Minutes per month"
 msgstr "Minutos por mes"
+
+#. RASTATIME 2026-11-10 - Track History widget
+msgid "Load more"
+msgstr "Cargar más"
+
+#. RASTATIME 2026-11-10 - Track History widget
+msgid "Load more button text:"
+msgstr "Texto del botón «Cargar más»:"

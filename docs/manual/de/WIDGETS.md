@@ -592,8 +592,16 @@ Instance-Bindung wird der Show-Kontext-Block ausgeblendet.
 
 **Einstellungen → Widgets → Track History** enthält:
 - Operator-konfigurierbares Empty-State-Label,
+- **Load more button text** — die Beschriftung des
+  Load-More-Knopfs (leer = übersetzter Standard der
+  Stationssprache, z. B. „Mehr laden"; seit 2026-11-10),
 - Live-Vorschau-iframe auf dunklem Backdrop,
 - Zwei vorgefertigte Embed-Code-Snippets (Pagesize 10 + 50).
+
+Das Widget füllt genau die Höhe des iframes.  Passen die
+Zeilen nicht hinein (größere Pagesize, Load more), scrollt
+die Liste mit eigenem Scrollbalken; Kopfzeile und
+Load-More-Knopf bleiben sichtbar (seit 2026-11-10).
 
 ---
 

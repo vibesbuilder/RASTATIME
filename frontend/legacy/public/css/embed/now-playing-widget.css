@@ -1122,7 +1122,12 @@ html, body {
 
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    /*  RASTATIME 2026-11-10 - exactly the iframe height (was min-height:
+        100vh: with a larger page size the body grew past the iframe, the
+        embed code sets scrolling="no", so the lower rows and the Load-more
+        footer were cut off).  Now the list scrolls inside, header and
+        footer stay visible.  */
+    height: 100vh;
 }
 
 /* ─── Header band ─── */

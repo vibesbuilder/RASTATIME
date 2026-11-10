@@ -393,6 +393,9 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             Application_Model_Preference::SetWidgetNoTrackHistory(
                 $form->getValue('widget_no_track_history')
             );
+            Application_Model_Preference::SetWidgetTrackHistoryLoadMore(
+                $form->getValue('widget_track_history_load_more')
+            );
             Application_Model_Preference::SetWidgetTrackHistoryExcludeShort(
                 (bool) $form->getValue('exclude_short_tracks')
             );
@@ -414,6 +417,7 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         } else {
             $form->populate([
                 'widget_no_track_history' => Application_Model_Preference::GetWidgetNoTrackHistory(),
+                'widget_track_history_load_more' => Application_Model_Preference::GetWidgetTrackHistoryLoadMore(),
                 'exclude_short_tracks'    => Application_Model_Preference::GetWidgetTrackHistoryExcludeShort() ? 1 : 0,
                 'min_seconds'             => Application_Model_Preference::GetWidgetTrackHistoryMinSeconds(),
                 'line_input_label'        => Application_Model_Preference::GetWidgetLineInputLabel(),

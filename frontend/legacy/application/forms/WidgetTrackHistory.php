@@ -31,6 +31,18 @@ class Application_Form_WidgetTrackHistory extends Zend_Form
            ->setAllowEmpty(true);
         $this->addElement($el);
 
+        // RASTATIME 2026-11-10 - text of the "Load more" button; empty
+        // keeps the translated default
+        $loadMore = new Zend_Form_Element_Text('widget_track_history_load_more');
+        $loadMore->setLabel(_('Load more button text:'))
+           ->setAttrib('class', 'input_text widget-label-input')
+           ->setAttrib('maxlength', 40)
+           ->setAttrib('placeholder', _('Load more'))
+           ->setAttrib('style', 'width: 18em;')
+           ->setRequired(false)
+           ->setAllowEmpty(true);
+        $this->addElement($loadMore);
+
         $excludeShort = new Zend_Form_Element_Checkbox('exclude_short_tracks');
         $excludeShort->setLabel(_('Exclude short tracks:'))
            ->setRequired(false);
