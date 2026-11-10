@@ -89,6 +89,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Widgets Next/Latest Shows: Datumsformat wählbar, Zeilen ohne Script (2026-11-10)** —
+  Befund 2026-11-10: auf einer Show-Seite der Webseite zeigte das Widget nur den Titel; der
+  Editor der Webseite hatte das iframe mit `sandbox=""` eingebettet (keine Scripts), und
+  Datum/Uhrzeit setzte nur das Script im Browser (Sprache und Zeitzone damit auch vom
+  Browser abhängig, in einer Vorschau englisch).  Jetzt schreibt der Server Datum und
+  Uhrzeit in der Stationssprache und Stationszeitzone (`?timezone=`) in Seite und JSON-Feed
+  (`date_label` / `time_label`); das Script zeigt sie nur noch an.  Neu unter Widgets →
+  Next/Latest Shows: **Date format** mit vier Varianten (deutsch `Di., 15. Dez.` Standard,
+  `Di, 15. Dez`, `Di, 15.12.`, `15.12.`), gebaut aus ICU-Skeletten
+  (`Application_Model_WidgetDateFormat`, neue Klasse - `composer dump-autoload`).  Manual
+  WIDGETS ×4.
 - **Widget Track History: Scrollbalken und Knopftext (2026-11-10)** — Befund 2026-11-10: mit
   größerer Pagesize wuchs das Widget über die iframe-Höhe hinaus (`min-height: 100vh`, der
   Einbettungscode setzt `scrolling="no"`), untere Zeilen und der „Load more"-Knopf waren

@@ -165,8 +165,22 @@ Fri 24 May                                  06:00 - 08:00
 ```
 
 - **Title row**: the show's name from `cc_show.name`
-- **List rows**: one line per instance, `Weekday DD Mon` on the
-  left, `HH:MM - HH:MM` on the right
+- **List rows**: one line per instance, the date on the left,
+  `H:MM - H:MM` on the right
+- **Date format** (since 2026-11-10): chosen under Settings →
+  Widgets → Next/Latest Shows → **Date format**, for both
+  widgets.  Four variants, written in the station language
+  (Settings → General → Default Language); the German
+  examples: `Di., 15. Dez.` (default), `Di, 15. Dez`,
+  `Di, 15.12.`, `15.12.` - in English `Tue, Dec 15`,
+  `Tue, Dec 15`, `Tue, 12/15`, `12/15`.  The dropdown shows
+  each variant in the station language.
+- Date and time are written by the server, in the station
+  timezone or `?timezone=`.  The rows are therefore complete
+  even where the embedding page blocks scripts (some CMS
+  editors add `sandbox=""` to an iframe by themselves); only
+  the automatic refresh needs scripts - without them the list
+  is updated when the page is loaded again.
 
 The list refreshes every `cache` seconds (see §7).  When the topmost
 row of a Next-Shows widget slips into the past (the show has

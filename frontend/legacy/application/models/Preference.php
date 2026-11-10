@@ -597,6 +597,17 @@ class Application_Model_Preference
     }
     public static function SetWidgetNoLatestShows($v)     { self::setValue('widget_no_latest_shows', (string) $v); }
 
+    // RASTATIME 2026-11-10 - date format of the Next / Latest Shows widgets
+    // (Application_Model_WidgetDateFormat::FORMATS, default 'locale').
+    public static function GetWidgetShowsDateFormat()
+    {
+        return Application_Model_WidgetDateFormat::normalize(self::getValue('widget_shows_date_format'));
+    }
+    public static function SetWidgetShowsDateFormat($v)
+    {
+        self::setValue('widget_shows_date_format', Application_Model_WidgetDateFormat::normalize($v));
+    }
+
     // RASTATIME 2026-05-22 — On-Air-Today widget empty-state label.
     // Shown when neither a currently-airing show nor any upcoming
     // shows fall within the station day's remaining window.

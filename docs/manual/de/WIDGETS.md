@@ -172,8 +172,22 @@ Fr. 24. Mai                                 06:00 - 08:00
 ```
 
 - **Titelzeile**: Sendungsname aus `cc_show.name`
-- **Listenzeilen**: eine Zeile pro Instanz, `Wochentag DD Mon`
-  links, `HH:MM - HH:MM` rechts
+- **Listenzeilen**: eine Zeile pro Instanz, das Datum links,
+  `H:MM - H:MM` rechts
+- **Datumsformat** (seit 2026-11-10): unter Einstellungen →
+  Widgets → Next/Latest Shows → **Date format** für beide
+  Widgets wählbar.  Vier Varianten in der Stationssprache
+  (Einstellungen → Allgemein → Standardsprache); auf Deutsch:
+  `Di., 15. Dez.` (Standard), `Di, 15. Dez`, `Di, 15.12.`,
+  `15.12.`.  Die Auswahlliste zeigt jede Variante in der
+  Stationssprache.
+- Datum und Uhrzeit schreibt der Server, in der Zeitzone der
+  Station bzw. `?timezone=`.  Die Zeilen sind deshalb auch
+  vollständig, wenn die einbettende Seite Scripts sperrt
+  (manche CMS-Editoren setzen von sich aus `sandbox=""` an ein
+  iframe); nur die automatische Aktualisierung braucht
+  Scripts - ohne sie wird die Liste beim erneuten Laden der
+  Seite aktualisiert.
 
 Die Liste aktualisiert sich alle `cache` Sekunden (siehe §7).
 Wenn die oberste Zeile eines Next-Shows-Widgets in die

@@ -23,6 +23,24 @@ class EmbedController extends Zend_Controller_Action
         // language as well, not the visitor's browser: <html lang> carries
         // it (BCP 47, e.g. "de-DE") to the widget scripts.
         $this->view->widgetLang = str_replace('_', '-', (string) ($locale ?: 'en_US'));
+        $this->widgetLocale = (string) ($locale ?: 'en_US');
+    }
+
+    /** @var string station language (ICU locale) for server-side date labels */
+    private $widgetLocale = 'en_US';
+
+    /**
+     * RASTATIME 2026-11-10 - date_label / time_label on every instance of
+     * the Next / Latest Shows widgets (Settings -> Widgets -> Date format).
+     */
+    private function _labelShowInstances(array $instances, $timezone)
+    {
+        return Application_Model_WidgetDateFormat::labelInstances(
+            $instances,
+            Application_Model_Preference::GetWidgetShowsDateFormat(),
+            $this->widgetLocale,
+            (string) $timezone
+        );
     }
 
     /**
@@ -662,7 +680,10 @@ class EmbedController extends Zend_Controller_Action
             'direction' => $direction,
             'show'      => !empty($showIds) ? $this->_fetchShowMeta($showIds) : null,
             'instances' => !empty($showIds)
-                ? $this->_fetchShowInstances($showIds, $direction, $limit, $timezone)
+                ? $this->_labelShowInstances(
+                    $this->_fetchShowInstances($showIds, $direction, $limit, $timezone),
+                    $timezone
+                )
                 : [],
             'limit'     => $limit,
             'timezone'  => $timezone,
@@ -721,7 +742,10 @@ class EmbedController extends Zend_Controller_Action
             ? $this->_fetchShowMeta($showIds)
             : null;
         $this->view->instances = !empty($showIds)
-            ? $this->_fetchShowInstances($showIds, $direction, $limit, $timezone)
+            ? $this->_labelShowInstances(
+                $this->_fetchShowInstances($showIds, $direction, $limit, $timezone),
+                $timezone
+            )
             : [];
 
         // RASTATIME 2026-05-22 — empty-state labels, configurable by
@@ -758,6 +782,10 @@ class EmbedController extends Zend_Controller_Action
         $cacheParam = $request->getParam('cache');
         if ($cacheParam !== null) {
             $params['cache'] = $cacheParam;
+        }
+        $tzParam = $request->getParam('timezone');
+        if ($tzParam !== null && $tzParam !== '') {
+            $params['timezone'] = (string) $tzParam;
         }
         $this->view->dataUrl = '/Embed/shows-data?' . http_build_query($params);
 

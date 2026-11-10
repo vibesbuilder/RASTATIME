@@ -221,6 +221,13 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             }
         }
         $form->getElement('preview_show_id')->setMultiOptions($options);
+        // RASTATIME 2026-11-10 - date format examples in the station language
+        $form->getElement('widget_shows_date_format')->setMultiOptions(
+            Application_Model_WidgetDateFormat::examples(
+                (string) (Application_Model_Preference::GetDefaultLocale() ?: 'en_US'),
+                (string) Application_Model_Preference::GetDefaultTimezone()
+            )
+        );
 
         // POST: validate + persist labels only.  The show-picker is
         // round-tripped in the same form but not persisted (it just
@@ -232,11 +239,15 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             Application_Model_Preference::SetWidgetNoLatestShows(
                 $form->getValue('widget_no_latest_shows')
             );
+            Application_Model_Preference::SetWidgetShowsDateFormat(
+                $form->getValue('widget_shows_date_format')
+            );
             $this->view->saved = true;
         } else {
             $form->populate([
                 'widget_no_next_shows'   => Application_Model_Preference::GetWidgetNoNextShows(),
                 'widget_no_latest_shows' => Application_Model_Preference::GetWidgetNoLatestShows(),
+                'widget_shows_date_format' => Application_Model_Preference::GetWidgetShowsDateFormat(),
             ]);
         }
 

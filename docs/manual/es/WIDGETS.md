@@ -173,8 +173,22 @@ vie 24 may                                  06:00 - 08:00
 ```
 
 - **Línea de título**: nombre del programa desde `cc_show.name`
-- **Líneas de lista**: una línea por instancia, `Día DD Mes`
-  a la izquierda, `HH:MM - HH:MM` a la derecha
+- **Líneas de lista**: una línea por instancia, la fecha a la
+  izquierda, `H:MM - H:MM` a la derecha
+- **Formato de fecha** (desde 2026-11-10): se elige en
+  Configuración → Widgets → Next/Latest Shows → **Date
+  format**, para ambos widgets.  Cuatro variantes en el
+  idioma de la emisora (Configuración → General → Idioma
+  predeterminado); en español: `mar, 15 dic` (predeterminado),
+  `mar, 15 dic`, `mar, 15/12`, `15/12`.  La lista desplegable
+  muestra cada variante en el idioma de la emisora.
+- La fecha y la hora las escribe el servidor, en la zona
+  horaria de la emisora o `?timezone=`.  Por eso las filas
+  están completas aunque la página que incrusta bloquee los
+  scripts (algunos editores de CMS añaden por sí mismos
+  `sandbox=""` a un iframe); solo la actualización automática
+  necesita scripts - sin ellos la lista se actualiza al
+  volver a cargar la página.
 
 La lista se refresca cada `cache` segundos (vea §7).  Cuando
 la línea superior de un widget Next-Shows se desliza al pasado

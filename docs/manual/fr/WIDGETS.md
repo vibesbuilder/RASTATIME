@@ -174,8 +174,22 @@ ven. 24 mai                                 06:00 - 08:00
 ```
 
 - **Ligne titre** : nom de l'émission depuis `cc_show.name`
-- **Lignes liste** : une ligne par instance, `Jour DD Mois`
-  à gauche, `HH:MM - HH:MM` à droite
+- **Lignes liste** : une ligne par instance, la date à
+  gauche, `H:MM - H:MM` à droite
+- **Format de date** (depuis le 2026-11-10) : se choisit
+  sous Paramètres → Widgets → Next/Latest Shows → **Date
+  format**, pour les deux widgets.  Quatre variantes dans la
+  langue de la station (Paramètres → Général → Langue par
+  défaut) ; en français : `mar. 15 déc.` (défaut),
+  `mar 15 déc`, `mar 15/12`, `15/12`.  La liste déroulante
+  montre chaque variante dans la langue de la station.
+- La date et l'heure sont écrites par le serveur, dans le
+  fuseau de la station ou `?timezone=`.  Les lignes sont donc
+  complètes même si la page qui intègre bloque les scripts
+  (certains éditeurs de CMS ajoutent d'eux-mêmes
+  `sandbox=""` à un iframe) ; seul le rafraîchissement
+  automatique a besoin des scripts - sans eux la liste est
+  mise à jour au rechargement de la page.
 
 La liste se rafraîchit toutes les `cache` secondes (voir §7).
 Quand la ligne du haut d'un widget Next-Shows passe dans le

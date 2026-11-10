@@ -81,6 +81,17 @@ class Application_Form_WidgetNextLatestShows extends Zend_Form
             $this->addElement($el);
         }
 
+        // RASTATIME 2026-11-10 - date format of both widgets; the options
+        // (format => example in the station language) come from the
+        // controller via setMultiOptions.
+        $dateFormat = new Zend_Form_Element_Select('widget_shows_date_format');
+        $dateFormat->setLabel(_('Date format:'))
+                   ->setAttrib('class', 'input_select')
+                   ->setAttrib('style', 'width: 18em;')
+                   ->setRequired(false)
+                   ->setAllowEmpty(true);
+        $this->addElement($dateFormat);
+
         $submit = new Zend_Form_Element_Submit('submit');
         $submit->setLabel(_('Save'))
                ->setAttrib('class', 'btn');

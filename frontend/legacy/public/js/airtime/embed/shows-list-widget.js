@@ -131,6 +131,11 @@
         for (var i = 0; i < rows.length; i++) {
             var dateCell = rows[i].querySelector('.np-list-date');
             var timeCell = rows[i].querySelector('.np-list-time');
+            // RASTATIME 2026-11-10 - the server renders the labels (station
+            // language, Widgets -> Date format); only rows without them
+            // (an older cached feed) are formatted here.
+            if (dateCell && dateCell.getAttribute('data-fixed') === '1') { dateCell = null; }
+            if (timeCell && timeCell.getAttribute('data-fixed') === '1') { timeCell = null; }
             if (dateCell) {
                 var ds = dateCell.getAttribute('data-starts');
                 dateCell.textContent = fmtDate(ds);
@@ -194,12 +199,20 @@
             dateSpan.className = 'np-list-date';
             dateSpan.setAttribute('data-starts', inst.starts || '');
             dateSpan.setAttribute('data-ends',   inst.ends   || '');
+            if (typeof inst.date_label === 'string') {
+                dateSpan.setAttribute('data-fixed', '1');
+                dateSpan.textContent = inst.date_label;
+            }
             row.appendChild(dateSpan);
 
             var timeSpan = document.createElement('span');
             timeSpan.className = 'np-list-time';
             timeSpan.setAttribute('data-starts', inst.starts || '');
             timeSpan.setAttribute('data-ends',   inst.ends   || '');
+            if (typeof inst.time_label === 'string') {
+                timeSpan.setAttribute('data-fixed', '1');
+                timeSpan.textContent = inst.time_label;
+            }
             row.appendChild(timeSpan);
 
             ul.appendChild(row);
