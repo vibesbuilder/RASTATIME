@@ -831,10 +831,41 @@ Sie stattdessen das passwortgeschützte
 
 ## 13. Cross-Origin-Einbettung
 
-Iframes funktionieren cross-origin von Haus aus — keine
-zusätzliche Konfiguration nötig. Die Homepage Ihrer
-Station kann das Widget einbetten, unabhängig davon,
-welcher Host die Homepage bereitstellt.
+Zwei Einstellungen entscheiden, ob ein Browser ein Widget
+in einer anderen Webseite anzeigt.  Beide müssen es
+erlauben, sonst zeigt der Browser statt des Widgets einen
+Platzhalter (Firefox: „darf diese eingebettete Seite nicht
+öffnen").
+
+1. **Seite von RASTATIME (öffentlicher HTTPS-Host).** Die
+   Studio-Oberfläche wird mit `X-Frame-Options: SAMEORIGIN`
+   ausgeliefert, damit keine fremde Seite sie einbetten
+   kann.  Für die Widgets unter `/embed/` tritt an seine
+   Stelle `Content-Security-Policy: frame-ancestors 'self' <Seiten>`,
+   sobald die erlaubten Webseiten in
+   `config\apache-site.conf` eingetragen sind (seit
+   2026-11-10):
+   ```
+   Define RT_EMBED_ANCESTORS "https://radio.example.org https://www.radio.example.org"
+   ```
+   Durch Leerzeichen getrennt, jeweils mit `https://`;
+   danach Apache neu starten (`RASTATIME-APACHE`; die
+   Hörer-Streams unter `/stream/` verbinden sich neu, also
+   einen ruhigen Moment wählen).  Ohne die Zeile kann nur
+   der RASTATIME-Host selbst die Widgets anzeigen.  Die
+   LAN-Adresse über http sendet keinen der beiden Header.
+2. **Seite Ihrer Webseite.** Sendet Ihre Webseite selbst
+   einen `Content-Security-Policy`-Header, muss er Frames
+   vom RASTATIME-Host erlauben, z. B.
+   `frame-src 'self' https://rastatime.example.org;`.
+   Eine Richtlinie nur mit `default-src 'self'` sperrt
+   jedes eingebettete Widget.  Das wird am Webserver oder
+   im CMS Ihrer Webseite eingestellt, nicht in RASTATIME.
+
+Prüfen: Webseite öffnen, dann die Browser-Konsole (F12).
+„Refused to display … X-Frame-Options" oder
+„frame-ancestors" weist auf Seite 1, „violates …
+frame-src / default-src" auf Seite 2.
 
 Wenn Sie zuvor versucht haben, über JavaScript-Snippet
 einzubetten und auf CORS-Fehler gestoßen sind, umgeht der

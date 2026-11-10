@@ -302,7 +302,11 @@ the certificate files.  `httpd.exe -t`, `Restart-Service RASTATIME-APACHE`.
 4. Copy `config\apache-site.conf.example` to `config\apache-site.conf`
    (git-ignored, part of every backup ZIP) and set `RT_PUBLIC_HOST` to
    the public name - `rastatime-https.conf` reads it from there and
-   carries no station data itself (since 2026-11-02).  Only then add to
+   carries no station data itself (since 2026-11-02).  If the station's
+   website embeds the widgets, also set `RT_EMBED_ANCESTORS` to its
+   origins (since 2026-11-10, manual WIDGETS §13) - otherwise the
+   widgets keep `X-Frame-Options: SAMEORIGIN` and browsers show a
+   placeholder on the website.  Only then add to
    httpd.conf, after the two existing includes:
    ```
    Include "C:/RASTATIME/infra/apache/rastatime-https.conf"

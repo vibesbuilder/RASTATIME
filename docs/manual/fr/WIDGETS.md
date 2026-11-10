@@ -776,8 +776,40 @@ IDs internes.
 
 ## 13. Intégration cross-origin
 
-Les iframes fonctionnent cross-origin nativement — aucune
-configuration supplémentaire nécessaire.
+Deux réglages décident si un navigateur affiche un widget
+dans un autre site.  Les deux doivent l'autoriser, sinon le
+navigateur affiche un espace réservé à la place du widget
+(Firefox : « n'est pas autorisé à ouvrir cette page
+intégrée »).
+
+1. **Côté RASTATIME (hôte HTTPS public).** L'interface du
+   studio est envoyée avec `X-Frame-Options: SAMEORIGIN`
+   pour qu'aucun autre site ne puisse l'intégrer.  Pour les
+   widgets sous `/embed/`, cet en-tête est remplacé par
+   `Content-Security-Policy: frame-ancestors 'self' <sites>`
+   dès que les sites autorisés sont inscrits dans
+   `config\apache-site.conf` (depuis le 2026-11-10) :
+   ```
+   Define RT_EMBED_ANCESTORS "https://radio.example.org https://www.radio.example.org"
+   ```
+   Séparés par des espaces, chacun avec `https://` ;
+   redémarrez ensuite Apache (`RASTATIME-APACHE` ; les flux
+   d'écoute sous `/stream/` se reconnectent, choisissez donc
+   un moment calme).  Sans cette ligne, seul l'hôte
+   RASTATIME peut afficher les widgets.  L'adresse LAN en
+   http n'envoie aucun des deux en-têtes.
+2. **Côté de votre site.** Si votre site envoie lui-même un
+   en-tête `Content-Security-Policy`, celui-ci doit
+   autoriser les cadres de l'hôte RASTATIME, par ex.
+   `frame-src 'self' https://rastatime.example.org;`.
+   Une politique limitée à `default-src 'self'` bloque tous
+   les widgets intégrés.  Cela se règle sur le serveur web
+   ou dans le CMS de votre site, pas dans RASTATIME.
+
+Vérification : ouvrez le site, puis la console du
+navigateur (F12).  « Refused to display … X-Frame-Options »
+ou « frame-ancestors » désigne le côté 1, « violates …
+frame-src / default-src » le côté 2.
 
 ---
 

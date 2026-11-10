@@ -944,9 +944,39 @@ which DJ is on air right now), open the password-protected
 
 ## 13. Cross-origin embedding
 
-Iframes work cross-origin out of the box — no extra
-configuration needed. Your station's homepage can embed
-the widget regardless of which host serves the homepage.
+Two settings decide whether a browser shows a widget
+inside another website.  Both have to allow it, otherwise
+the browser shows a placeholder instead of the widget
+(Firefox: "may not open this embedded page").
+
+1. **RASTATIME side (the public HTTPS host).** The studio
+   interface is sent with `X-Frame-Options: SAMEORIGIN`
+   so that no other site can embed it.  For the widgets
+   under `/embed/` this is replaced by
+   `Content-Security-Policy: frame-ancestors 'self' <sites>`
+   as soon as the allowed websites are listed in
+   `config\apache-site.conf` (since 2026-11-10):
+   ```
+   Define RT_EMBED_ANCESTORS "https://radio.example.org https://www.radio.example.org"
+   ```
+   Space-separated, each with `https://`; then restart
+   Apache (`RASTATIME-APACHE`; the listener streams under
+   `/stream/` reconnect, so choose a quiet moment).
+   Without the line the widgets can only be shown by the
+   RASTATIME host itself.  The plain-http LAN address
+   sends neither header.
+2. **Your website's side.** If your website sends a
+   `Content-Security-Policy` header of its own, it must
+   allow frames from the RASTATIME host, e.g.
+   `frame-src 'self' https://rastatime.example.org;`.
+   A policy with only `default-src 'self'` blocks every
+   embedded widget.  This is set on the web server or in
+   the CMS of your website, not in RASTATIME.
+
+Check: open the website, then the browser console (F12).
+"Refused to display … X-Frame-Options" or "frame-ancestors"
+points to side 1, "violates … frame-src / default-src"
+to side 2.
 
 If you previously tried embedding via JavaScript snippet
 and ran into CORS errors, switching to the iframe approach

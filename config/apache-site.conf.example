@@ -5,3 +5,6 @@
 # <host>-chain.pem and <host>-key.pem into RT_CERT_DIR.
 Define RT_PUBLIC_HOST radio.example.org
 Define RT_CERT_DIR "C:/RASTATIME/certs"
+# Websites allowed to embed the /embed/ widgets in an iframe (space-separated
+# origins).  Leave it out and the widgets can only be embedded by this host.
+#Define RT_EMBED_ANCESTORS "https://radio.example.org https://www.radio.example.org"

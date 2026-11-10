@@ -89,6 +89,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Widgets auf der Stations-Webseite (2026-11-10)** — Befund 2026-11-10: Firefox und Brave
+  zeigten auf der Webseite statt der eingebetteten Widgets einen Platzhalter.  Der
+  öffentliche HTTPS-Host sendete seit dem Go-live (2026-10-04) für alles
+  `X-Frame-Options: SAMEORIGIN`, auch für `/embed/`.  Jetzt ersetzt er ihn für `/embed/`
+  durch `Content-Security-Policy: frame-ancestors 'self' <Seiten>`, sobald
+  `RT_EMBED_ANCESTORS` in `config/apache-site.conf` gesetzt ist; die Studio-Oberfläche
+  bleibt `SAMEORIGIN`.  Erkannt wird `/embed/` an der ursprünglichen Anfragezeile
+  (`THE_REQUEST`), weil ein `<Location>` nach der Umleitung auf `index.php` nicht mehr
+  greift.  Manual WIDGETS §13 in vier Sprachen (zweite Bedingung: die CSP der Webseite
+  muss `frame-src` für den RASTATIME-Host erlauben), GO_LIVE_HTTPS.
 - **Live Text Info nach einem Liquidsoap-Neustart (2026-11-10)** — Befund 2026-11-10: die
   Live-Text-Datei blieb seit 2026-11-09 14:07 auf demselben Stand.  Ein frisches Liquidsoap
   startet mit `livetext_enabled = false`; PLAYOUT schickt nach einem erkannten Neustart die
