@@ -225,7 +225,7 @@ Die Sendung erscheint im Kalender als farbiger Block.
 > Sendungsdefinition) und mindestens eine Zeile in
 > `cc_show_instances` (jedes Vorkommen). Für eine einmalige
 > Sendung wie diese erhalten Sie eine von jeder. Eine
-> wiederkehrende Sendung erstellt die Instanzen eifrig bis
+> wiederkehrende Sendung erstellt die Episoden eifrig bis
 > zum konfigurierten Horizont (~3 Monate standardmäßig).
 
 ### 4.4 Die Sendung mit dem Track füllen
@@ -245,7 +245,7 @@ Klicken Sie auf **Speichern** oben im Show-Builder.
 > wiederverwendbaren [Sendungs-Vorlage](./SHOW_TEMPLATES.md)
 > zu füllen, oder eine
 > [Autoloading Playlist](./AUTOLOADING_PLAYLISTS.md)
-> anhängen, sodass sich jede Instanz selbst füllt.
+> anhängen, sodass sich jede Episode selbst füllt.
 
 ### 4.5 Warten, bis die Sendung beginnt
 

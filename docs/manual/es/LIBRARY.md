@@ -364,8 +364,8 @@ es ese día, no.  Una pista desactivada a mano nunca se elige.
 > almacenados en `cc_blockcriteria`. En momento de build,
 > `BlockExpander.expand()` ensambla un PostgreSQL `SELECT
 > … WHERE … LIMIT …` sobre `cc_files`. Los límites de tiempo restante
-> se convierten en un tope de duración vía `getSecondsRemaining()` de la
-> instancia (desde 2026-10-06 el tiempo libre dispuesto: `time_filled` =
+> se convierten en un tope de duración vía `getSecondsRemaining()` del
+> episodio (desde 2026-10-06 el tiempo libre dispuesto: `time_filled` =
 > inicio hasta el final de la última fila; la elección la hace
 > `Scheduler::pickRemainingBlock()`).
 
@@ -512,8 +512,8 @@ Dos caminos:
 
 2. **Autoloading**: adjunte la playlist a la definición
    del programa en la sección **Autoloading Playlist**
-   del formulario de edición de programa. Cada futura
-   instancia del programa tendrá los items de la playlist
+   del formulario de edición de programa. Cada futuro
+   episodio del programa tendrá los items de la playlist
    construidos automáticamente. Vea
    [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md).
 

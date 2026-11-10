@@ -190,7 +190,7 @@ Administratoren.
 | Knopf | Wirkung |
 |---|---|
 | **Delete All Tracks in Library** | Entfernt jeden Track aus der Bibliothek und aus künftigen Sendeplänen (Upstream). |
-| **Clear Calendar** (seit 2026-10-14) | Entfernt jede Sendung, die **noch nicht begonnen** hat, samt Inhalt und beendet alle Wiederholungen. Die laufende Sendung und alles Vergangene bleiben, das Sendeprotokoll behält seine Sendungsnamen. Eine Sendung ohne verbleibende Instanz wird gelöscht. Die Bestätigung nennt, wie viele Instanzen und Sendungen entfernt wurden. |
+| **Clear Calendar** (seit 2026-10-14) | Entfernt jede Sendung, die **noch nicht begonnen** hat, samt Inhalt und beendet alle Wiederholungen. Die laufende Sendung und alles Vergangene bleiben, das Sendeprotokoll behält seine Sendungsnamen. Eine Sendung ohne verbleibende Episode wird gelöscht. Die Bestätigung nennt, wie viele Episoden und Sendungen entfernt wurden. |
 
 > **Unter der Haube.** Die Werte sind Zeilen der Tabelle `cc_pref`
 > (Schlüssel / Wert).  Werte je Benutzer (Sprache, Zeitzone,

@@ -2,7 +2,7 @@
 
 > **Where you are in the manual.** Settings → **Archiving** (producers,
 > CBA accounts); Calendar → show form, section **Archiving**;
-> Calendar → right-click an instance → **Extras** → **Archive Online**; Analytics →
+> Calendar → right-click an episode → **Extras** → **Archive Online**; Analytics →
 > **People Involved** and **Archive Status**.  Read [Calendar](./CALENDAR.md) and
 > [Record-per-Show](./RECORD_PER_SHOW.md) first - the audio of an
 > archived episode is the show's recording.
@@ -16,7 +16,7 @@
 > (My Podcast).  Putting an episode on cba.media is called *archiving
 > online* to keep the two apart.
 
-An *episode* is one instance of a show in the calendar: next Monday's
+An *episode* is one occurrence of a show in the calendar: next Monday's
 "Morning Show" is one episode, the Monday after is the next.
 
 **Where the stages stand.**
@@ -121,7 +121,7 @@ as **Hosts involved** (0-999; called *Number of involved people* until
 2026-11-07), and appears once **Own production** is ticked - it counts
 in Analytics → People Involved (§6).
 
-In **Edit Instance** the section is shown **read-only** with the values
+In **Edit Episode** the section is shown **read-only** with the values
 of the show (since 2026-11-04; before, it was not shown): it belongs to
 the whole show.  The data of a single episode is edited in **Archive
 Online** (§4).
@@ -134,7 +134,7 @@ Online** (§4).
 
 ## 4. Episode data: "Archive Online"
 
-Right-click an instance in the calendar → **Extras** → **Archive Online** (until
+Right-click an episode in the calendar → **Extras** → **Archive Online** (until
 2026-11-03 *Episode...*).  The entry is
 there before and after the show aired - you can add the image after the
 broadcast - for Admins, Program Managers and the hosts of the show.
@@ -143,7 +143,7 @@ broadcast - for Admins, Program Managers and the hosts of the show.
 |---|---|
 | **Title** | Empty: the show's name and the date, shown greyed as a suggestion. |
 | **Teaser** | A short summary. Empty: the show's default teaser. |
-| **Description** | The text of the episode, on cba.media the text of the post. Empty: the description of the show, or the show name when the show has none (shown greyed). This is the only place to edit it (Edit Instance no longer shows it). |
+| **Description** | The text of the episode, on cba.media the text of the post. Empty: the description of the show, or the show name when the show has none (shown greyed). This is the only place to edit it (Edit Episode no longer shows it). |
 | **Guests involved** | The guests of this one episode (0-999), counted on top of the show's hosts (since 2026-11-07; before, the field was called *People involved* and replaced the show's value). Empty means no guests; the line below the field shows the show's hosts. |
 | **Production date** | Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier. |
 | **Do not archive this episode automatically** | For tests, cancelled episodes or rights problems. Takes effect with automatic archiving (§5); archiving by hand stays possible. |
@@ -161,8 +161,8 @@ chosen.  Episode images live in the library folder under
 of the [Backup](./BACKUP.md).
 
 > **Plan close to the broadcast.**  When the repeat pattern of a show
-> changes, the calendar recreates its future instances, and their
-> episode data goes with them.  (**Edit Instance** of a single episode
+> changes, the calendar recreates its future episodes, and their
+> episode data goes with them.  (**Edit Episode** of a single episode
 > keeps it.)  Enter titles and images for the next few weeks rather
 > than months ahead.
 
@@ -376,7 +376,7 @@ show appears after its first episode has ended.
 
 ### "The Archiving section is greyed out."
 
-In **Edit Instance** it is read-only - the section belongs to the whole
+In **Edit Episode** it is read-only - the section belongs to the whole
 show; use **Archive Online** for one episode.  It is greyed out too when
 you are not a Program Manager or Admin.
 

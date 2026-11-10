@@ -30,8 +30,8 @@ un sitio externo.
 |---|---|---|
 | **Now Playing — Show** | `/embed/now-playing-show` | Widget de texto de dos líneas. Nombre del programa actual + duración restante; nombre del próximo programa + horas de inicio-fin. |
 | **Now Playing — Track** | `/embed/now-playing-track` | Widget de texto de dos líneas. Pista actual "Artista - Título" + duración restante; próxima pista + horas de inicio-fin. |
-| **Next Shows** | `/embed/next-shows` | Widget de lista. Título del programa + lista cronológica de las próximas instancias de un programa recurrente. |
-| **Latest Shows** | `/embed/latest-shows` | Widget de lista. Título del programa + lista crono-inversa de las últimas instancias pasadas de un programa recurrente. |
+| **Next Shows** | `/embed/next-shows` | Widget de lista. Título del programa + lista cronológica de los próximos episodios de un programa recurrente. |
+| **Latest Shows** | `/embed/latest-shows` | Widget de lista. Título del programa + lista crono-inversa de los últimos episodios pasados de un programa recurrente. |
 | **On Air Today** | `/embed/on-air-today` | Widget de cuadrícula diaria. Banda de cabecera + programa actual + próximos del día, cada línea "HH:MM – HH:MM   Nombre (enlace)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Widget de pestañas de siete días. Cabecera con ◀ / ▶ navegación semanal + etiqueta de rango de fechas; pestañas de día; lista de filas por pestaña con HH:MM – HH:MM + nombre del programa (enlace). Imagen de fondo opcional vía `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendario basado en FullCalendar 6 (alojado localmente). Vistas Day / 2-Day / Week conmutables vía botones in-widget o `?view=`. Slots de programa coloreados desde `cc_show.background_color`. Clic → modal con descripción + botón URL. Auto-scroll a la línea now. |
@@ -137,7 +137,7 @@ Igual que el widget show — vea §2.
 
 ## 4. Widgets Next-Shows / Latest-Shows
 
-Widgets hermanos que listan múltiples instancias **de un solo
+Widgets hermanos que listan múltiples episodios **de un solo
 programa recurrente** en lugar del envoltorio "qué está sonando
 ahora" de los dos widgets Now-Playing.  Útil para una página de
 detalle de programa en su sitio: integre el widget en la barra
@@ -190,7 +190,7 @@ vie 24 may                                  06:00 - 08:00
 - **Color de fondo**: ajuste **Background color** (selector de
   color; **Transparent** vacía el campo y vuelve a verse la
   página que incrusta) o `?bgcolor=` (desde 2026-11-10)
-- **Líneas de lista**: una línea por instancia, la fecha a la
+- **Líneas de lista**: una línea por episodio, la fecha a la
   izquierda, `H:MM - H:MM` a la derecha
 - **Formato de fecha** (desde 2026-11-10): se elige en
   Configuración → Widgets → Next/Latest Shows → **Date
@@ -216,9 +216,9 @@ la línea superior de un widget Next-Shows se desliza al pasado
 
 | Parámetro | Valores | Por defecto | Efecto |
 |---|---|---|---|
-| `show_id` | entero (cc_show.id) | — | Identifica el programa. Estable frente a renombres y a cambios de instancia recurrente — cada instancia de un programa recurrente comparte este id. **Recomendado sobre `show`.** |
+| `show_id` | entero (cc_show.id) | — | Identifica el programa. Estable frente a renombres y a cambios de episodios — cada episodio de un programa recurrente comparte este id. **Recomendado sobre `show`.** |
 | `show` | cadena (cc_show.name) | — | Fallback cuando `show_id` está ausente.  Coincidencia exacta sensible a mayúsculas/minúsculas — **coincide con todos los programas que comparten el nombre**, así una emisora con un programa "BBC News" por día de semana puede listarlos todos con un solo embed `?show=BBC%20News`.  `show_id` gana cuando ambos están definidos. |
-| `limit` | entero 1..20 | 4 (next), 3 (latest) | Cuántas instancias listar. |
+| `limit` | entero 1..20 | 4 (next), 3 (latest) | Cuántos episodios listar. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Igual que los widgets de dos líneas — vea §2. |
 | `cache` | entero segundos 10..3600 | `60` | Igual que los widgets de dos líneas — vea §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportamiento del título del programa cuando es más ancho que 300 px. |
@@ -236,9 +236,9 @@ la línea superior de un widget Next-Shows se desliza al pasado
 > en vivo y copia un snippet de iframe listo para usar con
 > el id ya rellenado.
 
-### Instancias modificadas / canceladas
+### Episodios modificados / cancelados
 
-Las instancias individuales que el operador movió o canceló
+Los episodios individuales que el operador movió o canceló
 (`cc_show_instances.modified_instance = TRUE`) se filtran de
 la lista, coincidiendo con la convención que
 `Application_Model_Show::getNextShows` usa en el panel
@@ -314,11 +314,11 @@ migre a la línea siguiente sin esperar el TTL del caché.
 > mañana 00:30 **no** se lista aunque el `limit` lo
 > permitiría — el tope es duro.
 
-### Instancias modificadas / canceladas
+### Episodios modificados / cancelados
 
 Misma convención que los widgets Next-Shows / Latest-Shows
 — las filas con `cc_show_instances.modified_instance = TRUE`
-se filtran para que una instancia pospuesta / cancelada no
+se filtran para que un episodio pospuesto / cancelado no
 deje una línea fantasma en el widget público.
 
 ### Página de configuración
@@ -428,7 +428,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
 > así que la mayoría de los nombres caben en una línea; un nombre muy
 > largo termina en «…».
 
-### Instancias modificadas / canceladas
+### Episodios modificados / cancelados
 
 Misma convención que los otros widgets —
 `modified_instance = TRUE` se filtran.
@@ -576,7 +576,7 @@ Fuente: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 5. **Sesiones Live-Show** (`file_id IS NULL`) — nuevo
    2026-05-23.  Escritas por `ensureLiveShowLogged()`
    como side-effect en `/api/live-info(-v2)`.  Detecta
-   show-instances con `time_filled = '00:00:00'`.
+   episodios con `time_filled = '00:00:00'`.
    Artist = "Live Show".
 6. **Cambios manuales de fuente Dashboard** (`file_id IS
    NULL`) — escritas por `insertLineInLog()` al
@@ -591,7 +591,7 @@ Line-In Library.
 
 En el modal: encima de la línea del nombre de programa
 está ahora la etiqueta **"Played in the show:"**.  Para
-entradas webstream sin enlace de instancia el bloque
+entradas webstream sin enlace de episodio el bloque
 de contexto se oculta.
 
 **Configuración → Widgets → Track History** aloja la
@@ -880,7 +880,7 @@ detenido — verifique `Get-Service RASTATIME-PLAYOUT`.
   la emisora pase.  Para mirar hacia adelante, fije un
   día específico vía `?day=YYYY-MM-DD`.
 - Confirme que los programas realmente estén programados
-  en el Calendario — las instancias canceladas
+  en el Calendario — los episodios cancelados
   (`modified_instance = TRUE`) se filtran by-design.
 - Si la URL del iframe contiene `?timezone=...`, eso
   sobrescribe la zona horaria de la emisora para el cálculo
@@ -893,16 +893,16 @@ detenido — verifique `Get-Service RASTATIME-PLAYOUT`.
   (preferido) o `?show=Nombre`.  La página de Configuración
   (§5) genera el snippet con el id ya integrado — cópielo
   desde ahí en lugar de armar la URL a mano.
-- Confirme que el programa realmente tenga instancias
-  futuras en el Calendario (para Next Shows) o haya salido
+- Confirme que el programa realmente tenga episodios
+  futuros en el Calendario (para Next Shows) o haya salido
   al aire al menos una vez (para Latest Shows).  Un
   programa nuevecito sin episodios emitidos muestra el
   placeholder vacío en el widget Latest hasta que termine
   el primer episodio.
 - Las filas `modified_instance = TRUE` se filtran by-design
   (coincide con el panel interno).  Un programa cuya
-  única instancia próxima fue movida o cancelada muestra
-  vacío hasta que se genere una nueva instancia.
+  único episodio próximo fue movido o cancelado muestra
+  vacío hasta que se genere un nuevo episodio.
 
 ---
 

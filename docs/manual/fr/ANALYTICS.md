@@ -52,8 +52,8 @@ entrées) :
 * **File Summary** — la même fenêtre agrégée **par piste** :
   combien de fois chaque fichier est passé sur la période. Triable
   par n'importe quelle colonne.
-* **Show Summary** — la même fenêtre groupée **par instance
-  d'émission**. Dépliez une émission pour voir ce qui y est passé.
+* **Show Summary** — la même fenêtre groupée **par
+  épisode**. Dépliez une émission pour voir ce qui y est passé.
 
 > **Astuce opérateur.** Le Log Sheet enregistre ce que le *moteur*
 > a joué. Un DJ en direct qui parle sur le flux ne laisse aucune
@@ -154,7 +154,7 @@ Admin Password indique qu'aucune statistique n'est collectée pour lui.
 ## 4. Show Listener Stats
 
 **Analytics → Show Listener Stats** replie les mêmes données
-d'audience **par instance d'émission** : pour chaque émission de
+d'audience **par épisode** : pour chaque émission de
 la plage choisie, vous obtenez le nombre **moyen** et le nombre
 **maximum** d'auditeurs simultanés pendant son passage à
 l'antenne.

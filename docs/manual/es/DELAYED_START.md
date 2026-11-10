@@ -25,7 +25,7 @@ minutos antes de salir al aire.
 > desliza si **su propia** casilla está marcada. El deslizamiento
 > nunca se deshace automáticamente — vea §6. Si cambia de opinión,
 > desmarque la casilla (los futuros sobrepasos dejan de deslizarlo) o
-> arrastre la instancia de vuelta en el calendario.
+> arrastre el episodio de vuelta en el calendario.
 
 ---
 
@@ -91,7 +91,7 @@ deslizamiento (§4).
 Para un programa **recurrente** la casilla forma parte de la
 definición del programa, así que se aplica a cada episodio. Cuando un
 sobrepaso real desplaza un episodio, solo **ese** episodio cambia (se
-convierte en una anulación por-ocurrencia); los demás episodios
+convierte en una anulación por episodio); los demás episodios
 conservan su slot normal.
 
 > **Cómo funciona bajo el capó.** La marca se almacena en el nuevo
@@ -250,10 +250,10 @@ slot omitido. El marcador está ahí para que usted lo note después —
 p. ej. para disculparse al aire, o para ajustar el programa
 sobrepasado la próxima vez.
 
-> **Cómo funciona bajo el capó.** Vaciar una instancia enterrada
-> refleja la acción **Vaciar planning** para una instancia: sus filas
-> `cc_schedule` se eliminan, `time_filled` se pone a cero, la instancia
-> se marca `modified_instance` — la marca « ocurrencia eliminada » del
+> **Cómo funciona bajo el capó.** Vaciar un episodio enterrado
+> refleja la acción **Vaciar planning** para un episodio: sus filas
+> `cc_schedule` se eliminan, `time_filled` se pone a cero, el episodio
+> se marca `modified_instance` — la marca « episodio eliminado » del
 > upstream, adecuada para un slot que nunca sale al aire — más
 > `delayed_start_from` (desde el 27/09/2026, véase abajo), y
 > `cc_files.is_scheduled` se retira para toda pista que ya no esté
@@ -296,8 +296,8 @@ La tarea es **idempotente y solo hacia adelante**:
 
 > **Cómo funciona bajo el capó.**
 > `Application_Service_ShowShiftService::applyDelayedStarts()`
-> selecciona las instancias sobrepasadas que no son ocurrencias
-> eliminadas (`modified_instance`) ni ya desplazadas
+> selecciona los episodios sobrepasados que no son episodios
+> eliminados (`modified_instance`) ni ya desplazados
 > (`delayed_start_from`), cuyo fin de slot cae dentro de la ventana de
 > lead, y luego recorre
 > cada una hacia adelante: vaciando los programas marcados enterrados
@@ -309,14 +309,14 @@ La tarea es **idempotente y solo hacia adelante**:
 >
 > **Por qué un marcador propio (27/09/2026).**  El primer ensayo en
 > directo mostró que el marcador de junio — `modified_instance`, la
-> bandera « esta ocurrencia fue eliminada » del upstream — ocultaba el
+> bandera « este episodio fue eliminado » del upstream — ocultaba el
 > programa desplazado al panel, al live-info, a todos los widgets, al
 > calendario, al show builder y a la comprobación de solapamiento,
 > mientras el playout lo emitía.  La migración 0058 añadió
 > `cc_show_instances.delayed_start_from`; un programa desplazado ahora
 > sigue visible en todas partes a su nueva hora.  Guardar el slot
 > original (y no solo una bandera) permite además al regenerador de
-> repeticiones encontrar la ocurrencia movida al editar el programa,
+> repeticiones encontrar el episodio movido al editar el programa,
 > en lugar de crear un duplicado a la hora de la serie.
 > El propio fin del programa sobrepasado se extiende hasta donde se
 > asentó su contenido. El intervalo y el lead son anulables con
@@ -351,13 +351,13 @@ de menos de 0,3 s se siguen cubriendo sin costura.
 - **Un programa que movió a mano no es por sí mismo un origen de
   deslizamiento.** Un programa ya desplazado por la tarea
   (`delayed_start_from` puesto) nunca se trata como la *fuente* de una
-  nueva propagación, y una ocurrencia eliminada (`modified_instance`)
+  nueva propagación, y un episodio eliminado (`modified_instance`)
   se omite por completo — mientras que un programa que simplemente
-  arrastró en el calendario es una instancia normal que aún puede
+  arrastró en el calendario es un episodio normal que aún puede
   deslizarse, vaciarse o (si se sobrepasa) provocar él mismo una
   propagación. Así el mecanismo se mantiene idempotente sin luchar
   contra sus ediciones manuales, en consonancia con
-  cómo otras pasadas automáticas dejan en paz las instancias editadas a
+  cómo otras pasadas automáticas dejan en paz los episodios editados a
   mano.
 - **En cada paso solo importa la casilla del programa siguiente.** Que
   el propio programa A esté marcado es irrelevante para que el

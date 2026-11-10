@@ -46,7 +46,7 @@ Admins edit every entry):
   collecting societies.
 * **File Summary** — the same window aggregated **per track**: how
   often each file aired in the range. Sortable by any column.
-* **Show Summary** — the same window grouped **per show instance**.
+* **Show Summary** — the same window grouped **per episode**.
   Expand a show to see what aired inside it.
 
 > **Operator tip.** The Log Sheet records what the *engine* played.
@@ -136,7 +136,7 @@ Admin Password says that no statistics are collected for it.
 ## 4. Show Listener Stats
 
 **Analytics → Show Listener Stats** folds the same listener data
-**per show instance**: for each show in the picked range you get the
+**per episode**: for each show in the picked range you get the
 **average** and the **maximum** number of concurrent listeners while
 it was on air.
 

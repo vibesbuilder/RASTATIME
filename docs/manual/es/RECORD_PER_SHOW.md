@@ -214,7 +214,7 @@ en cuanto se cierra su archivo de grabación:
   primer uso), el título `<nombre del programa> <AAAA-MM-DD HH:MM>`,
   el nombre del programa como artista y el álbum `Show Recordings`,
   para encontrarla fácilmente en la biblioteca.
-- La pista queda **vinculada a la instancia del programa** (el
+- La pista queda **vinculada al episodio del programa** (el
   «archivo grabado» del calendario), de modo que una repetición
   posterior de un programa en directo pueda usarla.
 - Una grabación ya importada se reconoce por su suma de comprobación
@@ -332,8 +332,8 @@ de las regulaciones, pero:
 Editar programa → expandir **Grabación** → desmarcar
 **Grabar este programa:** → Guardar.
 
-Las instancias ya grabadas no se ven afectadas. Las
-instancias futuras no inician el subproceso FFmpeg.
+Los episodios ya grabados no se ven afectados. Los
+episodios futuros no inician el subproceso FFmpeg.
 
 ---
 

@@ -9,7 +9,7 @@
 
 Una **autoloading playlist** es una playlist de biblioteca
 *adjunta a una definición de programa* para que cada
-instancia del programa se rellene desde esa playlist
+episodio del programa se rellene desde esa playlist
 automáticamente.
 
 Esta es la herramienta ahorradora de trabajo más poderosa
@@ -24,11 +24,11 @@ rellena cada día de semana.
 ## 1. Lo básico
 
 Un programa con autoloading playlist se construye **una
-vez por instancia** por el constructor de autoplaylist en
+vez por episodio** por el constructor de autoplaylist en
 segundo plano. La construcción típicamente sucede 60
-segundos antes del inicio de la instancia.
+segundos antes del inicio del episodio.
 
-La secuencia de construcción para cada instancia:
+La secuencia de construcción para cada episodio:
 
 1. (Opcional) **Playlist intro** añadida al principio.
 2. Items de la **playlist body** añadidos en orden; smart
@@ -68,7 +68,7 @@ Guarde el programa.
 > otro programa».
 
 > **Carga automática por episodio (desde 2026-11-03).**  «Editar
-> instancia» puede dar a un episodio su propia lista, intro, outro o
+> episodio» puede dar a un episodio su propia lista, intro, outro o
 > repetición, o ninguna carga automática; desmarque **Use the show's
 > autoloading settings** en la sección Autoloading Playlist.  Solo antes
 > de la construcción (una hora antes del inicio, aproximadamente):
@@ -77,11 +77,11 @@ Guarde el programa.
 ## 3. La cadencia de construcción de 60 segundos
 
 El constructor de autoplaylist corre cada 60 segundos.
-Para cada instancia próxima de un programa con autoloading
+Para cada episodio próximo de un programa con autoloading
 playlist:
 
-- Si la instancia comienza en **menos de ~60 s** y no ha
-  sido construida aún, construir ahora.
+- Si el episodio comienza en **menos de ~60 s** y no ha
+  sido construido aún, construir ahora.
 - Si no, dejarla para el próximo ciclo.
 
 Esto significa que la construcción es *siempre* una
@@ -140,7 +140,7 @@ sobrerreserva.
 > `Scheduler::scheduleFilesAfter()`. La línea de registro
 > «show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
 > rows, x s free at the end» resume cada build; `ap_fill_test.php`
-> (C:\Temp\optd) ensaya un llenado en una instancia temporal.
+> (C:\Temp\optd) ensaya un llenado en un episodio temporal.
 
 **Un episodio más largo que el slot (desde el 26/10/2026).**  El
 primer elemento que no cabía se omitía, y Auto DJ llenaba el
@@ -236,8 +236,8 @@ Cuando no marcado:
 Editar programa → expandir **Autoloading Playlist** →
 desmarcar **¿Añadir Autoloading Playlist?** → Guardar.
 
-Las instancias futuras ya no se auto-construirán. Las
-instancias ya construidas mantienen su contenido
+Los episodios futuros ya no se auto-construirán. Los
+episodios ya construidos mantienen su contenido
 construido.
 
 
@@ -247,7 +247,7 @@ construido.
 > Playlist* de esos programas.  Si un programa conserva la casilla sin
 > playlist (importación, base antigua), el aviso del panel «El
 > autoloading está activado, pero el programa no tiene lista» aparece
-> para cada emisión de las próximas 48 horas - edite el programa y elija
+> para cada episodio de las próximas 48 horas - edite el programa y elija
 > una lista.
 
 ---
@@ -257,7 +257,7 @@ construido.
 | | Autoloading Playlist | Auto DJ |
 |---|---|---|
 | **Dónde adjunto** | Formulario de edición de un programa específico | Configuración → Auto DJ (nivel emisora) |
-| **Cuándo rellena** | Por instancia de programa, 60 s antes del inicio | (a) Crea nuevos programas en huecos. (b) Completa programas incompletos. |
+| **Cuándo rellena** | Por episodio, 60 s antes del inicio | (a) Crea nuevos programas en huecos. (b) Completa programas incompletos. |
 | **Con qué rellena** | La playlist configurada (cualquier estructura) | Una playlist Auto-DJ configurada |
 | **Afecta a qué programas** | Solo al programa al que está adjunto | Todos los programas + crea nuevos |
 | **Necesita un presentador?** | No | No |
@@ -274,11 +274,11 @@ para **tiempo de aire no planificado**.
 ### "Adjunté una playlist pero el programa quedó vacío."
 
 Tres posibilidades:
-1. La instancia ya comenzó.
-2. La instancia ya fue rellenada manualmente.
+1. El episodio ya comenzó.
+2. El episodio ya fue rellenado manualmente.
 3. El worker job runner no está corriendo.
 
-### "¿Cómo veo si la auto-construcción corrió para una instancia específica?"
+### "¿Cómo veo si la auto-construcción corrió para un episodio específico?"
 
 Abra el programa en el calendario; la barra de relleno
 del calendario debería ser > 0 %.

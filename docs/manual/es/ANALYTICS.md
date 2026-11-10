@@ -52,8 +52,8 @@ Managers y los Admins editan todas las entradas):
 * **File Summary** — la misma ventana agregada **por pista**:
   cuántas veces sonó cada archivo en el período. Ordenable por
   cualquier columna.
-* **Show Summary** — la misma ventana agrupada **por instancia de
-  programa**. Despliegue un programa para ver qué sonó dentro.
+* **Show Summary** — la misma ventana agrupada **por
+  episodio**. Despliegue un programa para ver qué sonó dentro.
 
 > **Consejo para el operador.** El Log Sheet registra lo que
 > reprodujo el *motor*. Un DJ en vivo hablando sobre el flujo no
@@ -151,7 +151,7 @@ estadísticas para él.
 ## 4. Show Listener Stats
 
 **Analytics → Show Listener Stats** pliega los mismos datos de
-audiencia **por instancia de programa**: para cada programa del
+audiencia **por episodio**: para cada programa del
 rango elegido obtiene el número **medio** y el **máximo** de
 oyentes simultáneos durante su emisión.
 

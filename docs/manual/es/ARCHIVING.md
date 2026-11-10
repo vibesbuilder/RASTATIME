@@ -2,7 +2,7 @@
 
 > **Dónde está en el manual.** Ajustes → **Archivo** (productores,
 > cuentas de CBA); Calendario → formulario del programa,
-> sección **Archivo**; Calendario → clic derecho en una emisión →
+> sección **Archivo**; Calendario → clic derecho en un episodio →
 > **Extras** → **Archivar en línea**; Estadísticas → **Participantes** y
 > **Estado del archivo** (en la interfaz en inglés: Settings →
 > Archiving, Archiving, Archive Online, Analytics → People Involved y
@@ -128,7 +128,7 @@ propia**, como **Presentadores** (Hosts involved, 0-999; *Número de
 participantes* hasta el 2026-11-07), y aparece en cuanto se marca
 **Producción propia**; cuenta en Estadísticas → Participantes (§6).
 
-En **Editar emisión** la sección se muestra **de solo lectura** con los
+En **Editar episodio** la sección se muestra **de solo lectura** con los
 valores del programa (desde el 2026-11-04; antes no aparecía): pertenece
 al programa completo.  Los datos de un solo episodio se editan en
 **Archivar en línea** (§4).
@@ -142,7 +142,7 @@ al programa completo.  Los datos de un solo episodio se editan en
 
 ## 4. Datos del episodio: «Archivar en línea»
 
-Clic derecho en una emisión del calendario → **Extras** → **Archivar en línea**
+Clic derecho en un episodio del calendario → **Extras** → **Archivar en línea**
 (hasta el 2026-11-03 *Episodio...*).  La entrada está disponible antes
 y después de la emisión - la imagen se puede añadir después - para
 Admins, Program Managers y los presentadores del programa.
@@ -151,7 +151,7 @@ Admins, Program Managers y los presentadores del programa.
 |---|---|
 | **Título** | Vacío: el nombre del programa y la fecha, en gris como sugerencia. |
 | **Teaser** | Un breve resumen. Vacío: el teaser predeterminado del programa. |
-| **Descripción** | El texto del episodio, en cba.media el texto de la entrada. Vacío: la descripción del programa o, si no tiene, el nombre del programa (en gris). Es el único lugar para editarla (Editar emisión ya no la muestra). |
+| **Descripción** | El texto del episodio, en cba.media el texto de la entrada. Vacío: la descripción del programa o, si no tiene, el nombre del programa (en gris). Es el único lugar para editarla (Editar episodio ya no la muestra). |
 | **Invitados** (Guests involved) | Los invitados de este episodio (0-999), contados además de los presentadores del programa (desde el 2026-11-07; antes el campo se llamaba *Participantes* y sustituía el valor del programa). Vacío significa sin invitados; la línea bajo el campo muestra los presentadores del programa. |
 | **Fecha de producción** | La exige cba.media. Vacía: el día de la emisión. Indíquela si el episodio se produjo antes. |
 | **No archivar este episodio automáticamente** | Para pruebas, episodios cancelados o problemas de derechos. Se aplica con el archivo automático (§5); archivar a mano sigue siendo posible. |
@@ -165,13 +165,13 @@ la biblioteca.
 
 **Guardar** almacena los campos de texto; la imagen se guarda en cuanto
 se elige.  Las imágenes de episodio están en la carpeta de la
-biblioteca bajo `imported/episode-images/<emisión>/` y forman parte del
+biblioteca bajo `imported/episode-images/<episodio>/` y forman parte del
 espejo de medios de la [Copia de seguridad](./BACKUP.md).
 
 > **Planifique cerca de la emisión.**  Cuando cambia el patrón de
-> repetición de un programa, el calendario vuelve a crear sus emisiones
-> futuras, y sus datos de episodio se pierden con ellas.  (**Editar
-> emisión** de un solo episodio los conserva.)  Introduzca títulos e
+> repetición de un programa, el calendario vuelve a crear sus episodios
+> futuros, y sus datos de episodio se pierden con ellos.  (**Editar
+> episodio** de un solo episodio los conserva.)  Introduzca títulos e
 > imágenes para las próximas semanas, no con meses de antelación.
 
 ---
@@ -403,7 +403,7 @@ programa nuevo aparece en cuanto termina su primer episodio.
 
 ### «La sección Archivo está en gris.»
 
-En **Editar emisión** es de solo lectura: la sección pertenece al
+En **Editar episodio** es de solo lectura: la sección pertenece al
 programa completo; para un episodio use **Archivar en línea**.  También
 está en gris si usted no es Program Manager ni Admin.
 

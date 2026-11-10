@@ -204,7 +204,7 @@ gaspilleur et ennuyeux.
 
 Pendant que vous glissez des titres dans une émission, dans le
 calendrier ou le show builder, cette émission est à vous : chaque
-action de planification verrouille d'abord l'instance d'émission, et
+action de planification verrouille d'abord l'épisode, et
 le fill-pass n'attend pas ce verrou.  Il saute l'émission pour ce
 cycle, écrit une ligne d'information dans le journal (« is being
 edited right now - left alone until the next pass ») et revient une
@@ -218,7 +218,7 @@ l'opérateur pouvait donc échouer avec un message d'erreur.
 ### Le fill-pass ne modifie jamais la définition d'émission
 
 Le fill-pass n'insère que des **items de planning** dans
-l'instance existante. Il ne change pas le nom, les
+l'épisode existant. Il ne change pas le nom, les
 animateurs, l'attachement d'autoplaylist ou tout autre
 champ de définition de l'émission. L'intention de
 l'opérateur pour l'émission reste intacte ; seule la
@@ -291,7 +291,7 @@ Vérifiez dans cet ordre :
 
 C'était une régression en v4 (Section 23.20). Corrigé
 depuis RASTATIME 2026-05-21 : le pre-pass requête jusqu'à
-200 instances à venir et ne requiert que le *début* du
+200 épisodes à venir et ne requiert que le *début* du
 trou (pas la *fin*) à l'intérieur de la fenêtre
 lookahead.
 

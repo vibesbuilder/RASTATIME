@@ -21,7 +21,7 @@ minutes before air.
 > **This is opt-in and forward-only.** A show only ever slides if
 > **its own** box is ticked. The slide is never undone automatically
 > — see §6. If you change your mind, untick the box (future overruns
-> stop sliding it) or drag the instance back on the calendar.
+> stop sliding it) or drag the episode back on the calendar.
 
 ---
 
@@ -235,9 +235,9 @@ The earlier show simply plays through the skipped slot's airtime. The
 marker is there for you to notice after the fact — e.g. to apologise
 on air, or to tighten the overbooked show next time.
 
-> **How it works under the hood.** Clearing a buried instance mirrors
-> the **Clear Schedule** action for one instance: its `cc_schedule`
-> rows are deleted, `time_filled` is zeroed, the instance is flagged
+> **How it works under the hood.** Clearing a buried episode mirrors
+> the **Clear Schedule** action for one episode: its `cc_schedule`
+> rows are deleted, `time_filled` is zeroed, the episode is flagged
 > `modified_instance` — upstream's "deleted occurrence" mark, fitting
 > for a slot that never airs — plus `delayed_start_from` (since
 > 2026-09-27, see below), and `cc_files.is_scheduled` is dropped for
@@ -277,7 +277,7 @@ The task is **idempotent and forward-only**:
 
 > **How it works under the hood.**
 > `Application_Service_ShowShiftService::applyDelayedStarts()` selects
-> overbooking instances that are neither deleted occurrences
+> overbooking episodes that are neither deleted occurrences
 > (`modified_instance`) nor already shifted (`delayed_start_from`),
 > whose slot end is within the lead window, then walks each one
 > forward: clearing
@@ -329,11 +329,11 @@ Gaps shorter than 0.3 s are still bridged seamlessly.
   the task has moved (`delayed_start_from` set) is never treated as
   the *source* of a new ripple, and a deleted occurrence
   (`modified_instance`) is skipped entirely — but a show you simply
-  dragged on the calendar is an ordinary instance and can still slide,
+  dragged on the calendar is an ordinary episode and can still slide,
   be cleared, or (if it overruns) trigger a slide itself. This keeps
   the engine idempotent without fighting your manual edits, consistent
   with how
-  hand-edited instances are left alone by other automatic passes.
+  hand-edited episodes are left alone by other automatic passes.
 - **Only the next show's box matters at each step.** Whether show A
   itself is ticked is irrelevant to whether A's overrun pushes B —
   what matters is B's box. (A's box matters only when the show

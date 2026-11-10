@@ -28,8 +28,8 @@ them on an external site.
 |---|---|---|
 | **Now Playing — Show** | `/embed/now-playing-show` | Two-line text widget. Current show name + remaining duration; next show name + start–end times. |
 | **Now Playing — Track** | `/embed/now-playing-track` | Two-line text widget. Current track "Artist - Title" + remaining duration; next track + start–end times. |
-| **Next Shows** | `/embed/next-shows` | List widget. Show title + chronological list of upcoming instances of one recurring show. |
-| **Latest Shows** | `/embed/latest-shows` | List widget. Show title + reverse-chronological list of most recent past instances of one recurring show. |
+| **Next Shows** | `/embed/next-shows` | List widget. Show title + chronological list of upcoming episodes of one recurring show. |
+| **Latest Shows** | `/embed/latest-shows` | List widget. Show title + reverse-chronological list of most recent past episodes of one recurring show. |
 | **On Air Today** | `/embed/on-air-today` | Day-grid widget. Header band + today's current + upcoming shows, each row "HH:MM – HH:MM   Show name (link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Seven-day tab widget. Header with ◀ / ▶ week-navigation + date-range label; day tabs; per-tab row list with HH:MM – HH:MM + show name (link). Optional background-image via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Calendar-style widget powered by FullCalendar 6 (locally hosted). Operator-switchable Day / 2-Day / Week views via in-widget buttons or `?view=`. Show slots coloured from `cc_show.background_color`. Click → modal with show description + URL button. Auto-scrolls to the now-line. |
@@ -130,7 +130,7 @@ Same as the show widget — see §2.
 
 ## 4. Next-Shows / Latest-Shows widgets
 
-Sister widgets that list multiple instances of **a single recurring
+Sister widgets that list multiple episodes of **a single recurring
 show** rather than the "what is on right now" envelope of the two
 Now-Playing widgets.  Useful for a show-detail page on your station
 site: drop the widget in the sidebar and listeners see the next four
@@ -182,7 +182,7 @@ Fri 24 May                                  06:00 - 08:00
   (colour picker; **Transparent** empties the field and the
   embedding page shows through again), per embed `?bgcolor=`
   (since 2026-11-10)
-- **List rows**: one line per instance, the date on the left,
+- **List rows**: one line per episode, the date on the left,
   `H:MM - H:MM` on the right
 - **Date format** (since 2026-11-10): chosen under Settings →
   Widgets → Next/Latest Shows → **Date format**, for both
@@ -208,9 +208,9 @@ drops the row without waiting out the cache TTL.
 
 | Param | Values | Default | Effect |
 |---|---|---|---|
-| `show_id` | integer (cc_show.id) | — | Identifies the show. Stable across renames and across recurring-instance changes — every instance of a recurring show shares this id. **Recommended over `show`.** |
+| `show_id` | integer (cc_show.id) | — | Identifies the show. Stable across renames and across recurring-episode changes — every episode of a recurring show shares this id. **Recommended over `show`.** |
 | `show` | string (cc_show.name) | — | Fallback when `show_id` is absent.  Case-sensitive exact match — **matches every show that shares the name**, so a station with one "BBC News" show per weekday can list them all with a single `?show=BBC%20News` embed.  `show_id` wins when both are set. |
-| `limit` | integer 1..20 | 4 (next), 3 (latest) | How many instances to list. |
+| `limit` | integer 1..20 | 4 (next), 3 (latest) | How many episodes to list. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Same as the two-line widgets — see §2. |
 | `cache` | integer seconds 10..3600 | `60` | Same as the two-line widgets — see §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of the show title when wider than 300 px. |
@@ -227,9 +227,9 @@ drops the row without waiting out the cache TTL.
 > shows a live preview and copies a ready-made iframe snippet with
 > the id pre-filled.
 
-### Modified / cancelled instances
+### Modified / cancelled episodes
 
-Single instances that the operator moved or cancelled
+Single episodes that the operator moved or cancelled
 (`cc_show_instances.modified_instance = TRUE`) are filtered out
 of the list, matching the convention `Application_Model_Show::
 getNextShows` uses on the internal Dashboard.  A single
@@ -303,11 +303,11 @@ without waiting out the cache TTL.
 > A show that starts tomorrow 00:30 is **not** listed even if
 > the `limit` would otherwise leave room — the cap is hard.
 
-### Modified / cancelled instances
+### Modified / cancelled episodes
 
 Same convention as the Next-Shows / Latest-Shows widgets —
 rows with `cc_show_instances.modified_instance = TRUE` are
-filtered out so a single postponed / cancelled instance does
+filtered out so a single postponed / cancelled episode does
 not leave a phantom row in the public widget.
 
 ### Settings page
@@ -416,11 +416,11 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 > instead of 19 px), so most names fit on one line; a very long name
 > ends in an ellipsis.
 
-### Modified / cancelled instances
+### Modified / cancelled episodes
 
 Same convention as the other widgets — rows with
 `cc_show_instances.modified_instance = TRUE` are filtered out
-so a moved / cancelled instance doesn't leave a phantom row.
+so a moved / cancelled episode doesn't leave a phantom row.
 
 ### Settings page
 
@@ -526,7 +526,7 @@ FullCalendar's documented event format:
 }
 ```
 
-Modified / cancelled instances (`modified_instance = TRUE`)
+Modified / cancelled episodes (`modified_instance = TRUE`)
 are filtered out, matching the convention all the other
 widgets use.
 
@@ -613,7 +613,7 @@ plus header + load-more footer):
   name, and an "Open show page →" button when the parent
   show has a configured URL.  The show name itself stays
   plain text — only the dedicated button is the click
-  affordance.  When a webstream entry has no instance
+  affordance.  When a webstream entry has no episode
   binding, the show-context block is hidden entirely.
 
 ### URL parameters
@@ -1073,7 +1073,7 @@ longer, the playout engine may have stopped — check
   want to look ahead, pin a specific day via
   `?day=YYYY-MM-DD`.
 - Verify the shows are actually scheduled in the Calendar —
-  cancelled (`modified_instance = TRUE`) instances are
+  cancelled (`modified_instance = TRUE`) episodes are
   filtered out by design.
 - If the iframe URL contains `?timezone=...`, that overrides
   the station timezone for the "today" boundary calculation.
@@ -1086,15 +1086,15 @@ longer, the playout engine may have stopped — check
   or `?show=Name`.  The Settings page (§5) generates the
   snippet with the id baked in — copy it from there rather
   than hand-crafting the URL.
-- Confirm the show actually has future instances in the
+- Confirm the show actually has future episodes in the
   Calendar (for Next Shows) or has aired at least once
   (for Latest Shows).  A brand-new show with no aired
   episodes shows the empty placeholder on the Latest
   widget until the first episode finishes.
 - `modified_instance = TRUE` rows are filtered out by
   design (matches the internal Dashboard).  A show whose
-  only upcoming instance has been moved or cancelled
-  shows empty until a fresh instance is generated.
+  only upcoming episode has been moved or cancelled
+  shows empty until a fresh episode is generated.
 
 ---
 

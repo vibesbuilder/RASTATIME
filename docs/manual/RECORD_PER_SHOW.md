@@ -118,7 +118,7 @@ Calendar → New Show → expand **Record** section → tick
 Calendar → click the show → **Edit Show** → expand **Record**
 section → tick **Record this show:** → Save.
 
-The toggle takes effect from the *next* instance to start.
+The toggle takes effect from the *next* episode to start.
 A show that has already started does not retroactively
 record (the FFmpeg subprocess only starts when the show
 begins).
@@ -232,7 +232,7 @@ recording file is closed:
   use), the title `<show name> <YYYY-MM-DD HH:MM>`, the show name
   as artist and the album `Show Recordings`, so it is easy to find
   in the library.
-- The library track is **linked to the show instance** (the
+- The library track is **linked to the episode** (the
   calendar's "recorded file"), so a later repeat of a live show can
   pick it up.
 - A recording that was already imported is recognised by its
@@ -397,9 +397,9 @@ this show:** → Save.
 
 Effects:
 
-- Already-recorded instances are unaffected (the files
+- Already-recorded episodes are unaffected (the files
   remain on disk).
-- Future instances do not start the FFmpeg subprocess.
+- Future episodes do not start the FFmpeg subprocess.
 - The **View Recorded File** menu item disappears for
   future shows.
 

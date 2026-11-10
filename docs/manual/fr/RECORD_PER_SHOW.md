@@ -118,7 +118,7 @@ Calendrier → cliquez sur l'émission → **Modifier
 l'émission** → développer **Enregistrement** → cocher →
 Enregistrer.
 
-Le toggle prend effet à partir de la *prochaine* instance
+Le toggle prend effet à partir du *prochain* épisode
 à démarrer. Une émission qui a déjà commencé n'enregistre
 pas rétroactivement.
 
@@ -235,7 +235,7 @@ la médiathèque dès que son fichier d'enregistrement est fermé :
   utilisation), le titre `<nom de l'émission> <AAAA-MM-JJ HH:MM>`, le
   nom de l'émission comme artiste et l'album `Show Recordings`, pour
   être facile à retrouver dans la bibliothèque.
-- La piste est **liée à l'instance de l'émission** (le « fichier
+- La piste est **liée à l'épisode de l'émission** (le « fichier
   enregistré » du calendrier), de sorte qu'une rediffusion ultérieure
   d'une émission en direct puisse la reprendre.
 - Un enregistrement déjà importé est reconnu par sa somme de contrôle
@@ -362,8 +362,8 @@ pour la plupart des règlements, mais :
 Modifier l'émission → développer **Enregistrement** →
 décocher **Enregistrer cette émission :** → Enregistrer.
 
-Les instances déjà enregistrées ne sont pas affectées (les
-fichiers restent sur disque). Les instances futures ne
+Les épisodes déjà enregistrés ne sont pas affectés (les
+fichiers restent sur disque). Les épisodes futurs ne
 démarrent pas le sous-processus FFmpeg.
 
 ---

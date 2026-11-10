@@ -226,8 +226,8 @@ remplie entièrement dès que la dramaturgie est placée.
 > Gardez-le au-dessus de l'intervalle de passage de 2 minutes.
 
 > **Comment ça marche en coulisses.** `AutoPlaylistManager::`
-> `fillRequestShows()` traite les instances déjà à l'antenne (pas
-> encore terminées) tout comme les imminentes.
+> `fillRequestShows()` traite les épisodes déjà à l'antenne (pas
+> encore terminés) tout comme les imminents.
 > `_fillRequestShowByPositions()` résout `cc_playlistcontents` à partir
 > du curseur persisté `cc_show_instances.autoplaylist_cursor` jusqu'à
 > `now +` `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (défaut 300), ajoute

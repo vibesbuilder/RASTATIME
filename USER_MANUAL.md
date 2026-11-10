@@ -133,7 +133,7 @@ master document above is the only thing they all assume.
 
 | Chapter | What's in it |
 |---|---|
-| [Autoloading Playlists](./docs/manual/AUTOLOADING_PLAYLISTS.md) | Letting a playlist build itself for every instance of a show, including outro-reserve handling. |
+| [Autoloading Playlists](./docs/manual/AUTOLOADING_PLAYLISTS.md) | Letting a playlist build itself for every episode of a show, including outro-reserve handling. |
 | [Auto DJ](./docs/manual/AUTO_DJ.md) | The background filler that creates shows in calendar gaps and tops up incomplete shows. |
 | [Song Requests](./docs/manual/SONG_REQUESTS.md) | Letting listeners request tracks from a public widget that air automatically inside a request show. |
 | [Record-per-Show](./docs/manual/RECORD_PER_SHOW.md) | Capturing the full on-air output of a show to a file. |
@@ -216,13 +216,13 @@ they will use.
 | Term | Meaning |
 |---|---|
 | **Show** | A slot on the calendar with a start, end, name, and (usually) some scheduled content. Persisted in `cc_show` + `cc_show_instances`. |
-| **Instance** | One concrete occurrence of a show. A daily show is one `cc_show` row + many `cc_show_instances` rows. |
-| **Schedule item** | One row inside a show instance's playlist — typically a file, but also a smart block, webstream, or line-in. Persisted in `cc_schedule`. |
+| **Episode** | One concrete occurrence of a show (internally a *show instance*). A daily show is one `cc_show` row + many `cc_show_instances` rows. |
+| **Schedule item** | One row inside an episode's playlist — typically a file, but also a smart block, webstream, or line-in. Persisted in `cc_schedule`. |
 | **Playlist** | A reusable ordered list of items. Persisted in `cc_playlist` + `cc_playlistcontents`. |
 | **Smart block** | A query inside a playlist that expands into a set of tracks at build time, optionally limited to "time remaining in the show". Persisted in `cc_block`. |
 | **Webstream** | A URL pointing at another Icecast / Shoutcast / HTTP MP3/AAC source. Persisted in `cc_webstream`. |
 | **Line-In** | A named live audio input on the operator's machine (a microphone, a mixer, an external CD player). Persisted in `rastatime_linein`. |
-| **Autoloading playlist** | A playlist attached to a *show definition* so every instance of the show gets the playlist's contents built into its schedule automatically. |
+| **Autoloading playlist** | A playlist attached to a *show definition* so every episode of the show gets the playlist's contents built into its schedule automatically. |
 | **Auto DJ** | A background process that creates shows in calendar gaps and tops up incomplete shows. Distinct from autoloading playlists. |
 | **Delayed start** | A per-show opt-in (`cc_show.allow_delayed_start`) that lets a show begin later than its calendar slot when the preceding show overran, keeping its own end fixed. A background task applies it a few minutes before air. |
 | **Song request** | A listener-submitted track wish, collected by a public widget and aired automatically by a request show (an autoloading-playlist show with a *Use requests* smart block). Persisted in `rastatime_song_request`. |

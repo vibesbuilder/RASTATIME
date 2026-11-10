@@ -64,9 +64,9 @@ tel que `Europe/Berlin`, ou `UTC`).
 | `/api/week-info` | `timezone` | Le programme de cette semaine et de la suivante, une liste par jour (`monday` … `nextsunday`), chaque émission avec nom, heures, description, image, url. |
 | `/api/station-metadata` | — | Nom, description, logo, langue, fuseau de la station et la liste des flux. |
 | `/api/shows` | `show_id` (optionnel) | Toutes les émissions, ou une : id, nom, description, genre, url, couleurs, indicateur linked. |
-| `/api/show-schedules` | `show_id` (requis), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | Les instances d'une émission dans la période. |
-| `/api/show-tracks` | `instance_id` (requis) | Les lignes d'une instance : position, titre, artiste, durée, début. |
-| `/api/item-history-feed` | `start`, `end`, `instance_id` (optionnel) | L'historique de diffusion : quoi, quand, avec titre, artiste et instance. |
+| `/api/show-schedules` | `show_id` (requis), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | Les épisodes d'une émission dans la période. |
+| `/api/show-tracks` | `instance_id` (requis) | Les lignes d'un épisode : position, titre, artiste, durée, début. |
+| `/api/item-history-feed` | `start`, `end`, `instance_id` (optionnel) | L'historique de diffusion : quoi, quand, avec titre, artiste et épisode. |
 | `/api/show-history-feed` | `start`, `end`, `user_id` (optionnel) | Les émissions diffusées dans la période. |
 | `/api/track?id=<id fichier>&return=<type>` | `return` = `artwork`, `artwork-32`, `artwork-64`, `artwork-data` | La pochette d'un titre (JPG). |
 | `/api/show-logo?id=<id émission>` | — | L'image d'une émission. |
@@ -168,7 +168,7 @@ Le programme de la semaine en UTC (public) :
 curl -s "https://<station-host>/api/week-info?timezone=UTC"
 ```
 
-Les lignes d'une instance d'émission (public) :
+Les lignes d'un épisode (public) :
 
 ```bash
 curl -s "https://<station-host>/api/show-tracks?instance_id=12345"

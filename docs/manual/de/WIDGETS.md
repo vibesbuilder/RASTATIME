@@ -29,8 +29,8 @@ Sie sie auf einer externen Seite einbetten.
 |---|---|---|
 | **Now Playing — Show** | `/embed/now-playing-show` | Zwei-Zeilen-Text-Widget. Aktueller Sendungsname + verbleibende Dauer; nächster Sendungsname + Start-End-Zeiten. |
 | **Now Playing — Track** | `/embed/now-playing-track` | Zwei-Zeilen-Text-Widget. Aktueller Track "Künstler - Titel" + verbleibende Dauer; nächster Track + Start-End-Zeiten. |
-| **Next Shows** | `/embed/next-shows` | Listen-Widget. Sendungstitel + chronologische Liste der kommenden Instanzen einer wiederkehrenden Sendung. |
-| **Latest Shows** | `/embed/latest-shows` | Listen-Widget. Sendungstitel + umgekehrt-chronologische Liste der letzten Instanzen einer wiederkehrenden Sendung. |
+| **Next Shows** | `/embed/next-shows` | Listen-Widget. Sendungstitel + chronologische Liste der kommenden Episoden einer wiederkehrenden Sendung. |
+| **Latest Shows** | `/embed/latest-shows` | Listen-Widget. Sendungstitel + umgekehrt-chronologische Liste der letzten Episoden einer wiederkehrenden Sendung. |
 | **On Air Today** | `/embed/on-air-today` | Tages-Grid-Widget. Header-Band + heutige laufende + kommende Sendungen, jede Zeile "HH:MM – HH:MM   Sendungsname (Link)". |
 | **Weekly Schedule** | `/embed/weekly-program` | Sieben-Tage-Tab-Widget. Header mit ◀ / ▶ Wochen-Navigation + Datums-Range-Label; Tagestabs; Zeilenliste pro Tab mit HH:MM – HH:MM + Sendungsname (Link). Optionales Hintergrundbild via `?bg=URL`. |
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Kalender-Widget basierend auf FullCalendar 6 (lokal gehostet). Operator-umschaltbare Day / 2-Day / Week Views via In-Widget-Buttons oder `?view=`. Show-Slots eingefärbt aus `cc_show.background_color`. Klick → Modal mit Sendungs-Beschreibung + URL-Button. Auto-Scroll zur Now-Linie. |
@@ -136,7 +136,7 @@ Gleich wie das Show-Widget — siehe §2.
 
 ## 4. Next-Shows / Latest-Shows Widgets
 
-Schwester-Widgets, die mehrere Instanzen **einer einzelnen
+Schwester-Widgets, die mehrere Episoden **einer einzelnen
 wiederkehrenden Sendung** auflisten anstatt des "Was läuft gerade"-
 Rahmens der beiden Now-Playing-Widgets.  Nützlich für eine
 Sendungs-Detailseite auf Ihrer Stations-Website: Widget in die
@@ -190,7 +190,7 @@ Fr. 24. Mai                                 06:00 - 08:00
   (Farbwähler; **Transparent** leert das Feld, dann scheint
   wieder die einbettende Seite durch) bzw. `?bgcolor=` (seit
   2026-11-10)
-- **Listenzeilen**: eine Zeile pro Instanz, das Datum links,
+- **Listenzeilen**: eine Zeile pro Episode, das Datum links,
   `H:MM - H:MM` rechts
 - **Datumsformat** (seit 2026-11-10): unter Einstellungen →
   Widgets → Next/Latest Shows → **Date format** für beide
@@ -217,9 +217,9 @@ ohne Abwarten der Cache-TTL verschwindet.
 
 | Parameter | Werte | Standard | Effekt |
 |---|---|---|---|
-| `show_id` | Ganzzahl (cc_show.id) | — | Identifiziert die Sendung. Stabil über Umbenennungen und über Recurring-Instanz-Änderungen — jede Instanz einer wiederkehrenden Sendung teilt sich diese ID. **Empfohlen gegenüber `show`.** |
+| `show_id` | Ganzzahl (cc_show.id) | — | Identifiziert die Sendung. Stabil über Umbenennungen und über Änderungen an einzelnen Episoden — jede Episode einer wiederkehrenden Sendung teilt sich diese ID. **Empfohlen gegenüber `show`.** |
 | `show` | String (cc_show.name) | — | Fallback, wenn `show_id` fehlt.  Case-sensitive exakter Treffer — **matched alle Shows, die den Namen teilen**, sodass eine Station mit einer "BBC News"-Show pro Wochentag alle auf einmal mit einem einzigen `?show=BBC%20News`-Embed listen kann.  `show_id` gewinnt, wenn beide gesetzt sind. |
-| `limit` | Ganzzahl 1..20 | 4 (next), 3 (latest) | Wie viele Instanzen aufgelistet werden. |
+| `limit` | Ganzzahl 1..20 | 4 (next), 3 (latest) | Wie viele Episoden aufgelistet werden. |
 | `theme` | `auto`, `dark`, `light` | `auto` | Wie die Zwei-Zeilen-Widgets — siehe §2. |
 | `cache` | Ganzzahl Sekunden 10..3600 | `60` | Wie die Zwei-Zeilen-Widgets — siehe §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Verhalten des Sendungstitels, wenn breiter als 300 px. |
@@ -237,9 +237,9 @@ ohne Abwarten der Cache-TTL verschwindet.
 > Live-Vorschau und kopiert einen vorgefertigten iframe-Snippet
 > mit der ID schon eingebaut.
 
-### Geänderte / abgesagte Instanzen
+### Geänderte / abgesagte Episoden
 
-Einzelne Instanzen, die der Operator verschoben oder
+Einzelne Episoden, die der Operator verschoben oder
 abgesagt hat (`cc_show_instances.modified_instance = TRUE`),
 werden aus der Liste herausgefiltert — passend zur
 Konvention, die `Application_Model_Show::getNextShows` im
@@ -316,12 +316,12 @@ zur nächsten Zeile wandert, ohne die Cache-TTL abzuwarten.
 > startet, wird **nicht** gelistet, auch wenn das `limit`
 > sonst Platz lassen würde — die Deckelung ist hart.
 
-### Geänderte / abgesagte Instanzen
+### Geänderte / abgesagte Episoden
 
 Gleiche Konvention wie bei den Next-Shows / Latest-Shows
 Widgets — Zeilen mit `cc_show_instances.modified_instance =
 TRUE` werden herausgefiltert, damit eine einzelne
-verschobene / abgesagte Instanz keinen Phantom-Eintrag im
+verschobene / abgesagte Episode keinen Phantom-Eintrag im
 öffentlichen Widget hinterlässt.
 
 ### Einstellungs-Seite
@@ -429,7 +429,7 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 > kleinere Schrift (etwa 14 px statt 19 px), sodass die meisten Namen
 > in eine Zeile passen; ein sehr langer Name endet mit „…“.
 
-### Geänderte / abgesagte Instanzen
+### Geänderte / abgesagte Episoden
 
 Gleiche Konvention wie bei den anderen Widgets —
 `modified_instance = TRUE` werden herausgefiltert.
@@ -502,7 +502,7 @@ aktuell sichtbaren Datums-Bereich.  Output entspricht dem
 FullCalendar-Event-Format mit `id`, `title`, `start`, `end`,
 `url`, `backgroundColor`, `borderColor`, `textColor`,
 `extendedProps.{description, showId}`.  Modified / abgesagte
-Instanzen werden herausgefiltert.
+Episoden werden herausgefiltert.
 
 ### Einstellungs-Seite
 
@@ -607,7 +607,7 @@ Quelle: `cc_playout_history` LEFT JOIN `cc_files` LEFT JOIN
 5. **Live-Show-Sessions** (`file_id IS NULL`) — neu
    2026-05-23.  Geschrieben von `ensureLiveShowLogged()`
    als Side-Effect bei `/api/live-info(-v2)`.  Catched
-   Show-Instances mit `time_filled = '00:00:00'`
+   Episoden mit `time_filled = '00:00:00'`
    (Operator hat Slot ohne Items angelegt, Liquidsoap
    schaltet automatisch auf master_dj).  Artist = "Live
    Show".
@@ -624,7 +624,7 @@ Library setzt.
 
 Im Modal: über der Show-Zeile steht jetzt die Beschriftung
 **"Played in the show:"**.  Bei Webstream-Einträgen ohne
-Instance-Bindung wird der Show-Kontext-Block ausgeblendet.
+Episoden-Bindung wird der Show-Kontext-Block ausgeblendet.
 
 ### Einstellungs-Seite
 
@@ -968,7 +968,7 @@ die Playout-Engine gestoppt — prüfen Sie
   vorüberzieht.  Um vorauszuschauen, pinnen Sie einen
   bestimmten Tag via `?day=YYYY-MM-DD`.
 - Verifizieren Sie, dass die Sendungen tatsächlich im
-  Kalender geplant sind — abgesagte Instanzen
+  Kalender geplant sind — abgesagte Episoden
   (`modified_instance = TRUE`) werden by-design
   herausgefiltert.
 - Wenn die iframe-URL `?timezone=...` enthält, überschreibt
@@ -984,16 +984,16 @@ die Playout-Engine gestoppt — prüfen Sie
   ID schon eingebaut — kopieren Sie ihn von dort, statt
   die URL handschriftlich zu basteln.
 - Bestätigen Sie, dass die Sendung tatsächlich künftige
-  Instanzen im Kalender hat (für Next Shows) oder
+  Episoden im Kalender hat (für Next Shows) oder
   mindestens einmal gesendet wurde (für Latest Shows).
   Eine brandneue Sendung ohne ausgestrahlte Episoden zeigt
   im Latest-Widget den Empty-Placeholder bis die erste
   Episode beendet ist.
 - `modified_instance = TRUE`-Zeilen werden by-design
   herausgefiltert (passend zum internen Dashboard).  Eine
-  Sendung, deren einzige kommende Instanz verschoben
+  Sendung, deren einzige kommende Episode verschoben
   oder abgesagt wurde, zeigt Empty, bis eine neue
-  Instanz generiert wird.
+  Episode generiert wird.
 
 ---
 

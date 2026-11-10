@@ -7,7 +7,7 @@
 > *not* the same thing; see §8 for the difference.
 
 An **autoloading playlist** is a Library playlist *attached to
-a show definition* so every instance of the show is filled
+a show definition* so every episode of the show is filled
 from that playlist automatically. You manage the playlist once;
 every Monday's show at 09:00 picks up whatever the playlist
 currently holds.
@@ -23,12 +23,12 @@ the show fills itself every weekday.
 ## 1. The basics
 
 A show with an autoloading playlist gets built **once per
-instance** by the background autoplaylist builder. The build
-typically happens 60 seconds before the instance starts —
+episode** by the background autoplaylist builder. The build
+typically happens 60 seconds before the episode starts —
 just-in-time so the show reflects the very latest playlist
 state.
 
-The build sequence for each instance is:
+The build sequence for each episode is:
 
 1. (Optional) **Intro playlist** added at the start.
 2. **Body playlist** items added in order; smart blocks
@@ -75,7 +75,7 @@ Open the show on the calendar → **Edit Show** → expand
 
 Save the show. The autoplaylist builder picks up the
 attachment on its next poll (every 60 s by default) and
-builds future instances accordingly.
+builds future episodes accordingly.
 
 ---
 
@@ -86,7 +86,7 @@ builds future instances accordingly.
 > autoloading playlist then fills only the remaining time.  Details in
 > [Calendar](./CALENDAR.md) § 4 "Repeat of another show".
 
-> **Autoloading per episode (since 2026-11-03).**  "Edit Instance" can
+> **Autoloading per episode (since 2026-11-03).**  "Edit Episode" can
 > give one episode its own playlist, intro, outro or repeat setting, or
 > no autoloading at all; untick **Use the show's autoloading settings**
 > in the Autoloading Playlist section.  Only before the build (about an
@@ -95,9 +95,9 @@ builds future instances accordingly.
 ## 3. The 60-second build cadence
 
 The autoplaylist builder runs every 60 seconds. For each
-upcoming instance of an autoloading-playlist show:
+upcoming episode of an autoloading-playlist show:
 
-- If the instance starts in **less than ~60 s** and has not
+- If the episode starts in **less than ~60 s** and has not
   yet been built, build it now.
 - Otherwise, leave it for the next cycle.
 
@@ -117,7 +117,7 @@ edited version.
 > invoked by the worker job runner's `SchedulePollJob` every
 > 60 s. Each cycle it walks every upcoming show with
 > `cc_show_autoplaylist.has_autoplaylist = TRUE`, checks
-> whether the instance's schedule is already populated, and
+> whether the episode's schedule is already populated, and
 > builds otherwise. See ARCHITECTURE §17 for the full pipeline.
 
 ---
@@ -166,7 +166,7 @@ is possible), never an overbook.
 > `Scheduler::scheduleFilesAfter()`. The log line
 > "show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
 > rows, x s free at the end" sums up every build; `ap_fill_test.php`
-> (C:\Temp\optd) rehearses a fill on a temporary instance.
+> (C:\Temp\optd) rehearses a fill on a temporary episode.
 
 **An episode longer than the slot (since 2026-10-26).**  The
 first item that does not fit used to be left out, and Auto DJ
@@ -282,9 +282,9 @@ When unticked:
 Edit the show → expand **Autoloading Playlist** → untick
 **Add Autoloading Playlist?** → Save.
 
-Future instances will no longer auto-build. Already-built
-instances keep their built content (no retroactive change).
-To clear an already-built instance, open the show on the
+Future episodes will no longer auto-build. Already-built
+episodes keep their built content (no retroactive change).
+To clear an already-built episode, open the show on the
 calendar → **Clear Schedule**.
 
 > **Deleted playlist (since 2026-10-28).**  Deleting the playlist from
@@ -292,7 +292,7 @@ calendar → **Clear Schedule**.
 > confirmation the shows' *Add Autoloading Playlist* tick is switched
 > off as well.  Should a show nevertheless carry the tick without a
 > playlist (an import, an old database), the dashboard banner warns
-> "Autoloading is on, but the show has no playlist" for every instance
+> "Autoloading is on, but the show has no playlist" for every episode
 > of the next 48 hours - edit the show and pick a playlist.
 
 ---
@@ -304,7 +304,7 @@ These two features are easy to confuse. Quick reference:
 | | Autoloading Playlist | Auto DJ |
 |---|---|---|
 | **Where attached** | A specific show's edit form | Settings → Auto DJ (station-wide) |
-| **When it fills** | Per show instance, 60 s before start | (a) Creates new shows in calendar gaps. (b) Tops up incomplete upcoming shows. |
+| **When it fills** | Per episode, 60 s before start | (a) Creates new shows in calendar gaps. (b) Tops up incomplete upcoming shows. |
 | **What it fills with** | The configured playlist (any structure) | One configured Auto-DJ playlist |
 | **Affects which shows** | Only the show it is attached to | All shows + creates new ones |
 | **Needs a host?** | No | No |
@@ -325,20 +325,20 @@ See [Auto DJ](./AUTO_DJ.md) for the full feature.
 
 Three possibilities:
 
-1. The instance has already started — the auto-build only
-   touches *future* instances.
-2. The instance was already manually filled. The auto-build
+1. The episode has already started — the auto-build only
+   touches *future* episodes.
+2. The episode was already manually filled. The auto-build
    skips any show that already has scheduled items.
 3. The worker job runner is not running. Check
    `Get-Service RASTATIME-WORKER`.
 
-### "How do I see if the auto-build ran for a specific instance?"
+### "How do I see if the auto-build ran for a specific episode?"
 
 Open the show on the calendar; the calendar fill bar should
 be > 0 %. If it is 0 % seconds before start time, the
 auto-build has not yet run. Wait 60 s and reload, or use
 **Clear Schedule** + reopen to force the next poll cycle to
-treat the instance as fresh.
+treat the episode as fresh.
 
 ### "Can the intro playlist contain a smart block?"
 

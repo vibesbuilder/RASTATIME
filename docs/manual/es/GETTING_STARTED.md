@@ -201,7 +201,7 @@ color.
 > **Cómo funciona bajo el capó.** Guardar el formulario
 > escribe una fila en `cc_show` (la definición del
 > programa) y al menos una fila en `cc_show_instances`
-> (cada ocurrencia).
+> (cada episodio).
 
 ### 4.4 Rellenar el programa con la pista
 

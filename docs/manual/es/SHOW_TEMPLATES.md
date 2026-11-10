@@ -91,10 +91,10 @@ del calendario.
 > use **Aplicar plantilla** en cada uno. Vea ARCHITECTURE
 > §23.16 para el registro completo de decisión.
 
-### Al aplicar una plantilla en un formulario Editar instancia
+### Al aplicar una plantilla en un formulario Editar episodio
 
 No puede. RASTATIME 2026-05-19 suprime la sección
-**Plantillas** en el diálogo Editar instancia.
+**Plantillas** en el diálogo Editar episodio.
 
 ---
 
@@ -117,7 +117,7 @@ No puede. RASTATIME 2026-05-19 suprime la sección
 |---|---|
 | **Fecha / hora de inicio** | Por-uso. |
 | **Contraseña live-stream** | Seguridad. |
-| **Descripciones por-instancia** | Específicas de instancia. |
+| **Descripción del episodio** | Específica de cada episodio. |
 
 > **Cómo funciona bajo el capó.** Las plantillas viven en
 > la tabla `cc_show_template` (`id`, `name UNIQUE`,
@@ -184,7 +184,7 @@ Una emisora opera **Mañanas** Lun-Vie 07:00–10:00 con:
 
 **Primera vez:**
 
-1. Crear la ocurrencia del lunes: Nuevo programa, rellenar
+1. Crear el programa del lunes: Nuevo programa, rellenar
    todos los campos, guardar.
 2. Abrir el programa del lunes → **Guardar como plantilla**
    → nombrar `Mañanas`.

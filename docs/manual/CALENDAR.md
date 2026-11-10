@@ -131,17 +131,17 @@ The form is divided into collapsible sections. **What** and
 
 | Section | Purpose |
 |---|---|
-| **Templates** | Pre-fill the form from a saved [Show Template](./SHOW_TEMPLATES.md), or save the current form as a template after you finish. Hidden when editing a single instance of a repeating show. |
+| **Templates** | Pre-fill the form from a saved [Show Template](./SHOW_TEMPLATES.md), or save the current form as a template after you finish. Hidden when editing a single episode of a repeating show. |
 | **What** | Name, URL, genre, description, hosts, background / text colours, show image. The visible label on the calendar. |
 | **When** | Start date / time, duration, end date, repeats, **Allow delayed start** (let this show begin late when the previous one overran — see [Delayed Show Start](./DELAYED_START.md)). |
 | **Live Stream Input** | Allow remote hosts to take the show via Show DJ (per-show username + password). |
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
 | **Own production** | Tick for the station's own productions: the show's aired minutes count in Analytics → [Programme Minutes](./ANALYTICS.md), its people in Analytics → People Involved (since 2026-11-03).  Sits in the section **What**; the help icon next to it explains it in short. |
 | **Hosts involved** | Appears below **Own production** once it is ticked (since 2026-11-04; called *Number of involved people* until 2026-11-07): how many hosts take part in every episode, 0-999. Counts once per year in Analytics → [People Involved](./ANALYTICS.md), however many episodes aired; the guests of a single episode are entered under Archive Online (**Guests involved**) and added on top. Removing the tick keeps the number, it just stops counting. |
-| **Autoloading Playlist** | Attach a playlist to fill every instance automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
+| **Autoloading Playlist** | Attach a playlist to fill every episode automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Who** | Additional hosts beyond the primary one set under What. |
-| **Archiving** | Producer, CBA account, the cba.media defaults and automatic archiving of the show (read-only in Edit Instance since 2026-11-04). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
-| **Style** | Background colour, text colour, show image (visible only here for one-off shows; for recurring shows these stay constant across instances). |
+| **Archiving** | Producer, CBA account, the cba.media defaults and automatic archiving of the show (read-only in Edit Episode since 2026-11-04). See [Archiving](./ARCHIVING.md). Since 2026-11-03. |
+| **Style** | Background colour, text colour, show image (visible only here for one-off shows; for recurring shows these stay constant across episodes). |
 
 > **Operator tip.** If you are about to fill in the same name,
 > hosts, colours, and autoloading playlist as last week, stop
@@ -184,30 +184,33 @@ Click the show → context menu → choose an action.
 | **View** | Read-only view of the show's metadata + schedule. Each row's *Start* and *Length* are the laid-out schedule row (Length = cue-out minus cue-in, as in the show builder; since 2026-10-23); the totals at the bottom are the laid-out content length (incl. cue points and crossfade overlaps) against the show's duration. | Always |
 | **Extras → Teasers** | Since 2026-11-10 in the submenu **Extras** (with Archive Online; a People Involved entry is planned there).  The jingles that announce this show - change types, unlink, link more; see [Teaser Automation](./TEASERS.md). Since 2026-10-16. | Admin / PM |
 | **Extras → Archive Online** | Title, teaser, description, image and guests involved of this one episode, before or after it aired, and "Archive online now" to cba.media; see [Archiving](./ARCHIVING.md). Since 2026-11-03 (first named *Episode...*). | Admin / PM / hosts of the show (archiving: Admin / PM) |
-| **Edit Show** | Edit the show definition (name, time, repeats, etc.). | Future or current shows |
-| **Edit Instance** | Edit only this one occurrence of a recurring show. | Recurring shows only |
+| **Edit → Edit Episode** | Edit only this one episode of a recurring show. An episode edited this way offers only **Edit Episode**. | Recurring shows only |
+| **Edit → Edit Show** | Edit the show definition (name, time, repeats, etc.). A one-off show shows **Edit Show** directly. | Future or current shows |
 | **Cancel Show** | End the show *now* — only meaningful for the currently-playing show. | Current show only |
-| **Delete Show** | Remove the entire show + all its instances. | Future shows only |
-| **Delete this instance** | Remove only this one occurrence of a recurring show. | Recurring shows, future only |
+| **Delete** | Remove a one-off show. | One-off shows, future only |
+| **Delete → Delete Episode** | Remove only this one episode of a recurring show. An edited episode offers only **Delete Episode**. | Recurring shows, future only |
+| **Delete → Delete Episode and All Following** | Remove this episode and every later one; the series ends before it. | Recurring shows, future only |
 | **Clear Schedule** | Wipe the show's scheduled content but keep the empty slot. | Future shows only |
 
-> **Why "Edit Show" vs "Edit Instance".** A weekly show is one
-> *definition* with many *instances*. Editing the definition
-> changes every future instance (e.g. moving the show from
-> Mondays to Tuesdays). Editing a single instance creates a
-> per-occurrence override (e.g. this one week, the host is
-> different). The instance override survives the next
+> **Why "Edit Show" vs "Edit Episode".** A weekly show is one
+> *definition* with many *episodes*. Editing the definition
+> changes every future episode (e.g. moving the show from
+> Mondays to Tuesdays). Editing a single episode creates a
+> per-episode override (e.g. this one week, the host is
+> different). The episode override survives the next
 > definition edit but does not propagate to siblings.
+> (*Edit Episode* / *Delete Episode* were called *Edit Instance* /
+> *Delete Instance* until 2026-11-10.)
 
-### What "Edit Instance" cannot do
+### What "Edit Episode" cannot do
 
 - Cannot apply a Show Template. Templates only apply to entire
-  shows because stamping a template onto one instance would
+  shows because stamping a template onto one episode would
   either silently propagate to siblings (violating the one-way
   stamp model) or have no effect on them (which would mislead
   the operator). RASTATIME 2026-05-19 suppresses the Templates
-  section in the Edit-Instance form for this reason.
-- Cannot change the start/end of the instance to a time outside
+  section in the Edit-Episode form for this reason.
+- Cannot change the start/end of the episode to a time outside
   the parent show's repeat pattern.
 - Cannot change the **Archiving** section: it shows the show's values
   read-only (since 2026-11-04).  This episode's description, image and
@@ -215,9 +218,9 @@ Click the show → context menu → choose an action.
 
 ---
 
-### What "Edit Instance" can change since 2026-11-03: the autoloading
+### What "Edit Episode" can change since 2026-11-03: the autoloading
 
-The **Autoloading Playlist** section of the instance form is editable.
+The **Autoloading Playlist** section of the episode form is editable.
 **Use the show's autoloading settings** (ticked by default) keeps the
 episode on the show's playlist, intro, outro and repeat setting.  Untick
 it and the fields below apply to this episode only - a different
@@ -233,7 +236,7 @@ Builder and it is filled again with the current settings.
 
 ## 4. Recurring shows
 
-A recurring show is one definition with many instances eagerly
+A recurring show is one definition with many episodes eagerly
 materialised out to a configurable horizon (default ~3 months).
 
 ### Creating a recurring show
@@ -243,7 +246,7 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 | Field | Meaning |
 |---|---|
 | **Repeat Type** | Weekly / Bi-Weekly / Tri-Weekly / Monthly. |
-| **Select Months** (since 2026-10-14) | Monthly repeats only: tick the months in which the show takes place, all twelve by default. Untick July and August for a summer break, or keep every third month for a quarterly show. Combined with *Repeat By* (day of the month / day of the week). Deselecting a month on an existing show removes its future instances in that month. |
+| **Select Months** (since 2026-10-14) | Monthly repeats only: tick the months in which the show takes place, all twelve by default. Untick July and August for a summer break, or keep every third month for a quarterly show. Combined with *Repeat By* (day of the month / day of the week). Deselecting a month on an existing show removes its future episodes in that month. |
 | **Days** | Which days of the week (for Weekly / Bi-Weekly / Tri-Weekly). |
 | **End Date** | Optional — when the recurrence stops. Leave blank to recur indefinitely. |
 
@@ -254,13 +257,13 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 
 ### Editing a recurring show
 
-- **Edit Show** changes the definition: every future instance
-  picks up the change. Past instances stay as they were.
-- **Edit Instance** creates a per-occurrence override (see
+- **Edit Show** changes the definition: every future episode
+  picks up the change. Past episodes stay as they were.
+- **Edit Episode** creates a per-episode override (see
   above).
-- **Delete this instance** removes only that one occurrence.
-- **Delete Show** removes the entire series including all
-  future instances.
+- **Delete Episode** removes only that one episode.
+- **Delete Episode and All Following** removes this episode and
+  every later one of the series.
 - **Undo after deleting** (since 2026-10-28): a delete from the
   calendar's menu does not reach the server at once. The show
   disappears from the calendar and a toast at the bottom of the
@@ -286,12 +289,12 @@ Many shows air once and are repeated once, on a different weekday
 or in a different week.  Open the repeat's **Edit Show** form,
 section **Repeat** (right above Autoloading Playlist), and pick the
 original under
-**Repeat of show**.  From then on every instance of the repeat is
+**Repeat of show**.  From then on every episode of the repeat is
 filled automatically:
 
 - **Which shows the list offers** *(since 2026-10-27)*: every show
   that is still to come or on air now, and a show that has already
-  aired (within the last 60 days) only if its last instance can be
+  aired (within the last 60 days) only if its last episode can be
   repeated completely - tracks only, or its recording is imported.
   A past live show without a recording is not offered: pick the
   original before it airs.  A source that is already stored stays
@@ -300,7 +303,7 @@ filled automatically:
   same lead as the autoloading build), not at the end of the
   original - so corrections made to the original after it aired are
   carried over.
-- **What**: the content of the original's **last ended** instance -
+- **What**: the content of the original's **last ended** episode -
   files and webstreams in their order with the aired cue points and
   fades, jingles included.  The autoloading playlist fills the
   remaining time afterwards.
@@ -317,7 +320,7 @@ filled automatically:
   copied as a live row and a line-in is left out, as before.  The recording is protected from deletion while
   a pending repeat needs it.
 - **If the original has not aired yet** (first week, cancelled
-  instance): the repeat is left to its autoloading playlist.
+  episode): the repeat is left to its autoloading playlist.
 - **Length**: a shorter repeat is cut at its end like any
   overbooked show; a longer one is topped up by its autoloading
   playlist.
@@ -335,7 +338,7 @@ mark, like the clock of an autoloading show - it is filled on its
 own; hover the icon for the original's name.
 
 **View Show** on a filled repeat says "Repeat of show A from
-<date> at <time>" and, if rows were skipped, how many.  An instance
+<date> at <time>" and, if rows were skipped, how many.  An episode
 that already has content (filled by hand) is never overwritten.
 Live shows that were recorded cannot be repeated this way yet
 (stage 2, see BACKLOG).
@@ -353,7 +356,7 @@ Click and drag any future show block to a different time / day.
   10 minutes unless you picked another, saved per user).
 - The drag respects the no-overlap rule: dropping onto an
   occupied slot is rejected with a red flash.
-- For a recurring show, only *this instance* is moved — the
+- For a recurring show, only *this episode* is moved — the
   rest of the series stays.
 
 ### 5.2 Resize a show
@@ -382,8 +385,8 @@ Right-click any show:
 | Group | Items |
 |---|---|
 | Content | Schedule Tracks, Clear Schedule |
-| Editing | Edit Show, Edit Instance, Apply Template, Save as Template |
-| Lifecycle | Cancel Show (current only), Delete Show, Delete this instance |
+| Editing | Edit Episode, Edit Show, Apply Template, Save as Template |
+| Lifecycle | Cancel Show (current only), Delete (one-off shows), Delete Episode, Delete Episode and All Following |
 | Info | View Show, View Recorded File (if a recording exists) |
 
 The menu adapts to the show's state — e.g. **View Recorded

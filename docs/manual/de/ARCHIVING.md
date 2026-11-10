@@ -3,7 +3,7 @@
 > **Wo Sie sich im Handbuch befinden.** Einstellungen →
 > **Archivierung** (Produzenten, CBA-Konten); Kalender →
 > Sendungsformular, Abschnitt **Archivierung**; Kalender → Rechtsklick
-> auf eine Instanz → **Extras** → **Online archivieren**; Statistiken →
+> auf eine Episode → **Extras** → **Online archivieren**; Statistiken →
 > **Teilnehmende** und **Archiv-Status** (in der englischen Oberfläche
 > Settings → Archiving, Archiving, Archive Online, Analytics →
 > People Involved und Archive Status).  Lesen Sie zuerst
@@ -20,7 +20,7 @@
 > Stations-Podcast (My Podcast).  Eine Episode auf cba.media zu bringen
 > heißt deshalb *online archivieren*, damit beides auseinanderbleibt.
 
-Eine *Episode* ist eine Instanz einer Sendung im Kalender: die
+Eine *Episode* ist ein einzelnes Vorkommen einer Sendung im Kalender: die
 „Morgensendung" am nächsten Montag ist eine Episode, die am Montag
 darauf die nächste.
 
@@ -131,7 +131,7 @@ als **Moderierende** (Hosts involved, 0-999; bis 2026-11-07 *Anzahl
 Teilnehmende*) und erscheint, sobald **Eigenproduktion** angehakt ist -
 sie zählt in Statistiken → Teilnehmende (§6).
 
-In **Instanz bearbeiten** wird der Abschnitt **schreibgeschützt** mit
+In **Episode bearbeiten** wird der Abschnitt **schreibgeschützt** mit
 den Werten der Sendung angezeigt (seit 2026-11-04; vorher fehlte er):
 er gehört zur ganzen Sendung.  Die Daten einer einzelnen Episode
 bearbeiten Sie unter **Online archivieren** (§4).
@@ -144,7 +144,7 @@ bearbeiten Sie unter **Online archivieren** (§4).
 
 ## 4. Episodendaten: „Online archivieren"
 
-Rechtsklick auf eine Instanz im Kalender → **Extras** → **Online archivieren** (bis
+Rechtsklick auf eine Episode im Kalender → **Extras** → **Online archivieren** (bis
 2026-11-03 *Episode...*).  Der Eintrag steht vor und nach der Sendung
 zur Verfügung - das Bild können Sie auch nach der Ausstrahlung setzen -
 für Admins, Programm-Manager und die Hosts der Sendung.
@@ -153,7 +153,7 @@ für Admins, Programm-Manager und die Hosts der Sendung.
 |---|---|
 | **Titel** | Leer: Name der Sendung und Datum, grau als Vorschlag angezeigt. |
 | **Teaser** | Eine kurze Zusammenfassung. Leer: der Standard-Teaser der Sendung. |
-| **Beschreibung** | Der Text der Episode, auf cba.media der Text des Beitrags. Leer: die Beschreibung der Sendung oder, wenn die Sendung keine hat, der Name der Sendung (grau angezeigt). Hier ist die einzige Stelle dafür (Instanz bearbeiten zeigt das Feld nicht mehr). |
+| **Beschreibung** | Der Text der Episode, auf cba.media der Text des Beitrags. Leer: die Beschreibung der Sendung oder, wenn die Sendung keine hat, der Name der Sendung (grau angezeigt). Hier ist die einzige Stelle dafür (Episode bearbeiten zeigt das Feld nicht mehr). |
 | **Gäste** (Guests involved) | Die Gäste dieser einen Episode (0-999), gezählt zusätzlich zu den Moderierenden der Sendung (seit 2026-11-07; vorher hieß das Feld *Teilnehmende* und ersetzte den Wert der Sendung). Leer bedeutet keine Gäste; die Zeile unter dem Feld zeigt die Moderierenden der Sendung. |
 | **Produktionsdatum** | Von cba.media verlangt. Leer: der Sendetag. Setzen Sie es, wenn die Episode früher produziert wurde. |
 | **Diese Episode nicht automatisch archivieren** | Für Tests, ausgefallene Episoden oder Rechteprobleme. Wirkt mit der automatischen Archivierung (§5); von Hand archivieren bleibt möglich. |
@@ -171,8 +171,8 @@ Sie es wählen.  Episodenbilder liegen im Library-Ordner unter
 [Backups](./BACKUP.md).
 
 > **Nah an der Sendung planen.**  Ändert sich das Wiederholungsmuster
-> einer Sendung, legt der Kalender ihre künftigen Instanzen neu an, und
-> deren Episodendaten gehen mit.  (**Instanz bearbeiten** einer
+> einer Sendung, legt der Kalender ihre künftigen Episoden neu an, und
+> deren Episodendaten gehen mit.  (**Episode bearbeiten** einer
 > einzelnen Episode behält sie.)  Tragen Sie Titel und Bilder für die
 > nächsten Wochen ein, nicht Monate im Voraus.
 
@@ -405,7 +405,7 @@ ist.
 
 ### „Der Abschnitt Archivierung ist grau."
 
-In **Instanz bearbeiten** ist er schreibgeschützt - der Abschnitt gehört
+In **Episode bearbeiten** ist er schreibgeschützt - der Abschnitt gehört
 zur ganzen Sendung; für eine Episode nehmen Sie **Online archivieren**.
 Grau ist er auch, wenn Sie nicht Programm-Manager oder Admin sind.
 

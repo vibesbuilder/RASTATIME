@@ -2,8 +2,8 @@
 
 > **Où vous en êtes dans le manuel.** Paramètres → **Archivage**
 > (producteurs, comptes CBA) ; Calendrier → formulaire de
-> l'émission, section **Archivage** ; Calendrier → clic droit sur une
-> occurrence → **Compléments** → **Archiver en ligne** ; Statistiques → **Participants**
+> l'émission, section **Archivage** ; Calendrier → clic droit sur un
+> épisode → **Compléments** → **Archiver en ligne** ; Statistiques → **Participants**
 > et **État de l'archivage** (dans l'interface anglaise : Settings →
 > Archiving, Archiving, Archive Online, Analytics → People Involved et
 > Archive Status).  Lisez d'abord
@@ -133,7 +133,7 @@ le 2026-11-04) : il se trouve dans la section **What**, sous
 **Production propre** est cochée - il compte dans Statistiques →
 Participants (§6).
 
-Dans **Modifier l'occurrence**, la section s'affiche **en lecture
+Dans **Modifier l'épisode**, la section s'affiche **en lecture
 seule** avec les valeurs de l'émission (depuis le 2026-11-04 ; avant,
 elle n'apparaissait pas) : elle appartient à l'émission entière.  Les
 données d'un seul épisode se modifient dans **Archiver en ligne** (§4).
@@ -146,7 +146,7 @@ données d'un seul épisode se modifient dans **Archiver en ligne** (§4).
 
 ## 4. Données de l'épisode : « Archiver en ligne »
 
-Clic droit sur une occurrence dans le calendrier → **Compléments** →
+Clic droit sur un épisode dans le calendrier → **Compléments** →
 **Archiver en ligne** (jusqu'au 2026-11-03 *Épisode...*).  L'entrée est disponible
 avant et après la diffusion - l'image peut être ajoutée après
 l'émission - pour les Admins, les Program Managers et les animateurs de
@@ -156,7 +156,7 @@ l'émission.
 |---|---|
 | **Titre** | Vide : le nom de l'émission et la date, affichés en gris comme suggestion. |
 | **Accroche** | Un court résumé. Vide : l'accroche par défaut de l'émission. |
-| **Description** | Le texte de l'épisode, sur cba.media le texte de l'article. Vide : la description de l'émission ou, si elle n'en a pas, le nom de l'émission (affiché en gris). C'est le seul endroit pour la modifier (Modifier l'occurrence ne l'affiche plus). |
+| **Description** | Le texte de l'épisode, sur cba.media le texte de l'article. Vide : la description de l'émission ou, si elle n'en a pas, le nom de l'émission (affiché en gris). C'est le seul endroit pour la modifier (Modifier l'épisode ne l'affiche plus). |
 | **Invités** (Guests involved) | Les invités de cet épisode (0-999), comptés en plus des animateurs de l'émission (depuis le 2026-11-07 ; avant, le champ s'appelait *Participants* et remplaçait la valeur de l'émission). Vide signifie aucun invité ; la ligne sous le champ indique les animateurs de l'émission. |
 | **Date de production** | Exigée par cba.media. Vide : le jour de la diffusion. À renseigner si l'épisode a été produit plus tôt. |
 | **Ne pas archiver cet épisode automatiquement** | Pour les tests, les épisodes annulés ou les problèmes de droits. S'applique avec l'archivage automatique (§5) ; l'archivage manuel reste possible. |
@@ -174,9 +174,9 @@ dossier de la bibliothèque sous `imported/episode-images/<occurrence>/`
 et font partie du miroir des médias de la [Sauvegarde](./BACKUP.md).
 
 > **Planifier près de la diffusion.**  Quand le rythme de répétition
-> d'une émission change, le calendrier recrée ses occurrences futures,
-> et leurs données d'épisode disparaissent avec elles.  (**Modifier
-> l'occurrence** d'un seul épisode les conserve.)  Saisissez titres et
+> d'une émission change, le calendrier recrée ses épisodes futurs,
+> et leurs données d'épisode disparaissent avec eux.  (**Modifier
+> l'épisode** pour un seul épisode les conserve.)  Saisissez titres et
 > images pour les prochaines semaines plutôt que des mois à l'avance.
 
 ---
@@ -413,7 +413,7 @@ Une nouvelle émission apparaît dès que son premier épisode est terminé.
 
 ### « La section Archivage est grisée. »
 
-Dans **Modifier l'occurrence**, elle est en lecture seule - la section
+Dans **Modifier l'épisode**, elle est en lecture seule - la section
 appartient à l'émission entière ; pour un épisode, utilisez **Archiver
 en ligne**.  Elle est aussi grisée si vous n'êtes ni Program Manager ni
 Admin.

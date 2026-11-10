@@ -9,7 +9,7 @@
 
 Eine **autoloading Playlist** ist eine Bibliotheks-Playlist,
 die *an eine Sendungsdefinition angehängt* ist, sodass jede
-Instanz der Sendung automatisch aus dieser Playlist gefüllt
+Episode der Sendung automatisch aus dieser Playlist gefüllt
 wird. Sie verwalten die Playlist einmal; jede Montags-Sendung
 um 09:00 nimmt auf, was die Playlist gerade enthält.
 
@@ -25,12 +25,12 @@ Sendung füllt sich jeden Werktag selbst.
 ## 1. Die Grundlagen
 
 Eine Sendung mit einer autoloading Playlist wird **einmal
-pro Instanz** vom Hintergrund-Autoplaylist-Builder gebaut.
+pro Episode** vom Hintergrund-Autoplaylist-Builder gebaut.
 Der Build erfolgt typischerweise 60 Sekunden vor Beginn der
-Instanz — gerade rechtzeitig, damit die Sendung den
+Episode — gerade rechtzeitig, damit die Sendung den
 allerneuesten Zustand der Playlist widerspiegelt.
 
-Die Build-Reihenfolge für jede Instanz ist:
+Die Build-Reihenfolge für jede Episode ist:
 
 1. (Optional) **Intro-Playlist** am Anfang hinzugefügt.
 2. **Body-Playlist**-Items in Reihenfolge hinzugefügt; Smart
@@ -79,7 +79,7 @@ nichts.
 
 Speichern Sie die Sendung. Der Autoplaylist-Builder nimmt
 die Anbringung beim nächsten Poll (standardmäßig alle 60 s)
-auf und baut zukünftige Instanzen entsprechend.
+auf und baut zukünftige Episoden entsprechend.
 
 ---
 
@@ -91,7 +91,7 @@ auf und baut zukünftige Instanzen entsprechend.
 > die Restzeit.  Details in [Kalender](./CALENDAR.md) § 4
 > „Wiederholung einer anderen Sendung".
 
-> **Autoloading je Episode (seit 2026-11-03).**  „Instanz bearbeiten"
+> **Autoloading je Episode (seit 2026-11-03).**  „Episode bearbeiten"
 > kann einer Episode eine eigene Playlist, ein eigenes Intro, Outro oder
 > die Wiederholung geben, oder gar kein Autoloading; dazu **Use the
 > show's autoloading settings** im Abschnitt Autoloading Playlist
@@ -101,9 +101,9 @@ auf und baut zukünftige Instanzen entsprechend.
 ## 3. Die 60-Sekunden-Build-Kadenz
 
 Der Autoplaylist-Builder läuft alle 60 Sekunden. Für jede
-kommende Instanz einer Autoloading-Playlist-Sendung:
+kommende Episode einer Autoloading-Playlist-Sendung:
 
-- Wenn die Instanz in **weniger als ~60 s** startet und
+- Wenn die Episode in **weniger als ~60 s** startet und
   noch nicht gebaut wurde, baue jetzt.
 - Andernfalls lasse sie für den nächsten Zyklus.
 
@@ -126,7 +126,7 @@ bearbeitete Version.
 > `SchedulePollJob` des Worker-Job-Runners alle 60 s. Jeder
 > Zyklus läuft jede kommende Sendung mit
 > `cc_show_autoplaylist.has_autoplaylist = TRUE` durch,
-> prüft, ob der Sendeplan der Instanz bereits gefüllt ist,
+> prüft, ob der Sendeplan der Episode bereits gefüllt ist,
 > und baut andernfalls. Siehe ARCHITECTURE §17 für die
 > vollständige Pipeline.
 
@@ -180,7 +180,7 @@ eine Überbuchung.
 > „show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
 > rows, x s free at the end" fasst jeden Build zusammen;
 > `ap_fill_test.php` (C:\Temp\optd) probt eine Befüllung an einer
-> temporären Instanz.
+> temporären Episode.
 
 **Eine Folge, die länger ist als der Sendeplatz (seit 26.10.2026).**
 Das erste Element, das nicht passte, wurde bisher weggelassen, und
@@ -303,10 +303,10 @@ Wenn nicht angekreuzt:
 Sendung bearbeiten → **Autoloading Playlist** erweitern →
 **Autoloading Playlist hinzufügen?** abwählen → Speichern.
 
-Zukünftige Instanzen werden nicht mehr automatisch gebaut.
-Bereits gebaute Instanzen behalten ihren gebauten Inhalt
+Zukünftige Episoden werden nicht mehr automatisch gebaut.
+Bereits gebaute Episoden behalten ihren gebauten Inhalt
 (keine rückwirkende Änderung). Um eine bereits gebaute
-Instanz zu leeren, öffnen Sie die Sendung im Kalender →
+Episode zu leeren, öffnen Sie die Sendung im Kalender →
 **Sendeplan leeren**.
 
 
@@ -316,7 +316,7 @@ Instanz zu leeren, öffnen Sie die Sendung im Kalender →
 > Autoloading Playlist* dieser Sendungen abgeschaltet.  Trägt eine
 > Sendung trotzdem das Häkchen ohne Playlist (Import, alte Datenbank),
 > warnt das Dashboard-Banner „Autoloading ist an, aber die Sendung hat
-> keine Playlist" für jede Folge der nächsten 48 Stunden - Sendung
+> keine Playlist" für jede Episode der nächsten 48 Stunden - Sendung
 > bearbeiten und eine Playlist wählen.
 
 ---
@@ -329,7 +329,7 @@ Referenz:
 | | Autoloading Playlist | Auto DJ |
 |---|---|---|
 | **Wo angehängt** | An ein Sendungs-Bearbeitungsformular einer bestimmten Sendung | Einstellungen → Auto DJ (stationsweit) |
-| **Wann es füllt** | Pro Sendungsinstanz, 60 s vor Beginn | (a) Erstellt neue Sendungen in Kalenderlücken. (b) Füllt unvollständige kommende Sendungen auf. |
+| **Wann es füllt** | Pro Episode, 60 s vor Beginn | (a) Erstellt neue Sendungen in Kalenderlücken. (b) Füllt unvollständige kommende Sendungen auf. |
 | **Womit es füllt** | Die konfigurierte Playlist (jede Struktur) | Eine konfigurierte Auto-DJ-Playlist |
 | **Welche Sendungen betroffen** | Nur die Sendung, an die es angehängt ist | Alle Sendungen + erstellt neue |
 | **Braucht einen Host?** | Nein | Nein |
@@ -351,22 +351,22 @@ Siehe [Auto DJ](./AUTO_DJ.md) für die vollständige Funktion.
 
 Drei Möglichkeiten:
 
-1. Die Instanz hat bereits begonnen — der Auto-Build
-   berührt nur *zukünftige* Instanzen.
-2. Die Instanz wurde bereits manuell gefüllt. Der
+1. Die Episode hat bereits begonnen — der Auto-Build
+   berührt nur *zukünftige* Episoden.
+2. Die Episode wurde bereits manuell gefüllt. Der
    Auto-Build überspringt jede Sendung, die bereits
    geplante Items hat.
 3. Der Worker-Job-Runner läuft nicht. Prüfen Sie
    `Get-Service RASTATIME-WORKER`.
 
-### "Wie sehe ich, ob der Auto-Build für eine bestimmte Instanz lief?"
+### "Wie sehe ich, ob der Auto-Build für eine bestimmte Episode lief?"
 
 Öffnen Sie die Sendung im Kalender; der Kalender-Füll-Balken
 sollte > 0 % sein. Wenn er Sekunden vor Startzeit 0 % ist,
 ist der Auto-Build noch nicht gelaufen. Warten Sie 60 s und
 laden Sie neu, oder verwenden Sie **Sendeplan leeren** +
 erneut öffnen, um den nächsten Poll-Zyklus zu zwingen, die
-Instanz als frisch zu behandeln.
+Episode als frisch zu behandeln.
 
 ### "Kann die Intro-Playlist einen Smart Block enthalten?"
 

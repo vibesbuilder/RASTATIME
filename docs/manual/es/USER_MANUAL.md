@@ -146,7 +146,7 @@ documento maestro arriba es lo único que todos asumen.
 
 | Capítulo | Contenido |
 |---|---|
-| [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Dejar que una playlist se construya para cada instancia de un programa, incluyendo gestión de reserva de outro. |
+| [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Dejar que una playlist se construya para cada episodio de un programa, incluyendo gestión de reserva de outro. |
 | [Automatización de teasers](./TEASERS.md) | Vincular jingles con el programa que anuncian; un criterio de bloque inteligente emite los teasers «hoy» y «mañana» el día correcto. |
 | [Auto DJ](./AUTO_DJ.md) | El rellenador en segundo plano que crea programas en huecos del calendario y completa programas incompletos. |
 | [Peticiones de canciones](./SONG_REQUESTS.md) | Dejar que los oyentes pidan pistas desde un widget público, que suenan automáticamente dentro de un request show. |
@@ -231,13 +231,13 @@ inglés.
 | Término | Significado |
 |---|---|
 | **Show / Programa** | Un slot en el calendario con inicio, fin, nombre y (normalmente) contenido programado. Persistido en `cc_show` + `cc_show_instances`. |
-| **Instancia** | Una ocurrencia concreta de un programa. Un programa diario es una fila `cc_show` + muchas filas `cc_show_instances`. |
-| **Schedule item** | Una fila dentro del planning de una instancia de programa — típicamente un archivo, pero también un smart block, webstream o line-in. Persistido en `cc_schedule`. |
+| **Episodio** | Una aparición concreta de un programa en el calendario (internamente una *show instance*). Un programa diario es una fila `cc_show` + muchas filas `cc_show_instances`. |
+| **Schedule item** | Una fila dentro del planning de un episodio — típicamente un archivo, pero también un smart block, webstream o line-in. Persistido en `cc_schedule`. |
 | **Playlist** | Una lista ordenada reutilizable de items. Persistida en `cc_playlist` + `cc_playlistcontents`. |
 | **Smart Block** | Una consulta dentro de una playlist que se expande en un conjunto de pistas en el momento de build, opcionalmente limitada a "tiempo restante en el programa". Persistido en `cc_block`. |
 | **Webstream** | Una URL apuntando a otra fuente Icecast / Shoutcast / HTTP MP3/AAC. Persistido en `cc_webstream`. |
 | **Line-In** | Una entrada de audio en vivo nombrada en la máquina del operador (un micrófono, un mezclador, un reproductor CD externo). Persistido en `rastatime_linein`. |
-| **Autoloading playlist** | Una playlist adjunta a una *definición de programa* para que cada instancia del programa tenga los contenidos de la playlist construidos en su planning automáticamente. |
+| **Autoloading playlist** | Una playlist adjunta a una *definición de programa* para que cada episodio del programa tenga los contenidos de la playlist construidos en su planning automáticamente. |
 | **Auto DJ** | Un proceso en segundo plano que crea programas en huecos del calendario y completa programas incompletos. Distinto de autoloading playlists. |
 | **Inicio diferido** | Un opt-in por programa (`cc_show.allow_delayed_start`) que permite a un programa empezar más tarde que su slot del calendario cuando el programa precedente se sobrepasó, manteniendo su propio fin fijo. Una tarea en segundo plano lo aplica unos minutos antes del aire. |
 | **Song request (petición de canción)** | Un deseo de pista enviado por un oyente, recogido por un widget público y emitido automáticamente por un request show (un programa con autoloading playlist y un Smart Block *Use requests*). Persistido en `rastatime_song_request`. |

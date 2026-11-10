@@ -275,7 +275,7 @@ Effekte:
 > eine Sendung kürzer zu machen, ohne sie sofort zu
 > beenden, bearbeiten Sie die Sendung im Kalender und
 > ändern Sie die Endzeit; das wirkt sich auf die *nächste*
-> Instanz aus und ist reversibel.
+> Episode aus und ist reversibel.
 
 ---
 

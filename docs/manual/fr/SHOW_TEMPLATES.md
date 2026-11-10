@@ -122,17 +122,17 @@ nouveau modèle à chaque émission future".
 > [Calendrier](./CALENDAR.md) §8). Voir ARCHITECTURE
 > §23.16 pour le journal de décision complet.
 
-### Lors de l'application d'un modèle sur un formulaire Modifier l'instance
+### Lors de l'application d'un modèle sur un formulaire Modifier l'épisode
 
 Vous ne pouvez pas. RASTATIME 2026-05-19 supprime la
-section **Modèles** dans le dialogue Modifier l'instance
-(une instance d'une émission récurrente). Re-tamponner une
-seule instance se propagerait silencieusement aux frères
+section **Modèles** dans le dialogue Modifier l'épisode
+(un épisode d'une émission récurrente). Re-tamponner un
+seul épisode se propagerait silencieusement aux frères
 et sœurs (viole le modèle de tampon unidirectionnel) ou
 n'aurait aucun effet sur eux (ce qui tromperait
 l'opérateur).
 
-Si vous devez surcharger une instance, modifiez ses
+Si vous devez surcharger un épisode, modifiez ses
 champs directement sans utiliser le chemin de modèle.
 
 ---
@@ -161,7 +161,7 @@ Délibérément exclu :
 |---|---|
 | **Date / heure de début** | Par utilisation ; le modèle est réutilisable à travers plusieurs heures de début. |
 | **Mot de passe live-stream** | Sécurité — un modèle enregistré ne devrait pas porter de credentials. L'opérateur définit le mot de passe par émission. |
-| **Descriptions par instance** | Spécifiques à l'instance (ex. "l'invité de cette semaine est X"). |
+| **Descriptions par épisode** | Spécifiques à l'épisode (ex. "l'invité de cette semaine est X"). |
 
 > **Comment ça marche sous le capot.** Les modèles vivent
 > dans la table `cc_show_template` (`id`, `name UNIQUE`,
@@ -267,7 +267,7 @@ Une station diffuse **Matinale** Lun-Ven 07:00–10:00 avec :
 
 **Première fois :**
 
-1. Créer l'occurrence du lundi : Nouvelle émission,
+1. Créer l'émission du lundi : Nouvelle émission,
    remplir tous les champs, enregistrer.
 2. Ouvrir l'émission du lundi → **Enregistrer comme
    modèle** → nommer `Matinale`.
@@ -287,7 +287,7 @@ Une station diffuse **Matinale** Lun-Ven 07:00–10:00 avec :
    Jeu, Ven.
 4. Enregistrer.
 
-Ceci génère tous les cinq jours comme instances d'une
+Ceci génère tous les cinq jours comme épisodes d'une
 définition d'émission récurrente. Modifier la définition
 d'émission plus tard change les cinq.
 

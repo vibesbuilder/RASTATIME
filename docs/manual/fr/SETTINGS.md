@@ -193,7 +193,7 @@ réservés aux administrateurs.
 | Bouton | Effet |
 |---|---|
 | **Delete All Tracks in Library** | Supprime chaque piste de la bibliothèque et des grilles à venir (upstream). |
-| **Clear Calendar** (depuis le 2026-10-14) | Supprime chaque émission qui **n'a pas encore commencé**, avec son contenu, et met fin à toutes les répétitions. L'émission en cours et tout le passé restent, l'historique de diffusion garde ses noms d'émission. Une émission sans instance restante est effacée. La confirmation indique combien d'instances et d'émissions ont été retirées. |
+| **Clear Calendar** (depuis le 2026-10-14) | Supprime chaque émission qui **n'a pas encore commencé**, avec son contenu, et met fin à toutes les répétitions. L'émission en cours et tout le passé restent, l'historique de diffusion garde ses noms d'émission. Une émission sans épisode restant est effacée. La confirmation indique combien d'épisodes et d'émissions ont été retirés. |
 
 > **Sous le capot.** Les valeurs sont des lignes de la table `cc_pref`
 > (clé / valeur).  Les valeurs par utilisateur (langue, fuseau horaire,

@@ -32,7 +32,7 @@ establezca
 | Campo | Significado |
 |---|---|
 | **Tipo de teaser** | **Teaser de programa (cualquier día)**, **Teaser del día: «hoy»** o **Teaser del día: «mañana»**.  Elíjalo primero: la lista de programas permanece atenuada hasta que haya un tipo, y un guardado con programas sin tipo se rechaza. |
-| **Teaser para los programas** | los programas que anuncia este jingle; el botón **Programas** abre el mismo panel de casillas que el pool de peticiones; marque uno o varios, el botón muestra el número.  La lista contiene cada programa con una emisión próxima, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser; volver a poner el tipo en *None* vacía la lista. |
+| **Teaser para los programas** | los programas que anuncia este jingle; el botón **Programas** abre el mismo panel de casillas que el pool de peticiones; marque uno o varios, el botón muestra el número.  La lista contiene cada programa con un episodio próximo, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser; volver a poner el tipo en *None* vacía la lista. |
 
 Para muchos jingles a la vez, selecciónelos en la biblioteca y use
 **Edit** (edición masiva): los mismos dos campos; nada seleccionado
@@ -63,17 +63,17 @@ actual para la lista de contenido y, cuando arrastra un bloque a un
 programa a mano, el final de la fila tras la que lo suelta.  Con ese
 día *D* y el instante *T* del hueco:
 
-* un teaser **«hoy»** encaja cuando su programa tiene una emisión el
+* un teaser **«hoy»** encaja cuando su programa tiene un episodio el
   día *D* que empieza después de *T*;
-* un teaser **«mañana»** encaja cuando su programa tiene una emisión el
+* un teaser **«mañana»** encaja cuando su programa tiene un episodio el
   día *D + 1*;
 * un **teaser de programa** encaja cualquier día, salvo que su programa
-  haya *terminado por hoy*: tuvo una emisión el día *D* que acabó antes
-  de *T* y no tiene otra posterior ese día;
-* un jingle nunca encaja con el programa cuya instancia se está
+  haya *terminado por hoy*: tuvo un episodio el día *D* que acabó antes
+  de *T* y no tiene otro posterior ese día;
+* un jingle nunca encaja con el programa cuyo episodio se está
   rellenando: un programa no se anuncia a sí mismo.
 
-Una emisión cancelada o movida se lleva, por tanto, sus teasers del día:
+Un episodio cancelado o movido se lleva, por tanto, sus teasers del día:
 el criterio mira el calendario en el momento del relleno, no una lista
 fija.
 
@@ -118,7 +118,7 @@ mantenga el del jingle) y pulse **Vincular a este programa**.  El tipo
 pertenece al jingle: cambiarlo aquí lo cambia para todos sus programas.
 Solo administradores y gestores de programación; la entrada existe
 también para programas pasados, pues el vínculo es con el programa, no
-con la emisión.
+con el episodio.
 
 ## 6. Importar / Exportar
 
@@ -138,15 +138,15 @@ programa.  La elección real ocurre al rellenar el programa.
 
 ### «Un programa desapareció de la lista.»
 
-La lista contiene programas con una emisión próxima.  Un jingle
-conserva su vínculo con un programa que ya no la tiene; el editor lo
+La lista contiene programas con un episodio próximo.  Un jingle
+conserva su vínculo con un programa que ya no lo tiene; el editor lo
 sigue mostrando, el criterio simplemente no encuentra un día que
 encaje.
 
 ### «No se elige nada.»
 
 Compruebe que los jingles llevan programa y tipo, que el programa
-realmente tiene una emisión ese día y que los demás criterios del bloque
+realmente tiene un episodio ese día y que los demás criterios del bloque
 (tipo de pista, género) no los excluyen.  Hasta que se hayan ejecutado las
 migraciones de base de datos 0069 y 0070, el criterio devuelve un conjunto vacío
 y el registro lo dice.
@@ -157,4 +157,4 @@ y el registro lo dice.
   límites y filtros de exclusión.
 * [Listas de carga automática](./AUTOLOADING_PLAYLISTS.md): listas de
   intro, outro y contenido que llevan los bloques de teasers.
-* [Calendario](./CALENDAR.md): las emisiones que lee el criterio.
+* [Calendario](./CALENDAR.md): los episodios que lee el criterio.

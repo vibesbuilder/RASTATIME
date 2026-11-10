@@ -434,7 +434,7 @@ Track wird nie ausgewählt.
 > `BlockExpander.expand()` ein PostgreSQL-`SELECT … WHERE …
 > LIMIT …` über `cc_files` zusammen. Time-remaining-Limits
 > werden über die `getSecondsRemaining()`-Methode der
-> Sendungsinstanz in eine Dauer-Obergrenze umgerechnet (seit
+> Episode in eine Dauer-Obergrenze umgerechnet (seit
 > 2026-10-06 die ausgelegte freie Zeit: `time_filled` = Start bis Ende
 > der letzten Zeile; die Auswahl trifft `Scheduler::pickRemainingBlock()`).
 > Siehe ARCHITECTURE §23.19 für die Outro-Reserve-Interaktion
@@ -602,7 +602,7 @@ Zwei Pfade:
 2. **Autoloading**: Hängen Sie die Playlist an die
    Sendungsdefinition im Abschnitt **Autoloading Playlist**
    des Sendungs-Bearbeitungsformulars an. Jede zukünftige
-   Instanz der Sendung wird die Items der Playlist
+   Episode der Sendung wird die Items der Playlist
    automatisch in ihren Sendeplan gebaut bekommen. Das
    Bearbeiten der Playlist *beeinflusst* zukünftige Builds.
    Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md).

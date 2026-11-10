@@ -30,7 +30,7 @@ Doppelklick) und setzen Sie
 | Feld | Bedeutung |
 |---|---|
 | **Teaser-Typ** | **Showteaser (jederzeit)**, **Tagesteaser: „heute"** oder **Tagesteaser: „morgen"**.  Wählen Sie ihn zuerst: Die Sendungsliste darunter bleibt ausgegraut, bis ein Typ gesetzt ist, und ein Speichern mit Sendungen ohne Typ wird abgewiesen. |
-| **Teaser für Sendungen** | die Sendungen, die dieser Jingle ankündigt - der Knopf **Sendungen** öffnet dasselbe Kästchen-Panel wie der Song-Request-Pool; eine oder mehrere anhaken, der Knopf zeigt die Anzahl.  Die Liste enthält jede Sendung mit bevorstehender Ausstrahlung, jeweils mit der nächsten Sendezeit (`bbc (Sat 12:00)`), damit gleichnamige Sendungen unterscheidbar sind; die stündlichen Nachrichten-Slots sind eigene Sendungen, und ein „BBC heute"-Jingle kann sie alle ankündigen.  Keine Auswahl = kein Teaser; wird der Typ wieder auf *None* gesetzt, leert sich die Liste. |
+| **Teaser für Sendungen** | die Sendungen, die dieser Jingle ankündigt - der Knopf **Sendungen** öffnet dasselbe Kästchen-Panel wie der Song-Request-Pool; eine oder mehrere anhaken, der Knopf zeigt die Anzahl.  Die Liste enthält jede Sendung mit bevorstehender Episode, jeweils mit der nächsten Sendezeit (`bbc (Sat 12:00)`), damit gleichnamige Sendungen unterscheidbar sind; die stündlichen Nachrichten-Slots sind eigene Sendungen, und ein „BBC heute"-Jingle kann sie alle ankündigen.  Keine Auswahl = kein Teaser; wird der Typ wieder auf *None* gesetzt, leert sich die Liste. |
 
 Für viele Jingles auf einmal markieren Sie sie in der Bibliothek und
 nutzen **Edit** (Mehrfach-Bearbeitung): dieselben zwei Felder; keine
@@ -62,16 +62,16 @@ ziehen - das Ende der Zeile, hinter die Sie ihn legen.  Mit diesem Tag
 *D* und dem Zeitpunkt *T* des Slots gilt:
 
 * ein **„heute"**-Teaser passt, wenn seine Sendung an *D* eine
-  Ausstrahlung hat, die nach *T* beginnt;
+  Episode hat, die nach *T* beginnt;
 * ein **„morgen"**-Teaser passt, wenn seine Sendung an *D + 1* eine
-  Ausstrahlung hat;
+  Episode hat;
 * ein **Showteaser** passt an jedem Tag - außer seine Sendung ist *für
-  heute vorbei*: Sie hatte an *D* eine Ausstrahlung, die vor *T*
+  heute vorbei*: Sie hatte an *D* eine Episode, die vor *T*
   endete, und hat an *D* keine spätere mehr;
-* ein Jingle passt nie zur Sendung, deren Instanz gerade befüllt wird -
+* ein Jingle passt nie zur Sendung, deren Episode gerade befüllt wird -
   eine Sendung teasert sich nicht selbst.
 
-Eine abgesagte oder verschobene Ausstrahlung nimmt ihre Tagesteaser
+Eine abgesagte oder verschobene Episode nimmt ihre Tagesteaser
 also mit: Das Kriterium schaut zur Füllzeit in den Kalender, nicht in
 eine feste Liste.
 
@@ -117,7 +117,7 @@ den des Jingles behalten) und **Mit dieser Sendung verknüpfen**
 klicken.  Der Typ gehört zum Jingle; eine Änderung hier gilt für alle
 seine Sendungen.  Nur Administratoren und Programm-Manager; der Eintrag
 gibt es auch bei vergangenen Sendungen, denn die Verknüpfung gilt der
-Sendung, nicht der Ausstrahlung.
+Sendung, nicht der Episode.
 
 ## 6. Import / Export
 
@@ -137,7 +137,7 @@ Sendung.
 
 ### „Eine Sendung ist aus der Liste verschwunden."
 
-Die Liste enthält Sendungen mit bevorstehender Ausstrahlung.  Ein
+Die Liste enthält Sendungen mit bevorstehender Episode.  Ein
 Jingle behält seine Verknüpfung zu einer Sendung, die keine mehr hat;
 der Editor zeigt sie weiterhin, das Kriterium findet nur keinen
 passenden Tag.
@@ -145,7 +145,7 @@ passenden Tag.
 ### „Es wird gar nichts gewählt."
 
 Prüfen Sie, dass die Jingles Sendung und Typ tragen, dass die Sendung an
-diesem Tag wirklich eine Ausstrahlung hat und dass die übrigen
+diesem Tag wirklich eine Episode hat und dass die übrigen
 Kriterien des Blocks (Track-Typ, Genre) sie nicht ausschließen.  Bis die
 Datenbank-Migrationen 0069 und 0070 gelaufen sind, liefert das Kriterium einen
 leeren Pool, und das Log sagt es.
@@ -156,5 +156,5 @@ leeren Pool, und das Log sagt es.
   die Exclude-Filter.
 * [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md) - Intro-, Outro-
   und Inhalts-Playlisten, die die Teaser-Blöcke tragen.
-* [Kalender](./CALENDAR.md) - die Ausstrahlungen, die das Kriterium
+* [Kalender](./CALENDAR.md) - die Episoden, die das Kriterium
   liest.

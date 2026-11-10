@@ -40,7 +40,7 @@ Solo los administradores ven la página.
    rápida de empezar una hoja de cálculo desde cero.
 
 La exportación de programas contiene los programas que aún tienen
-emisiones próximas. Cada fila empieza en la **siguiente** emisión del
+episodios próximos. Cada fila empieza en el **siguiente** episodio del
 programa, de modo que un archivo exportado puede importarse de nuevo
 sin tocar el pasado.
 
@@ -110,15 +110,15 @@ administrador. Borre un archivo con contraseñas después de importarlo.
 | Columna | Significado |
 |---|---|
 | `name`, `url`, `genre`, `description` | como en el diálogo; solo `name` es obligatorio |
-| `start_date`, `start_time`, `end_date`, `end_time` | primera emisión; `end_date` puede quedar vacío (mismo día, o día siguiente cuando el fin precede al inicio) |
+| `start_date`, `start_time`, `end_date`, `end_time` | primer episodio; `end_date` puede quedar vacío (mismo día, o día siguiente cuando el fin precede al inicio) |
 | `timezone` | nombre IANA como `Europe/Berlin`; vacío = zona horaria de la emisora |
 | `allow_delayed_start` | yes/no, véase [Inicio diferido](./DELAYED_START.md) |
 | `repeats`, `repeat_type` | `none`, `weekly`, `biweekly`, `every_3_weeks`, `every_4_weeks`, `monthly_date`, `monthly_weekday` |
 | `days` | para los tipos semanales: `Mon,Tue,Wed,Thu,Fri,Sat,Sun` (también valen las abreviaturas alemanas); vacío = día de la semana de `start_date` |
 | `months` | para los tipos mensuales (desde 2026-10-15): `Jan,Feb,...,Dec` o `1..12` (también valen las abreviaturas alemanas); vacío = todos los meses |
-| `repeat_end_date`, `no_end` | fecha de la última emisión, o `no_end = yes` |
+| `repeat_end_date`, `no_end` | fecha del último episodio, o `no_end = yes` |
 | `linked`, `record` | yes/no |
-| `content`, `content_repeat` | el nombre de una lista usada como **lista de carga automática** del programa, y si se repite hasta llenar el programa; véase [Listas de carga automática](./AUTOLOADING_PLAYLISTS.md). Una lista puede contener pistas, bloques inteligentes, webstreams y entradas de línea, así cada instancia del programa se llena automáticamente. |
+| `content`, `content_repeat` | el nombre de una lista usada como **lista de carga automática** del programa, y si se repite hasta llenar el programa; véase [Listas de carga automática](./AUTOLOADING_PLAYLISTS.md). Una lista puede contener pistas, bloques inteligentes, webstreams y entradas de línea, así cada episodio del programa se llena automáticamente. |
 | `repeat_of` | nombre de un programa existente cuyo último contenido emitido rellena este programa poco antes de empezar (**Repetición del programa**, desde 2026-10-18); vacío = ninguno. Un nombre desconocido se informa como nota y el programa se importa sin él. |
 | `own_production` | yes/no - producción propia de la emisora; los minutos emitidos cuentan en Analytics → Minutos de programa, sus personas en Analytics → Participantes (desde 2026-11-03). |
 | `intro_playlist`, `outro_playlist` | nombres de listas; vacío = valores por defecto de la emisora |

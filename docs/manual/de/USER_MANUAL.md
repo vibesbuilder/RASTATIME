@@ -148,7 +148,7 @@ sie alle voraussetzen.
 
 | Kapitel | Inhalt |
 |---|---|
-| [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Eine Playlist sich selbst für jede Instanz einer Sendung aufbauen lassen, inklusive Outro-Reserve-Logik. |
+| [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Eine Playlist sich selbst für jede Episode einer Sendung aufbauen lassen, inklusive Outro-Reserve-Logik. |
 | [Teaser-Automatik](./TEASERS.md) | Jingles mit der Sendung verknüpfen, die sie ankündigen; ein Smart-Block-Kriterium spielt „heute"- und „morgen"-Teaser am richtigen Tag. |
 | [Auto DJ](./AUTO_DJ.md) | Der Hintergrund-Filler, der Sendungen in Kalenderlücken erstellt und unvollständige Sendungen auffüllt. |
 | [Song Requests](./SONG_REQUESTS.md) | Hörer Tracks über ein öffentliches Widget wünschen lassen, die automatisch in einer Request-Show laufen. |
@@ -234,13 +234,13 @@ Diese Runbooks sind aktuell nur auf Englisch verfügbar.
 | Begriff | Bedeutung |
 |---|---|
 | **Show / Sendung** | Ein Slot im Kalender mit Start, Ende, Name und (üblicherweise) eingeplanten Inhalten. Persistiert in `cc_show` + `cc_show_instances`. |
-| **Instanz** | Ein konkretes Vorkommen einer Sendung. Eine tägliche Sendung ist eine `cc_show`-Zeile + viele `cc_show_instances`-Zeilen. |
-| **Schedule-Item** | Eine Zeile in der Playlist einer Sendungsinstanz — typischerweise eine Datei, aber auch ein Smart Block, Webstream oder Line-In. Persistiert in `cc_schedule`. |
+| **Episode** | Ein konkretes Vorkommen einer Sendung. Eine tägliche Sendung ist eine `cc_show`-Zeile + viele `cc_show_instances`-Zeilen. |
+| **Schedule-Item** | Eine Zeile in der Playlist einer Episode — typischerweise eine Datei, aber auch ein Smart Block, Webstream oder Line-In. Persistiert in `cc_schedule`. |
 | **Playlist** | Eine wiederverwendbare geordnete Liste von Items. Persistiert in `cc_playlist` + `cc_playlistcontents`. |
 | **Smart Block** | Eine Abfrage innerhalb einer Playlist, die zum Build-Zeitpunkt zu einer Menge von Tracks expandiert, optional begrenzt auf "verbleibende Zeit in der Sendung". Persistiert in `cc_block`. |
 | **Webstream** | Eine URL, die auf eine andere Icecast- / Shoutcast- / HTTP-MP3/AAC-Quelle zeigt. Persistiert in `cc_webstream`. |
 | **Line-In** | Ein benannter Live-Audio-Eingang auf der Operator-Maschine (ein Mikrofon, ein Mixer, ein externer CD-Player). Persistiert in `rastatime_linein`. |
-| **Autoloading Playlist** | Eine Playlist, die an eine *Sendungsdefinition* angehängt ist, sodass jede Instanz der Sendung die Inhalte der Playlist automatisch in den Sendeplan aufnimmt. |
+| **Autoloading Playlist** | Eine Playlist, die an eine *Sendungsdefinition* angehängt ist, sodass jede Episode der Sendung die Inhalte der Playlist automatisch in den Sendeplan aufnimmt. |
 | **Auto DJ** | Ein Hintergrundprozess, der Sendungen in Kalenderlücken erstellt und unvollständige Sendungen auffüllt. Unterscheidet sich von Autoloading Playlists. |
 | **Verzögerter Start** | Eine Opt-in-Einstellung pro Sendung (`cc_show.allow_delayed_start`), die eine Sendung später als ihren Kalender-Slot beginnen lässt, wenn die vorige Sendung überzogen hat, wobei ihr eigenes Ende fix bleibt. Ein Hintergrund-Task wendet sie wenige Minuten vor der Ausstrahlung an. |
 | **Song Request** | Ein vom Hörer gesendeter Track-Wunsch, gesammelt von einem öffentlichen Widget und automatisch von einer Request-Show ausgestrahlt (eine Autoloading-Playlist-Sendung mit einem *Use requests*-Smart-Block). Persistiert in `rastatime_song_request`. |

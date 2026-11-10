@@ -64,9 +64,9 @@ time zone unless you pass `timezone=` (a tz database name such as
 | `/api/week-info` | `timezone` | The programme of this week and next, one list per weekday (`monday` … `nextsunday`), each show with name, times, description, image, url. |
 | `/api/station-metadata` | — | Station name, description, logo, locale, time zone and the list of streams. |
 | `/api/shows` | `show_id` (optional) | All shows, or one: id, name, description, genre, url, colours, linked flag. |
-| `/api/show-schedules` | `show_id` (required), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | The instances of one show in the range. |
-| `/api/show-tracks` | `instance_id` (required) | The rows of one show instance: position, title, artist, length, start. |
-| `/api/item-history-feed` | `start`, `end`, `instance_id` (optional) | The playout history: what was played when, with title, artist and show instance. |
+| `/api/show-schedules` | `show_id` (required), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | The episodes of one show in the range. |
+| `/api/show-tracks` | `instance_id` (required) | The rows of one episode: position, title, artist, length, start. |
+| `/api/item-history-feed` | `start`, `end`, `instance_id` (optional) | The playout history: what was played when, with title, artist and episode. |
 | `/api/show-history-feed` | `start`, `end`, `user_id` (optional) | The shows that aired in the range. |
 | `/api/track?id=<file id>&return=<kind>` | `return` = `artwork`, `artwork-32`, `artwork-64`, `artwork-data` | The cover image of a track (JPG). |
 | `/api/show-logo?id=<show id>` | — | The image of a show. |
@@ -165,7 +165,7 @@ This week's programme in UTC (public):
 curl -s "https://<station-host>/api/week-info?timezone=UTC"
 ```
 
-The rows of a show instance (public):
+The rows of an episode (public):
 
 ```bash
 curl -s "https://<station-host>/api/show-tracks?instance_id=12345"

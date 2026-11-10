@@ -120,7 +120,7 @@ des mots de passe après l'import.
 | `months` | pour les types mensuels (depuis le 2026-10-15) : `Jan,Feb,...,Dec` ou `1..12` (les abréviations allemandes fonctionnent aussi) ; vide = chaque mois |
 | `repeat_end_date`, `no_end` | date de la dernière diffusion, ou `no_end = yes` |
 | `linked`, `record` | yes/no |
-| `content`, `content_repeat` | le nom d'une playlist utilisée comme **playlist de chargement automatique** de l'émission, et si elle se répète jusqu'à remplir l'émission — voir [Playlists de chargement automatique](./AUTOLOADING_PLAYLISTS.md). Une playlist peut contenir des pistes, des smart blocks, des webstreams et des entrées line-in : chaque occurrence de l'émission est ainsi remplie automatiquement. |
+| `content`, `content_repeat` | le nom d'une playlist utilisée comme **playlist de chargement automatique** de l'émission, et si elle se répète jusqu'à remplir l'émission — voir [Playlists de chargement automatique](./AUTOLOADING_PLAYLISTS.md). Une playlist peut contenir des pistes, des smart blocks, des webstreams et des entrées line-in : chaque épisode de l'émission est ainsi rempli automatiquement. |
 | `repeat_of` | nom d'une émission existante dont le dernier contenu diffusé remplit cette émission peu avant son début (**Rediffusion de l'émission**, depuis le 2026-10-18) ; vide = aucune. Un nom inconnu est signalé en note et l'émission est importée sans lui. |
 | `own_production` | yes/no - production propre de la station ; les minutes diffusées comptent dans Analytics → Minutes de programme, ses participants dans Analytics → Participants (depuis le 2026-11-03). |
 | `intro_playlist`, `outro_playlist` | noms de playlists ; vide = valeurs par défaut de la station |

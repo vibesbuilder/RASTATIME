@@ -153,7 +153,7 @@ qu'ils supposent tous.
 
 | Chapitre | Contenu |
 |---|---|
-| [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Laisser une playlist se construire elle-même pour chaque instance d'une émission, y compris la gestion de la réserve d'outro. |
+| [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) | Laisser une playlist se construire elle-même pour chaque épisode d'une émission, y compris la gestion de la réserve d'outro. |
 | [Automatisation des teasers](./TEASERS.md) | Lier les jingles à l'émission qu'ils annoncent ; un critère de smart block passe les teasers « aujourd'hui » et « demain » le bon jour. |
 | [Auto DJ](./AUTO_DJ.md) | Le remplisseur d'arrière-plan qui crée des émissions dans les trous du calendrier et complète les émissions incomplètes. |
 | [Demandes de titres](./SONG_REQUESTS.md) | Laisser les auditeurs demander des titres depuis un widget public, qui passent automatiquement dans une request show. |
@@ -240,13 +240,13 @@ anglais.
 | Terme | Signification |
 |---|---|
 | **Show / Émission** | Un créneau dans le calendrier avec début, fin, nom et (habituellement) du contenu planifié. Persisté dans `cc_show` + `cc_show_instances`. |
-| **Instance** | Une occurrence concrète d'une émission. Une émission quotidienne est une ligne `cc_show` + plusieurs lignes `cc_show_instances`. |
-| **Schedule item** | Une ligne dans la playlist d'une instance d'émission — typiquement un fichier, mais aussi un smart block, webstream ou line-in. Persisté dans `cc_schedule`. |
+| **Épisode** | Une occurrence concrète d'une émission dans le calendrier. Une émission quotidienne est une ligne `cc_show` + plusieurs lignes `cc_show_instances`. |
+| **Schedule item** | Une ligne dans la playlist d'un épisode — typiquement un fichier, mais aussi un smart block, webstream ou line-in. Persisté dans `cc_schedule`. |
 | **Playlist** | Une liste ordonnée réutilisable d'items. Persistée dans `cc_playlist` + `cc_playlistcontents`. |
 | **Smart Block** | Une requête dans une playlist qui s'étend en un ensemble de pistes au moment du build, optionnellement limitée à "temps restant dans l'émission". Persisté dans `cc_block`. |
 | **Webstream** | Une URL pointant vers une autre source Icecast / Shoutcast / HTTP MP3/AAC. Persisté dans `cc_webstream`. |
 | **Line-In** | Une entrée audio live nommée sur la machine de l'opérateur (un microphone, un mixeur, un lecteur CD externe). Persisté dans `rastatime_linein`. |
-| **Autoloading playlist** | Une playlist attachée à une *définition d'émission* pour que chaque instance de l'émission obtienne le contenu de la playlist construit automatiquement dans son planning. |
+| **Autoloading playlist** | Une playlist attachée à une *définition d'émission* pour que chaque épisode de l'émission obtienne le contenu de la playlist construit automatiquement dans son planning. |
 | **Auto DJ** | Un processus d'arrière-plan qui crée des émissions dans les trous du calendrier et complète les émissions incomplètes. Distinct des autoloading playlists. |
 | **Démarrage différé (delayed start)** | Une inscription volontaire par émission (`cc_show.allow_delayed_start`) qui laisse une émission commencer plus tard que son créneau de calendrier lorsque l'émission précédente a dépassé, en gardant sa propre fin fixe. Une tâche d'arrière-plan l'applique quelques minutes avant l'antenne. |
 | **Song request (demande de titre)** | Un souhait de titre envoyé par un auditeur, collecté par un widget public et diffusé automatiquement par une request show (une émission à autoloading playlist avec un Smart Block *Use requests*). Persisté dans `rastatime_song_request`. |

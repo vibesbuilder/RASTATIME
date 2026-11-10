@@ -146,17 +146,17 @@ valeurs par défaut.
 
 | Section | But |
 |---|---|
-| **Modèles** | Pré-remplir le formulaire depuis un [Modèle d'émission](./SHOW_TEMPLATES.md) enregistré, ou enregistrer le formulaire actuel comme modèle après avoir terminé. Caché lors de l'édition d'une seule instance d'une émission récurrente. |
+| **Modèles** | Pré-remplir le formulaire depuis un [Modèle d'émission](./SHOW_TEMPLATES.md) enregistré, ou enregistrer le formulaire actuel comme modèle après avoir terminé. Caché lors de l'édition d'un seul épisode d'une émission récurrente. |
 | **Quoi** | Nom, URL, genre, description, animateurs, couleurs de fond / texte, image de l'émission. Le libellé visible sur le calendrier. |
 | **Quand** | Date / heure de début, durée, date de fin, répétitions, **Autoriser le démarrage différé** (laisser cette émission commencer en retard quand la précédente a dépassé — voir [Démarrage différé d'émission](./DELAYED_START.md)). |
 | **Entrée Live Stream** | Permettre aux animateurs distants de prendre l'émission via Show DJ (nom d'utilisateur + mot de passe par émission). |
 | **Enregistrement** | Cocher pour enregistrer la sortie à l'antenne de l'émission dans un fichier. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md). |
 | **Own production** (production propre) | Cocher pour les productions propres de la station : les minutes diffusées de l'émission comptent dans Analytics → [Minutes de programme](./ANALYTICS.md), ses participants dans Analytics → Participants (depuis le 2026-11-03).  Se trouve dans la section **Quoi** ; l'icône d'aide à côté l'explique en bref. |
 | **Hosts involved** (animateurs) | Apparaît sous **Own production** dès que la case est cochée (depuis le 2026-11-04 ; *Number of involved people* jusqu'au 2026-11-07) : combien d'animateurs participent à chaque épisode, 0-999. Compte une fois par an dans Analytics → [Participants](./ANALYTICS.md), quel que soit le nombre d'épisodes diffusés ; les invités d'un seul épisode se saisissent dans Archiver en ligne (**Guests involved**) et s'ajoutent. Décocher la case garde le nombre, il cesse seulement de compter. |
-| **Autoloading Playlist** | Attacher une playlist pour remplir chaque instance automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
+| **Autoloading Playlist** | Attacher une playlist pour remplir chaque épisode automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Qui** | Animateurs supplémentaires au-delà du principal défini sous Quoi. |
-| **Archivage** | Producteur, compte CBA, réglages cba.media et archivage automatique de l'émission (en lecture seule dans Modifier l'occurrence depuis le 2026-11-04). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
-| **Style** | Couleur de fond, couleur de texte, image d'émission (visible seulement ici pour les émissions ponctuelles ; pour les émissions récurrentes, celles-ci restent constantes à travers les instances). |
+| **Archivage** | Producteur, compte CBA, réglages cba.media et archivage automatique de l'émission (en lecture seule dans Modifier l'épisode depuis le 2026-11-04). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
+| **Style** | Couleur de fond, couleur de texte, image d'émission (visible seulement ici pour les émissions ponctuelles ; pour les émissions récurrentes, celles-ci restent constantes à travers les épisodes). |
 
 > **Conseil opérateur.** Si vous êtes sur le point de
 > remplir le même nom, animateurs, couleurs et autoloading
@@ -203,34 +203,41 @@ action.
 | **Voir** | Vue en lecture seule des métadonnées + planning de l'émission. *Start* et *Length* de chaque ligne sont la ligne de planning telle que posée (Length = cue-out moins cue-in, comme dans le show builder ; depuis le 2026-10-23) ; les totaux en bas sont la longueur posée du contenu (points de cue et chevauchements de crossfade compris) face à la durée de l'émission. | Toujours |
 | **Compléments → Teasers** | Depuis le 2026-11-10 dans le sous-menu **Compléments** (avec Archiver en ligne ; une entrée People Involved y est prévue).  Les jingles qui annoncent cette émission - changer le type, retirer, en lier d'autres ; voir [Automatisation des teasers](./TEASERS.md). Depuis le 2026-10-16. | Admin / PM |
 | **Compléments → Archiver en ligne** | Titre, accroche, description, image et invités de cet épisode, avant ou après sa diffusion, et « Archiver en ligne maintenant » sur cba.media ; voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03 (d'abord nommé *Épisode...*). | Admin / PM / animateurs de l'émission (archiver : Admin / PM) |
-| **Modifier l'émission** | Modifier la définition d'émission (nom, heure, répétitions, etc.). | Émissions futures ou actuelles |
-| **Modifier l'instance** | Modifier seulement cette occurrence d'une émission récurrente. | Émissions récurrentes seulement |
+| **Modifier → Modifier l'épisode** | Modifier seulement cet épisode d'une émission récurrente. | Émissions récurrentes seulement |
+| **Modifier → Modifier l'émission** | Modifier la définition d'émission (nom, heure, répétitions, etc.). | Émissions futures ou actuelles |
 | **Annuler l'émission** | Terminer l'émission *maintenant* — sensé seulement pour l'émission actuellement en cours. | Émission actuelle seulement |
-| **Supprimer l'émission** | Retirer toute l'émission + toutes ses instances. | Émissions futures seulement |
-| **Supprimer cette instance** | Retirer seulement cette occurrence d'une émission récurrente. | Émissions récurrentes, futures seulement |
+| **Supprimer → Supprimer l'épisode** | Retirer seulement cet épisode d'une émission récurrente. | Émissions récurrentes, futures seulement |
+| **Supprimer → Supprimer l'épisode et tous les suivants** | Retirer cet épisode et tous les épisodes suivants de l'émission. | Émissions futures seulement |
 | **Vider le planning** | Effacer le contenu planifié de l'émission mais garder le créneau vide. | Émissions futures seulement |
 
 > **Pourquoi "Modifier l'émission" vs "Modifier
-> l'instance".** Une émission hebdomadaire est une
-> *définition* avec plusieurs *instances*. Modifier la
-> définition change chaque instance future (ex. déplacer
-> l'émission du lundi au mardi). Modifier une seule
-> instance crée une surcharge par occurrence (ex. cette
+> l'épisode".** Une émission hebdomadaire est une
+> *définition* avec plusieurs *épisodes*. Modifier la
+> définition change chaque épisode futur (ex. déplacer
+> l'émission du lundi au mardi). Modifier un seul
+> épisode crée une surcharge par épisode (ex. cette
 > semaine seulement, l'animateur est différent). La
-> surcharge d'instance survit à la prochaine édition de
+> surcharge d'épisode survit à la prochaine édition de
 > définition mais ne se propage pas aux frères et sœurs.
+>
+> **Modifier** et **Supprimer** ouvrent chacun un sous-menu,
+> l'épisode en premier.  Une émission non récurrente n'affiche
+> que **Modifier l'émission** et **Supprimer** ; un épisode
+> déjà modifié seul d'une émission récurrente n'affiche que
+> **Modifier l'épisode** / **Supprimer l'épisode** (appelés
+> *Edit Instance* / *Delete Instance* jusqu'au 2026-11-10).
 
-### Ce que "Modifier l'instance" ne peut pas faire
+### Ce que "Modifier l'épisode" ne peut pas faire
 
 - Ne peut pas appliquer un Modèle d'émission. Les modèles
   s'appliquent seulement aux émissions entières parce que
-  tamponner un modèle sur une instance se propagerait
+  tamponner un modèle sur un épisode se propagerait
   silencieusement aux frères et sœurs (violant le modèle
   de tampon unidirectionnel) ou n'aurait aucun effet sur
   eux (ce qui tromperait l'opérateur). RASTATIME
   2026-05-19 supprime la section Modèles dans le
-  formulaire Modifier l'instance pour cette raison.
-- Ne peut pas changer le début/fin de l'instance à un
+  formulaire Modifier l'épisode pour cette raison.
+- Ne peut pas changer le début/fin de l'épisode à un
   moment hors du motif de répétition de l'émission parent.
 - Ne peut pas modifier la section **Archivage** : elle
   affiche les valeurs de l'émission en lecture seule
@@ -240,9 +247,9 @@ action.
 
 ---
 
-### Ce que « Modifier l'instance » peut changer depuis le 2026-11-03 : le chargement automatique
+### Ce que « Modifier l'épisode » peut changer depuis le 2026-11-03 : le chargement automatique
 
-La section **Autoloading Playlist** du formulaire d'instance est
+La section **Autoloading Playlist** du formulaire d'épisode est
 modifiable.  **Use the show's autoloading settings** (coché par défaut)
 garde l'épisode sur la playlist, l'intro, l'outro et la répétition de
 l'émission.  Décochez-la et les champs ci-dessous ne s'appliquent qu'à
@@ -261,7 +268,7 @@ nouveau avec les réglages actuels.
 ## 4. Émissions récurrentes
 
 Une émission récurrente est une définition avec plusieurs
-instances matérialisées avec empressement jusqu'à un
+épisodes matérialisés avec empressement jusqu'à un
 horizon configurable (par défaut ~3 mois).
 
 ### Créer une émission récurrente
@@ -272,7 +279,7 @@ sous-champs apparaissent :
 | Champ | Signification |
 |---|---|
 | **Type de répétition** | Hebdomadaire / Bihebdomadaire / Trihebdomadaire / Mensuelle. |
-| **Choisir les mois** (depuis le 2026-10-14) | Répétition mensuelle seulement : cochez les mois où l'émission a lieu, les douze par défaut. Décochez juillet et août pour une pause estivale, ou gardez un mois sur trois pour une émission trimestrielle. Se combine avec *Repeat By* (jour du mois / jour de la semaine). Décocher un mois sur une émission existante supprime ses instances à venir dans ce mois. |
+| **Choisir les mois** (depuis le 2026-10-14) | Répétition mensuelle seulement : cochez les mois où l'émission a lieu, les douze par défaut. Décochez juillet et août pour une pause estivale, ou gardez un mois sur trois pour une émission trimestrielle. Se combine avec *Repeat By* (jour du mois / jour de la semaine). Décocher un mois sur une émission existante supprime ses épisodes à venir dans ce mois. |
 | **Jours** | Quels jours de la semaine (pour Hebdomadaire / Bihebdomadaire / Trihebdomadaire). |
 | **Date de fin** | Optionnelle — quand la récurrence s'arrête. Laisser vide pour répéter indéfiniment. |
 
@@ -280,20 +287,20 @@ sous-champs apparaissent :
 > répète "le troisième vendredi" n'est *pas* directement
 > supportée. Le plus proche est "hebdomadaire, vendredi,
 > mais lié à un cycle de 4 semaines" — plus facile de
-> planifier les quatre occurrences mensuelles comme
+> planifier les quatre épisodes mensuels comme
 > émissions ponctuelles.
 
 ### Modifier une émission récurrente
 
 - **Modifier l'émission** change la définition : chaque
-  instance future reprend le changement. Les instances
-  passées restent telles qu'elles étaient.
-- **Modifier l'instance** crée une surcharge par
-  occurrence (voir ci-dessus).
-- **Supprimer cette instance** retire seulement cette
-  occurrence.
-- **Supprimer l'émission** retire toute la série y compris
-  toutes les instances futures.
+  épisode futur reprend le changement. Les épisodes
+  passés restent tels qu'ils étaient.
+- **Modifier l'épisode** crée une surcharge par
+  épisode (voir ci-dessus).
+- **Supprimer l'épisode** retire seulement cet
+  épisode.
+- **Supprimer l'épisode et tous les suivants** retire cet
+  épisode et tous les épisodes futurs de la série.
 - **Annuler après suppression** (depuis le 2026-10-28) : une
   suppression depuis le menu du calendrier n'atteint pas le
   serveur tout de suite. L'émission disparaît du calendrier et un
@@ -307,7 +314,7 @@ sous-champs apparaissent :
 > **Comment ça marche sous le capot.** Les émissions
 > récurrentes écrivent une ligne `cc_show` + une ligne
 > `cc_show_days` par jour de répétition + des lignes
-> `cc_show_instances` pour chaque occurrence matérialisée.
+> `cc_show_instances` pour chaque épisode matérialisé.
 > L'horizon de matérialisation est configuré sous
 > Paramètres → Préférences générales. Étendre l'horizon
 > est O(N) sur les émissions récurrentes existantes ; le
@@ -322,12 +329,12 @@ un autre jour ou une autre semaine.  Ouvrez le formulaire **Edit
 Show** de la rediffusion, section **Rediffusion** (juste au-dessus
 d'Autoloading Playlist), et
 choisissez l'original sous **Rediffusion de l'émission**.  Dès lors
-chaque instance de la rediffusion est remplie automatiquement :
+chaque épisode de la rediffusion est rempli automatiquement :
 
 - **Émissions proposées par la liste** *(depuis le 2026-10-27)* :
   toute émission à venir ou en cours, et une émission déjà diffusée
-  (dans les 60 derniers jours) seulement si sa dernière instance peut
-  être rediffusée entièrement - uniquement des pistes, ou son
+  (dans les 60 derniers jours) seulement si son dernier épisode peut
+  être rediffusé entièrement - uniquement des pistes, ou son
   enregistrement est importé.  Une émission en direct passée sans
   enregistrement n'est pas proposée : choisissez l'original avant sa
   diffusion.  Une source déjà enregistrée reste sélectionnable.
@@ -335,7 +342,7 @@ chaque instance de la rediffusion est remplie automatiquement :
   heure, la même avance que le chargement automatique), pas à la fin
   de l'original - les corrections faites à l'original après sa
   diffusion sont donc reprises.
-- **Quoi** : le contenu de la **dernière instance terminée** de
+- **Quoi** : le contenu du **dernier épisode terminé** de
   l'original - fichiers et flux web dans leur ordre avec les points de
   repère et fondus diffusés, jingles compris.  La playlist de
   chargement automatique remplit ensuite le temps restant.
@@ -356,7 +363,7 @@ chaque instance de la rediffusion est remplie automatiquement :
   L'enregistrement est protégé contre la suppression tant qu'une
   rediffusion en attente en a besoin.
 - **Si l'original n'a pas encore été diffusé** (première semaine,
-  instance annulée) : la rediffusion est laissée à sa playlist de
+  épisode annulé) : la rediffusion est laissée à sa playlist de
   chargement automatique.
 - **Durée** : une rediffusion plus courte est coupée à sa fin comme
   toute émission surbookée ; une plus longue est complétée par sa
@@ -377,8 +384,8 @@ seule ; le survol de l'icône indique le nom de l'original.
 
 **View Show** sur une rediffusion remplie dit « Rediffusion de
 l'émission A du <date> à <heure> » et, si des lignes ont été sautées,
-combien.  Une instance qui a déjà du contenu (remplie à la main)
-n'est jamais écrasée.  Les émissions live enregistrées ne peuvent pas
+combien.  Un épisode qui a déjà du contenu (rempli à la main)
+n'est jamais écrasé.  Les émissions live enregistrées ne peuvent pas
 encore être rediffusées ainsi (étape 2, voir BACKLOG).
 
 ## 5. Glisser-déposer
@@ -397,8 +404,8 @@ vers une heure / un jour différent.
 - Le glissement respecte la règle de non-chevauchement :
   déposer sur un créneau occupé est rejeté avec un flash
   rouge.
-- Pour une émission récurrente, seulement *cette
-  instance* est déplacée — le reste de la série reste.
+- Pour une émission récurrente, seulement *cet
+  épisode* est déplacé — le reste de la série reste.
 
 ### 5.2 Redimensionner une émission
 
@@ -430,8 +437,8 @@ Clic droit sur n'importe quelle émission :
 | Groupe | Items |
 |---|---|
 | Contenu | Planifier les pistes, Vider le planning |
-| Édition | Modifier l'émission, Modifier l'instance, Appliquer un modèle, Enregistrer comme modèle |
-| Cycle de vie | Annuler l'émission (actuelle seulement), Supprimer l'émission, Supprimer cette instance |
+| Édition | Modifier l'épisode, Modifier l'émission, Appliquer un modèle, Enregistrer comme modèle |
+| Cycle de vie | Annuler l'émission (actuelle seulement), Supprimer l'épisode, Supprimer l'épisode et tous les suivants |
 | Info | Voir l'émission, Voir le fichier enregistré (si un enregistrement existe) |
 
 Le menu s'adapte à l'état de l'émission — ex. **Voir le

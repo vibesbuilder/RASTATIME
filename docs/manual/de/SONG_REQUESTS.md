@@ -222,7 +222,7 @@ lange Musik-Tail wird komplett gefüllt, sobald die Dramaturgie steht.
 
 > **Wie es unter der Haube funktioniert.** `AutoPlaylistManager::`
 > `fillRequestShows()` bearbeitet sowohl bereits laufende (noch nicht
-> beendete) als auch unmittelbar bevorstehende Instanzen.
+> beendete) als auch unmittelbar bevorstehende Episoden.
 > `_fillRequestShowByPositions()` löst `cc_playlistcontents` ab dem
 > persistierten `cc_show_instances.autoplaylist_cursor` bis
 > `now + RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (Standard 300) auf, hängt

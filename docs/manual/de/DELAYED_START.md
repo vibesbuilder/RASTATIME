@@ -26,7 +26,7 @@ Hintergrund-Task erledigt den Rest, wenige Minuten vor der Ausstrahlung.
 > angekreuzt ist. Die Verschiebung wird nie automatisch rückgängig
 > gemacht — siehe §6. Wenn Sie es sich anders überlegen, entfernen Sie
 > das Häkchen (künftige Überziehungen verschieben die Sendung dann
-> nicht mehr) oder ziehen Sie die Instanz im Kalender zurück.
+> nicht mehr) oder ziehen Sie die Episode im Kalender zurück.
 
 ---
 
@@ -258,10 +258,10 @@ bemerken — etwa um sich On Air zu entschuldigen oder die überbuchte
 Sendung beim nächsten Mal zu straffen.
 
 > **Wie es unter der Haube funktioniert.** Das Leeren einer
-> verschütteten Instanz spiegelt die Aktion **Sendeplan leeren** für
-> eine einzelne Instanz: Ihre `cc_schedule`-Zeilen werden gelöscht,
-> `time_filled` wird auf null gesetzt, die Instanz wird als
-> `modified_instance` markiert — Upstreams „gelöschte Folge", passend
+> verschütteten Episode spiegelt die Aktion **Sendeplan leeren** für
+> eine einzelne Episode: Ihre `cc_schedule`-Zeilen werden gelöscht,
+> `time_filled` wird auf null gesetzt, die Episode wird als
+> `modified_instance` markiert — Upstreams „gelöschte Episode", passend
 > für einen Slot, der nie sendet — plus `delayed_start_from` (seit
 > 27.09.2026, siehe unten), und `cc_files.is_scheduled` wird für jeden
 > Track zurückgesetzt, der nirgends mehr eingeplant ist.
@@ -303,7 +303,7 @@ Der Task ist **idempotent und arbeitet nur vorwärts**:
 
 > **Wie es unter der Haube funktioniert.**
 > `Application_Service_ShowShiftService::applyDelayedStarts()` wählt
-> überbuchende Instanzen aus, die weder gelöschte Folgen
+> überbuchende Episoden aus, die weder gelöschte Episoden
 > (`modified_instance`) noch bereits verschoben (`delayed_start_from`)
 > sind und deren Slot-Ende im Vorlauf-Fenster liegt, und läuft dann von
 > jeder vorwärts: leert
@@ -315,13 +315,13 @@ Der Task ist **idempotent und arbeitet nur vorwärts**:
 >
 > **Warum ein eigener Marker (27.09.2026).**  Die erste Live-Probe
 > zeigte, dass der Juni-Marker — `modified_instance`, Upstreams
-> „diese Folge wurde gelöscht" — die verschobene Sendung in Dashboard,
+> „diese Episode wurde gelöscht" — die verschobene Sendung in Dashboard,
 > Live-Info, allen Widgets, Kalender, Showbuilder und
 > Überlappungsprüfung versteckte, während das Playout sie spielte.
 > Migration 0058 ergänzte `cc_show_instances.delayed_start_from`; eine
 > verschobene Sendung bleibt jetzt überall an ihrer neuen Zeit
 > sichtbar.  Dass der ursprüngliche Slot gespeichert wird (nicht nur
-> ein Flag), lässt den Wiederholungs-Regenerator die verschobene Folge
+> ein Flag), lässt den Wiederholungs-Regenerator die verschobene Episode
 > auch beim Bearbeiten der Sendung wiederfinden, statt ein Duplikat
 > zur Serienzeit anzulegen. Das Ende der überziehenden Sendung wird bis
 > dorthin gedehnt, wo ihr Inhalt zur Ruhe kam. Intervall und Vorlauf sind
@@ -356,13 +356,13 @@ nahtlos überbrückt.
 - **Eine von Hand verschobene Sendung ist nicht selbst ein
   Verschiebungs-Ursprung.** Eine vom Task verschobene Sendung
   (`delayed_start_from` gesetzt) gilt nie als *Quelle* einer neuen
-  Kaskade, eine gelöschte Folge (`modified_instance`) wird ganz
+  Kaskade, eine gelöschte Episode (`modified_instance`) wird ganz
   übersprungen — eine Sendung, die Sie nur im Kalender gezogen haben,
-  ist dagegen eine gewöhnliche Instanz und kann weiterhin verschoben
+  ist dagegen eine gewöhnliche Episode und kann weiterhin verschoben
   oder geleert werden oder (wenn sie überzieht) selbst eine Kaskade
   auslösen. So bleibt der Mechanismus idempotent, ohne mit Ihren
   manuellen Änderungen in Konflikt zu geraten, konsistent damit,
-  wie von Hand bearbeitete Instanzen auch von anderen automatischen
+  wie von Hand bearbeitete Episoden auch von anderen automatischen
   Durchläufen in Ruhe gelassen werden.
 - **An jedem Schritt zählt nur das Kästchen der nächsten Sendung.** Ob
   Sendung A selbst angekreuzt ist, ist dafür unerheblich, ob A's

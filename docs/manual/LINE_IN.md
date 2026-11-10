@@ -459,7 +459,7 @@ it "Studio Mic" or "Anna's Mic" and ignore the OS label.
 Yes. Create a playlist containing exactly one Line-In row
 with Default Length = the show length (or infinite). Attach
 this playlist as the show's autoloading playlist. Every
-instance of the show will play exclusively from the
+episode of the show will play exclusively from the
 Line-In.
 
 ### "Is the Line-In's audio recorded if Record-per-Show is on?"

@@ -501,7 +501,7 @@ Sie das OS-Label.
 Ja. Erstellen Sie eine Playlist, die genau eine
 Line-In-Zeile mit Standardlänge = der Sendungslänge (oder
 unendlich) enthält. Hängen Sie diese Playlist als
-Autoloading Playlist der Sendung an. Jede Instanz der
+Autoloading Playlist der Sendung an. Jede Episode der
 Sendung wird ausschließlich vom Line-In spielen.
 
 ### "Wird das Audio des Line-Ins aufgezeichnet, wenn Record-per-Show aktiviert ist?"

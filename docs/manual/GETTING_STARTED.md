@@ -197,7 +197,7 @@ The show appears on the calendar as a coloured block.
 > row to `cc_show` (the show definition) and at least one row
 > to `cc_show_instances` (each occurrence). For a one-off show
 > like this you get one of each. A repeating show creates the
-> instances eagerly out to the configured horizon (~3 months by
+> episodes eagerly out to the configured horizon (~3 months by
 > default).
 
 ### 4.4 Fill the show with the track
@@ -214,7 +214,7 @@ Click **Save** at the top of the show-builder.
 > the calendar and pick **Apply Template** to fill it from a
 > reusable [Show Template](./SHOW_TEMPLATES.md), or attach an
 > [Autoloading Playlist](./AUTOLOADING_PLAYLISTS.md) so every
-> instance fills itself.
+> episode fills itself.
 
 ### 4.5 Wait for the show to start
 

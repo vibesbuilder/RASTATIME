@@ -192,7 +192,7 @@ administradores.
 | Botón | Efecto |
 |---|---|
 | **Delete All Tracks in Library** | Elimina cada pista de la biblioteca y de las parrillas futuras (upstream). |
-| **Clear Calendar** (desde 2026-10-14) | Elimina cada programa que **aún no ha empezado**, con su contenido, y termina todas las repeticiones. El programa en antena y todo el pasado se conservan, el historial de emisión mantiene sus nombres de programa. Un programa sin instancias restantes se borra. La confirmación indica cuántas instancias y programas se retiraron. |
+| **Clear Calendar** (desde 2026-10-14) | Elimina cada programa que **aún no ha empezado**, con su contenido, y termina todas las repeticiones. El programa en antena y todo el pasado se conservan, el historial de emisión mantiene sus nombres de programa. Un programa sin episodios restantes se borra. La confirmación indica cuántos episodios y programas se retiraron. |
 
 > **Bajo el capó.** Los valores son filas de la tabla `cc_pref`
 > (clave / valor).  Los valores por usuario (idioma, zona horaria,

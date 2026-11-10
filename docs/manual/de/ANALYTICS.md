@@ -53,7 +53,7 @@ löschen sie - Program Manager und Admins bearbeiten jeden Eintrag):
   Track**: wie oft jede Datei im Zeitraum lief. Nach jeder Spalte
   sortierbar.
 * **Show Summary** — dasselbe Zeitfenster gruppiert **pro
-  Sendungs-Instanz**. Eine Sendung aufklappen zeigt, was darin
+  Episode**. Eine Sendung aufklappen zeigt, was darin
   lief.
 
 > **Operator-Tipp.** Das Log Sheet protokolliert, was die *Engine*
@@ -150,7 +150,7 @@ ihn keine Statistik erfasst wird.
 ## 4. Show Listener Stats
 
 **Analytics → Show Listener Stats** faltet dieselben Hörerdaten
-**pro Sendungs-Instanz**: Für jede Sendung im gewählten Zeitraum
+**pro Episode**: Für jede Sendung im gewählten Zeitraum
 erhalten Sie die **durchschnittliche** und die **maximale** Zahl
 gleichzeitiger Hörer während ihrer Sendezeit.
 
@@ -177,7 +177,7 @@ Kreuzen Sie **Own production** (Eigenproduktion) in einer Sendung an
 oder wiederholend, Vorlagen und Import/Export tragen es als
 `own_production`).  Die Seite zählt die
 Episoden markierter Sendungen, die im Jahr gesendet wurden - beendet,
-nicht gelöscht, keine alte Rebroadcast-Instanz - mit ihrer **geplanten**
+nicht gelöscht, keine alte Rebroadcast-Episode - mit ihrer **geplanten**
 Dauer, je Sendung und Monat auf Minuten gerundet.  Sendungen, die als
 [Wiederholung einer anderen Sendung](./CALENDAR.md) angelegt sind,
 stehen in einer eigenen Spalte (Erstausstrahlungen gegenüber

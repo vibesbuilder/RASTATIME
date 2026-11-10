@@ -401,7 +401,7 @@ disabled by hand is never picked.
 > `cc_blockcriteria`. At build time, `BlockExpander.expand()`
 > assembles a PostgreSQL `SELECT … WHERE … LIMIT …` over
 > `cc_files`. Time-remaining limits convert to a duration cap
-> via the show instance's `getSecondsRemaining()` — since
+> via the episode's `getSecondsRemaining()` — since
 > 2026-10-06 the laid-out free time (`time_filled` = start to the end
 > of the last row); the pick is `Scheduler::pickRemainingBlock()`. See
 > ARCHITECTURE §23.19 for the outro-reserve interaction with
@@ -558,7 +558,7 @@ Two paths:
 
 2. **Autoloading**: attach the playlist to the show definition
    on the show-edit form's **Autoloading Playlist** section.
-   Every future instance of the show will have the playlist's
+   Every future episode of the show will have the playlist's
    items built into its schedule automatically. Editing the
    playlist *does* affect future builds. See
    [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md).

@@ -132,17 +132,17 @@ Vorlage auf jede zukünftige Sendung an".
 > [Kalender](./CALENDAR.md) §8). Siehe ARCHITECTURE §23.16
 > für das vollständige Entscheidungsprotokoll.
 
-### Beim Anwenden einer Vorlage auf ein Instanz-Bearbeitungs-Formular
+### Beim Anwenden einer Vorlage auf ein Episoden-Bearbeitungsformular
 
 Können Sie nicht. RASTATIME 2026-05-19 unterdrückt den
-**Vorlagen**-Abschnitt im Instanz-Bearbeiten-Dialog (eine
-Instanz einer wiederkehrenden Sendung). Das erneute
-Stempeln einer einzelnen Instanz würde entweder still auf
+**Vorlagen**-Abschnitt im Dialog **Episode bearbeiten** (eine
+Episode einer wiederkehrenden Sendung). Das erneute
+Stempeln einer einzelnen Episode würde entweder still auf
 Geschwister propagieren (verletzt das Einweg-Stempel-Modell)
 oder keinen Effekt auf sie haben (was den Operator in die
 Irre führen würde).
 
-Wenn Sie eine Instanz übersteuern müssen, bearbeiten Sie
+Wenn Sie eine Episode übersteuern müssen, bearbeiten Sie
 deren Felder direkt, ohne den Vorlagen-Pfad zu verwenden.
 
 ---
@@ -171,7 +171,7 @@ Bewusst ausgeschlossen:
 |---|---|
 | **Startdatum / Startzeit** | Pro-Verwendung; die Vorlage ist über viele Startzeiten wiederverwendbar. |
 | **Live-Stream-Passwort** | Sicherheit — eine gespeicherte Vorlage sollte keine Zugangsdaten enthalten. Der Operator setzt das Passwort pro Sendung. |
-| **Pro-Instanz-Beschreibungen** | Instanzspezifisch (z.B. "diese Woche ist der Gast X"). |
+| **Episoden-Beschreibungen** | Episodenspezifisch (z.B. "diese Woche ist der Gast X"). |
 
 > **Wie es unter der Haube funktioniert.** Vorlagen leben in
 > der Tabelle `cc_show_template` (`id`, `name UNIQUE`,
@@ -276,7 +276,7 @@ mit:
 
 **Erstes Mal:**
 
-1. Montags-Vorkommen erstellen: Neue Sendung, alle Felder
+1. Montags-Sendung erstellen: Neue Sendung, alle Felder
    ausfüllen, speichern.
 2. Montags-Sendung öffnen → **Als Vorlage speichern** →
    `Morgensendung` benennen.
@@ -296,7 +296,7 @@ mit:
    Mi, Do, Fr.
 4. Speichern.
 
-Dies erzeugt alle fünf Tage als Instanzen einer
+Dies erzeugt alle fünf Tage als Episoden einer
 wiederkehrenden Sendungsdefinition. Das Bearbeiten der
 Sendungsdefinition später ändert alle fünf.
 

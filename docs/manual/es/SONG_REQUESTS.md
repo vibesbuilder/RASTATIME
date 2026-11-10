@@ -224,8 +224,8 @@ colocada.
 > Manténgalo por encima del intervalo de pasada de 2 minutos.
 
 > **Cómo funciona por dentro.** `AutoPlaylistManager::`
-> `fillRequestShows()` procesa tanto las instancias que ya están al
-> aire (aún no terminadas) como las inminentes.
+> `fillRequestShows()` procesa tanto los episodios que ya están al
+> aire (aún no terminados) como los inminentes.
 > `_fillRequestShowByPositions()` resuelve `cc_playlistcontents` desde
 > el `cc_show_instances.autoplaylist_cursor` persistido hasta `now +`
 > `RASTATIME_REQUEST_FILL_AHEAD_SECONDS` (por defecto 300), añadiendo

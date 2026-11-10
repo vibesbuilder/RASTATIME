@@ -648,7 +648,7 @@ new files get the matching extension.
 **Copy Show Recordings into Library** *(since 2026-10-19)*: when
 ticked, a tagged copy of every finished show recording is imported
 into the library (track type "Recordings", title `<show> <date
-time>`, linked to the show instance); the file in the recording
+time>`, linked to the episode); the file in the recording
 folder stays untouched.  Details in
 [Record-per-Show, section 3.6](./RECORD_PER_SHOW.md).  Saved with
 the page's **Save**; the playout needs one restart

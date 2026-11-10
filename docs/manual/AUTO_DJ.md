@@ -233,7 +233,7 @@ wasteful and annoying.
 
 While you drag tracks into a show in the calendar or the show
 builder, that show is yours: every scheduling action now locks the
-show instance first, and the fill-pass does not wait for that lock.
+episode first, and the fill-pass does not wait for that lock.
 It skips the show for this cycle, writes an information line to the
 log ("is being edited right now - left alone until the next pass")
 and looks again a minute later.  Once your edit is saved and the show
@@ -245,7 +245,7 @@ operator's drop could fail with an error message.
 ### Fill-pass never modifies the show definition
 
 The fill-pass only inserts **schedule items** into the
-existing instance. It does not change the show's name,
+existing episode. It does not change the show's name,
 hosts, autoplaylist attachment, or any other definition
 field. The operator's intent for the show stays intact;
 only the empty tail is filled.
@@ -310,7 +310,7 @@ Check in order:
 
 This was a regression in v4 (Section 23.20). RASTATIME
 2026-05-21 onwards fixes it: the pre-pass queries up to 200
-upcoming instances and only requires the gap *start* (not
+upcoming episodes and only requires the gap *start* (not
 the gap *end*) to be inside the lookahead window. So a
 single gap creates a single show, even if the gap is
 multiple hours long. If you still see this, upgrade.

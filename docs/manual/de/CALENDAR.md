@@ -144,17 +144,17 @@ Standardwerten bleiben.
 
 | Abschnitt | Zweck |
 |---|---|
-| **Vorlagen** | Das Formular aus einer gespeicherten [Sendungs-Vorlage](./SHOW_TEMPLATES.md) vorausfüllen oder das aktuelle Formular nach Abschluss als Vorlage speichern. Versteckt beim Bearbeiten einer einzelnen Instanz einer wiederkehrenden Sendung. |
+| **Vorlagen** | Das Formular aus einer gespeicherten [Sendungs-Vorlage](./SHOW_TEMPLATES.md) vorausfüllen oder das aktuelle Formular nach Abschluss als Vorlage speichern. Versteckt beim Bearbeiten einer einzelnen Episode einer wiederkehrenden Sendung. |
 | **Was** | Name, URL, Genre, Beschreibung, Hosts, Hintergrund- / Textfarben, Sendungs-Bild. Das sichtbare Label im Kalender. |
 | **Wann** | Startdatum / Uhrzeit, Dauer, Enddatum, Wiederholungen, **Verzögerten Start erlauben** (diese Sendung später beginnen lassen, wenn die vorige überzogen hat — siehe [Verzögerter Sendungsstart](./DELAYED_START.md)). |
 | **Live-Stream-Eingabe** | Remote-Hosts erlauben, die Sendung via Show DJ zu übernehmen (Pro-Sendung-Benutzername + Passwort). |
 | **Aufnahme** | Ankreuzen, um den On-Air-Output der Sendung in eine Datei aufzuzeichnen. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
 | **Own production** (Eigenproduktion) | Ankreuzen bei Eigenproduktionen des Senders: die gesendeten Minuten der Sendung zählen in Analytics → [Sendeminuten](./ANALYTICS.md), ihre Teilnehmenden in Analytics → Teilnehmende (seit 2026-11-03).  Steht im Abschnitt **What** (Was); das Hilfe-Symbol daneben erklärt es kurz. |
 | **Hosts involved** (Moderierende) | Erscheint unter **Own production**, sobald es angekreuzt ist (seit 2026-11-04; bis 2026-11-07 *Number of involved people*): wie viele Moderierende in jeder Episode mitwirken, 0-999. Zählt einmal pro Jahr in Analytics → [Teilnehmende](./ANALYTICS.md), egal wie viele Episoden gesendet wurden; die Gäste einer einzelnen Episode werden unter Online archivieren eingetragen (**Guests involved**) und dazugezählt. Wird das Häkchen entfernt, bleibt die Zahl erhalten, sie zählt nur nicht mehr. |
-| **Autoloading Playlist** | Eine Playlist anhängen, um jede Instanz automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
+| **Autoloading Playlist** | Eine Playlist anhängen, um jede Episode automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Wer** | Zusätzliche Hosts über den primären unter Was gesetzten hinaus. |
-| **Archivierung** | Produzent, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (in Instanz bearbeiten seit 2026-11-04 schreibgeschützt). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
-| **Style** | Hintergrundfarbe, Textfarbe, Sendungs-Bild (sichtbar nur hier für einmalige Sendungen; für wiederkehrende Sendungen bleiben diese über Instanzen hinweg konstant). |
+| **Archivierung** | Produzent, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (in Episode bearbeiten seit 2026-11-04 schreibgeschützt). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
+| **Style** | Hintergrundfarbe, Textfarbe, Sendungs-Bild (sichtbar nur hier für einmalige Sendungen; für wiederkehrende Sendungen bleiben diese über Episoden hinweg konstant). |
 
 > **Operator-Tipp.** Wenn Sie im Begriff sind, denselben
 > Namen, dieselben Hosts, Farben und Autoloading Playlist
@@ -201,34 +201,38 @@ Aktion.
 | **Ansehen** | Lese-Ansicht der Metadaten der Sendung + Sendeplan. *Start* und *Length* je Zeile sind die ausgelegte Sendeplanzeile (Length = Cue-Out minus Cue-In, wie im Show Builder; seit 2026-10-23); die Summen unten sind die ausgelegte Inhaltslänge (inkl. Cue-Punkten und Crossfade-Überlappungen) gegenüber der Sendungsdauer. | Immer |
 | **Extras → Teaser** | Seit 2026-11-10 im Untermenü **Extras** (zusammen mit Online archivieren; ein Eintrag für People Involved ist dort geplant).  Die Jingles, die diese Sendung ankündigen - Typ ändern, lösen, weitere verknüpfen; siehe [Teaser-Automatik](./TEASERS.md). Seit 2026-10-16. | Admin / PM |
 | **Extras → Online archivieren** | Titel, Teaser, Beschreibung, Bild und Gäste dieser einen Episode, vor oder nach der Sendung, und „Jetzt online archivieren“ auf cba.media; siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03 (zuerst *Episode...* genannt). | Admin / PM / Hosts der Sendung (archivieren: Admin / PM) |
-| **Sendung bearbeiten** | Die Sendungsdefinition bearbeiten (Name, Zeit, Wiederholungen usw.). | Zukünftige oder aktuelle Sendungen |
-| **Instanz bearbeiten** | Nur dieses eine Vorkommen einer wiederkehrenden Sendung bearbeiten. | Nur wiederkehrende Sendungen |
+| **Bearbeiten → Episode bearbeiten** | Nur diese eine Episode einer wiederkehrenden Sendung bearbeiten. | Nur wiederkehrende Sendungen |
+| **Bearbeiten → Sendung bearbeiten** | Die Sendungsdefinition bearbeiten (Name, Zeit, Wiederholungen usw.). Eine nicht wiederholte Sendung zeigt nur **Sendung bearbeiten**. | Zukünftige oder aktuelle Sendungen |
 | **Sendung abbrechen** | Die Sendung *jetzt* beenden — nur für die aktuell laufende Sendung sinnvoll. | Nur aktuelle Sendung |
-| **Sendung löschen** | Die gesamte Sendung + alle Instanzen entfernen. | Nur zukünftige Sendungen |
-| **Diese Instanz löschen** | Nur dieses eine Vorkommen einer wiederkehrenden Sendung entfernen. | Wiederkehrende Sendungen, nur zukünftige |
+| **Löschen → Episode löschen** | Nur diese eine Episode einer wiederkehrenden Sendung entfernen. | Wiederkehrende Sendungen, nur zukünftige |
+| **Löschen → Episode und alle folgenden löschen** | Diese Episode und alle folgenden Episoden der Sendung entfernen.  Eine nicht wiederholte Sendung zeigt nur **Löschen** und entfernt die Sendung. | Nur zukünftige Sendungen |
 | **Sendeplan leeren** | Den geplanten Inhalt der Sendung löschen, aber den leeren Slot behalten. | Nur zukünftige Sendungen |
 
-> **Warum "Sendung bearbeiten" vs "Instanz bearbeiten".**
+Eine einzeln bearbeitete Episode einer wiederholten Sendung zeigt nur
+**Episode bearbeiten** und **Episode löschen** (bis 2026-11-10 hießen
+die Einträge *Instanz bearbeiten* / *Instanz löschen*).
+
+> **Warum "Sendung bearbeiten" vs "Episode bearbeiten".**
 > Eine wöchentliche Sendung ist eine *Definition* mit vielen
-> *Instanzen*. Das Bearbeiten der Definition ändert jede
-> zukünftige Instanz (z.B. Verschieben der Sendung von
+> *Episoden*. Das Bearbeiten der Definition ändert jede
+> zukünftige Episode (z.B. Verschieben der Sendung von
 > Montagen auf Dienstage). Das Bearbeiten einer einzelnen
-> Instanz erzeugt eine Pro-Vorkommen-Übersteuerung (z.B.
-> diese eine Woche ist der Host anders). Die Instanz-
+> Episode erzeugt eine Pro-Vorkommen-Übersteuerung (z.B.
+> diese eine Woche ist der Host anders). Die Episoden-
 > Übersteuerung überlebt die nächste Definitionsbearbeitung,
 > propagiert sich aber nicht auf Geschwister.
 
-### Was "Instanz bearbeiten" nicht kann
+### Was "Episode bearbeiten" nicht kann
 
 - Kann keine Sendungs-Vorlage anwenden. Vorlagen gelten nur
   für ganze Sendungen, weil das Stempeln einer Vorlage auf
-  eine Instanz entweder still auf Geschwister propagieren
+  eine Episode entweder still auf Geschwister propagieren
   würde (verletzt das Einweg-Stempel-Modell) oder keinen
   Effekt auf sie haben würde (was den Operator in die Irre
   führen würde). RASTATIME 2026-05-19 unterdrückt den
-  Vorlagen-Abschnitt im Instanz-Bearbeiten-Formular aus
+  Vorlagen-Abschnitt im Episoden-Formular aus
   diesem Grund.
-- Kann den Start/Ende der Instanz nicht auf eine Zeit
+- Kann den Start/Ende der Episode nicht auf eine Zeit
   außerhalb des Wiederholungsmusters der übergeordneten
   Sendung ändern.
 - Kann den Abschnitt **Archivierung** nicht ändern: Er zeigt
@@ -238,9 +242,9 @@ Aktion.
 
 ---
 
-### Was „Instanz bearbeiten" seit 2026-11-03 ändern kann: das Autoloading
+### Was „Episode bearbeiten" seit 2026-11-03 ändern kann: das Autoloading
 
-Der Abschnitt **Autoloading Playlist** des Instanz-Formulars ist
+Der Abschnitt **Autoloading Playlist** des Episoden-Formulars ist
 bearbeitbar.  **Use the show's autoloading settings** (vorangekreuzt)
 hält die Episode bei Playlist, Intro, Outro und Wiederholung der
 Sendung.  Abgewählt gelten die Felder darunter nur für diese Episode -
@@ -258,7 +262,7 @@ neu befüllt.
 ## 4. Wiederkehrende Sendungen
 
 Eine wiederkehrende Sendung ist eine Definition mit vielen
-Instanzen, die eifrig bis zu einem konfigurierbaren Horizont
+Episoden, die eifrig bis zu einem konfigurierbaren Horizont
 (standardmäßig ~3 Monate) materialisiert werden.
 
 ### Eine wiederkehrende Sendung erstellen
@@ -269,7 +273,7 @@ Drei Unterfelder erscheinen:
 | Feld | Bedeutung |
 |---|---|
 | **Wiederholungstyp** | Wöchentlich / Zweiwöchentlich / Dreiwöchentlich / Monatlich. |
-| **Monate wählen** (seit 2026-10-14) | Nur bei monatlicher Wiederholung: Haken bei den Monaten, in denen die Sendung stattfindet, standardmäßig alle zwölf. Juli und August abwählen für eine Sommerpause, jeden dritten Monat behalten für eine Quartalssendung. Kombinierbar mit *Repeat By* (Tag des Monats / Wochentag). Wird bei einer bestehenden Sendung ein Monat abgewählt, verschwinden ihre künftigen Instanzen in diesem Monat. |
+| **Monate wählen** (seit 2026-10-14) | Nur bei monatlicher Wiederholung: Haken bei den Monaten, in denen die Sendung stattfindet, standardmäßig alle zwölf. Juli und August abwählen für eine Sommerpause, jeden dritten Monat behalten für eine Quartalssendung. Kombinierbar mit *Repeat By* (Tag des Monats / Wochentag). Wird bei einer bestehenden Sendung ein Monat abgewählt, verschwinden ihre künftigen Episoden in diesem Monat. |
 | **Tage** | Welche Wochentage (für Wöchentlich / Zweiwöchentlich / Dreiwöchentlich). |
 | **Enddatum** | Optional — wann die Wiederholung stoppt. Leer lassen, um unbegrenzt zu wiederholen. |
 
@@ -282,14 +286,14 @@ Drei Unterfelder erscheinen:
 ### Eine wiederkehrende Sendung bearbeiten
 
 - **Sendung bearbeiten** ändert die Definition: jede
-  zukünftige Instanz übernimmt die Änderung.
-  Vergangene Instanzen bleiben wie sie waren.
-- **Instanz bearbeiten** erzeugt eine
+  zukünftige Episode übernimmt die Änderung.
+  Vergangene Episoden bleiben wie sie waren.
+- **Episode bearbeiten** erzeugt eine
   Pro-Vorkommen-Übersteuerung (siehe oben).
-- **Diese Instanz löschen** entfernt nur dieses eine
-  Vorkommen.
-- **Sendung löschen** entfernt die gesamte Serie inklusive
-  aller zukünftigen Instanzen.
+- **Episode löschen** entfernt nur diese eine
+  Episode.
+- **Episode und alle folgenden löschen** entfernt diese und
+  alle zukünftigen Episoden der Serie.
 - **Rückgängig nach dem Löschen** (seit 2026-10-28): ein Löschen
   über das Kalendermenü erreicht den Server nicht sofort. Die
   Sendung verschwindet aus dem Kalender, und ein Hinweis am
@@ -303,7 +307,7 @@ Drei Unterfelder erscheinen:
 > **Wie es unter der Haube funktioniert.** Wiederkehrende
 > Sendungen schreiben eine `cc_show`-Zeile + eine
 > `cc_show_days`-Zeile pro Wiederholungstag + `cc_show_instances`-
-> Zeilen für jede materialisierte Instanz. Der
+> Zeilen für jede materialisierte Episode. Der
 > Materialisierungshorizont wird unter Einstellungen →
 > Allgemeine Einstellungen konfiguriert. Das Erweitern des
 > Horizonts ist O(N) auf bestehenden wiederkehrenden
@@ -318,13 +322,13 @@ Viele Sendungen laufen einmal und werden einmal wiederholt, an einem
 anderen Wochentag oder in einer anderen Woche.  Öffnen Sie das
 **Edit-Show**-Formular der Wiederholung, Abschnitt **Wiederholung**
 (direkt über Autoloading Playlist), und wählen Sie unter **Wiederholung von Sendung** das
-Original.  Von da an wird jede Instanz der Wiederholung automatisch
+Original.  Von da an wird jede Episode der Wiederholung automatisch
 befüllt:
 
 - **Welche Sendungen die Liste anbietet** *(seit 2026-10-27)*: jede
   Sendung, die noch kommt oder gerade läuft, und eine bereits
   gelaufene Sendung (innerhalb der letzten 60 Tage) nur, wenn ihre
-  letzte Instanz vollständig wiederholbar ist - nur Tracks, oder ihre
+  letzte Episode vollständig wiederholbar ist - nur Tracks, oder ihre
   Aufnahme ist importiert.  Eine vergangene Live-Sendung ohne Aufnahme
   wird nicht angeboten: Wählen Sie das Original, bevor es läuft.  Eine
   bereits gespeicherte Quelle bleibt wählbar.
@@ -332,7 +336,7 @@ befüllt:
   derselbe Vorlauf wie beim Autoloading), nicht am Ende des Originals
   - Korrekturen am Original nach der Ausstrahlung werden so
   mitgenommen.
-- **Was**: der Inhalt der **zuletzt beendeten** Instanz des Originals
+- **Was**: der Inhalt der **zuletzt beendeten** Episode des Originals
   - Dateien und Webstreams in ihrer Reihenfolge mit den gesendeten
   Cue-Punkten und Blenden, Jingles eingeschlossen.  Die
   Autoloading-Playlist füllt danach die Restzeit.
@@ -350,7 +354,7 @@ befüllt:
   Live-Zeile kopiert und ein Line-In bleibt draußen.  Die Aufnahme ist vor dem Löschen geschützt, solange eine
   anstehende Wiederholung sie braucht.
 - **Wenn das Original noch nicht gelaufen ist** (erste Woche,
-  abgesagte Instanz): die Wiederholung bleibt ihrer
+  abgesagte Episode): die Wiederholung bleibt ihrer
   Autoloading-Playlist überlassen.
 - **Länge**: eine kürzere Wiederholung wird am Ende abgeschnitten wie
   jede überbuchte Sendung; eine längere füllt ihre Autoloading-Playlist
@@ -372,7 +376,7 @@ Name des Originals.
 
 **View Show** einer befüllten Wiederholung zeigt „Wiederholung von
 Sendung A vom <Datum> um <Zeit>" und, falls Zeilen übersprungen
-wurden, wie viele.  Eine Instanz, die bereits Inhalt hat (von Hand
+wurden, wie viele.  Eine Episode, die bereits Inhalt hat (von Hand
 befüllt), wird nie überschrieben.  Aufgezeichnete Live-Sendungen
 lassen sich so noch nicht wiederholen (Stufe 2, siehe BACKLOG).
 
@@ -392,7 +396,7 @@ Sendungs-Block auf eine andere Zeit / einen anderen Tag.
 - Das Ziehen respektiert die Nicht-Überlappungs-Regel: das
   Ablegen auf einem belegten Slot wird mit einem roten
   Flash abgelehnt.
-- Für eine wiederkehrende Sendung wird nur *diese Instanz*
+- Für eine wiederkehrende Sendung wird nur *diese Episode*
   verschoben — der Rest der Serie bleibt.
 
 ### 5.2 Eine Sendung skalieren
@@ -424,8 +428,8 @@ Rechtsklick auf eine beliebige Sendung:
 | Gruppe | Items |
 |---|---|
 | Inhalt | Tracks einplanen, Sendeplan leeren |
-| Bearbeitung | Sendung bearbeiten, Instanz bearbeiten, Vorlage anwenden, Als Vorlage speichern |
-| Lebenszyklus | Sendung abbrechen (nur aktuelle), Sendung löschen, Diese Instanz löschen |
+| Bearbeitung | Bearbeiten → Episode bearbeiten / Sendung bearbeiten, Vorlage anwenden, Als Vorlage speichern |
+| Lebenszyklus | Sendung abbrechen (nur aktuelle), Löschen → Episode löschen / Episode und alle folgenden löschen (nicht wiederholte Sendung: nur Löschen) |
 | Info | Sendung ansehen, Aufnahmedatei ansehen (wenn eine Aufnahme existiert) |
 
 Das Menü passt sich dem Zustand der Sendung an — z.B.

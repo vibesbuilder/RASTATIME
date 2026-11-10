@@ -225,9 +225,9 @@ coloré.
 > **Comment ça marche sous le capot.** Enregistrer le
 > formulaire écrit une ligne dans `cc_show` (la définition
 > de l'émission) et au moins une ligne dans
-> `cc_show_instances` (chaque occurrence). Pour une
+> `cc_show_instances` (chaque épisode). Pour une
 > émission ponctuelle comme celle-ci, vous obtenez une de
-> chaque. Une émission récurrente crée les instances avec
+> chaque. Une émission récurrente crée les épisodes avec
 > empressement jusqu'à l'horizon configuré (~3 mois par
 > défaut).
 
@@ -249,7 +249,7 @@ Cliquez sur **Enregistrer** en haut du show-builder.
 > un [Modèle d'émission](./SHOW_TEMPLATES.md)
 > réutilisable, ou attacher une
 > [Autoloading Playlist](./AUTOLOADING_PLAYLISTS.md) pour
-> que chaque instance se remplisse elle-même.
+> que chaque épisode se remplisse lui-même.
 
 ### 4.5 Attendre que l'émission commence
 

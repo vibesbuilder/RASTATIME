@@ -10,7 +10,7 @@
 
 Une **autoloading playlist** est une playlist de bibliothèque
 *attachée à une définition d'émission*, de sorte que chaque
-instance de l'émission est remplie depuis cette playlist
+épisode de l'émission est rempli depuis cette playlist
 automatiquement. Vous gérez la playlist une fois ; chaque
 émission du lundi à 09:00 prend ce que la playlist contient
 actuellement.
@@ -27,13 +27,13 @@ chaque jour de semaine.
 ## 1. Les bases
 
 Une émission avec autoloading playlist est construite
-**une fois par instance** par le builder d'autoplaylist
+**une fois par épisode** par le builder d'autoplaylist
 d'arrière-plan. Le build se produit typiquement 60
-secondes avant le début de l'instance — juste à temps pour
+secondes avant le début de l'épisode — juste à temps pour
 que l'émission reflète l'état le plus récent de la
 playlist.
 
-La séquence de build pour chaque instance est :
+La séquence de build pour chaque épisode est :
 
 1. (Optionnel) **Playlist intro** ajoutée au début.
 2. Items de la **playlist body** ajoutés en ordre ; les
@@ -82,7 +82,7 @@ l'émission** → développez **Autoloading Playlist**.
 
 Enregistrez l'émission. Le builder d'autoplaylist prend
 l'attachement à son prochain poll (par défaut toutes les
-60 s) et construit les instances futures en conséquence.
+60 s) et construit les épisodes futurs en conséquence.
 
 ---
 
@@ -95,7 +95,7 @@ l'attachement à son prochain poll (par défaut toutes les
 > [Calendrier](./CALENDAR.md) § 4 « Rediffusion d'une autre émission ».
 
 > **Chargement automatique par épisode (depuis le 2026-11-03).**
-> « Modifier l'instance » peut donner à un épisode sa propre playlist,
+> « Modifier l'épisode » peut donner à un épisode sa propre playlist,
 > son intro, son outro ou la répétition, ou aucun chargement
 > automatique ; décochez **Use the show's autoloading settings** dans
 > la section Autoloading Playlist.  Seulement avant le build (environ une
@@ -104,10 +104,10 @@ l'attachement à son prochain poll (par défaut toutes les
 ## 3. La cadence de build de 60 secondes
 
 Le builder d'autoplaylist tourne toutes les 60 secondes.
-Pour chaque instance à venir d'une émission avec
+Pour chaque épisode à venir d'une émission avec
 autoloading playlist :
 
-- Si l'instance commence dans **moins de ~60 s** et n'a
+- Si l'épisode commence dans **moins de ~60 s** et n'a
   pas encore été construite, construire maintenant.
 - Sinon, la laisser pour le prochain cycle.
 
@@ -130,7 +130,7 @@ modifiée.
 > le `SchedulePollJob` du worker job runner toutes les
 > 60 s. Chaque cycle parcourt chaque émission à venir avec
 > `cc_show_autoplaylist.has_autoplaylist = TRUE`, vérifie
-> si le planning de l'instance est déjà peuplé, et
+> si le planning de l'épisode est déjà peuplé, et
 > construit sinon. Voir ARCHITECTURE §17 pour la pipeline
 > complète.
 
@@ -183,8 +183,8 @@ une surréservation.
 > `Scheduler::scheduleFilesAfter()`. La ligne de journal
 > « show_instance_id=N filled - intro a, outro b, auto c (+d top-up)
 > rows, x s free at the end » résume chaque build ;
-> `ap_fill_test.php` (C:\Temp\optd) répète un remplissage sur une
-> instance temporaire.
+> `ap_fill_test.php` (C:\Temp\optd) répète un remplissage sur un
+> épisode temporaire.
 
 **Un épisode plus long que le créneau (depuis le 26/10/2026).**  Le
 premier élément qui ne tenait pas était laissé de côté, et Auto DJ
@@ -312,10 +312,10 @@ Modifier l'émission → développer **Autoloading Playlist**
 → décocher **Ajouter Autoloading Playlist ?** →
 Enregistrer.
 
-Les instances futures ne s'auto-construiront plus. Les
-instances déjà construites gardent leur contenu construit
-(pas de changement rétroactif). Pour vider une instance
-déjà construite, ouvrez l'émission dans le calendrier →
+Les épisodes futurs ne s'auto-construiront plus. Les
+épisodes déjà construits gardent leur contenu construit
+(pas de changement rétroactif). Pour vider un épisode
+déjà construit, ouvrez l'émission dans le calendrier →
 **Vider le planning**.
 
 
@@ -325,7 +325,7 @@ déjà construite, ouvrez l'émission dans le calendrier →
 > de ces émissions est aussi décochée.  Si une émission porte malgré
 > tout la case sans playlist (import, ancienne base), la bannière du
 > tableau de bord avertit « L'autoloading est actif, mais l'émission n'a
-> pas de playlist » pour chaque occurrence des 48 prochaines heures -
+> pas de playlist » pour chaque épisode des 48 prochaines heures -
 > modifiez l'émission et choisissez une playlist.
 
 ---
@@ -338,7 +338,7 @@ Référence rapide :
 | | Autoloading Playlist | Auto DJ |
 |---|---|---|
 | **Où attaché** | Formulaire d'édition d'une émission spécifique | Paramètres → Auto DJ (au niveau station) |
-| **Quand ça remplit** | Par instance d'émission, 60 s avant le début | (a) Crée de nouvelles émissions dans les trous du calendrier. (b) Complète les émissions incomplètes à venir. |
+| **Quand ça remplit** | Par épisode, 60 s avant le début | (a) Crée de nouvelles émissions dans les trous du calendrier. (b) Complète les émissions incomplètes à venir. |
 | **Avec quoi ça remplit** | La playlist configurée (n'importe quelle structure) | Une playlist Auto-DJ configurée |
 | **Affecte quelles émissions** | Seulement l'émission à laquelle elle est attachée | Toutes les émissions + en crée de nouvelles |
 | **Besoin d'un animateur ?** | Non | Non |
@@ -361,15 +361,15 @@ complète.
 
 Trois possibilités :
 
-1. L'instance a déjà commencé — l'auto-build ne touche
-   que les instances *futures*.
-2. L'instance a déjà été remplie manuellement.
+1. L'épisode a déjà commencé — l'auto-build ne touche
+   que les épisodes *futurs*.
+2. L'épisode a déjà été rempli manuellement.
    L'auto-build saute toute émission qui a déjà des items
    planifiés.
 3. Le worker job runner ne tourne pas. Vérifiez
    `Get-Service RASTATIME-WORKER`.
 
-### "Comment voir si l'auto-build a tourné pour une instance spécifique ?"
+### "Comment voir si l'auto-build a tourné pour un épisode spécifique ?"
 
 Ouvrez l'émission dans le calendrier ; la barre de
 remplissage du calendrier devrait être > 0 %. Si elle est
@@ -377,7 +377,7 @@ remplissage du calendrier devrait être > 0 %. Si elle est
 l'auto-build n'a pas encore tourné. Attendez 60 s et
 rechargez, ou utilisez **Vider le planning** + rouvrir
 pour forcer le prochain cycle de poll à traiter
-l'instance comme fraîche.
+l'épisode comme frais.
 
 ### "La playlist intro peut-elle contenir un smart block ?"
 

@@ -443,8 +443,8 @@ Une piste désactivée à la main n'est jamais choisie.
 > `BlockExpander.expand()` assemble un PostgreSQL
 > `SELECT … WHERE … LIMIT …` sur `cc_files`. Les limites
 > de temps restant se convertissent en plafond de durée
-> via la méthode `getSecondsRemaining()` de l'instance
-> d'émission (depuis le 2026-10-06 le temps libre mis en page :
+> via la méthode `getSecondsRemaining()` de l'épisode
+> (depuis le 2026-10-06 le temps libre mis en page :
 > `time_filled` = début jusqu'à la fin de la dernière ligne ; le choix
 > revient à `Scheduler::pickRemainingBlock()`). Voir ARCHITECTURE §23.19 pour
 > l'interaction réserve d'outro avec les smart blocks
@@ -612,8 +612,8 @@ Deux chemins :
 
 2. **Autoloading** : attachez la playlist à la définition
    d'émission dans la section **Autoloading Playlist** du
-   formulaire d'édition d'émission. Chaque future
-   instance de l'émission aura les items de la playlist
+   formulaire d'édition d'émission. Chaque futur
+   épisode de l'émission aura les items de la playlist
    construits automatiquement dans son planning.
    Modifier la playlist *affecte* les futurs builds.
    Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md).

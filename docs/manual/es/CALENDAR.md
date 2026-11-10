@@ -105,9 +105,9 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
 | **Own production** (producción propia) | Marcar en las producciones propias de la emisora: los minutos emitidos del programa cuentan en Analytics → [Minutos de programa](./ANALYTICS.md), sus personas en Analytics → Participantes (desde 2026-11-03).  Está en la sección **Qué** (*What* en la interfaz); el icono de ayuda junto a la casilla la explica en breve. |
 | **Hosts involved** (presentadores) | Aparece debajo de **Own production** en cuanto se marca (desde 2026-11-04; *Number of involved people* hasta el 2026-11-07): cuántos presentadores participan en cada episodio, 0-999. Cuenta una vez al año en Analytics → [Participantes](./ANALYTICS.md), sin importar cuántos episodios se emitieron; los invitados de un solo episodio se introducen en Archivar en línea (**Guests involved**) y se suman. Quitar la casilla conserva el número; solo deja de contar. |
-| **Autoloading Playlist** | Adjuntar una playlist para rellenar cada instancia automáticamente. |
+| **Autoloading Playlist** | Adjuntar una playlist para rellenar cada episodio automáticamente. |
 | **Quién** | Presentadores adicionales. |
-| **Archivo** | Productor, cuenta de CBA, valores de cba.media y archivo automático del programa (de solo lectura en Editar instancia desde el 2026-11-04). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
+| **Archivo** | Productor, cuenta de CBA, valores de cba.media y archivo automático del programa (de solo lectura en Editar episodio desde el 2026-11-04). Véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03. |
 | **Estilo** | Color de fondo, color de texto, imagen de programa. |
 
 ### Por qué el formulario rechaza su guardado
@@ -136,25 +136,28 @@ acción.
 | **Ver** | Vista de solo lectura de los metadatos + programación del programa. *Start* y *Length* de cada fila son la fila de programación tal como queda colocada (Length = cue-out menos cue-in, como en el show builder; desde el 2026-10-23); los totales de abajo son la longitud colocada del contenido (con puntos de cue y solapes de crossfade) frente a la duración del programa. | Siempre |
 | **Extras → Teasers** | Desde 2026-11-10 en el submenú **Extras** (junto con Archivar en línea; allí está prevista una entrada People Involved).  Los jingles que anuncian este programa: cambiar tipos, desvincular, vincular más; véase [Automatización de teasers](./TEASERS.md). Desde 2026-10-16. | Admin / PM |
 | **Extras → Archivar en línea** | Título, teaser, descripción, imagen e invitados de este episodio, antes o después de emitirse, y «Archivar en línea ahora» en cba.media; véase [Archivo](./ARCHIVING.md). Desde el 2026-11-03 (primero llamado *Episodio...*). | Admin / PM / presentadores del programa (archivar: Admin / PM) |
-| **Editar programa** | Editar la definición de programa. | Programas futuros o actuales |
-| **Editar instancia** | Editar solo esta ocurrencia de un programa recurrente. | Programas recurrentes solamente |
+| **Editar → Editar episodio** | Editar solo este episodio de un programa recurrente. Un episodio editado así ofrece solo **Editar episodio**. | Programas recurrentes solamente |
+| **Editar → Editar programa** | Editar la definición de programa. Un programa no recurrente muestra **Editar programa** directamente. | Programas futuros o actuales |
 | **Cancelar programa** | Terminar el programa *ahora*. | Programa actual solamente |
-| **Eliminar programa** | Retirar todo el programa + todas sus instancias. | Programas futuros solamente |
-| **Eliminar esta instancia** | Retirar solo esta ocurrencia. | Programas recurrentes, futuros solamente |
+| **Eliminar** | Retirar un programa no recurrente. | Programas no recurrentes, futuros solamente |
+| **Eliminar → Eliminar episodio** | Retirar solo este episodio de un programa recurrente. Un episodio editado ofrece solo **Eliminar episodio**. | Programas recurrentes, futuros solamente |
+| **Eliminar → Eliminar episodio y todos los siguientes** | Retirar este episodio y todos los siguientes; la serie termina antes de él. | Programas recurrentes, futuros solamente |
 | **Vaciar planning** | Borrar el contenido planificado pero mantener el slot vacío. | Programas futuros solamente |
 
-> **Por qué "Editar programa" vs "Editar instancia".** Un
-> programa semanal es una *definición* con muchas
-> *instancias*. Editar la definición cambia cada instancia
-> futura. Editar una sola instancia crea una anulación
-> por-ocurrencia.
+> **Por qué "Editar programa" vs "Editar episodio".** Un
+> programa semanal es una *definición* con muchos
+> *episodios*. Editar la definición cambia cada episodio
+> futuro. Editar un solo episodio crea una anulación
+> por episodio.
+> (*Editar episodio* / *Eliminar episodio* se llamaban *Edit Instance* /
+> *Delete Instance* hasta 2026-11-10.)
 
-### Lo que "Editar instancia" no puede hacer
+### Lo que "Editar episodio" no puede hacer
 
 - No puede aplicar una Plantilla de programa. RASTATIME
   2026-05-19 suprime la sección Plantillas en el
-  formulario Editar instancia.
-- No puede cambiar el inicio/fin de la instancia fuera
+  formulario Editar episodio.
+- No puede cambiar el inicio/fin del episodio fuera
   del patrón de repetición del programa padre.
 - No puede cambiar la sección **Archivo**: muestra los valores
   del programa de solo lectura (desde 2026-11-04).  La
@@ -163,9 +166,9 @@ acción.
 
 ---
 
-### Lo que «Editar instancia» puede cambiar desde 2026-11-03: la carga automática
+### Lo que «Editar episodio» puede cambiar desde 2026-11-03: la carga automática
 
-La sección **Autoloading Playlist** del formulario de instancia es
+La sección **Autoloading Playlist** del formulario del episodio es
 editable.  **Use the show's autoloading settings** (marcado por
 defecto) mantiene el episodio con la lista, intro, outro y repetición
 del programa.  Desmárquelo y los campos de abajo se aplican solo a este
@@ -182,8 +185,8 @@ los ajustes actuales.
 
 ## 4. Programas recurrentes
 
-Un programa recurrente es una definición con muchas
-instancias materializadas eagerly hasta un horizonte
+Un programa recurrente es una definición con muchos
+episodios materializados eagerly hasta un horizonte
 configurable (~3 meses por defecto).
 
 ### Crear un programa recurrente
@@ -194,18 +197,19 @@ sub-campos aparecen:
 | Campo | Significado |
 |---|---|
 | **Tipo de repetición** | Semanal / Quincenal / Trisemanal / Mensual. |
-| **Seleccionar meses** (desde 2026-10-14) | Solo en repetición mensual: marque los meses en que se emite el programa, los doce por defecto. Desmarque julio y agosto para una pausa de verano, o conserve un mes de cada tres para un programa trimestral. Se combina con *Repeat By* (día del mes / día de la semana). Desmarcar un mes en un programa existente elimina sus instancias futuras de ese mes. |
+| **Seleccionar meses** (desde 2026-10-14) | Solo en repetición mensual: marque los meses en que se emite el programa, los doce por defecto. Desmarque julio y agosto para una pausa de verano, o conserve un mes de cada tres para un programa trimestral. Se combina con *Repeat By* (día del mes / día de la semana). Desmarcar un mes en un programa existente elimina sus episodios futuros de ese mes. |
 | **Días** | Qué días de la semana. |
 | **Fecha de fin** | Opcional. |
 
 ### Editar un programa recurrente
 
-- **Editar programa** cambia la definición: cada instancia
-  futura toma el cambio.
-- **Editar instancia** crea una anulación
-  por-ocurrencia.
-- **Eliminar esta instancia** retira solo esa ocurrencia.
-- **Eliminar programa** retira toda la serie.
+- **Editar programa** cambia la definición: cada episodio
+  futuro toma el cambio.
+- **Editar episodio** crea una anulación
+  por episodio.
+- **Eliminar episodio** retira solo ese episodio.
+- **Eliminar episodio y todos los siguientes** retira ese episodio y
+  todos los episodios siguientes de la serie.
 - **Deshacer tras eliminar** (desde 2026-10-28): una eliminación
   desde el menú del calendario no llega al servidor de inmediato.
   El programa desaparece del calendario y un aviso al pie de la
@@ -219,7 +223,7 @@ sub-campos aparecen:
 > **Cómo funciona bajo el capó.** Programas recurrentes
 > escriben una fila `cc_show` + una fila `cc_show_days`
 > por día de repetición + filas `cc_show_instances` para
-> cada ocurrencia materializada.
+> cada episodio materializado.
 
 ---
 
@@ -229,12 +233,12 @@ Muchos programas se emiten una vez y se repiten una vez, otro día o
 en otra semana.  Abra el formulario **Edit Show** de la repetición,
 sección **Repetición** (justo encima de Autoloading Playlist), y
 elija el original en **Repetición
-del programa**.  Desde entonces cada instancia de la repetición se
+del programa**.  Desde entonces cada episodio de la repetición se
 rellena automáticamente:
 
 - **Qué programas ofrece la lista** *(desde 2026-10-27)*: todo
   programa que aún está por venir o en antena, y un programa ya
-  emitido (en los últimos 60 días) solo si su última instancia se
+  emitido (en los últimos 60 días) solo si su último episodio se
   puede repetir completa: solo pistas, o su grabación está importada.
   Un programa en directo pasado sin grabación no se ofrece: elija el
   original antes de que se emita.  Una fuente ya guardada sigue
@@ -243,7 +247,7 @@ rellena automáticamente:
   una hora, la misma antelación que la carga automática), no al final
   del original; así se trasladan las correcciones hechas al original
   tras su emisión.
-- **Qué**: el contenido de la **última instancia terminada** del
+- **Qué**: el contenido del **último episodio terminado** del
   original: archivos y retransmisiones en su orden con los puntos de
   cue y fundidos emitidos, jingles incluidos.  La lista de carga
   automática rellena después el tiempo restante.
@@ -262,8 +266,8 @@ rellena automáticamente:
   fuera, como antes.  La grabación
   está protegida contra el borrado mientras una repetición pendiente la
   necesite.
-- **Si el original aún no se ha emitido** (primera semana, instancia
-  cancelada): la repetición se deja a su lista de carga automática.
+- **Si el original aún no se ha emitido** (primera semana, episodio
+  cancelado): la repetición se deja a su lista de carga automática.
 - **Duración**: una repetición más corta se corta al final como
   cualquier programa sobrecargado; una más larga la completa su lista
   de carga automática.
@@ -283,7 +287,7 @@ el nombre del original.
 
 **View Show** en una repetición rellenada dice «Repetición del
 programa A del <fecha> a las <hora>» y, si se omitieron filas,
-cuántas.  Una instancia que ya tiene contenido (rellenada a mano)
+cuántas.  Un episodio que ya tiene contenido (rellenado a mano)
 nunca se sobrescribe.  Los programas en vivo grabados aún no se
 pueden repetir así (etapa 2, véase BACKLOG).
 
@@ -320,8 +324,8 @@ Clic derecho en cualquier programa:
 | Grupo | Items |
 |---|---|
 | Contenido | Planificar pistas, Vaciar planning |
-| Edición | Editar programa, Editar instancia, Aplicar plantilla, Guardar como plantilla |
-| Ciclo de vida | Cancelar programa, Eliminar programa, Eliminar esta instancia |
+| Edición | Editar episodio, Editar programa, Aplicar plantilla, Guardar como plantilla |
+| Ciclo de vida | Cancelar programa, Eliminar (programas no recurrentes), Eliminar episodio, Eliminar episodio y todos los siguientes |
 | Info | Ver programa, Ver archivo grabado |
 
 ---

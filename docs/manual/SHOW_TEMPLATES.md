@@ -110,16 +110,16 @@ template to every future show".
 > [Calendar](./CALENDAR.md) §8). See ARCHITECTURE §23.16 for
 > the full decision log.
 
-### When applying a template to an Edit-Instance form
+### When applying a template to an Edit-Episode form
 
 You cannot. RASTATIME 2026-05-19 suppresses the **Templates**
-section in the Edit-Instance dialog (one instance of a
-recurring show). Re-stamping a single instance would either
+section in the Edit-Episode dialog (one episode of a
+recurring show). Re-stamping a single episode would either
 silently propagate to siblings (violates the one-way stamp
 model) or have no effect on them (which would mislead the
 operator).
 
-If you need to override one instance, edit its fields directly
+If you need to override one episode, edit its fields directly
 without using the template path.
 
 ---
@@ -147,7 +147,7 @@ Deliberately excluded:
 |---|---|
 | **Start date / start time** | Per-use; the template is reusable across many start times. |
 | **Live-stream password** | Security — a saved template should not carry credentials. The operator sets the password per show. |
-| **Per-instance descriptions** | Instance-specific (e.g. "this week's guest is X"). |
+| **Per-episode descriptions** | Episode-specific (e.g. "this week's guest is X"). |
 
 > **How it works under the hood.** Templates live in the
 > `cc_show_template` table (`id`, `name UNIQUE`, `template_data
@@ -244,7 +244,7 @@ A station runs **Morning Show** Mon-Fri 07:00–10:00 with:
 
 **First time:**
 
-1. Create the Monday occurrence: New Show, fill all fields,
+1. Create the Monday show: New Show, fill all fields,
    save.
 2. Open the Monday show → **Save as Template** → name it
    `Morning Show`.
@@ -262,7 +262,7 @@ A station runs **Morning Show** Mon-Fri 07:00–10:00 with:
 3. Tick **Repeats** → Weekly → Mon, Tue, Wed, Thu, Fri.
 4. Save.
 
-This generates all five days as instances of one recurring
+This generates all five days as episodes of one recurring
 show definition. Editing the show definition later changes
 all five.
 

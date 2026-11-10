@@ -126,7 +126,7 @@ Kalender → Sendung klicken → **Sendung bearbeiten** →
 **Aufnahme**-Abschnitt erweitern → **Diese Sendung
 aufzeichnen:** ankreuzen → Speichern.
 
-Der Toggle wird ab der *nächsten* zu startenden Instanz
+Der Toggle wird ab der *nächsten* zu startenden Episode
 wirksam. Eine bereits gestartete Sendung zeichnet nicht
 rückwirkend auf (der FFmpeg-Subprozess startet nur, wenn
 die Sendung beginnt).
@@ -244,7 +244,7 @@ ist:
   Einsatz angelegt), den Titel `<Sendungsname> <JJJJ-MM-TT HH:MM>`,
   den Sendungsnamen als Interpret und das Album `Show Recordings`,
   damit sie in der Bibliothek leicht zu finden ist.
-- Der Bibliothekstitel wird **mit der Sendungsinstanz verknüpft**
+- Der Bibliothekstitel wird **mit der Episode verknüpft**
   (die „aufgezeichnete Datei" des Kalenders), sodass eine spätere
   Wiederholung einer Live-Sendung darauf zugreifen kann.
 - Eine bereits importierte Aufnahme wird an ihrer Prüfsumme erkannt
@@ -424,9 +424,9 @@ Sendung bearbeiten → **Aufnahme**-Abschnitt erweitern →
 
 Effekte:
 
-- Bereits aufgezeichnete Instanzen sind nicht betroffen
+- Bereits aufgezeichnete Episoden sind nicht betroffen
   (die Dateien bleiben auf der Festplatte).
-- Zukünftige Instanzen starten den FFmpeg-Subprozess nicht.
+- Zukünftige Episoden starten den FFmpeg-Subprozess nicht.
 - Das **Aufnahmedatei ansehen**-Menü-Item verschwindet für
   zukünftige Sendungen.
 

@@ -70,8 +70,8 @@ vous le déposez.  Avec ce jour *D* et l'instant *T* du créneau :
 * un **teaser d'émission** correspond n'importe quel jour - sauf si son
   émission est *terminée pour aujourd'hui* : elle a eu une diffusion le
   jour *D* finie avant *T* et n'en a plus de plus tardive ce jour-là ;
-* un jingle ne correspond jamais à l'émission dont l'instance est
-  remplie - une émission ne se teste pas elle-même.
+* un jingle ne correspond jamais à l'émission dont l'épisode est
+  rempli - une émission ne se teste pas elle-même.
 
 Une diffusion annulée ou déplacée emporte donc ses teasers du jour : le
 critère lit le calendrier au moment du remplissage, pas une liste fixe.

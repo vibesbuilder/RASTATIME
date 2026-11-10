@@ -214,7 +214,7 @@ is placed.
 > interval.
 
 > **How it works under the hood.** `AutoPlaylistManager::`
-> `fillRequestShows()` processes instances already on air (not yet
+> `fillRequestShows()` processes episodes already on air (not yet
 > ended) as well as imminent ones. `_fillRequestShowByPositions()`
 > resolves `cc_playlistcontents` from the persisted
 > `cc_show_instances.autoplaylist_cursor` up to `now +`

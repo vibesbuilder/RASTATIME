@@ -186,7 +186,7 @@ administrators only.
 | Button | Effect |
 |---|---|
 | **Delete All Tracks in Library** | Removes every track from the library and from future schedules (upstream). |
-| **Clear Calendar** (since 2026-10-14) | Removes every show that has **not started yet**, with its content, and ends all repeats. The show on air and everything in the past stay, so the Playout History keeps its show names. A show without any instance left is deleted. The confirmation reports how many instances and shows went. |
+| **Clear Calendar** (since 2026-10-14) | Removes every show that has **not started yet**, with its content, and ends all repeats. The show on air and everything in the past stay, so the Playout History keeps its show names. A show without any episode left is deleted. The confirmation reports how many episodes and shows went. |
 
 > **How it works under the hood.** The values are rows of the
 > `cc_pref` table (key / value).  Per-user values (language, time zone,

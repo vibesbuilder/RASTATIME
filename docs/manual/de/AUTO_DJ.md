@@ -253,7 +253,7 @@ verschwenderisch und nervig.
 
 Während Sie im Kalender oder im Show Builder Titel in eine Sendung
 ziehen, gehört diese Sendung Ihnen: Jede Planungsaktion sperrt jetzt
-zuerst die Sendungsinstanz, und der Fill-Pass wartet nicht auf diese
+zuerst die Episode, und der Fill-Pass wartet nicht auf diese
 Sperre.  Er überspringt die Sendung in diesem Zyklus, schreibt eine
 Informationszeile ins Log („is being edited right now - left alone
 until the next pass") und schaut eine Minute später wieder nach.
@@ -266,7 +266,7 @@ des Operators mit einer Fehlermeldung scheitern konnte.
 ### Der Fill-Pass modifiziert nie die Sendungsdefinition
 
 Der Fill-Pass fügt nur **Schedule-Items** in die bestehende
-Instanz ein. Er ändert weder den Namen, die Hosts, die
+Episode ein. Er ändert weder den Namen, die Hosts, die
 Autoplaylist-Anbringung noch ein anderes Definitionsfeld
 der Sendung. Die Absicht des Operators für die Sendung
 bleibt intakt; nur der leere Schwanz wird gefüllt.
@@ -337,7 +337,7 @@ Prüfen Sie in dieser Reihenfolge:
 
 Dies war eine Regression in v4 (Abschnitt 23.20). Ab
 RASTATIME 2026-05-21 behoben: der Pre-Pass fragt bis zu 200
-kommende Instanzen ab und verlangt nur, dass der
+kommende Episoden ab und verlangt nur, dass der
 Lücken*beginn* (nicht das Lücken*ende*) innerhalb des
 Lookahead-Fensters liegt. Eine einzelne Lücke erstellt also
 eine einzelne Sendung, selbst wenn die Lücke mehrere Stunden

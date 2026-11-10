@@ -63,9 +63,9 @@ emisora, salvo que pase `timezone=` (un nombre de la base tz como
 | `/api/week-info` | `timezone` | La programación de esta semana y la siguiente, una lista por día (`monday` … `nextsunday`), cada programa con nombre, horas, descripción, imagen, url. |
 | `/api/station-metadata` | — | Nombre, descripción, logo, idioma, zona horaria de la emisora y la lista de streams. |
 | `/api/shows` | `show_id` (opcional) | Todos los programas, o uno: id, nombre, descripción, género, url, colores, indicador linked. |
-| `/api/show-schedules` | `show_id` (obligatorio), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | Las instancias de un programa en el periodo. |
-| `/api/show-tracks` | `instance_id` (obligatorio) | Las filas de una instancia: posición, título, artista, duración, inicio. |
-| `/api/item-history-feed` | `start`, `end`, `instance_id` (opcional) | El historial de emisión: qué sonó y cuándo, con título, artista e instancia. |
+| `/api/show-schedules` | `show_id` (obligatorio), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | Los episodios de un programa en el periodo. |
+| `/api/show-tracks` | `instance_id` (obligatorio) | Las filas de un episodio: posición, título, artista, duración, inicio. |
+| `/api/item-history-feed` | `start`, `end`, `instance_id` (opcional) | El historial de emisión: qué sonó y cuándo, con título, artista y episodio. |
 | `/api/show-history-feed` | `start`, `end`, `user_id` (opcional) | Los programas emitidos en el periodo. |
 | `/api/track?id=<id archivo>&return=<tipo>` | `return` = `artwork`, `artwork-32`, `artwork-64`, `artwork-data` | La carátula de una pista (JPG). |
 | `/api/show-logo?id=<id programa>` | — | La imagen de un programa. |
@@ -165,7 +165,7 @@ La programación de esta semana en UTC (público):
 curl -s "https://<station-host>/api/week-info?timezone=UTC"
 ```
 
-Las filas de una instancia de programa (público):
+Las filas de un episodio (público):
 
 ```bash
 curl -s "https://<station-host>/api/show-tracks?instance_id=12345"

@@ -700,7 +700,7 @@ behalten ihr Format, neue Dateien bekommen die passende Endung.
 Ist das Kästchen gesetzt, wird von jeder fertigen Sendungsaufnahme
 eine getaggte Kopie in die Bibliothek importiert (Track-Typ
 „Recordings", Titel `<Sendung> <Datum Uhrzeit>`, verknüpft mit der
-Sendungsinstanz); die Datei im Aufnahmeordner bleibt unverändert.
+Episode); die Datei im Aufnahmeordner bleibt unverändert.
 Details in [Record-per-Show, Abschnitt 3.6](./RECORD_PER_SHOW.md).
 Gespeichert wird mit dem **Save** der Seite; das
 Playout braucht nach dem Update einen Neustart, danach wirkt der

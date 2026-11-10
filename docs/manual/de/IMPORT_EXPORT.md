@@ -40,7 +40,7 @@ Die Seite sehen nur Administratoren.
    schnellste Weg, eine Tabelle von null zu beginnen.
 
 Der Sendungs-Export enthält die Sendungen mit bevorstehenden
-Ausstrahlungen. Jede Zeile beginnt bei der **nächsten** Ausstrahlung
+Episoden. Jede Zeile beginnt bei der **nächsten** Episode
 der Sendung, sodass eine exportierte Datei ohne Eingriff in die
 Vergangenheit wieder importierbar ist.
 
@@ -111,15 +111,15 @@ Sie eine Datei mit Passwörtern nach dem Import.
 | Spalte | Bedeutung |
 |---|---|
 | `name`, `url`, `genre`, `description` | wie im Dialog; nur `name` ist Pflicht |
-| `start_date`, `start_time`, `end_date`, `end_time` | erste Ausstrahlung; `end_date` darf leer bleiben (gleicher Tag, oder Folgetag, wenn das Ende vor dem Start liegt) |
+| `start_date`, `start_time`, `end_date`, `end_time` | erste Episode; `end_date` darf leer bleiben (gleicher Tag, oder Folgetag, wenn das Ende vor dem Start liegt) |
 | `timezone` | IANA-Name wie `Europe/Berlin`; leer = Zeitzone der Station |
 | `allow_delayed_start` | yes/no, siehe [Verzögerter Sendungsstart](./DELAYED_START.md) |
 | `repeats`, `repeat_type` | `none`, `weekly`, `biweekly`, `every_3_weeks`, `every_4_weeks`, `monthly_date`, `monthly_weekday` |
 | `days` | für die wöchentlichen Typen: `Mon,Tue,Wed,Thu,Fri,Sat,Sun` (deutsche Kurzformen gehen auch); leer = Wochentag von `start_date` |
 | `months` | für die monatlichen Typen (seit 2026-10-15): `Jan,Feb,...,Dec` oder `1..12` (deutsche Kurzformen gehen auch); leer = jeden Monat |
-| `repeat_end_date`, `no_end` | Datum der letzten Ausstrahlung oder `no_end = yes` |
+| `repeat_end_date`, `no_end` | Datum der letzten Episode oder `no_end = yes` |
 | `linked`, `record` | yes/no |
-| `content`, `content_repeat` | Name einer Playlist als **Autoloading-Playlist** der Sendung, und ob sie bis zur vollen Sendung wiederholt wird — siehe [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md). Eine Playlist kann Titel, Smart Blocks, Webstreams und Line-In-Eingänge enthalten, damit wird jede Instanz der Sendung automatisch befüllt. |
+| `content`, `content_repeat` | Name einer Playlist als **Autoloading-Playlist** der Sendung, und ob sie bis zur vollen Sendung wiederholt wird — siehe [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md). Eine Playlist kann Titel, Smart Blocks, Webstreams und Line-In-Eingänge enthalten, damit wird jede Episode der Sendung automatisch befüllt. |
 | `repeat_of` | Name einer vorhandenen Sendung, deren zuletzt gesendeter Inhalt diese Sendung kurz vor dem Start befüllt (**Wiederholung von Sendung**, seit 2026-10-18); leer = keine. Ein unbekannter Name wird als Hinweis gemeldet, die Sendung ohne ihn importiert. |
 | `own_production` | yes/no - Eigenproduktion des Senders; die gesendeten Minuten zählen in Analytics → Sendeminuten, ihre Teilnehmenden in Analytics → Teilnehmende (seit 2026-11-03). |
 | `intro_playlist`, `outro_playlist` | Playlist-Namen; leer = Stationsvorgaben |

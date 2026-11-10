@@ -64,7 +64,7 @@ slot:
 * a **show teaser** fits on any day - unless its show is *over for
   today*: it had a broadcast on *D* that ended before *T* and has no
   later one on *D*;
-* a jingle never fits the show whose instance is being filled - a show
+* a jingle never fits the show whose episode is being filled - a show
   does not tease itself.
 
 A cancelled or moved broadcast therefore takes its day teasers with it:

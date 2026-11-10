@@ -649,7 +649,7 @@ correspondante.
 le 2026-10-19)* : si la case est cochée, une copie taguée de chaque
 enregistrement d'émission terminé est importée dans la bibliothèque
 (type de piste « Recordings », titre `<émission> <date heure>`, liée à
-l'instance de l'émission) ; le fichier du dossier d'enregistrement
+l'épisode de l'émission) ; le fichier du dossier d'enregistrement
 reste intact.  Détails dans
 [Record-per-Show, section 3.6](./RECORD_PER_SHOW.md).  Enregistré
 avec le **Save** de la page ; le playout a besoin d'un

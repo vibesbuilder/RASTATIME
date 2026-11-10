@@ -162,7 +162,7 @@ juego para que la auto-construcción no se desborde.
 
 Mientras arrastra pistas a un programa en el calendario o en el show
 builder, ese programa es suyo: cada acción de planificación bloquea
-primero la instancia del programa, y el fill-pass no espera a ese
+primero el episodio del programa, y el fill-pass no espera a ese
 bloqueo.  Omite el programa en este ciclo, escribe una línea
 informativa en el registro («is being edited right now - left alone
 until the next pass») y vuelve a mirar un minuto después.  Una vez
@@ -174,8 +174,8 @@ operador podía fallar con un mensaje de error.
 
 ### El fill-pass nunca modifica la definición del programa
 
-El fill-pass solo inserta **items de planning** en la
-instancia existente.
+El fill-pass solo inserta **items de planning** en el
+episodio existente.
 
 ---
 

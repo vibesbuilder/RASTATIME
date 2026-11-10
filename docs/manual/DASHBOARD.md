@@ -257,7 +257,7 @@ Effects:
 > the cancel is irreversible. To make a show shorter without
 > ending it immediately, edit the show on the calendar and
 > change the end time; that takes effect for the *next*
-> instance and is reversible.
+> episode and is reversible.
 
 ---
 

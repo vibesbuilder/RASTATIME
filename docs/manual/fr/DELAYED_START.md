@@ -25,7 +25,7 @@ quelques minutes avant l'antenne.
 > émission ne glisse jamais que si **sa propre** case est cochée.
 > Le glissement n'est jamais annulé automatiquement — voir §6. Si
 > vous changez d'avis, décochez la case (les dépassements futurs
-> cessent de la faire glisser) ou ramenez l'instance en arrière
+> cessent de la faire glisser) ou ramenez l'épisode en arrière
 > sur le calendrier.
 
 ---
@@ -95,7 +95,7 @@ ancres qui arrêtent un glissement (§4).
 Pour une émission **récurrente**, la case fait partie de la
 définition d'émission, donc elle s'applique à chaque épisode.
 Quand un dépassement réel décale un épisode, seul **cet** épisode
-est modifié (il devient une surcharge par occurrence) ; les autres
+est modifié (il devient une surcharge par épisode) ; les autres
 épisodes gardent leur créneau normal.
 
 > **Comment ça marche sous le capot.** La coche est stockée dans
@@ -262,11 +262,11 @@ temps d'antenne du créneau sauté. Le marqueur est là pour que vous
 le remarquiez après coup — p. ex. pour vous excuser à l'antenne,
 ou pour resserrer l'émission surbookée la prochaine fois.
 
-> **Comment ça marche sous le capot.** Vider une instance
-> ensevelie reflète l'action **Vider le planning** pour une
-> instance : ses lignes `cc_schedule` sont supprimées,
-> `time_filled` est remis à zéro, l'instance est marquée
-> `modified_instance` — la marque « occurrence supprimée » de
+> **Comment ça marche sous le capot.** Vider un épisode
+> enseveli reflète l'action **Vider le planning** pour un
+> épisode : ses lignes `cc_schedule` sont supprimées,
+> `time_filled` est remis à zéro, l'épisode est marqué
+> `modified_instance` — la marque « épisode supprimé » de
 > l'upstream, adaptée à un créneau qui ne passe jamais à l'antenne —
 > plus `delayed_start_from` (depuis le 27/09/2026, voir plus bas), et
 > `cc_files.is_scheduled` est retiré pour toute piste qui n'est plus
@@ -312,8 +312,8 @@ La tâche est **idempotente et à sens unique** :
 
 > **Comment ça marche sous le capot.**
 > `Application_Service_ShowShiftService::applyDelayedStarts()`
-> sélectionne les instances en surbooking qui ne sont ni des
-> occurrences supprimées (`modified_instance`) ni déjà décalées
+> sélectionne les épisodes en surbooking qui ne sont ni des
+> épisodes supprimés (`modified_instance`) ni déjà décalés
 > (`delayed_start_from`), dont la fin de créneau est dans la fenêtre
 > de lead, puis parcourt chacune vers l'avant : vidant les
 > émissions cochées entièrement dépassées, faisant glisser la
@@ -325,15 +325,15 @@ La tâche est **idempotente et à sens unique** :
 >
 > **Pourquoi un marqueur dédié (27/09/2026).**  La première répétition
 > en direct a montré que le marqueur de juin — `modified_instance`, le
-> drapeau « cette occurrence a été supprimée » de l'upstream — cachait
+> drapeau « cet épisode a été supprimé » de l'upstream — cachait
 > l'émission décalée au tableau de bord, au live-info, à tous les
 > widgets, au calendrier, au show builder et au contrôle de
 > chevauchement, pendant que le playout la diffusait.  La migration
 > 0058 a ajouté `cc_show_instances.delayed_start_from` ; une émission
 > décalée reste désormais visible partout à sa nouvelle heure.
 > Conserver le créneau d'origine (et pas seulement un drapeau) permet
-> aussi au régénérateur de répétitions de retrouver l'occurrence
-> déplacée quand vous modifiez l'émission, au lieu de créer un doublon
+> aussi au régénérateur de répétitions de retrouver l'épisode
+> déplacé quand vous modifiez l'émission, au lieu de créer un doublon
 > à l'heure de la série. La fin propre de l'émission en surbooking est étendue
 > jusqu'à l'endroit où son contenu s'est posé. L'intervalle et le
 > lead sont surchargeables avec
@@ -371,13 +371,13 @@ restent comblés sans couture.
   elle-même une origine de glissement.** Si vous glissez une
   émission déjà décalée par la tâche (`delayed_start_from` posé)
   n'est jamais traitée comme la *source* d'une nouvelle propagation,
-  et une occurrence supprimée (`modified_instance`) est ignorée —
+  et un épisode supprimé (`modified_instance`) est ignoré —
   tandis qu'une émission simplement glissée sur le calendrier reste
-  une instance ordinaire qui peut encore glisser, être vidée ou (si
-  elle déborde) déclencher elle-même une propagation. Cela garde le
+  un épisode ordinaire qui peut encore glisser, être vidé ou (s'il
+  déborde) déclencher lui-même une propagation. Cela garde le
   mécanisme idempotent sans contrarier vos modifications manuelles, en
-  cohérence avec la façon dont les instances éditées à la main
-  sont laissées tranquilles par les autres passages automatiques.
+  cohérence avec la façon dont les épisodes édités à la main
+  sont laissés tranquilles par les autres passages automatiques.
 - **Seule la case de l'émission suivante compte à chaque étape.**
   Que l'émission A elle-même soit cochée n'a aucune importance
   pour savoir si le dépassement de A pousse B — ce qui compte,
