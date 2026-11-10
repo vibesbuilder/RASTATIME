@@ -1631,6 +1631,6 @@ $(document).ready(function () {
 //Alert the error and reload the page
 //this function is used to resolve concurrency issue
 function alertShowErrorAndReload() {
-  alert($.i18n._("The show instance doesn't exist anymore!"));
+  alert($.i18n._("The episode doesn't exist anymore!"));
   window.location.reload();
 }

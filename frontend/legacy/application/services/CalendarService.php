@@ -125,8 +125,7 @@ class Application_Service_CalendarService
                 if ($isRepeating) {
                     if ($populateInstance) {
                         $menu['edit'] = [
-                            // "name" => _("Edit This Instance"),
-                            'name' => _('Edit Instance'),
+                            'name' => _('Edit Episode'),
                             'icon' => 'edit',
                             'url' => $baseUrl . 'Schedule/populate-repeating-show-instance-form',
                         ];
@@ -137,17 +136,18 @@ class Application_Service_CalendarService
                             'items' => [],
                         ];
 
+                        // RASTATIME 2026-11-10 - "Episode" instead of "Instance"
+                        // everywhere in the UI, the episode entry first (operator)
+                        $menu['edit']['items']['instance'] = [
+                            'name' => _('Edit Episode'),
+                            'icon' => 'edit',
+                            'url' => $baseUrl . 'Schedule/populate-repeating-show-instance-form',
+                        ];
+
                         $menu['edit']['items']['all'] = [
                             'name' => _('Edit Show'),
                             'icon' => 'edit',
                             'url' => $baseUrl . 'Schedule/populate-show-form',
-                        ];
-
-                        $menu['edit']['items']['instance'] = [
-                            // "name" => _("Edit This Instance"),
-                            'name' => _('Edit Instance'),
-                            'icon' => 'edit',
-                            'url' => $baseUrl . 'Schedule/populate-repeating-show-instance-form',
                         ];
                     }
                 } else {
@@ -167,13 +167,13 @@ class Application_Service_CalendarService
 
                 // RASTATIME 2026-10-28 - an edited instance of a repeating
                 // show stands on its own (the edit branch above offers only
-                // "Edit Instance"), so it gets only "Delete Instance".
+                // "Edit Episode"), so it gets only "Delete Episode".
                 // Upstream tested $isRepeating first, which made this branch
                 // unreachable ($populateInstance implies $isRepeating) and
                 // offered "Delete Instance and All Following" on it.
                 if ($populateInstance) {
                     $menu['del'] = [
-                        'name' => _('Delete Instance'),
+                        'name' => _('Delete Episode'),
                         'icon' => 'delete',
                         'url' => $baseUrl . 'schedule/delete-show-instance',
                     ];
@@ -187,15 +187,13 @@ class Application_Service_CalendarService
                     ];
 
                     $menu['del']['items']['single'] = [
-                        // "name"=> _("Delete This Instance"),
-                        'name' => _('Delete Instance'),
+                        'name' => _('Delete Episode'),
                         'icon' => 'delete',
                         'url' => $baseUrl . 'schedule/delete-show-instance',
                     ];
 
                     $menu['del']['items']['following'] = [
-                        // "name"=> _("Delete This Instance and All Following"),
-                        'name' => _('Delete Instance and All Following'),
+                        'name' => _('Delete Episode and All Following'),
                         'icon' => 'delete',
                         'url' => $baseUrl . 'schedule/delete-show',
                     ];

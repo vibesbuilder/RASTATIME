@@ -94,7 +94,7 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
 
         // Add the instance description
         $this->addElement('textarea', 'add_show_instance_description', [
-            'label' => _('Instance Description:'),
+            'label' => _('Episode Description:'),
             'required' => false,
             'class' => 'input_text_area',
             'validators' => [['StringLength', false, [0, $maxLens['description']]]],

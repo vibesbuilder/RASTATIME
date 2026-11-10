@@ -15,7 +15,7 @@ class Application_Form_EditHistoryItem extends Application_Form_EditHistory
 
         /*
         $instance = new Zend_Form_Element_Select("instance_id");
-        $instance->setLabel(_("Choose Show Instance"));
+        $instance->setLabel(_("Choose Episode"));
         $instance->setMultiOptions(array("0" => "-----------"));
         $instance->setValue(0);
         $instance->setDecorators(array('ViewHelper'));
@@ -57,7 +57,7 @@ class Application_Form_EditHistoryItem extends Application_Form_EditHistory
         $possibleInstances['0'] = _('No Show');
 
         $instance = new Zend_Form_Element_Select('his_instance_select');
-        // $instance->setLabel(_("Choose Show Instance"));
+        // $instance->setLabel(_("Choose Episode"));
         $instance->setMultiOptions($possibleInstances);
         $instance->setValue($default);
         $instance->setDecorators(['ViewHelper']);

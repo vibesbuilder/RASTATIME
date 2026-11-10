@@ -188,7 +188,7 @@ final class LocaleController extends Zend_Controller_Action
             '%s of %s podcasts' => _('%s of %s podcasts'),
             '%s of %s line inputs' => _('%s of %s line inputs'),
             'Clear the calendar? Every show that has not started yet is removed with its content and all repeats end. The show on air and the past stay.' => _('Clear the calendar? Every show that has not started yet is removed with its content and all repeats end. The show on air and the past stay.'),
-            'Calendar cleared: %s instances removed, %s shows deleted.' => _('Calendar cleared: %s instances removed, %s shows deleted.'),
+            'Calendar cleared: %s episodes removed, %s shows deleted.' => _('Calendar cleared: %s episodes removed, %s shows deleted.'),
             'The calendar could not be cleared.' => _('The calendar could not be cleared.'),
             'Clear search' => _('Clear search'),
             'The metadata could not be saved.' => _('The metadata could not be saved.'),
@@ -290,13 +290,13 @@ final class LocaleController extends Zend_Controller_Action
             'This follows the same security pattern for the shows: only users assigned to the show can connect.' => _('This follows the same security pattern for the shows: only users assigned to the show can connect.'),
             'Specify custom authentication which will work only for this show.' => _('Specify custom authentication which will work only for this show.'),
             "If your live streaming client does not ask for a username, this field should be 'source'." => _("If your live streaming client does not ask for a username, this field should be 'source'."),
-            "The show instance doesn't exist anymore!" => _("The show instance doesn't exist anymore!"),
+            "The episode doesn't exist anymore!" => _("The episode doesn't exist anymore!"),
             'Warning: Shows cannot be re-linked' => _('Warning: Shows cannot be re-linked'),
             'By linking your repeating shows any media items scheduled in any repeat show will also get scheduled in the other repeat shows' => _('By linking your repeating shows any media items scheduled in any repeat show will also get scheduled in the other repeat shows'),
             'Timezone is set to the station timezone by default. Shows in the calendar will be displayed in your local time defined by the Interface Timezone in your user settings.' => _('Timezone is set to the station timezone by default. Shows in the calendar will be displayed in your local time defined by the Interface Timezone in your user settings.'),
             // schedule/full-calendar-functions
             // already in schedule/add-show.js
-            // "The show instance doesn't exist anymore!" => _("The show instance doesn't exist anymore!"),
+            // "The episode doesn't exist anymore!" => _("The episode doesn't exist anymore!"),
             'Show' => _('Show'),
             'Show is empty' => _('Show is empty'),
             'Clear search' => _('Clear search'), // RASTATIME 2026-10-21 widgets/table.js
@@ -367,7 +367,7 @@ final class LocaleController extends Zend_Controller_Action
             'Remove all content?' => _('Remove all content?'),
             // schedule/undo-delete.js (RASTATIME 2026-10-28)
             'Deleting "%s" in %s s' => _('Deleting "%s" in %s s'),
-            'Deleting "%s" and all following instances in %s s' => _('Deleting "%s" and all following instances in %s s'),
+            'Deleting "%s" and all following episodes in %s s' => _('Deleting "%s" and all following episodes in %s s'),
             'Deleting the show "%s" in %s s' => _('Deleting the show "%s" in %s s'),
             'this show' => _('this show'),
             'Undo' => _('Undo'),

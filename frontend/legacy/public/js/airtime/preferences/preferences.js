@@ -163,7 +163,7 @@ function clearCalendar() {
       if (json && json.ok) {
         alert(
           $.i18n
-            ._("Calendar cleared: %s instances removed, %s shows deleted.")
+            ._("Calendar cleared: %s episodes removed, %s shows deleted.")
             .replace("%s", json.instances)
             .replace("%s", json.deleted),
         );

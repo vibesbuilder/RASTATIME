@@ -23,7 +23,7 @@ function scheduleCalRefetch() {
 
 function scheduleRefetchEvents(json) {
   if (json.show_error == true) {
-    alert($.i18n._("The show instance doesn't exist anymore!"));
+    alert($.i18n._("The episode doesn't exist anymore!"));
   }
   if (json.show_id) {
     var dialog_id = parseInt($("#add_show_id").val(), 10);
@@ -315,7 +315,7 @@ function addQtipsToIcons(ele, id) {
 //Alert the error and reload the page
 //this function is used to resolve concurrency issue
 function alertShowErrorAndReload() {
-  alert($.i18n._("The show instance doesn't exist anymore!"));
+  alert($.i18n._("The episode doesn't exist anymore!"));
   window.location.reload();
 }
 

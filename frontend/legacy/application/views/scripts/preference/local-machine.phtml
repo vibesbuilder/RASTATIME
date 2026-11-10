@@ -779,7 +779,7 @@ $rtTip = function ($text) {
                 </select><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("320 kbps is archive grade (about 145 MB per hour as MP3); 192 kbps halves the disk use.")); ?>"></span>
             </dd>
 
-            <dt><label for="local_recording_copy_to_library"><?php echo _("Copy Show Recordings into Library") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the show instance, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once.")) ?>"></span></dt>
+            <dt><label for="local_recording_copy_to_library"><?php echo _("Copy Show Recordings into Library") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the episode, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once.")) ?>"></span></dt>
             <dd>
                 <input id="local_recording_copy_to_library" name="local_recording_copy_to_library" type="checkbox" value="1"<?php echo $localRecordingCopy ? ' checked="checked"' : ''; ?> />
             </dd>

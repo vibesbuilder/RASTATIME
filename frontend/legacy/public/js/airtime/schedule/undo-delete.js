@@ -82,7 +82,7 @@ window.rtUndoDelete = (function ($) {
   function messageFor(mode, title) {
     var text;
     if (mode === "following") {
-      text = $.i18n._('Deleting "%s" and all following instances in %s s');
+      text = $.i18n._('Deleting "%s" and all following episodes in %s s');
     } else if (mode === "show") {
       text = $.i18n._('Deleting the show "%s" in %s s');
     } else {

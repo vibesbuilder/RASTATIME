@@ -1672,8 +1672,8 @@ msgid "Specify custom authentication which will work only for this show."
 msgstr "Spécifiez l'authentification personnalisée qui ne fonctionnera que pour cette émission."
 
 #: application/controllers/LocaleController.php:203
-msgid "The show instance doesn't exist anymore!"
-msgstr "L'instance de l'émission n'existe plus !"
+msgid "The episode doesn't exist anymore!"
+msgstr "Cet épisode n'existe plus !"
 
 #: application/controllers/LocaleController.php:204
 msgid "Warning: Shows cannot be re-linked"
@@ -3003,8 +3003,8 @@ msgid "Description:"
 msgstr "Description :"
 
 #: application/forms/AddShowWhat.php:69
-msgid "Instance Description:"
-msgstr "Description de l'instance :"
+msgid "Episode Description:"
+msgstr "Description de l'épisode :"
 
 #: application/forms/AddShowWhen.php:15
 msgid "'%value%' does not fit the time format 'HH:mm'"
@@ -4027,8 +4027,8 @@ msgstr "Annuler l'émission"
 
 #: application/services/CalendarService.php:149
 #: application/services/CalendarService.php:168
-msgid "Edit Instance"
-msgstr "Modifier cet élément"
+msgid "Edit Episode"
+msgstr "Modifier l'épisode"
 
 #: application/services/CalendarService.php:161
 #: application/services/CalendarService.php:175
@@ -4036,12 +4036,12 @@ msgid "Edit Show"
 msgstr "Édition de l'émission"
 
 #: application/services/CalendarService.php:199
-msgid "Delete Instance"
-msgstr "Supprimer cet élément"
+msgid "Delete Episode"
+msgstr "Supprimer l'épisode"
 
 #: application/services/CalendarService.php:206
-msgid "Delete Instance and All Following"
-msgstr "Supprimer cet élément et tous les suivants"
+msgid "Delete Episode and All Following"
+msgstr "Supprimer l'épisode et tous les suivants"
 
 #: application/services/CalendarService.php:264
 msgid "Permission denied"
@@ -6545,8 +6545,8 @@ msgid "Clear the calendar? Every show that has not started yet is removed with i
 msgstr "Vider le calendrier ? Chaque émission qui n'a pas encore commencé est supprimée avec son contenu et toutes les répétitions prennent fin. L'émission en cours et le passé restent."
 
 #: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
-msgid "Calendar cleared: %s instances removed, %s shows deleted."
-msgstr "Calendrier vidé : %s instances supprimées, %s émissions effacées."
+msgid "Calendar cleared: %s episodes removed, %s shows deleted."
+msgstr "Calendrier vidé : %s épisodes supprimés, %s émissions effacées."
 
 #: application/forms/DangerousPreferences.php public/js/airtime/preferences/preferences.js
 msgid "The calendar could not be cleared."
@@ -6805,8 +6805,8 @@ msgid "Copy Show Recordings into Library"
 msgstr "Copier les enregistrements d’émission dans la bibliothèque"
 
 #: RASTATIME 2026-10-19 copy show recordings into library
-msgid "When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the show instance, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once."
-msgstr "Quand une émission enregistrée se termine, une copie de l’enregistrement est importée dans la médiathèque avec le type de piste \"Recordings\" (titre : nom de l’émission et heure de début) et liée à l’instance de l’émission, pour pouvoir être reprogrammée ou utilisée dans des listes de lecture.  Le fichier du dossier d’enregistrement reste en place.  Nécessite ffmpeg pour les tags ; s’applique aux émissions qui se terminent après un redémarrage unique du playout."
+msgid "When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the episode, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once."
+msgstr "Quand une émission enregistrée se termine, une copie de l’enregistrement est importée dans la médiathèque avec le type de piste \"Recordings\" (titre : nom de l’émission et heure de début) et liée à l’épisode, pour pouvoir être reprogrammée ou utilisée dans des listes de lecture.  Le fichier du dossier d’enregistrement reste en place.  Nécessite ffmpeg pour les tags ; s’applique aux émissions qui se terminent après un redémarrage unique du playout."
 
 #: RASTATIME 2026-10-21 show form section "Repeat" (Repeat of show)
 msgid "Repeat"
@@ -7064,8 +7064,8 @@ msgstr "(filtre « Failed » : Télécharger ou Effacer)."
 msgid "Deleting \"%s\" in %s s"
 msgstr "Suppression de « %s » dans %s s"
 
-msgid "Deleting \"%s\" and all following instances in %s s"
-msgstr "Suppression de « %s » et de toutes les instances suivantes dans %s s"
+msgid "Deleting \"%s\" and all following episodes in %s s"
+msgstr "Suppression de « %s » et de tous les épisodes suivants dans %s s"
 
 msgid "Deleting the show \"%s\" in %s s"
 msgstr "Suppression de l'émission « %s » dans %s s"
@@ -7162,8 +7162,8 @@ msgid "The description is too long (8192 characters at most)."
 msgstr "La description est trop longue (8192 caractères au maximum)."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
-msgid "The show instance does not exist any more."
-msgstr "Cette occurrence de l'émission n'existe plus."
+msgid "The episode does not exist any more."
+msgstr "Cet épisode n'existe plus."
 
 #: RASTATIME 2026-11-03 publishing stage 1 (editorial team, episodes, participants)
 msgid "The image must not be larger than 10 MB."
@@ -8629,3 +8629,7 @@ msgstr "Veuillez saisir un nombre de 0 à 60."
 #. RASTATIME 2026-11-10 - calendar context menu
 msgid "Extras"
 msgstr "Compléments"
+
+#. RASTATIME 2026-11-10 - Episode instead of Instance
+msgid "Choose Episode"
+msgstr "Choisissez un épisode"

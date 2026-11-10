@@ -616,7 +616,7 @@ class Application_Service_ArchivingService
             if (!self::exec('UPDATE cc_show_instances SET description = ? WHERE id = ?', [$description === '' ? null : $description, $instanceId])) {
                 $con->rollBack();
 
-                return _('The show instance does not exist any more.');
+                return _('The episode does not exist any more.');
             }
             self::exec(
                 'INSERT INTO cc_episode (instance_id, title, teaser, image_license, image_caption, participants,
@@ -673,7 +673,7 @@ class Application_Service_ArchivingService
             return _('The archiving tables are missing - run the database migrations 0074 and 0075 first.');
         }
         if (!self::query('SELECT 1 FROM cc_show_instances WHERE id = ?', [$instanceId])) {
-            return _('The show instance does not exist any more.');
+            return _('The episode does not exist any more.');
         }
         if ($size <= 0 || $size > self::EPISODE_IMAGE_MAX_BYTES) {
             return _('The image must not be larger than 10 MB.');
@@ -935,7 +935,7 @@ class Application_Service_ArchivingService
     {
         $ep = self::episode($instanceId);
         if ($ep === null) {
-            return [_('The show instance does not exist any more.')];
+            return [_('The episode does not exist any more.')];
         }
         $missing = [];
         if (!$ep['aired']) {
@@ -1040,7 +1040,7 @@ class Application_Service_ArchivingService
             }
         }
         if (!self::query('SELECT 1 FROM cc_show_instances WHERE id = ?', [$instanceId])) {
-            return _('The show instance does not exist any more.');
+            return _('The episode does not exist any more.');
         }
         self::exec(
             'INSERT INTO cc_episode (instance_id, cba_post_id, cba_archived_at, updated_at) VALUES (?, ?, ?, now())

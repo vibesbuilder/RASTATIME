@@ -618,7 +618,7 @@ class ScheduleController extends Zend_Controller_Action
         $showId = (int) Propel::getConnection()->query('SELECT show_id FROM cc_show_instances WHERE id = ' . $instanceId)->fetchColumn();
         if (!$showId) {
             $this->getResponse()->setHttpResponseCode(404);
-            $this->_helper->json->sendJson(['ok' => false, 'error' => _('The show instance does not exist any more.')]);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => _('The episode does not exist any more.')]);
 
             return 0;
         }
