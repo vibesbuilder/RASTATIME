@@ -608,6 +608,40 @@ class Application_Model_Preference
         self::setValue('widget_shows_date_format', Application_Model_WidgetDateFormat::normalize($v));
     }
 
+    // RASTATIME 2026-11-10 - Next / Latest Shows: show name as heading
+    // (default on) and font size in px (default 14, 10..32).  Defaults for
+    // every embed; ?title= / ?size= override them per iframe.
+    public const WIDGET_SHOWS_FONT_SIZE_DEFAULT = 14;
+    public const WIDGET_SHOWS_FONT_SIZE_MIN = 10;
+    public const WIDGET_SHOWS_FONT_SIZE_MAX = 32;
+
+    public static function GetWidgetShowsShowTitle()
+    {
+        return self::getValue('widget_shows_show_title') !== '0';
+    }
+    public static function SetWidgetShowsShowTitle($v)
+    {
+        self::setValue('widget_shows_show_title', $v ? '1' : '0');
+    }
+
+    public static function ClampWidgetShowsFontSize($v)
+    {
+        $v = (int) $v;
+        if ($v <= 0) {
+            return self::WIDGET_SHOWS_FONT_SIZE_DEFAULT;
+        }
+
+        return max(self::WIDGET_SHOWS_FONT_SIZE_MIN, min(self::WIDGET_SHOWS_FONT_SIZE_MAX, $v));
+    }
+    public static function GetWidgetShowsFontSize()
+    {
+        return self::ClampWidgetShowsFontSize(self::getValue('widget_shows_font_size'));
+    }
+    public static function SetWidgetShowsFontSize($v)
+    {
+        self::setValue('widget_shows_font_size', (string) self::ClampWidgetShowsFontSize($v));
+    }
+
     // RASTATIME 2026-05-22 — On-Air-Today widget empty-state label.
     // Shown when neither a currently-airing show nor any upcoming
     // shows fall within the station day's remaining window.

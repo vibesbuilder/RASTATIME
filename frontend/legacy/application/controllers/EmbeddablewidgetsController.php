@@ -242,12 +242,24 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             Application_Model_Preference::SetWidgetShowsDateFormat(
                 $form->getValue('widget_shows_date_format')
             );
+            Application_Model_Preference::SetWidgetShowsShowTitle(
+                (bool) $form->getValue('widget_shows_show_title')
+            );
+            // empty = back to the default size
+            Application_Model_Preference::SetWidgetShowsFontSize(
+                trim((string) $form->getValue('widget_shows_font_size'))
+            );
+            $form->getElement('widget_shows_font_size')->setValue(
+                Application_Model_Preference::GetWidgetShowsFontSize()
+            );
             $this->view->saved = true;
         } else {
             $form->populate([
                 'widget_no_next_shows'   => Application_Model_Preference::GetWidgetNoNextShows(),
                 'widget_no_latest_shows' => Application_Model_Preference::GetWidgetNoLatestShows(),
                 'widget_shows_date_format' => Application_Model_Preference::GetWidgetShowsDateFormat(),
+                'widget_shows_show_title'  => Application_Model_Preference::GetWidgetShowsShowTitle() ? 1 : 0,
+                'widget_shows_font_size'   => Application_Model_Preference::GetWidgetShowsFontSize(),
             ]);
         }
 

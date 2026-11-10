@@ -722,6 +722,17 @@ class EmbedController extends Zend_Controller_Action
         }
         $this->view->overflowClass = 'np-overflow-' . $overflow;
 
+        // RASTATIME 2026-11-10 - heading and font size: the defaults from
+        // Widgets -> Next/Latest Shows, ?title=0|1 / ?size=N per iframe
+        $titleParam = $request->getParam('title');
+        $this->view->showTitle = ($titleParam === '0' || $titleParam === '1')
+            ? $titleParam === '1'
+            : Application_Model_Preference::GetWidgetShowsShowTitle();
+        $sizeParam = $request->getParam('size');
+        $this->view->fontSize = ($sizeParam !== null && $sizeParam !== '' && ctype_digit((string) $sizeParam))
+            ? Application_Model_Preference::ClampWidgetShowsFontSize($sizeParam)
+            : Application_Model_Preference::GetWidgetShowsFontSize();
+
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;
         $this->_emitCacheHeaders($cacheTtl);

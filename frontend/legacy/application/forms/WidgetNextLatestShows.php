@@ -92,6 +92,26 @@ class Application_Form_WidgetNextLatestShows extends Zend_Form
                    ->setAllowEmpty(true);
         $this->addElement($dateFormat);
 
+        // RASTATIME 2026-11-10 - show name as heading + font size (defaults
+        // for every embed; ?title=0|1 and ?size=N override them per iframe)
+        $showTitle = new Zend_Form_Element_Checkbox('widget_shows_show_title');
+        $showTitle->setLabel(_('Show the show name as heading:'))
+                  ->setRequired(false);
+        $this->addElement($showTitle);
+
+        $fontSize = new Zend_Form_Element_Text('widget_shows_font_size');
+        $fontSize->setLabel(_('Font size (px):'))
+                 ->setAttrib('class', 'input_text')
+                 ->setAttrib('type', 'number')
+                 ->setAttrib('min', Application_Model_Preference::WIDGET_SHOWS_FONT_SIZE_MIN)
+                 ->setAttrib('max', Application_Model_Preference::WIDGET_SHOWS_FONT_SIZE_MAX)
+                 ->setAttrib('step', 1)
+                 ->setAttrib('placeholder', (string) Application_Model_Preference::WIDGET_SHOWS_FONT_SIZE_DEFAULT)
+                 ->setAttrib('style', 'width: 6em;')
+                 ->setRequired(false)
+                 ->setAllowEmpty(true);
+        $this->addElement($fontSize);
+
         $submit = new Zend_Form_Element_Submit('submit');
         $submit->setLabel(_('Save'))
                ->setAttrib('class', 'btn');

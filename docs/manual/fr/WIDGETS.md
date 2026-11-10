@@ -174,6 +174,10 @@ ven. 24 mai                                 06:00 - 08:00
 ```
 
 - **Ligne titre** : nom de l'émission depuis `cc_show.name`
+- **Titre** : peut être masqué (réglage **Show the show name
+  as heading**, ou `?title=0` pour une seule intégration) ;
+  la taille de police vient de **Font size (px)** ou
+  `?size=` (depuis le 2026-11-10)
 - **Lignes liste** : une ligne par instance, la date à
   gauche, `H:MM - H:MM` à droite
 - **Format de date** (depuis le 2026-11-10) : se choisit
@@ -207,6 +211,8 @@ sans attendre la TTL du cache.
 | `theme` | `auto`, `dark`, `light` | `auto` | Identique aux widgets deux lignes — voir §2. |
 | `cache` | entier secondes 10..3600 | `60` | Identique aux widgets deux lignes — voir §7. |
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Comportement du titre d'émission quand plus large que 300 px. |
+| `title` | `0`, `1` | réglage **Show the show name as heading** (activé) | `0` masque le titre avec le nom de l'émission (p. ex. sur la page de l'émission elle-même), `1` l'affiche.  Sans paramètre, le réglage sous Widgets → Next/Latest Shows s'applique (depuis le 2026-11-10). |
+| `size` | entier px 10..32 | réglage **Font size (px)** (14) | Taille de police de tout le widget ; titre et lignes suivent.  Sans paramètre, le réglage s'applique (depuis le 2026-11-10). |
 | `timezone` | tout fuseau standard | défaut station | Toutes les heures rendues dans cette zone. |
 
 > **Conseil.** Choisissez l'émission depuis le menu déroulant
