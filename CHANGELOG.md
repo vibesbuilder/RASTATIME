@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Kategorie je Sendung + Programme Minutes nach Genre / Kategorie (2026-11-10)** — Neues
+  Freitextfeld **Category** unter Edit Show → What (Vorschläge aus den verwendeten Werten, ebenso
+  beim Genre); `cc_show.category`, Migration 0082 (das Feld erscheint erst, wenn die Spalte da
+  ist).  Analytics → Programme Minutes: Abschnitt „By genre and category“ (Gruppieren nach Genre,
+  Kategorie oder beidem; Eigenproduktion Erstsendung / Wiederholung, andere Sendungen, gesamt;
+  Groß-/Kleinschreibung egal) mit CSV; Sendungstabelle und Minuten-CSV mit Genre und Kategorie;
+  Vorlagen und Import/Export (`category`).  ARCHITECTURE §23.105, Manual ×4 (e9ac6325, 415be59c).
 - **Verzögerung für Live Text Info und Radioplayer Feed (2026-11-10)** — Der Ton erreicht die
   Hörer einige Sekunden nach der Titel-Info (Stereo Tool, Icecast-Puffer, Relay, Player); der
   Titel im Stream (ICY) ist synchron, Live-Text-Datei und Feed waren zu früh.  Neu je Bereich
