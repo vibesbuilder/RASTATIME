@@ -166,7 +166,19 @@ column of their own (first broadcasts vs. repeats), because most
 authorities report them separately.  Shows without the flag appear
 greyed with their minutes under "other shows (not counted)" so you can
 see what is left out.  A table per month and **Download CSV (minutes)**
-(per show, totals, per month) complete the section.
+(per show with genre and category, totals, per month) complete the section.
+
+**By genre and category** (since 2026-11-10): below the months, the
+same minutes grouped by the shows' **Genre**, **Category** or **Genre
+and category** (choose under *Group by*), with the columns episodes of
+own productions, minutes of own productions as first broadcasts and as
+repeats, minutes of other shows and the total.  Values are grouped
+ignoring upper / lower case and surrounding blanks and shown in their
+most used spelling; shows without a value form the row *No genre* /
+*No category*.  **Download CSV** exports the chosen grouping.  Minutes
+are rounded per group, so a sum can differ from the per-show totals by
+a minute or two.  The category is set in the show (Edit Show → What,
+free text with suggestions; database migration 0082).
 
 Program Managers and Admins open this page.
 

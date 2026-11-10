@@ -109,7 +109,7 @@ administrador. Borre un archivo con contraseñas después de importarlo.
 
 | Columna | Significado |
 |---|---|
-| `name`, `url`, `genre`, `description` | como en el diálogo; solo `name` es obligatorio |
+| `name`, `url`, `genre`, `category`, `description` | como en el diálogo; solo `name` es obligatorio (`category` desde el 2026-11-10; los archivos sin la columna se importan con la categoría vacía) |
 | `start_date`, `start_time`, `end_date`, `end_time` | primer episodio; `end_date` puede quedar vacío (mismo día, o día siguiente cuando el fin precede al inicio) |
 | `timezone` | nombre IANA como `Europe/Berlin`; vacío = zona horaria de la emisora |
 | `allow_delayed_start` | yes/no, véase [Inicio diferido](./DELAYED_START.md) |

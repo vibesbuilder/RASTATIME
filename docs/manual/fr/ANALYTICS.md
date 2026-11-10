@@ -190,8 +190,22 @@ colonne (premières diffusions / rediffusions), car la plupart des
 autorités les déclarent séparément.  Les émissions sans la case
 apparaissent grisées avec leurs minutes sous « autres émissions (non
 comptées) », pour voir ce qui manque.  Un tableau par mois et
-**Download CSV (minutes)** (par émission, totaux, par mois) complètent la
-section.
+**Download CSV (minutes)** (par émission avec genre et catégorie,
+totaux, par mois) complètent la section.
+
+**Par genre et catégorie** (depuis le 2026-11-10) : sous les mois, les
+mêmes minutes regroupées par **Genre**, **Catégorie** ou **Genre et
+catégorie** des émissions (au choix sous *Grouper par*), avec les
+colonnes épisodes des productions propres, minutes des productions
+propres en première diffusion et en rediffusion, minutes des autres
+émissions et total.  Les valeurs sont regroupées sans tenir compte des
+majuscules / minuscules ni des espaces autour et affichées dans leur
+orthographe la plus fréquente ; les émissions sans valeur forment la
+ligne *Sans genre* / *Sans catégorie*.  **Télécharger le CSV** exporte
+le regroupement choisi.  Les minutes sont arrondies par groupe, une
+somme peut donc différer d'une minute ou deux des totaux par émission.
+La catégorie se définit dans l'émission (Edit Show → What, texte libre
+avec suggestions ; migration de base de données 0082).
 
 Les Program Managers et les Admins ouvrent cette page.
 

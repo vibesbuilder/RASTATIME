@@ -184,8 +184,22 @@ stehen in einer eigenen Spalte (Erstausstrahlungen gegenüber
 Wiederholungen), weil die meisten Behörden sie getrennt abfragen.
 Sendungen ohne Häkchen erscheinen ausgegraut mit ihren Minuten unter
 „andere Sendungen (nicht gezählt)", damit sichtbar bleibt, was fehlt.
-Eine Monatstabelle und **Download CSV (minutes)** (je Sendung, Summen,
-je Monat) runden den Abschnitt ab.
+Eine Monatstabelle und **Download CSV (minutes)** (je Sendung mit Genre
+und Kategorie, Summen, je Monat) runden den Abschnitt ab.
+
+**Nach Genre und Kategorie** (seit 2026-11-10): unter den Monaten
+dieselben Minuten, gruppiert nach **Genre**, **Kategorie** oder **Genre
+und Kategorie** der Sendungen (Auswahl unter *Gruppieren nach*), mit den
+Spalten Episoden der Eigenproduktionen, Minuten der Eigenproduktionen
+als Erstausstrahlung und als Wiederholung, Minuten anderer Sendungen und
+Summe.  Die Werte werden ohne Rücksicht auf Groß- / Kleinschreibung und
+umgebende Leerzeichen gruppiert und in ihrer häufigsten Schreibweise
+gezeigt; Sendungen ohne Wert bilden die Zeile *Kein Genre* / *Keine
+Kategorie*.  **CSV herunterladen** exportiert die gewählte Gruppierung.
+Die Minuten werden je Gruppe gerundet, eine Summe kann daher um ein bis
+zwei Minuten von den Summen je Sendung abweichen.  Die Kategorie wird in
+der Sendung gesetzt (Edit Show → What, Freitext mit Vorschlägen;
+Datenbank-Migration 0082).
 
 Program Managers und Admins öffnen diese Seite.
 

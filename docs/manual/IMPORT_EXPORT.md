@@ -103,7 +103,7 @@ import.
 
 | Column | Meaning |
 |---|---|
-| `name`, `url`, `genre`, `description` | as in the dialog; only `name` is required |
+| `name`, `url`, `genre`, `category`, `description` | as in the dialog; only `name` is required (`category` since 2026-11-10; files without the column import with an empty category) |
 | `start_date`, `start_time`, `end_date`, `end_time` | first broadcast; `end_date` may stay empty (same day, or next day when the end lies before the start) |
 | `timezone` | IANA name such as `Europe/Berlin`; empty = the station's timezone |
 | `allow_delayed_start` | yes/no, see [Delayed Start](./DELAYED_START.md) |

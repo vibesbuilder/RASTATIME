@@ -110,7 +110,7 @@ Sie eine Datei mit Passwörtern nach dem Import.
 
 | Spalte | Bedeutung |
 |---|---|
-| `name`, `url`, `genre`, `description` | wie im Dialog; nur `name` ist Pflicht |
+| `name`, `url`, `genre`, `category`, `description` | wie im Dialog; nur `name` ist Pflicht (`category` seit 2026-11-10; Dateien ohne die Spalte werden mit leerer Kategorie importiert) |
 | `start_date`, `start_time`, `end_date`, `end_time` | erste Episode; `end_date` darf leer bleiben (gleicher Tag, oder Folgetag, wenn das Ende vor dem Start liegt) |
 | `timezone` | IANA-Name wie `Europe/Berlin`; leer = Zeitzone der Station |
 | `allow_delayed_start` | yes/no, siehe [Verzögerter Sendungsstart](./DELAYED_START.md) |

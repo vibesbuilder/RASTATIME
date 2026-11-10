@@ -186,7 +186,22 @@ columna (primeras emisiones frente a repeticiones), porque la mayoría de
 las autoridades los declaran por separado.  Los programas sin la casilla
 aparecen en gris con sus minutos bajo «otros programas (no contados)»
 para ver qué queda fuera.  Una tabla por mes y **Download CSV (minutes)**
-(por programa, totales, por mes) completan la sección.
+(por programa con género y categoría, totales, por mes) completan la
+sección.
+
+**Por género y categoría** (desde el 2026-11-10): debajo de los meses,
+los mismos minutos agrupados por **Género**, **Categoría** o **Género y
+categoría** de los programas (a elegir en *Agrupar por*), con las
+columnas episodios de producciones propias, minutos de producciones
+propias como primeras emisiones y como repeticiones, minutos de otros
+programas y total.  Los valores se agrupan sin distinguir mayúsculas /
+minúsculas ni espacios alrededor y se muestran con su grafía más usada;
+los programas sin valor forman la fila *Sin género* / *Sin categoría*.
+**Descargar CSV** exporta la agrupación elegida.  Los minutos se
+redondean por grupo, así que una suma puede diferir en uno o dos minutos
+de los totales por programa.  La categoría se fija en el programa (Edit
+Show → What, texto libre con sugerencias; migración de base de datos
+0082).
 
 Program Managers y Admins abren esta página.
 

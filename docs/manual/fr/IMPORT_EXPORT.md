@@ -111,7 +111,7 @@ des mots de passe après l'import.
 
 | Colonne | Signification |
 |---|---|
-| `name`, `url`, `genre`, `description` | comme dans la boîte de dialogue ; seul `name` est obligatoire |
+| `name`, `url`, `genre`, `category`, `description` | comme dans la boîte de dialogue ; seul `name` est obligatoire (`category` depuis le 2026-11-10 ; les fichiers sans cette colonne s'importent avec une catégorie vide) |
 | `start_date`, `start_time`, `end_date`, `end_time` | première diffusion ; `end_date` peut rester vide (même jour, ou lendemain quand la fin précède le début) |
 | `timezone` | nom IANA tel que `Europe/Berlin` ; vide = fuseau de la station |
 | `allow_delayed_start` | yes/no, voir [Démarrage différé](./DELAYED_START.md) |
