@@ -2193,6 +2193,19 @@ class Application_Model_Preference
         return self::radioplayerInt('radioplayer_poll_seconds', 6, 5, 120);
     }
 
+    // RASTATIME 2026-11-10 - Radioplayer delay (s, 0..60): the feed answers
+    // as of "now minus delay", so now / next / previous change later.
+    public static function getRadioplayerDelay()
+    {
+        return self::radioplayerInt('radioplayer_delay', 0, 0, 60);
+    }
+
+    public static function setRadioplayerDelay($value)
+    {
+        $v = trim((string) $value);
+        self::setValue('radioplayer_delay', ctype_digit($v) ? (string) max(0, min(60, (int) $v)) : '');
+    }
+
     public static function setRadioplayerPollSeconds($value)
     {
         $v = trim((string) $value);
@@ -2241,6 +2254,21 @@ class Application_Model_Preference
     public static function setLiveTextFilePath($value)
     {
         self::setValue('live_text_file_path', trim((string) $value));
+    }
+
+    // RASTATIME 2026-11-10 - Live Text delay (s, 0..60): the playout holds
+    // every line back so the text changes when the listener hears it.
+    public static function getLiveTextDelay()
+    {
+        $v = trim((string) self::getValue('live_text_delay'));
+
+        return ctype_digit($v) ? max(0, min(60, (int) $v)) : 0;
+    }
+
+    public static function setLiveTextDelay($value)
+    {
+        $v = trim((string) $value);
+        self::setValue('live_text_delay', ctype_digit($v) ? (string) max(0, min(60, (int) $v)) : '0');
     }
 
     // FTP push settings as one JSON row (like the FTP import); the password

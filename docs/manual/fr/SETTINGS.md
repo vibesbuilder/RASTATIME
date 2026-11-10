@@ -120,6 +120,7 @@ entrée ligne ou DJ.
 | **Publier sur le web** | Le fichier est servi sous `http://<hôte>/live/now-playing.txt` (fichier statique, sans connexion, indépendant de l'interrupteur Public API). Accessible depuis Internet dès que le serveur web l'est, comme les widgets. |
 | **Écrire aussi dans un fichier** | Chemin absolu facultatif (cette machine ou un partage réseau). |
 | **Envoyer sur un serveur FTP** | À chaque changement le fichier est envoyé via FTP, FTPS (TLS explicite) ou SFTP vers le chemin distant ; identifiants propres, distincts de l'import FTP. SFTP exige un `curl` avec libssh2 (celui livré avec Git pour Windows ; le curl intégré à Windows ne le peut pas). Les échecs sont journalisés ; le changement suivant réessaie. |
+| **Délai (s)** | Depuis le 2026-11-10.  L'auditeur entend un changement quelques secondes après que le playout l'a signalé (traitement audio, tampons du flux, relais du fournisseur, lecteur).  Chaque ligne est retenue autant de secondes et écrite à son propre moment, dans l'ordre – un jingle suivi du titre suivant pendant le délai s'affiche quand même pour sa durée.  0 = immédiatement (défaut), 0..60.  Mesurez le décalage une fois : notez quand `/live/now-playing.txt` change et quand le nouveau titre s'entend sur un lecteur typique. |
 
 La ligne est construite par le moteur audio à partir des métadonnées
 qu'il envoie réellement au flux, titres DJ et titres de webstream compris.
@@ -144,6 +145,7 @@ Live Text Info et de l'interrupteur de l'API publique.
 | **Number of previous tracks** | Nombre de titres récemment diffusés listés (0..20, défaut 7). |
 | **Leave out tracks shorter than (s)** | Jingles et identifiants de station restent hors des titres précédents et de « now » (défaut 60, 0 = tout). |
 | **Suggested polling interval (s)** | Envoyé comme `pollNext` (5..120, défaut 6). |
+| **Délai (s)** | Depuis le 2026-11-10.  Le flux répond avec l'état d'il y a autant de secondes ; maintenant, suivant et les titres précédents changent donc plus tard (0..60, défaut 0).  L'interrogation du partenaire, le cache de 5 s et les systèmes du partenaire ajoutent déjà quelques secondes – commencez par 0 et ne fixez une valeur qu'après avoir comparé l'application du partenaire avec ce qui s'entend. |
 
 Contenu du flux :
 
@@ -255,7 +257,7 @@ chargement de page.  Exceptions :
 | Fondus enchaînés, flux, carte son | Au redémarrage de la chaîne audio - planifié automatiquement à un moment calme ; **Appliquer maintenant** dans Paramètres → Machine locale le force. |
 | Couleurs principale et secondaire, logo, favicon | Au prochain chargement de page (F5). |
 | Votre propre langue | Au prochain chargement de page ; l'écran de connexion utilise la langue par défaut. |
-| Live Text Info, TuneIn | Au prochain changement de titre ou de source. |
+| Live Text Info, TuneIn | Au prochain changement de titre ou de source (le délai Live Text compte à partir de ce changement). |
 | Radioplayer Feed | Aussitôt (le flux est mis en cache 5 s). |
 
 ### « Y a-t-il un menu Outils, une visionneuse de journaux ou une console DB ? »

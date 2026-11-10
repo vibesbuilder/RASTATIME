@@ -131,6 +131,7 @@ class PreferenceController extends Zend_Controller_Action
                 Application_Model_Preference::setLiveTextFormat($values['live_text_format'] ?? 0);
                 Application_Model_Preference::setLiveTextWebEnabled(!empty($values['live_text_web_enabled']));
                 Application_Model_Preference::setLiveTextFilePath($values['live_text_file_path'] ?? '');
+                Application_Model_Preference::setLiveTextDelay($values['live_text_delay'] ?? '0');
                 $liveTextFtp = Application_Model_Preference::getLiveTextFtpConfig();
                 $liveTextFtp['enabled'] = !empty($values['live_text_ftp_enabled']);
                 $liveTextFtp['protocol'] = in_array($values['live_text_ftp_protocol'] ?? 'ftp', ['ftp', 'ftps', 'sftp'], true)
@@ -152,6 +153,7 @@ class PreferenceController extends Zend_Controller_Action
                 Application_Model_Preference::setRadioplayerPrevious($values['radioplayer_previous'] ?? '');
                 Application_Model_Preference::setRadioplayerMinSeconds($values['radioplayer_min_seconds'] ?? '');
                 Application_Model_Preference::setRadioplayerPollSeconds($values['radioplayer_poll_seconds'] ?? '');
+                Application_Model_Preference::setRadioplayerDelay($values['radioplayer_delay'] ?? '');
 
                 Application_Model_Preference::setTuneinEnabled($values['enable_tunein']);
                 Application_Model_Preference::setTuneinStationId($values['tunein_station_id']);

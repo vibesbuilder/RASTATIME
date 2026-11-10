@@ -8255,3 +8255,16 @@ msgstr "Mehr laden"
 #. RASTATIME 2026-11-10 - Track History widget
 msgid "Load more button text:"
 msgstr "Text des Knopfs „Mehr laden“:"
+
+#. RASTATIME 2026-11-10 - Live Text / Radioplayer delay
+msgid "Delay (s):"
+msgstr "Verzögerung (s):"
+
+msgid "The listener hears a change some seconds after the playout reports it (audio processing, stream buffers, players). Every line is written this many seconds later, so the text changes when the listener hears it. 0 = at once (0..60)."
+msgstr "Hörer hören einen Wechsel einige Sekunden nachdem das Playout ihn meldet (Audiobearbeitung, Stream-Puffer, Player). Jede Zeile wird um so viele Sekunden später geschrieben, damit sich der Text ändert, wenn der Wechsel zu hören ist. 0 = sofort (0..60)."
+
+msgid "The feed answers as of this many seconds ago, so \"now\", \"next\" and the previous tracks change later. The partner's polling and caching already add a few seconds - start with 0 and compare with the app (0..60)."
+msgstr "Der Feed antwortet mit dem Stand von vor so vielen Sekunden, „Jetzt“, „Nächster“ und die vorigen Titel wechseln also später. Abfrage und Zwischenspeicher des Partners verzögern bereits um einige Sekunden – mit 0 beginnen und mit der App vergleichen (0..60)."
+
+msgid "Please enter a number from 0 to 60."
+msgstr "Bitte eine Zahl von 0 bis 60 eingeben."

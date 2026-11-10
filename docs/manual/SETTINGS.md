@@ -117,6 +117,7 @@ every change of track, webstream, Line-In or DJ.
 | **Publish on the web** | The file is served at `http://<host>/live/now-playing.txt` (static file, no login, independent of the Public API switch). Reachable from the internet as soon as the web server is, like the widgets. |
 | **Also write to file** | Optional absolute path (this machine or a network share). |
 | **Push to an FTP server** | On every change the file is uploaded via FTP, FTPS (explicit TLS) or SFTP to the remote path; own credentials, separate from the FTP import. SFTP needs a `curl` with libssh2 (the one shipped with Git for Windows; the Windows built-in curl cannot). Failures are logged; the next change retries. |
+| **Delay (s)** | Since 2026-11-10.  The listener hears a change some seconds after the playout reports it (audio processing, stream buffers, the provider's relay, the player).  Every line is held back this many seconds and written at its own time, in order - a jingle followed by the next track within the delay still shows for its turn.  0 = at once (default), 0..60.  Measure the offset once: note when `/live/now-playing.txt` changes and when the new track is heard on a typical player. |
 
 The line is built by the audio engine from the metadata it actually
 sends to the stream, so DJ titles and webstream titles are included. A
@@ -141,6 +142,7 @@ Info and of the Public API switch.
 | **Number of previous tracks** | How many of the last played tracks are listed (0..20, default 7). |
 | **Leave out tracks shorter than (s)** | Jingles and station IDs stay out of the previous tracks and out of "now" (default 60, 0 = everything). |
 | **Suggested polling interval (s)** | Sent as `pollNext` (5..120, default 6). |
+| **Delay (s)** | Since 2026-11-10.  The feed answers as of this many seconds ago, so now, next and the previous tracks change later (0..60, default 0).  The partner's polling, the 5 s cache and the partner's own systems already add a few seconds - start with 0 and set a value only after comparing the partner's app with what is heard. |
 
 What the feed contains:
 
@@ -245,7 +247,7 @@ Exceptions:
 | Crossfades, streams, sound card | When the audio chain restarts - planned automatically at a quiet moment; **Apply now** in Settings → Local Machine forces it. |
 | Primary and secondary colour, logo, favicon | With the next page load (F5). |
 | Your own language | With the next page load; the login screen uses the Default Language. |
-| Live Text Info, TuneIn | At the next change of track or source. |
+| Live Text Info, TuneIn | At the next change of track or source (the Live Text delay counts from that change). |
 | Radioplayer Feed | At once (the feed is cached for 5 s). |
 
 ### "Is there a Tools menu, a log viewer or a DB console?"

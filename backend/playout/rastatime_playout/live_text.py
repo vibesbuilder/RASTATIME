@@ -17,6 +17,15 @@ appended.  Identical lines are ignored.  Settings (Settings -> General,
 "Live Text Info") are re-read before every update, so a save takes
 effect at the next change.  I/O runs on a worker thread; the playout
 callback never blocks.
+
+RASTATIME 2026-11-10 - optional delay ("Delay (s)", 0..60): the listener
+hears a change some seconds after Liquidsoap reports it (Stereo Tool,
+Icecast burst, relays, player buffers).  With a delay every line is held
+back and written at its own due time, in order - a jingle that is
+followed by the next track within the delay still shows for its turn.
+A worker that falls behind writes only the newest due line.  Lines still
+waiting are lost on a playout restart; the next change sets the file
+again.
 """
 
 from __future__ import annotations
@@ -28,6 +37,8 @@ import os
 import shutil
 import subprocess
 import threading
+import time
+from collections import deque
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -42,12 +53,14 @@ VALID_FORMATS = (0, 1, 2)
 FTP_PROTOCOLS = ("ftp", "ftps", "sftp")
 FTP_TIMEOUT_SECONDS = 20.0
 MAX_LINE_LENGTH = 500
+MAX_DELAY_SECONDS = 60
 
 _PREF_ENABLED = "live_text_enabled"
 _PREF_FORMAT = "live_text_format"
 _PREF_WEB = "live_text_web_enabled"
 _PREF_FILE = "live_text_file_path"
 _PREF_FTP = "live_text_ftp_config"
+_PREF_DELAY = "live_text_delay"
 
 
 @dataclass(frozen=True)
@@ -80,6 +93,7 @@ class LiveTextConfig:
     web_enabled: bool = True
     file_path: str = ""
     ftp: LiveTextFtp = field(default_factory=LiveTextFtp)
+    delay_seconds: int = 0
 
 
 def _truthy(value: object) -> bool:
@@ -119,12 +133,17 @@ def parse_live_text_config(entries: Mapping[str, object]) -> LiveTextConfig:
                 path=str(data.get("path") or "/").strip() or "/",
             )
     web_raw = entries.get(_PREF_WEB)
+    try:
+        delay = int(str(entries.get(_PREF_DELAY) or "0").strip() or 0)
+    except ValueError:
+        delay = 0
     return LiveTextConfig(
         enabled=_truthy(entries.get(_PREF_ENABLED)),
         label_format=label_format,
         web_enabled=True if web_raw in (None, "") else _truthy(web_raw),
         file_path=str(entries.get(_PREF_FILE) or "").strip(),
         ftp=ftp,
+        delay_seconds=max(0, min(MAX_DELAY_SECONDS, delay)),
     )
 
 
@@ -247,10 +266,16 @@ class LiveTextWriter:
         self._read_config = read_config
         self._web_dir = Path(web_dir) if web_dir else default_web_dir()
         self._ftp_upload = ftp_upload
+        self._clock: Callable[[], float] = time.monotonic
         self._lock = threading.Lock()
         self._io_lock = threading.Lock()
         self._last: Optional[tuple[str, LiveTextConfig]] = None
         self._seq = 0
+        self._written_seq = 0
+        # delayed lines: (due, seq, line, cfg), due in self._clock() time
+        self._pending: deque[tuple[float, int, str, LiveTextConfig]] = deque()
+        self._pending_cv = threading.Condition(self._lock)
+        self._delay_worker: Optional[threading.Thread] = None
         self.last_error: Optional[str] = None
 
     # -- settings for the Liquidsoap side --------------------------------------
@@ -289,6 +314,11 @@ class LiveTextWriter:
             self._last = (line, cfg)
             self._seq += 1
             seq = self._seq
+            if cfg.delay_seconds > 0:
+                self._enqueue_locked(self._clock() + cfg.delay_seconds, seq, line, cfg)
+                return True
+            # no delay (any more): lines still waiting are older than this one
+            self._pending.clear()
         if wait:
             self._write_targets(line, cfg, seq)
         else:
@@ -302,10 +332,70 @@ class LiveTextWriter:
         with self._lock:
             return seq != self._seq
 
-    def _write_targets(self, line: str, cfg: LiveTextConfig, seq: int) -> None:
+    # -- delay ----------------------------------------------------------------
+
+    def _enqueue_locked(self, due: float, seq: int, line: str, cfg: LiveTextConfig) -> None:
+        # a shorter delay than before: waiting lines due later are older - drop them
+        while self._pending and self._pending[-1][0] >= due:
+            self._pending.pop()
+        self._pending.append((due, seq, line, cfg))
+        if self._delay_worker is None or not self._delay_worker.is_alive():
+            self._delay_worker = threading.Thread(
+                target=self._delay_loop, name="live-text-delay", daemon=True
+            )
+            self._delay_worker.start()
+        self._pending_cv.notify()
+
+    def pending_count(self) -> int:
+        with self._lock:
+            return len(self._pending)
+
+    def _next_due_locked(self) -> Optional[tuple[int, str, LiveTextConfig]]:
+        """The newest line that is due now (older due lines are skipped), else None."""
+        now = self._clock()
+        item = None
+        while self._pending and self._pending[0][0] <= now:
+            item = self._pending.popleft()
+        return None if item is None else item[1:]
+
+    def run_due(self) -> int:
+        """Write the newest due line synchronously (tests, shutdown); returns its seq or 0."""
+        with self._lock:
+            item = self._next_due_locked()
+        if item is None:
+            return 0
+        seq, line, cfg = item
+        self._write_targets(line, cfg, seq, delayed=True)
+        return seq
+
+    def _delay_loop(self) -> None:
+        while True:
+            with self._lock:
+                while True:
+                    item = self._next_due_locked()
+                    if item is not None:
+                        break
+                    timeout = (self._pending[0][0] - self._clock()) if self._pending else None
+                    self._pending_cv.wait(timeout=timeout)
+            seq, line, cfg = item
+            try:
+                self._write_targets(line, cfg, seq, delayed=True)
+            except Exception:  # pylint: disable=broad-exception-caught
+                logger.exception("Live Text: delayed write failed")
+
+    # -- writing --------------------------------------------------------------
+
+    def _write_targets(
+        self, line: str, cfg: LiveTextConfig, seq: int, *, delayed: bool = False
+    ) -> None:
         with self._io_lock:
-            if self._is_stale(seq):
+            if delayed:
+                # a delayed line never overwrites a newer line already written
+                if seq <= self._written_seq:
+                    return
+            elif self._is_stale(seq):
                 return
+            self._written_seq = seq
             written: Optional[Path] = None
             if cfg.web_enabled:
                 try:
@@ -351,7 +441,10 @@ class LiveTextWriter:
                                 cfg.ftp.host,
                                 exc,
                             )
-            logger.info("Live Text: %r", line)
+            if delayed:
+                logger.info("Live Text: %r (after %d s)", line, cfg.delay_seconds)
+            else:
+                logger.info("Live Text: %r", line)
 
 
 def cfp(cfg: LiveTextConfig) -> str:

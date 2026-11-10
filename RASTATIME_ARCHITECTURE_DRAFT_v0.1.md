@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.131
+Draft version: 0.132
 Date: 2026-11-10
 
 > **Revision history**
+> - **0.132 (2026-11-10)** - **Delay for Live Text and the Radioplayer feed** (§23.104): the
+>   Live Text writer holds every line back X seconds and writes it at its own due time; the
+>   feed answers as of "now minus X".  Both default 0.
 > - **0.131 (2026-11-10)** - **Radioplayer feed for ORF Sound** (§23.103): a public JSON
 >   endpoint in the Radioplayer v4 events format (previous from the playout history, now / next
 >   from the schedule), own switch and optional key, independent of Live Text Info.
@@ -9777,4 +9780,41 @@ queries + one history query).  The partner polls every ~6 s.
 
 **Risk.**  Read-only; playout and Liquidsoap are not touched.  The data
 is the same the public widgets already show.  Rollback: switch off or
+`git revert`.
+
+### 23.104 Delay for Live Text and the Radioplayer Feed (2026-11-10)
+
+**Need.**  The in-band stream title (ICY) is in step with the audio.
+The out-of-band consumers are not: the Live Text file changes when
+Liquidsoap reports the metadata, the Radioplayer feed when the schedule
+row starts - the listener hears the change seconds later (Stereo Tool,
+Icecast burst, the provider's relay, player buffers; one webstream path
+measured ~8.6 s on 2026-11-05).  Operator Go 2026-11-10 for both, after
+an evaluation.
+
+**Live Text** (`LiveTextWriter`, PLAYOUT).  New pref `live_text_delay`
+(0..60 s, default 0; `LiveTextConfig.delay_seconds`).  With 0 the path
+is unchanged (one write thread per line, older lines dropped as stale).
+With a delay each new line goes into a queue `(due, seq, line, cfg)`
+and one daemon worker (`live-text-delay`, started lazily) writes it at
+its due time.  Lines are not dropped because a newer one arrived - a
+jingle followed by the next track within the delay still shows for its
+turn; a worker that falls behind (slow FTP) writes only the newest due
+line.  A shorter delay drops queued lines due later than the new line;
+switching to 0 clears the queue; `_written_seq` keeps a delayed line
+from overwriting a newer written one.  Lines still waiting are lost on
+a PLAYOUT restart (the next change sets the file again).  Liquidsoap is
+not touched; the setting is read per update.
+
+**Radioplayer feed** (`EmbedController::_buildRadioplayerEvents`).  New
+pref `radioplayer_delay` (0..60 s, default 0).  The feed builds
+everything as of `now - delay`: the history query (`ends <= ref`) and
+`Application_Model_Schedule::GetPlayOrderRange($utcTimeEnd, $shows,
+$utcNow)`, which takes an optional reference time now (default: now,
+all other callers unchanged).  The partner's polling and the 5 s cache
+already delay the feed, so the field says "start with 0".
+
+**Risk.**  Low.  The live-text worker catches every exception like the
+existing write path; a wrong value shows the text too early or too late,
+nothing stops.  The feed stays read-only.  Rollback: set 0 or
 `git revert`.

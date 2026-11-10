@@ -25,6 +25,7 @@ $publicUrl = rtrim(Config::getPublicUrl(), '/') . '/live/now-playing.txt';
         </p>
 
         <?php echo $this->element->getElement('live_text_file_path')->render() ?>
+        <?php echo $this->element->getElement('live_text_delay')->render() ?>
 
         <?php echo $this->element->getElement('live_text_ftp_enabled')->renderViewHelper() ?>
         <?php echo $this->element->getElement('live_text_ftp_enabled')->renderLabel() ?>

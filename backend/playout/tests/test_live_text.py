@@ -248,3 +248,107 @@ def test_start_listener_wires_the_live_text_writer(monkeypatch):
     ss.start_listener(MagicMock(), host="127.0.0.1", port=0, live_text=writer)
     assert ss._EventHandler.live_text is writer
     ss._EventHandler.live_text = None
+
+
+# RASTATIME 2026-11-10 - delay
+
+
+class _Clock:
+    def __init__(self) -> None:
+        self.t = 1000.0
+
+    def __call__(self) -> float:
+        return self.t
+
+
+def _delayed_writer(tmp_path: Path, delay: int):
+    box = {"cfg": LiveTextConfig(enabled=True, web_enabled=True, delay_seconds=delay)}
+    w = LiveTextWriter(lambda: box["cfg"], web_dir=tmp_path / "web", ftp_upload=lambda f, p: None)
+    clock = _Clock()
+    w._clock = clock  # noqa: SLF001
+    w._delay_worker = MagicMock(is_alive=lambda: True)  # noqa: SLF001 - drive run_due() by hand
+    return w, clock, box
+
+
+def _web(tmp_path: Path) -> str:
+    f = tmp_path / "web" / "now-playing.txt"
+    return f.read_text(encoding="utf-8").strip() if f.exists() else ""
+
+
+def test_parse_delay_is_clamped():
+    assert parse_live_text_config({"live_text_delay": "8"}).delay_seconds == 8
+    assert parse_live_text_config({"live_text_delay": "999"}).delay_seconds == 60
+    assert parse_live_text_config({"live_text_delay": "-3"}).delay_seconds == 0
+    assert parse_live_text_config({"live_text_delay": "x"}).delay_seconds == 0
+    assert parse_live_text_config({}).delay_seconds == 0
+
+
+def test_delayed_lines_are_written_in_order_at_their_due_time(tmp_path):
+    w, clock, _ = _delayed_writer(tmp_path, 10)
+    assert w.update("Jingle", wait=True) is True
+    clock.t += 3
+    assert w.update("Artist - Title", wait=True) is True
+    assert _web(tmp_path) == "" and w.pending_count() == 2
+    clock.t += 6.9  # 9.9 s after the jingle
+    assert w.run_due() == 0
+    clock.t += 0.1  # jingle due
+    w.run_due()
+    assert _web(tmp_path) == "Jingle"
+    clock.t += 3  # track due
+    w.run_due()
+    assert _web(tmp_path) == "Artist - Title" and w.pending_count() == 0
+
+
+def test_a_late_worker_writes_only_the_newest_due_line(tmp_path):
+    w, clock, _ = _delayed_writer(tmp_path, 5)
+    w.update("A", wait=True)
+    clock.t += 1
+    w.update("B", wait=True)
+    clock.t += 1
+    w.update("C", wait=True)
+    clock.t += 30
+    assert w.run_due() == 3
+    assert _web(tmp_path) == "C" and w.pending_count() == 0
+
+
+def test_switching_the_delay_off_drops_waiting_lines(tmp_path):
+    w, clock, box = _delayed_writer(tmp_path, 10)
+    w.update("Old", wait=True)
+    box["cfg"] = LiveTextConfig(enabled=True, web_enabled=True, delay_seconds=0)
+    w.update("New", wait=True)
+    assert _web(tmp_path) == "New" and w.pending_count() == 0
+    clock.t += 20
+    w.run_due()
+    assert _web(tmp_path) == "New"
+
+
+def test_a_shorter_delay_drops_older_lines_due_later(tmp_path):
+    w, clock, box = _delayed_writer(tmp_path, 20)
+    w.update("Old", wait=True)
+    box["cfg"] = LiveTextConfig(enabled=True, web_enabled=True, delay_seconds=5)
+    w.update("New", wait=True)
+    assert w.pending_count() == 1
+    clock.t += 5
+    w.run_due()
+    assert _web(tmp_path) == "New"
+
+
+def test_a_delayed_line_never_overwrites_a_newer_written_line(tmp_path):
+    w, _, _ = _delayed_writer(tmp_path, 5)
+    w._seq = 7  # noqa: SLF001
+    w._write_targets("Newer", w._read_config(), 7)  # noqa: SLF001
+    w._write_targets("Older", w._read_config(), 3, delayed=True)  # noqa: SLF001
+    assert _web(tmp_path) == "Newer"
+
+
+def test_the_delay_worker_thread_writes_by_itself(tmp_path):
+    import time as _time
+
+    cfg = LiveTextConfig(enabled=True, web_enabled=True, delay_seconds=1)
+    w = LiveTextWriter(lambda: cfg, web_dir=tmp_path / "web", ftp_upload=lambda f, p: None)
+    w.update("Threaded")
+    assert _web(tmp_path) == ""
+    deadline = _time.monotonic() + 5
+    while _web(tmp_path) != "Threaded" and _time.monotonic() < deadline:
+        _time.sleep(0.05)
+    assert _web(tmp_path) == "Threaded"

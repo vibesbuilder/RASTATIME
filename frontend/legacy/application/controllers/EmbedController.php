@@ -549,6 +549,12 @@ class EmbedController extends Zend_Controller_Action
         }
         $serviceDescription = mb_substr($serviceDescription, 0, 1000);
         $minSeconds = Application_Model_Preference::getRadioplayerMinSeconds();
+        // RASTATIME 2026-11-10 - delay: everything as of "now minus delay"
+        $refUtc = new DateTime('now', new DateTimeZone('UTC'));
+        $delay = Application_Model_Preference::getRadioplayerDelay();
+        if ($delay > 0) {
+            $refUtc->modify('-' . $delay . ' seconds');
+        }
         $imagesPublic = (bool) Application_Model_Preference::GetAllow3rdPartyApi();
         $base = rtrim(Config::getPublicUrl(), '/');
         $abs = function ($path) use ($base) {
@@ -602,7 +608,7 @@ class EmbedController extends Zend_Controller_Action
         $previous = [];
         $limit = Application_Model_Preference::getRadioplayerPrevious();
         if ($limit > 0) {
-            $nowUtc = gmdate('Y-m-d H:i:s');
+            $nowUtc = $refUtc->format('Y-m-d H:i:s');
             $rows = Application_Common_Database::prepareAndExecute(
                 "SELECT ph.starts, ph.ends, f.id AS file_id, f.track_title, f.artist_name,
                         (COALESCE(f.artwork, '') <> '') AS has_artwork,
@@ -635,7 +641,7 @@ class EmbedController extends Zend_Controller_Action
         }
 
         // ---- now / next: the schedule (same source as the player widget)
-        $range = Application_Model_Schedule::GetPlayOrderRange();
+        $range = Application_Model_Schedule::GetPlayOrderRange(null, 5, $refUtc);
         $showNow = $range['shows']['current'] ?? null;
         $showNext = $range['shows']['next'] ?? null;
         if (is_array($showNext) && isset($showNext[0]) && is_array($showNext[0])) {

@@ -119,6 +119,7 @@ el playout en cada cambio de pista, webstream, entrada de línea o DJ.
 | **Publicar en la web** | El archivo se sirve en `http://<host>/live/now-playing.txt` (archivo estático, sin inicio de sesión, independiente del interruptor Public API). Accesible desde Internet en cuanto lo sea el servidor web, como los widgets. |
 | **Escribir también en un archivo** | Ruta absoluta opcional (este equipo o un recurso compartido de red). |
 | **Subir a un servidor FTP** | En cada cambio el archivo se sube por FTP, FTPS (TLS explícito) o SFTP a la ruta remota; credenciales propias, separadas de la importación FTP. SFTP necesita un `curl` con libssh2 (el que trae Git para Windows; el curl integrado de Windows no puede). Los fallos se registran; el siguiente cambio lo reintenta. |
+| **Retardo (s)** | Desde 2026-11-10.  El oyente escucha un cambio unos segundos después de que el playout lo comunique (procesamiento de audio, búferes del stream, relay del proveedor, reproductor).  Cada línea se retiene esos segundos y se escribe en su propio momento, en orden: un jingle al que sigue el siguiente tema dentro del retardo se muestra igualmente durante su turno.  0 = al instante (predeterminado), 0..60.  Mida el desfase una vez: anote cuándo cambia `/live/now-playing.txt` y cuándo se oye el nuevo tema en un reproductor típico. |
 
 La línea la construye el motor de audio a partir de los metadatos que
 realmente envía al stream, incluidos títulos de DJ y de webstream. Un
@@ -143,6 +144,7 @@ Info y del interruptor de la API pública.
 | **Number of previous tracks** | Cuántas de las últimas pistas emitidas se listan (0..20, predeterminado 7). |
 | **Leave out tracks shorter than (s)** | Jingles e identificativos quedan fuera de las pistas anteriores y de «now» (predeterminado 60, 0 = todo). |
 | **Suggested polling interval (s)** | Se envía como `pollNext` (5..120, predeterminado 6). |
+| **Retardo (s)** | Desde 2026-11-10.  El feed responde con el estado de hace esos segundos; ahora, siguiente y los temas anteriores cambian más tarde (0..60, predeterminado 0).  La consulta del socio, la caché de 5 s y los sistemas del socio ya añaden unos segundos: empiece con 0 y fije un valor solo tras comparar la app del socio con lo que se oye. |
 
 Qué contiene el feed:
 
@@ -253,7 +255,7 @@ carga de página.  Excepciones:
 | Crossfades, streams, tarjeta de sonido | Cuando la cadena de audio se reinicia - planificado automáticamente en un momento tranquilo; **Aplicar ahora** en Ajustes → Máquina local lo fuerza. |
 | Colores principal y secundario, logo, favicon | Con la siguiente carga de página (F5). |
 | Su propio idioma | Con la siguiente carga de página; la pantalla de inicio de sesión usa el idioma por defecto. |
-| Live Text Info, TuneIn | En el siguiente cambio de pista o de fuente. |
+| Live Text Info, TuneIn | En el siguiente cambio de pista o de fuente (el retardo de Live Text cuenta desde ese cambio). |
 | Radioplayer Feed | Al instante (el feed se guarda en caché 5 s). |
 
 ### «¿Hay un menú de herramientas, un visor de registros o una consola de base de datos?»

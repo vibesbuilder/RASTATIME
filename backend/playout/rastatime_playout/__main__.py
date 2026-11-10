@@ -283,11 +283,12 @@ def _build_live_text_writer():
     cfg = read_live_text_config_from_db()
     if cfg is not None and cfg.enabled:
         logger.info(
-            "Live Text Info: enabled (format %d, web %s, file %r, ftp %s) -> %s",
+            "Live Text Info: enabled (format %d, web %s, file %r, ftp %s, delay %d s) -> %s",
             cfg.label_format,
             "on" if cfg.web_enabled else "off",
             cfg.file_path or "-",
             "on" if cfg.ftp.enabled else "off",
+            cfg.delay_seconds,
             writer.web_file,
         )
     else:

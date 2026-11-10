@@ -82,5 +82,16 @@ class Application_Form_RadioplayerPreferences extends Zend_Form_SubForm
             ->setAttrib('class', 'input_text')
             ->setAttrib('style', 'width: 6em;');
         $this->addElement($poll);
+
+        // RASTATIME 2026-11-10 - delay
+        $delay = new Zend_Form_Element_Text('radioplayer_delay');
+        $delay->setLabel(_('Delay (s):'))
+            ->setDescription(_('The feed answers as of this many seconds ago, so "now", "next" and the previous tracks change later. The partner\'s polling and caching already add a few seconds - start with 0 and compare with the app (0..60).'))
+            ->setFilters(['StringTrim'])
+            ->addValidator('regex', false, ['/^(\d|[1-5]\d|60)?$/', 'messages' => _('Please enter a number from 0 to 60.')])
+            ->setValue(Application_Model_Preference::getRadioplayerDelay())
+            ->setAttrib('class', 'input_text')
+            ->setAttrib('style', 'width: 6em;');
+        $this->addElement($delay);
     }
 }

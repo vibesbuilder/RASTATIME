@@ -119,6 +119,7 @@ Playout bei jedem Wechsel von Titel, Webstream, Line-In oder DJ geschrieben.
 | **Im Web veröffentlichen** | Die Datei wird unter `http://<host>/live/now-playing.txt` ausgeliefert (statische Datei, ohne Login, unabhängig vom Public-API-Schalter). Aus dem Internet erreichbar, sobald der Webserver es ist, wie die Widgets. |
 | **Zusätzlich in Datei schreiben** | Optionaler absoluter Pfad (dieser Rechner oder Netzwerkfreigabe). |
 | **Auf einen FTP-Server hochladen** | Bei jeder Änderung wird die Datei per FTP, FTPS (explizites TLS) oder SFTP auf den Zielpfad hochgeladen; eigene Zugangsdaten, getrennt vom FTP-Import. SFTP braucht ein `curl` mit libssh2 (das von Git für Windows; das in Windows eingebaute kann es nicht). Fehler werden geloggt, die nächste Änderung versucht es erneut. |
+| **Verzögerung (s)** | Seit 2026-11-10.  Hörer hören einen Wechsel einige Sekunden nachdem das Playout ihn meldet (Audiobearbeitung, Stream-Puffer, Relay des Anbieters, Player).  Jede Zeile wird um so viele Sekunden zurückgehalten und zu ihrem eigenen Zeitpunkt geschrieben, in der richtigen Reihenfolge – ein Jingle, dem innerhalb der Verzögerung der nächste Titel folgt, erscheint trotzdem für seine Dauer.  0 = sofort (Standard), 0..60.  Den Versatz einmal messen: festhalten, wann sich `/live/now-playing.txt` ändert und wann der neue Titel auf einem typischen Player zu hören ist. |
 
 Die Zeile bildet die Audio-Engine aus den Metadaten, die sie tatsächlich
 in den Stream sendet, DJ-Titel und Webstream-Titel eingeschlossen. Eine
@@ -143,6 +144,7 @@ Info und vom Schalter für die öffentliche API.
 | **Number of previous tracks** | Wie viele der zuletzt gespielten Titel aufgeführt werden (0..20, Standard 7). |
 | **Leave out tracks shorter than (s)** | Jingles und Stationskennungen bleiben aus den letzten Titeln und aus „now“ heraus (Standard 60, 0 = alles). |
 | **Suggested polling interval (s)** | Wird als `pollNext` gesendet (5..120, Standard 6). |
+| **Verzögerung (s)** | Seit 2026-11-10.  Der Feed antwortet mit dem Stand von vor so vielen Sekunden; Jetzt, Nächster und die vorigen Titel wechseln also später (0..60, Standard 0).  Die Abfrage des Partners, der 5-s-Zwischenspeicher und die Systeme des Partners verzögern bereits um einige Sekunden – mit 0 beginnen und erst nach einem Vergleich der Partner-App mit dem Gehörten einen Wert setzen. |
 
 Was der Feed enthält:
 
@@ -252,7 +254,7 @@ Seitenaufruf.  Ausnahmen:
 | Crossfades, Streams, Soundkarte | Wenn die Audiokette neu startet - automatisch in einem ruhigen Moment geplant; **Jetzt anwenden** in Einstellungen → Lokale Maschine erzwingt es. |
 | Primär- und Sekundärfarbe, Logo, Favicon | Beim nächsten Seitenaufruf (F5). |
 | Ihre eigene Sprache | Beim nächsten Seitenaufruf; der Anmeldebildschirm nutzt die Standardsprache. |
-| Live Text Info, TuneIn | Beim nächsten Wechsel von Titel oder Quelle. |
+| Live Text Info, TuneIn | Beim nächsten Wechsel von Titel oder Quelle (die Live-Text-Verzögerung zählt ab diesem Wechsel). |
 | Radioplayer Feed | Sofort (der Feed wird 5 s zwischengespeichert). |
 
 ### „Gibt es ein Tools-Menü, einen Log-Viewer oder eine DB-Konsole?“

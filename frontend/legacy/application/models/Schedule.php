@@ -93,8 +93,10 @@ SQL;
      * @param null|mixed $utcTimeEnd
      * @param mixed      $showsToRetrieve
      */
-    public static function GetPlayOrderRange($utcTimeEnd = null, $showsToRetrieve = 5)
+    public static function GetPlayOrderRange($utcTimeEnd = null, $showsToRetrieve = 5, $utcNow = null)
     {
+        // RASTATIME 2026-11-10 - optional reference time (UTC DateTime): the
+        // Radioplayer feed asks "what was on air X seconds ago" for its delay.
         // Everything in this function must be done in UTC. You will get a swift kick in the pants if you mess that up.
 
         // when timeEnd is unspecified, return to the default behaviour - set a range of 48 hours from current time
@@ -105,7 +107,11 @@ SQL;
             $utcTimeEnd = $end->format(DEFAULT_TIMESTAMP_FORMAT);
         }
 
-        $utcNow = new DateTime('now', new DateTimeZone('UTC'));
+        if ($utcNow instanceof DateTime) {
+            $utcNow = (clone $utcNow)->setTimezone(new DateTimeZone('UTC'));
+        } else {
+            $utcNow = new DateTime('now', new DateTimeZone('UTC'));
+        }
 
         $shows = Application_Model_Show::getPrevCurrentNext($utcNow, $utcTimeEnd, $showsToRetrieve);
         $currentShowID = null;

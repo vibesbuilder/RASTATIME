@@ -50,6 +50,17 @@ class Application_Form_LiveTextPreferences extends Zend_Form_SubForm
             ->setAttrib('class', 'input_text');
         $this->addElement($filePath);
 
+        // RASTATIME 2026-11-10 - delay
+        $delay = new Zend_Form_Element_Text('live_text_delay');
+        $delay->setLabel(_('Delay (s):'))
+            ->setDescription(_('The listener hears a change some seconds after the playout reports it (audio processing, stream buffers, players). Every line is written this many seconds later, so the text changes when the listener hears it. 0 = at once (0..60).'))
+            ->setFilters(['StringTrim'])
+            ->addValidator('regex', false, ['/^(\d|[1-5]\d|60)?$/', 'messages' => _('Please enter a number from 0 to 60.')])
+            ->setValue(Application_Model_Preference::getLiveTextDelay())
+            ->setAttrib('class', 'input_text')
+            ->setAttrib('style', 'width: 6em;');
+        $this->addElement($delay);
+
         $ftp = Application_Model_Preference::getLiveTextFtpConfig();
 
         $ftpEnabled = new Zend_Form_Element_Checkbox('live_text_ftp_enabled');
