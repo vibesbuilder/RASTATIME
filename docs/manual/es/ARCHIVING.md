@@ -3,7 +3,7 @@
 > **Dónde está en el manual.** Ajustes → **Archivo** (productores,
 > cuentas de CBA); Calendario → formulario del programa,
 > sección **Archivo**; Calendario → clic derecho en una emisión →
-> **Archivar en línea**; Estadísticas → **Participantes** y
+> **Extras** → **Archivar en línea**; Estadísticas → **Participantes** y
 > **Estado del archivo** (en la interfaz en inglés: Settings →
 > Archiving, Archiving, Archive Online, Analytics → People Involved y
 > Archive Status).  Lea primero
@@ -142,7 +142,7 @@ al programa completo.  Los datos de un solo episodio se editan en
 
 ## 4. Datos del episodio: «Archivar en línea»
 
-Clic derecho en una emisión del calendario → **Archivar en línea**
+Clic derecho en una emisión del calendario → **Extras** → **Archivar en línea**
 (hasta el 2026-11-03 *Episodio...*).  La entrada está disponible antes
 y después de la emisión - la imagen se puede añadir después - para
 Admins, Program Managers y los presentadores del programa.

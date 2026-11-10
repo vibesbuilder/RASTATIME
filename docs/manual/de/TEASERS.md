@@ -108,7 +108,7 @@ wenn sie passen.
 ## 5. Teaser aus dem Kalender
 
 Klicken Sie im [Kalender](./CALENDAR.md) auf eine Sendung und wählen
-Sie **Teaser**: Der Dialog listet jeden Jingle, der diese Sendung
+Sie **Extras** → **Teaser** (seit 2026-11-10 ein Untermenü): Der Dialog listet jeden Jingle, der diese Sendung
 ankündigt, mit seinem Typ und den weiteren Sendungen, die er ankündigt.
 Sie ändern den Typ direkt in der Zeile, lösen einen Jingle mit dem
 Kreuz von der Sendung und verknüpfen weitere: zwei Zeichen eines Titels

@@ -3,7 +3,7 @@
 > **Wo Sie sich im Handbuch befinden.** Einstellungen →
 > **Archivierung** (Produzenten, CBA-Konten); Kalender →
 > Sendungsformular, Abschnitt **Archivierung**; Kalender → Rechtsklick
-> auf eine Instanz → **Online archivieren**; Statistiken →
+> auf eine Instanz → **Extras** → **Online archivieren**; Statistiken →
 > **Teilnehmende** und **Archiv-Status** (in der englischen Oberfläche
 > Settings → Archiving, Archiving, Archive Online, Analytics →
 > People Involved und Archive Status).  Lesen Sie zuerst
@@ -144,7 +144,7 @@ bearbeiten Sie unter **Online archivieren** (§4).
 
 ## 4. Episodendaten: „Online archivieren"
 
-Rechtsklick auf eine Instanz im Kalender → **Online archivieren** (bis
+Rechtsklick auf eine Instanz im Kalender → **Extras** → **Online archivieren** (bis
 2026-11-03 *Episode...*).  Der Eintrag steht vor und nach der Sendung
 zur Verfügung - das Bild können Sie auch nach der Ausstrahlung setzen -
 für Admins, Programm-Manager und die Hosts der Sendung.

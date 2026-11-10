@@ -182,8 +182,8 @@ Click the show → context menu → choose an action.
 | **Apply Template** | Stamp a [Show Template](./SHOW_TEMPLATES.md) onto this show; replaces the form fields. | Future shows only |
 | **Save as Template** | Save the current show settings as a new template. | Always |
 | **View** | Read-only view of the show's metadata + schedule. Each row's *Start* and *Length* are the laid-out schedule row (Length = cue-out minus cue-in, as in the show builder; since 2026-10-23); the totals at the bottom are the laid-out content length (incl. cue points and crossfade overlaps) against the show's duration. | Always |
-| **Teasers** | The jingles that announce this show - change types, unlink, link more; see [Teaser Automation](./TEASERS.md). Since 2026-10-16. | Admin / PM |
-| **Archive Online** | Title, teaser, description, image and guests involved of this one episode, before or after it aired, and "Archive online now" to cba.media; see [Archiving](./ARCHIVING.md). Since 2026-11-03 (first named *Episode...*). | Admin / PM / hosts of the show (archiving: Admin / PM) |
+| **Extras → Teasers** | Since 2026-11-10 in the submenu **Extras** (with Archive Online; a People Involved entry is planned there).  The jingles that announce this show - change types, unlink, link more; see [Teaser Automation](./TEASERS.md). Since 2026-10-16. | Admin / PM |
+| **Extras → Archive Online** | Title, teaser, description, image and guests involved of this one episode, before or after it aired, and "Archive online now" to cba.media; see [Archiving](./ARCHIVING.md). Since 2026-11-03 (first named *Episode...*). | Admin / PM / hosts of the show (archiving: Admin / PM) |
 | **Edit Show** | Edit the show definition (name, time, repeats, etc.). | Future or current shows |
 | **Edit Instance** | Edit only this one occurrence of a recurring show. | Recurring shows only |
 | **Cancel Show** | End the show *now* — only meaningful for the currently-playing show. | Current show only |

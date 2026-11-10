@@ -99,7 +99,7 @@ fits the schedule* gives that show's jingles only when they fit.
 ## 5. Teasers from the calendar
 
 Right-click (or click) a show in the [Calendar](./CALENDAR.md) and pick
-**Teasers**: the dialog lists every jingle that announces this show
+**Extras** → **Teasers** (a submenu since 2026-11-10): the dialog lists every jingle that announces this show
 with its type and the other shows it announces, lets you change the
 type in place, remove a jingle from the show with the cross, and link
 further jingles: type two characters of a title or creator, pick the

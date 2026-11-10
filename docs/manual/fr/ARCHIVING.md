@@ -3,7 +3,7 @@
 > **Où vous en êtes dans le manuel.** Paramètres → **Archivage**
 > (producteurs, comptes CBA) ; Calendrier → formulaire de
 > l'émission, section **Archivage** ; Calendrier → clic droit sur une
-> occurrence → **Archiver en ligne** ; Statistiques → **Participants**
+> occurrence → **Compléments** → **Archiver en ligne** ; Statistiques → **Participants**
 > et **État de l'archivage** (dans l'interface anglaise : Settings →
 > Archiving, Archiving, Archive Online, Analytics → People Involved et
 > Archive Status).  Lisez d'abord
@@ -146,8 +146,8 @@ données d'un seul épisode se modifient dans **Archiver en ligne** (§4).
 
 ## 4. Données de l'épisode : « Archiver en ligne »
 
-Clic droit sur une occurrence dans le calendrier → **Archiver en
-ligne** (jusqu'au 2026-11-03 *Épisode...*).  L'entrée est disponible
+Clic droit sur une occurrence dans le calendrier → **Compléments** →
+**Archiver en ligne** (jusqu'au 2026-11-03 *Épisode...*).  L'entrée est disponible
 avant et après la diffusion - l'image peut être ajoutée après
 l'émission - pour les Admins, les Program Managers et les animateurs de
 l'émission.

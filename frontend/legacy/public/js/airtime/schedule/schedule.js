@@ -565,32 +565,36 @@ $(document).ready(function () {
           oItems.content.callback = callback;
         }
 
+        // RASTATIME 2026-11-10 - Teasers and Archive Online sit in the
+        // "Extras" submenu (CalendarService::addExtrasItem).
+        var extras = oItems.extras !== undefined && oItems.extras.items ? oItems.extras.items : oItems;
+
         // RASTATIME 2026-10-16 - teaser automation stage 2: "Teasers" dialog
-        if (oItems.teasers !== undefined) {
+        if (extras.teasers !== undefined) {
           callback = function () {
             $.get(
-              oItems.teasers.url,
+              extras.teasers.url,
               { format: "json", id: data.id },
               function (json) {
                 buildTeaserDialog(json);
               },
             );
           };
-          oItems.teasers.callback = callback;
+          extras.teasers.callback = callback;
         }
 
         // RASTATIME 2026-11-03 - archiving stage 1: "Archive Online" dialog
-        if (oItems.episode !== undefined) {
+        if (extras.episode !== undefined) {
           callback = function () {
             $.get(
-              oItems.episode.url,
+              extras.episode.url,
               { format: "json", id: data.id },
               function (json) {
                 buildEpisodeDialog(json);
               },
             );
           };
-          oItems.episode.callback = callback;
+          extras.episode.callback = callback;
         }
 
         //define a cancel recorded show callback.

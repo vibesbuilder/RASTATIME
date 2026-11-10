@@ -2,7 +2,7 @@
 
 > **Where you are in the manual.** Settings → **Archiving** (producers,
 > CBA accounts); Calendar → show form, section **Archiving**;
-> Calendar → right-click an instance → **Archive Online**; Analytics →
+> Calendar → right-click an instance → **Extras** → **Archive Online**; Analytics →
 > **People Involved** and **Archive Status**.  Read [Calendar](./CALENDAR.md) and
 > [Record-per-Show](./RECORD_PER_SHOW.md) first - the audio of an
 > archived episode is the show's recording.
@@ -134,7 +134,7 @@ Online** (§4).
 
 ## 4. Episode data: "Archive Online"
 
-Right-click an instance in the calendar → **Archive Online** (until
+Right-click an instance in the calendar → **Extras** → **Archive Online** (until
 2026-11-03 *Episode...*).  The entry is
 there before and after the show aired - you can add the image after the
 broadcast - for Admins, Program Managers and the hosts of the show.

@@ -110,7 +110,7 @@ cuando encajan.
 ## 5. Teasers desde el calendario
 
 Haga clic en un programa en el [Calendario](./CALENDAR.md) y elija
-**Teasers**: el diálogo lista cada jingle que anuncia este programa con
+**Extras** → **Teasers** (un submenú desde 2026-11-10): el diálogo lista cada jingle que anuncia este programa con
 su tipo y los demás programas que anuncia; cambie el tipo en la propia
 fila, quite un jingle del programa con la cruz y vincule otros: escriba
 dos caracteres de un título o intérprete, elija el jingle, un tipo (o

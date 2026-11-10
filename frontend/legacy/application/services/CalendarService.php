@@ -57,15 +57,7 @@ class Application_Service_CalendarService
                 'icon' => 'overview',
                 'url' => $baseUrl . 'schedule/show-content-dialog',
             ];
-            if ($isAdminOrPM) {
-                // RASTATIME 2026-10-16 - teaser automation stage 2
-                $menu['teasers'] = [
-                    'name' => _('Teasers'),
-                    'icon' => 'teaser',
-                    'url' => $baseUrl . 'schedule/teaser-dialog',
-                ];
-            }
-            $this->addEpisodeItem($menu, $baseUrl, $isAdminOrPM || $isHostOfShow);
+            $this->addExtrasItem($menu, $baseUrl, $isAdminOrPM, $isAdminOrPM || $isHostOfShow);
         } else {
             // Show content can be modified from the calendar if:
             // the user is admin or hosting the show.
@@ -91,16 +83,7 @@ class Application_Service_CalendarService
                 'icon' => 'overview',
                 'url' => $baseUrl . 'schedule/show-content-dialog',
             ];
-            if ($isAdminOrPM) {
-                // RASTATIME 2026-10-16 - teaser automation stage 2: the jingles
-                // that announce this show, link / unlink / retype in place
-                $menu['teasers'] = [
-                    'name' => _('Teasers'),
-                    'icon' => 'teaser',
-                    'url' => $baseUrl . 'schedule/teaser-dialog',
-                ];
-            }
-            $this->addEpisodeItem($menu, $baseUrl, $isAdminOrPM || $isHostOfShow);
+            $this->addExtrasItem($menu, $baseUrl, $isAdminOrPM, $isAdminOrPM || $isHostOfShow);
 
             // user can remove all content if the show has not started
             if ($now < $start && ($isAdminOrPM || $isHostOfShow)) {
@@ -235,20 +218,45 @@ class Application_Service_CalendarService
      * @param int      $deltaMin delta minutes show moved
      */
     /**
-     * RASTATIME 2026-11-03 - archiving stage 1: "Archive Online" (title, teaser,
-     * image, people involved of this instance) for admins, program managers
-     * and the hosts of the show, before and after it aired; not for the
-     * legacy rebroadcast instances (they repeat another instance).
+     * RASTATIME 2026-11-10 - "Extras" submenu (operator: fewer top-level
+     * entries; a "People Involved" entry is planned here as well):
+     *
+     *  - Teasers (2026-10-16, teaser automation stage 2): the jingles that
+     *    announce this show, link / unlink / retype in place - admins and
+     *    program managers.
+     *  - Archive Online (2026-11-03, archiving stage 1): title, teaser,
+     *    image, people involved of this instance - admins, program
+     *    managers and the hosts of the show, before and after it aired;
+     *    not for the legacy rebroadcast instances (they repeat another
+     *    instance).
+     *
+     * The keys of the sub-items stay "teasers" / "episode" (schedule.js).
+     * No sub-item allowed -> no "Extras" entry.
      */
-    private function addEpisodeItem(array &$menu, $baseUrl, $mayEdit)
+    private function addExtrasItem(array &$menu, $baseUrl, $mayTeasers, $mayEpisode)
     {
-        if (!$mayEdit || $this->ccShowInstance->isRebroadcast()) {
+        $items = [];
+        if ($mayTeasers) {
+            $items['teasers'] = [
+                'name' => _('Teasers'),
+                'icon' => 'teaser',
+                'url' => $baseUrl . 'schedule/teaser-dialog',
+            ];
+        }
+        if ($mayEpisode && !$this->ccShowInstance->isRebroadcast()) {
+            $items['episode'] = [
+                'name' => _('Archive Online'),
+                'icon' => 'archive-online',
+                'url' => $baseUrl . 'schedule/episode-dialog',
+            ];
+        }
+        if ($items === []) {
             return;
         }
-        $menu['episode'] = [
-            'name' => _('Archive Online'),
-            'icon' => 'archive-online',
-            'url' => $baseUrl . 'schedule/episode-dialog',
+        $menu['extras'] = [
+            'name' => _('Extras'),
+            'icon' => 'extras',
+            'items' => $items,
         ];
     }
 

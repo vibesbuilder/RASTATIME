@@ -8625,3 +8625,7 @@ msgstr "Le flux répond avec l'état d'il y a autant de secondes : « maintenant
 
 msgid "Please enter a number from 0 to 60."
 msgstr "Veuillez saisir un nombre de 0 à 60."
+
+#. RASTATIME 2026-11-10 - calendar context menu
+msgid "Extras"
+msgstr "Compléments"

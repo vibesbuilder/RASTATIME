@@ -124,6 +124,8 @@
 .context-menu-item.icon-teaser { background-image: url(images/icon_teaser_cm.svg); background-size: 16px 16px; }
 /* RASTATIME 2026-11-03 - calendar "Archive Online" entry (episode data, upload to cba.media) */
 .context-menu-item.icon-archive-online { background-image: url(images/icon_archive_online_cm.svg); background-size: 16px 16px; }
+/* RASTATIME 2026-11-10 - calendar "Extras" submenu (Teasers, Archive Online) */
+.context-menu-item.icon-extras { background-image: url(images/icon_extras_cm.svg); background-size: 16px 16px; }
 
 /* vertically align inside labels */
 .context-menu-input > label > * { vertical-align: top; }

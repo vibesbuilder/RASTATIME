@@ -8268,3 +8268,7 @@ msgstr "Der Feed antwortet mit dem Stand von vor so vielen Sekunden, „Jetzt“
 
 msgid "Please enter a number from 0 to 60."
 msgstr "Bitte eine Zahl von 0 bis 60 eingeben."
+
+#. RASTATIME 2026-11-10 - calendar context menu
+msgid "Extras"
+msgstr "Extras"

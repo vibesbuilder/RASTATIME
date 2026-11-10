@@ -110,7 +110,7 @@ les émissions qui n'ont pas encore de teasers du jour.
 ## 5. Les teasers depuis le calendrier
 
 Cliquez sur une émission dans le [Calendrier](./CALENDAR.md) et
-choisissez **Teasers** : la boîte de dialogue liste chaque jingle qui
+choisissez **Compléments** → **Teasers** (un sous-menu depuis le 2026-11-10) : la boîte de dialogue liste chaque jingle qui
 annonce cette émission avec son type et les autres émissions qu'il
 annonce ; vous changez le type sur place, retirez un jingle de
 l'émission avec la croix et en liez d'autres : saisissez deux
