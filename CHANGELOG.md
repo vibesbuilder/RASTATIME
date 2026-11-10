@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Shows: **Text color** (#rrggbb mit Farbwähler; leer bzw. Knopf **Theme colors** = die
   Farben des Themes).  Gilt sofort für alle Einbettungen, `?color=rrggbb` weicht je iframe
   ab.  Die Farbe ersetzt `--np-fg`, der Leer-Text nutzt sie zu 70 %.  Die Einstellungsseite
-  nennt jetzt auch `title`, `size` und `color` unter den URL-Parametern.  Manual WIDGETS ×4.
+  nennt jetzt auch `title`, `size` und `color` unter den URL-Parametern.  Manual WIDGETS ×4 (ba40be54).
 - **Widgets Next/Latest Shows: Überschrift abschaltbar, Schriftgröße (2026-11-10)** — Neu
   unter Widgets → Next/Latest Shows: **Show the show name as heading** (Standard an) und
   **Font size (px)** (Standard 14, 10..32).  Sie gelten sofort für alle bestehenden
