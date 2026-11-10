@@ -137,6 +137,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   DE/FR/ES, Handbuch LIBRARY ×4, Architektur §23.98. Probe
   `C:/Temp/optd/track_disabled_probe.php` (27/27, Transaktion mit Rollback). Commit `5542c828`.
 
+### Changed
+
+- **Einstellungen Live Text Info / Radioplayer Feed: Tooltips (2026-11-10)** — Einleitungstexte
+  als Hilfe-Icon nach der Schalter-Beschriftung, Feldbeschreibungen als Tooltips; die
+  FTP-Felder von Live Text erscheinen erst, wenn der FTP-Push eingeschaltet ist.  Manual
+  SETTINGS ×4 (5e375a31).
+
 ### Fixed
 
 - **Widgets Next/Latest Shows: Datumsformat wählbar, Zeilen ohne Script (2026-11-10)** —
