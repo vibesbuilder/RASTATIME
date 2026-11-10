@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Widgets Next/Latest Shows: Fettschrift (2026-11-10)** — Neu unter Widgets → Next/Latest
   Shows: **Bold text** (Standard aus).  Zeilen fett, die Überschrift eine Stufe kräftiger
   (800), damit sie sich weiter abhebt.  Gilt sofort für alle Einbettungen, `?bold=0|1`
-  weicht je iframe ab.  Manual WIDGETS ×4.
+  weicht je iframe ab.  Manual WIDGETS ×4 (11cd9a72).
 - **Widgets Next/Latest Shows: Hintergrundfarbe (2026-11-10)** — Neu unter Widgets →
   Next/Latest Shows: **Background color** (#rrggbb mit Farbwähler; leer bzw. Knopf
   **Transparent** = durchsichtig wie bisher).  Gilt sofort für alle Einbettungen,
