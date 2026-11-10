@@ -144,6 +144,15 @@ class PreferenceController extends Zend_Controller_Action
                 $liveTextFtp['path'] = trim((string) ($values['live_text_ftp_path'] ?? '')) ?: '/';
                 Application_Model_Preference::setLiveTextFtpConfig($liveTextFtp);
 
+                // RASTATIME 2026-11-10 - Radioplayer feed for ORF Sound
+                Application_Model_Preference::setRadioplayerEnabled(!empty($values['enable_radioplayer']));
+                Application_Model_Preference::setRadioplayerKey($values['radioplayer_key'] ?? '');
+                Application_Model_Preference::setRadioplayerRpId($values['radioplayer_rp_id'] ?? '');
+                Application_Model_Preference::setRadioplayerServiceDescription($values['radioplayer_service_description'] ?? '');
+                Application_Model_Preference::setRadioplayerPrevious($values['radioplayer_previous'] ?? '');
+                Application_Model_Preference::setRadioplayerMinSeconds($values['radioplayer_min_seconds'] ?? '');
+                Application_Model_Preference::setRadioplayerPollSeconds($values['radioplayer_poll_seconds'] ?? '');
+
                 Application_Model_Preference::setTuneinEnabled($values['enable_tunein']);
                 Application_Model_Preference::setTuneinStationId($values['tunein_station_id']);
                 Application_Model_Preference::setTuneinPartnerKey($values['tunein_partner_key']);

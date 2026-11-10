@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.130
-Date: 2026-11-09
+Draft version: 0.131
+Date: 2026-11-10
 
 > **Revision history**
+> - **0.131 (2026-11-10)** - **Radioplayer feed for ORF Sound** (§23.103): a public JSON
+>   endpoint in the Radioplayer v4 events format (previous from the playout history, now / next
+>   from the schedule), own switch and optional key, independent of Live Text Info.
 > - **0.130 (2026-11-09)** - **Metadata at transitions** (§23.102): the bus shapes mix the new
 >   arm first (add forwards the first source's metadata only), and a metadata guard re-inserts
 >   a new track's packet that did not reach the bus (sequence shapes lost about half live).
@@ -9725,3 +9728,53 @@ the rollout.
 **Rollout.** PLAYOUT restart (re-renders rastatime.liq; the planned
 Liquidsoap restart follows at a track boundary - never by hand,
 §23.89).  Rollback: `git revert` + PLAYOUT restart.
+
+### 23.103 Radioplayer Feed for ORF Sound (2026-11-10)
+
+**Need.**  ORF Sound lists private stations that are not on the
+Radioplayer platform from a JSON endpoint it polls (partner requirements
+page, status 08/26): the Radioplayer v4 "events" lookup -
+`results.previous` / `now` / `next`, `total`, `pollNext`; per item
+`name`, `artistName` (songs), `description` (type `PI`),
+`serviceDescription` (type `SI`), `startTime` / `stopTime` (Unix
+seconds), `imageUrl`, `type` `PE_E` / `PI` / `SI`.  The "service"
+lookup is deprecated there (configured by hand).
+
+**Decision (operator Go 2026-11-10, way A of three).**  A legacy endpoint
+`GET /embed/radioplayer-events` (`EmbedController::
+radioplayerEventsAction`), not a file written by PLAYOUT (way B: closer
+to air, but cover / show logic again in Python, the history list empty
+after every restart, a change in the on-air path) and not API v2 (way C:
+login-only, no cover logic).
+
+- **previous** - the last N file plays from `cc_playout_history` (24 h,
+  `ends <= now`, duration >= threshold, title or artist set), oldest
+  first, all `PE_E`.  Webstream rows are left out.
+- **now** - `Application_Model_Schedule::GetPlayOrderRange()` like the
+  Stream Player: the running file track (`PE_E`) unless it is shorter
+  than the threshold (a jingle) or has no file (webstream / line-in);
+  then the running show (`PI`, name, description without tags, show
+  times); nothing on air: `SI` with the station logo.
+- **next** - the next file track of the running show, else the next
+  show (`PI`).
+- **imageUrl** - track artwork (`api/track?return=artwork-512`), else the
+  show image (`api/show-logo`), else the default cover
+  (`embed/default-cover`).  Artwork and show images only while the
+  public API switch serves them (they answer 401 otherwise).  Absolute
+  URLs from `Config::getPublicUrl()`.
+- Timestamps are strings, as in the partner's example; `rpId` from the
+  setting or empty; `pollNext` = setting x 1000 ms.
+
+**Settings** (Settings -> General -> Radioplayer Feed, SubForm
+`Application_Form_RadioplayerPreferences`, prefs `radioplayer_*`):
+switch (off = 404), optional access key (`?key=`, `hash_equals`, 403),
+rpId, serviceDescription (empty = station description), previous count
+0..20 (7), short-track threshold 0..600 s (60), pollNext 5..120 s (6).
+Independent of Live Text Info and of the public API switch.
+
+**Load.**  5 s `Cache-Control`; one build is ~50 ms (two schedule
+queries + one history query).  The partner polls every ~6 s.
+
+**Risk.**  Read-only; playout and Liquidsoap are not touched.  The data
+is the same the public widgets already show.  Rollback: switch off or
+`git revert`.

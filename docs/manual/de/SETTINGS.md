@@ -21,7 +21,7 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 
 | Seite | Zweck | Wer | Kapitel |
 |---|---|---|---|
-| **Allgemein** | Stationsname und -beschreibung, Sprache, Wochenbeginn, öffentliche API, Radio-Seite, Logo, Hintergrund der Startseite, Favicon, Primärfarbe, Crossfades, Track-Typ für Uploads, Automations-Playlisten, Live Text Info, TuneIn, Dangerous Options. | Admin | Dieses Kapitel §2 |
+| **Allgemein** | Stationsname und -beschreibung, Sprache, Wochenbeginn, öffentliche API, Radio-Seite, Logo, Hintergrund der Startseite, Favicon, Primärfarbe, Crossfades, Track-Typ für Uploads, Automations-Playlisten, Live Text Info, Radioplayer Feed (ORF Sound), TuneIn, Dangerous Options. | Admin | Dieses Kapitel §2 |
 | **Mein Profil** | Eigener Name, E-Mail, Passwort, Oberflächensprache und Zeitzone. | alle | [Benutzer und Rollen](./USERS_AND_ROLES.md) §4 |
 | **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
 | **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import. | Admin | [Bibliothek](./LIBRARY.md) |
@@ -124,6 +124,45 @@ Die Zeile bildet die Audio-Engine aus den Metadaten, die sie tatsächlich
 in den Stream sendet, DJ-Titel und Webstream-Titel eingeschlossen. Eine
 geänderte Einstellung greift beim nächsten Wechsel, kein Neustart.
 
+### Radioplayer Feed (ORF Sound)
+
+Aufklappbarer Bereich unter Live Text Info (seit 2026-11-10).  ORF
+Sound zeigt Privatsender, die nicht auf der Radioplayer-Plattform sind,
+über einen JSON-Feed im Format der Radioplayer-„events“-Abfrage an, den
+es alle paar Sekunden abruft.  RASTATIME beantwortet ihn unter
+`https://<host>/embed/radioplayer-events` - unabhängig von Live Text
+Info und vom Schalter für die öffentliche API.
+
+| Feld | Hinweise |
+|---|---|
+| **Provide the "now playing" feed for ORF Sound?** | Hauptschalter.  Aus = die Adresse antwortet mit 404. |
+| **Access key** | Optional.  Ist er gesetzt, antwortet der Feed nur mit `?key=<Wert>` in der Adresse (sonst 403); geben Sie dem Partner die vollständige Adresse, die unter dem Schalter steht.  Buchstaben, Ziffern, `-` und `_`. |
+| **Station ID (rpId)** | Die vom Partner vergebene Kennung, falls vorhanden; sonst leer. |
+| **Station description** | `serviceDescription` jedes Eintrags; leer = die Stationsbeschreibung dieser Seite. |
+| **Number of previous tracks** | Wie viele der zuletzt gespielten Titel aufgeführt werden (0..20, Standard 7). |
+| **Leave out tracks shorter than (s)** | Jingles und Stationskennungen bleiben aus den letzten Titeln und aus „now“ heraus (Standard 60, 0 = alles). |
+| **Suggested polling interval (s)** | Wird als `pollNext` gesendet (5..120, Standard 6). |
+
+Was der Feed enthält:
+
+* **previous** - die zuletzt gespielten Datei-Titel aus dem
+  Playout-Verlauf (was tatsächlich gesendet wurde), älteste zuerst, als
+  Songs (`PE_E`) mit Titel, Künstler, Beginn und Ende.
+* **now** - der laufende Datei-Titel als Song mit Cover.  Bei einem
+  Webstream, Line-In, Live-DJ oder Jingle die laufende **Sendung**
+  (`PI`, Name und Beschreibung der Sendung, Beginn und Ende); ohne
+  Sendung die Station selbst (`SI`).
+* **next** - der nächste Titel der laufenden Sendung, sonst die
+  nächste Sendung.
+* **Bilder** - das Cover des Titels, sonst das Sendungsbild, sonst das
+  Standard-Cover (Einstellungen → Widgets → Player).  Cover und
+  Sendungsbilder werden nur verlinkt, solange der Schalter für die
+  öffentliche API sie ausliefert (§2); sonst das Standard-Cover.
+* „now“ folgt dem Sendeplan wie das Stream-Player-Widget; an einem
+  Übergang kann es ein paar Sekunden vom Gehörten abweichen.
+  Änderungen auf dieser Seite gelten sofort (der Feed wird 5 s
+  zwischengespeichert).
+
 ### TuneIn Settings
 
 Aufklappbarer Bereich unter den Allgemeinen Einstellungen. Seit
@@ -213,6 +252,7 @@ Seitenaufruf.  Ausnahmen:
 | Primär- und Sekundärfarbe, Logo, Favicon | Beim nächsten Seitenaufruf (F5). |
 | Ihre eigene Sprache | Beim nächsten Seitenaufruf; der Anmeldebildschirm nutzt die Standardsprache. |
 | Live Text Info, TuneIn | Beim nächsten Wechsel von Titel oder Quelle. |
+| Radioplayer Feed (ORF Sound) | Sofort (der Feed wird 5 s zwischengespeichert). |
 
 ### „Gibt es ein Tools-Menü, einen Log-Viewer oder eine DB-Konsole?“
 

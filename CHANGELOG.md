@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Radioplayer-Feed für ORF Sound (2026-11-10, Go Weg A)** — ORF Sound braucht für
+  Privatsender ohne Radioplayer-Anbindung einen JSON-Endpunkt im Format der
+  Radioplayer-v4-„events“-Abfrage.  Neu: `GET /embed/radioplayer-events` mit `previous` (die
+  letzten gespielten Datei-Titel aus dem Playout-Verlauf, ohne Jingles), `now` (laufender
+  Titel mit Cover, bei Webstream / Line-In / Live-DJ / Jingle die laufende Sendung als `PI`,
+  sonst `SI`), `next` (nächster Titel, sonst nächste Sendung), `total`, `pollNext`.  Eigener
+  Bereich unter Einstellungen → Allgemein → Radioplayer Feed (ORF Sound): Schalter (aus =
+  404), optionaler Zugangsschlüssel (`?key=`, sonst 403), rpId, serviceDescription, Anzahl,
+  Kurztitel-Schwelle, pollNext.  Unabhängig von Live Text Info und vom Schalter für die
+  öffentliche API; Cover / Sendungsbilder nur, solange die öffentliche API sie ausliefert.
+  5 s Cache.  Neue Klasse `Application_Form_RadioplayerPreferences` (`composer
+  dump-autoload`).  ARCHITECTURE §23.103, Manual SETTINGS ×4.
 - **Widgets Next/Latest Shows: Schriftart (2026-11-10)** — Neu unter Widgets → Next/Latest
   Shows: **Font** mit Systemschrift (Standard), Archivo, Arial, Verdana, Georgia, Times New
   Roman und Monospace; `?font=<key>` weicht je iframe ab.  Archivo (Schrift der

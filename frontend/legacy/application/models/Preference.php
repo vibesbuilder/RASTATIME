@@ -2107,6 +2107,98 @@ class Application_Model_Preference
 
     // RASTATIME 2026-09-28 - Live Text Info (Settings -> General): the "now
     // playing" line as a text file, written by the playout.
+    // RASTATIME 2026-11-10 - Radioplayer "now playing" feed for ORF Sound
+    // (/embed/radioplayer-events, Settings -> General).  Independent of Live
+    // Text Info and of the public API switch.
+    public static function getRadioplayerEnabled()
+    {
+        return self::getValue('radioplayer_enabled') === '1';
+    }
+
+    public static function setRadioplayerEnabled($value)
+    {
+        self::setValue('radioplayer_enabled', $value ? '1' : '0');
+    }
+
+    public static function getRadioplayerKey()
+    {
+        $v = trim((string) self::getValue('radioplayer_key'));
+
+        return preg_match('/^[A-Za-z0-9_-]{1,64}$/', $v) ? $v : '';
+    }
+
+    public static function setRadioplayerKey($value)
+    {
+        $v = trim((string) $value);
+        self::setValue('radioplayer_key', preg_match('/^[A-Za-z0-9_-]{1,64}$/', $v) ? $v : '');
+    }
+
+    public static function getRadioplayerRpId()
+    {
+        $v = trim((string) self::getValue('radioplayer_rp_id'));
+
+        return preg_match('/^[A-Za-z0-9_.-]{1,32}$/', $v) ? $v : '';
+    }
+
+    public static function setRadioplayerRpId($value)
+    {
+        $v = trim((string) $value);
+        self::setValue('radioplayer_rp_id', preg_match('/^[A-Za-z0-9_.-]{1,32}$/', $v) ? $v : '');
+    }
+
+    public static function getRadioplayerServiceDescription()
+    {
+        return trim((string) self::getValue('radioplayer_service_description'));
+    }
+
+    public static function setRadioplayerServiceDescription($value)
+    {
+        self::setValue('radioplayer_service_description', mb_substr(trim((string) $value), 0, 1000));
+    }
+
+    private static function radioplayerInt($key, $default, $min, $max)
+    {
+        $raw = trim((string) self::getValue($key));
+        if ($raw === '' || !ctype_digit($raw)) {
+            return $default;
+        }
+
+        return max($min, min($max, (int) $raw));
+    }
+
+    public static function getRadioplayerPrevious()
+    {
+        return self::radioplayerInt('radioplayer_previous', 7, 0, 20);
+    }
+
+    public static function setRadioplayerPrevious($value)
+    {
+        $v = trim((string) $value);
+        self::setValue('radioplayer_previous', ctype_digit($v) ? (string) max(0, min(20, (int) $v)) : '');
+    }
+
+    public static function getRadioplayerMinSeconds()
+    {
+        return self::radioplayerInt('radioplayer_min_seconds', 60, 0, 600);
+    }
+
+    public static function setRadioplayerMinSeconds($value)
+    {
+        $v = trim((string) $value);
+        self::setValue('radioplayer_min_seconds', ctype_digit($v) ? (string) max(0, min(600, (int) $v)) : '');
+    }
+
+    public static function getRadioplayerPollSeconds()
+    {
+        return self::radioplayerInt('radioplayer_poll_seconds', 6, 5, 120);
+    }
+
+    public static function setRadioplayerPollSeconds($value)
+    {
+        $v = trim((string) $value);
+        self::setValue('radioplayer_poll_seconds', ctype_digit($v) ? (string) max(5, min(120, (int) $v)) : '');
+    }
+
     public static function getLiveTextEnabled()
     {
         return self::getValue('live_text_enabled') === '1';

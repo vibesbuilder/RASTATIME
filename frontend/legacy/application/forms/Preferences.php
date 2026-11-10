@@ -28,6 +28,10 @@ class Application_Form_Preferences extends Zend_Form
         $liveTextPreferences = new Application_Form_LiveTextPreferences();
         $this->addSubForm($liveTextPreferences, 'preferences_livetext');
 
+        // RASTATIME 2026-11-10 - Radioplayer feed for ORF Sound (below Live Text)
+        $radioplayerPreferences = new Application_Form_RadioplayerPreferences();
+        $this->addSubForm($radioplayerPreferences, 'preferences_radioplayer');
+
         // tunein form
         $tuneinPreferences = new Application_Form_TuneInPreferences();
         $this->addSubForm($tuneinPreferences, 'preferences_tunein');

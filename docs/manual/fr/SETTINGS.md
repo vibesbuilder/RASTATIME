@@ -21,7 +21,7 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 
 | Page | Rôle | Qui | Chapitre |
 |---|---|---|---|
-| **Général** | Nom et description de la station, langue, début de semaine, API publique, page radio, logo, fond de la page d'accueil, favicon, couleur principale, fondus enchaînés, type de piste des téléversements, playlists d'automatisation, Live Text Info, TuneIn, Dangerous Options. | Admin | Ce chapitre §2 |
+| **Général** | Nom et description de la station, langue, début de semaine, API publique, page radio, logo, fond de la page d'accueil, favicon, couleur principale, fondus enchaînés, type de piste des téléversements, playlists d'automatisation, Live Text Info, Radioplayer Feed (ORF Sound), TuneIn, Dangerous Options. | Admin | Ce chapitre §2 |
 | **Mon profil** | Vos nom, e-mail, mot de passe, langue d'interface et fuseau horaire. | tous | [Utilisateurs et rôles](./USERS_AND_ROLES.md) §4 |
 | **Utilisateurs** | Créer, modifier et supprimer des utilisateurs, définir leur type. | Admin | [Utilisateurs et rôles](./USERS_AND_ROLES.md) §3 |
 | **Types de piste** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux et leur analyse des points de repère à l'import. | Admin | [Bibliothèque](./LIBRARY.md) |
@@ -125,6 +125,47 @@ La ligne est construite par le moteur audio à partir des métadonnées
 qu'il envoie réellement au flux, titres DJ et titres de webstream compris.
 Un paramètre modifié s'applique au prochain changement, sans redémarrage.
 
+### Radioplayer Feed (ORF Sound)
+
+Section dépliable sous Live Text Info (depuis le 2026-11-10).  ORF Sound
+affiche les stations privées qui ne sont pas sur la plateforme
+Radioplayer à partir d'un flux JSON au format de la requête « events »
+de Radioplayer, qu'il interroge toutes les quelques secondes.  RASTATIME
+y répond à `https://<hôte>/embed/radioplayer-events` - indépendamment de
+Live Text Info et de l'interrupteur de l'API publique.
+
+| Champ | Remarques |
+|---|---|
+| **Provide the "now playing" feed for ORF Sound?** | Interrupteur principal.  Désactivé = l'adresse répond 404. |
+| **Access key** | Facultatif.  S'il est défini, le flux ne répond qu'avec `?key=<valeur>` dans l'adresse (sinon 403) ; donnez au partenaire l'adresse complète affichée sous l'interrupteur.  Lettres, chiffres, `-` et `_`. |
+| **Station ID (rpId)** | L'identifiant attribué par le partenaire, le cas échéant ; sinon vide. |
+| **Station description** | `serviceDescription` de chaque entrée ; vide = la description de la station de cette page. |
+| **Number of previous tracks** | Nombre de titres récemment diffusés listés (0..20, défaut 7). |
+| **Leave out tracks shorter than (s)** | Jingles et identifiants de station restent hors des titres précédents et de « now » (défaut 60, 0 = tout). |
+| **Suggested polling interval (s)** | Envoyé comme `pollNext` (5..120, défaut 6). |
+
+Contenu du flux :
+
+* **previous** - les derniers titres de fichiers diffusés, tirés de
+  l'historique de diffusion (ce qui est réellement parti à l'antenne),
+  du plus ancien au plus récent, comme chansons (`PE_E`) avec titre,
+  artiste, début et fin.
+* **now** - le titre de fichier en cours comme chanson avec sa
+  pochette.  Pour un webstream, une entrée Line-In, un DJ en direct ou
+  un jingle, l'**émission** en cours (`PI`, nom et description de
+  l'émission, début et fin) ; sans émission, la station elle-même
+  (`SI`).
+* **next** - le titre suivant de l'émission en cours, sinon l'émission
+  suivante.
+* **Images** - la pochette du titre, sinon l'image de l'émission, sinon
+  la pochette par défaut (Paramètres → Widgets → Player).  Pochettes et
+  images d'émission ne sont liées que tant que l'interrupteur de l'API
+  publique les sert (§2) ; sinon la pochette par défaut.
+* « now » suit la grille comme le widget Stream Player ; lors d'une
+  transition il peut différer de quelques secondes de ce qu'on entend.
+  Les modifications sur cette page s'appliquent aussitôt (le flux est
+  mis en cache 5 s).
+
 ### TuneIn Settings
 
 Section repliable sous les Préférences générales. Depuis le 2026-09-28,
@@ -214,6 +255,7 @@ chargement de page.  Exceptions :
 | Couleurs principale et secondaire, logo, favicon | Au prochain chargement de page (F5). |
 | Votre propre langue | Au prochain chargement de page ; l'écran de connexion utilise la langue par défaut. |
 | Live Text Info, TuneIn | Au prochain changement de titre ou de source. |
+| Radioplayer Feed (ORF Sound) | Aussitôt (le flux est mis en cache 5 s). |
 
 ### « Y a-t-il un menu Outils, une visionneuse de journaux ou une console DB ? »
 

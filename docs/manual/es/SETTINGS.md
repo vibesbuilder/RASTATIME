@@ -21,7 +21,7 @@ Navegación izquierda → **Ajustes** abre el submenú:
 
 | Página | Para qué | Quién | Capítulo |
 |---|---|---|---|
-| **General** | Nombre y descripción de la emisora, idioma, inicio de semana, API pública, página de radio, logo, fondo de la página de inicio, favicon, color principal, crossfades, tipo de pista de las subidas, listas de automatización, Live Text Info, TuneIn, Dangerous Options. | Admin | Este capítulo §2 |
+| **General** | Nombre y descripción de la emisora, idioma, inicio de semana, API pública, página de radio, logo, fondo de la página de inicio, favicon, color principal, crossfades, tipo de pista de las subidas, listas de automatización, Live Text Info, Radioplayer Feed (ORF Sound), TuneIn, Dangerous Options. | Admin | Este capítulo §2 |
 | **Mi Perfil** | Su nombre, correo, contraseña, idioma de la interfaz y zona horaria. | todos | [Usuarios y roles](./USERS_AND_ROLES.md) §4 |
 | **Usuarios** | Crear, editar y eliminar usuarios y definir su tipo. | Admin | [Usuarios y roles](./USERS_AND_ROLES.md) §3 |
 | **Tipos de pista** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream y su análisis de puntos de cue al importar. | Admin | [Biblioteca](./LIBRARY.md) |
@@ -124,6 +124,47 @@ La línea la construye el motor de audio a partir de los metadatos que
 realmente envía al stream, incluidos títulos de DJ y de webstream. Un
 ajuste modificado se aplica en el siguiente cambio, sin reinicio.
 
+### Radioplayer Feed (ORF Sound)
+
+Sección desplegable bajo Live Text Info (desde 2026-11-10).  ORF Sound
+muestra las emisoras privadas que no están en la plataforma Radioplayer
+a partir de un feed JSON con el formato de la consulta «events» de
+Radioplayer, que consulta cada pocos segundos.  RASTATIME lo responde en
+`https://<host>/embed/radioplayer-events`, independiente de Live Text
+Info y del interruptor de la API pública.
+
+| Campo | Notas |
+|---|---|
+| **Provide the "now playing" feed for ORF Sound?** | Interruptor principal.  Desactivado = la dirección responde 404. |
+| **Access key** | Opcional.  Si está definida, el feed solo responde con `?key=<valor>` en la dirección (si no, 403); entregue al socio la dirección completa que aparece bajo el interruptor.  Letras, dígitos, `-` y `_`. |
+| **Station ID (rpId)** | El identificador asignado por el socio, si existe; si no, vacío. |
+| **Station description** | `serviceDescription` de cada entrada; vacío = la descripción de la emisora de esta página. |
+| **Number of previous tracks** | Cuántas de las últimas pistas emitidas se listan (0..20, predeterminado 7). |
+| **Leave out tracks shorter than (s)** | Jingles e identificativos quedan fuera de las pistas anteriores y de «now» (predeterminado 60, 0 = todo). |
+| **Suggested polling interval (s)** | Se envía como `pollNext` (5..120, predeterminado 6). |
+
+Qué contiene el feed:
+
+* **previous** - las últimas pistas de archivo emitidas según el
+  historial de emisión (lo que realmente salió al aire), de la más
+  antigua a la más reciente, como canciones (`PE_E`) con título,
+  artista, inicio y fin.
+* **now** - la pista de archivo en curso como canción con su portada.
+  Para un webstream, Line-In, un DJ en directo o un jingle, el
+  **programa** en curso (`PI`, nombre y descripción del programa,
+  inicio y fin); sin programa, la emisora misma (`SI`).
+* **next** - la siguiente pista del programa en curso, si no el
+  siguiente programa.
+* **Imágenes** - la portada de la pista, si no la imagen del programa,
+  si no la portada predeterminada (Configuración → Widgets → Player).
+  Portadas e imágenes de programa solo se enlazan mientras el
+  interruptor de la API pública las sirve (§2); si no, la portada
+  predeterminada.
+* «now» sigue la programación como el widget Stream Player; en una
+  transición puede diferir unos segundos de lo que se oye.  Los
+  cambios en esta página se aplican al instante (el feed se guarda en
+  caché 5 s).
+
 ### TuneIn Settings
 
 Sección plegable bajo las Preferencias generales. Desde el 2026-09-28 el
@@ -212,6 +253,7 @@ carga de página.  Excepciones:
 | Colores principal y secundario, logo, favicon | Con la siguiente carga de página (F5). |
 | Su propio idioma | Con la siguiente carga de página; la pantalla de inicio de sesión usa el idioma por defecto. |
 | Live Text Info, TuneIn | En el siguiente cambio de pista o de fuente. |
+| Radioplayer Feed (ORF Sound) | Al instante (el feed se guarda en caché 5 s). |
 
 ### «¿Hay un menú de herramientas, un visor de registros o una consola de base de datos?»
 

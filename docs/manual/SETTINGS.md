@@ -20,7 +20,7 @@ Left navigation → **Settings** opens the sub-menu:
 
 | Page | Purpose | Who | Manual chapter |
 |---|---|---|---|
-| **General** | Station name and description, language, week start, public API, radio page, logo, landing page background, favicon, primary colour, crossfades, upload track type, automation playlists, Live Text Info, TuneIn, Dangerous Options. | Admin | This chapter §2 |
+| **General** | Station name and description, language, week start, public API, radio page, logo, landing page background, favicon, primary colour, crossfades, upload track type, automation playlists, Live Text Info, Radioplayer Feed (ORF Sound), TuneIn, Dangerous Options. | Admin | This chapter §2 |
 | **My Profile** | Your own name, e-mail, password, interface language and time zone. | everyone | [Users and Roles](./USERS_AND_ROLES.md) §4 |
 | **Users** | Create, edit and delete users and set their user type. | Admin | [Users and Roles](./USERS_AND_ROLES.md) §3 |
 | **Track Types** | Track types with their crossfade, crossover and stream-metadata presets and their cue point analysis on import. | Admin | [Library](./LIBRARY.md) |
@@ -122,6 +122,43 @@ The line is built by the audio engine from the metadata it actually
 sends to the stream, so DJ titles and webstream titles are included. A
 changed setting takes effect at the next change, no restart.
 
+### Radioplayer Feed (ORF Sound)
+
+Collapsible section below Live Text Info (since 2026-11-10).  ORF Sound
+shows private stations that are not on the Radioplayer platform from a
+JSON feed in the format of the Radioplayer "events" lookup, which it
+polls every few seconds.  RASTATIME answers it at
+`https://<host>/embed/radioplayer-events` - independent of Live Text
+Info and of the Public API switch.
+
+| Field | Notes |
+|---|---|
+| **Provide the "now playing" feed for ORF Sound?** | Master switch.  Off = the address answers 404. |
+| **Access key** | Optional.  When set, the feed answers only with `?key=<value>` in the address (otherwise 403); give the partner the full address shown under the switch.  Letters, digits, `-` and `_`. |
+| **Station ID (rpId)** | The ID the partner assigned, if any; otherwise empty. |
+| **Station description** | `serviceDescription` of every entry; empty = the station description of this page. |
+| **Number of previous tracks** | How many of the last played tracks are listed (0..20, default 7). |
+| **Leave out tracks shorter than (s)** | Jingles and station IDs stay out of the previous tracks and out of "now" (default 60, 0 = everything). |
+| **Suggested polling interval (s)** | Sent as `pollNext` (5..120, default 6). |
+
+What the feed contains:
+
+* **previous** - the last played file tracks from the playout history
+  (what really went out), oldest first, as songs (`PE_E`) with title,
+  artist, start and end time.
+* **now** - the running file track as a song with its cover.  For a
+  webstream, a Line-In, a live DJ or a jingle the running **show**
+  (`PI`, name and description of the show, its start and end); with
+  nothing on air the station itself (`SI`).
+* **next** - the next track of the running show, else the next show.
+* **Pictures** - the track's cover, else the show image, else the
+  default cover (Settings → Widgets → Player).  Covers and show
+  images are only linked while the Public API switch serves them
+  (§2); otherwise the default cover.
+* "now" follows the schedule like the Stream Player widget; at a
+  transition it can be a few seconds off what is heard.  Changes on
+  this page apply at once (the feed is cached for 5 s).
+
 ### TuneIn Settings
 
 Collapsible section below General Preferences. Since 2026-09-28 the
@@ -208,6 +245,7 @@ Exceptions:
 | Primary and secondary colour, logo, favicon | With the next page load (F5). |
 | Your own language | With the next page load; the login screen uses the Default Language. |
 | Live Text Info, TuneIn | At the next change of track or source. |
+| Radioplayer Feed (ORF Sound) | At once (the feed is cached for 5 s). |
 
 ### "Is there a Tools menu, a log viewer or a DB console?"
 

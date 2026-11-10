@@ -487,6 +487,238 @@ class EmbedController extends Zend_Controller_Action
         echo $png;
     }
 
+    /**
+     * RASTATIME 2026-11-10 - Radioplayer "events" feed for ORF Sound.
+     *
+     * ORF Sound polls this for private stations that are not on the
+     * Radioplayer platform (Radioplayer v4 events lookup: results.previous /
+     * now / next, total, pollNext).  Per item: name, artistName (songs),
+     * description (type PI), serviceDescription (type SI), startTime /
+     * stopTime (Unix seconds as strings, as in the partner's example),
+     * imageUrl, type PE_E (song) / PI (programme) / SI (service).
+     *
+     *   previous - the last N file plays from cc_playout_history (what was
+     *              actually played), oldest first, without tracks shorter
+     *              than the threshold (jingles, station IDs)
+     *   now      - the running file track (PE_E); for a webstream, Line-In,
+     *              a live DJ or a jingle the running show (PI); off air SI
+     *   next     - the next file track of the running show, else the next
+     *              show (PI); empty when nothing is known
+     *
+     * Settings -> General -> Radioplayer Feed: own switch (404 when off),
+     * optional ?key= (403 without it), independent of Live Text Info and of
+     * the public API switch.  Cover / show image URLs are only handed out
+     * when the public API switch serves them; else the default cover or no
+     * image.  Five seconds of caching absorb the partner's polling.
+     */
+    public function radioplayerEventsAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        if (!Application_Model_Preference::getRadioplayerEnabled()) {
+            $this->getResponse()->setHttpResponseCode(404);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'not enabled']);
+
+            return;
+        }
+        $key = Application_Model_Preference::getRadioplayerKey();
+        if ($key !== '' && !hash_equals($key, (string) $this->getRequest()->getParam('key', ''))) {
+            $this->getResponse()->setHttpResponseCode(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'forbidden']);
+
+            return;
+        }
+
+        $payload = $this->_buildRadioplayerEvents();
+
+        header('Content-Type: application/json; charset=utf-8');
+        $this->_emitCacheHeaders(5);
+        echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    private function _buildRadioplayerEvents()
+    {
+        $rpId = Application_Model_Preference::getRadioplayerRpId();
+        $serviceName = trim((string) Application_Model_Preference::GetStationName());
+        $serviceDescription = Application_Model_Preference::getRadioplayerServiceDescription();
+        if ($serviceDescription === '') {
+            $serviceDescription = trim((string) Application_Model_Preference::GetStationDescription());
+        }
+        $serviceDescription = mb_substr($serviceDescription, 0, 1000);
+        $minSeconds = Application_Model_Preference::getRadioplayerMinSeconds();
+        $imagesPublic = (bool) Application_Model_Preference::GetAllow3rdPartyApi();
+        $base = rtrim(Config::getPublicUrl(), '/');
+        $abs = function ($path) use ($base) {
+            if ($path === null || $path === '') {
+                return '';
+            }
+
+            return preg_match('#^https?://#', $path) ? $path : $base . '/' . ltrim($path, '/');
+        };
+        $defaultCover = $abs($this->_defaultCoverUrl());
+        $stationLogo = ($imagesPublic && trim((string) Application_Model_Preference::GetStationLogo()) !== '')
+            ? $abs(Config::getBasePath() . 'api/station-logo')
+            : $defaultCover;
+        $image = function ($fileId, $hasArtwork, $showId, $showHasImage) use ($abs, $imagesPublic, $defaultCover) {
+            if ($imagesPublic && $fileId && $hasArtwork) {
+                return $abs($this->_artworkUrlPrefix(512) . (int) $fileId);
+            }
+            if ($imagesPublic && $showId && $showHasImage) {
+                return $abs($this->_showLogoUrlPrefix() . (int) $showId);
+            }
+
+            return $defaultCover;
+        };
+        $unix = function ($utc) {
+            if (empty($utc)) {
+                return '';
+            }
+            try {
+                return (string) (new DateTime($utc, new DateTimeZone('UTC')))->getTimestamp();
+            } catch (Exception $e) {
+                return '';
+            }
+        };
+        $item = function ($type, $name, $artist, $description, $start, $stop, $imageUrl) use ($rpId, $serviceName, $serviceDescription) {
+            return [
+                'rpId'               => $rpId,
+                'name'               => mb_substr((string) $name, 0, 255),
+                'description'        => $type === 'PI' ? mb_substr((string) $description, 0, 1000) : '',
+                'serviceName'        => $serviceName,
+                'imageUrl'           => (string) $imageUrl,
+                'startTime'          => (string) $start,
+                'stopTime'           => (string) $stop,
+                'type'               => $type,
+                'serviceDescription' => $serviceDescription,
+                'artistName'         => $type === 'PE_E' ? mb_substr((string) $artist, 0, 255) : '',
+                'song'               => $type === 'PE_E',
+            ];
+        };
+
+        // ---- previous: what was actually played (playout history)
+        $previous = [];
+        $limit = Application_Model_Preference::getRadioplayerPrevious();
+        if ($limit > 0) {
+            $nowUtc = gmdate('Y-m-d H:i:s');
+            $rows = Application_Common_Database::prepareAndExecute(
+                "SELECT ph.starts, ph.ends, f.id AS file_id, f.track_title, f.artist_name,
+                        (COALESCE(f.artwork, '') <> '') AS has_artwork,
+                        s.id AS show_id, (COALESCE(s.image_path, '') <> '') AS show_has_image
+                   FROM cc_playout_history ph
+                   JOIN cc_files f ON ph.file_id = f.id
+                   LEFT JOIN cc_show_instances si ON ph.instance_id = si.id
+                   LEFT JOIN cc_show s ON si.show_id = s.id
+                  WHERE ph.starts >= (:now::timestamp - INTERVAL '1 day')
+                    AND ph.ends IS NOT NULL
+                    AND ph.ends <= :now
+                    AND EXTRACT(EPOCH FROM (ph.ends - ph.starts)) >= :min_sec
+                    AND (COALESCE(f.track_title, '') <> '' OR COALESCE(f.artist_name, '') <> '')
+                  ORDER BY ph.starts DESC
+                  LIMIT :lim",
+                [':now' => $nowUtc, ':min_sec' => $minSeconds, ':lim' => $limit],
+                'all'
+            );
+            foreach (array_reverse($rows ?: []) as $r) {
+                $previous[] = $item(
+                    'PE_E',
+                    trim((string) $r['track_title']),
+                    trim((string) $r['artist_name']),
+                    '',
+                    $unix($r['starts']),
+                    $unix($r['ends']),
+                    $image($r['file_id'], !empty($r['has_artwork']), $r['show_id'], !empty($r['show_has_image']))
+                );
+            }
+        }
+
+        // ---- now / next: the schedule (same source as the player widget)
+        $range = Application_Model_Schedule::GetPlayOrderRange();
+        $showNow = $range['shows']['current'] ?? null;
+        $showNext = $range['shows']['next'] ?? null;
+        if (is_array($showNext) && isset($showNext[0]) && is_array($showNext[0])) {
+            $showNext = $showNext[0];
+        }
+        $showItem = function ($show) use ($item, $unix, $image) {
+            if (!is_array($show) || trim((string) ($show['name'] ?? '')) === '') {
+                return null;
+            }
+            $showId = isset($show['id']) ? (int) $show['id'] : null;
+
+            return $item(
+                'PI',
+                trim((string) $show['name']),
+                '',
+                trim(strip_tags((string) ($show['description'] ?? ''))),
+                $unix($show['starts'] ?? null),
+                $unix($show['ends'] ?? null),
+                $image(null, false, $showId, trim((string) ($show['image_path'] ?? '')) !== '')
+            );
+        };
+        $trackItem = function ($track, $show) use ($item, $unix, $image, $minSeconds) {
+            if (!is_array($track)) {
+                return null;
+            }
+            $meta = $track['metadata'] ?? [];
+            $fileId = isset($meta['id']) ? (int) $meta['id'] : null;
+            $title = trim((string) ($meta['track_title'] ?? ''));
+            $artist = trim((string) ($meta['artist_name'] ?? ''));
+            if (!$fileId || ($title === '' && $artist === '')) {
+                return null; // webstream / line-in: the show speaks for it
+            }
+            $start = $unix($track['starts'] ?? ($track['start'] ?? null));
+            $stop = $unix($track['ends'] ?? ($track['end'] ?? null));
+            if ($start !== '' && $stop !== '' && ((int) $stop - (int) $start) < $minSeconds) {
+                return null; // a jingle: the show speaks for it
+            }
+            $showId = is_array($show) && isset($show['id']) ? (int) $show['id'] : null;
+
+            return $item(
+                'PE_E',
+                $title,
+                $artist,
+                '',
+                $start,
+                $stop,
+                $image($fileId, trim((string) ($meta['artwork'] ?? '')) !== '', $showId, is_array($show) && trim((string) ($show['image_path'] ?? '')) !== '')
+            );
+        };
+
+        $now = $trackItem($range['tracks']['current'] ?? null, $showNow)
+            ?? $showItem($showNow)
+            ?? [
+                'type'               => 'SI',
+                'rpId'               => $rpId,
+                'serviceName'        => $serviceName,
+                'name'               => '',
+                'artistName'         => '',
+                'serviceDescription' => $serviceDescription,
+                'startTime'          => '',
+                'stopTime'           => '',
+                'imageUrl'           => $stationLogo,
+            ];
+
+        $next = [];
+        $nextTrack = $trackItem($range['tracks']['next'] ?? null, $showNow);
+        if ($nextTrack !== null) {
+            $next[] = $nextTrack;
+        } elseif (($nextShow = $showItem($showNext)) !== null) {
+            $next[] = $nextShow;
+        }
+
+        return [
+            'results' => [
+                'previous' => $previous,
+                'now'      => $now,
+                'next'     => $next,
+            ],
+            'total'    => count($previous),
+            'pollNext' => Application_Model_Preference::getRadioplayerPollSeconds() * 1000,
+        ];
+    }
+
     private function _buildNowPlayingPayload($timezone)
     {
         $range = Application_Model_Schedule::GetPlayOrderRange();
