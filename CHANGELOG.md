@@ -140,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Kalender: Untermenü „Extras“ (2026-11-10)** — Teasers und Archive Online stehen im
-  Kontextmenü einer Sendung jetzt unter **Extras** (weniger Hauptpunkte; ein Eintrag für People
+  Kontextmenü einer Sendung jetzt unter **Extras**, direkt unter Clear Show (weniger Hauptpunkte; ein Eintrag für People
   Involved ist dort geplant).  Rechte unverändert (Teasers Admin/PM, Archive Online auch Hosts);
   ohne erlaubten Unterpunkt kein Extras-Eintrag.  Manual CALENDAR / ARCHIVING / TEASERS ×4 (ca5239f8).
 - **Einstellungen Live Text Info / Radioplayer Feed: Tooltips (2026-11-10)** — Einleitungstexte

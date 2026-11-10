@@ -83,7 +83,6 @@ class Application_Service_CalendarService
                 'icon' => 'overview',
                 'url' => $baseUrl . 'schedule/show-content-dialog',
             ];
-            $this->addExtrasItem($menu, $baseUrl, $isAdminOrPM, $isAdminOrPM || $isHostOfShow);
 
             // user can remove all content if the show has not started
             if ($now < $start && ($isAdminOrPM || $isHostOfShow)) {
@@ -97,6 +96,9 @@ class Application_Service_CalendarService
                     ];
                 }
             }
+
+            // RASTATIME 2026-11-10 - Extras below Clear Show (operator)
+            $this->addExtrasItem($menu, $baseUrl, $isAdminOrPM, $isAdminOrPM || $isHostOfShow);
 
             // show is currently playing and user is admin
             if ($start <= $now && $now < $end && $isAdminOrPM) {
