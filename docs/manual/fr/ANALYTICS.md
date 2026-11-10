@@ -16,9 +16,9 @@ pages :
 | **History Templates** | Quelles colonnes le journal de diffusion doit-il enregistrer et exporter ? |
 | **Listener Stats** | Combien d'auditeurs étaient connectés à chaque flux, au fil du temps ? |
 | **Show Listener Stats** | Quelle audience chaque *émission* a-t-elle réalisée ? |
-| **People Involved** (participants) | Combien de personnes ont fait les productions propres de la station dans une année ? Voir § 6 et [Archivage](./ARCHIVING.md) § 6 (depuis le 2026-11-03, entrée de menu propre depuis le 2026-11-04). |
-| **Programme Minutes** (minutes de programme) | Combien de minutes de productions propres sont passées à l'antenne dans une année ? Une année à la fois, CSV. Voir § 5 (depuis le 2026-11-03 ; jusqu'au 2026-11-04, partie du « Yearly Report », le rapport annuel). |
 | **Music by Country** (musique par pays) | D'où vient la musique diffusée (quota musical) ? Une année à la fois, CSV. Voir § 7 (depuis le 2026-11-08). |
+| **Programme Minutes** (minutes de programme) | Combien de minutes de productions propres sont passées à l'antenne dans une année ? Une année à la fois, CSV. Voir § 5 (depuis le 2026-11-03 ; jusqu'au 2026-11-04, partie du « Yearly Report », le rapport annuel). |
+| **People Involved** (participants) | Combien de personnes ont fait les productions propres de la station dans une année ? Voir § 6 et [Archivage](./ARCHIVING.md) § 6 (depuis le 2026-11-03, entrée de menu propre depuis le 2026-11-04). |
 | **Archive Status** (état de l'archivage) | Chaque épisode est-il arrivé sur cba.media ? Envois en cours et en attente, ce que l'archivage automatique a devant lui, problèmes, historique, CSV. Voir [Archivage](./ARCHIVING.md) § 7 (depuis le 2026-11-04). |
 
 Les deux premières existent pour la **traçabilité** — déclarations

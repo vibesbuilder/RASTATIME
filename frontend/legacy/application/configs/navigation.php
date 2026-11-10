@@ -300,6 +300,24 @@ $pages[] = [
             'resource' => 'showlistenerstat',
         ],
         [
+            // RASTATIME 2026-11-08 - the music quota: plays and minutes of the
+            // music per country (Program Managers and Admins, like
+            // Programme Minutes).  Order Music by Country, Programme
+            // Minutes, People Involved since 2026-11-10 (operator).
+            'label' => 'Music by Country',
+            'module' => 'default',
+            'controller' => 'yearlyreport',
+            'action' => 'country',
+            'resource' => 'yearlyreport',
+        ],
+        [
+            'label' => 'Programme Minutes',
+            'module' => 'default',
+            'controller' => 'yearlyreport',
+            'action' => 'index',
+            'resource' => 'yearlyreport',
+        ],
+        [
             // RASTATIME 2026-11-04 - the "Yearly Report" of 2026-11-03 split in
             // two entries (operator): the people involved in the own
             // productions and their programme minutes (Program Managers and
@@ -310,23 +328,6 @@ $pages[] = [
             'action' => 'participants',
             'resource' => 'archiving',
             'privilege' => 'participants',
-        ],
-        [
-            'label' => 'Programme Minutes',
-            'module' => 'default',
-            'controller' => 'yearlyreport',
-            'action' => 'index',
-            'resource' => 'yearlyreport',
-        ],
-        [
-            // RASTATIME 2026-11-08 - the music quota: plays and minutes of the
-            // music per country (Program Managers and Admins, like
-            // Programme Minutes)
-            'label' => 'Music by Country',
-            'module' => 'default',
-            'controller' => 'yearlyreport',
-            'action' => 'country',
-            'resource' => 'yearlyreport',
         ],
         [
             // RASTATIME 2026-11-04 - archive status: uploads to cba.media,

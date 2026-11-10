@@ -16,9 +16,9 @@ páginas:
 | **History Templates** | ¿Qué columnas debe registrar y exportar el registro de emisión? |
 | **Listener Stats** | ¿Cuántos oyentes estaban conectados a cada flujo, a lo largo del tiempo? |
 | **Show Listener Stats** | ¿Qué audiencia logró cada *programa*? |
-| **People Involved** (Participantes) | ¿Cuántas personas hicieron las producciones propias de la emisora en un año? Véase § 6 y [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03, entrada de menú propia desde el 2026-11-04). |
-| **Programme Minutes** (Minutos de programa) | ¿Cuántos minutos de producciones propias salieron al aire en un año? Un año cada vez, CSV. Véase § 5 (desde el 2026-11-03; hasta el 2026-11-04 parte del «Yearly Report», el informe anual). |
 | **Music by Country** (Música por país) | ¿De dónde viene la música emitida (cuota musical)? Un año cada vez, CSV. Véase § 7 (desde el 2026-11-08). |
+| **Programme Minutes** (Minutos de programa) | ¿Cuántos minutos de producciones propias salieron al aire en un año? Un año cada vez, CSV. Véase § 5 (desde el 2026-11-03; hasta el 2026-11-04 parte del «Yearly Report», el informe anual). |
+| **People Involved** (Participantes) | ¿Cuántas personas hicieron las producciones propias de la emisora en un año? Véase § 6 y [Archivo](./ARCHIVING.md) § 6 (desde el 2026-11-03, entrada de menú propia desde el 2026-11-04). |
 | **Archive Status** (estado del archivo) | ¿Llegó cada episodio a cba.media? Subidas en curso y en espera, lo que tiene por delante el archivo automático, problemas, historial, CSV. Véase [Archivo](./ARCHIVING.md) § 7 (desde el 2026-11-04). |
 
 Las dos primeras existen para la **rendición de cuentas** —

@@ -15,9 +15,9 @@ The **Analytics** menu in the top navigation bundles eight pages:
 | **History Templates** | Which columns should the history log record and export? |
 | **Listener Stats** | How many listeners were connected to each stream, over time? |
 | **Show Listener Stats** | How did each *show* perform in listener numbers? |
-| **People Involved** | How many people made the station's own productions in a year? See § 6 and [Archiving](./ARCHIVING.md) § 6 (since 2026-11-03, own menu entry since 2026-11-04). |
-| **Programme Minutes** | How many minutes of own productions went on air in a year? One year at a time, CSV. See § 5 (since 2026-11-03; until 2026-11-04 part of the "Yearly Report"). |
 | **Music by Country** | Where does the music that aired come from (music quota)? One year at a time, CSV. See § 7 (since 2026-11-08). |
+| **Programme Minutes** | How many minutes of own productions went on air in a year? One year at a time, CSV. See § 5 (since 2026-11-03; until 2026-11-04 part of the "Yearly Report"). |
+| **People Involved** | How many people made the station's own productions in a year? See § 6 and [Archiving](./ARCHIVING.md) § 6 (since 2026-11-03, own menu entry since 2026-11-04). |
 | **Archive Status** | Did every episode reach cba.media? Uploads running and waiting, what the automatic archiving has ahead, problems, history, CSV. See [Archiving](./ARCHIVING.md) § 7 (since 2026-11-04). |
 
 The first two exist for **accountability** — royalty reporting,

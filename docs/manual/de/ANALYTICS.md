@@ -16,9 +16,9 @@ Seiten:
 | **History Templates** | Welche Spalten soll das Sendeprotokoll aufzeichnen und exportieren? |
 | **Listener Stats** | Wie viele Hörer waren je Stream verbunden, im Zeitverlauf? |
 | **Show Listener Stats** | Wie hat jede *Sendung* bei den Hörerzahlen abgeschnitten? |
-| **People Involved** (Teilnehmende) | Wie viele Menschen haben die Eigenproduktionen des Senders in einem Jahr gemacht? Siehe § 6 und [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03, eigener Menüeintrag seit 2026-11-04). |
-| **Programme Minutes** (Sendeminuten) | Wie viele Minuten Eigenproduktion liefen in einem Jahr auf Sendung? Je ein Jahr, CSV. Siehe § 5 (seit 2026-11-03; bis 2026-11-04 Teil des „Jahresberichts"). |
 | **Music by Country** (Musik nach Land) | Woher kommt die gesendete Musik (Musikquote)? Je ein Jahr, CSV. Siehe § 7 (seit 2026-11-08). |
+| **Programme Minutes** (Sendeminuten) | Wie viele Minuten Eigenproduktion liefen in einem Jahr auf Sendung? Je ein Jahr, CSV. Siehe § 5 (seit 2026-11-03; bis 2026-11-04 Teil des „Jahresberichts"). |
+| **People Involved** (Teilnehmende) | Wie viele Menschen haben die Eigenproduktionen des Senders in einem Jahr gemacht? Siehe § 6 und [Archivierung](./ARCHIVING.md) § 6 (seit 2026-11-03, eigener Menüeintrag seit 2026-11-04). |
 | **Archive Status** (Archiv-Status) | Ist jede Episode auf cba.media angekommen? Laufende und wartende Uploads, was das automatische Archivieren vor sich hat, Probleme, Verlauf, CSV. Siehe [Archivierung](./ARCHIVING.md) § 7 (seit 2026-11-04). |
 
 Die ersten beiden existieren für die **Rechenschaftspflicht** —
