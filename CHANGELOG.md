@@ -146,6 +146,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Analytics-Menü umgereiht (2026-11-10)** — Reihenfolge jetzt Playout History, History
+  Templates, Listener Stats, Show Listener Stats, Music by Country, Programme Minutes, People
+  Involved, Archive Status (Wunsch des Operators); die Übersichtstabelle im Manual-Kapitel
+  Analytics folgt in allen vier Sprachen, die Abschnittsnummern bleiben. (f90833e1)
+
 - **Kalender: Extras → People Involved (2026-11-10)** — „Guests involved“ (Gäste einer Episode,
   mit Hinweis auf die Hosts der Sendung) hat ein eigenes Fenster unter Extras → People Involved
   und ist aus Archive Online verschwunden; Speichern in Archive Online lässt die Gäste
