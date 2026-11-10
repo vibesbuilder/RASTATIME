@@ -6,16 +6,18 @@ if ($key !== '') {
     $feedUrl .= '?key=' . rawurlencode($key);
 }
 ?>
+<?php
+/* 2026-11-10: intro and field descriptions are help-icon tooltips (preferences.js). */
+$radioplayerIntro = _("A JSON feed in the format of the Radioplayer \"events\" lookup (previous / now / next) that distribution partners poll for stations outside the Radioplayer platform: the last played tracks, the running track with its cover, or the running show for webstreams, Line-In and live DJs. Independent of Live Text Info and of the public API switch.");
+?>
 <fieldset class="padded radioplayer-settings">
-    <p class="input-settings-inline-p">
-        <?php echo _("A JSON feed in the format of the Radioplayer \"events\" lookup (previous / now / next) that distribution partners poll for stations outside the Radioplayer platform: the last played tracks, the running track with its cover, or the running show for webstreams, Line-In and live DJs. Independent of Live Text Info and of the public API switch.") ?>
-    </p>
     <dl class="zend_form">
         <?php if ($this->element->getElement("enable_radioplayer")->hasErrors()) {
             echo $this->element->getElement('enable_radioplayer')->renderErrors();
         } ?>
         <?php echo $this->element->getElement('enable_radioplayer')->renderViewHelper() ?>
         <?php echo $this->element->getElement('enable_radioplayer')->renderLabel() ?>
+        <span class="help_icon" data-rt-tip="<?php echo htmlspecialchars($radioplayerIntro, ENT_QUOTES); ?>"></span>
         <p class="input-settings-inline-p">
             <?php echo _("Feed address:") ?> <a href="<?php echo htmlspecialchars($feedUrl, ENT_QUOTES); ?>" target="_blank"><?php echo htmlspecialchars($feedUrl); ?></a>
         </p>

@@ -277,7 +277,38 @@ $(document).ready(function () {
       "live_text_ftp_port",
       "live_text_ftp_password",
       "live_text_ftp_path",
+      "live_text_delay",
+      // Radioplayer Feed (2026-11-10)
+      "radioplayer_key",
+      "radioplayer_rp_id",
+      "radioplayer_service_description",
+      "radioplayer_previous",
+      "radioplayer_min_seconds",
+      "radioplayer_poll_seconds",
+      "radioplayer_delay",
     ],
+  });
+
+  // RASTATIME 2026-11-10 - server-rendered help icons (intro texts of
+  // Live Text Info / Radioplayer Feed), text escaped like the Zend ones.
+  $("#pref_form, form")
+    .find(".help_icon[data-rt-tip]")
+    .each(function () {
+      $(this).rtTooltip({
+        content: { text: $("<div>").text($(this).attr("data-rt-tip")).html() },
+        placement: "right",
+        interactive: true,
+      });
+    });
+
+  // RASTATIME 2026-11-10 - field groups that only show while their switch
+  // is on (Live Text FTP push).
+  $("[data-rt-toggle]").each(function () {
+    var $group = $(this);
+    var $switch = $("#" + $group.attr("data-rt-toggle"));
+    $switch.on("change", function () {
+      $group.toggle(this.checked);
+    });
   });
   $(document).on("click", ".collapsible-header", function () {
     $(this).next().toggle("fast");
