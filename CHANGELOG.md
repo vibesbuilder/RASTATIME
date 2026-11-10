@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bleibt `SAMEORIGIN`.  Erkannt wird `/embed/` an der ursprünglichen Anfragezeile
   (`THE_REQUEST`), weil ein `<Location>` nach der Umleitung auf `index.php` nicht mehr
   greift.  Manual WIDGETS §13 in vier Sprachen (zweite Bedingung: die CSP der Webseite
-  muss `frame-src` für den RASTATIME-Host erlauben), GO_LIVE_HTTPS.
+  muss `frame-src` für den RASTATIME-Host erlauben), GO_LIVE_HTTPS (1d30f12b).
 - **Live Text Info nach einem Liquidsoap-Neustart (2026-11-10)** — Befund 2026-11-10: die
   Live-Text-Datei blieb seit 2026-11-09 14:07 auf demselben Stand.  Ein frisches Liquidsoap
   startet mit `livetext_enabled = false`; PLAYOUT schickt nach einem erkannten Neustart die
