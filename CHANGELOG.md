@@ -99,14 +99,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Next/Latest Shows: **Date format** mit vier Varianten (deutsch `Di., 15. Dez.` Standard,
   `Di, 15. Dez`, `Di, 15.12.`, `15.12.`), gebaut aus ICU-Skeletten
   (`Application_Model_WidgetDateFormat`, neue Klasse - `composer dump-autoload`).  Manual
-  WIDGETS ×4.
+  WIDGETS ×4 (aa7e9087).
 - **Widget Track History: Scrollbalken und Knopftext (2026-11-10)** — Befund 2026-11-10: mit
   größerer Pagesize wuchs das Widget über die iframe-Höhe hinaus (`min-height: 100vh`, der
   Einbettungscode setzt `scrolling="no"`), untere Zeilen und der „Load more"-Knopf waren
   abgeschnitten.  Jetzt hat das Widget genau die iframe-Höhe, die Liste scrollt mit eigenem
   Balken, Kopfzeile und Knopf bleiben sichtbar.  Neu unter Widgets → Track History: **Load
   more button text** (leer = übersetzter Standard); „Load more" ist jetzt übersetzt
-  (DE/FR/ES, wirksam nach dem nächsten Apache-Neustart).  Manual WIDGETS ×4.
+  (DE/FR/ES, wirksam nach dem nächsten Apache-Neustart).  Manual WIDGETS ×4 (58940f8e).
 - **Widgets auf der Stations-Webseite (2026-11-10)** — Befund 2026-11-10: Firefox und Brave
   zeigten auf der Webseite statt der eingebetteten Widgets einen Platzhalter.  Der
   öffentliche HTTPS-Host sendete seit dem Go-live (2026-10-04) für alles
