@@ -1,5 +1,5 @@
 <?php
-/* RASTATIME 2026-11-10 - Radioplayer feed for ORF Sound (Settings -> General, below Live Text Info). */
+/* RASTATIME 2026-11-10 - Radioplayer feed (Settings -> General, below Live Text Info). */
 $feedUrl = rtrim(Config::getPublicUrl(), '/') . '/embed/radioplayer-events';
 $key = Application_Model_Preference::getRadioplayerKey();
 if ($key !== '') {
@@ -8,7 +8,7 @@ if ($key !== '') {
 ?>
 <fieldset class="padded radioplayer-settings">
     <p class="input-settings-inline-p">
-        <?php echo _("A JSON feed in the format of the Radioplayer \"events\" lookup (previous / now / next) that ORF Sound polls for private stations: the last played tracks, the running track with its cover, or the running show for webstreams, Line-In and live DJs. Independent of Live Text Info and of the public API switch.") ?>
+        <?php echo _("A JSON feed in the format of the Radioplayer \"events\" lookup (previous / now / next) that distribution partners poll for stations outside the Radioplayer platform: the last played tracks, the running track with its cover, or the running show for webstreams, Line-In and live DJs. Independent of Live Text Info and of the public API switch.") ?>
     </p>
     <dl class="zend_form">
         <?php if ($this->element->getElement("enable_radioplayer")->hasErrors()) {

@@ -21,7 +21,7 @@ Navegación izquierda → **Ajustes** abre el submenú:
 
 | Página | Para qué | Quién | Capítulo |
 |---|---|---|---|
-| **General** | Nombre y descripción de la emisora, idioma, inicio de semana, API pública, página de radio, logo, fondo de la página de inicio, favicon, color principal, crossfades, tipo de pista de las subidas, listas de automatización, Live Text Info, Radioplayer Feed (ORF Sound), TuneIn, Dangerous Options. | Admin | Este capítulo §2 |
+| **General** | Nombre y descripción de la emisora, idioma, inicio de semana, API pública, página de radio, logo, fondo de la página de inicio, favicon, color principal, crossfades, tipo de pista de las subidas, listas de automatización, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Este capítulo §2 |
 | **Mi Perfil** | Su nombre, correo, contraseña, idioma de la interfaz y zona horaria. | todos | [Usuarios y roles](./USERS_AND_ROLES.md) §4 |
 | **Usuarios** | Crear, editar y eliminar usuarios y definir su tipo. | Admin | [Usuarios y roles](./USERS_AND_ROLES.md) §3 |
 | **Tipos de pista** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream y su análisis de puntos de cue al importar. | Admin | [Biblioteca](./LIBRARY.md) |
@@ -124,18 +124,19 @@ La línea la construye el motor de audio a partir de los metadatos que
 realmente envía al stream, incluidos títulos de DJ y de webstream. Un
 ajuste modificado se aplica en el siguiente cambio, sin reinicio.
 
-### Radioplayer Feed (ORF Sound)
+### Radioplayer Feed
 
-Sección desplegable bajo Live Text Info (desde 2026-11-10).  ORF Sound
-muestra las emisoras privadas que no están en la plataforma Radioplayer
+Sección desplegable bajo Live Text Info (desde 2026-11-10).  Los socios
+de distribución (por ejemplo la app de audio de una radiodifusora
+pública) muestran las emisoras que no están en la plataforma Radioplayer
 a partir de un feed JSON con el formato de la consulta «events» de
-Radioplayer, que consulta cada pocos segundos.  RASTATIME lo responde en
+Radioplayer, que consultan cada pocos segundos.  RASTATIME lo responde en
 `https://<host>/embed/radioplayer-events`, independiente de Live Text
 Info y del interruptor de la API pública.
 
 | Campo | Notas |
 |---|---|
-| **Provide the "now playing" feed for ORF Sound?** | Interruptor principal.  Desactivado = la dirección responde 404. |
+| **Provide the "now playing" feed (Radioplayer events)?** | Interruptor principal.  Desactivado = la dirección responde 404. |
 | **Access key** | Opcional.  Si está definida, el feed solo responde con `?key=<valor>` en la dirección (si no, 403); entregue al socio la dirección completa que aparece bajo el interruptor.  Letras, dígitos, `-` y `_`. |
 | **Station ID (rpId)** | El identificador asignado por el socio, si existe; si no, vacío. |
 | **Station description** | `serviceDescription` de cada entrada; vacío = la descripción de la emisora de esta página. |
@@ -253,7 +254,7 @@ carga de página.  Excepciones:
 | Colores principal y secundario, logo, favicon | Con la siguiente carga de página (F5). |
 | Su propio idioma | Con la siguiente carga de página; la pantalla de inicio de sesión usa el idioma por defecto. |
 | Live Text Info, TuneIn | En el siguiente cambio de pista o de fuente. |
-| Radioplayer Feed (ORF Sound) | Al instante (el feed se guarda en caché 5 s). |
+| Radioplayer Feed | Al instante (el feed se guarda en caché 5 s). |
 
 ### «¿Hay un menú de herramientas, un visor de registros o una consola de base de datos?»
 

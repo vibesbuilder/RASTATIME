@@ -21,13 +21,13 @@ class Application_Form_RadioplayerPreferences extends Zend_Form_SubForm
         $enable = new Zend_Form_Element_Checkbox('enable_radioplayer');
         $enable->setDecorators(['ViewHelper', 'Errors', 'Label']);
         $enable->addDecorator('Label', ['class' => 'enable-radioplayer']);
-        $enable->setLabel(_('Provide the "now playing" feed for ORF Sound (Radioplayer events)?'));
+        $enable->setLabel(_('Provide the "now playing" feed (Radioplayer events)?'));
         $enable->setValue(Application_Model_Preference::getRadioplayerEnabled());
         $this->addElement($enable);
 
         $key = new Zend_Form_Element_Text('radioplayer_key');
         $key->setLabel(_('Access key (optional):'))
-            ->setDescription(_('When set, the feed answers only with ?key=<this value> in the address (give the full address to ORF). Letters, digits, - and _ only. Empty = no key.'))
+            ->setDescription(_('When set, the feed answers only with ?key=<this value> in the address (give the full address to your distribution partner). Letters, digits, - and _ only. Empty = no key.'))
             ->setFilters(['StringTrim'])
             ->addValidator('regex', false, ['/^[A-Za-z0-9_-]{0,64}$/', 'messages' => _('Letters, digits, - and _ only (at most 64).')])
             ->setValue(Application_Model_Preference::getRadioplayerKey())

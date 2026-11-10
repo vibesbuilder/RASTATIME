@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   letzten gespielten Datei-Titel aus dem Playout-Verlauf, ohne Jingles), `now` (laufender
   Titel mit Cover, bei Webstream / Line-In / Live-DJ / Jingle die laufende Sendung als `PI`,
   sonst `SI`), `next` (nächster Titel, sonst nächste Sendung), `total`, `pollNext`.  Eigener
-  Bereich unter Einstellungen → Allgemein → Radioplayer Feed (ORF Sound): Schalter (aus =
+  Bereich unter Einstellungen → Allgemein → Radioplayer Feed (seit 2026-11-10 ohne
+  Partnernamen in den Einstellungstexten): Schalter (aus =
   404), optionaler Zugangsschlüssel (`?key=`, sonst 403), rpId, serviceDescription, Anzahl,
   Kurztitel-Schwelle, pollNext.  Unabhängig von Live Text Info und vom Schalter für die
   öffentliche API; Cover / Sendungsbilder nur, solange die öffentliche API sie ausliefert.

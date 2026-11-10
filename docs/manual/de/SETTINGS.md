@@ -21,7 +21,7 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 
 | Seite | Zweck | Wer | Kapitel |
 |---|---|---|---|
-| **Allgemein** | Stationsname und -beschreibung, Sprache, Wochenbeginn, öffentliche API, Radio-Seite, Logo, Hintergrund der Startseite, Favicon, Primärfarbe, Crossfades, Track-Typ für Uploads, Automations-Playlisten, Live Text Info, Radioplayer Feed (ORF Sound), TuneIn, Dangerous Options. | Admin | Dieses Kapitel §2 |
+| **Allgemein** | Stationsname und -beschreibung, Sprache, Wochenbeginn, öffentliche API, Radio-Seite, Logo, Hintergrund der Startseite, Favicon, Primärfarbe, Crossfades, Track-Typ für Uploads, Automations-Playlisten, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Dieses Kapitel §2 |
 | **Mein Profil** | Eigener Name, E-Mail, Passwort, Oberflächensprache und Zeitzone. | alle | [Benutzer und Rollen](./USERS_AND_ROLES.md) §4 |
 | **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
 | **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import. | Admin | [Bibliothek](./LIBRARY.md) |
@@ -124,18 +124,19 @@ Die Zeile bildet die Audio-Engine aus den Metadaten, die sie tatsächlich
 in den Stream sendet, DJ-Titel und Webstream-Titel eingeschlossen. Eine
 geänderte Einstellung greift beim nächsten Wechsel, kein Neustart.
 
-### Radioplayer Feed (ORF Sound)
+### Radioplayer Feed
 
-Aufklappbarer Bereich unter Live Text Info (seit 2026-11-10).  ORF
-Sound zeigt Privatsender, die nicht auf der Radioplayer-Plattform sind,
-über einen JSON-Feed im Format der Radioplayer-„events“-Abfrage an, den
-es alle paar Sekunden abruft.  RASTATIME beantwortet ihn unter
+Aufklappbarer Bereich unter Live Text Info (seit 2026-11-10).
+Distributionspartner (etwa die Audio-App einer öffentlich-rechtlichen
+Rundfunkanstalt) zeigen Sender, die nicht auf der Radioplayer-Plattform
+sind, über einen JSON-Feed im Format der Radioplayer-„events“-Abfrage an,
+den sie alle paar Sekunden abrufen.  RASTATIME beantwortet ihn unter
 `https://<host>/embed/radioplayer-events` - unabhängig von Live Text
 Info und vom Schalter für die öffentliche API.
 
 | Feld | Hinweise |
 |---|---|
-| **Provide the "now playing" feed for ORF Sound?** | Hauptschalter.  Aus = die Adresse antwortet mit 404. |
+| **Provide the "now playing" feed (Radioplayer events)?** | Hauptschalter.  Aus = die Adresse antwortet mit 404. |
 | **Access key** | Optional.  Ist er gesetzt, antwortet der Feed nur mit `?key=<Wert>` in der Adresse (sonst 403); geben Sie dem Partner die vollständige Adresse, die unter dem Schalter steht.  Buchstaben, Ziffern, `-` und `_`. |
 | **Station ID (rpId)** | Die vom Partner vergebene Kennung, falls vorhanden; sonst leer. |
 | **Station description** | `serviceDescription` jedes Eintrags; leer = die Stationsbeschreibung dieser Seite. |
@@ -252,7 +253,7 @@ Seitenaufruf.  Ausnahmen:
 | Primär- und Sekundärfarbe, Logo, Favicon | Beim nächsten Seitenaufruf (F5). |
 | Ihre eigene Sprache | Beim nächsten Seitenaufruf; der Anmeldebildschirm nutzt die Standardsprache. |
 | Live Text Info, TuneIn | Beim nächsten Wechsel von Titel oder Quelle. |
-| Radioplayer Feed (ORF Sound) | Sofort (der Feed wird 5 s zwischengespeichert). |
+| Radioplayer Feed | Sofort (der Feed wird 5 s zwischengespeichert). |
 
 ### „Gibt es ein Tools-Menü, einen Log-Viewer oder eine DB-Konsole?“
 
