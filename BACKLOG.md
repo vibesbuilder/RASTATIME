@@ -89,6 +89,27 @@ Vorbedingungen / offene Fragen an den Partner (Operator fragt an, Stand 2026-11-
 - Vergibt der Partner eine Kennung (`rpId`)?  Dann in den Einstellungen eintragen.
 - Zeitstempel als Text (wie im Beispiel des Partners, so geliefert) oder als Zahl?  Bei „Zahl“: kleine Code-Änderung in `_buildRadioplayerEvents`.
 - Beobachtung: „next“ nennt die nächste Sendung, wenn der eine nächste Eintrag des Sendeplans ein Kurztitel (Jingle) ist; bei Bedarf zum übernächsten Titel weiterschauen.
+- Seit 2026-11-10 eingebaut: **Delay (s)** (0..60, Standard 0, `3ee35bf0`, §23.104) - bei 0 lassen, bis der Partner live ist und die App mit dem Gehörten verglichen werden kann.
+
+### 🟡 Radioplayer Feed per FTP-Push statt Abruf auf dieser Maschine - Evaluierung 2026-11-10, Operator: erst Antworten des Partners abwarten
+
+**Ziel (Operator):** externe Partner sollen nicht direkt auf die Studiomaschine zugreifen.  Das Playout fragt den
+Feed alle ~5 s lokal (`127.0.0.1`) ab und lädt die JSON-Datei nur bei geänderter Antwort auf einen FTP-/FTPS-/SFTP-Server
+(Upload-Funktion aus Live Text wiederverwenden); die Verzögerung wirkt automatisch mit.  Neu in den Einstellungen:
+FTP-Felder wie bei Live Text (nur sichtbar mit Schalter) und **„Answer requests from outside“** (Standard an; aus = der
+Feed antwortet nur noch lokalen Abfragen).  Aufwand Stufe 1 ~1 Tag (Python ~120 Zeilen + Tests, PHP ~60 Zeilen, Manual ×4),
+PLAYOUT-Neustart.  Risiko niedrig (eigener Thread, Fehler abgefangen; bei Ausfall bleibt die letzte Datei stehen).
+
+**Haken:** die `imageUrl` (Cover / Sendungsbilder) zeigen weiter auf diese Maschine.  Stufe 2 (~½ Tag): Bilder einmal je
+Track-ID mit hochladen und die URLs auf den Webspace umschreiben.
+
+Vorbedingungen:
+- Neue Fragen an den Partner (zusammen mit den offenen oben): Passt eine statische JSON-Datei auf unserem Webspace als
+  Abfrage-Adresse?  Wer ruft die Bild-URLs ab - die Middleware des Partners (einmal je Titel) oder jede App?  Davon hängt
+  ab, ob Stufe 2 nötig ist.
+- Webspace: liefert die Datei per HTTPS und ohne minutenlangen Zwischenspeicher (kein CDN-Cache auf `.json`); nach dem
+  Bau per Abruf prüfen.
+- Danach Operator-Go für Stufe 1 (und ggf. 2); Außenzugang erst abschalten, wenn der Partner auf die Datei-Adresse umgestellt hat.
 
 ### 🟡 Kurze Abrisse an den Sendestationen (DEVA DB6400 schaltet auf Fallback) - Evaluierung 2026-11-09, wartet auf Zeitstempel der Geräte und Werte des Streaming-Anbieters
 
