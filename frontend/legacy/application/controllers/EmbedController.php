@@ -732,6 +732,12 @@ class EmbedController extends Zend_Controller_Action
         $this->view->fontSize = ($sizeParam !== null && $sizeParam !== '' && ctype_digit((string) $sizeParam))
             ? Application_Model_Preference::ClampWidgetShowsFontSize($sizeParam)
             : Application_Model_Preference::GetWidgetShowsFontSize();
+        // text colour: ?color=rrggbb (with or without #), else the setting,
+        // '' = the theme colours
+        $colorParam = Application_Model_Preference::NormalizeWidgetColor($request->getParam('color', ''));
+        $this->view->textColor = $colorParam !== ''
+            ? $colorParam
+            : Application_Model_Preference::GetWidgetShowsTextColor();
 
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;

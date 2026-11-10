@@ -167,6 +167,10 @@ Fri 24 May                                  06:00 - 08:00
 - **Title row**: the show's name from `cc_show.name`; can be
   hidden (setting **Show the show name as heading**, or
   `?title=0` for one embed)
+- **Font size and text colour**: settings **Font size (px)**
+  and **Text color** (colour picker; **Theme colors** empties
+  the field and the theme decides again), per embed `?size=`
+  and `?color=` (since 2026-11-10)
 - **List rows**: one line per instance, the date on the left,
   `H:MM - H:MM` on the right
 - **Date format** (since 2026-11-10): chosen under Settings →
@@ -201,6 +205,7 @@ drops the row without waiting out the cache TTL.
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of the show title when wider than 300 px. |
 | `title` | `0`, `1` | setting **Show the show name as heading** (on) | `0` hides the show-name heading (e.g. on the show's own page), `1` shows it.  Without the parameter the setting under Widgets → Next/Latest Shows applies (since 2026-11-10). |
 | `size` | integer px 10..32 | setting **Font size (px)** (14) | Font size of the whole widget; heading and rows scale with it.  Without the parameter the setting applies (since 2026-11-10). |
+| `color` | hex `rrggbb` (with or without `#`, `#` as `%23`) | setting **Text color** (empty = theme colours) | Text colour of the whole widget, overrides the theme colours; the empty-state text uses it at 70 %.  Without the parameter the setting applies (since 2026-11-10). |
 | `timezone` | any standard timezone | station default | All times rendered in this zone. |
 
 > **Tip.** Pick the show from the dropdown in the Settings page

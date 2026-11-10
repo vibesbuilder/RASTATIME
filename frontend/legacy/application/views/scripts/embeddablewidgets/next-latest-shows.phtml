@@ -81,6 +81,33 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
 
         <?php echo $this->form; ?>
     </fieldset>
+    <script>
+    // RASTATIME 2026-11-10 - colour picker + clear button next to the
+    // text colour field (empty = the theme colours)
+    (function () {
+        var text = document.getElementById('widget_shows_text_color');
+        if (!text) { return; }
+        var valid = function (v) { return /^#[0-9a-fA-F]{6}$/.test(v); };
+        var picker = document.createElement('input');
+        picker.type = 'color';
+        picker.className = 'rt-accent-picker';
+        picker.value = valid(text.value) ? text.value.toLowerCase() : '#ffffff';
+        picker.style.marginLeft = '0.5em';
+        picker.addEventListener('input', function () { text.value = picker.value; });
+        text.addEventListener('input', function () {
+            var v = text.value.trim();
+            if (valid(v)) { picker.value = v.toLowerCase(); }
+        });
+        var clear = document.createElement('button');
+        clear.type = 'button';
+        clear.className = 'btn';
+        clear.style.marginLeft = '0.5em';
+        clear.textContent = <?php echo json_encode(_('Theme colors')); ?>;
+        clear.addEventListener('click', function () { text.value = ''; });
+        text.parentNode.insertBefore(clear, text.nextSibling);
+        text.parentNode.insertBefore(picker, text.nextSibling);
+    })();
+    </script>
 
     <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
     <h3 style="margin-top: 1.5em;"><?php echo _("Preview"); ?></h3>
@@ -143,6 +170,9 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
                 <code>theme=auto|dark|light</code>,
                 <code>cache=10..3600</code>,
                 <code>overflow=ellipsis|marquee</code>,
+                <code>title=0|1</code>,
+                <code>size=10..32</code>,
+                <code>color=rrggbb</code>,
                 <code>timezone=Europe/Berlin</code>.
                 <?php echo _("Example: "); ?>
                 <code>...?show=BBC%20News&amp;theme=dark&amp;limit=8</code>.
