@@ -198,7 +198,7 @@ hicieron las **producciones propias** de la emisora en un año.  Desde el
 involved** (presentadores; Edit Show → What, debajo de **Own
 production**; el campo aparece en cuanto se marca la casilla), contados
 **una vez al año**, + los **Guests involved** (invitados) de cada
-episodio emitido (Archive Online, «Archivar en línea», en el
+episodio emitido (Extras → People Involved, «Participantes», en el
 calendario), contados **por episodio**.  Solo cuentan los programas con
 **Own production**: un programa sin la casilla conserva su número, pero
 queda fuera hasta que se vuelva a marcar; los programas de repetición

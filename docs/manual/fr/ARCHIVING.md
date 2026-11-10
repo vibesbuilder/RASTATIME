@@ -152,12 +152,20 @@ avant et après la diffusion - l'image peut être ajoutée après
 l'émission - pour les Admins, les Program Managers et les animateurs de
 l'émission.
 
+Les **Invités** (Guests involved) ont leur propre fenêtre depuis le
+2026-11-10 : clic droit sur l'épisode → **Compléments** →
+**Participants**.  Les invités de cet épisode (0-999), comptés en plus
+des animateurs de l'émission (depuis le 2026-11-07 ; avant, le champ
+s'appelait *Participants* et remplaçait la valeur de l'émission).  Vide
+signifie aucun invité ; la ligne sous le champ indique les animateurs
+de l'émission.  Ouvert aux mêmes utilisateurs qu'Archiver en ligne
+(Admins, Program Managers, animateurs de l'émission).
+
 | Champ | Signification |
 |---|---|
 | **Titre** | Vide : le nom de l'émission et la date, affichés en gris comme suggestion. |
 | **Accroche** | Un court résumé. Vide : l'accroche par défaut de l'émission. |
 | **Description** | Le texte de l'épisode, sur cba.media le texte de l'article. Vide : la description de l'émission ou, si elle n'en a pas, le nom de l'émission (affiché en gris). C'est le seul endroit pour la modifier (Modifier l'épisode ne l'affiche plus). |
-| **Invités** (Guests involved) | Les invités de cet épisode (0-999), comptés en plus des animateurs de l'émission (depuis le 2026-11-07 ; avant, le champ s'appelait *Participants* et remplaçait la valeur de l'émission). Vide signifie aucun invité ; la ligne sous le champ indique les animateurs de l'émission. |
 | **Date de production** | Exigée par cba.media. Vide : le jour de la diffusion. À renseigner si l'épisode a été produit plus tôt. |
 | **Ne pas archiver cet épisode automatiquement** | Pour les tests, les épisodes annulés ou les problèmes de droits. S'applique avec l'archivage automatique (§5) ; l'archivage manuel reste possible. |
 | **Image de l'épisode** | Facultative, JPG ou PNG jusqu'à 10 Mo. Choisir un fichier le téléverse aussitôt ; **Retirer l'image** le supprime. Sans image, cba.media affiche celle du podcast. |
@@ -294,8 +302,8 @@ Depuis le 2026-11-07, le décompte suit les personnes, pas les épisodes :
   sous **Production propre**) sont les personnes présentes dans chaque
   épisode.  Ils comptent **une fois par émission et par an**, quel que
   soit le nombre d'épisodes diffusés.
-* Les **Invités** (Guests involved ; Archiver en ligne dans le
-  calendrier) sont les invités d'un épisode.  Ils comptent **dans
+* Les **Invités** (Guests involved ; Compléments → Participants dans
+  le calendrier) sont les invités d'un épisode.  Ils comptent **dans
   chaque épisode** et s'additionnent.
 * **Participants** = animateurs + invités.
 

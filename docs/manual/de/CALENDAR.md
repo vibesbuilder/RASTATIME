@@ -150,7 +150,7 @@ Standardwerten bleiben.
 | **Live-Stream-Eingabe** | Remote-Hosts erlauben, die Sendung via Show DJ zu übernehmen (Pro-Sendung-Benutzername + Passwort). |
 | **Aufnahme** | Ankreuzen, um den On-Air-Output der Sendung in eine Datei aufzuzeichnen. Siehe [Aufnahme pro Sendung](./RECORD_PER_SHOW.md). |
 | **Own production** (Eigenproduktion) | Ankreuzen bei Eigenproduktionen des Senders: die gesendeten Minuten der Sendung zählen in Analytics → [Sendeminuten](./ANALYTICS.md), ihre Teilnehmenden in Analytics → Teilnehmende (seit 2026-11-03).  Steht im Abschnitt **What** (Was); das Hilfe-Symbol daneben erklärt es kurz. |
-| **Hosts involved** (Moderierende) | Erscheint unter **Own production**, sobald es angekreuzt ist (seit 2026-11-04; bis 2026-11-07 *Number of involved people*): wie viele Moderierende in jeder Episode mitwirken, 0-999. Zählt einmal pro Jahr in Analytics → [Teilnehmende](./ANALYTICS.md), egal wie viele Episoden gesendet wurden; die Gäste einer einzelnen Episode werden unter Online archivieren eingetragen (**Guests involved**) und dazugezählt. Wird das Häkchen entfernt, bleibt die Zahl erhalten, sie zählt nur nicht mehr. |
+| **Hosts involved** (Moderierende) | Erscheint unter **Own production**, sobald es angekreuzt ist (seit 2026-11-04; bis 2026-11-07 *Number of involved people*): wie viele Moderierende in jeder Episode mitwirken, 0-999. Zählt einmal pro Jahr in Analytics → [Teilnehmende](./ANALYTICS.md), egal wie viele Episoden gesendet wurden; die Gäste einer einzelnen Episode werden unter Extras → Teilnehmende eingetragen (**Guests involved**) und dazugezählt. Wird das Häkchen entfernt, bleibt die Zahl erhalten, sie zählt nur nicht mehr. |
 | **Autoloading Playlist** | Eine Playlist anhängen, um jede Episode automatisch zu füllen. Siehe [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Wer** | Zusätzliche Hosts über den primären unter Was gesetzten hinaus. |
 | **Archivierung** | Produzent, CBA-Konto, die cba.media-Vorgaben und das automatische Archivieren der Sendung (in Episode bearbeiten seit 2026-11-04 schreibgeschützt). Siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03. |
@@ -199,8 +199,9 @@ Aktion.
 | **Vorlage anwenden** | Eine [Sendungs-Vorlage](./SHOW_TEMPLATES.md) auf diese Sendung stempeln; ersetzt die Formularfelder. | Nur zukünftige Sendungen |
 | **Als Vorlage speichern** | Die aktuellen Sendungseinstellungen als neue Vorlage speichern. | Immer |
 | **Ansehen** | Lese-Ansicht der Metadaten der Sendung + Sendeplan. *Start* und *Length* je Zeile sind die ausgelegte Sendeplanzeile (Length = Cue-Out minus Cue-In, wie im Show Builder; seit 2026-10-23); die Summen unten sind die ausgelegte Inhaltslänge (inkl. Cue-Punkten und Crossfade-Überlappungen) gegenüber der Sendungsdauer. | Immer |
-| **Extras → Teaser** | Seit 2026-11-10 im Untermenü **Extras** (zusammen mit Online archivieren; ein Eintrag für People Involved ist dort geplant).  Die Jingles, die diese Sendung ankündigen - Typ ändern, lösen, weitere verknüpfen; siehe [Teaser-Automatik](./TEASERS.md). Seit 2026-10-16. | Admin / PM |
-| **Extras → Online archivieren** | Titel, Teaser, Beschreibung, Bild und Gäste dieser einen Episode, vor oder nach der Sendung, und „Jetzt online archivieren“ auf cba.media; siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03 (zuerst *Episode...* genannt). | Admin / PM / Hosts der Sendung (archivieren: Admin / PM) |
+| **Extras → Teaser** | Seit 2026-11-10 im Untermenü **Extras** (zusammen mit Online archivieren und Teilnehmende).  Die Jingles, die diese Sendung ankündigen - Typ ändern, lösen, weitere verknüpfen; siehe [Teaser-Automatik](./TEASERS.md). Seit 2026-10-16. | Admin / PM |
+| **Extras → Online archivieren** | Titel, Teaser, Beschreibung und Bild dieser einen Episode, vor oder nach der Sendung, und „Jetzt online archivieren“ auf cba.media; siehe [Archivierung](./ARCHIVING.md). Seit 2026-11-03 (zuerst *Episode...* genannt). | Admin / PM / Hosts der Sendung (archivieren: Admin / PM) |
+| **Extras → Teilnehmende** | Die Gäste dieser einen Episode (**Gäste**, Guests involved, 0-999), gezählt zusätzlich zu den Moderierenden der Sendung in Analytics → [Teilnehmende](./ANALYTICS.md); die Zeile unter dem Feld zeigt die Moderierenden der Sendung. Seit 2026-11-10 (vorher war das Feld Teil von Online archivieren). | Admin / PM / Hosts der Sendung |
 | **Bearbeiten → Episode bearbeiten** | Nur diese eine Episode einer wiederkehrenden Sendung bearbeiten. | Nur wiederkehrende Sendungen |
 | **Bearbeiten → Sendung bearbeiten** | Die Sendungsdefinition bearbeiten (Name, Zeit, Wiederholungen usw.). Eine nicht wiederholte Sendung zeigt nur **Sendung bearbeiten**. | Zukünftige oder aktuelle Sendungen |
 | **Sendung abbrechen** | Die Sendung *jetzt* beenden — nur für die aktuell laufende Sendung sinnvoll. | Nur aktuelle Sendung |
@@ -237,8 +238,9 @@ die Einträge *Instanz bearbeiten* / *Instanz löschen*).
   Sendung ändern.
 - Kann den Abschnitt **Archivierung** nicht ändern: Er zeigt
   die Werte der Sendung schreibgeschützt (seit 2026-11-04).
-  Beschreibung, Bild und Teilnehmende dieser Episode
-  bearbeiten Sie unter **Online archivieren**.
+  Beschreibung und Bild dieser Episode bearbeiten Sie unter
+  **Extras → Online archivieren**, ihre Gäste unter **Extras →
+  Teilnehmende**.
 
 ---
 

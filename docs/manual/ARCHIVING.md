@@ -139,12 +139,19 @@ Right-click an episode in the calendar → **Extras** → **Archive Online** (un
 there before and after the show aired - you can add the image after the
 broadcast - for Admins, Program Managers and the hosts of the show.
 
+**Guests involved** has its own window since 2026-11-10: right-click the
+episode → **Extras** → **People Involved**.  The guests of this one
+episode (0-999), counted on top of the show's hosts (since 2026-11-07;
+before, the field was called *People involved* and replaced the show's
+value).  Empty means no guests; the line below the field shows the
+show's hosts.  Open to the same users as Archive Online (Admins,
+Program Managers, hosts of the show).
+
 | Field | Meaning |
 |---|---|
 | **Title** | Empty: the show's name and the date, shown greyed as a suggestion. |
 | **Teaser** | A short summary. Empty: the show's default teaser. |
 | **Description** | The text of the episode, on cba.media the text of the post. Empty: the description of the show, or the show name when the show has none (shown greyed). This is the only place to edit it (Edit Episode no longer shows it). |
-| **Guests involved** | The guests of this one episode (0-999), counted on top of the show's hosts (since 2026-11-07; before, the field was called *People involved* and replaced the show's value). Empty means no guests; the line below the field shows the show's hosts. |
 | **Production date** | Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier. |
 | **Do not archive this episode automatically** | For tests, cancelled episodes or rights problems. Takes effect with automatic archiving (§5); archiving by hand stays possible. |
 | **Episode image** | Optional, JPG or PNG up to 10 MB. Choosing a file uploads it at once; **Remove image** deletes it. Without an image, cba.media shows the image of the podcast. |
@@ -268,7 +275,7 @@ Since 2026-11-07 the count follows the people, not the episodes:
 * **Hosts involved** (Edit Show → What, right below **Own production**)
   are the people who are the same in every episode.  They count **once
   per show and year**, however many episodes aired.
-* **Guests involved** (Archive Online in the calendar) are the guests of
+* **Guests involved** (Extras → People Involved in the calendar) are the guests of
   one episode.  They count **in every episode** and add up.
 * **People involved** = hosts + guests.
 

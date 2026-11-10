@@ -197,7 +197,7 @@ die **Eigenproduktionen** des Senders in einem Jahr gemacht haben.  Seit
 involved** (Moderierende; Edit Show → What, unter **Own production**;
 das Feld erscheint, sobald das Kästchen angekreuzt ist), gezählt
 **einmal pro Jahr**, + die **Guests involved** (Gäste) jeder gesendeten
-Episode (Archive Online bzw. Online archivieren im Kalender), gezählt
+Episode (Extras → People Involved bzw. Teilnehmende im Kalender), gezählt
 **je Episode**.  Nur Sendungen mit **Own production** zählen - eine
 Sendung ohne Häkchen behält ihre Zahl, bleibt aber außen vor, bis sie
 wieder angekreuzt ist; Wiederholungssendungen (*Repeat of*) stehen in

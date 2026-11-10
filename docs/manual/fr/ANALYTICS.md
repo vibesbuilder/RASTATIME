@@ -203,7 +203,8 @@ Depuis le 2026-11-07 : **People involved** (participants) = les **Hosts
 involved** (animateurs ; Edit Show → What, sous **Own production** ; le
 champ apparaît dès que la case est cochée), comptés **une fois par
 an**, + les **Guests involved** (invités) de chaque épisode diffusé
-(Archive Online dans le calendrier), comptés **par épisode**.  Seules
+(Extras → People Involved, Compléments → Participants, dans le
+calendrier), comptés **par épisode**.  Seules
 les émissions avec **Own production** comptent - une émission sans la
 case garde son nombre mais est laissée de côté jusqu'à ce qu'elle soit
 de nouveau cochée ; les émissions de rediffusion (*Repeat of*)

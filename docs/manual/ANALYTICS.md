@@ -177,7 +177,7 @@ station's **own productions** in a year.  Since 2026-11-07:
 **People involved** = the show's **Hosts involved** (Edit Show → What,
 below **Own production**; the field appears once the box is ticked),
 counted **once per year**, + the **Guests involved** of every aired
-episode (Archive Online in the calendar), counted **per episode**.
+episode (Extras → People Involved in the calendar), counted **per episode**.
 Only shows with **Own production** count - a show without the tick
 keeps its number but is left out until it is ticked again; repeat shows
 (*Repeat of*) are listed but count nothing.  **Only shows without a

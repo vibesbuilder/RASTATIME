@@ -147,12 +147,20 @@ Clic derecho en un episodio del calendario → **Extras** → **Archivar en lín
 y después de la emisión - la imagen se puede añadir después - para
 Admins, Program Managers y los presentadores del programa.
 
+Los **Invitados** (Guests involved) tienen su propia ventana desde el
+2026-11-10: clic derecho en el episodio → **Extras** →
+**Participantes**.  Los invitados de este episodio (0-999), contados
+además de los presentadores del programa (desde el 2026-11-07; antes el
+campo se llamaba *Participantes* y sustituía el valor del programa).
+Vacío significa sin invitados; la línea bajo el campo muestra los
+presentadores del programa.  Abierta a los mismos usuarios que Archivar
+en línea (Admins, Program Managers, presentadores del programa).
+
 | Campo | Significado |
 |---|---|
 | **Título** | Vacío: el nombre del programa y la fecha, en gris como sugerencia. |
 | **Teaser** | Un breve resumen. Vacío: el teaser predeterminado del programa. |
 | **Descripción** | El texto del episodio, en cba.media el texto de la entrada. Vacío: la descripción del programa o, si no tiene, el nombre del programa (en gris). Es el único lugar para editarla (Editar episodio ya no la muestra). |
-| **Invitados** (Guests involved) | Los invitados de este episodio (0-999), contados además de los presentadores del programa (desde el 2026-11-07; antes el campo se llamaba *Participantes* y sustituía el valor del programa). Vacío significa sin invitados; la línea bajo el campo muestra los presentadores del programa. |
 | **Fecha de producción** | La exige cba.media. Vacía: el día de la emisión. Indíquela si el episodio se produjo antes. |
 | **No archivar este episodio automáticamente** | Para pruebas, episodios cancelados o problemas de derechos. Se aplica con el archivo automático (§5); archivar a mano sigue siendo posible. |
 | **Imagen del episodio** | Opcional, JPG o PNG de hasta 10 MB. Elegir un archivo lo sube enseguida; **Quitar imagen** lo borra. Sin imagen, cba.media muestra la del pódcast. |
@@ -286,7 +294,7 @@ Desde el 2026-11-07 el recuento sigue a las personas, no a los episodios:
   debajo de **Producción propia**) son las personas que están en cada
   episodio.  Cuentan **una vez por programa y año**, sin importar
   cuántos episodios se emitieron.
-* Los **Invitados** (Guests involved; Archivar en línea en el
+* Los **Invitados** (Guests involved; Extras → Participantes en el
   calendario) son los invitados de un episodio.  Cuentan **en cada
   episodio** y se suman.
 * **Participantes** = presentadores + invitados.

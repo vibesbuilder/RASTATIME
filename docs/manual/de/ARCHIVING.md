@@ -149,12 +149,20 @@ Rechtsklick auf eine Episode im Kalender → **Extras** → **Online archivieren
 zur Verfügung - das Bild können Sie auch nach der Ausstrahlung setzen -
 für Admins, Programm-Manager und die Hosts der Sendung.
 
+**Gäste** (Guests involved) haben seit 2026-11-10 ein eigenes Fenster:
+Rechtsklick auf die Episode → **Extras** → **Teilnehmende**.  Die Gäste
+dieser einen Episode (0-999), gezählt zusätzlich zu den Moderierenden
+der Sendung (seit 2026-11-07; vorher hieß das Feld *Teilnehmende* und
+ersetzte den Wert der Sendung).  Leer bedeutet keine Gäste; die Zeile
+unter dem Feld zeigt die Moderierenden der Sendung.  Offen für dieselben
+Benutzer wie Online archivieren (Admins, Programm-Manager, Hosts der
+Sendung).
+
 | Feld | Bedeutung |
 |---|---|
 | **Titel** | Leer: Name der Sendung und Datum, grau als Vorschlag angezeigt. |
 | **Teaser** | Eine kurze Zusammenfassung. Leer: der Standard-Teaser der Sendung. |
 | **Beschreibung** | Der Text der Episode, auf cba.media der Text des Beitrags. Leer: die Beschreibung der Sendung oder, wenn die Sendung keine hat, der Name der Sendung (grau angezeigt). Hier ist die einzige Stelle dafür (Episode bearbeiten zeigt das Feld nicht mehr). |
-| **Gäste** (Guests involved) | Die Gäste dieser einen Episode (0-999), gezählt zusätzlich zu den Moderierenden der Sendung (seit 2026-11-07; vorher hieß das Feld *Teilnehmende* und ersetzte den Wert der Sendung). Leer bedeutet keine Gäste; die Zeile unter dem Feld zeigt die Moderierenden der Sendung. |
 | **Produktionsdatum** | Von cba.media verlangt. Leer: der Sendetag. Setzen Sie es, wenn die Episode früher produziert wurde. |
 | **Diese Episode nicht automatisch archivieren** | Für Tests, ausgefallene Episoden oder Rechteprobleme. Wirkt mit der automatischen Archivierung (§5); von Hand archivieren bleibt möglich. |
 | **Episodenbild** | Optional, JPG oder PNG bis 10 MB. Die Auswahl einer Datei lädt sie sofort hoch; **Bild entfernen** löscht sie. Ohne Bild zeigt cba.media das Bild des Podcasts. |
@@ -287,8 +295,8 @@ Seit 2026-11-07 folgt die Zählung den Menschen, nicht den Episoden:
   **Eigenproduktion**) sind die Menschen, die in jeder Episode dieselben
   sind.  Sie zählen **einmal je Sendung und Jahr**, egal wie viele
   Episoden gesendet wurden.
-* **Gäste** (Guests involved; Online archivieren im Kalender) sind die
-  Gäste einer Episode.  Sie zählen **in jeder Episode** und werden
+* **Gäste** (Guests involved; Extras → Teilnehmende im Kalender) sind
+  die Gäste einer Episode.  Sie zählen **in jeder Episode** und werden
   zusammengezählt.
 * **Teilnehmende** = Moderierende + Gäste.
 

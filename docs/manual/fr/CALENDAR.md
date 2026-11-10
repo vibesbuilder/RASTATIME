@@ -152,7 +152,7 @@ valeurs par défaut.
 | **Entrée Live Stream** | Permettre aux animateurs distants de prendre l'émission via Show DJ (nom d'utilisateur + mot de passe par émission). |
 | **Enregistrement** | Cocher pour enregistrer la sortie à l'antenne de l'émission dans un fichier. Voir [Enregistrement par émission](./RECORD_PER_SHOW.md). |
 | **Own production** (production propre) | Cocher pour les productions propres de la station : les minutes diffusées de l'émission comptent dans Analytics → [Minutes de programme](./ANALYTICS.md), ses participants dans Analytics → Participants (depuis le 2026-11-03).  Se trouve dans la section **Quoi** ; l'icône d'aide à côté l'explique en bref. |
-| **Hosts involved** (animateurs) | Apparaît sous **Own production** dès que la case est cochée (depuis le 2026-11-04 ; *Number of involved people* jusqu'au 2026-11-07) : combien d'animateurs participent à chaque épisode, 0-999. Compte une fois par an dans Analytics → [Participants](./ANALYTICS.md), quel que soit le nombre d'épisodes diffusés ; les invités d'un seul épisode se saisissent dans Archiver en ligne (**Guests involved**) et s'ajoutent. Décocher la case garde le nombre, il cesse seulement de compter. |
+| **Hosts involved** (animateurs) | Apparaît sous **Own production** dès que la case est cochée (depuis le 2026-11-04 ; *Number of involved people* jusqu'au 2026-11-07) : combien d'animateurs participent à chaque épisode, 0-999. Compte une fois par an dans Analytics → [Participants](./ANALYTICS.md), quel que soit le nombre d'épisodes diffusés ; les invités d'un seul épisode se saisissent dans Compléments → Participants (**Guests involved**) et s'ajoutent. Décocher la case garde le nombre, il cesse seulement de compter. |
 | **Autoloading Playlist** | Attacher une playlist pour remplir chaque épisode automatiquement. Voir [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
 | **Qui** | Animateurs supplémentaires au-delà du principal défini sous Quoi. |
 | **Archivage** | Producteur, compte CBA, réglages cba.media et archivage automatique de l'émission (en lecture seule dans Modifier l'épisode depuis le 2026-11-04). Voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03. |
@@ -201,8 +201,9 @@ action.
 | **Appliquer un modèle** | Tamponner un [Modèle d'émission](./SHOW_TEMPLATES.md) sur cette émission ; remplace les champs du formulaire. | Émissions futures seulement |
 | **Enregistrer comme modèle** | Enregistrer les paramètres actuels de l'émission comme nouveau modèle. | Toujours |
 | **Voir** | Vue en lecture seule des métadonnées + planning de l'émission. *Start* et *Length* de chaque ligne sont la ligne de planning telle que posée (Length = cue-out moins cue-in, comme dans le show builder ; depuis le 2026-10-23) ; les totaux en bas sont la longueur posée du contenu (points de cue et chevauchements de crossfade compris) face à la durée de l'émission. | Toujours |
-| **Compléments → Teasers** | Depuis le 2026-11-10 dans le sous-menu **Compléments** (avec Archiver en ligne ; une entrée People Involved y est prévue).  Les jingles qui annoncent cette émission - changer le type, retirer, en lier d'autres ; voir [Automatisation des teasers](./TEASERS.md). Depuis le 2026-10-16. | Admin / PM |
-| **Compléments → Archiver en ligne** | Titre, accroche, description, image et invités de cet épisode, avant ou après sa diffusion, et « Archiver en ligne maintenant » sur cba.media ; voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03 (d'abord nommé *Épisode...*). | Admin / PM / animateurs de l'émission (archiver : Admin / PM) |
+| **Compléments → Teasers** | Depuis le 2026-11-10 dans le sous-menu **Compléments** (avec Archiver en ligne et Participants).  Les jingles qui annoncent cette émission - changer le type, retirer, en lier d'autres ; voir [Automatisation des teasers](./TEASERS.md). Depuis le 2026-10-16. | Admin / PM |
+| **Compléments → Archiver en ligne** | Titre, accroche, description et image de cet épisode, avant ou après sa diffusion, et « Archiver en ligne maintenant » sur cba.media ; voir [Archivage](./ARCHIVING.md). Depuis le 2026-11-03 (d'abord nommé *Épisode...*). | Admin / PM / animateurs de l'émission (archiver : Admin / PM) |
+| **Compléments → Participants** | Les invités de cet épisode (**Invités**, Guests involved, 0-999), comptés en plus des animateurs de l'émission dans Analytics → [Participants](./ANALYTICS.md) ; la ligne sous le champ indique les animateurs de l'émission. Depuis le 2026-11-10 (avant, le champ faisait partie d'Archiver en ligne). | Admin / PM / animateurs de l'émission |
 | **Modifier → Modifier l'épisode** | Modifier seulement cet épisode d'une émission récurrente. | Émissions récurrentes seulement |
 | **Modifier → Modifier l'émission** | Modifier la définition d'émission (nom, heure, répétitions, etc.). | Émissions futures ou actuelles |
 | **Annuler l'émission** | Terminer l'émission *maintenant* — sensé seulement pour l'émission actuellement en cours. | Émission actuelle seulement |
@@ -241,9 +242,10 @@ action.
   moment hors du motif de répétition de l'émission parent.
 - Ne peut pas modifier la section **Archivage** : elle
   affiche les valeurs de l'émission en lecture seule
-  (depuis le 2026-11-04). La description, l'image et les
-  participants de cet épisode se modifient dans
-  **Archiver en ligne**.
+  (depuis le 2026-11-04). La description et l'image de
+  cet épisode se modifient dans **Compléments → Archiver
+  en ligne**, ses invités dans **Compléments →
+  Participants**.
 
 ---
 
