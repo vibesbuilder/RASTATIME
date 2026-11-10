@@ -21,6 +21,87 @@ class Application_Service_YearlyReportService
 {
     private static $columnReady;
 
+    private static $categoryReady;
+
+    /** RASTATIME 2026-11-10 - True once migration 0082 added cc_show.category. */
+    public static function categoryReady(): bool
+    {
+        if (self::$categoryReady === null) {
+            try {
+                $row = Application_Common_Database::prepareAndExecute(
+                    "SELECT 1 AS ok FROM information_schema.columns WHERE table_name = 'cc_show' AND column_name = 'category'",
+                    [],
+                    Application_Common_Database::SINGLE
+                );
+                self::$categoryReady = !empty($row);
+            } catch (Exception $e) {
+                self::$categoryReady = false;
+            }
+        }
+
+        return self::$categoryReady;
+    }
+
+    /** RASTATIME 2026-11-10 - the show's category ('' until set / before migration 0082). */
+    public static function category($showId): string
+    {
+        $row = Application_Common_Database::prepareAndExecute(
+            "SELECT (to_jsonb(s) ->> 'category') AS v FROM cc_show s WHERE s.id = :id",
+            [':id' => (int) $showId],
+            Application_Common_Database::SINGLE
+        );
+
+        return $row ? trim((string) $row['v']) : '';
+    }
+
+    public static function setCategory($showId, $value): void
+    {
+        $value = mb_substr(trim((string) $value), 0, 255);
+        if (!self::categoryReady()) {
+            if ($value !== '') {
+                Logging::warn('YearlyReportService::setCategory: migration 0082 pending, category not stored');
+            }
+
+            return;
+        }
+        Application_Common_Database::prepareAndExecute(
+            'UPDATE cc_show SET category = :v WHERE id = :id',
+            [':v' => $value === '' ? null : $value, ':id' => (int) $showId],
+            Application_Common_Database::EXECUTE
+        );
+    }
+
+    /**
+     * RASTATIME 2026-11-10 - the values of genre or category in use, for the
+     * suggestions of the show form: one spelling per value (the most used
+     * one, case and blanks ignored), most used first.
+     *
+     * @return string[]
+     */
+    public static function suggestions(string $field): array
+    {
+        if ($field === 'category' && !self::categoryReady()) {
+            return [];
+        }
+        $col = $field === 'category' ? "(to_jsonb(s) ->> 'category')" : 's.genre';
+        try {
+            $rows = Application_Common_Database::prepareAndExecute(
+                "SELECT mode() WITHIN GROUP (ORDER BY btrim(v)) AS label, count(*) AS n
+                   FROM (SELECT {$col} AS v FROM cc_show s) x
+                  WHERE btrim(COALESCE(v, '')) <> ''
+                  GROUP BY lower(btrim(v))
+                  ORDER BY n DESC, label
+                  LIMIT 200",
+                [],
+                'all'
+            );
+        } catch (Exception $e) {
+            return [];
+        }
+
+        return array_map(static fn ($r) => (string) $r['label'], $rows ?: []);
+    }
+
     /** True once migration 0077 added cc_show.own_production. */
     public static function columnReady(): bool
     {
@@ -104,16 +185,18 @@ class Application_Service_YearlyReportService
                  ), shows AS (
                     SELECT s.id, s.name,
                            COALESCE((to_jsonb(s) ->> 'own_production')::boolean, FALSE) AS own_production,
-                           (s.repeat_of_show_id IS NOT NULL) AS is_repeat
+                           (s.repeat_of_show_id IS NOT NULL) AS is_repeat,
+                           NULLIF(btrim(COALESCE(s.genre, '')), '') AS genre,
+                           NULLIF(btrim(COALESCE(to_jsonb(s) ->> 'category', '')), '') AS category
                       FROM cc_show s
                  )";
         $params = [':tz' => $tzName, ':from' => $from, ':to' => $to];
 
         $rows = Application_Common_Database::prepareAndExecute(
-            $inst . " SELECT sh.id, sh.name, sh.own_production, sh.is_repeat,
+            $inst . " SELECT sh.id, sh.name, sh.own_production, sh.is_repeat, sh.genre, sh.category,
                              count(i.id) AS episodes, ROUND(SUM(i.secs) / 60.0) AS minutes
                         FROM inst i JOIN shows sh ON sh.id = i.show_id
-                       GROUP BY sh.id, sh.name, sh.own_production, sh.is_repeat
+                       GROUP BY sh.id, sh.name, sh.own_production, sh.is_repeat, sh.genre, sh.category
                        ORDER BY sh.own_production DESC, lower(sh.name), sh.id",
             $params,
             'all'
@@ -139,6 +222,7 @@ class Application_Service_YearlyReportService
             $row = [
                 'id' => (int) $r['id'], 'name' => (string) $r['name'], 'own_production' => $own, 'is_repeat' => $rep,
                 'episodes' => (int) $r['episodes'], 'minutes' => (int) $r['minutes'],
+                'genre' => (string) ($r['genre'] ?? ''), 'category' => (string) ($r['category'] ?? ''),
             ];
             $out['rows'][] = $row;
             if ($own) {
@@ -161,6 +245,62 @@ class Application_Service_YearlyReportService
                 'minutes_first' => isset($byMonth[$m]) ? (int) $byMonth[$m]['minutes_first'] : 0,
                 'minutes_repeat' => isset($byMonth[$m]) ? (int) $byMonth[$m]['minutes_repeat'] : 0,
             ];
+        }
+
+        // RASTATIME 2026-11-10 - per genre, per category, per genre x category
+        $out['groups'] = [];
+        foreach (['genre' => ['genre'], 'category' => ['category'], 'both' => ['genre', 'category']] as $key => $dims) {
+            $out['groups'][$key] = self::groupRows($inst, $params, $dims);
+        }
+
+        return $out;
+    }
+
+    /**
+     * RASTATIME 2026-11-10 - the minutes of the year grouped by genre and / or
+     * category, split like the totals: own productions first broadcasts,
+     * own productions repeats, other shows.  Values are grouped ignoring
+     * case and blanks (shown in their most used spelling); a show without
+     * a value lands in a group with an empty label.  Minutes are rounded per
+     * group from the summed seconds.
+     *
+     * @param string[] $dims 'genre' and / or 'category'
+     */
+    private static function groupRows(string $inst, array $params, array $dims): array
+    {
+        $keys = [];
+        $labels = [];
+        foreach ($dims as $d) {
+            $keys[] = "lower(COALESCE(sh.{$d}, ''))";
+            $labels[] = "COALESCE(mode() WITHIN GROUP (ORDER BY sh.{$d}), '') AS {$d}";
+        }
+        $rows = Application_Common_Database::prepareAndExecute(
+            $inst . ' SELECT ' . implode(', ', $labels) . ",
+                             count(i.id) FILTER (WHERE sh.own_production) AS episodes_own,
+                             count(i.id) FILTER (WHERE NOT sh.own_production) AS episodes_other,
+                             ROUND(COALESCE(SUM(i.secs) FILTER (WHERE sh.own_production AND NOT sh.is_repeat), 0) / 60.0) AS minutes_first,
+                             ROUND(COALESCE(SUM(i.secs) FILTER (WHERE sh.own_production AND sh.is_repeat), 0) / 60.0) AS minutes_repeat,
+                             ROUND(COALESCE(SUM(i.secs) FILTER (WHERE NOT sh.own_production), 0) / 60.0) AS minutes_other
+                        FROM inst i JOIN shows sh ON sh.id = i.show_id
+                       GROUP BY " . implode(', ', $keys) . '
+                       ORDER BY ' . implode(', ', array_map(static fn ($k) => "({$k} = '') , {$k}", $keys)),
+            $params,
+            'all'
+        );
+        $out = [];
+        foreach ($rows ?: [] as $r) {
+            $row = [
+                'genre' => in_array('genre', $dims, true) ? (string) $r['genre'] : null,
+                'category' => in_array('category', $dims, true) ? (string) $r['category'] : null,
+                'episodes_own' => (int) $r['episodes_own'],
+                'episodes_other' => (int) $r['episodes_other'],
+                'minutes_first' => (int) $r['minutes_first'],
+                'minutes_repeat' => (int) $r['minutes_repeat'],
+                'minutes_other' => (int) $r['minutes_other'],
+            ];
+            $row['minutes_own'] = $row['minutes_first'] + $row['minutes_repeat'];
+            $row['minutes_total'] = $row['minutes_own'] + $row['minutes_other'];
+            $out[] = $row;
         }
 
         return $out;

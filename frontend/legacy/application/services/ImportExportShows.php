@@ -45,7 +45,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
 
     public function columns(): array
     {
-        return ['name', 'url', 'genre', 'description', 'start_date', 'start_time', 'end_date', 'end_time', 'timezone',
+        return ['name', 'url', 'genre', 'category', 'description', 'start_date', 'start_time', 'end_date', 'end_time', 'timezone',
             'allow_delayed_start', 'own_production', 'repeats', 'repeat_type', 'days', 'months', 'repeat_end_date', 'no_end', 'linked', 'record',
             'content', 'content_repeat', 'intro_playlist', 'outro_playlist', 'repeat_of', 'rastatime_auth', 'custom_auth', 'custom_username',
             'djs', 'background_color', 'text_color', 'logo', ];
@@ -55,7 +55,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
     {
         return [
             'name' => 'show name (required)',
-            'url, genre, description' => 'free text',
+            'url, genre, category, description' => 'free text (category: since 2026-11-10, evaluated in Analytics -> Programme Minutes)',
             'start_date, start_time' => 'first broadcast: YYYY-MM-DD and HH:MM (station timezone unless "timezone" is set)',
             'end_date, end_time' => 'end of that broadcast; end_date may be empty (same day, or next day when end_time <= start_time)',
             'timezone' => 'IANA name, e.g. Europe/Berlin; empty = station default',
@@ -90,7 +90,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
         $monday = date('Y-m-d', strtotime('next monday'));
 
         return [[
-            'name' => 'Morning Show', 'url' => 'https://example.org/morning', 'genre' => 'Talk', 'description' => 'Wake-up programme',
+            'name' => 'Morning Show', 'url' => 'https://example.org/morning', 'genre' => 'Talk', 'category' => 'Information', 'description' => 'Wake-up programme',
             'start_date' => $monday, 'start_time' => '07:00', 'end_date' => '', 'end_time' => '09:00', 'timezone' => '',
             'allow_delayed_start' => 'no', 'own_production' => 'yes', 'repeats' => 'yes', 'repeat_type' => 'weekly', 'days' => 'Mon,Tue,Wed,Thu,Fri',
             'repeat_end_date' => '', 'no_end' => 'yes', 'linked' => 'no', 'record' => 'no',
@@ -158,7 +158,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             if ($rec['name'] === '') {
                 $rec['_errors'][] = _('name is empty');
             }
-            foreach (['url', 'genre', 'description', 'custom_username', 'content', 'intro_playlist', 'outro_playlist'] as $k) {
+            foreach (['url', 'genre', 'category', 'description', 'custom_username', 'content', 'intro_playlist', 'outro_playlist'] as $k) {
                 $rec[$k] = $g($k);
             }
             $rec['timezone'] = $g('timezone') !== '' ? $g('timezone') : $defaultTz;
@@ -379,6 +379,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'add_show_name' => $record['name'],
             'add_show_url' => $record['url'],
             'add_show_genre' => $record['genre'],
+            'add_show_category' => $record['category'] ?? '',  // RASTATIME 2026-11-10
             'add_show_description' => $record['description'],
             'add_show_start_now' => 'future',
             'add_show_start_date' => $record['start_date'],
@@ -539,6 +540,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
                    s.override_intro_playlist, s.intro_playlist_id, s.override_outro_playlist, s.outro_playlist_id,
                    s.allow_delayed_start,
                    (to_jsonb(s) ->> 'own_production') AS own_production,
+                   (to_jsonb(s) ->> 'category') AS category,
                    (SELECT min(i.starts) FROM cc_show_instances i WHERE i.show_id = s.id AND i.ends > now() AT TIME ZONE 'UTC' AND i.modified_instance = false) AS next_start
               FROM cc_show s
              WHERE EXISTS (SELECT 1 FROM cc_show_instances i WHERE i.show_id = s.id AND i.ends > now() AT TIME ZONE 'UTC' AND i.modified_instance = false)
@@ -611,6 +613,7 @@ SQL;
                 'name' => $s['name'],
                 'url' => (string) $s['url'],
                 'genre' => (string) $s['genre'],
+                'category' => (string) ($s['category'] ?? ''),
                 'description' => (string) $s['description'],
                 'start_date' => $startLocal->format('Y-m-d'),
                 'start_time' => $startLocal->format('H:i'),

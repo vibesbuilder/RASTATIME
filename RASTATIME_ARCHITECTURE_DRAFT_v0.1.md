@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.132
+Draft version: 0.133
 Date: 2026-11-10
 
 > **Revision history**
+> - **0.133 (2026-11-10)** - **Show category and programme minutes by genre / category** (§23.105):
+>   `cc_show.category` (migration 0082, free text with suggestions), Programme Minutes grouped
+>   by genre, category and both, with CSV.
 > - **0.132 (2026-11-10)** - **Delay for Live Text and the Radioplayer feed** (§23.104): the
 >   Live Text writer holds every line back X seconds and writes it at its own due time; the
 >   feed answers as of "now minus X".  Both default 0.
@@ -9818,3 +9821,40 @@ already delay the feed, so the field says "start with 0".
 existing write path; a wrong value shows the text too early or too late,
 nothing stops.  The feed stays read-only.  Rollback: set 0 or
 `git revert`.
+
+### 23.105 Show Category and Programme Minutes by Genre / Category (2026-11-10)
+
+**Need.**  The operator wants the programme minutes also per genre and
+per category of the shows (and combined), on screen and as CSV.  The
+show had a genre (free text) but no category.
+
+**Decision (operator 2026-11-10).**  Category is **free text with
+suggestions** like the genre (not a managed list, not a fixed list);
+the evaluation keeps the split of the existing report (own productions
+first broadcasts / repeats, other shows, total).
+
+- **Schema:** `cc_show.category VARCHAR(255) NULL` (legacy migration
+  0082).  Propel is not regenerated: read through
+  `to_jsonb(cc_show) ->> 'category'` (NULL before the migration), written
+  with raw SQL (`Application_Service_YearlyReportService::setCategory`).
+  The show form adds the field only once the column exists, so nothing
+  typed in is dropped before the migration.  The Django model is not
+  touched (same as `own_production`).
+- **Form:** Edit Show -> What, after Genre.  Genre and category carry
+  `data-rt-suggest` (JSON of the values in use, one spelling per value
+  ignoring case and blanks, most used first); add-show.js builds a
+  `<datalist>`.  Show templates and Import/Export (`category` column)
+  carry it; a form without the field leaves the stored value alone.
+- **Report:** `minutesReport()` returns `groups.genre|category|both` -
+  grouped by `lower(btrim(value))`, label = the most used spelling
+  (`mode()`), empty = own row; columns episodes own / other, minutes
+  first / repeat / other / total, rounded per group from the summed
+  seconds (sums can differ from the per-show totals by a minute).
+  Analytics -> Programme Minutes shows the grouping chosen under
+  "Group by"; `yearlyreport/groups-csv?group=genre|category|both`.
+  The per-show table and the minutes CSV gained genre and category
+  (CSV: appended columns).
+
+**Risk.**  Low; the migration adds a nullable column (lock_timeout 5 s);
+every reader works before and after it.  Rollback: `git revert`, the
+column can stay.

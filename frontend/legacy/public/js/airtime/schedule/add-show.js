@@ -652,6 +652,26 @@ function setAddShowEvents(form) {
       interactive: true,
     });
   });
+  // RASTATIME 2026-11-10 - suggestions for genre / category: the values in
+  // use (data-rt-suggest, JSON) as a datalist; free text stays possible
+  form.find("input[data-rt-suggest]").each(function () {
+    var $in = $(this), list;
+    try {
+      list = JSON.parse($in.attr("data-rt-suggest") || "[]");
+    } catch (e) {
+      list = [];
+    }
+    if (!list.length) {
+      return;
+    }
+    var id = this.id + "_suggest", $dl = $("<datalist>").attr("id", id);
+    $.each(list, function (i, v) {
+      $dl.append($("<option>").attr("value", v));
+    });
+    $("#" + id).remove();
+    $in.attr("list", id).after($dl);
+  });
+
   // RASTATIME 2026-11-03 - tooltips the server built as HTML (escaped
   // there), e.g. the licence matrix of the Archiving section
   form.find("[data-rt-tip-html]").each(function () {

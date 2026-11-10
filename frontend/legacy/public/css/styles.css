@@ -5929,6 +5929,10 @@ div.dt-button-collection .dt-button > span {
     max-width: 640px;
     margin-bottom: 1em;
 }
+/* RASTATIME 2026-11-10 - minutes per genre / category: labels on one line */
+.rt-yearly .rt-yearly-groups td:not(.num) {
+    white-space: nowrap;
+}
 .rt-yearly tr.rt-yearly-other td {
     color: #8a8a8a;
 }

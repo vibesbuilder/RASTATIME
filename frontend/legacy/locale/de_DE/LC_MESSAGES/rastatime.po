@@ -8276,3 +8276,37 @@ msgstr "Extras"
 #. RASTATIME 2026-11-10 - Episode instead of Instance
 msgid "Choose Episode"
 msgstr "Episode wählen"
+
+#. RASTATIME 2026-11-10 - show category, programme minutes by genre / category
+msgid "Category:"
+msgstr "Kategorie:"
+
+msgid "Category"
+msgstr "Kategorie"
+
+msgid "No genre"
+msgstr "Kein Genre"
+
+msgid "No category"
+msgstr "Keine Kategorie"
+
+msgid "By genre and category"
+msgstr "Nach Genre und Kategorie"
+
+msgid "Group by"
+msgstr "Gruppieren nach"
+
+msgid "Genre and category"
+msgstr "Genre und Kategorie"
+
+msgid "Episodes, other shows"
+msgstr "Episoden, andere Sendungen"
+
+msgid "Minutes, other shows"
+msgstr "Minuten, andere Sendungen"
+
+msgid "Minutes, total"
+msgstr "Minuten, gesamt"
+
+msgid "The column for the category is missing - run the database migration 0082 first. Until then every show is without a category."
+msgstr "Die Spalte für die Kategorie fehlt - zuerst die Datenbank-Migration 0082 ausführen. Bis dahin ist jede Sendung ohne Kategorie."

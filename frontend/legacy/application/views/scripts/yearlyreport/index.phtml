@@ -62,6 +62,67 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
         </tbody>
     </table>
 
+    <?php
+    // RASTATIME 2026-11-10 - minutes per genre / category / genre x category
+    $group = $this->group;
+    $grows = $m['groups'][$group] ?? [];
+    $noneLabel = ['genre' => _("No genre"), 'category' => _("No category")];
+    $gsum = array_fill_keys(['episodes_own', 'minutes_first', 'minutes_repeat', 'minutes_other', 'minutes_total'], 0);
+    ?>
+    <h3 id="rt_yearly_groups" class="rt-yearly-groups-head"><?php echo _("By genre and category"); ?></h3>
+    <?php if (!$this->categoryReady): ?>
+        <p class="rt-participants-warn"><?php echo _("The column for the category is missing - run the database migration 0082 first. Until then every show is without a category."); ?></p>
+    <?php endif; ?>
+    <form method="get" action="<?php echo $h($base . 'yearlyreport'); ?>#rt_yearly_groups" class="rt-participants-filter">
+        <input type="hidden" name="year" value="<?php echo (int) $this->year; ?>" />
+        <label for="rt_yearly_group"><?php echo _("Group by"); ?></label>
+        <select name="group" id="rt_yearly_group" class="input_select" onchange="this.form.submit()">
+            <option value="genre"<?php echo $group === 'genre' ? ' selected' : ''; ?>><?php echo _("Genre"); ?></option>
+            <option value="category"<?php echo $group === 'category' ? ' selected' : ''; ?>><?php echo _("Category"); ?></option>
+            <option value="both"<?php echo $group === 'both' ? ' selected' : ''; ?>><?php echo _("Genre and category"); ?></option>
+        </select>
+        <a class="btn" href="<?php echo $h($base . 'yearlyreport/groups-csv?year=' . (int) $this->year . '&group=' . $group); ?>"><?php echo _("Download CSV"); ?></a>
+    </form>
+    <?php if (!empty($grows)): ?>
+        <table class="datatable rt-participants-table rt-yearly-groups">
+            <thead>
+                <tr>
+                    <?php if ($group !== 'category'): ?><th><?php echo _("Genre"); ?></th><?php endif; ?>
+                    <?php if ($group !== 'genre'): ?><th><?php echo _("Category"); ?></th><?php endif; ?>
+                    <th class="num"><?php echo _("Episodes, own productions"); ?></th>
+                    <th class="num"><?php echo _("Minutes, first broadcasts"); ?></th>
+                    <th class="num"><?php echo _("Minutes, repeats"); ?></th>
+                    <th class="num"><?php echo _("Minutes, other shows"); ?></th>
+                    <th class="num"><?php echo _("Minutes, total"); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i = 0; foreach ($grows as $g): foreach ($gsum as $k => $v) { $gsum[$k] = $v + $g[$k]; } ?>
+                    <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
+                        <?php foreach (['genre', 'category'] as $d): if ($g[$d] === null) { continue; } ?>
+                            <td><?php echo $g[$d] === '' ? '<em>' . $h($noneLabel[$d]) . '</em>' : $h($g[$d]); ?></td>
+                        <?php endforeach; ?>
+                        <td class="num"><?php echo $g['episodes_own'] ?: ''; ?></td>
+                        <td class="num"><?php echo $g['minutes_first'] ? $fmt($g['minutes_first']) : ''; ?></td>
+                        <td class="num"><?php echo $g['minutes_repeat'] ? $fmt($g['minutes_repeat']) : ''; ?></td>
+                        <td class="num"><?php echo $g['minutes_other'] ? $fmt($g['minutes_other']) : ''; ?></td>
+                        <td class="num"><?php echo $fmt($g['minutes_total']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th<?php echo $group === 'both' ? ' colspan="2"' : ''; ?>><?php echo _("Total"); ?></th>
+                    <th class="num"><?php echo $gsum['episodes_own']; ?></th>
+                    <th class="num"><?php echo $fmt($gsum['minutes_first']); ?></th>
+                    <th class="num"><?php echo $fmt($gsum['minutes_repeat']); ?></th>
+                    <th class="num"><?php echo $fmt($gsum['minutes_other']); ?></th>
+                    <th class="num"><?php echo $fmt($gsum['minutes_total']); ?></th>
+                </tr>
+            </tfoot>
+        </table>
+    <?php endif; ?>
+
     <?php if (empty($m['rows'])): ?>
         <p class="rt-participants-empty"><?php echo _("No show aired in this year."); ?></p>
     <?php else: ?>
@@ -69,6 +130,8 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
             <thead>
                 <tr>
                     <th><?php echo _("Show name"); ?></th>
+                    <th><?php echo _("Genre"); ?></th>
+                    <th><?php echo _("Category"); ?></th>
                     <th><?php echo _("Own production"); ?></th>
                     <th class="num"><?php echo _("Episodes aired"); ?></th>
                     <th class="num"><?php echo _("Minutes"); ?></th>
@@ -78,6 +141,8 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
                 <?php $i = 0; foreach ($m['rows'] as $row): ?>
                     <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?><?php echo $row['own_production'] ? '' : ' rt-yearly-other'; ?>">
                         <td><?php echo $h($row['name']); ?><?php if ($row['is_repeat']): ?> <span class="rt-participants-tag"><?php echo _("Repeat"); ?></span><?php endif; ?></td>
+                        <td><?php echo $h($row['genre']); ?></td>
+                        <td><?php echo $h($row['category']); ?></td>
                         <td><?php echo $row['own_production'] ? _("yes") : '&ndash;'; ?></td>
                         <td class="num"><?php echo (int) $row['episodes']; ?></td>
                         <td class="num"><?php echo $fmt($row['minutes']); ?></td>

@@ -47,7 +47,27 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
             'required' => false,
             'filters' => ['StringTrim'],
             'validators' => [['StringLength', false, [0, $maxLens['genre']]]],
+            // RASTATIME 2026-11-10 - suggestions from the values in use (add-show.js)
+            'data-rt-suggest' => json_encode(Application_Service_YearlyReportService::suggestions('genre'), JSON_UNESCAPED_UNICODE),
+            'autocomplete' => 'off',
         ]);
+
+        // RASTATIME 2026-11-10 - category (operator): free text with
+        // suggestions, evaluated in Analytics -> Programme Minutes per genre,
+        // per category and per genre x category (cc_show.category, raw SQL,
+        // migration 0082; the field shows once the column exists, so nothing
+        // typed in is dropped before the migration ran)
+        if (Application_Service_YearlyReportService::categoryReady()) {
+            $this->addElement('text', 'add_show_category', [
+                'label' => _('Category:'),
+                'class' => 'input_text',
+                'required' => false,
+                'filters' => ['StringTrim'],
+                'validators' => [['StringLength', false, [0, 255]]],
+                'data-rt-suggest' => json_encode(Application_Service_YearlyReportService::suggestions('category'), JSON_UNESCAPED_UNICODE),
+                'autocomplete' => 'off',
+            ]);
+        }
 
         // RASTATIME 2026-11-03 - yearly report: the station's own production
         // (counted in Analytics -> Programme Minutes and People Involved).

@@ -1852,6 +1852,12 @@ SQL;
             !empty($showData['add_show_own_production'])
         );
 
+        // RASTATIME 2026-11-10 - category (raw SQL, migration 0082); a form
+        // without the field (older callers) leaves the stored value alone
+        if (array_key_exists('add_show_category', $showData)) {
+            Application_Service_YearlyReportService::setCategory($ccShow->getDbId(), (string) $showData['add_show_category']);
+        }
+
         // RASTATIME 2026-10-18 - "Repeat of show" (raw SQL, migration 0071)
         Application_Service_RepeatFillService::setRepeatOf(
             $ccShow->getDbId(),
