@@ -17,7 +17,7 @@ $rows = $this->missingOnly ? array_filter($r['rows'], fn ($x) => $x['missing']) 
 <div class="ui-widget prefpanel clearfix padded-strong rt-participants">
     <h2><?php echo _("People Involved"); ?></h2>
     <p class="rt-participants-note">
-        <?php echo _("People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Archive Online in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."); ?>
+        <?php echo _("People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Extras → People Involved in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."); ?>
     </p>
     <?php if (!$this->ready): ?>
         <p class="rt-participants-warn"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>

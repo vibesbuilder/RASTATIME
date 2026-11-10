@@ -225,12 +225,14 @@ class Application_Service_CalendarService
      *    announce this show, link / unlink / retype in place - admins and
      *    program managers.
      *  - Archive Online (2026-11-03, archiving stage 1): title, teaser,
-     *    image, people involved of this instance - admins, program
-     *    managers and the hosts of the show, before and after it aired;
-     *    not for the legacy rebroadcast instances (they repeat another
-     *    instance).
+     *    description, image of this episode - admins, program managers
+     *    and the hosts of the show, before and after it aired; not for the
+     *    legacy rebroadcast instances (they repeat another instance).
+     *  - People Involved (2026-11-10): the guests of this episode (moved
+     *    out of Archive Online) - same people and instances as Archive
+     *    Online.
      *
-     * The keys of the sub-items stay "teasers" / "episode" (schedule.js).
+     * The keys of the sub-items stay "teasers" / "episode" / "people" (schedule.js).
      * No sub-item allowed -> no "Extras" entry.
      */
     private function addExtrasItem(array &$menu, $baseUrl, $mayTeasers, $mayEpisode)
@@ -248,6 +250,11 @@ class Application_Service_CalendarService
                 'name' => _('Archive Online'),
                 'icon' => 'archive-online',
                 'url' => $baseUrl . 'schedule/episode-dialog',
+            ];
+            $items['people'] = [
+                'name' => _('People Involved'),
+                'icon' => 'people',
+                'url' => $baseUrl . 'schedule/people-dialog',
             ];
         }
         if ($items === []) {

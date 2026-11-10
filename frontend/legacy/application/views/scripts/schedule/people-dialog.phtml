@@ -1,0 +1,69 @@
+<?php
+// RASTATIME 2026-11-10 - the "People Involved" dialog of an episode
+// (calendar context menu → Extras).  The guests of this one episode, on top
+// of the show's hosts (Edit Show → What → "Hosts involved"); moved here from
+// the "Archive Online" dialog (operator).  Counted in Analytics → People
+// Involved and in the Yearly Report.  The Save button of the dialog
+// (schedule.js buildPeopleDialog) fires "rt-people-save".
+$h = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
+$baseUrl = Config::getBasePath();
+$e = $this->episode;
+$dis = $this->canEdit ? '' : ' disabled';
+$tip = function ($text) use ($h) {
+    return '<span class="help_icon" data-rt-tip="' . $h($text) . '"></span>';
+};
+?>
+<div id="people_dialog" class="rt-episode-dialog" data-id="<?php echo (int) $e['instance_id']; ?>"
+     data-csrf="<?php echo $h($this->csrf); ?>" data-can-edit="<?php echo $this->canEdit ? '1' : '0'; ?>">
+<?php if (!$this->ready): ?>
+    <p class="rt-episode-note"><?php echo _("The archiving tables are missing - run the database migrations 0074 and 0075 first."); ?></p>
+<?php else: ?>
+    <div id="people_form">
+        <label for="people_guests"><?php echo _("Guests involved"); ?><?php echo $tip(_("Guests of this episode only, on top of the show's hosts. Every episode adds its guests in Analytics → People Involved (own productions); the hosts count once per year.")); ?></label>
+        <input type="text" id="people_guests" class="input_text rt-episode-short" maxlength="3" value="<?php echo $e['participants'] === null ? '' : (int) $e['participants']; ?>"
+               placeholder="0"<?php echo $dis; ?> />
+        <span class="rt-episode-hint"><?php echo $e['show_participants'] === null
+            ? _("The show has no hosts value yet.")
+            : sprintf(_("Hosts of the show: %s"), (int) $e['show_participants']); ?></span>
+        <p id="people_msg" class="rt-episode-msg"></p>
+    </div>
+<?php endif; ?>
+<script>
+(function ($) {
+  var $d = $("#people_dialog").last();
+  var id = $d.data("id"), csrf = $d.data("csrf");
+  var base = "<?php echo $h($baseUrl); ?>";
+  var saved = <?php echo json_encode(_('Saved.'), JSON_UNESCAPED_UNICODE); ?>;
+  function msg(text, ok) {
+    $d.find("#people_msg").text(text).css("color", ok ? "#5cb85c" : "#d9534f");
+  }
+  function fail(json) {
+    var e = json && json.error;
+    msg(e && !/^[a-z-]+$/.test(e) ? e : $.i18n._("Could not save."), false);
+  }
+  $d.find("[data-rt-tip]").each(function () {
+    $(this).rtTooltip({
+      content: { text: $("<div>").text($(this).attr("data-rt-tip")).html() },
+      placement: "right",
+      interactive: true,
+    });
+  });
+  $d.on("rt-people-save", function () {
+    $.post(base + "schedule/people-save", {
+      csrf_token: csrf,
+      id: id,
+      participants: $.trim($d.find("#people_guests").val()),
+    }, function (json) {
+      if (json && json.ok) {
+        msg(saved, true);
+      } else {
+        fail(json);
+      }
+    }, "json").fail(function (xhr) { fail(xhr.responseJSON); });
+  });
+  $d.find("#people_guests").on("keydown", function (ev) {
+    if (ev.key === "Enter") { ev.preventDefault(); $d.trigger("rt-people-save"); }
+  });
+})(jQuery);
+</script>
+</div>

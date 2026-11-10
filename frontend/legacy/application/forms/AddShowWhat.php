@@ -66,7 +66,7 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
         // of a single episode are added on top (Archive Online).
         $this->addElement('text', 'add_show_participants', [
             'label' => _('Hosts involved:'),
-            'description' => _('How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Archive Online in the calendar → "Guests involved".'),
+            'description' => _('How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Extras → People Involved in the calendar.'),
             'class' => 'input_text',
             'required' => false,
             'filters' => ['StringTrim'],

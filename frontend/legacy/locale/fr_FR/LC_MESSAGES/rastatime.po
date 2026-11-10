@@ -8333,8 +8333,8 @@ msgstr "Nombre de participants :"
 msgid "How many people usually take part in an episode, counted in Analytics → People Involved. A single episode can differ: Archive Online in the calendar."
 msgstr "Combien de personnes participent habituellement à un épisode, compté dans Statistiques → Participants. Un épisode peut différer : Archiver en ligne dans le calendrier."
 
-msgid "The settings of the whole show, read-only here (Edit Show). This episode's description, image and people: Archive Online in the calendar."
-msgstr "Les réglages de toute l'émission, ici en lecture seule (Édition de l'émission). Description, image et participants de cet épisode : Archiver en ligne dans le calendrier."
+msgid "The settings of the whole show, read-only here (Edit Show). This episode's description and image: Extras → Archive Online in the calendar; its guests: Extras → People Involved."
+msgstr "Les réglages de toute l'émission, ici en lecture seule (Édition de l'émission). Description et image de cet épisode : Compléments → Archiver en ligne dans le calendrier ; ses invités : Compléments → Participants."
 
 msgid "People Involved"
 msgstr "Participants"
@@ -8394,8 +8394,8 @@ msgid "Hosts involved:"
 msgstr "Animateurs :"
 
 #: application/forms/AddShowWhat.php
-msgid "How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Archive Online in the calendar → \"Guests involved\"."
-msgstr "Combien d'animateurs participent à chaque épisode. Compté une fois par an dans Statistiques → Participants, quel que soit le nombre d'épisodes diffusés. Invités d'un seul épisode : Archiver en ligne dans le calendrier → \"Invités\"."
+msgid "How many hosts take part in every episode. Counted once per year in Analytics → People Involved, however many episodes aired. Guests of a single episode: Extras → People Involved in the calendar."
+msgstr "Combien d'animateurs participent à chaque épisode. Compté une fois par an dans Statistiques → Participants, quel que soit le nombre d'épisodes diffusés. Invités d'un seul épisode : Compléments → Participants dans le calendrier."
 
 #: application/views/scripts/schedule/episode-dialog.phtml
 msgid "Guests involved"
@@ -8414,8 +8414,8 @@ msgid "Hosts of the show: %s"
 msgstr "Animateurs de l'émission : %s"
 
 #: application/views/scripts/archiving/participants.phtml
-msgid "People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Archive Online in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."
-msgstr "Participants aux productions propres de la station, pour les statistiques annuelles : les animateurs d'une émission comptent une fois par an (Édition de l'émission → What → \"Production propre\" → \"Animateurs\"), les invités de chaque épisode s'ajoutent (Archiver en ligne dans le calendrier → \"Invités\"). Seules les émissions avec \"Production propre\" comptent ; sont comptés les épisodes diffusés, les anciennes rediffusions (rebroadcast) sont exclues, et les émissions de rediffusion (\"Repeat of\") ne comptent rien, car leurs personnes sont déjà comptées avec l'original."
+msgid "People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Extras → People Involved in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and repeat shows (\"Repeat of\") count nothing because their people were counted with the original."
+msgstr "Participants aux productions propres de la station, pour les statistiques annuelles : les animateurs d'une émission comptent une fois par an (Édition de l'émission → What → \"Production propre\" → \"Animateurs\"), les invités de chaque épisode s'ajoutent (Compléments → Participants dans le calendrier → \"Invités\"). Seules les émissions avec \"Production propre\" comptent ; sont comptés les épisodes diffusés, les anciennes rediffusions (rebroadcast) sont exclues, et les émissions de rediffusion (\"Repeat of\") ne comptent rien, car leurs personnes sont déjà comptées avec l'original."
 
 #: application/views/scripts/archiving/participants.phtml
 msgid "Hosts involved (once per show)"

@@ -368,6 +368,57 @@ function buildEpisodeDialog(json) {
   dialog.dialog("open");
 }
 
+// RASTATIME 2026-11-10 - the "People Involved" dialog of an episode
+// (schedule/people-dialog, calendar → Extras): the guests of the episode;
+// the view's inline script saves on "rt-people-save".
+function buildPeopleDialog(json) {
+  if (typeof json === "string") {
+    try {
+      json = JSON.parse(json);
+    } catch (e) {
+      alert("People Involved: unexpected response - " + json.substring(0, 160));
+      return;
+    }
+  }
+  if (!json || json.show_error == true) {
+    alertShowErrorAndReload();
+    return;
+  }
+  var dialog = $(json.dialog),
+    buttons = [];
+
+  if (dialog.data("can-edit") == 1 && dialog.find("#people_form").length) {
+    buttons.push({
+      text: $.i18n._("Save"),
+      class: "btn btn-new",
+      click: function () {
+        dialog.trigger("rt-people-save");
+      },
+    });
+  }
+  buttons.push({
+    text: $.i18n._("Close"),
+    class: "btn",
+    click: function () {
+      dialog.remove();
+    },
+  });
+
+  dialog.dialog({
+    autoOpen: false,
+    title:
+      $.i18n._("People Involved") + " '" + json.showTitle + "' " + (json.startsLocal || ""),
+    width: Math.min(480, (findViewportDimensions().width * 9) / 10),
+    height: "auto",
+    modal: true,
+    classes: { "ui-dialog": "schedule-tracks-dialog" },
+    open: markScheduleDialogOverlay,
+    close: closeDialogCalendar,
+    buttons: buttons,
+  });
+  dialog.dialog("open");
+}
+
 function buildContentDialog(json) {
   var dialog = $(json.dialog),
     viewport = findViewportDimensions(),
@@ -595,6 +646,20 @@ $(document).ready(function () {
             );
           };
           extras.episode.callback = callback;
+        }
+
+        // RASTATIME 2026-11-10 - "People Involved" dialog (guests of the episode)
+        if (extras.people !== undefined) {
+          callback = function () {
+            $.get(
+              extras.people.url,
+              { format: "json", id: data.id },
+              function (json) {
+                buildPeopleDialog(json);
+              },
+            );
+          };
+          extras.people.callback = callback;
         }
 
         //define a cancel recorded show callback.

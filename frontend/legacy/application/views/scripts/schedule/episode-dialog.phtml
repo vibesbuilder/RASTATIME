@@ -1,10 +1,10 @@
 <?php
 // RASTATIME 2026-11-03 - archiving: the "Archive Online" dialog of a show
-// instance (calendar context menu).  Stage 1: title, teaser, description,
-// image and people involved of this one episode; empty fields fall back to
+// instance (calendar context menu → Extras).  Stage 1: title, teaser,
+// description and image of this one episode; empty fields fall back to
 // the show's defaults (Edit Show → Archiving), shown as placeholders.
-// 2026-11-07: the people field is "Guests involved" - added per episode on
-// top of the show's hosts, no longer a replacement for them.  The
+// 2026-11-10: "Guests involved" moved to its own dialog (Extras → People
+// Involved, schedule/people-dialog.phtml).  The
 // Save button of the dialog (schedule.js buildEpisodeDialog) submits the
 // form; the image is uploaded / removed at once.  Stage 2: production
 // date, "do not archive", and the "Online archive" block (state of the
@@ -77,14 +77,7 @@ $T = [
                       placeholder="<?php echo $h(mb_substr(trim($e['show_description']) !== '' ? $e['show_description'] : $e['show_name'], 0, 300)); ?>"<?php echo $dis; ?>><?php echo $h($e['description']); ?></textarea>
 
             <div class="rt-episode-pair">
-                <div>
-                    <label for="episode_participants"><?php echo _("Guests involved"); ?><?php echo $tip(_("Guests of this episode only, on top of the show's hosts. Every episode adds its guests in Analytics → People Involved (own productions); the hosts count once per year.")); ?></label>
-                    <input type="text" id="episode_participants" class="input_text rt-episode-short" maxlength="3" value="<?php echo $e['participants'] === null ? '' : (int) $e['participants']; ?>"
-                           placeholder="0"<?php echo $dis; ?> />
-                    <span class="rt-episode-hint"><?php echo $e['show_participants'] === null
-                        ? _("The show has no hosts value yet.")
-                        : sprintf(_("Hosts of the show: %s"), (int) $e['show_participants']); ?></span>
-                </div>
+                <?php /* 2026-11-10: "Guests involved" lives in Extras → People Involved */ ?>
                 <div>
                     <label for="episode_production_date"><?php echo _("Production date"); ?><?php echo $tip(_("Required by cba.media. Empty: the day of the broadcast. Set it when the episode was produced earlier, e.g. recorded on Friday.")); ?></label>
                     <input type="date" id="episode_production_date" class="input_text rt-episode-date" value="<?php echo $h($e['production_date']); ?>"
@@ -346,7 +339,6 @@ $T = [
       title: $d.find("#episode_title").val(),
       teaser: $d.find("#episode_teaser").val(),
       description: $d.find("#episode_description").val(),
-      participants: $.trim($d.find("#episode_participants").val()),
       production_date: $d.find("#episode_production_date").val(),
       no_archive: $d.find("#episode_no_archive").prop("checked") ? 1 : "",
       image_license: $d.find("#episode_image_license").val(),

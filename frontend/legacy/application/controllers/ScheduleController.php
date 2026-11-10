@@ -21,6 +21,7 @@ class ScheduleController extends Zend_Controller_Action
             ->addActionContext('teaser-dialog', 'json')
             // RASTATIME 2026-11-03 - archiving stage 1
             ->addActionContext('episode-dialog', 'json')
+            ->addActionContext('people-dialog', 'json')
             ->addActionContext('clear-show', 'json')
             ->addActionContext('get-current-playlist', 'json')
             ->addActionContext('remove-group', 'json')
@@ -556,9 +557,10 @@ class ScheduleController extends Zend_Controller_Action
 
     /**
      * RASTATIME 2026-11-03 - archiving stage 1: the "Archive Online" dialog of a
-     * show instance (GET id).  Title, teaser, description, image and people
-     * involved of this one episode; the show's defaults show as
-     * placeholders.  Admins, program managers and the show's hosts.
+     * show instance (GET id).  Title, teaser, description and image of this
+     * one episode (the guests moved to People Involved on 2026-11-10); the
+     * show's defaults show as placeholders.  Admins, program managers and
+     * the show's hosts.
      */
     public function episodeDialogAction()
     {
@@ -586,6 +588,44 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->showTitle = $episode['show_name'];   // plain text, see showContentDialogAction
         $this->view->startsLocal = $episode['starts_local'];
         unset($this->view->episode, $this->view->licenses, $this->view->hasImage, $this->view->archiveState);
+    }
+
+    /**
+     * RASTATIME 2026-11-10 - the "People Involved" dialog of an episode (GET
+     * id, calendar → Extras): the guests of this episode on top of the
+     * show's hosts.  Same people as Archive Online.
+     */
+    public function peopleDialogAction()
+    {
+        $instanceId = (int) $this->_getParam('id');
+        $episode = Application_Service_ArchivingService::episode($instanceId);
+        if ($episode === null) {
+            $this->view->show_error = true;
+
+            return;
+        }
+        $ns = new Zend_Session_Namespace('csrf_namespace');
+        if (empty($ns->authtoken)) {
+            $ns->authtoken = sha1(uniqid((string) mt_rand(), true));
+        }
+        $this->view->csrf = $ns->authtoken;
+        $this->view->episode = $episode;
+        $this->view->canEdit = $this->episodeMayEdit($episode['show_id']);
+        $this->view->ready = Application_Service_ArchivingService::tablesReady();
+        $this->view->dialog = $this->view->render('schedule/people-dialog.phtml');
+        $this->view->showTitle = $episode['show_name'];   // plain text, see showContentDialogAction
+        $this->view->startsLocal = $episode['starts_local'];
+        unset($this->view->episode);
+    }
+
+    /** POST id + participants (guests, empty = none). */
+    public function peopleSaveAction()
+    {
+        if (!($instanceId = $this->episodeMutationAllowed())) {
+            return;
+        }
+        $error = Application_Service_ArchivingService::saveEpisodeGuests($instanceId, (string) $this->_getParam('participants', ''));
+        $this->_helper->json->sendJson(['ok' => $error === null, 'error' => $error]);
     }
 
     private function episodeMayEdit($showId)
@@ -643,7 +683,6 @@ class ScheduleController extends Zend_Controller_Action
             'description' => $this->_getParam('description', ''),
             'image_license' => $this->_getParam('image_license', ''),
             'image_caption' => $this->_getParam('image_caption', ''),
-            'participants' => $this->_getParam('participants', ''),
             'production_date' => $this->_getParam('production_date', ''),
             'no_archive' => $this->_getParam('no_archive', ''),
         ]);

@@ -582,6 +582,9 @@ class Application_Service_ArchivingService
         $teaser = trim((string) ($data['teaser'] ?? ''));
         $caption = trim((string) ($data['image_caption'] ?? ''));
         $license = trim((string) ($data['image_license'] ?? ''));
+        // RASTATIME 2026-11-10 - the guests live in the People Involved
+        // dialog now (saveEpisodeGuests); kept as they are unless posted.
+        $hasParticipants = array_key_exists('participants', $data);
         $participants = trim((string) ($data['participants'] ?? ''));
         $description = trim((string) ($data['description'] ?? ''));
         $production = trim((string) ($data['production_date'] ?? ''));
@@ -624,7 +627,8 @@ class Application_Service_ArchivingService
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, now())
                  ON CONFLICT (instance_id) DO UPDATE SET
                         title = EXCLUDED.title, teaser = EXCLUDED.teaser, image_license = EXCLUDED.image_license,
-                        image_caption = EXCLUDED.image_caption, participants = EXCLUDED.participants,
+                        image_caption = EXCLUDED.image_caption, '
+                        . ($hasParticipants ? 'participants = EXCLUDED.participants, ' : '') . '
                         production_date = EXCLUDED.production_date, no_archive = EXCLUDED.no_archive, updated_at = now()',
                 [
                     $instanceId,
@@ -643,6 +647,33 @@ class Application_Service_ArchivingService
 
             throw $e;
         }
+
+        return null;
+    }
+
+    /**
+     * RASTATIME 2026-11-10 - the guests of one episode (People Involved
+     * dialog); only cc_episode.participants is written, the other episode
+     * fields stay.  Empty = no guests.
+     */
+    public static function saveEpisodeGuests(int $instanceId, string $participants): ?string
+    {
+        if (!self::tablesReady()) {
+            return _('The archiving tables are missing - run the database migrations 0074 and 0075 first.');
+        }
+        $participants = trim($participants);
+        if ($participants !== '' && (!ctype_digit($participants) || (int) $participants > 999)) {
+            return _('Please enter a whole number between 0 and 999.');
+        }
+        $exists = self::query('SELECT 1 FROM cc_show_instances WHERE id = ?', [$instanceId]);
+        if (!$exists) {
+            return _('The episode does not exist any more.');
+        }
+        self::exec(
+            'INSERT INTO cc_episode (instance_id, participants, updated_at) VALUES (?, ?, now())
+             ON CONFLICT (instance_id) DO UPDATE SET participants = EXCLUDED.participants, updated_at = now()',
+            [$instanceId, $participants === '' ? null : (int) $participants]
+        );
 
         return null;
     }

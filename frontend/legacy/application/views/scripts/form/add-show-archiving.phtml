@@ -46,7 +46,7 @@ $row = function ($name, $wide = true) use ($f, $h, $tips) {
 ?>
 <fieldset class="rt-archiving">
     <?php if ($f->readOnly): ?>
-        <p class="rt-archiving-note"><?php echo _("The settings of the whole show, read-only here (Edit Show). This episode's description, image and people: Archive Online in the calendar."); ?></p>
+        <p class="rt-archiving-note"><?php echo _("The settings of the whole show, read-only here (Edit Show). This episode's description and image: Extras → Archive Online in the calendar; its guests: Extras → People Involved."); ?></p>
     <?php endif; ?>
     <dl>
         <?php if (!Application_Service_ArchivingService::tablesReady()): ?>
