@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fällige Zeile; wartende Zeilen gehen bei einem PLAYOUT-Neustart verloren.  Radioplayer: der
   Feed antwortet mit dem Stand von „jetzt minus X“ (`GetPlayOrderRange` nimmt dafür einen
   optionalen Bezugszeitpunkt).  Wirksam: Feed sofort, Live Text nach dem nächsten
-  PLAYOUT-Neustart.  ARCHITECTURE §23.104, Manual SETTINGS ×4.
+  PLAYOUT-Neustart.  ARCHITECTURE §23.104, Manual SETTINGS ×4 (3ee35bf0).
 - **Radioplayer-Feed für ORF Sound (2026-11-10, Go Weg A)** — ORF Sound braucht für
   Privatsender ohne Radioplayer-Anbindung einen JSON-Endpunkt im Format der
   Radioplayer-v4-„events“-Abfrage.  Neu: `GET /embed/radioplayer-events` mit `previous` (die
