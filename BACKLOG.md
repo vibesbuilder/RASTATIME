@@ -80,6 +80,16 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Radioplayer Feed (Distributionspartner) - GEBAUT und eingeschaltet 2026-11-10 (`10c66559`, `a69d0e17`, §23.103), wartet auf Antworten des Partners
+
+`/embed/radioplayer-events` liefert previous / now / next im Format der Radioplayer-v4-„events“-Abfrage; live geprüft 2026-11-10 18:15 (200, 7 Titel, laufender Titel mit Bild, nächste Sendung), noch ohne Zugangsschlüssel.
+
+Vorbedingungen / offene Fragen an den Partner (Operator fragt an, Stand 2026-11-10: keine Antwort):
+- Unter welcher Adresse fragt der Partner ab, und passt ein Schlüssel in der Adresse (`?key=`)?  Danach: Schlüssel setzen, volle Adresse übergeben.
+- Vergibt der Partner eine Kennung (`rpId`)?  Dann in den Einstellungen eintragen.
+- Zeitstempel als Text (wie im Beispiel des Partners, so geliefert) oder als Zahl?  Bei „Zahl“: kleine Code-Änderung in `_buildRadioplayerEvents`.
+- Beobachtung: „next“ nennt die nächste Sendung, wenn der eine nächste Eintrag des Sendeplans ein Kurztitel (Jingle) ist; bei Bedarf zum übernächsten Titel weiterschauen.
+
 ### 🟡 Kurze Abrisse an den Sendestationen (DEVA DB6400 schaltet auf Fallback) - Evaluierung 2026-11-09, wartet auf Zeitstempel der Geräte und Werte des Streaming-Anbieters
 
 **Kette:** Liquidsoap -> Icecast `/rastatime` (MP3 CBR 320 kbit/s = 40.000 B/s) -> Apache `/stream/rastatime`
