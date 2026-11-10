@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Kurztitel-Schwelle, pollNext.  Unabhängig von Live Text Info und vom Schalter für die
   öffentliche API; Cover / Sendungsbilder nur, solange die öffentliche API sie ausliefert.
   5 s Cache.  Neue Klasse `Application_Form_RadioplayerPreferences` (`composer
-  dump-autoload`).  ARCHITECTURE §23.103, Manual SETTINGS ×4.
+  dump-autoload`).  ARCHITECTURE §23.103, Manual SETTINGS ×4 (10c66559).
 - **Widgets Next/Latest Shows: Schriftart (2026-11-10)** — Neu unter Widgets → Next/Latest
   Shows: **Font** mit Systemschrift (Standard), Archivo, Arial, Verdana, Georgia, Times New
   Roman und Monospace; `?font=<key>` weicht je iframe ab.  Archivo (Schrift der
