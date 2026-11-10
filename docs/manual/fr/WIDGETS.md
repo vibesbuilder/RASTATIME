@@ -182,6 +182,12 @@ ven. 24 mai                                 06:00 - 08:00
   décide à nouveau) ou `?color=` (depuis le 2026-11-10)
 - **Gras** : réglage **Bold text** ou `?bold=1` (depuis le
   2026-11-10)
+- **Police** : réglage **Font** - police système (défaut),
+  Archivo, Arial, Verdana, Georgia, Times New Roman,
+  Monospace ; ou `?font=`.  Archivo (SIL Open Font License)
+  est servie depuis `public/fonts/archivo` sur ce serveur, le
+  widget n'interroge donc aucun CDN de polices (depuis le
+  2026-11-10)
 - **Couleur de fond** : réglage **Background color**
   (sélecteur de couleur ; **Transparent** vide le champ et la
   page qui intègre transparaît de nouveau) ou `?bgcolor=`
@@ -222,6 +228,7 @@ sans attendre la TTL du cache.
 | `title` | `0`, `1` | réglage **Show the show name as heading** (activé) | `0` masque le titre avec le nom de l'émission (p. ex. sur la page de l'émission elle-même), `1` l'affiche.  Sans paramètre, le réglage sous Widgets → Next/Latest Shows s'applique (depuis le 2026-11-10). |
 | `size` | entier px 10..32 | réglage **Font size (px)** (14) | Taille de police de tout le widget ; titre et lignes suivent.  Sans paramètre, le réglage s'applique (depuis le 2026-11-10). |
 | `bold` | `0`, `1` | réglage **Bold text** (désactivé) | `1` met les lignes en gras (le titre un cran plus épais), `0` normal.  Sans paramètre, le réglage s'applique (depuis le 2026-11-10). |
+| `font` | `system`, `archivo`, `arial`, `verdana`, `georgia`, `serif`, `mono` | réglage **Font** (`system`) | Police de tout le widget.  `archivo` est servie par RASTATIME lui-même (aucun CDN de polices), les autres existent sur pratiquement tous les appareils.  Sans paramètre, le réglage s'applique (depuis le 2026-11-10). |
 | `color` | hex `rrggbb` (avec ou sans `#`, `#` en `%23`) | réglage **Text color** (vide = couleurs du thème) | Couleur du texte de tout le widget, remplace les couleurs du thème ; le texte d'état vide l'utilise à 70 %.  Sans paramètre, le réglage s'applique (depuis le 2026-11-10). |
 | `bgcolor` | hex `rrggbb` (avec ou sans `#`, `#` en `%23`) | réglage **Background color** (vide = transparent) | Fond de tout l'iframe ; sans couleur, la page qui intègre transparaît.  Sans paramètre, le réglage s'applique (depuis le 2026-11-10). |
 | `timezone` | tout fuseau standard | défaut station | Toutes les heures rendues dans cette zone. |

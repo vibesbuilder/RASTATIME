@@ -685,6 +685,35 @@ class Application_Model_Preference
         self::setValue('widget_shows_bold', $v ? '1' : '0');
     }
 
+    // RASTATIME 2026-11-10 - Next / Latest Shows font: key => [label, CSS
+    // font-family].  'system' is the widget CSS default (no override);
+    // 'archivo' is served locally (public/fonts/archivo, OFL), the others
+    // are installed on practically every device.  ?font= per iframe.
+    public const WIDGET_FONTS = [
+        'system'  => ['System font (default)', ''],
+        'archivo' => ['Archivo', "'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"],
+        'arial'   => ['Arial', 'Arial, Helvetica, sans-serif'],
+        'verdana' => ['Verdana', 'Verdana, Geneva, sans-serif'],
+        'georgia' => ['Georgia', "Georgia, 'Times New Roman', serif"],
+        'serif'   => ['Times New Roman (serif)', "'Times New Roman', Times, serif"],
+        'mono'    => ['Monospace', "Consolas, 'Courier New', monospace"],
+    ];
+
+    public static function NormalizeWidgetFont($v)
+    {
+        $v = strtolower(trim((string) $v));
+
+        return array_key_exists($v, self::WIDGET_FONTS) ? $v : 'system';
+    }
+    public static function GetWidgetShowsFont()
+    {
+        return self::NormalizeWidgetFont(self::getValue('widget_shows_font'));
+    }
+    public static function SetWidgetShowsFont($v)
+    {
+        self::setValue('widget_shows_font', self::NormalizeWidgetFont($v));
+    }
+
     // RASTATIME 2026-05-22 — On-Air-Today widget empty-state label.
     // Shown when neither a currently-airing show nor any upcoming
     // shows fall within the station day's remaining window.

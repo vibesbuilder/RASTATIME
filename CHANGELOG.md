@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Widgets Next/Latest Shows: Schriftart (2026-11-10)** — Neu unter Widgets → Next/Latest
+  Shows: **Font** mit Systemschrift (Standard), Archivo, Arial, Verdana, Georgia, Times New
+  Roman und Monospace; `?font=<key>` weicht je iframe ab.  Archivo (Schrift der
+  Stations-Webseite, SIL OFL 1.1) liegt lokal unter `public/fonts/archivo`
+  (@fontsource-variable/archivo 5.2.8, latin + latin-ext, variable Stärke, ~66 KB) - das
+  Widget fragt kein Schrift-CDN an.  Nur feste Schrift-Stapel, kein Freitext.  Manual
+  WIDGETS ×4, COMPONENTS.
 - **Widgets Next/Latest Shows: Fettschrift (2026-11-10)** — Neu unter Widgets → Next/Latest
   Shows: **Bold text** (Standard aus).  Zeilen fett, die Überschrift eine Stufe kräftiger
   (800), damit sie sich weiter abhebt.  Gilt sofort für alle Einbettungen, `?bold=0|1`

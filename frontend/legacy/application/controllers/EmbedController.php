@@ -749,6 +749,14 @@ class EmbedController extends Zend_Controller_Action
         $this->view->bold = ($boldParam === '0' || $boldParam === '1')
             ? $boldParam === '1'
             : Application_Model_Preference::GetWidgetShowsBold();
+        // font: ?font=<key>, else the setting; Archivo brings its own
+        // stylesheet (local files, no font CDN)
+        $fontParam = (string) $request->getParam('font', '');
+        $fontKey = ($fontParam !== '' && array_key_exists(strtolower($fontParam), Application_Model_Preference::WIDGET_FONTS))
+            ? strtolower($fontParam)
+            : Application_Model_Preference::GetWidgetShowsFont();
+        $this->view->fontFamily = Application_Model_Preference::WIDGET_FONTS[$fontKey][1];
+        $this->view->fontCss = $fontKey === 'archivo' ? Assets::url('fonts/archivo/archivo.css') : '';
 
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;

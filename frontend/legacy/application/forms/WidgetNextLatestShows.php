@@ -112,6 +112,20 @@ class Application_Form_WidgetNextLatestShows extends Zend_Form
                  ->setAllowEmpty(true);
         $this->addElement($fontSize);
 
+        // RASTATIME 2026-11-10 - font (?font=<key> per iframe)
+        $fontOptions = [];
+        foreach (Application_Model_Preference::WIDGET_FONTS as $key => $def) {
+            $fontOptions[$key] = _($def[0]);
+        }
+        $font = new Zend_Form_Element_Select('widget_shows_font');
+        $font->setLabel(_('Font:'))
+             ->setAttrib('class', 'input_select')
+             ->setAttrib('style', 'width: 18em;')
+             ->setMultiOptions($fontOptions)
+             ->setRequired(false)
+             ->setAllowEmpty(true);
+        $this->addElement($font);
+
         // RASTATIME 2026-11-10 - bold text (?bold=0|1 per iframe)
         $bold = new Zend_Form_Element_Checkbox('widget_shows_bold');
         $bold->setLabel(_('Bold text:'))

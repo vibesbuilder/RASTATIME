@@ -180,6 +180,12 @@ Fr. 24. Mai                                 06:00 - 08:00
   wieder das Theme) bzw. `?color=` (seit 2026-11-10)
 - **Fettschrift**: Einstellung **Bold text** bzw. `?bold=1`
   (seit 2026-11-10)
+- **Schriftart**: Einstellung **Font** - Systemschrift
+  (Standard), Archivo, Arial, Verdana, Georgia, Times New
+  Roman, Monospace; bzw. `?font=`.  Archivo (SIL Open Font
+  License) liegt unter `public/fonts/archivo` auf diesem
+  Server, das Widget fragt also kein Schrift-CDN an (seit
+  2026-11-10)
 - **Hintergrundfarbe**: Einstellung **Background color**
   (Farbwähler; **Transparent** leert das Feld, dann scheint
   wieder die einbettende Seite durch) bzw. `?bgcolor=` (seit
@@ -220,6 +226,7 @@ ohne Abwarten der Cache-TTL verschwindet.
 | `title` | `0`, `1` | Einstellung **Show the show name as heading** (an) | `0` blendet die Überschrift mit dem Sendungsnamen aus (z. B. auf der Seite der Sendung selbst), `1` zeigt sie.  Ohne Parameter gilt die Einstellung unter Widgets → Next/Latest Shows (seit 2026-11-10). |
 | `size` | Ganzzahl px 10..32 | Einstellung **Font size (px)** (14) | Schriftgröße des ganzen Widgets; Überschrift und Zeilen wachsen mit.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
 | `bold` | `0`, `1` | Einstellung **Bold text** (aus) | `1` setzt die Zeilen fett (die Überschrift eine Stufe kräftiger), `0` normal.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
+| `font` | `system`, `archivo`, `arial`, `verdana`, `georgia`, `serif`, `mono` | Einstellung **Font** (`system`) | Schriftart des ganzen Widgets.  `archivo` liefert RASTATIME selbst aus (kein Schrift-CDN), die übrigen sind auf praktisch jedem Gerät vorhanden.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
 | `color` | Hex `rrggbb` (mit oder ohne `#`, `#` als `%23`) | Einstellung **Text color** (leer = Theme-Farben) | Textfarbe des ganzen Widgets, ersetzt die Theme-Farben; der Leer-Text nutzt sie zu 70 %.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
 | `bgcolor` | Hex `rrggbb` (mit oder ohne `#`, `#` als `%23`) | Einstellung **Background color** (leer = transparent) | Hintergrund des ganzen iframes; ohne Farbe scheint die einbettende Seite durch.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
 | `timezone` | beliebige Standard-Zeitzone | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |

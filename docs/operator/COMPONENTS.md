@@ -33,6 +33,7 @@ window.
 | ffmpeg | B | 9.0.1 | gyan.dev essentials build; feed: endoflife.date/ffmpeg | unzip over `C:\ffmpeg` in the window (used by the analyzer, cue-point detection, line-in capture) | keep the previous folder |
 | Stereo Tool library | B | 11.05 | thimeo.com (licence pending) | only together with a preset/licence change; the lockout fallback restarts without it if the fresh instance dies | previous DLL |
 | nssm, Autologon64 | – | stable | nssm.cc, Sysinternals | practically never | – |
+| Archivo web font (widgets) | – | @fontsource-variable/archivo 5.2.8, latin + latin-ext variable weight, in `frontend\legacy\public\fonts\archivo` (since 2026-11-10, with `LICENSE`, SIL OFL 1.1) | npm via cdn.jsdelivr.net | only when a glyph is missing: replace the two woff2 files from a newer version | git |
 
 The installed column goes stale; `scripts\update_check.py` is the truth.
 

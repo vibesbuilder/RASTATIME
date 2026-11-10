@@ -261,6 +261,9 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             Application_Model_Preference::SetWidgetShowsBold(
                 (bool) $form->getValue('widget_shows_bold')
             );
+            Application_Model_Preference::SetWidgetShowsFont(
+                $form->getValue('widget_shows_font')
+            );
             $this->view->saved = true;
         } else {
             $form->populate([
@@ -272,6 +275,7 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
                 'widget_shows_text_color'  => Application_Model_Preference::GetWidgetShowsTextColor(),
                 'widget_shows_bg_color'    => Application_Model_Preference::GetWidgetShowsBgColor(),
                 'widget_shows_bold'        => Application_Model_Preference::GetWidgetShowsBold() ? 1 : 0,
+                'widget_shows_font'        => Application_Model_Preference::GetWidgetShowsFont(),
             ]);
         }
 
