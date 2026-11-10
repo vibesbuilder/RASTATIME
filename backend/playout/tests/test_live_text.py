@@ -201,6 +201,30 @@ def test_scheduler_pushes_live_text_settings_on_change(monkeypatch):
     assert engine.live_text_settings.call_count == 2
 
 
+def test_liquidsoap_restart_repushes_live_text_settings(monkeypatch):
+    """Regression 2026-11-10: a fresh Liquidsoap starts with livetext_enabled
+    = false; the unchanged preference was never pushed again, so the Live
+    Text file stayed stale until PLAYOUT itself restarted."""
+    from rastatime_playout import playout_scheduler as ps
+    from rastatime_playout.engine.interface import PlayoutState
+    from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
+
+    monkeypatch.setattr(ps.liquidsoap_health, "liquidsoap_process_info", lambda: [])
+    engine = MagicMock(spec=LiquidsoapPlayoutEngine)
+    engine.get_state.return_value = PlayoutState.STOPPED
+    engine.recording_stop.return_value = None
+    engine.liquidsoap_uptime_seconds.return_value = 1000.0
+    writer = MagicMock(spec=LiveTextWriter)
+    writer.liquidsoap_settings.return_value = (True, 2)
+    s = ps.PlayoutScheduler(engine=engine, api_client=MagicMock(), live_text=writer)
+    s._sync_live_text_settings()
+    engine.live_text_settings.assert_called_once_with(True, 2)
+    s._apply_initial_liquidsoap_state()  # what a detected restart runs
+    s._sync_live_text_settings()
+    assert engine.live_text_settings.call_count == 2
+    assert engine.live_text_settings.call_args.args == (True, 2)
+
+
 def test_start_listener_wires_the_live_text_writer(monkeypatch):
     """Regression 2026-09-28: the attribute set before start_listener() was
     overwritten by its own default - /live-text answered 503 in production."""

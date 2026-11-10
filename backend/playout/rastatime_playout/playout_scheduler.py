@@ -1273,6 +1273,10 @@ class PlayoutScheduler:
         # live values again on the next refresh (2026-09-13).
         self._icy_pushed = None
         self._bus_show_pushed = None
+        # The Live Text switch starts at false in a fresh instance too: without
+        # this reset a Liquidsoap restart left Live Text off until the next
+        # PLAYOUT restart (2026-11-10, file stale since 2026-11-09 14:07).
+        self._live_text_pushed = None
         return True, None
 
     def _retry_initial_liquidsoap_state(
