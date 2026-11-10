@@ -83,15 +83,19 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
     </fieldset>
     <script>
     // RASTATIME 2026-11-10 - colour picker + clear button next to the
-    // text colour field (empty = the theme colours)
-    (function () {
-        var text = document.getElementById('widget_shows_text_color');
+    // text colour field (empty = the theme colours) and the background
+    // colour field (empty = transparent)
+    [
+        ['widget_shows_text_color', '#ffffff', <?php echo json_encode(_('Theme colors')); ?>],
+        ['widget_shows_bg_color', '#000000', <?php echo json_encode(_('Transparent')); ?>]
+    ].forEach(function (cfg) {
+        var text = document.getElementById(cfg[0]);
         if (!text) { return; }
         var valid = function (v) { return /^#[0-9a-fA-F]{6}$/.test(v); };
         var picker = document.createElement('input');
         picker.type = 'color';
         picker.className = 'rt-accent-picker';
-        picker.value = valid(text.value) ? text.value.toLowerCase() : '#ffffff';
+        picker.value = valid(text.value) ? text.value.toLowerCase() : cfg[1];
         picker.style.marginLeft = '0.5em';
         picker.addEventListener('input', function () { text.value = picker.value; });
         text.addEventListener('input', function () {
@@ -102,11 +106,11 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
         clear.type = 'button';
         clear.className = 'btn';
         clear.style.marginLeft = '0.5em';
-        clear.textContent = <?php echo json_encode(_('Theme colors')); ?>;
+        clear.textContent = cfg[2];
         clear.addEventListener('click', function () { text.value = ''; });
         text.parentNode.insertBefore(clear, text.nextSibling);
         text.parentNode.insertBefore(picker, text.nextSibling);
-    })();
+    });
     </script>
 
     <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
@@ -173,6 +177,7 @@ $latestEmbedUrl   = $publicUrl . '/embed/latest-shows' . ($qsCommon ? '?' . $qsC
                 <code>title=0|1</code>,
                 <code>size=10..32</code>,
                 <code>color=rrggbb</code>,
+                <code>bgcolor=rrggbb</code>,
                 <code>timezone=Europe/Berlin</code>.
                 <?php echo _("Example: "); ?>
                 <code>...?show=BBC%20News&amp;theme=dark&amp;limit=8</code>.

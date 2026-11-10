@@ -738,6 +738,12 @@ class EmbedController extends Zend_Controller_Action
         $this->view->textColor = $colorParam !== ''
             ? $colorParam
             : Application_Model_Preference::GetWidgetShowsTextColor();
+        // background: ?bgcolor=rrggbb (with or without #), else the setting,
+        // '' = transparent
+        $bgParam = Application_Model_Preference::NormalizeWidgetColor($request->getParam('bgcolor', ''));
+        $this->view->bgColor = $bgParam !== ''
+            ? $bgParam
+            : Application_Model_Preference::GetWidgetShowsBgColor();
 
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;

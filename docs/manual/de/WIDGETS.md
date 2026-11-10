@@ -178,6 +178,10 @@ Fr. 24. Mai                                 06:00 - 08:00
   (px)** bzw. `?size=`, die Textfarbe **Text color**
   (Farbwähler; **Theme colors** leert das Feld, dann gilt
   wieder das Theme) bzw. `?color=` (seit 2026-11-10)
+- **Hintergrundfarbe**: Einstellung **Background color**
+  (Farbwähler; **Transparent** leert das Feld, dann scheint
+  wieder die einbettende Seite durch) bzw. `?bgcolor=` (seit
+  2026-11-10)
 - **Listenzeilen**: eine Zeile pro Instanz, das Datum links,
   `H:MM - H:MM` rechts
 - **Datumsformat** (seit 2026-11-10): unter Einstellungen →
@@ -214,6 +218,7 @@ ohne Abwarten der Cache-TTL verschwindet.
 | `title` | `0`, `1` | Einstellung **Show the show name as heading** (an) | `0` blendet die Überschrift mit dem Sendungsnamen aus (z. B. auf der Seite der Sendung selbst), `1` zeigt sie.  Ohne Parameter gilt die Einstellung unter Widgets → Next/Latest Shows (seit 2026-11-10). |
 | `size` | Ganzzahl px 10..32 | Einstellung **Font size (px)** (14) | Schriftgröße des ganzen Widgets; Überschrift und Zeilen wachsen mit.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
 | `color` | Hex `rrggbb` (mit oder ohne `#`, `#` als `%23`) | Einstellung **Text color** (leer = Theme-Farben) | Textfarbe des ganzen Widgets, ersetzt die Theme-Farben; der Leer-Text nutzt sie zu 70 %.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
+| `bgcolor` | Hex `rrggbb` (mit oder ohne `#`, `#` als `%23`) | Einstellung **Background color** (leer = transparent) | Hintergrund des ganzen iframes; ohne Farbe scheint die einbettende Seite durch.  Ohne Parameter gilt die Einstellung (seit 2026-11-10). |
 | `timezone` | beliebige Standard-Zeitzone | Stations-Standard | Alle Zeiten in dieser Zone gerendert. |
 
 > **Tipp.** Wählen Sie die Sendung aus dem Dropdown auf der

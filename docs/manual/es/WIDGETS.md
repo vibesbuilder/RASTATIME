@@ -179,6 +179,9 @@ vie 24 may                                  06:00 - 08:00
   color del texto **Text color** (selector de color; **Theme
   colors** vacía el campo y vuelve a decidir el tema) o
   `?color=` (desde 2026-11-10)
+- **Color de fondo**: ajuste **Background color** (selector de
+  color; **Transparent** vacía el campo y vuelve a verse la
+  página que incrusta) o `?bgcolor=` (desde 2026-11-10)
 - **Líneas de lista**: una línea por instancia, la fecha a la
   izquierda, `H:MM - H:MM` a la derecha
 - **Formato de fecha** (desde 2026-11-10): se elige en
@@ -214,6 +217,7 @@ la línea superior de un widget Next-Shows se desliza al pasado
 | `title` | `0`, `1` | ajuste **Show the show name as heading** (activado) | `0` oculta el título con el nombre del programa (p. ej. en la propia página del programa), `1` lo muestra.  Sin el parámetro se aplica el ajuste de Widgets → Next/Latest Shows (desde 2026-11-10). |
 | `size` | entero px 10..32 | ajuste **Font size (px)** (14) | Tamaño de letra de todo el widget; título y filas crecen con él.  Sin el parámetro se aplica el ajuste (desde 2026-11-10). |
 | `color` | hex `rrggbb` (con o sin `#`, `#` como `%23`) | ajuste **Text color** (vacío = colores del tema) | Color del texto de todo el widget, sustituye los colores del tema; el texto de estado vacío lo usa al 70 %.  Sin el parámetro se aplica el ajuste (desde 2026-11-10). |
+| `bgcolor` | hex `rrggbb` (con o sin `#`, `#` como `%23`) | ajuste **Background color** (vacío = transparente) | Fondo de todo el iframe; sin color se ve la página que incrusta.  Sin el parámetro se aplica el ajuste (desde 2026-11-10). |
 | `timezone` | cualquier zona estándar | predeterminado de la emisora | Todas las horas renderizadas en esta zona. |
 
 > **Consejo.** Elija el programa desde el menú desplegable de

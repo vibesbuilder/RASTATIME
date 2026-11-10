@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Widgets Next/Latest Shows: Hintergrundfarbe (2026-11-10)** — Neu unter Widgets →
+  Next/Latest Shows: **Background color** (#rrggbb mit Farbwähler; leer bzw. Knopf
+  **Transparent** = durchsichtig wie bisher).  Gilt sofort für alle Einbettungen,
+  `?bgcolor=rrggbb` weicht je iframe ab.  Die Farbe sitzt am `<html>`-Element und füllt
+  damit das ganze iframe.  Manual WIDGETS ×4.
 - **Widgets Next/Latest Shows: Textfarbe (2026-11-10)** — Neu unter Widgets → Next/Latest
   Shows: **Text color** (#rrggbb mit Farbwähler; leer bzw. Knopf **Theme colors** = die
   Farben des Themes).  Gilt sofort für alle Einbettungen, `?color=rrggbb` weicht je iframe

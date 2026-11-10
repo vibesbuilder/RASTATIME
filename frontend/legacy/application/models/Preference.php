@@ -662,6 +662,18 @@ class Application_Model_Preference
         self::setValue('widget_shows_text_color', self::NormalizeWidgetColor($v));
     }
 
+    // RASTATIME 2026-11-10 - Next / Latest Shows background colour,
+    // "#rrggbb" or '' (= transparent, the embedding page shows through);
+    // ?bgcolor= overrides it per iframe.
+    public static function GetWidgetShowsBgColor()
+    {
+        return self::NormalizeWidgetColor(self::getValue('widget_shows_bg_color'));
+    }
+    public static function SetWidgetShowsBgColor($v)
+    {
+        self::setValue('widget_shows_bg_color', self::NormalizeWidgetColor($v));
+    }
+
     // RASTATIME 2026-05-22 — On-Air-Today widget empty-state label.
     // Shown when neither a currently-airing show nor any upcoming
     // shows fall within the station day's remaining window.

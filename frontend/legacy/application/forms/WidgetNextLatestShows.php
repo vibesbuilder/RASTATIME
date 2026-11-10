@@ -129,6 +129,23 @@ class Application_Form_WidgetNextLatestShows extends Zend_Form
                   ]);
         $this->addElement($textColor);
 
+        // RASTATIME 2026-11-10 - background colour (#rrggbb; empty =
+        // transparent); the view adds a colour picker and a clear button
+        $bgColor = new Zend_Form_Element_Text('widget_shows_bg_color');
+        $bgColor->setLabel(_('Background color:'))
+                ->setAttrib('class', 'input_text')
+                ->setAttrib('maxlength', 7)
+                ->setAttrib('placeholder', _('transparent'))
+                ->setAttrib('style', 'width: 6em;')
+                ->setRequired(false)
+                ->setAllowEmpty(true)
+                ->addFilter('StringTrim')
+                ->addValidator('Regex', false, [
+                    'pattern'  => '/^#[0-9a-fA-F]{6}$/',
+                    'messages' => _('Please enter a color as #rrggbb (e.g. #ff5d1a).'),
+                ]);
+        $this->addElement($bgColor);
+
         $submit = new Zend_Form_Element_Submit('submit');
         $submit->setLabel(_('Save'))
                ->setAttrib('class', 'btn');
