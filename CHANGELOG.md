@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Font size (px)** (Standard 14, 10..32).  Sie gelten sofort für alle bestehenden
   Einbettungen; eine einzelne Einbettung weicht mit `?title=0|1` bzw. `?size=N` ab (z. B.
   ohne Überschrift auf der Seite der Sendung).  Die Schriftgröße sitzt am Widget-Körper,
-  Überschrift und Zeilen skalieren mit.  Manual WIDGETS ×4.
+  Überschrift und Zeilen skalieren mit.  Manual WIDGETS ×4 (eead28b4).
 - **Stereo-Tool-Preset „16 LUFS clean" (2026-11-09, Operator-Go C1)** — Die Sendestationen
   bekamen seit der R128-Umstellung (2026-09-29) ein um 7–10 dB leiseres Signal. Neues Preset
   `config/stereotool/rastatime-16-clean.sts`: das transparente Preset mit +7 dB vor demselben
