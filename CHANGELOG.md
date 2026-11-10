@@ -95,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Stream-Label-Werte erneut, merkte sich beim Live-Text-Schalter aber den alten Stand und
   schickte ihn nicht wieder - Live Text blieb bis zum nächsten PLAYOUT-Neustart aus (der
   geplante Liquidsoap-Neustart 2026-11-09 14:21 hat es ausgelöst).  Jetzt wird auch der
-  Live-Text-Stand beim Neustart vergessen und beim nächsten Refresh neu gesetzt.  Test
+  Live-Text-Stand beim Neustart vergessen und beim nächsten Refresh neu gesetzt (1d0c4c61).  Test
   (899 grün).
 - **Stream-Titel, Live Text und Off-Air-Text an Übergängen (2026-11-09, Go Stufe 1+2
   2026-11-09)** — Befund 2026-11-07/08: der erste Titel nach einer Sendungsgrenze hatte oft
