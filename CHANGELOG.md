@@ -139,6 +139,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **„Episode“ statt „Instance“ (2026-11-10)** — Ein einzelnes Vorkommen einer Sendung heißt in
+  Oberfläche und Handbuch jetzt überall Episode.  Kontextmenü: **Edit** [Edit Episode, Edit
+  Show] (Episode zuerst), **Delete** [Delete Episode, Delete Episode and All Following]; dazu
+  Episode Description, Choose Episode, Meldungen, Kalender-Leeren- und Lösch-Countdown-Text,
+  Aufnahme-Tooltip; Übersetzungen DE/FR/ES.  Software-Instanzen und Code-Bezeichner
+  (`instance_id`, `cc_show_instances`) bleiben.  Manual ×4 (0c7f98fd, 5f349b8d).
 - **Kalender: Untermenü „Extras“ (2026-11-10)** — Teasers und Archive Online stehen im
   Kontextmenü einer Sendung jetzt unter **Extras**, direkt unter Clear Show (weniger Hauptpunkte; ein Eintrag für People
   Involved ist dort geplant).  Rechte unverändert (Teasers Admin/PM, Archive Online auch Hosts);
