@@ -112,6 +112,12 @@ class Application_Form_WidgetNextLatestShows extends Zend_Form
                  ->setAllowEmpty(true);
         $this->addElement($fontSize);
 
+        // RASTATIME 2026-11-10 - bold text (?bold=0|1 per iframe)
+        $bold = new Zend_Form_Element_Checkbox('widget_shows_bold');
+        $bold->setLabel(_('Bold text:'))
+             ->setRequired(false);
+        $this->addElement($bold);
+
         // RASTATIME 2026-11-10 - text colour (#rrggbb; empty = the theme
         // colours); the view adds a colour picker and a clear button
         $textColor = new Zend_Form_Element_Text('widget_shows_text_color');

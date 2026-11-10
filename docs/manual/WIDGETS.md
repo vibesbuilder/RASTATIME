@@ -171,6 +171,8 @@ Fri 24 May                                  06:00 - 08:00
   and **Text color** (colour picker; **Theme colors** empties
   the field and the theme decides again), per embed `?size=`
   and `?color=` (since 2026-11-10)
+- **Bold text**: setting **Bold text**, per embed `?bold=1`
+  (since 2026-11-10)
 - **Background colour**: setting **Background color**
   (colour picker; **Transparent** empties the field and the
   embedding page shows through again), per embed `?bgcolor=`
@@ -209,6 +211,7 @@ drops the row without waiting out the cache TTL.
 | `overflow` | `ellipsis`, `marquee` | `ellipsis` | Behaviour of the show title when wider than 300 px. |
 | `title` | `0`, `1` | setting **Show the show name as heading** (on) | `0` hides the show-name heading (e.g. on the show's own page), `1` shows it.  Without the parameter the setting under Widgets → Next/Latest Shows applies (since 2026-11-10). |
 | `size` | integer px 10..32 | setting **Font size (px)** (14) | Font size of the whole widget; heading and rows scale with it.  Without the parameter the setting applies (since 2026-11-10). |
+| `bold` | `0`, `1` | setting **Bold text** (off) | `1` sets the rows in bold (the heading one step heavier), `0` normal.  Without the parameter the setting applies (since 2026-11-10). |
 | `color` | hex `rrggbb` (with or without `#`, `#` as `%23`) | setting **Text color** (empty = theme colours) | Text colour of the whole widget, overrides the theme colours; the empty-state text uses it at 70 %.  Without the parameter the setting applies (since 2026-11-10). |
 | `bgcolor` | hex `rrggbb` (with or without `#`, `#` as `%23`) | setting **Background color** (empty = transparent) | Background of the whole iframe; without a colour the embedding page shows through.  Without the parameter the setting applies (since 2026-11-10). |
 | `timezone` | any standard timezone | station default | All times rendered in this zone. |

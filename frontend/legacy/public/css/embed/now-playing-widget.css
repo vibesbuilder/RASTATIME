@@ -280,6 +280,17 @@ html, body {
     white-space: nowrap;
 }
 
+/*  RASTATIME 2026-11-10 - "Bold text" (Widgets -> Next/Latest Shows,
+    ?bold=1): rows bold, the heading one step heavier so it still stands
+    out.  */
+.np-widget.np-shows-list.np-bold .np-list-row,
+.np-widget.np-shows-list.np-bold .np-list-empty {
+    font-weight: 700;
+}
+.np-widget.np-shows-list.np-bold .np-row-title {
+    font-weight: 800;
+}
+
 .np-widget.np-shows-list .np-list-empty {
     /*  Placeholder row shown when the requested show has no
         instances in the chosen direction, or when the iframe URL

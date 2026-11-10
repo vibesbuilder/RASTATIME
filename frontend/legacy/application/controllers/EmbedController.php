@@ -744,6 +744,11 @@ class EmbedController extends Zend_Controller_Action
         $this->view->bgColor = $bgParam !== ''
             ? $bgParam
             : Application_Model_Preference::GetWidgetShowsBgColor();
+        // bold text: ?bold=0|1, else the setting
+        $boldParam = $request->getParam('bold');
+        $this->view->bold = ($boldParam === '0' || $boldParam === '1')
+            ? $boldParam === '1'
+            : Application_Model_Preference::GetWidgetShowsBold();
 
         $cacheTtl = $this->_resolveCacheTtl();
         $this->view->cacheTtl = $cacheTtl;
