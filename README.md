@@ -6,6 +6,12 @@
 **Radio automation for Windows: schedule, play out, stream and archive a
 radio station from one Windows 11 PC.**
 
+https://github.com/user-attachments/assets/489b8b19-715e-468f-bb66-f58e321b40c6
+
+*A three-minute tour of RASTATIME (v1.4.0): dashboard, scheduling, library, playlists and
+smart blocks, sources, Auto DJ, playout and streams, widgets, archiving, reporting, operations,
+four languages.*
+
 RASTATIME runs the whole on-air chain of a community or small station: a
 calendar of shows, a media library with playlists and smart blocks,
 automatic filling, a Liquidsoap playout engine with crossfades and
