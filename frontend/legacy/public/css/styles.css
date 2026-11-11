@@ -2161,10 +2161,38 @@ button, input {
     background-position:right 0;
 }
 /* RASTATIME 2026-11-11 - native time fields (js/airtime/common/time-input.js)
-   replace the jQuery UI timepicker; the browser draws its own clock icon */
-.input_text.rt-time-input {
-    width: 85px;
+   replace the jQuery UI timepicker; the browser draws its own clock icon.
+   Same font, padding and height as the text fields next to them (the
+   browser's time field brings a larger font and inner padding of its own,
+   operator 2026-11-11: only the hours were visible in the show form); the
+   widths are the former timepicker widths. */
+input.input_text.rt-time-input {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    line-height: normal;
+    height: auto;
+    padding: 5px;
     background-image: none;
+}
+input.rt-time-input::-webkit-datetime-edit,
+input.rt-time-input::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+}
+input.rt-time-input::-webkit-datetime-edit-hour-field,
+input.rt-time-input::-webkit-datetime-edit-minute-field {
+    padding: 0 1px;
+}
+input.rt-time-input::-webkit-calendar-picker-indicator {
+    padding: 0;
+    margin: 0 0 0 2px;
+    width: 12px;
+    height: 12px;
+}
+/* Listener Stats / Show Listener Stats: the old text field had the auto
+   width of a 20-character input, like the date fields beside it */
+#listenerstat_content input.input_text.rt-time-input,
+#showlistenerstat_content input.input_text.rt-time-input {
+    width: 146px;
 }
 ul.errors {
     display:block;
@@ -2610,7 +2638,7 @@ span.errors.sp-errors{
     width:95px;
 }
 .formrow-repeat li .rt-time-input {
-    width:85px;
+    width:60px;
 }
 .recording-show {
     float: right;
