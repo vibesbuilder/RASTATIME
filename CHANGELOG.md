@@ -22,13 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `dataTables.columnFilter_orig.js` und `serverbrowser_orig.js` (nirgends geladen) entfernt.
   Die übrigen Hinweise sind begründet geschlossen (Admin-only-Pfade, Fehlertexte ohne
   Stacktrace, alte Bibliotheken ohne Fremdeingaben; Bibliotheks-Ersatz als Idee im BACKLOG).
-  Wirksam: Oberfläche sofort, die Logzeile nach dem nächsten PLAYOUT-Neustart.
+  Wirksam: Oberfläche sofort, die Logzeile nach dem nächsten PLAYOUT-Neustart (83134eb0).
 
 ### Changed
 
 - **Release-Action auf v3.0.4 (2026-11-11)** — `softprops/action-gh-release` 3.0.3 → 3.0.4
   (Dependabot-Vorschlag, SHA gegen das Upstream-Tag geprüft), lokal übernommen statt per
-  Web-Merge.
+  Web-Merge (d4513f8a).
 
 ## [1.4.0] - 2026-11-11
 
