@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   waren nur noch die Stunden zu sehen, in Playout History und Listener Stats waren die Felder
   größer (Operator).  Jetzt dieselbe Schrift, derselbe Abstand und 26 px Höhe wie die
   Datumsfelder daneben, kompakte Uhr-Schaltfläche, und die früheren Breiten (Show-Formular 54 px,
-  Showbuilder / Playout History / Wiederholungszeiten 60 px, Listener Stats wie die Datumsfelder).
+  Showbuilder / Playout History / Wiederholungszeiten 60 px, Listener Stats wie die Datumsfelder) (71d207a3).
 - **Release-Action auf v3.0.4 (2026-11-11)** — `softprops/action-gh-release` 3.0.3 → 3.0.4
   (Dependabot-Vorschlag, SHA gegen das Upstream-Tag geprüft), lokal übernommen statt per
   Web-Merge (d4513f8a).
