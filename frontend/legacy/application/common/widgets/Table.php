@@ -14,7 +14,9 @@ class AirtimeTableView
         // only core; the 2012 ColVis/ColReorder are gone, Buttons (+colVis)
         // and ColReorder 1.6 are the extensions.  The version-agnostic helper
         // plugins (pluginAPI / fnSetFilteringDelay / FixedColumns /
-        // FixedHeader / columnFilter) load unchanged ($.browser via shim).
+        // FixedHeader) load unchanged ($.browser via shim).  columnFilter is
+        // gone since 2026-11-11 (library.js filters natively, the plugin call
+        // was dead code).
         $deps = [
             'js/airtime/widgets/table.js',
             'js/datatables-1.13/js/jquery.dataTables.min.js',
@@ -26,7 +28,6 @@ class AirtimeTableView
         $deps[] = 'js/datatables-1.13/extensions/dataTables.colReorder.min.js';
         $deps[] = 'js/datatables/plugin/dataTables.FixedColumns.js';
         $deps[] = 'js/datatables/plugin/dataTables.FixedHeader.js';
-        $deps[] = 'js/datatables/plugin/dataTables.columnFilter.js';
 
         return $deps;
     }

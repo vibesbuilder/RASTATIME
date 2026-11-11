@@ -1533,8 +1533,8 @@ var AIRTIME = (function (AIRTIME) {
 
       fnServerData: function (sSource, aoData, fnCallback) {
         /*
-         * The real validation check is done in
-         * dataTables.columnFilter.js We also need to check it here
+         * The fields are validated when they change (wireModernColumnFilter).
+         * We also need to check it here
          * because datatable is redrawn everytime an action is performed
          * in the Library page. In order for datatable to redraw the
          * advanced search fields MUST all be valid.
@@ -1866,7 +1866,6 @@ var AIRTIME = (function (AIRTIME) {
         return;
       }
       var aoCols = oTable.fnSettings().aoColumns;
-      var colsForAdvancedSearch = new Array();
       var advanceSearchDiv = $("div#advanced_search");
       advanceSearchDiv.empty();
       $.each(aoCols, function (i, ele) {
@@ -1921,38 +1920,18 @@ var AIRTIME = (function (AIRTIME) {
                 "</div>",
             );
           }
-
-          if (libraryColumnTypes[ele.mDataProp] == "s") {
-            var obj = { sSelector: "#" + ele.mDataProp };
-          } else if (libraryColumnTypes[ele.mDataProp] == "tt") {
-            var obj = { sSelector: "#" + ele.mDataProp, type: "select" };
-          } else {
-            var obj = { sSelector: "#" + ele.mDataProp, type: "number-range" };
-          }
-          colsForAdvancedSearch.push(obj);
-        } else {
-          colsForAdvancedSearch.push(null);
         }
       });
 
-      // RASTATIME 2026-06-01 (JS-modernization stage 2): the 2012 columnFilter
-      // fork (advanced per-column search) couples to the old ColVis (bUseColVis)
-      // + the colReorderMap and only speaks the DataTables 1.9 API.
-      if (!dtModern) {
-        oTable.columnFilter({
-          aoColumns: colsForAdvancedSearch,
-          bUseColVis: true,
-          sPlaceHolder: "head:before",
-        });
-      } else {
-        // RASTATIME 2026-06-04 (?jq3): rebuild the same per-column filters on the
-        // modern stack.  The backend contract is unchanged -- DataTables 1.13 in
-        // legacy-compat mode still sends sSearch_{N}/mDataProp_{N}, a range is
-        // just the "min~max" string the backend already parses, and fnServerData
-        // already sends advSearch -- so we only populate the #advanced_search
-        // slots and wire fnFilter (which fnSetFilteringDelay debounces).
-        wireModernColumnFilter(oTable, aoCols);
-      }
+      // RASTATIME 2026-11-11 - the 2012 columnFilter plugin branch is gone
+      // (never ran: the Buttons stack is always loaded).
+      // RASTATIME 2026-06-04 (?jq3): rebuild the same per-column filters on the
+      // modern stack.  The backend contract is unchanged -- DataTables 1.13 in
+      // legacy-compat mode still sends sSearch_{N}/mDataProp_{N}, a range is
+      // just the "min~max" string the backend already parses, and fnServerData
+      // already sends advSearch -- so we only populate the #advanced_search
+      // slots and wire fnFilter (which fnSetFilteringDelay debounces).
+      wireModernColumnFilter(oTable, aoCols);
     }
 
     // RASTATIME 2026-06-04 (?jq3 / DataTables 1.13): modern replacement for the
@@ -1964,8 +1943,7 @@ var AIRTIME = (function (AIRTIME) {
     //   "tt" select -> sSearch_{idx} = type id    (backend exact match)
     // fnFilter is debounced globally by fnSetFilteringDelay(350); the table's
     // fnServerData already sends advSearch + validates, so the PHP backend stays
-    // byte-for-byte unchanged.  The legacy stack (jQuery 1.8 / DT 1.9) keeps the
-    // plugin; this runs only on the modern Buttons stack.
+    // byte-for-byte unchanged.
     function wireModernColumnFilter(oTable, aoCols) {
       var sRangeFormat = $.i18n._("From {from} to {to}");
       // Same three label fragments the plugin produced from sRangeFormat.
@@ -2947,7 +2925,7 @@ var AIRTIME = (function (AIRTIME) {
 })(AIRTIME || {});
 
 /*
- * This function is called from dataTables.columnFilter.js
+ * Validates the advanced search fields (fnServerData, wireModernColumnFilter).
  */
 function validateAdvancedSearch(divs) {
   var valid,

@@ -258,11 +258,6 @@ final class LocaleController extends Zend_Controller_Action
             'is in the range' => _('is in the range'),
             'Preview' => _('Preview'),
             'Generate' => _('Generate'),
-            // preferences/musicdirs.js
-            'Choose Storage Folder' => _('Choose Storage Folder'),
-            'Choose Folder to Watch' => _('Choose Folder to Watch'),
-            "Are you sure you want to change the storage folder?\nThis will remove the files from your Airtime library!" => _("Are you sure you want to change the storage folder?\nThis will remove the files from your Airtime library!"),
-            'Manage Media Folders' => _('Manage Media Folders'),
             'Are you sure you want to remove the watched folder?' => _('Are you sure you want to remove the watched folder?'),
             'This path is currently not accessible.' => _('This path is currently not accessible.'),
             // preferences/streamsetting.js
@@ -428,8 +423,7 @@ final class LocaleController extends Zend_Controller_Action
             // status/status.js
             'in use' => _('in use'),
             'Disk' => _('Disk'),
-            // serverbrowse/serverbrowse.js
-            'Look in' => _('Look in'),
+            // RASTATIME 2026-11-11 - formerly serverbrowse.js; kept, other scripts use them
             'Cancel' => _('Cancel'),
             'Open' => _('Open'),
             // user/user.js

@@ -31,6 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   2026-10-27 braucht neue Passwörter; `manage.py password_hashes` nennt die Konten.  Schließt
   CodeQL py/weak-sensitive-data-hashing.  Wirksam: Legacy sofort, API nach dem nächsten
   API-Neustart.
+- **Tote Alt-Bibliotheken und Ordner-Browser entfernt (2026-11-11)** — `serverbrowser.js` samt
+  `musicdirs.js`, Formular `WatchedDirPreferences`, Platzhalter `directory-config` und der
+  zweite, nie geladene Timepicker (`jquery-ui-timepicker-addon`) waren nirgends eingebunden; die
+  Server-Aktion `/preference/server-browse` war aber für jeden Admin erreichbar und listete die
+  Unterordner eines beliebigen Pfads auf dem Server - weg.  `dataTables.columnFilter.js` wurde
+  auf fünf Seiten geladen, lief aber nie (die Library filtert seit 2026-06 mit eigenem Code);
+  Plugin und toter Aufrufzweig entfernt.  Keine sichtbare Änderung.
 
 ### Changed
 

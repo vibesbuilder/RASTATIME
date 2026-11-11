@@ -6,11 +6,10 @@ class PreferenceController extends Zend_Controller_Action
     {
         // Initialize action controller here
         $ajaxContext = $this->_helper->getHelper('AjaxContext');
-        $ajaxContext->addActionContext('server-browse', 'json')
-            ->addActionContext('change-stor-directory', 'json')
-            ->addActionContext('reload-watch-directory', 'json')
-            ->addActionContext('remove-watch-directory', 'json')
-            ->addActionContext('is-import-in-progress', 'json')
+        // RASTATIME 2026-11-11 - server-browse (lists any server folder for an
+        // Admin, CodeQL clean-up) and the media-folder actions of the
+        // never-loaded musicdirs.js removed
+        $ajaxContext->addActionContext('is-import-in-progress', 'json')
             ->addActionContext('change-stream-setting', 'json')
             ->addActionContext('get-liquidsoap-status', 'json')
             ->addActionContext('get-admin-password-status', 'json')
@@ -198,8 +197,6 @@ class PreferenceController extends Zend_Controller_Action
 
         $this->_helper->json->sendJson(['url' => $url]);
     }
-
-    public function directoryConfigAction() {}
 
     public function removeLogoAction()
     {
@@ -1417,42 +1414,6 @@ class PreferenceController extends Zend_Controller_Action
 
             Application_Model_Preference::SetStreamOutput($i, $data);
         }
-    }
-
-    public function serverBrowseAction()
-    {
-        $request = $this->getRequest();
-        $path = $request->getParam('path', null);
-
-        $result = [];
-
-        if (is_null($path)) {
-            $element = [];
-            $element['name'] = _('path should be specified');
-            $element['isFolder'] = false;
-            $element['isError'] = true;
-            $result[$path] = $element;
-        } else {
-            $path .= '/';
-            $handle = opendir($path);
-            if ($handle !== false) {
-                while (false !== ($file = readdir($handle))) {
-                    if ($file != '.' && $file != '..') {
-                        // only show directories that aren't private.
-                        if (is_dir($path . $file) && substr($file, 0, 1) != '.') {
-                            $element = [];
-                            $element['name'] = $file;
-                            $element['isFolder'] = true;
-                            $element['isError'] = false;
-                            $result[$file] = $element;
-                        }
-                    }
-                }
-            }
-        }
-        ksort($result);
-        // returns format serverBrowse is looking for.
-        $this->_helper->json->sendJson($result);
     }
 
     public function isImportInProgressAction()
