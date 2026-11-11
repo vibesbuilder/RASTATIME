@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **CodeQL-Befunde behoben (2026-11-11)** — Erster CodeQL-Lauf nach dem Öffentlich-Stellen des
+  Repos: 83 Hinweise, eingestuft.  Behoben: (1) Der Podcast-Episodendialog setzte die
+  Beschreibung aus dem fremden Feed als HTML in die Seite; zwischen einem präparierten Feed und
+  Skript im Browser stand nur die lückenhafte Attribut-Sperrliste von SimplePie.  Jetzt wird sie
+  in trägen DOMParser-Dokumenten gelesen und als Text gezeigt (Zeilenumbrüche und Absätze
+  bleiben).  (2) Die Beschriftung eines Editor-Tabs (Tracktitel aus den Datei-Tags,
+  Playlist-Name) wurde als HTML zusammengesetzt; jetzt als Text.  (3) Cue-Editor: Cue-Werte per
+  `.text()` statt `.html()`.  (4) Die Debug-Zeile der Line-In-Aufnahme schrieb die
+  FFmpeg-Kommandozeile samt Icecast-Quellpasswort; beide Logstellen maskieren es jetzt über eine
+  Hilfsmethode (ein leeres Passwort maskiert nichts mehr zeichenweise).  (5) Die toten Kopien
+  `dataTables.columnFilter_orig.js` und `serverbrowser_orig.js` (nirgends geladen) entfernt.
+  Die übrigen Hinweise sind begründet geschlossen (Admin-only-Pfade, Fehlertexte ohne
+  Stacktrace, alte Bibliotheken ohne Fremdeingaben; Bibliotheks-Ersatz als Idee im BACKLOG).
+  Wirksam: Oberfläche sofort, die Logzeile nach dem nächsten PLAYOUT-Neustart.
+
+### Changed
+
+- **Release-Action auf v3.0.4 (2026-11-11)** — `softprops/action-gh-release` 3.0.3 → 3.0.4
+  (Dependabot-Vorschlag, SHA gegen das Upstream-Tag geprüft), lokal übernommen statt per
+  Web-Merge.
+
 ## [1.4.0] - 2026-11-11
 
 ### Added

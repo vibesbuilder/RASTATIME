@@ -7905,3 +7905,30 @@ Risiko: Löschen ist irreversibel - Umschreibung ist semantisch gleich
 (75 Ids geprüft), trotzdem erst an einer Wegwerf-Datei live prüfen;
 Legacy-only, kein Neustart.  Empfehlung: Go 1+2, 3 Defer.
 
+## CodeQL-Befunde nach dem Öffentlich-Stellen (2026-11-11)
+
+### ✅ Echte Fälle behoben - GEBAUT 2026-11-11 (Go 2026-11-11)
+Podcast-Episodendialog (Feed-HTML), Editor-Tab-Beschriftung (Tracktitel),
+Cue-Editor, Passwort in der Debug-Zeile der Line-In-Aufnahme, zwei tote
+`*_orig.js`-Dateien.  Details im CHANGELOG.
+
+### 🔴 MD5-Rückfall im Passwort-Check entfernen - HOLD
+Seit 2026-10-27 bcrypt, alte MD5-Hashes werden beim nächsten Login ersetzt
+(Legacy-Adapter, User::verifyPassword, Django check_password).  Am
+2026-11-11 hatten noch 5 von 10 Konten MD5 (darunter das Admin-Konto, vier
+Konten ohne je eine Anmeldung).  Solange der Rückfall im Code steht, bleibt
+der CodeQL-Hinweis py/weak-sensitive-data-hashing offen.
+Vorbedingungen:
+- Alle Konten haben bcrypt: einmal anmelden, Passwort neu setzen oder
+  Konto löschen (Operator).
+- Dann Rückfall in Application_Model_Password::verify und
+  core/models/user.py::verify_password entfernen (MD5-Werte matchen nie
+  mehr), Tests anpassen.
+
+### 💡 Alte JavaScript-Bibliotheken ersetzen - IDEA
+BlockUI 2.39 (2011), Flot 0.8.3, jquery.ui.timepicker,
+dataTables.columnFilter, serverbrowser.  Zusammen 30 CodeQL-Hinweise
+(html-constructed-from-input, unsafe-jquery-plugin, xss-through-dom,
+incomplete-sanitization); heute nicht ausnutzbar, weil unser Code dort nur
+eigene Texte übergibt.  Teil der langfristigen Modernisierung; je
+Bibliothek einzeln und mit Live-Prüfung der betroffenen Seiten.

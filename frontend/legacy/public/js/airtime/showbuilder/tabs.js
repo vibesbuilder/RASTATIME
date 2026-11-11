@@ -91,9 +91,10 @@ var AIRTIME = (function (AIRTIME) {
         self.id +
         "' role='presentation' class='active'>" +
         "<a href='javascript:void(0)'>" +
-        "<span class='tab-name'>" +
-        name +
-        "</span>" +
+        // RASTATIME 2026-11-11 (CodeQL js/xss-through-dom) - the name is
+        // a track title from file tags or a playlist name: set as text
+        // below, never concatenated into the markup
+        "<span class='tab-name'></span>" +
         "<span href='#' class='lib_pl_close icon-remove'></span>" +
         "</a>" +
         "</li>",
@@ -103,6 +104,7 @@ var AIRTIME = (function (AIRTIME) {
     tabs.append(tab);
 
     var newTab = $("#pl-tab-" + self.id);
+    newTab.find(".tab-name").text(name);
 
     self.wrapper = pane;
     self.contents = t;

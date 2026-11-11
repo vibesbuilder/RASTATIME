@@ -2768,8 +2768,29 @@ var AIRTIME = (function (AIRTIME) {
   mod.openPodcastEpisodeDialog = function (podcastId) {
     var episode = AIRTIME.podcast.episodeTables[podcastId].getSelectedRows()[0];
     $("body").append("<div id='podcast_episode_dialog'></div>");
-    var dialog = $("#podcast_episode_dialog").html(episode.description);
-    dialog.html(dialog.text());
+    // RASTATIME 2026-11-11 (CodeQL js/xss-through-dom) - the description
+    // is the external feed's HTML, sent HTML-escaped (htmlspecialchars).
+    // It used to be unescaped into the live page, which left only
+    // SimplePie's incomplete attribute blacklist between a crafted feed
+    // and script in the operator's browser.  Now it is parsed in inert
+    // DOMParser documents (no scripts, no requests) and shown as plain
+    // text; line breaks and paragraphs survive as newlines.
+    var parseInert = function (html) {
+      return new DOMParser().parseFromString(html || "", "text/html").body;
+    };
+    var body = parseInert(parseInert(episode.description).textContent);
+    Array.prototype.forEach.call(body.querySelectorAll("br"), function (br) {
+      br.replaceWith("\n");
+    });
+    Array.prototype.forEach.call(
+      body.querySelectorAll("p, div, li, tr, h1, h2, h3, h4, h5, h6"),
+      function (el) {
+        el.append("\n");
+      },
+    );
+    var dialog = $("#podcast_episode_dialog")
+      .css({ "white-space": "pre-line", "max-width": "640px" })
+      .text((body.textContent || "").replace(/\n{3,}/g, "\n\n").trim());
     dialog.dialog({
       title: episode.title,
       width: "auto",

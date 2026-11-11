@@ -179,3 +179,18 @@ def test_build_feeder_cmd_carries_mapping_and_name(capture):
     assert "rastatime_playout.engine.linein_feeder" in cmd
     assert cmd[cmd.index("--mapping") + 1] == "4,5"
     assert cmd[cmd.index("--device-name") + 1] == "Mikrofon (US-16x08)"
+
+
+# RASTATIME 2026-11-11 - the logged command line never carries the source password
+def test_masked_hides_the_icecast_password(capture):
+    capture._icecast_password = "s3cret-pw"
+    cmd = capture._build_ffmpeg_cmd("0fb30b0b-c875-432b-a48f-dbb5208995c9", False)
+    assert "s3cret-pw" in " ".join(cmd)
+    masked = capture._masked(cmd)
+    assert "s3cret-pw" not in masked
+    assert "****" in masked
+
+
+def test_masked_with_empty_password_changes_nothing(capture):
+    capture._icecast_password = ""
+    assert capture._masked(["ffmpeg", "-i", "x"]) == "ffmpeg -i x"

@@ -1838,19 +1838,21 @@ var AIRTIME = (function (AIRTIME) {
       $html.remove();
     }
 
-    $html.find(".editor-cue-in").html(cueIn);
-    $html.find(".editor-cue-out").html(cueOut);
+    // RASTATIME 2026-11-11 (CodeQL js/xss-through-dom) - cue values are
+    // plain text, set with .text() instead of .html()
+    $html.find(".editor-cue-in").text(cueIn);
+    $html.find(".editor-cue-out").text(cueOut);
 
     $html.on("click", ".set-cue-in", function (e) {
       var cueIn = $html.find(".audio_start").val();
 
-      $html.find(".editor-cue-in").html(cueIn);
+      $html.find(".editor-cue-in").text(cueIn);
     });
 
     $html.on("click", ".set-cue-out", function (e) {
       var cueOut = $html.find(".audio_end").val();
 
-      $html.find(".editor-cue-out").html(cueOut);
+      $html.find(".editor-cue-out").text(cueOut);
     });
 
     $html.dialog({
@@ -1870,8 +1872,8 @@ var AIRTIME = (function (AIRTIME) {
           text: $.i18n._("Save"),
           class: "btn btn-small btn-inverse",
           click: function () {
-            var cueIn = $html.find(".editor-cue-in").html(),
-              cueOut = $html.find(".editor-cue-out").html();
+            var cueIn = $html.find(".editor-cue-in").text(),
+              cueOut = $html.find(".editor-cue-out").text();
 
             playlistEditor.stop();
 

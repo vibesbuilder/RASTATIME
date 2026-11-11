@@ -576,6 +576,17 @@ class FfmpegLineinCapture:
             icecast_url,
         ]
 
+    def _masked(self, cmd: list) -> str:
+        """
+        The command line for logs, with the Icecast source password (part
+        of the output URL) replaced by ****.  An empty password masks
+        nothing (str.replace("") would put **** between every character).
+        """
+        line = " ".join(str(part) for part in cmd)
+        if self._icecast_password:
+            line = line.replace(self._icecast_password, "****")
+        return line
+
     def _launch_processes(
         self,
         device_id: str,
@@ -596,7 +607,9 @@ class FfmpegLineinCapture:
             self._icecast_port,
             self._icecast_mount,
         )
-        logger.debug("FfmpegLineinCapture cmd: %s (feeder: %s)", cmd, feeder_cmd)
+        # RASTATIME 2026-11-11 (CodeQL py/clear-text-logging-sensitive-data) -
+        # the command carries the Icecast source password in its URL
+        logger.debug("FfmpegLineinCapture cmd: %s (feeder: %s)", self._masked(cmd), feeder_cmd)
 
         try:
             self._stderr_fh = open(self._stderr_log_path, "ab", buffering=0)
@@ -605,7 +618,7 @@ class FfmpegLineinCapture:
                 f"channels={self._channel_mapping} "
                 f"@ {time.strftime('%Y-%m-%d %H:%M:%S')} =====\n"
                 + (f"feeder: {' '.join(feeder_cmd)}\n" if feeder_cmd else "")
-                + f"cmd: {' '.join(cmd).replace(self._icecast_password, '****')}\n"
+                + f"cmd: {self._masked(cmd)}\n"
             ).encode()
             self._stderr_fh.write(header)
         except OSError as exc:
