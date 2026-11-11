@@ -16,13 +16,9 @@ class ListenerstatController extends Zend_Controller_Action
 
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Analytics');
 
+        // RASTATIME 2026-11-11 - Flot 4.2.6 bundle (time axis, hover, legend
+        // included) instead of Flot 0.8.3 + time / crosshair / resize plugins.
         $this->view->headScript()->appendFile(Assets::url('js/flot/jquery.flot.js'), 'text/javascript');
-        // RASTATIME 2026-06-05 (?jq3): Flot 0.7 is incompatible with jQuery 3.
-        // Upgraded to Flot 0.8.3, which moved the time-axis (xaxis mode:"time")
-        // into a separate plugin -- load it right after the core.
-        $this->view->headScript()->appendFile(Assets::url('js/flot/jquery.flot.time.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/flot/jquery.flot.crosshair.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/flot/jquery.flot.resize.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/listenerstat/listenerstat.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/timepicker/jquery.ui.timepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/buttons/buttons.js'), 'text/javascript');

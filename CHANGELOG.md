@@ -47,6 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `js/airtime/common/block.js` (~90 Zeilen) mit denselben Aufrufen `.block()` / `.unblock()`
   und denselben CSS-Klassen, auf jeder Seite geladen - so wirft auch die eigene Podcast-Seite
   keinen Fehler mehr (dort fehlte BlockUI).  Aussehen unverändert.
+- **Flot 0.8.3 → 4.2.6 (2026-11-11)** — Diagramm unter Analytics → Listener Stats.  Ein
+  Bündel (Zeitachse, Hover, Legende) statt Kern + drei Plugins; das unbenutzte Crosshair- und das
+  pollende Resize-Plugin fallen weg (Neuzeichnen per `ResizeObserver`).  Die Legende mit den
+  Mount-Checkboxen ist eigener DOM-Code: Mount-Namen werden als Text gesetzt (vorher ungeschützt
+  im HTML), Farben bleiben beim Aus-/Einblenden stabil; der Tooltip wird nur noch einmal
+  gebunden.  Die Zeitachse zeigt wie bisher Studiozeit (der Server verschiebt die Werte bereits
+  je Messpunkt in die Benutzer-Zeitzone).  Aussehen unverändert.
 - **Release-Action auf v3.0.4 (2026-11-11)** — `softprops/action-gh-release` 3.0.3 → 3.0.4
   (Dependabot-Vorschlag, SHA gegen das Upstream-Tag geprüft), lokal übernommen statt per
   Web-Merge (d4513f8a).

@@ -13,6 +13,55 @@ $(document).ready(function () {
 
   getDataAndPlot();
 
+  // RASTATIME 2026-11-11 - bound once (Flot 0.8 code bound it on every redraw)
+  var previousPoint = null;
+  $("#flot_placeholder").on("plothover", function (event, pos, item) {
+    if (!item) {
+      $("#tooltip").remove();
+      previousPoint = null;
+      return;
+    }
+    var pointKey = item.seriesIndex + ":" + item.dataIndex;
+    if (previousPoint === pointKey) {
+      return;
+    }
+    previousPoint = pointKey;
+    $("#tooltip").remove();
+    $("<div id='tooltip'/>")
+      .text(
+        sprintf(
+          $.i18n._("Listener Count on %s: %s"),
+          item.series.label,
+          Math.floor(item.datapoint[1]),
+        ),
+      )
+      .css({
+        position: "absolute",
+        display: "none",
+        top: item.pageY + 5,
+        left: item.pageX + 5,
+        border: "1px solid #fdd",
+        padding: "2px",
+        "background-color": "#fee",
+        opacity: 0.8,
+      })
+      .appendTo("body")
+      .fadeIn(200);
+  });
+
+  // redraw when the placeholder changes size (instead of Flot's polling
+  // resize plugin)
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      var $ph = $("#flot_placeholder");
+      if (listenerPlot && $ph.width() > 0 && $ph.height() > 0) {
+        listenerPlot.resize();
+        listenerPlot.setupGrid();
+        listenerPlot.draw();
+      }
+    }).observe(document.getElementById("flot_placeholder"));
+  }
+
   listenerstat_content.find("#his_submit").click(function () {
     var oRange = AIRTIME.utilities.fnGetScheduleRange(
       dateStartId,
@@ -33,6 +82,12 @@ function toggleOverlay() {
   $("#flot_placeholder").toggleClass("processing");
 }
 
+/**
+ * RASTATIME 2026-11-11 - Flot 4.2 instead of 0.8.3.  The timestamps from
+ * Listenerstat/get-data are already shifted to the user's timezone on the
+ * server (ListenerStat::getDataPointsWithinRange, per sample), so plotting
+ * them on Flot's UTC axis shows studio time.
+ */
 function getDataAndPlot(startTimestamp, endTimestamp) {
   // Turn on the processing overlay
   toggleOverlay();
@@ -42,15 +97,11 @@ function getDataAndPlot(startTimestamp, endTimestamp) {
     baseUrl + "Listenerstat/get-data",
     { start: startTimestamp, end: endTimestamp },
     function (data) {
-      out = new Object();
+      var out = {};
       $.each(data, function (mpName, v) {
-        plotData = new Object();
-        plotData.data = new Array();
+        var plotData = { label: mpName, data: [] };
         $.each(v, function (i, ele) {
-          plotData.label = mpName;
-          var d = new Date(0);
-          d.setUTCSeconds(ele.timestamp);
-          plotData.data.push([d, ele.listener_count]);
+          plotData.data.push([ele.timestamp * 1000, ele.listener_count]);
         });
         out[mpName] = plotData;
       });
@@ -61,70 +112,53 @@ function getDataAndPlot(startTimestamp, endTimestamp) {
   );
 }
 
-function plot(datasets) {
-  var plot;
-  data = null;
-  function plotByChoice(doAll) {
-    // largest date object that you can set
-    firstTimestamp = new Date(8640000000000000);
-    // smallest
-    lastTimestamp = new Date(0);
+var listenerPlot = null;
 
-    data = [];
-    if (doAll != null) {
-      $.each(datasets, function (key, val) {
-        if (firstTimestamp.getTime() > val.data[0][0].getTime()) {
-          firstTimestamp = val.data[0][0];
-        }
-        if (
-          lastTimestamp.getTime() < val.data[val.data.length - 1][0].getTime()
-        ) {
-          lastTimestamp = val.data[val.data.length - 1][0];
-        }
-        data.push(val);
-      });
-    } else {
-      $("#legend .legendCB").each(function () {
-        if (this.checked) {
-          data.push(datasets[this.id]);
-          if (
-            firstTimestamp.getTime() > datasets[this.id].data[0][0].getTime()
-          ) {
-            firstTimestamp = datasets[this.id].data[0][0];
-          }
-          if (
-            lastTimestamp.getTime() <
-            datasets[this.id].data[
-              datasets[this.id].data.length - 1
-            ][0].getTime()
-          ) {
-            lastTimestamp =
-              datasets[this.id].data[datasets[this.id].data.length - 1][0];
-          }
-        } else {
-          data.push({ label: this.id, data: [] });
-        }
-      });
+function plot(datasets) {
+  var names = Object.keys(datasets);
+  // a new data set starts with every mount point shown
+  var shown = {};
+  names.forEach(function (name) {
+    shown[name] = true;
+  });
+
+  function draw() {
+    var first = Infinity;
+    var last = -Infinity;
+    // Hidden mount points stay in the list with no data, and every series
+    // keeps its colour index, so the colours do not shift when one is hidden.
+    var data = names.map(function (name, i) {
+      var series = datasets[name];
+      if (!shown[name]) {
+        return { label: name, data: [], color: i };
+      }
+      if (series.data.length) {
+        first = Math.min(first, series.data[0][0]);
+        last = Math.max(last, series.data[series.data.length - 1][0]);
+      }
+      return { label: name, data: series.data, color: i };
+    });
+
+    var xaxis = {
+      mode: "time",
+      timeBase: "milliseconds", // Flot 3+ defaults to seconds
+      timeformat: "%y/%m/%d %H:%M", // Flot 4 pads %d itself (no %0d)
+      color: "#d6d6d6",
+      tickColor: "#d6d6d6",
+    };
+    var tickSize = (last - first) / 1000 / 10; // about ten ticks
+    if (isFinite(tickSize) && tickSize > 0) {
+      xaxis.tickSize = [tickSize, "second"];
     }
 
-    numOfTicks = 10;
-    tickSize =
-      (lastTimestamp.getTime() - firstTimestamp.getTime()) / 1000 / numOfTicks;
-
-    plot = $.plot($("#flot_placeholder"), data, {
+    listenerPlot = $.plot($("#flot_placeholder"), data, {
       yaxis: {
         min: 0,
         tickDecimals: 0,
         color: "#d6d6d6",
         tickColor: "#d6d6d6",
       },
-      xaxis: {
-        mode: "time",
-        timeformat: "%y/%m/%0d %H:%M",
-        tickSize: [tickSize, "second"],
-        color: "#d6d6d6",
-        tickColor: "#d6d6d6",
-      },
+      xaxis: xaxis,
       grid: {
         hoverable: true,
         backgroundColor: { colors: ["#333", "#555"] },
@@ -136,72 +170,49 @@ function plot(datasets) {
         },
         points: { show: true },
       },
-      legend: {
-        container: $("#legend"),
-        noColumns: 5,
-        color: "#c0c0c0",
-        labelFormatter: function (label, series) {
-          var cb =
-            '<input style="float:left;" class="legendCB" type="checkbox" ';
-          if (series.data.length > 0) {
-            cb += 'checked="true" ';
-          }
-          cb += 'id="' + label + '" /> ';
-          cb += label;
-          return cb;
-        },
-      },
+      legend: { show: false },
     });
-
-    function showTooltip(x, y, contents) {
-      $('<div id="tooltip">' + contents + "</div>")
-        .css({
-          position: "absolute",
-          display: "none",
-          top: y + 5,
-          left: x + 5,
-          border: "1px solid #fdd",
-          padding: "2px",
-          "background-color": "#fee",
-          opacity: 0.8,
-        })
-        .appendTo("body")
-        .fadeIn(200);
-    }
-
-    var previousPoint = null;
-    $("#flot_placeholder").bind("plothover", function (event, pos, item) {
-      if (item) {
-        if (previousPoint != item.dataIndex) {
-          previousPoint = item.dataIndex;
-
-          $("#tooltip").remove();
-          var y = item.datapoint[1].toFixed(2);
-
-          showTooltip(
-            item.pageX,
-            item.pageY,
-            sprintf(
-              $.i18n._("Listener Count on %s: %s"),
-              item.series.label,
-              Math.floor(y),
-            ),
-          );
-        }
-      } else {
-        $("#tooltip").remove();
-        previousPoint = null;
-      }
-    });
-
-    $("#legend")
-      .find("input")
-      .click(function () {
-        setTimeout(plotByChoice, 100);
-      });
+    return listenerPlot;
   }
 
-  plotByChoice(true);
+  // The legend is our own markup: a checkbox per mount point to show or
+  // hide it.  Mount names are set as text (Flot 0.8's labelFormatter put
+  // them into the HTML unescaped).
+  function buildLegend(drawn) {
+    var $legend = $("#legend").empty();
+    drawn.getData().forEach(function (series) {
+      var $checkbox = $("<input type='checkbox'/>")
+        .addClass("legendCB")
+        .prop("checked", !!shown[series.label])
+        .on("change", function () {
+          shown[series.label] = this.checked;
+          draw();
+        });
+      $("<label/>")
+        .css({
+          display: "inline-flex",
+          alignItems: "center",
+          marginRight: "16px",
+          color: "#c0c0c0",
+          cursor: "pointer",
+        })
+        .append(
+          $checkbox,
+          $("<span/>").css({
+            display: "inline-block",
+            width: "12px",
+            height: "12px",
+            margin: "0 6px",
+            border: "1px solid #ccc",
+            background: series.color,
+          }),
+          $("<span/>").text(series.label),
+        )
+        .appendTo($legend);
+    });
+  }
+
+  buildLegend(draw());
   oBaseDatePickerSettings = {
     dateFormat: "yy-mm-dd",
     //i18n_months, i18n_days_short are in common.js
