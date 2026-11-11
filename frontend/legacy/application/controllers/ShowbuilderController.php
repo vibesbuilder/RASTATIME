@@ -41,7 +41,6 @@ class ShowbuilderController extends Zend_Controller_Action
         // PLUPLOAD
         $this->view->headScript()->appendFile(Assets::url('js/libs/dropzone.min.js'), 'text/javascript');
 
-        $this->view->headScript()->appendFile(Assets::url('js/timepicker/jquery.ui.timepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/showbuilder/tabs.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/showbuilder/builder.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/showbuilder/main_builder.js'), 'text/javascript');
@@ -58,7 +57,6 @@ class ShowbuilderController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/airtime/playlist/smart_blockbuilder.js'), 'text/javascript');
         $this->view->headLink()->appendStylesheet(Assets::url('css/playlist_builder.css'));
 
-        $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/showbuilder.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/dashboard.css'));
 

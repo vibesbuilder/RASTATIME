@@ -7925,7 +7925,12 @@ Vorbedingungen:
   core/models/user.py::verify_password entfernen (MD5-Werte matchen nie
   mehr), Tests anpassen.
 
-### 💡 Alte JavaScript-Bibliotheken ersetzen - IDEA
+### ✅ Alte JavaScript-Bibliotheken ersetzen - ERLEDIGT 2026-11-11 (Go 2026-11-11: A, B, C1, D1)
+serverbrowser + columnFilter gelöscht, BlockUI -> common/block.js,
+Timepicker -> natives `<input type="time">` (common/time-input.js),
+Flot 0.8.3 -> 4.2.6.  Die `$.browser`-Krücke bleibt: contextMenu,
+FixedColumns und FixedHeader lesen sie noch.
+Ursprünglicher Eintrag:
 BlockUI 2.39 (2011), Flot 0.8.3, jquery.ui.timepicker,
 dataTables.columnFilter, serverbrowser.  Zusammen 30 CodeQL-Hinweise
 (html-constructed-from-input, unsafe-jquery-plugin, xss-through-dom,

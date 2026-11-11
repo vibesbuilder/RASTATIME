@@ -47,16 +47,6 @@ function addDatePicker() {
     },
     onClose: validateTimeRange,
   };
-  oBaseTimePickerSettings = {
-    showPeriodLabels: false,
-    showCloseButton: true,
-    closeButtonText: $.i18n._("Done"),
-    showLeadingZero: false,
-    defaultTime: "0:00",
-    hourText: $.i18n._("Hour"),
-    minuteText: $.i18n._("Minute"),
-    onClose: validateTimeRange,
-  };
 
   showlistenerstat_content
     .find(dateStartId)
@@ -64,7 +54,7 @@ function addDatePicker() {
     .blur(validateTimeRange);
   showlistenerstat_content
     .find(timeStartId)
-    .timepicker(oBaseTimePickerSettings)
+    .rtTimeInput({ onChange: validateTimeRange }) // RASTATIME 2026-11-11 - native time fields (common/time-input.js) instead of the jQuery UI timepicker
     .blur(validateTimeRange);
   showlistenerstat_content
     .find(dateEndId)
@@ -72,7 +62,7 @@ function addDatePicker() {
     .blur(validateTimeRange);
   showlistenerstat_content
     .find(timeEndId)
-    .timepicker(oBaseTimePickerSettings)
+    .rtTimeInput({ onChange: validateTimeRange })
     .blur(validateTimeRange);
 }
 

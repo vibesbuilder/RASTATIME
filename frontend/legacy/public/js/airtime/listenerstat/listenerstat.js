@@ -11,6 +11,23 @@ $(document).ready(function () {
   $("#listenerstat_content").find("#flot_placeholder").width(width);
   $("#listenerstat_content").find("#legend").width(width);
 
+  // RASTATIME 2026-11-11 - date / time fields set up once here (they were
+  // re-initialised in plot() on every data load); native time fields
+  // (common/time-input.js) instead of the jQuery UI timepicker
+  var oBaseDatePickerSettings = {
+    dateFormat: "yy-mm-dd",
+    //i18n_months, i18n_days_short are in common.js
+    monthNames: i18n_months,
+    dayNamesMin: i18n_days_short,
+    onSelect: function (sDate, oDatePicker) {
+      $(this).datepicker("setDate", sDate);
+    },
+  };
+  listenerstat_content.find(dateStartId).datepicker(oBaseDatePickerSettings);
+  listenerstat_content.find(timeStartId).rtTimeInput();
+  listenerstat_content.find(dateEndId).datepicker(oBaseDatePickerSettings);
+  listenerstat_content.find(timeEndId).rtTimeInput();
+
   getDataAndPlot();
 
   // RASTATIME 2026-11-11 - bound once (Flot 0.8 code bound it on every redraw)
@@ -213,28 +230,4 @@ function plot(datasets) {
   }
 
   buildLegend(draw());
-  oBaseDatePickerSettings = {
-    dateFormat: "yy-mm-dd",
-    //i18n_months, i18n_days_short are in common.js
-    monthNames: i18n_months,
-    dayNamesMin: i18n_days_short,
-    onSelect: function (sDate, oDatePicker) {
-      $(this).datepicker("setDate", sDate);
-    },
-  };
-
-  oBaseTimePickerSettings = {
-    showPeriodLabels: false,
-    showCloseButton: true,
-    closeButtonText: $.i18n._("Done"),
-    showLeadingZero: false,
-    defaultTime: "0:00",
-    hourText: $.i18n._("Hour"),
-    minuteText: $.i18n._("Minute"),
-  };
-
-  listenerstat_content.find(dateStartId).datepicker(oBaseDatePickerSettings);
-  listenerstat_content.find(timeStartId).timepicker(oBaseTimePickerSettings);
-  listenerstat_content.find(dateEndId).datepicker(oBaseDatePickerSettings);
-  listenerstat_content.find(timeEndId).timepicker(oBaseTimePickerSettings);
 }

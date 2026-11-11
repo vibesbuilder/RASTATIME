@@ -129,7 +129,6 @@ class PlayouthistoryController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/datatables/plugin/dataTables.pluginAPI.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/datatables/plugin/dataTables.fnSetFilteringDelay.js'), 'text/javascript');
 
-        $this->view->headScript()->appendFile(Assets::url('js/timepicker/jquery.ui.timepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/bootstrap-datetime/bootstrap-datetimepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/buttons/buttons.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/utilities/utilities.js'), 'text/javascript');
@@ -139,7 +138,6 @@ class PlayouthistoryController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/airtime/playouthistory/historytable.js'), 'text/javascript');
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/bootstrap-datetimepicker.min.css'));
-        $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/playouthistory.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/history_styles.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.contextMenu.css'));

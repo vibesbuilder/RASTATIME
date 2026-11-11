@@ -2160,10 +2160,11 @@ button, input {
     background-repeat:no-repeat;
     background-position:right 0;
 }
-.input_text.hasTimepicker {
-    background-image:url(images/input_with_time_bg.png);
-    background-repeat:no-repeat;
-    background-position:right 0;
+/* RASTATIME 2026-11-11 - native time fields (js/airtime/common/time-input.js)
+   replace the jQuery UI timepicker; the browser draws its own clock icon */
+.input_text.rt-time-input {
+    width: 85px;
+    background-image: none;
 }
 ul.errors {
     display:block;
@@ -2608,8 +2609,8 @@ span.errors.sp-errors{
 .formrow-repeat li .hasDatepicker, .formrow-repeat li .input_select {
     width:95px;
 }
-.formrow-repeat li .hasTimepicker {
-    width:60px;
+.formrow-repeat li .rt-time-input {
+    width:85px;
 }
 .recording-show {
     float: right;

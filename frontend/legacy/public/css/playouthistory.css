@@ -15,8 +15,8 @@
     width: 95px;
 }
 
-#history_content input.input_text.hasTimepicker {
-    width: 60px;
+#history_content input.input_text.rt-time-input {
+    width: 85px;
 }
 
 div.his-timerange {

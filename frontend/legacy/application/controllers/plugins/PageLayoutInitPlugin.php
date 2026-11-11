@@ -221,7 +221,9 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
             ->appendFile(Assets::url('js/libs/jquery-browser-shim.js'), 'text/javascript')
             ->appendFile(Assets::url('js/libs/jquery-ui-1.13.3.min.js'), 'text/javascript')
             // RASTATIME 2026-11-11 - $(el).block() / unblock(), replaces BlockUI 2.39
-            ->appendFile(Assets::url('js/airtime/common/block.js'), 'text/javascript');
+            ->appendFile(Assets::url('js/airtime/common/block.js'), 'text/javascript')
+            // RASTATIME 2026-11-11 - $(input).rtTimeInput(), replaces the jQuery UI timepicker
+            ->appendFile(Assets::url('js/airtime/common/time-input.js'), 'text/javascript');
         $hs
             // RASTATIME 2026-06-01 (JS-modernization stage 1): AngularJS 1.4.5
             // (EOL 2022) has been fully removed — the Podcast / Publish views

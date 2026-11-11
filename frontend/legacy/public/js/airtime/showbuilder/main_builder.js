@@ -41,16 +41,6 @@ AIRTIME = (function (AIRTIME) {
     onClose: validateTimeRange,
   };
 
-  oBaseTimePickerSettings = {
-    showPeriodLabels: false,
-    showCloseButton: true,
-    closeButtonText: $.i18n._("Done"),
-    showLeadingZero: false,
-    defaultTime: "0:00",
-    hourText: $.i18n._("Hour"),
-    minuteText: $.i18n._("Minute"),
-    onClose: validateTimeRange,
-  };
 
   function setWidgetSize() {
     viewport = AIRTIME.utilities.findViewportDimensions();
@@ -222,7 +212,7 @@ AIRTIME = (function (AIRTIME) {
 
     $builder
       .find(timeStartId)
-      .timepicker(oBaseTimePickerSettings)
+      .rtTimeInput({ onChange: validateTimeRange }) // RASTATIME 2026-11-11 - native time fields (common/time-input.js) instead of the jQuery UI timepicker
       .blur(validateTimeRange);
 
     $builder
@@ -232,7 +222,7 @@ AIRTIME = (function (AIRTIME) {
 
     $builder
       .find(timeEndId)
-      .timepicker(oBaseTimePickerSettings)
+      .rtTimeInput({ onChange: validateTimeRange })
       .blur(validateTimeRange);
 
     oRange = AIRTIME.utilities.fnGetScheduleRange(

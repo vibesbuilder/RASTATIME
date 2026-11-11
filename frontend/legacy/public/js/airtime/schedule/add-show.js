@@ -248,14 +248,6 @@ function beginEditShow(data) {
   openAddShowForm(false);
 }
 
-function onStartTimeSelect() {
-  $("#add_show_start_time").trigger("input");
-}
-
-function onEndTimeSelect() {
-  $("#add_show_end_time").trigger("input");
-}
-
 function padZeroes(number, length) {
   var str = "" + number;
   while (str.length < length) {
@@ -732,19 +724,10 @@ function setAddShowEvents(form) {
   createDateInput(form.find("#add_show_end_date_no_repeat"), endDpSelect);
   createDateInput(form.find("#add_show_end_date"), endDpSelect);
 
-  $("#add_show_start_time").timepicker({
-    amPmText: ["", ""],
-    defaultTime: "00:00",
-    onSelect: onStartTimeSelect,
-    hourText: $.i18n._("Hour"),
-    minuteText: $.i18n._("Minute"),
-  });
-  $("#add_show_end_time").timepicker({
-    amPmText: ["", ""],
-    onSelect: onEndTimeSelect,
-    hourText: $.i18n._("Hour"),
-    minuteText: $.i18n._("Minute"),
-  });
+  // RASTATIME 2026-11-11 - native time fields (common/time-input.js) instead of the jQuery UI timepicker;
+  // the browser fires "input" itself, which the duration logic listens to
+  $("#add_show_start_time").rtTimeInput();
+  $("#add_show_end_time").rtTimeInput();
 
   form.find('input[name^="add_show_rebroadcast_date_absolute"]').datepicker({
     minDate: adjustDateToServerDate(new Date(), timezoneOffset),
@@ -757,13 +740,7 @@ function setAddShowEvents(form) {
     firstDay: calendarPref.weekStart,
   });
 
-  form.find('input[name^="add_show_rebroadcast_time"]').timepicker({
-    amPmText: ["", ""],
-    defaultTime: "",
-    closeButtonText: $.i18n._("Done"),
-    hourText: $.i18n._("Hour"),
-    minuteText: $.i18n._("Minute"),
-  });
+  form.find('input[name^="add_show_rebroadcast_time"]').rtTimeInput();
 
   form.find(".add_absolute_rebroadcast_day").click(function () {
     var li = $(this)

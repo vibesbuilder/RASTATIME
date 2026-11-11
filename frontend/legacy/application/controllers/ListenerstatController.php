@@ -20,10 +20,8 @@ class ListenerstatController extends Zend_Controller_Action
         // included) instead of Flot 0.8.3 + time / crosshair / resize plugins.
         $this->view->headScript()->appendFile(Assets::url('js/flot/jquery.flot.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/listenerstat/listenerstat.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/timepicker/jquery.ui.timepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/buttons/buttons.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/utilities/utilities.js'), 'text/javascript');
-        $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
 
         [$startsDT, $endsDT] = Application_Common_HTTPHelper::getStartEndFromRequest($request);
         $userTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
@@ -128,13 +126,11 @@ class ListenerstatController extends Zend_Controller_Action
         $headScript = $this->view->headScript();
         AirtimeTableView::injectTableJavaScriptDependencies($headScript);
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Analytics');
-        $this->view->headScript()->appendFile(Assets::url('js/timepicker/jquery.ui.timepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/buttons/buttons.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/utilities/utilities.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/airtime/listenerstat/showlistenerstat.js'), 'text/javascript');
 
         AirtimeTableView::injectTableCssDependencies($this->view->headLink());
-        $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
         $this->view->headLink()->appendStylesheet(Assets::url('css/show_analytics.css'));
 
         $user = Application_Model_User::getCurrentUser();

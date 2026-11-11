@@ -157,16 +157,6 @@ function buildTimerange(dialog) {
         $(this).datepicker("setDate", sDate);
       },
       onClose: validateTimeRange,
-    },
-    oBaseTimePickerSettings = {
-      showPeriodLabels: false,
-      showCloseButton: true,
-      closeButtonText: $.i18n._("Done"),
-      showLeadingZero: false,
-      defaultTime: "0:00",
-      hourText: $.i18n._("Hour"),
-      minuteText: $.i18n._("Minute"),
-      onClose: validateTimeRange,
     };
 
   /*
@@ -180,9 +170,10 @@ function buildTimerange(dialog) {
   });
 
   builder.find(dateStartId).datepicker(oBaseDatePickerSettings);
-  builder.find(timeStartId).timepicker(oBaseTimePickerSettings);
+  // RASTATIME 2026-11-11 - native time fields (common/time-input.js) instead of the jQuery UI timepicker
+  builder.find(timeStartId).rtTimeInput({ onChange: validateTimeRange });
   builder.find(dateEndId).datepicker(oBaseDatePickerSettings);
-  builder.find(timeEndId).timepicker(oBaseTimePickerSettings);
+  builder.find(timeEndId).rtTimeInput({ onChange: validateTimeRange });
 
   var oRange = AIRTIME.utilities.fnGetScheduleRange(
     dateStartId,

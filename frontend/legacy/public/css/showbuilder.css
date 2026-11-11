@@ -83,8 +83,8 @@
     width:95px;
 }
 
-.sb-content input.input_text.hasTimepicker {
-    width:60px;
+.sb-content input.input_text.rt-time-input {
+    width:85px;
 }
 
 div.sb-timerange {

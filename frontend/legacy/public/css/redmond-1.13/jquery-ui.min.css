@@ -35,18 +35,3 @@
 .ui-datepicker td a.ui-state-active{background:var(--rt-accent) none;border:1px solid var(--rt-accent-darker);color:var(--rt-accent-fg)}
 .ui-datepicker .ui-datepicker-unselectable .ui-state-default{background:#454545 none;border:1px solid #383838;color:#888}
 
-/* RASTATIME 2026-10-01: the timepicker popup (jquery.ui.timepicker, FG)
- * joins the dark recolor - it builds its table from the same redmond
- * classes as the datepicker (ui-widget-content, ui-state-default/hover/
- * active, ui-widget-header) and still showed the blue glass cells
- * (operator report 2026-10-01: show builder, New/Edit Show, Playout
- * History, Listener Stats).  Same palette as the datepicker above. */
-#ui-timepicker-div{background:#3a3a3a;border:1px solid #2a2a2a;color:#ddd}
-#ui-timepicker-div .ui-timepicker-table.ui-widget-content,#ui-timepicker-div .ui-timepicker-buttonpane.ui-widget-content{background:#3a3a3a none;border-color:#2a2a2a;color:#ddd}
-#ui-timepicker-div .ui-timepicker-table th.periods{color:#ddd}
-#ui-timepicker-div td a.ui-state-default,#ui-timepicker-div td span.ui-state-default{background:#565656 none;border:1px solid #2f2f2f;color:#eee}
-#ui-timepicker-div td a.ui-state-hover{background:#6a6a6a none;border:1px solid #3a3a3a;color:#fff}
-#ui-timepicker-div td a.ui-state-active{background:var(--rt-accent) none;border:1px solid var(--rt-accent-darker);color:var(--rt-accent-fg)}
-#ui-timepicker-div td span.ui-state-disabled{background:#454545 none;border:1px solid #383838;color:#888}
-#ui-timepicker-div .ui-timepicker-buttonpane button.ui-state-default{background:#565656 none;border:1px solid #2f2f2f;color:#fff}
-#ui-timepicker-div .ui-timepicker-buttonpane button.ui-state-default:hover{background:#6a6a6a none;border-color:#3a3a3a}

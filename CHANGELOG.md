@@ -54,6 +54,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   im HTML), Farben bleiben beim Aus-/Einblenden stabil; der Tooltip wird nur noch einmal
   gebunden.  Die Zeitachse zeigt wie bisher Studiozeit (der Server verschiebt die Werte bereits
   je Messpunkt in die Benutzer-Zeitzone).  Aussehen unverändert.
+- **Uhrzeitfelder: Browser-Feld statt jQuery-UI-Timepicker (2026-11-11)** — Der Timepicker
+  0.2.9 (seit ~2014 ungepflegt, brauchte die `$.browser`-Krücke) ist ersetzt durch das
+  eingebaute `<input type="time">` (Tastatur, Mausrad, Auswahl des Browsers) auf allen sechs
+  Seiten: Showbuilder, Kalender (Show-Inhalt), Show anlegen / bearbeiten inkl.
+  Wiederholungszeiten, Playout History, Listener Stats und Show Listener Stats.  Neu
+  `js/airtime/common/time-input.js` (`$(input).rtTimeInput()`), auf jeder Seite geladen; der
+  Wert bleibt `HH:MM` (24 h), Formulare, Prüfungen und Server unverändert, Werte ohne führende
+  Null werden aufgefüllt.  Die Anzeige folgt der Sprache von Windows / Browser (bei englischem
+  System ggf. 12 h mit AM/PM, gespeichert wird trotzdem 24 h); das Stunden-/Minuten-Raster zum
+  Anklicken entfällt.  Listener Stats richtet die Datums-/Zeitfelder nur noch einmal ein (vorher
+  bei jedem Datenabruf).  Timepicker-Dateien, sein Uhr-Hintergrundbild und die
+  Dunkel-Regeln für sein Popup entfernt.
 - **Release-Action auf v3.0.4 (2026-11-11)** — `softprops/action-gh-release` 3.0.3 → 3.0.4
   (Dependabot-Vorschlag, SHA gegen das Upstream-Tag geprüft), lokal übernommen statt per
   Web-Merge (d4513f8a).

@@ -84,7 +84,6 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/index.global.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/locales-all.global.min.js'), 'text/javascript');
         $this->view->headScript()->offsetSetFile(110, Assets::url('js/airtime/schedule/schedule-fc6.js'), 'text/javascript');
-        $this->view->headScript()->appendFile(Assets::url('js/timepicker/jquery.ui.timepicker.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/colorpicker/js/colorpicker.js'), 'text/javascript');
 
         // This block needs to be added before the add-show.js script
@@ -97,7 +96,6 @@ class ScheduleController extends Zend_Controller_Action
         // RASTATIME 2026-10-28 - "Undo" after deleting a show from the calendar
         $this->view->headScript()->appendFile(Assets::url('js/airtime/schedule/undo-delete.js'), 'text/javascript');
 
-        $this->view->headLink()->appendStylesheet(Assets::url('css/jquery.ui.timepicker.css'));
         // RASTATIME 2026-09-17: schedule-fc6.css is the FC6 dark theme; the
         // FC1.5 fullcalendar.css went with the fork.
         $this->view->headLink()->appendStylesheet(Assets::url('css/schedule-fc6.css'));
