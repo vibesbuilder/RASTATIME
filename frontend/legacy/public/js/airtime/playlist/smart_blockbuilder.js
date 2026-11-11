@@ -1139,8 +1139,8 @@ function removeButtonCheck() {
 }
 
 function enableLoadingIcon() {
-  // Disable the default overlay style
-  $.blockUI.defaults.overlayCSS = {};
+  // RASTATIME 2026-11-11 - block() is js/airtime/common/block.js now (the
+  // themed overlay never used BlockUI's overlayCSS default)
   $(".side_playlist.active-tab").block({
     //message: $.i18n._("Processing..."),
     message: $.i18n._(""),

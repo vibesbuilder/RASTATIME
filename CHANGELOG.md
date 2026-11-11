@@ -41,6 +41,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BlockUI 2.39 ersetzt (2026-11-11)** — Die Bibliothek von 2011 (brauchte die `$.browser`-
+  Krücke) wurde nur für „Bereich beim Laden abdunkeln“ genutzt (Library, Showbuilder, Playlist-
+  und Smart-Block-Editor, Podcast-Episodentabelle, Show-Formular).  Neu
+  `js/airtime/common/block.js` (~90 Zeilen) mit denselben Aufrufen `.block()` / `.unblock()`
+  und denselben CSS-Klassen, auf jeder Seite geladen - so wirft auch die eigene Podcast-Seite
+  keinen Fehler mehr (dort fehlte BlockUI).  Aussehen unverändert.
 - **Release-Action auf v3.0.4 (2026-11-11)** — `softprops/action-gh-release` 3.0.3 → 3.0.4
   (Dependabot-Vorschlag, SHA gegen das Upstream-Tag geprüft), lokal übernommen statt per
   Web-Merge (d4513f8a).
