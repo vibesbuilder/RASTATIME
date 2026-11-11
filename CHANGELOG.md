@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-11
+
 ### Security
 
 - **CodeQL-Befunde behoben (2026-11-11)** — Erster CodeQL-Lauf nach dem Öffentlich-Stellen des
@@ -10992,7 +10994,8 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.1.0...v1.2.0
