@@ -10,10 +10,13 @@
  *
  * New hashes are bcrypt (password_hash, PASSWORD_BCRYPT, cost 12, "$2y$"
  * prefix).  The Django API writes the same algorithm with the python
- * bcrypt package ("$2b$" prefix); both sides verify both prefixes.  An old
- * 32-character hex value is still accepted by verify() so that every
- * account keeps working and is re-hashed on its next successful login
- * (Application_Model_User::verifyPassword, the login adapter).
+ * bcrypt package ("$2b$" prefix); both sides verify both prefixes.
+ *
+ * Until 2026-11-11 an old 32-character hex value was still accepted and
+ * re-hashed on the next login.  Every account had migrated by then, so the
+ * md5 fallback is gone (CodeQL py/weak-sensitive-data-hashing): an md5
+ * value - e.g. from a restored pre-2026-10-27 backup - never matches; the
+ * account needs a new password (`manage.py password_hashes` names them).
  */
 class Application_Model_Password
 {
@@ -25,7 +28,7 @@ class Application_Model_Password
         return password_hash($plain, PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST]);
     }
 
-    /** True when $stored is an unsalted md5 of the pre-2026-10-27 era. */
+    /** True when $stored is an unsalted md5 of the pre-2026-10-27 era (no longer accepted). */
     public static function isLegacyMd5(?string $stored): bool
     {
         return $stored !== null && preg_match('/^[0-9a-f]{32}$/i', $stored) === 1;
@@ -38,23 +41,17 @@ class Application_Model_Password
     }
 
     /**
-     * Check a plain password against the stored value: bcrypt, or the
-     * legacy md5 as a fallback.  An empty stored value never matches
-     * (header-auth placeholder accounts).
+     * Check a plain password against the stored bcrypt value.  Anything
+     * else - empty (header-auth placeholder accounts), a legacy md5 - never
+     * matches.
      */
     public static function verify(string $plain, ?string $stored): bool
     {
-        if ($stored === null || $stored === '') {
+        if ($stored === null || !self::isBcrypt($stored)) {
             return false;
         }
-        if (self::isBcrypt($stored)) {
-            return password_verify($plain, $stored);
-        }
-        if (self::isLegacyMd5($stored)) {
-            return hash_equals(strtolower($stored), md5($plain));
-        }
 
-        return false;
+        return password_verify($plain, $stored);
     }
 
     /** True when a verified password should be stored again with the current algorithm. */

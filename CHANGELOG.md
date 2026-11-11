@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Die übrigen Hinweise sind begründet geschlossen (Admin-only-Pfade, Fehlertexte ohne
   Stacktrace, alte Bibliotheken ohne Fremdeingaben; Bibliotheks-Ersatz als Idee im BACKLOG).
   Wirksam: Oberfläche sofort, die Logzeile nach dem nächsten PLAYOUT-Neustart (83134eb0).
+- **MD5-Rückfall im Passwort-Check entfernt (2026-11-11)** — Seit 2026-10-27 bcrypt; alte
+  MD5-Werte wurden noch angenommen und beim nächsten Login ersetzt.  Am 2026-11-11 waren alle
+  Konten umgestellt (vier nie benutzte gelöscht, Admin einmal angemeldet), darum nimmt weder die
+  Legacy-Seite (`Application_Model_Password::verify`) noch die API (`verify_password`,
+  `has_usable_password`) einen MD5-Wert mehr an.  Folge: Ein zurückgespieltes Backup von vor dem
+  2026-10-27 braucht neue Passwörter; `manage.py password_hashes` nennt die Konten.  Schließt
+  CodeQL py/weak-sensitive-data-hashing.  Wirksam: Legacy sofort, API nach dem nächsten
+  API-Neustart.
 
 ### Changed
 

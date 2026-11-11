@@ -76,17 +76,16 @@ class TestUserPasswordHashing(APITestCase):
         self.assertTrue(verify_password("x", user.password))
         self.assertTrue(user.check_password("x"))
 
-    def test_legacy_md5_is_accepted_and_upgraded(self):
+    def test_legacy_md5_is_no_longer_accepted(self):
+        # RASTATIME 2026-11-11 - the md5 fallback is gone
         user = self._user("whatever")
         User.objects.filter(pk=user.pk).update(password=hashlib.md5(b"OldPass1").hexdigest())
         user = User.objects.get(pk=user.pk)
         self.assertTrue(is_legacy_md5_hash(user.password))
-        self.assertFalse(user.check_password("wrong"))
+        self.assertFalse(user.has_usable_password())
+        self.assertFalse(user.check_password("OldPass1"))
+        self.assertFalse(verify_password("OldPass1", user.password))
         self.assertTrue(is_legacy_md5_hash(User.objects.get(pk=user.pk).password))
-        self.assertTrue(user.check_password("OldPass1"))
-        stored = User.objects.get(pk=user.pk).password
-        self.assertTrue(is_bcrypt_hash(stored))
-        self.assertTrue(verify_password("OldPass1", stored))
 
     def test_empty_password_is_unusable(self):
         user = self._user("x")

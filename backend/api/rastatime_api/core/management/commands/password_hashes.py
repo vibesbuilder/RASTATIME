@@ -2,9 +2,10 @@
 RASTATIME 2026-10-27 - how the user passwords are stored.
 
 Until 2026-10-27 ``cc_subjs.pass`` held unsalted md5 hashes; since then
-new and re-hashed passwords are bcrypt, and every account migrates on its
-next successful login (web login, DJ dial-in or API).  This command tells
-the operator which accounts still carry the old hash.
+new and re-hashed passwords are bcrypt.  Since 2026-11-11 an md5 value is
+no longer accepted at all (every account had migrated).  This command
+names accounts that still carry one - e.g. after restoring an old backup -
+so the operator can set a new password for them.
 
     manage.py password_hashes
 """
@@ -33,5 +34,6 @@ class Command(BaseCommand):
             out(f"  {kind:10s}  {user.username}  ({user.role})")
         out(
             f"{counts['bcrypt']} bcrypt, {counts['legacy md5']} legacy md5 "
-            f"(migrate on the next login), {counts['none']} without a usable password"
+            f"(no longer accepted - set a new password), "
+            f"{counts['none']} without a usable password"
         )

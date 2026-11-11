@@ -5,10 +5,10 @@
  *
  * Replaces Zend_Auth_Adapter_DbTable with setCredentialTreatment('MD5(?)'):
  * the row is fetched by login and the password is checked in PHP
- * (Application_Model_Password: bcrypt, legacy md5 accepted).  A login that
- * succeeded against a legacy md5 - or a bcrypt hash below the current cost -
- * stores the password again as bcrypt, so every account migrates on its
- * next login.  getResultRowObject() mirrors the DbTable adapter: the row's
+ * (Application_Model_Password: bcrypt only since 2026-11-11; the legacy md5
+ * was accepted until every account had migrated).  A login against a
+ * bcrypt hash below the current cost stores the password again with the
+ * current cost.  getResultRowObject() mirrors the DbTable adapter: the row's
  * columns as a stdClass, with the password left out.
  */
 class Rastatime_Auth_Adaptor_Password implements Zend_Auth_Adapter_Interface

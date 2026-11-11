@@ -7912,7 +7912,7 @@ Podcast-Episodendialog (Feed-HTML), Editor-Tab-Beschriftung (Tracktitel),
 Cue-Editor, Passwort in der Debug-Zeile der Line-In-Aufnahme, zwei tote
 `*_orig.js`-Dateien.  Details im CHANGELOG.
 
-### 🔴 MD5-Rückfall im Passwort-Check entfernen - HOLD
+### ✅ MD5-Rückfall im Passwort-Check entfernen - GEBAUT 2026-11-11 (Go 2026-11-11, alle 6 Konten bcrypt)
 Seit 2026-10-27 bcrypt, alte MD5-Hashes werden beim nächsten Login ersetzt
 (Legacy-Adapter, User::verifyPassword, Django check_password).  Am
 2026-11-11 hatten noch 5 von 10 Konten MD5 (darunter das Admin-Konto, vier

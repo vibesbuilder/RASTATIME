@@ -141,10 +141,10 @@ class Application_Model_User
     }
 
     /**
-     * RASTATIME 2026-10-27 - check a plain password against the stored hash
-     * (bcrypt, or the legacy md5 of accounts that have not logged in since
-     * the change).  A match against a legacy or weaker hash stores the
-     * password again as bcrypt right away.
+     * RASTATIME 2026-10-27 - check a plain password against the stored
+     * bcrypt hash (the legacy md5 fallback is gone since 2026-11-11).  A
+     * match against a hash below the current cost stores the password again
+     * right away.
      */
     public function verifyPassword($password): bool
     {
