@@ -80,6 +80,47 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟢 Puffer-Track für kleine Restlücken (Auto-DJ) - Evaluierung 2026-11-12, wartet auf Go
+
+Operator-Idee 2026-11-12 nach der Stille vom 2026-11-11 13:44 (30,8 s Rest am Ende einer
+Podcast-Sendung; der Auto-DJ-Block hatte keinen passenden kurzen Titel, Dead-Air-Alarm).  Ein eigens
+produzierter, mehrere Minuten langer Titel (jederzeit ausblendbar) füllt eine Restlücke, wenn der
+Auto-DJ nichts Passendes findet; er darf als einziger Titel das Sendungsende überschreiten und wird
+dort geschnitten oder ausgeblendet.
+
+**Häufigkeit (30 Tage bis 2026-11-12):** rund 10 Sendungen endeten mit 6-31 s Stille, eine mit 180 s,
+dazu 10 Webstream-Sendungen mit 5-20 s Rest.
+
+**Entwurf Stufe 1 (Schnitt):**
+- Settings → Auto DJ: „Buffer Track" (Titel), „Maximum Gap" (s), „At the End of the Show" (Cut /
+  Fade Out).  Prüfung beim Speichern: Titellänge > maximale Lücke + Crossfade.
+- `AutoDjService::runFillPass`: nach dem normalen Anhängen den Rest neu messen; 5 s < Rest ≤ Maximum
+  → Puffer-Track nach der letzten Zeile anhängen (darf überbuchen).  Größere Reste wie heute.
+- Kappung am Sendungsende gibt es schon (API `get_cue_out` / `get_ends_at`), der Übergang zur
+  Folgesendung läuft über die Show-Form (Show-Crossfade 1 s).
+- Pflicht: `ShowShiftService` (Inhaltsende = `MAX(ends)`) darf die Puffer-Zeile nicht als Überlauf
+  werten - 12 Sendungen haben „Allow delayed start", die Folgesendung würde sonst um Minuten
+  verschoben oder geleert.  Ebenso: Wiederholungs-Kopie (Puffer-Zeile nicht mitkopieren), Show
+  Builder / Kalender (Überbuchung als Puffer kennzeichnen), Preflight (Puffer-Track fehlt /
+  deaktiviert).
+- Puffer-Zeile erkennen: (a) über die Datei-Id aus den Settings (keine Migration) oder (b) eigene
+  Spalte in `cc_schedule` (Migration, robust gegen einen Wechsel des Titels).  Empfehlung (b).
+- Nebenbefund: `get_cue_out` liefert bei überbuchten Zeilen „Sendungsende − Start" statt
+  „Cue-In + Sendungsende − Start" - jede überbuchte Zeile endet um ihren Cue-In zu früh (Fall
+  2026-11-07 17:15: 0,03 s).  Fix im selben Paket.
+
+**Stufe 2 (Ausblenden):** Fade-Länge je Übergang (wie `rt_dur`) für die Show-Form, bis BUFFER (3 s)
+ohne neuen Mechanismus; PLAYOUT + Template, geplanter Liquidsoap-Neustart.  🟡 Defer: Fades > 3 s
+(brauchen `fade.out` mit Metadaten an der Queue, Bench zuerst) und ein Fade, wenn der Puffer-Track in
+Stille endet (heute harter Schluss am Cue-Out; nur bei Lücken < 60 s zwischen zwei Sendungen).
+
+**Grenze:** der Fill-Pass arbeitet nur vor Sendungsbeginn (1 h voraus); Lücken, die erst während
+der Sendung entstehen, deckt der Puffer-Track nicht ab.
+
+**Offen beim Go:** Mindestlücke (5 s wie heute?), ein Titel oder mehrere zur Abwechslung,
+Fade-Länge (≤ 3 s genügt?), Puffer auch nach einem festen Outro und in Webstream-Sendungen,
+Variante (a) / (b).
+
 ### 🟡 Radioplayer Feed (Distributionspartner) - GEBAUT und eingeschaltet 2026-11-10 (`10c66559`, `a69d0e17`, §23.103), wartet auf Antworten des Partners
 
 `/embed/radioplayer-events` liefert previous / now / next im Format der Radioplayer-v4-„events“-Abfrage; live geprüft 2026-11-10 18:15 (200, 7 Titel, laufender Titel mit Bild, nächste Sendung), noch ohne Zugangsschlüssel.
