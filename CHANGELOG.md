@@ -30,14 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `has_usable_password`) einen MD5-Wert mehr an.  Folge: Ein zurückgespieltes Backup von vor dem
   2026-10-27 braucht neue Passwörter; `manage.py password_hashes` nennt die Konten.  Schließt
   CodeQL py/weak-sensitive-data-hashing.  Wirksam: Legacy sofort, API nach dem nächsten
-  API-Neustart.
+  API-Neustart (ccceb3ff).
 - **Tote Alt-Bibliotheken und Ordner-Browser entfernt (2026-11-11)** — `serverbrowser.js` samt
   `musicdirs.js`, Formular `WatchedDirPreferences`, Platzhalter `directory-config` und der
   zweite, nie geladene Timepicker (`jquery-ui-timepicker-addon`) waren nirgends eingebunden; die
   Server-Aktion `/preference/server-browse` war aber für jeden Admin erreichbar und listete die
   Unterordner eines beliebigen Pfads auf dem Server - weg.  `dataTables.columnFilter.js` wurde
   auf fünf Seiten geladen, lief aber nie (die Library filtert seit 2026-06 mit eigenem Code);
-  Plugin und toter Aufrufzweig entfernt.  Keine sichtbare Änderung.
+  Plugin und toter Aufrufzweig entfernt.  Keine sichtbare Änderung (861fc0b2).
 
 ### Changed
 
@@ -46,14 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   und Smart-Block-Editor, Podcast-Episodentabelle, Show-Formular).  Neu
   `js/airtime/common/block.js` (~90 Zeilen) mit denselben Aufrufen `.block()` / `.unblock()`
   und denselben CSS-Klassen, auf jeder Seite geladen - so wirft auch die eigene Podcast-Seite
-  keinen Fehler mehr (dort fehlte BlockUI).  Aussehen unverändert.
+  keinen Fehler mehr (dort fehlte BlockUI).  Aussehen unverändert (e13609a9).
 - **Flot 0.8.3 → 4.2.6 (2026-11-11)** — Diagramm unter Analytics → Listener Stats.  Ein
   Bündel (Zeitachse, Hover, Legende) statt Kern + drei Plugins; das unbenutzte Crosshair- und das
   pollende Resize-Plugin fallen weg (Neuzeichnen per `ResizeObserver`).  Die Legende mit den
   Mount-Checkboxen ist eigener DOM-Code: Mount-Namen werden als Text gesetzt (vorher ungeschützt
   im HTML), Farben bleiben beim Aus-/Einblenden stabil; der Tooltip wird nur noch einmal
   gebunden.  Die Zeitachse zeigt wie bisher Studiozeit (der Server verschiebt die Werte bereits
-  je Messpunkt in die Benutzer-Zeitzone).  Aussehen unverändert.
+  je Messpunkt in die Benutzer-Zeitzone).  Aussehen unverändert (dce0dfda).
 - **Uhrzeitfelder: Browser-Feld statt jQuery-UI-Timepicker (2026-11-11)** — Der Timepicker
   0.2.9 (seit ~2014 ungepflegt, brauchte die `$.browser`-Krücke) ist ersetzt durch das
   eingebaute `<input type="time">` (Tastatur, Mausrad, Auswahl des Browsers) auf allen sechs
@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   System ggf. 12 h mit AM/PM, gespeichert wird trotzdem 24 h); das Stunden-/Minuten-Raster zum
   Anklicken entfällt.  Listener Stats richtet die Datums-/Zeitfelder nur noch einmal ein (vorher
   bei jedem Datenabruf).  Timepicker-Dateien, sein Uhr-Hintergrundbild und die
-  Dunkel-Regeln für sein Popup entfernt.
+  Dunkel-Regeln für sein Popup entfernt (df1099bd).
 - **Release-Action auf v3.0.4 (2026-11-11)** — `softprops/action-gh-release` 3.0.3 → 3.0.4
   (Dependabot-Vorschlag, SHA gegen das Upstream-Tag geprüft), lokal übernommen statt per
   Web-Merge (d4513f8a).
