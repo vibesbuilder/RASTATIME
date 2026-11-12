@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Liquidsoap-Eingang zuerst (solange der Mount noch Ton hat - ein Eingang, der schon einen toten
   Mount abfragt, verliert das Stop und bleibt bis zum Neustart ein Zombie), dann die Aufnahme,
   Gate zurück.  Dieselbe Lücke hatte ein entfernter Webstream (Eingang und offenes Gate blieben);
-  auch er wird jetzt gestoppt.  Wirksam nach dem nächsten PLAYOUT-Neustart.
+  auch er wird jetzt gestoppt.  Wirksam nach dem nächsten PLAYOUT-Neustart (81c27e40).
 
 ## [1.5.0] - 2026-11-11
 
