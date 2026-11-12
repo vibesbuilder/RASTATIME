@@ -688,15 +688,10 @@ class PlayoutScheduler:
                         self._queued_ahead = None
                         self._queued_ahead_prev = None
 
-                    # Phase B — if the now-stale event was a Line-In,
-                    # also tear down the dshow capture; otherwise the
-                    # microphone device stays locked by an orphan
-                    # FFmpeg subprocess.
-                    if (
-                        isinstance(self._current_event, LineinEvent)
-                        and self._linein_capture is not None
-                    ):
-                        self._linein_capture.stop()
+                    # Phase B — if the now-stale event was a Line-In or
+                    # a web stream, also release its source (capture +
+                    # Liquidsoap input), see _stop_removed_source.
+                    self._stop_removed_source(self._current_event, stale_key)
 
                     self._playing_key = None
                     self._current_event = None
@@ -2700,6 +2695,38 @@ class PlayoutScheduler:
                 self._linein_capture.stop()
             self._engine.linein_gate(True)
         elif isinstance(event, WebStreamEvent):
+            self._webstream_generation += 1
+            self._engine.webstream_stop()
+            self._engine.webstream_gate(True)
+
+    def _stop_removed_source(self, event: object, key: Optional[str]) -> None:
+        """
+        RASTATIME 2026-11-12 - release the source of a running line-in or
+        web stream that was removed from (or truncated in) the schedule.
+
+        This path used to stop only the line-in capture.  Liquidsoap's
+        ``linein_http`` input then polled the vanished ``/linein-capture``
+        mount (404 about twice a second) and Liquidsoap grew about 140 MB/h
+        until the next regular line-in stop (2026-11-11 08:20 -> 20:30;
+        memory alert 03:15 the next night).  A removed web stream kept its
+        input and its open gate as well.
+
+        The Liquidsoap input is stopped FIRST, while the mount still
+        carries audio: an ``input.http`` that is already polling a dead
+        mount loses the stop and stays a zombie until the next restart
+        (2026-11-12 10:05, status "starting").  Then the capture goes,
+        and the gate is reset like :meth:`_undo_prepare` does.  A pending
+        drained stop is cancelled through the generation counter.
+        """
+        if isinstance(event, LineinEvent):
+            logger.info("Line-in %s removed while running - stopping its source.", key)
+            self._linein_generation += 1
+            self._engine.linein_stop()
+            if self._linein_capture is not None:
+                self._linein_capture.stop()
+            self._engine.linein_gate(True)
+        elif isinstance(event, WebStreamEvent):
+            logger.info("Web stream %s removed while running - stopping its source.", key)
             self._webstream_generation += 1
             self._engine.webstream_stop()
             self._engine.webstream_gate(True)

@@ -80,7 +80,24 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟢 Puffer-Track für kleine Restlücken (Auto-DJ) - Evaluierung 2026-11-12, wartet auf Go
+### 🟡 Speicher-Warnung vor einem ohnehin geplanten Liquidsoap-Neustart - Defer (Operator 2026-11-12)
+
+In der Nacht zum 2026-11-12 kam der Alarm „Audio engine memory high" um 03:15, 03:45 und 04:15
+(OK): die Banner-Schwelle `RASTATIME_LIQUIDSOAP_MEMORY_WARN_MB` (2816 MB) lag unter dem Stand vor
+dem Fenster, der weiche Neustart (`RASTATIME_LIQUIDSOAP_RESTART_AT_MB` 2560 MB) läuft aber erst ab
+04:00 - drei Mails für einen Zustand, der sich um 04:03 selbst erledigte (Grenz-Neustart, 5,1 s).
+Auslöser war das Poll-Leck nach dem entfernten Line-In (behoben 2026-11-12, siehe CHANGELOG), im
+Normalbetrieb erreicht Liquidsoap 2816 MB vor dem Fenster kaum.
+
+**Optionen:**
+- (a) Warnung (Banner + Alarm) unterdrücken, solange die weiche Grenze überschritten ist, ein
+  Neustart im nächsten Fenster ansteht und die harte Grenze (3072 MB) noch nicht absehbar ist.
+- (b) Warnung bleibt, der Text sagt „planned restart from 04:00" statt „restart PLAYOUT, then
+  LIQUIDSOAP" - kein Handlungsbedarf erkennbar.
+- (c) Warn-Schwelle relativ zur harten Grenze statt absolut.
+
+**Vorbedingungen:** eine Woche ohne Poll-Leck beobachten (kommt die Warnung überhaupt noch?), dann
+Option wählen.
 
 Operator-Idee 2026-11-12 nach der Stille vom 2026-11-11 13:44 (30,8 s Rest am Ende einer
 Podcast-Sendung; der Auto-DJ-Block hatte keinen passenden kurzen Titel, Dead-Air-Alarm).  Ein eigens

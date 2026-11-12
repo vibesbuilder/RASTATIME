@@ -701,6 +701,56 @@ def test_refresh_still_tears_down_a_really_removed_item(liquidsoap_scheduler):
     assert sched._playing_key is None
 
 
+def test_removed_linein_stops_the_liquidsoap_input_before_the_capture(
+    liquidsoap_scheduler,
+):
+    """2026-11-12: the removal path stopped only the capture; linein_http
+    then polled the dead /linein-capture mount (404 flood, +140 MB/h).
+    The input must be stopped while the mount still exists."""
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    now = datetime.utcnow()
+    running = _make_linein_event().model_copy(
+        update={"start": now - timedelta(minutes=30), "end": now + timedelta(minutes=1)}
+    )
+    sched._playing_key = "K"
+    sched._current_event = running
+    sched._current_audio_path = capture.listen_url
+    capture.is_running = True
+    gen = sched._linein_generation
+    order = MagicMock()
+    order.attach_mock(engine.linein_stop, "linein_stop")
+    order.attach_mock(capture.stop, "capture_stop")
+
+    _refresh_with(sched, {})
+
+    names = [c[0] for c in order.mock_calls]
+    assert names == ["linein_stop", "capture_stop"]
+    engine.linein_gate.assert_called_with(True)
+    assert sched._linein_generation == gen + 1  # a pending drained stop is void
+    assert sched._current_event is None
+
+
+def test_removed_webstream_stops_its_input(liquidsoap_scheduler):
+    sched, engine, capture = liquidsoap_scheduler
+    sched._switcher = None
+    now = datetime.utcnow()
+    running = _webstream_event(now - timedelta(minutes=10)).model_copy(
+        update={"end": now + timedelta(minutes=20)}
+    )
+    sched._playing_key = "W"
+    sched._current_event = running
+    gen = sched._webstream_generation
+
+    _refresh_with(sched, {})
+
+    engine.webstream_stop.assert_called_once()
+    engine.webstream_gate.assert_called_with(True)
+    assert sched._webstream_generation == gen + 1
+    capture.stop.assert_not_called()
+    engine.linein_stop.assert_not_called()
+
+
 def test_file_catch_up_rebinds_instead_of_replaying_the_same_item(
     liquidsoap_scheduler,
 ):

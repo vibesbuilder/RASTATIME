@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Entfernter Line-In ließ Liquidsoap einen toten Mount abfragen (2026-11-12)** — Wurde ein
+  laufender Line-In im Kalender entfernt oder gekürzt, stoppte PLAYOUT nur die Aufnahme, nicht den
+  Eingang `linein_http` in Liquidsoap.  Der fragte danach rund zweimal pro Sekunde den
+  verschwundenen Mount `/linein-capture` ab (404) und Liquidsoap wuchs um etwa 140 MB/h bis zum
+  nächsten regulären Line-In-Ende (2026-11-11 08:20 bis 20:30; Speicheralarm 2026-11-12 03:15,
+  Grenz-Neustart 04:03).  Jetzt gibt der Abbaupfad die Quelle frei wie das reguläre Slot-Ende:
+  Liquidsoap-Eingang zuerst (solange der Mount noch Ton hat - ein Eingang, der schon einen toten
+  Mount abfragt, verliert das Stop und bleibt bis zum Neustart ein Zombie), dann die Aufnahme,
+  Gate zurück.  Dieselbe Lücke hatte ein entfernter Webstream (Eingang und offenes Gate blieben);
+  auch er wird jetzt gestoppt.  Wirksam nach dem nächsten PLAYOUT-Neustart.
+
 ## [1.5.0] - 2026-11-11
 
 ### Security
