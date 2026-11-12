@@ -80,6 +80,38 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - Evaluierung 2026-11-12, wartet auf Operator-Go
+
+**Befund:** jedes Widget ist ein iframe mit fester Höhe und `scrolling="no"` (Weekly 670×670, Multi-View 100 %×600,
+Track History 100 %×500, On Air Today 340×250 …).  Wächst der Inhalt (mehr Zeilen, `?limit=`, `?art=on`), wird er
+abgeschnitten; Weekly ist auf dem Handy breiter als der Bildschirm.  Kein Widget meldet heute seine Höhe nach außen
+(kein postMessage / ResizeObserver).
+
+**Optionen:**
+- **A (empfohlen) iframe mit Höhenmeldung:** das Widget misst seinen Inhalt (ResizeObserver) und schickt die Höhe per
+  `postMessage`; ein kleines Skript auf der Website (`/embed/embed.js` oder ~15 Zeilen inline) setzt die iframe-Höhe.
+  Auto-Modus nur nach Handshake mit dem Skript - ohne Skript bleibt alles wie heute (feste Höhe als Rückfall).
+  Isolation, gleicher Ursprung für die Daten (kein CORS), Theme/Sprache bleiben.  Pro Widget ein Inhaltshöhen-Modus:
+  Weekly ohne innere 520-px-Leiste, Multi-View FullCalendar `height: auto`, Track History ohne 100vh-Liste, Modale
+  an die sichtbare Stelle (Skript meldet den sichtbaren Ausschnitt).  Player-Leiste bleibt fest (56/80 px).
+- **B JavaScript-Widget ohne iframe** (Custom Element + Shadow DOM, Daten per fetch): Höhe automatisch, aber
+  Neubau aller neun Widgets, CORS auf `/embed/*-data`, Übersetzungen in den Client, FullCalendar im Shadow DOM
+  ungewiss, unser JS läuft mit vollen Rechten in der Website.  🔴 nicht empfohlen.
+- **C nur Snippet ändern** (`height: 80vh` + innerer Scroll): sofort, kein Code, passt sich der Bildschirmhöhe an,
+  aber nicht dem Inhalt.  Als Übergang möglich.
+
+**Aufwand A:** Stufe 1 (Kindskript, Website-Skript, Inhaltshöhe für Now Playing, Next/Latest, On Air Today, Weekly)
+~1 Tag; Stufe 2 (Multi-View, Track History, Song Request, Modale) ~1 Tag; Snippets auf 8 Widget-Seiten, Manual
+WIDGETS ×4, Architektur-§ ~½ Tag.  Kein Neustart (Legacy-PHP/JS live), keine Migration.
+
+**Risiko A:** niedrig - Sendebetrieb unberührt (nur `/embed/`-Seiten).  Fehlerbild: falsche Höhe auf der Website
+(Ober-/Untergrenze klemmen), Rückfall Skript aus dem Snippet nehmen bzw. Revert.  Externes Skript = Vertrauen der
+Website in unseren Server (Alternative: Inline-Listener ohne fremde Datei, oder SRI-Hash).  Cookie-Consent-Plugin
+der Website muss Skript und Frame zulassen (wie heute schon den Frame).
+
+**Vorbedingungen:** Operator-Go für A (Stufe 1, optional 2); vorher klären, ob das Joomla der Website `<script>` in
+Modulen erlaubt (sonst Weg über Template/Custom-HTML-Modul ohne Editor-Filter).
+
 ### 🟡 Speicher-Warnung vor einem ohnehin geplanten Liquidsoap-Neustart - Defer (Operator 2026-11-12)
 
 In der Nacht zum 2026-11-12 kam der Alarm „Audio engine memory high" um 03:15, 03:45 und 04:15
