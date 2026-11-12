@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - Evaluierung 2026-11-12, wartet auf Operator-Go
+### ✅ Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - GEBAUT 2026-11-12 (Go A, Stufe 1 + 2, §23.106; Nebenbefunde mit erledigt)
 
 **Befund:** jedes Widget ist ein iframe mit fester Höhe und `scrolling="no"` (Weekly 670×670, Multi-View 100 %×600,
 Track History 100 %×500, On Air Today 340×250 …).  Wächst der Inhalt (mehr Zeilen, `?limit=`, `?art=on`), wird er
@@ -111,6 +111,14 @@ der Website muss Skript und Frame zulassen (wie heute schon den Frame).
 
 **Vorbedingungen:** Operator-Go für A (Stufe 1, optional 2); vorher klären, ob das Joomla der Website `<script>` in
 Modulen erlaubt (sonst Weg über Template/Custom-HTML-Modul ohne Editor-Filter).
+
+**Umsetzung 2026-11-12:** Operator-Go A Stufe 1 + 2, Joomla erlaubt Scripts in Modulen.  Gebaut wie oben (Kindskript
+`autoheight.js` in allen neun Widgets, `/embed/widgets.js` als statische Datei, Auto-Modus nur nach Handshake, Multi-View
+80 % der Fensterhöhe, Dialoge im sichtbaren Ausschnitt, Messung zusätzlich sekündlich wegen gedrosselter Fremd-Frames),
+Embed-Codes und Vorschauen auf sieben Widget-Seiten, Manual WIDGETS/SONG_REQUESTS/API ×4.  Nebenbefunde im selben
+Commit: `min_sec`, Frame-Regel ohne Groß-/Kleinschreibung (wirksam nach Apache-Neustart), fünf Legacy-Lesepfade hinter
+dem Schalter, `show-tracks` ohne Webstream-URL/Login, `show-history-feed` antwortet anonym.  Offen: Script-Zeile auf
+der Website eintragen (Operator).
 
 ### 🟡 Speicher-Warnung vor einem ohnehin geplanten Liquidsoap-Neustart - Defer (Operator 2026-11-12)
 

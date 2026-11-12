@@ -1418,3 +1418,53 @@ html, body {
 .np-widget.np-track-history.np-th-no-link .np-th-modal-link {
     display: none;
 }
+
+/* ───── RASTATIME 2026-11-12 — self-sizing widgets (auto mode) ─────
+ *
+ *  js/airtime/embed/autoheight.js sets <html class="rt-autoheight"> only
+ *  when the embedding page runs /embed/widgets.js; the iframe then takes
+ *  the height of the content.  Nothing in auto mode may depend on the
+ *  iframe height (100vh, height: 100%), or it would feed back into it:
+ *  the inner scroll boxes go and the page around the widget scrolls.
+ *  Without the loader none of this applies and the fixed-height layout
+ *  above stays as it is.
+ */
+html.rt-autoheight {
+    overflow: hidden;
+}
+html.rt-autoheight,
+html.rt-autoheight body {
+    height: auto;
+    min-height: 0;
+}
+
+/*  Weekly: the whole day, not a 520 px box with its own scrollbar.  */
+html.rt-autoheight .np-widget.np-weekly-schedule .np-ws-day {
+    max-height: none;
+    overflow: visible;
+}
+
+/*  Multi-View: a time grid is 24 hours tall, so instead of the content it
+    follows the visitor's screen - 80 % of the window height the loader
+    reports, within 400..1000 px; the hours scroll inside as before.  */
+html.rt-autoheight .np-widget.np-multi-view-schedule {
+    min-height: 0;
+    height: clamp(400px, calc(var(--rt-parent-vh, 750px) * 0.8), 1000px);
+}
+
+/*  Track History: every loaded row, "Load more" makes the widget taller.  */
+html.rt-autoheight .np-widget.np-track-history {
+    height: auto;
+}
+html.rt-autoheight .np-widget.np-track-history .np-th-list {
+    flex: none;
+    overflow: visible;
+}
+
+/*  Dialogs: centred in the part of the widget the visitor sees (the frame
+    may be much taller than the window), not in the middle of the frame.  */
+html.rt-autoheight .np-widget.np-multi-view-schedule .np-mv-modal,
+html.rt-autoheight .np-widget.np-track-history .np-th-modal {
+    top: calc(var(--rt-vp-top, 0px) + var(--rt-vp-height, 100vh) / 2);
+    max-height: calc(var(--rt-vp-height, 100vh) - 32px);
+}

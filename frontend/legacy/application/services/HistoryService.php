@@ -430,19 +430,24 @@ class Application_Service_HistoryService
         ];
     }
 
-    public function getShowList($startDT, $endDT, $userId = null)
+    /**
+     * @param bool $currentUserFilter without $userId: limit a host to their
+     *                                own shows (studio pages); false for the
+     *                                public API, which has no session
+     *                                (RASTATIME 2026-11-12: the session lookup
+     *                                threw there and the endpoint answered
+     *                                empty)
+     */
+    public function getShowList($startDT, $endDT, $userId = null, $currentUserFilter = true)
     {
-        if (empty($userId)) {
+        if (!empty($userId)) {
+            $user = new Application_Model_User($userId);
+        } elseif ($currentUserFilter) {
             $user = Application_Model_User::getCurrentUser();
         } else {
-            $user = new Application_Model_User($userId);
+            $user = null;
         }
         $shows = Application_Model_Show::getShows($startDT, $endDT);
-
-        Logging::info($startDT->format(DEFAULT_TIMESTAMP_FORMAT));
-        Logging::info($endDT->format(DEFAULT_TIMESTAMP_FORMAT));
-
-        Logging::info($shows);
 
         // need to filter the list to only their shows
         if ((!empty($user)) && $user->isHost()) {
@@ -453,7 +458,6 @@ class Application_Service_HistoryService
             }
 
             $showIds = array_unique($showIds);
-            Logging::info($showIds);
 
             $hostRecords = CcShowHostsQuery::create()
                 ->filterByDbHost($user->getId())
@@ -465,8 +469,6 @@ class Application_Service_HistoryService
             foreach ($hostRecords as $record) {
                 $filteredShowIds[] = $record->getDbShow();
             }
-
-            Logging::info($filteredShowIds);
 
             $filteredShows = [];
 

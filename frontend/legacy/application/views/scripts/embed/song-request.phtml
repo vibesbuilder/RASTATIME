@@ -38,6 +38,8 @@ $enabled = !empty($this->requestsEnabled);
         max-height: 320px; overflow-y: auto;
         border: 1px solid var(--sr-border); border-radius: 4px;
     }
+    <?php /* RASTATIME 2026-11-12 - self-sizing (autoheight.js): the whole result list, the page scrolls */ ?>
+    html.rt-autoheight .sr-table-wrap { max-height: none; overflow: visible; }
     table.sr-table { width: 100%; border-collapse: collapse; }
     table.sr-table td {
         padding: 5px 8px; border-bottom: 1px solid var(--sr-border);
@@ -92,5 +94,7 @@ $enabled = !empty($this->requestsEnabled);
 <?php endif; ?>
 
     <script src="<?php echo $this->widgetJs; ?>" defer></script>
+    <?php /* RASTATIME 2026-11-12 - grows with its content when the embedding page runs /embed/widgets.js */ ?>
+    <script src="<?php echo Assets::url('js/airtime/embed/autoheight.js'); ?>" defer></script>
 </body>
 </html>

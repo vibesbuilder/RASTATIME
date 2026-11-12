@@ -2234,6 +2234,11 @@ class EmbedController extends Zend_Controller_Action
     {
         $raw = $request->getParam('min_sec');
         if ($raw === null || $raw === '') {
+            // RASTATIME 2026-11-12 - min_seconds was what the widget JS sent
+            // from 2026-09-18 until today; still accepted from older embeds.
+            $raw = $request->getParam('min_seconds');
+        }
+        if ($raw === null || $raw === '') {
             return Application_Model_Preference::GetWidgetTrackHistoryMinSeconds();
         }
         $i = (int) $raw;

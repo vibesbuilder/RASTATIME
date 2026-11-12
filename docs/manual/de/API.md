@@ -41,12 +41,17 @@ Drossel; nur die Song-Request-Endpunkte sind je Hörer begrenzt.
 **Einstellungen → General → Public RASTATIME API** (an / aus).
 
 - **An:** die Lese-Endpunkte der Legacy-API antworten ohne Schlüssel.
-  Das brauchen die Embed-Widgets — Now-Playing, Wochenprogramm und
-  Player lesen `live-info`, `track` und `show-logo`.  Wer den Schalter
-  ausschaltet, legt die Widgets auf der Website lahm.
 - **Aus:** dieselben Endpunkte verlangen den API-Key.  Nur sinnvoll,
-  wenn Sie keine Widgets einsetzen und keine externe Seite das
-  Programm liest.
+  wenn keine externe Seite das Programm über sie liest.  Seit
+  2026-11-12 gilt das auch für `shows`, `show-schedules`,
+  `show-tracks`, `item-history-feed` und `show-history-feed`, die
+  vorher auch bei ausgeschaltetem Schalter antworteten.
+
+Die Embed-Widgets lesen ihre Daten über eigene `/embed/…`-Adressen,
+die in jedem Fall öffentlich sind; aus dieser API holen sie nur die
+Cover und Sendungsbilder (`track`, `show-logo`).  Bei ausgeschaltetem
+Schalter laufen die Widgets weiter, nur ohne Cover (bis 2026-11-12
+stand hier, sie würden lahmgelegt).
 
 Der Schalter berührt die API v2 nicht und öffnet nichts, was schreibt.
 
@@ -66,9 +71,9 @@ der tz-Datenbank wie `Europe/Berlin`, oder `UTC`).
 | `/api/station-metadata` | — | Stationsname, Beschreibung, Logo, Sprache, Zeitzone und die Liste der Streams. |
 | `/api/shows` | `show_id` (optional) | Alle Sendungen oder eine: id, Name, Beschreibung, Genre, URL, Farben, Verknüpfungs-Flag. |
 | `/api/show-schedules` | `show_id` (Pflicht), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | Die Episoden einer Sendung im Zeitraum. |
-| `/api/show-tracks` | `instance_id` (Pflicht) | Die Zeilen einer Episode: Position, Titel, Interpret, Länge, Start. |
+| `/api/show-tracks` | `instance_id` (Pflicht) | Die Zeilen einer Episode: Position, Titel, Interpret, Länge, Start.  Eine Webstream-Zeile trägt nur den Namen des Streams, `file_id` gibt es nur für Dateien (bis 2026-11-12 standen dort die Quell-URL des Streams und der Login dessen, der ihn angelegt hat). |
 | `/api/item-history-feed` | `start`, `end`, `instance_id` (optional) | Die Playout-History: was wann lief, mit Titel, Interpret und Episode. |
-| `/api/show-history-feed` | `start`, `end`, `user_id` (optional) | Die Sendungen, die im Zeitraum liefen. |
+| `/api/show-history-feed` | `start`, `end`, `user_id` (optional) | Die Sendungen, die im Zeitraum liefen; `user_id` beschränkt sie auf die Sendungen dieses Hosts.  Ohne `user_id` antwortete der Endpunkt bis 2026-11-12 leer. |
 | `/api/track?id=<Datei-ID>&return=<Art>` | `return` = `artwork`, `artwork-32`, `artwork-64`, `artwork-data` | Das Cover eines Titels (JPG). |
 | `/api/show-logo?id=<Sendungs-ID>` | — | Das Bild einer Sendung. |
 | `/api/track-types` | — | Die in der Bibliothek eingerichteten Track-Typen. |

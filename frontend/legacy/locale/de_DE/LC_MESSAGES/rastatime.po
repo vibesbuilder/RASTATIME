@@ -8310,3 +8310,7 @@ msgstr "Minuten, gesamt"
 
 msgid "The column for the category is missing - run the database migration 0082 first. Until then every show is without a category."
 msgstr "Die Spalte für die Kategorie fehlt - zuerst die Datenbank-Migration 0082 ausführen. Bis dahin ist jede Sendung ohne Kategorie."
+
+#: application/views/scripts/embeddablewidgets/schedule.phtml
+msgid "The script line lets the widget grow and shrink with its content (once per page is enough); without it the iframe keeps the height in the code."
+msgstr "Die Script-Zeile lässt das Widget mit seinem Inhalt wachsen und schrumpfen (einmal pro Seite genügt); ohne sie behält das iframe die Höhe aus dem Code."

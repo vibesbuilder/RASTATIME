@@ -244,9 +244,25 @@ colocada.
 El widget público se encuentra en:
 
 ```
-   http://<su-emisora>/Embed/song-request
-   http://<su-emisora>/Embed/song-request?theme=dark
+   https://<su-emisora>/embed/song-request
+   https://<su-emisora>/embed/song-request?theme=dark
 ```
+
+Código de embebido (desde el 2026-11-12 con la línea script que hace
+crecer el widget con la lista, vea [Widgets](./WIDGETS.md) → *Altura
+automática*):
+
+```html
+<iframe src="https://<su-emisora>/embed/song-request"
+        width="100%" height="420" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+<script src="https://<su-emisora>/embed/widgets.js" async></script>
+```
+
+Escriba la dirección en minúsculas (`/embed/`): hasta el 2026-11-12
+este capítulo decía `/Embed/`, y así escrito el widget no se podía
+incrustar en otro sitio web.
 
 Incrústelo en un `<iframe>` en su web (temas: `light`, `dark`,
 `auto`). Muestra una tabla desplazable de cada pista solicitable
@@ -281,7 +297,7 @@ Salvaguardas integradas (sin necesidad de cola de moderación):
 > quedan en texto.
 
 > **Cómo funciona por dentro.** El widget es una página iframe
-> autónoma en JS vanilla (`/Embed/song-request`) que habla con dos
+> autónoma en JS vanilla (`/embed/song-request`) que habla con dos
 > endpoints Django públicos: `GET /api/v2/song-requests/search` (el
 > catálogo) y `POST /api/v2/song-requests` (envío). Sin inicio de
 > sesión, sin cookie. La IP en bruto del oyente nunca se almacena;

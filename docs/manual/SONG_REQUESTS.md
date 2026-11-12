@@ -232,9 +232,24 @@ is placed.
 The public widget lives at:
 
 ```
-   http://<your-station>/Embed/song-request
-   http://<your-station>/Embed/song-request?theme=dark
+   https://<your-station>/embed/song-request
+   https://<your-station>/embed/song-request?theme=dark
 ```
+
+Embed code (since 2026-11-12 with the script line that lets the widget
+grow with the list, see [Widgets](./WIDGETS.md) → *Automatic height*):
+
+```html
+<iframe src="https://<your-station>/embed/song-request"
+        width="100%" height="420" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+<script src="https://<your-station>/embed/widgets.js" async></script>
+```
+
+Write the address in lowercase (`/embed/`): until 2026-11-12 this
+chapter said `/Embed/`, and spelled that way the widget could not be
+embedded in another website.
 
 Embed it in an `<iframe>` on your website (themes: `light`, `dark`,
 `auto`). It shows a scrollable table of every requestable track —
@@ -268,7 +283,7 @@ Built-in guardrails (no moderation queue needed):
 > have no artwork stay text-only too.
 
 > **How it works under the hood.** The widget is a self-contained
-> vanilla-JS iframe page (`/Embed/song-request`) talking to two
+> vanilla-JS iframe page (`/embed/song-request`) talking to two
 > public Django endpoints: `GET /api/v2/song-requests/search`
 > (the catalogue) and `POST /api/v2/song-requests` (submit). No
 > login, no cookie. The raw listener IP is never stored — only a

@@ -41,11 +41,19 @@ des demandes d'auditeurs sont limités par auditeur.
 **Paramètres → General → Public RASTATIME API** (on / off).
 
 - **On :** les points d'accès en lecture de l'API legacy répondent
-  sans clé.  C'est ce dont les widgets ont besoin — now-playing,
-  programme hebdomadaire et lecteur lisent `live-info`, `track` et
-  `show-logo`.  Éteindre l'interrupteur casse les widgets de votre site.
+  sans clé.
 - **Off :** les mêmes points d'accès exigent la clé API.  À choisir
-  seulement sans widgets et sans site externe qui lit le programme.
+  seulement si aucun site externe ne lit le programme par leur biais.
+  Depuis le 2026-11-12, cela vaut aussi pour `shows`, `show-schedules`,
+  `show-tracks`, `item-history-feed` et `show-history-feed`, qui
+  répondaient auparavant même interrupteur éteint.
+
+Les widgets lisent leurs données via leurs propres adresses `/embed/…`,
+publiques dans tous les cas ; de cette API ils ne prennent que les
+pochettes et images d'émission (`track`, `show-logo`).  Interrupteur
+éteint, les widgets continuent de fonctionner, simplement sans
+pochettes (jusqu'au 2026-11-12, ce chapitre disait qu'ils cesseraient
+de fonctionner).
 
 L'interrupteur ne touche pas l'API v2 et n'ouvre rien qui écrit.
 
@@ -65,9 +73,9 @@ tel que `Europe/Berlin`, ou `UTC`).
 | `/api/station-metadata` | — | Nom, description, logo, langue, fuseau de la station et la liste des flux. |
 | `/api/shows` | `show_id` (optionnel) | Toutes les émissions, ou une : id, nom, description, genre, url, couleurs, indicateur linked. |
 | `/api/show-schedules` | `show_id` (requis), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | Les épisodes d'une émission dans la période. |
-| `/api/show-tracks` | `instance_id` (requis) | Les lignes d'un épisode : position, titre, artiste, durée, début. |
+| `/api/show-tracks` | `instance_id` (requis) | Les lignes d'un épisode : position, titre, artiste, durée, début.  Une ligne de flux web ne porte que le nom du flux, `file_id` n'existe que pour les fichiers (jusqu'au 2026-11-12 y figuraient l'URL source du flux et l'identifiant de la personne qui l'a créé). |
 | `/api/item-history-feed` | `start`, `end`, `instance_id` (optionnel) | L'historique de diffusion : quoi, quand, avec titre, artiste et épisode. |
-| `/api/show-history-feed` | `start`, `end`, `user_id` (optionnel) | Les émissions diffusées dans la période. |
+| `/api/show-history-feed` | `start`, `end`, `user_id` (optionnel) | Les émissions diffusées dans la période ; `user_id` les limite aux émissions de cet animateur.  Sans `user_id`, la réponse était vide jusqu'au 2026-11-12. |
 | `/api/track?id=<id fichier>&return=<type>` | `return` = `artwork`, `artwork-32`, `artwork-64`, `artwork-data` | La pochette d'un titre (JPG). |
 | `/api/show-logo?id=<id émission>` | — | L'image d'une émission. |
 | `/api/track-types` | — | Les types de pistes configurés dans la bibliothèque. |

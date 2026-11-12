@@ -1567,3 +1567,7 @@ msgstr ""
 #: application/controllers/YearlyreportController.php
 msgid "Minutes per month"
 msgstr ""
+
+#: application/views/scripts/embeddablewidgets/schedule.phtml
+msgid "The script line lets the widget grow and shrink with its content (once per page is enough); without it the iframe keeps the height in the code."
+msgstr ""

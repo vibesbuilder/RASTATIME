@@ -50,6 +50,61 @@ latest).
 
 ---
 
+## Automatic height (since 2026-11-12)
+
+An iframe needs a height, and a fixed height never fits every screen:
+on a phone the rows wrap and the bottom is cut off, a day with many
+shows does not fit, and `?limit=` or covers make a widget taller than
+its frame.  Every embed code on the **Widgets** pages therefore has a
+second line:
+
+```html
+<iframe src="https://your-station.example/embed/weekly-program"
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
+</iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
+```
+
+With the script line the widget tells the page how tall its content
+is and the iframe follows it, also when the content changes (another
+day tab, **Load more**, a longer list, a narrower screen).  Without the
+line the iframe keeps the `height` of the code, exactly as before; that
+height also stays the fallback for visitors without JavaScript.
+
+- **Once per page is enough.**  The script finds every widget iframe of
+  your RASTATIME host on the page, older embed codes without the line
+  included: they keep their width and get the automatic height.
+  Including the line several times does no harm.
+- **Width:** `width="100%"` with a `max-width` lets the widget follow a
+  narrow screen; the embed codes use this form since 2026-11-12.
+- **Per widget:**
+
+  | Widget | Height with the script line |
+  |---|---|
+  | Now Playing, Next / Latest Shows, On Air Today, Player card, Song Request | as tall as the content |
+  | Weekly Schedule | the whole selected day, without a scrollbar of its own (before: a 520 px box) |
+  | Multi-View Schedule | 80 % of the visitor's window height (400 to 1000 px): a time grid is 24 hours tall, the hours scroll inside as before |
+  | Track History | every loaded row; **Load more** makes it taller |
+  | Player bar | keeps the height you give it (56 px) |
+
+  The dialogs of Multi-View and Track History open in the part of the
+  widget the visitor sees, even when the widget is taller than the
+  window.
+- **Opt out** a single iframe with `data-rt-autoheight="off"`.
+- **What the script does:** it reads messages from your RASTATIME host
+  only, sets the height of that host's widget iframes and tells each
+  widget which part of it is visible.  It sets no cookies and loads
+  nothing else.
+- **Your website has to allow the script** like the frame (section 13):
+  a CMS that removes `<script>` from articles needs a module or template
+  that keeps it (Joomla: a *Custom* module whose editor does not filter
+  scripts), a cookie consent tool has to release the RASTATIME host for
+  scripts as well, and a `Content-Security-Policy` of your website needs
+  the host in `script-src` too.
+
+---
+
 ## 2. Now Playing — Show widget
 
 Drop-in iframe:
@@ -57,8 +112,9 @@ Drop-in iframe:
 ```html
 <iframe src="https://your-station.example/embed/now-playing-show"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 ### What it shows
@@ -102,8 +158,9 @@ Drop-in iframe:
 ```html
 <iframe src="https://your-station.example/embed/now-playing-track"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 ### What it shows
@@ -140,18 +197,20 @@ Drop-in iframe (next shows):
 
 ```html
 <iframe src="https://your-station.example/embed/next-shows?show_id=42"
-        width="300" height="140" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="140" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 Drop-in iframe (latest shows):
 
 ```html
 <iframe src="https://your-station.example/embed/latest-shows?show_id=42"
-        width="300" height="120" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="120" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 ### What it shows
@@ -249,9 +308,10 @@ Drop-in iframe:
 
 ```html
 <iframe src="https://your-station.example/embed/on-air-today"
-        width="340" height="250" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="250" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 ### What it shows
@@ -338,9 +398,10 @@ Drop-in iframe:
 
 ```html
 <iframe src="https://your-station.example/embed/weekly-program"
-        width="400" height="560" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 ### What it shows
@@ -406,9 +467,11 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← day tabs
 > **Width.** The Weekly Schedule widget body is **670 px wide**
 > (raised from 400 px on 2026-05-25 per operator request — all
 > fonts, paddings, and the day-panel max-height scaled
-> proportionally; the iframe in the recommended embed snippet
-> is `width="670" height="670"`).  Set the iframe to these
-> values in the embedding HTML for a flush fit.
+> proportionally).  The recommended embed snippet uses
+> `width="100%"` with `max-width: 670px` and `height="670"` as
+> the fallback; with the script line the height follows the
+> selected day (see *Automatic height*).  Before 2026-11-12 the
+> snippet in this chapter still said 400 × 560.
 >
 > **Phones.** Below 670 px the widget follows the iframe width; it
 > fits a 350 px phone screen (iframe `width="100%"`).  Since
@@ -450,6 +513,7 @@ comfortably):
         width="100%" height="600" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 ### What it shows
@@ -574,6 +638,7 @@ plus header + load-more footer):
         width="100%" height="500" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://your-station.example/embed/widgets.js" async></script>
 ```
 
 ### What it shows
@@ -608,6 +673,8 @@ plus header + load-more footer):
   when the rows do not fit (larger page size, Load more),
   the list scrolls with its own scrollbar while the header
   and the Load-more footer stay visible (since 2026-11-10).
+  With the script line (see *Automatic height*) the iframe grows
+  with the rows instead and the page scrolls.
 - **Modal**: opens on row click with title, artist, time
   range, a **"Played in the show:"** caption + the show
   name, and an "Open show page →" button when the parent
@@ -900,7 +967,8 @@ station homepage.  An explicit `?art=` in an embed URL always wins.
 Now Playing stays *off* by default on purpose: that widget is
 documented with `height="50"`, so covers are opt-in and no existing
 embed changes on its own.  With `?art=on` the box grows to about
-48 px — give the iframe `height="56"` or more.
+48 px — give the iframe `height="56"` or more, or add the script
+line (see *Automatic height*), then the height follows by itself.
 
 The Track History shows no covers.
 
@@ -1024,7 +1092,11 @@ to side 2.
 
 If you previously tried embedding via JavaScript snippet
 and ran into CORS errors, switching to the iframe approach
-(this chapter) sidesteps the problem entirely.
+(this chapter) sidesteps the problem entirely.  The script
+line of *Automatic height* is not such a snippet: it only
+sizes the iframes and fetches no data, so it needs no CORS -
+but your website's policy has to allow it as a script
+(`script-src`).
 
 ---
 
@@ -1050,6 +1122,18 @@ and ran into CORS errors, switching to the iframe approach
   the public hostname configured under Settings →
   General Preferences. The URL must be reachable from
   the visitor's browser, not just from the station's LAN.
+
+### "The widget keeps its fixed height / is cut off"
+
+- Is the `<script src=".../embed/widgets.js">` line on the
+  published page?  Some editors remove `<script>` when the
+  article is saved - check the page source.
+- Browser console (F12): a blocked script ("Refused to load
+  the script", a consent tool) means side 2 of section 13 -
+  release the RASTATIME host for scripts.
+- The iframe must not carry `data-rt-autoheight="off"`, and
+  its `src` has to point to the same RASTATIME host as the
+  script.
 
 ### "Widget background is white but I want dark"
 

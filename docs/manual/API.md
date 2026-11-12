@@ -39,12 +39,18 @@ only the song-request endpoints are throttled per listener.
 
 **Settings → General → Public RASTATIME API** (on / off).
 
-- **On:** the read-only legacy endpoints answer without a key.  This
-  is what the embed widgets need — the now-playing, weekly programme
-  and player widgets read `live-info`, `track` and `show-logo`.
-  Turning the switch off breaks the widgets on your website.
+- **On:** the read-only legacy endpoints answer without a key.
 - **Off:** the same endpoints require the API key.  Only choose this
-  if you use no widgets and no external site reads the programme.
+  if no external site reads the programme through them.  Since
+  2026-11-12 this includes `shows`, `show-schedules`, `show-tracks`,
+  `item-history-feed` and `show-history-feed`, which answered even
+  with the switch off before.
+
+The embed widgets read their data from their own `/embed/…` addresses,
+which are public either way; from this API they only take the covers
+and show images (`track`, `show-logo`).  With the switch off the widgets
+keep working and simply show no covers (before 2026-11-12 this chapter
+said they would stop working).
 
 The switch does not touch API v2 and does not open anything that
 writes.
@@ -65,9 +71,9 @@ time zone unless you pass `timezone=` (a tz database name such as
 | `/api/station-metadata` | — | Station name, description, logo, locale, time zone and the list of streams. |
 | `/api/shows` | `show_id` (optional) | All shows, or one: id, name, description, genre, url, colours, linked flag. |
 | `/api/show-schedules` | `show_id` (required), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | The episodes of one show in the range. |
-| `/api/show-tracks` | `instance_id` (required) | The rows of one episode: position, title, artist, length, start. |
+| `/api/show-tracks` | `instance_id` (required) | The rows of one episode: position, title, artist, length, start.  A web stream row carries the stream's name only, `file_id` is set for files only (until 2026-11-12 it showed the stream's source URL and the login of whoever created the stream). |
 | `/api/item-history-feed` | `start`, `end`, `instance_id` (optional) | The playout history: what was played when, with title, artist and episode. |
-| `/api/show-history-feed` | `start`, `end`, `user_id` (optional) | The shows that aired in the range. |
+| `/api/show-history-feed` | `start`, `end`, `user_id` (optional) | The shows that aired in the range; `user_id` limits them to the shows of that host.  Without `user_id` it answered empty until 2026-11-12. |
 | `/api/track?id=<file id>&return=<kind>` | `return` = `artwork`, `artwork-32`, `artwork-64`, `artwork-data` | The cover image of a track (JPG). |
 | `/api/show-logo?id=<show id>` | — | The image of a show. |
 | `/api/track-types` | — | The track types configured in the library. |

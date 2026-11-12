@@ -98,5 +98,7 @@ $headerText = $isToday
     </ul>
 
     <script src="<?php echo $this->widgetJs; ?>" defer></script>
+    <?php /* RASTATIME 2026-11-12 - grows with its content when the embedding page runs /embed/widgets.js */ ?>
+    <script src="<?php echo Assets::url('js/airtime/embed/autoheight.js'); ?>" defer></script>
 </body>
 </html>

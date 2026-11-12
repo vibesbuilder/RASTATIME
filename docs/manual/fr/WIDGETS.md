@@ -53,6 +53,64 @@ plus tard après la durée `cache`).
 
 ---
 
+## Hauteur automatique (depuis le 2026-11-12)
+
+Un iframe a besoin d'une hauteur, et une hauteur fixe ne convient
+jamais à tous les écrans : sur un téléphone les lignes se coupent et
+le bas disparaît, une journée chargée ne tient pas, et `?limit=` ou les
+pochettes rendent un widget plus haut que son cadre.  Chaque code
+d'intégration des pages **Widgets** a donc une deuxième ligne :
+
+```html
+<iframe src="https://votre-station.example/embed/weekly-program"
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
+</iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
+```
+
+Avec la ligne script, le widget indique à la page la hauteur de son
+contenu et l'iframe la suit, y compris quand le contenu change (autre
+onglet de jour, **Load more**, liste plus longue, écran plus étroit).
+Sans cette ligne, l'iframe garde la `height` du code, exactement comme
+avant ; cette hauteur reste aussi la solution de repli pour les
+visiteurs sans JavaScript.
+
+- **Une fois par page suffit.**  Le script trouve chaque iframe de
+  widget de votre hôte RASTATIME sur la page, y compris les anciens
+  codes sans la ligne : ils gardent leur largeur et obtiennent la
+  hauteur automatique.  L'inclure plusieurs fois ne pose aucun problème.
+- **Largeur :** `width="100%"` avec un `max-width` permet au widget de
+  suivre un écran étroit ; les codes d'intégration utilisent cette forme
+  depuis le 2026-11-12.
+- **Par widget :**
+
+  | Widget | Hauteur avec la ligne script |
+  |---|---|
+  | Now Playing, Next / Latest Shows, On Air Today, carte Player, Song Request | aussi haut que le contenu |
+  | Weekly Schedule | toute la journée choisie, sans barre de défilement propre (avant : une boîte de 520 px) |
+  | Multi-View Schedule | 80 % de la hauteur de fenêtre du visiteur (400 à 1000 px) : une grille horaire fait 24 heures, les heures défilent à l'intérieur comme avant |
+  | Track History | chaque ligne chargée ; **Load more** l'agrandit |
+  | Barre Player | garde la hauteur que vous lui donnez (56 px) |
+
+  Les dialogues de Multi-View et Track History s'ouvrent dans la partie
+  du widget que le visiteur voit, même quand le widget est plus haut que
+  la fenêtre.
+- **Désactiver** pour un seul iframe avec `data-rt-autoheight="off"`.
+- **Ce que fait le script :** il ne lit que les messages de votre hôte
+  RASTATIME, règle la hauteur des iframes de widget de cet hôte et
+  indique à chaque widget quelle partie de lui est visible.  Il ne pose
+  aucun cookie et ne charge rien d'autre.
+- **Votre site doit autoriser le script** comme le cadre (section 13) :
+  un CMS qui retire `<script>` des articles a besoin d'un module ou
+  modèle qui le conserve (Joomla : un module *Custom* dont l'éditeur ne
+  filtre pas les scripts), un outil de consentement aux cookies doit
+  aussi libérer l'hôte RASTATIME pour les scripts, et une
+  `Content-Security-Policy` de votre site doit aussi contenir l'hôte
+  dans `script-src`.
+
+---
+
 ## 2. Widget Now Playing — Show
 
 iframe prêt à l'emploi :
@@ -60,8 +118,9 @@ iframe prêt à l'emploi :
 ```html
 <iframe src="https://votre-station.example/embed/now-playing-show"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Ce qu'il affiche
@@ -108,8 +167,9 @@ iframe prêt à l'emploi :
 ```html
 <iframe src="https://votre-station.example/embed/now-playing-track"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Ce qu'il affiche
@@ -149,18 +209,20 @@ iframe prêt à l'emploi (next shows) :
 
 ```html
 <iframe src="https://votre-station.example/embed/next-shows?show_id=42"
-        width="300" height="140" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="140" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 iframe prêt à l'emploi (latest shows) :
 
 ```html
 <iframe src="https://votre-station.example/embed/latest-shows?show_id=42"
-        width="300" height="120" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="120" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Ce qu'il affiche
@@ -260,9 +322,10 @@ iframe prêt à l'emploi :
 
 ```html
 <iframe src="https://votre-station.example/embed/on-air-today"
-        width="340" height="250" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="250" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Ce qu'il affiche
@@ -353,9 +416,10 @@ iframe prêt à l'emploi :
 
 ```html
 <iframe src="https://votre-station.example/embed/weekly-program"
-        width="400" height="560" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Ce qu'il affiche
@@ -421,10 +485,12 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← onglets
 > **Largeur.** Le widget Weekly Schedule fait **670 px de large**
 > (élargi depuis 400 px le 2026-05-25 sur demande de l'opérateur —
 > toutes les polices, paddings et la max-height du panneau de jour
-> ont été mis à l'échelle proportionnellement ; l'iframe dans le
-> snippet d'intégration recommandé est `width="670" height="670"`).
-> Réglez l'iframe sur ces valeurs dans le HTML d'intégration pour
-> un ajustement précis.
+> ont été mis à l'échelle proportionnellement).  Le snippet
+> d'intégration recommandé utilise `width="100%"` avec
+> `max-width: 670px` et `height="670"` comme repli ; avec la ligne
+> script, la hauteur suit la journée choisie (voir *Hauteur
+> automatique*).  Jusqu'au 2026-11-12, le snippet de ce chapitre
+> indiquait encore 400 × 560.
 >
 > **Smartphones.** En dessous de 670 px, le widget suit la largeur de
 > l'iframe ; il tient sur un écran de smartphone de 350 px (iframe
@@ -464,6 +530,7 @@ iframe prêt à l'emploi :
         width="100%" height="600" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Ce qu'il affiche
@@ -531,6 +598,7 @@ iframe prêt à l'emploi (~500 px de haut) :
         width="100%" height="500" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://votre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Paramètres URL
@@ -610,7 +678,8 @@ Le widget occupe exactement la hauteur de l'iframe.  Si
 les lignes ne tiennent pas (pagesize plus grand, Load
 more), la liste défile avec sa propre barre ; l'en-tête et
 le bouton Load more restent visibles (depuis le
-2026-11-10).
+2026-11-10).  Avec la ligne script (voir *Hauteur automatique*),
+l'iframe grandit au contraire avec les lignes et la page défile.
 
 ---
 
@@ -755,7 +824,8 @@ d'intégration l'emporte toujours.
 Now Playing reste volontairement *désactivé* par défaut : ce widget
 est documenté avec `height="50"`, les pochettes sont donc en opt-in.
 Avec `?art=on` la boîte atteint environ 48 px — donnez alors
-`height="56"` ou plus à l'iframe.
+`height="56"` ou plus à l'iframe, ou ajoutez la ligne script (voir
+*Hauteur automatique*) : la hauteur suit alors d'elle-même.
 
 La Track History n'affiche pas de pochettes.
 
@@ -874,6 +944,17 @@ frame-src / default-src » le côté 2.
 - Vérifiez que l'URL est accessible depuis le contexte
   du navigateur de la page d'intégration.
 - Vérifiez la console du navigateur pour les erreurs JS.
+
+### "Le widget garde sa hauteur fixe / est coupé"
+
+- La ligne `<script src=".../embed/widgets.js">` figure-t-elle sur
+  la page publiée ?  Certains éditeurs retirent `<script>` à
+  l'enregistrement - vérifiez le code source de la page.
+- Console du navigateur (F12) : un script bloqué (« Refused to
+  load the script », un outil de consentement) relève du côté 2
+  de la section 13 - libérez l'hôte RASTATIME pour les scripts.
+- L'iframe ne doit pas porter `data-rt-autoheight="off"`, et son
+  `src` doit pointer vers le même hôte RASTATIME que le script.
 
 ### "Le fond du widget est blanc mais je veux du sombre"
 

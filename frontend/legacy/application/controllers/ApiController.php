@@ -131,6 +131,24 @@ class ApiController extends Zend_Controller_Action
         'status' => 'admin',
     ];
 
+    /**
+     * RASTATIME 2026-11-12 - the gate the public read endpoints shows,
+     * show-schedules, show-tracks, item-history-feed and show-history-feed
+     * never had: open with Settings -> General -> Public RASTATIME API,
+     * otherwise only with the API key or a studio session - the same answer
+     * as live-info and week-info (the manual always said so).
+     */
+    private function publicReadAllowed()
+    {
+        if (Application_Model_Preference::GetAllow3rdPartyApi() || $this->checkAuth()) {
+            return true;
+        }
+        header('HTTP/1.0 401 Unauthorized');
+        echo _('You are not allowed to access this resource. ');
+
+        exit;
+    }
+
     public function checkAuth()
     {
         $CC_CONFIG = Config::getConfig();
@@ -1593,6 +1611,9 @@ class ApiController extends Zend_Controller_Action
      */
     public function itemHistoryFeedAction()
     {
+        // RASTATIME 2026-11-12 - gated like the other public read endpoints
+        $this->publicReadAllowed();
+
         try {
             $request = $this->getRequest();
             $params = $request->getParams();
@@ -1617,6 +1638,9 @@ class ApiController extends Zend_Controller_Action
      */
     public function showHistoryFeedAction()
     {
+        // RASTATIME 2026-11-12 - gated like the other public read endpoints
+        $this->publicReadAllowed();
+
         try {
             $request = $this->getRequest();
             $params = $request->getParams();
@@ -1625,7 +1649,8 @@ class ApiController extends Zend_Controller_Action
             [$startsDT, $endsDT] = Application_Common_HTTPHelper::getStartEndFromRequest($request);
 
             $historyService = new Application_Service_HistoryService();
-            $shows = $historyService->getShowList($startsDT, $endsDT, $userId);
+            // no session here: no "own shows only" filter for a host
+            $shows = $historyService->getShowList($startsDT, $endsDT, $userId, false);
 
             $this->_helper->json->sendJson($shows);
         } catch (Exception $e) {
@@ -1641,6 +1666,9 @@ class ApiController extends Zend_Controller_Action
      */
     public function showsAction()
     {
+        // RASTATIME 2026-11-12 - gated like the other public read endpoints
+        $this->publicReadAllowed();
+
         try {
             $request = $this->getRequest();
             $params = $request->getParams();
@@ -1675,6 +1703,9 @@ class ApiController extends Zend_Controller_Action
      */
     public function showSchedulesAction()
     {
+        // RASTATIME 2026-11-12 - gated like the other public read endpoints
+        $this->publicReadAllowed();
+
         try {
             $request = $this->getRequest();
             $params = $request->getParams();
@@ -1712,6 +1743,9 @@ class ApiController extends Zend_Controller_Action
      */
     public function showTracksAction()
     {
+        // RASTATIME 2026-11-12 - gated like the other public read endpoints
+        $this->publicReadAllowed();
+
         $baseUrl = Config::getBasePath();
         $prefTimezone = Application_Model_Preference::GetTimezone();
 
@@ -1736,15 +1770,27 @@ class ApiController extends Zend_Controller_Action
         $result = [];
         $position = 0;
         foreach ($showInstanceContent as $track) {
+            $title = isset($track['track_title']) ? $track['track_title'] : '';
+            $artist = isset($track['creator']) ? $track['creator'] : '';
+            if ($track['type'] == 1) {
+                // RASTATIME 2026-11-12 - a public endpoint: a web stream row
+                // shows the stream's name only.  The studio query behind it
+                // titles it "name: source URL" and puts the creator's studio
+                // login into creator; the URL may carry access data.
+                $stream = CcWebstreamQuery::create()->findPk($track['item_id']);
+                $title = $stream ? (string) $stream->getDbName() : '';
+                $artist = '';
+            }
             $elementMap = [
-                'title' => isset($track['track_title']) ? $track['track_title'] : '',
-                'artist' => isset($track['creator']) ? $track['creator'] : '',
+                'title' => $title,
+                'artist' => $artist,
                 'position' => $position,
                 'id' => ++$position,
                 'mime' => isset($track['mime']) ? $track['mime'] : '',
                 'starts' => isset($track['starts']) ? $track['starts'] : '',
                 'length' => isset($track['length']) ? $track['length'] : '',
-                'file_id' => ($track['type'] == 0) ? $track['item_id'] : $track['filepath'],
+                // files only (was the web stream URL for stream rows)
+                'file_id' => ($track['type'] == 0) ? $track['item_id'] : null,
             ];
 
             $result[] = $elementMap;

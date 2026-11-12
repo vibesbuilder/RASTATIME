@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.133
-Date: 2026-11-10
+Draft version: 0.134
+Date: 2026-11-12
 
 > **Revision history**
+> - **0.134 (2026-11-12)** - **Self-sizing widgets** (§23.106): the /embed/ iframes report
+>   their content height by postMessage and /embed/widgets.js on the website sets it; inert
+>   without the script.  Same change: five legacy read endpoints behind the public-API switch,
+>   show-tracks without stream URLs / logins, show-history-feed answers anonymous callers.
 > - **0.133 (2026-11-10)** - **Show category and programme minutes by genre / category** (§23.105):
 >   `cc_show.category` (migration 0082, free text with suggestions), Programme Minutes grouped
 >   by genre, category and both, with CSV.
@@ -9858,3 +9862,75 @@ first broadcasts / repeats, other shows, total).
 **Risk.**  Low; the migration adds a nullable column (lock_timeout 5 s);
 every reader works before and after it.  Rollback: `git revert`, the
 column can stay.
+
+### 23.106 Self-Sizing Widgets (2026-11-12)
+
+**Request.**  Operator: an iframe needs a fixed height, so the widgets
+follow neither the screen size nor changing content.  Evaluated
+2026-11-12 (A iframe with a height message, B JavaScript widget without
+iframe, C viewport height in the snippet only); operator Go for A,
+stages 1 and 2.
+
+**Decision.**  The widgets stay iframes - isolation and same-origin
+data, the reasons of §23.22 - and report their height.
+
+- **Widget side:** `js/airtime/embed/autoheight.js`, loaded by all nine
+  `/embed/` views.  Inert until the embedding page says hello; then
+  `<html class="rt-autoheight">`, a ResizeObserver plus a re-measure
+  every second (browsers pause rendering, and with it the observer, in
+  off-screen cross-origin frames), and `postMessage({rtWidget: 1,
+  type: 'height'})` to the origin that said hello.  `<body
+  data-rt-autoheight="off">` opts out (player bar).
+- **Page side:** `public/embed/widgets.js`, a static file next to the
+  routes (Apache serves existing files before the front controller).
+  Its origin is the script's own origin; it reads messages from that
+  origin only, finds the iframe by `contentWindow`, clamps the height to
+  24..30000 px and sends `viewport` (visible part, window height) on
+  scroll and resize.  Idempotent per origin (`window.RastatimeWidgets`).
+  The handshake runs both ways (`ready` from the widget; `hello` on the
+  scan and on every iframe load), so script order and in-frame reloads
+  (week navigation) do not matter.  Without the script nothing changes:
+  the `height` attribute stays the fallback.
+- **CSS** (`now-playing-widget.css`, the song request inline): under
+  `.rt-autoheight` no 100vh layout and no inner scroll box (weekly day
+  panel, track history list, song request table).  Multi-View follows
+  the visitor's window instead of the content (a time grid is 24 hours):
+  `clamp(400px, 80 % of --rt-parent-vh, 1000px)`, FullCalendar
+  `updateSize()` on the events.  Dialogs centre in the visible part
+  (`--rt-vp-top`, `--rt-vp-height`).
+- **Embed codes** on the seven Widgets pages: `width="100%"` with a
+  `max-width`, the script line, a note; the previews load the script.
+
+Tested against the worktree with PHP's built-in server and a host page
+on another origin: all nine widgets, the bar opting out, an iframe with
+`data-rt-autoheight="off"` staying fixed, week navigation, a dialog in
+a 1781 px Track History, phone width.
+
+**Side findings fixed in the same change.**
+
+- Track History forwarded `min_seconds`, the controller reads the
+  documented `min_sec`: the widget JS sends `min_sec`, the controller
+  accepts `min_seconds` as an alias.
+- The `/embed/` frame rule (§23.22, `RT_EMBED_ANCESTORS`) is
+  case-insensitive (`m#...#i`): `/Embed/song-request`, as the manual
+  wrote it, kept SAMEORIGIN.  Active after the next Apache restart.
+- Legacy API: `shows`, `show-schedules`, `show-tracks`,
+  `item-history-feed` and `show-history-feed` had no
+  `GetAllow3rdPartyApi() || checkAuth()` gate, contrary to §23.90 and the
+  manual - `ApiController::publicReadAllowed()`.  `show-tracks` exposed
+  a web stream row's source URL (title and `file_id`) and the studio
+  login of its creator: name only, `file_id` for files only.
+  `show-history-feed` answered empty for anonymous callers
+  (`getCurrentUser()` threw in strict session mode, the action swallowed
+  it): the API calls `getShowList(..., $currentUserFilter = false)`; the
+  debug logging of the whole show list on every call is gone.
+- Manual: WIDGETS §6 showed 400 x 560 (the page: 670 x 670); API §2 said
+  the widgets read `live-info` and stop without the switch - they read
+  `/embed/*-data`, only the covers depend on it.
+
+**Risk.**  Low.  The broadcast is untouched (legacy PHP / JS only, no
+migration, no service restart; the Apache rule waits for the next
+restart).  Existing embed codes behave exactly as before until the
+website adds the script line.  Failure mode: a wrong height on the
+website (clamped).  Rollback: drop the script line on the website, or
+`git revert` (tag `live-2026-11-12b`).

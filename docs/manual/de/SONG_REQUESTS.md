@@ -240,9 +240,25 @@ lange Musik-Tail wird komplett gefüllt, sobald die Dramaturgie steht.
 Das öffentliche Widget liegt unter:
 
 ```
-   http://<ihre-station>/Embed/song-request
-   http://<ihre-station>/Embed/song-request?theme=dark
+   https://<ihre-station>/embed/song-request
+   https://<ihre-station>/embed/song-request?theme=dark
 ```
+
+Embed-Code (seit 2026-11-12 mit der Script-Zeile, die das Widget mit
+der Liste wachsen lässt, siehe [Widgets](./WIDGETS.md) → *Automatische
+Höhe*):
+
+```html
+<iframe src="https://<ihre-station>/embed/song-request"
+        width="100%" height="420" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+<script src="https://<ihre-station>/embed/widgets.js" async></script>
+```
+
+Schreiben Sie die Adresse klein (`/embed/`): Bis 2026-11-12 stand in
+diesem Kapitel `/Embed/`, und so geschrieben ließ sich das Widget
+nicht in eine andere Website einbetten.
 
 Betten Sie es in ein `<iframe>` auf Ihrer Website ein (Themes:
 `light`, `dark`, `auto`). Es zeigt eine scrollbare Tabelle jedes
@@ -276,7 +292,7 @@ Eingebaute Schutzmechanismen (keine Moderations-Queue nötig):
 > kein Artwork haben, bleiben ebenfalls text-only.
 
 > **Wie es unter der Haube funktioniert.** Das Widget ist eine
-> eigenständige Vanilla-JS-iframe-Seite (`/Embed/song-request`), die
+> eigenständige Vanilla-JS-iframe-Seite (`/embed/song-request`), die
 > mit zwei öffentlichen Django-Endpunkten spricht: `GET
 > /api/v2/song-requests/search` (der Katalog) und `POST
 > /api/v2/song-requests` (Submit). Kein Login, kein Cookie. Die rohe

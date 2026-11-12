@@ -556,4 +556,11 @@
      */
     calendar.render();
     updateHeader();
+
+    // RASTATIME 2026-11-12 - self-sizing widgets (autoheight.js): the body
+    // height changes when the page's loader switches the widget to auto
+    // mode and when the visitor's window changes size; the calendar has to
+    // re-measure its box then.
+    document.addEventListener('rt-autoheight', function () { calendar.updateSize(); });
+    document.addEventListener('rt-autoheight-resize', function () { calendar.updateSize(); });
 })();

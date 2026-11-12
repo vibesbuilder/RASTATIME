@@ -245,9 +245,25 @@ remplie entièrement dès que la dramaturgie est placée.
 Le widget public se trouve à :
 
 ```
-   http://<votre-station>/Embed/song-request
-   http://<votre-station>/Embed/song-request?theme=dark
+   https://<votre-station>/embed/song-request
+   https://<votre-station>/embed/song-request?theme=dark
 ```
+
+Code d'intégration (depuis le 2026-11-12 avec la ligne script qui fait
+grandir le widget avec la liste, voir [Widgets](./WIDGETS.md) →
+*Hauteur automatique*) :
+
+```html
+<iframe src="https://<votre-station>/embed/song-request"
+        width="100%" height="420" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent;">
+</iframe>
+<script src="https://<votre-station>/embed/widgets.js" async></script>
+```
+
+Écrivez l'adresse en minuscules (`/embed/`) : jusqu'au 2026-11-12 ce
+chapitre indiquait `/Embed/`, et ainsi écrit le widget ne pouvait pas
+être intégré dans un autre site.
 
 Intégrez-le dans une `<iframe>` sur votre site (thèmes : `light`,
 `dark`, `auto`). Il affiche un tableau défilant de chaque titre
@@ -282,7 +298,7 @@ Garde-fous intégrés (aucune file de modération nécessaire) :
 > seul.
 
 > **Comment ça marche en coulisses.** Le widget est une page iframe
-> autonome en JS vanilla (`/Embed/song-request`) dialoguant avec deux
+> autonome en JS vanilla (`/embed/song-request`) dialoguant avec deux
 > points de terminaison Django publics : `GET
 > /api/v2/song-requests/search` (le catalogue) et `POST
 > /api/v2/song-requests` (envoi). Pas de connexion, pas de cookie.

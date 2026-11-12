@@ -52,6 +52,64 @@ muy tarde tras el tiempo `cache`).
 
 ---
 
+## Altura automática (desde el 2026-11-12)
+
+Un iframe necesita una altura, y una altura fija nunca encaja en todas
+las pantallas: en un móvil las filas se parten y la parte inferior se
+corta, un día con muchos programas no cabe, y `?limit=` o las carátulas
+hacen un widget más alto que su marco.  Por eso cada código de embebido
+de las páginas **Widgets** tiene una segunda línea:
+
+```html
+<iframe src="https://su-emisora.example/embed/weekly-program"
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
+</iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
+```
+
+Con la línea script, el widget comunica a la página la altura de su
+contenido y el iframe la sigue, también cuando el contenido cambia
+(otra pestaña de día, **Load more**, una lista más larga, una pantalla
+más estrecha).  Sin la línea, el iframe conserva la `height` del
+código, exactamente como antes; esa altura sigue siendo también la
+alternativa para visitantes sin JavaScript.
+
+- **Basta una vez por página.**  El script encuentra cada iframe de
+  widget de su host RASTATIME en la página, incluidos los códigos
+  antiguos sin la línea: conservan su ancho y reciben la altura
+  automática.  Incluirla varias veces no hace daño.
+- **Ancho:** `width="100%"` con un `max-width` permite que el widget
+  siga una pantalla estrecha; los códigos de embebido usan esta forma
+  desde el 2026-11-12.
+- **Por widget:**
+
+  | Widget | Altura con la línea script |
+  |---|---|
+  | Now Playing, Next / Latest Shows, On Air Today, tarjeta Player, Song Request | tan alto como el contenido |
+  | Weekly Schedule | el día elegido completo, sin barra de desplazamiento propia (antes: una caja de 520 px) |
+  | Multi-View Schedule | el 80 % de la altura de ventana del visitante (400 a 1000 px): una cuadrícula horaria mide 24 horas, las horas se desplazan dentro como antes |
+  | Track History | cada fila cargada; **Load more** lo hace más alto |
+  | Barra Player | conserva la altura que usted le dé (56 px) |
+
+  Los diálogos de Multi-View y Track History se abren en la parte del
+  widget que ve el visitante, aunque el widget sea más alto que la
+  ventana.
+- **Desactivar** para un solo iframe con `data-rt-autoheight="off"`.
+- **Qué hace el script:** solo lee mensajes de su host RASTATIME, fija
+  la altura de los iframes de widget de ese host y comunica a cada
+  widget qué parte de él es visible.  No pone cookies y no carga nada
+  más.
+- **Su sitio web debe permitir el script** igual que el marco (sección
+  13): un CMS que elimina `<script>` de los artículos necesita un
+  módulo o plantilla que lo conserve (Joomla: un módulo *Custom* cuyo
+  editor no filtre scripts), una herramienta de consentimiento de
+  cookies debe liberar también el host RASTATIME para scripts, y una
+  `Content-Security-Policy` de su sitio necesita el host también en
+  `script-src`.
+
+---
+
 ## 2. Widget Now Playing — Show
 
 iframe listo para usar:
@@ -59,8 +117,9 @@ iframe listo para usar:
 ```html
 <iframe src="https://su-emisora.example/embed/now-playing-show"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 ### Lo que muestra
@@ -107,8 +166,9 @@ iframe listo para usar:
 ```html
 <iframe src="https://su-emisora.example/embed/now-playing-track"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 ### Lo que muestra
@@ -148,18 +208,20 @@ iframe listo para usar (next shows):
 
 ```html
 <iframe src="https://su-emisora.example/embed/next-shows?show_id=42"
-        width="300" height="140" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="140" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 iframe listo para usar (latest shows):
 
 ```html
 <iframe src="https://su-emisora.example/embed/latest-shows?show_id=42"
-        width="300" height="120" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="120" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 ### Lo que muestra
@@ -258,9 +320,10 @@ iframe listo para usar:
 
 ```html
 <iframe src="https://su-emisora.example/embed/on-air-today"
-        width="340" height="250" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="250" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 ### Lo que muestra
@@ -349,9 +412,10 @@ iframe listo para usar:
 
 ```html
 <iframe src="https://su-emisora.example/embed/weekly-program"
-        width="400" height="560" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 ### Lo que muestra
@@ -416,10 +480,11 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← pestañas
 > **Ancho.** El widget Weekly Schedule mide **670 px de ancho**
 > (ampliado desde 400 px el 2026-05-25 a petición del operador —
 > todas las fuentes, paddings y la max-height del panel-día se
-> escalaron proporcionalmente; el iframe en el snippet de
-> embebido recomendado es `width="670" height="670"`).  Ajuste
-> el iframe a estos valores en el HTML de embebido para un
-> encaje preciso.
+> escalaron proporcionalmente).  El snippet de embebido
+> recomendado usa `width="100%"` con `max-width: 670px` y
+> `height="670"` como alternativa; con la línea script la altura
+> sigue al día elegido (vea *Altura automática*).  Hasta el
+> 2026-11-12 el snippet de este capítulo aún decía 400 × 560.
 >
 > **Smartphones.** Por debajo de 670 px el widget sigue el ancho del
 > iframe; cabe en una pantalla de smartphone de 350 px (iframe
@@ -459,6 +524,7 @@ iframe listo para usar:
         width="100%" height="600" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 ### Lo que muestra
@@ -526,6 +592,7 @@ iframe listo para usar (~500 px de alto):
         width="100%" height="500" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://su-emisora.example/embed/widgets.js" async></script>
 ```
 
 ### Parámetros URL
@@ -604,7 +671,9 @@ listos-para-usar (pagesize 10 + 50).
 El widget ocupa exactamente la altura del iframe.  Si las
 filas no caben (pagesize mayor, Load more), la lista se
 desplaza con su propia barra; la cabecera y el botón Load
-more siguen visibles (desde 2026-11-10).
+more siguen visibles (desde 2026-11-10).  Con la línea script
+(vea *Altura automática*) el iframe crece en cambio con las filas
+y la página se desplaza.
 
 ---
 
@@ -746,7 +815,8 @@ tiene prioridad.
 Now Playing queda *desactivado* por defecto a propósito: ese widget
 está documentado con `height="50"`, así que las carátulas son
 opt-in.  Con `?art=on` la caja crece a unos 48 px — dé al iframe
-`height="56"` o más.
+`height="56"` o más, o añada la línea script (vea *Altura
+automática*): entonces la altura sigue sola.
 
 El Track History no muestra carátulas.
 
@@ -860,6 +930,18 @@ default-src» al lado 2.
 - Verifique que la URL sea accesible desde el contexto
   del navegador de la página integradora.
 - Verifique la consola del navegador.
+
+### "El widget conserva su altura fija / se corta"
+
+- ¿Está la línea `<script src=".../embed/widgets.js">` en la
+  página publicada?  Algunos editores eliminan `<script>` al
+  guardar - revise el código fuente de la página.
+- Consola del navegador (F12): un script bloqueado («Refused to
+  load the script», una herramienta de consentimiento)
+  corresponde al lado 2 de la sección 13 - libere el host
+  RASTATIME para scripts.
+- El iframe no debe llevar `data-rt-autoheight="off"`, y su
+  `src` debe apuntar al mismo host RASTATIME que el script.
 
 ### "El fondo del widget es blanco pero quiero oscuro"
 

@@ -222,11 +222,14 @@
         }
         // RASTATIME 2026-09-18 — forward the filter parameters the page
         // was opened with.  Without this the documented ?exclude_short=
-        // / ?min_seconds= overrides only affected the (never rendered)
+        // / ?min_sec= overrides only affected the (never rendered)
         // server-side first page: every list the visitor actually sees
         // comes from this fetch, which used to drop them and silently
         // fall back to the operator preference.
-        carryParams(['exclude_short', 'min_seconds']).forEach(function (kv) {
+        // 2026-11-12: the documented name is min_sec (the controller never
+        // read min_seconds, which this line sent until today); min_seconds
+        // stays accepted for embeds that copied it.
+        carryParams(['exclude_short', 'min_sec', 'min_seconds']).forEach(function (kv) {
             url += '&' + kv;
         });
 

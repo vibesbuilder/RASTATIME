@@ -40,11 +40,17 @@ peticiones de oyentes están limitados por oyente.
 **Configuración → General → Public RASTATIME API** (on / off).
 
 - **On:** los puntos de lectura de la API legacy responden sin clave.
-  Es lo que necesitan los widgets — now-playing, programa semanal y
-  reproductor leen `live-info`, `track` y `show-logo`.  Apagar el
-  interruptor rompe los widgets de su sitio web.
 - **Off:** los mismos puntos exigen la clave API.  Solo tiene sentido
-  sin widgets y sin un sitio externo que lea la programación.
+  si ningún sitio externo lee la programación a través de ellos.
+  Desde el 2026-11-12 esto vale también para `shows`, `show-schedules`,
+  `show-tracks`, `item-history-feed` y `show-history-feed`, que antes
+  respondían incluso con el interruptor apagado.
+
+Los widgets leen sus datos a través de sus propias direcciones
+`/embed/…`, públicas en cualquier caso; de esta API solo toman las
+carátulas e imágenes de programa (`track`, `show-logo`).  Con el
+interruptor apagado los widgets siguen funcionando, solo sin carátulas
+(hasta el 2026-11-12 este capítulo decía que dejarían de funcionar).
 
 El interruptor no toca la API v2 y no abre nada que escriba.
 
@@ -64,9 +70,9 @@ emisora, salvo que pase `timezone=` (un nombre de la base tz como
 | `/api/station-metadata` | — | Nombre, descripción, logo, idioma, zona horaria de la emisora y la lista de streams. |
 | `/api/shows` | `show_id` (opcional) | Todos los programas, o uno: id, nombre, descripción, género, url, colores, indicador linked. |
 | `/api/show-schedules` | `show_id` (obligatorio), `start`, `end` (`YYYY-MM-DD HH:MM:SS`) | Los episodios de un programa en el periodo. |
-| `/api/show-tracks` | `instance_id` (obligatorio) | Las filas de un episodio: posición, título, artista, duración, inicio. |
+| `/api/show-tracks` | `instance_id` (obligatorio) | Las filas de un episodio: posición, título, artista, duración, inicio.  Una fila de webstream lleva solo el nombre del stream, `file_id` existe solo para archivos (hasta el 2026-11-12 aparecían la URL de origen del stream y el login de quien lo creó). |
 | `/api/item-history-feed` | `start`, `end`, `instance_id` (opcional) | El historial de emisión: qué sonó y cuándo, con título, artista y episodio. |
-| `/api/show-history-feed` | `start`, `end`, `user_id` (opcional) | Los programas emitidos en el periodo. |
+| `/api/show-history-feed` | `start`, `end`, `user_id` (opcional) | Los programas emitidos en el periodo; `user_id` los limita a los programas de ese presentador.  Sin `user_id` respondía vacío hasta el 2026-11-12. |
 | `/api/track?id=<id archivo>&return=<tipo>` | `return` = `artwork`, `artwork-32`, `artwork-64`, `artwork-data` | La carátula de una pista (JPG). |
 | `/api/show-logo?id=<id programa>` | — | La imagen de un programa. |
 | `/api/track-types` | — | Los tipos de pista configurados en la biblioteca. |

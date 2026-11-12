@@ -5,6 +5,7 @@
 // FullCalendar time-grid needs vertical room.
 
 $publicUrl = rtrim($this->publicUrl, '/');
+$widgetsJs = $publicUrl . '/embed/widgets.js'; // RASTATIME 2026-11-12 - self-sizing widgets
 $previewUrl = $publicUrl . '/embed/multi-view-schedule?theme=dark';
 $embedUrlDay  = $publicUrl . '/embed/multi-view-schedule';
 $embedUrl2Day = $publicUrl . '/embed/multi-view-schedule?view=2day';
@@ -65,20 +66,27 @@ $embedUrlWeek = $publicUrl . '/embed/multi-view-schedule?view=week';
         <label style="display: block; margin-top: 0.8em;"><strong>
             <?php echo _("Day view (default)"); ?>:
         </strong></label>
-        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
-        ><iframe src="<?php echo htmlspecialchars($embedUrlDay, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+        <textarea style="width: 98%; font-family: monospace;" rows="3" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedUrlDay, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe>
+<script src="<?php echo htmlspecialchars($widgetsJs, ENT_QUOTES, 'UTF-8'); ?>" async></script></textarea>
 
         <label style="display: block; margin-top: 0.8em;"><strong>
             <?php echo _("2-Day view"); ?>:
         </strong></label>
-        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
-        ><iframe src="<?php echo htmlspecialchars($embedUrl2Day, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+        <textarea style="width: 98%; font-family: monospace;" rows="3" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedUrl2Day, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe>
+<script src="<?php echo htmlspecialchars($widgetsJs, ENT_QUOTES, 'UTF-8'); ?>" async></script></textarea>
 
         <label style="display: block; margin-top: 0.8em;"><strong>
             <?php echo _("Week view"); ?>:
         </strong></label>
-        <textarea style="width: 98%; font-family: monospace;" rows="2" readonly="readonly"
-        ><iframe src="<?php echo htmlspecialchars($embedUrlWeek, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe></textarea>
+        <textarea style="width: 98%; font-family: monospace;" rows="3" readonly="readonly"
+        ><iframe src="<?php echo htmlspecialchars($embedUrlWeek, ENT_QUOTES, 'UTF-8'); ?>" width="100%" height="600" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe>
+<script src="<?php echo htmlspecialchars($widgetsJs, ENT_QUOTES, 'UTF-8'); ?>" async></script></textarea>
+
+        <p style="margin-top: 0.8em; color: #666;">
+            <?php /* RASTATIME 2026-11-12 - self-sizing widgets */ echo _("The script line lets the widget grow and shrink with its content (once per page is enough); without it the iframe keeps the height in the code."); ?>
+        </p>
 
         <p style="margin-top: 1em; color: #666;">
             <?php echo _("Copy a snippet above and paste it into your "
@@ -100,3 +108,6 @@ $embedUrlWeek = $publicUrl . '/embed/multi-view-schedule?view=week';
     </fieldset>
 
 </div>
+
+<?php /* RASTATIME 2026-11-12 - the previews grow with their content, as on the website */ ?>
+<script src="<?php echo htmlspecialchars($widgetsJs, ENT_QUOTES, 'UTF-8'); ?>" async></script>

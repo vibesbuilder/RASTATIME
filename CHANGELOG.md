@@ -7,7 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Widgets size themselves (2026-11-12, operator Go A, stages 1 + 2)** - every
+  `/embed/` widget reports its content height to the page around it, and the new
+  `/embed/widgets.js` on the station website sets the iframe height: it follows
+  the content (another day, Load more, a longer list, a narrow phone screen)
+  instead of a fixed `height`.  One script line per page, older embed codes on
+  that page included; without it nothing changes (the `height` stays the
+  fallback).  Weekly shows the whole day, Track History every loaded row,
+  Multi-View 80 % of the visitor's window, the player bar keeps 56 px; dialogs
+  open in the visible part of a tall widget.  The embed codes on the seven
+  Widgets pages carry the line and `width="100%"` with a `max-width`; the
+  previews size themselves too.  Manual WIDGETS (new section "Automatic
+  height", fixed snippets) and SONG_REQUESTS x4, ARCHITECTURE 0.134 (23.106).
+
 ### Fixed
+
+- **Track History: `?min_sec=` reaches the list (2026-11-12)** - the widget JS
+  forwarded `min_seconds`, the controller reads the documented `min_sec`, so a
+  threshold in the embed URL never applied.  Both names work now.
+- **Public `show-history-feed` answered empty (2026-11-12)** - without `user_id`
+  it looked up the logged-in user, which throws without a session; the
+  exception was swallowed.  The API path now lists the shows without a host
+  filter.  Its debug logging of the whole show list on every call is gone.
+- **Widget frame rule was case-sensitive (2026-11-12)** - `/Embed/song-request`
+  (as the manual wrote it) kept `X-Frame-Options: SAMEORIGIN` and could not be
+  embedded on the station website.  `infra/apache/rastatime-https.conf` matches
+  case-insensitively; active after the next Apache restart.  The manual uses
+  `/embed/` now.
+- **Manual: WIDGETS and API corrected (2026-11-12)** - the Weekly snippet said
+  400 x 560 (the Widgets page: 670 x 670); API section 2 said the widgets read
+  `live-info` and stop working without the public-API switch - they read their
+  own `/embed/` data, only the covers need the switch.
 
 - **Entfernter Line-In ließ Liquidsoap einen toten Mount abfragen (2026-11-12)** — Wurde ein
   laufender Line-In im Kalender entfernt oder gekürzt, stoppte PLAYOUT nur die Aufnahme, nicht den
@@ -19,6 +51,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Mount abfragt, verliert das Stop und bleibt bis zum Neustart ein Zombie), dann die Aufnahme,
   Gate zurück.  Dieselbe Lücke hatte ein entfernter Webstream (Eingang und offenes Gate blieben);
   auch er wird jetzt gestoppt.  Wirksam nach dem nächsten PLAYOUT-Neustart (81c27e40).
+
+### Security
+
+- **Legacy read endpoints honour the public-API switch; `show-tracks` without
+  stream URLs (2026-11-12)** - `shows`, `show-schedules`, `show-tracks`,
+  `item-history-feed` and `show-history-feed` answered even with Settings ->
+  General -> Public RASTATIME API off (the manual said they need the key then);
+  they now behave like `live-info`.  `show-tracks` showed a web stream row's
+  source URL (in the title and as `file_id`) and the studio login of the
+  person who created the stream (checked live for the 08:00 BBC episode); now
+  the stream's name only, `file_id` for files only.  No change while the switch
+  is on (it is, for the widgets).
 
 ## [1.5.0] - 2026-11-11
 

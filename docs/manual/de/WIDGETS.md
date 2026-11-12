@@ -51,6 +51,64 @@ erscheint beim nächsten Laden des Widgets (spätestens nach der
 
 ---
 
+## Automatische Höhe (seit 2026-11-12)
+
+Ein iframe braucht eine Höhe, und eine feste Höhe passt nie auf jeden
+Bildschirm: Auf dem Handy brechen die Zeilen um und unten wird
+abgeschnitten, ein Tag mit vielen Sendungen passt nicht hinein, und
+`?limit=` oder Cover machen ein Widget höher als seinen Rahmen.  Jeder
+Embed-Code auf den **Widgets**-Seiten hat deshalb eine zweite Zeile:
+
+```html
+<iframe src="https://ihre-station.example/embed/weekly-program"
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
+</iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
+```
+
+Mit der Script-Zeile teilt das Widget der Seite mit, wie hoch sein
+Inhalt ist, und das iframe folgt ihm, auch wenn sich der Inhalt ändert
+(anderer Tages-Tab, **Load more**, eine längere Liste, ein schmalerer
+Bildschirm).  Ohne die Zeile behält das iframe die `height` aus dem
+Code, genau wie bisher; diese Höhe bleibt auch der Rückfall für
+Besucher ohne JavaScript.
+
+- **Einmal pro Seite genügt.**  Das Script findet jedes Widget-iframe
+  Ihres RASTATIME-Hosts auf der Seite, auch ältere Embed-Codes ohne die
+  Zeile: Sie behalten ihre Breite und bekommen die automatische Höhe.
+  Mehrfach eingebunden schadet es nicht.
+- **Breite:** `width="100%"` mit einem `max-width` lässt das Widget
+  einem schmalen Bildschirm folgen; die Embed-Codes nutzen diese Form
+  seit 2026-11-12.
+- **Je Widget:**
+
+  | Widget | Höhe mit der Script-Zeile |
+  |---|---|
+  | Now Playing, Next / Latest Shows, On Air Today, Player-Karte, Song Request | so hoch wie der Inhalt |
+  | Weekly Schedule | der ganze gewählte Tag, ohne eigenen Scrollbalken (vorher: eine 520-px-Box) |
+  | Multi-View Schedule | 80 % der Fensterhöhe des Besuchers (400 bis 1000 px): Ein Zeitraster ist 24 Stunden hoch, die Stunden scrollen wie bisher innen |
+  | Track History | jede geladene Zeile; **Load more** macht es höher |
+  | Player-Leiste | behält die Höhe, die Sie ihr geben (56 px) |
+
+  Die Dialoge von Multi-View und Track History öffnen sich in dem Teil
+  des Widgets, den der Besucher sieht, auch wenn das Widget höher als
+  das Fenster ist.
+- **Abschalten** für ein einzelnes iframe mit `data-rt-autoheight="off"`.
+- **Was das Script tut:** Es liest nur Nachrichten Ihres
+  RASTATIME-Hosts, setzt die Höhe der Widget-iframes dieses Hosts und
+  teilt jedem Widget mit, welcher Teil von ihm sichtbar ist.  Es setzt
+  keine Cookies und lädt nichts nach.
+- **Ihre Website muss das Script erlauben**, wie den Frame (Abschnitt
+  13): Ein CMS, das `<script>` aus Beiträgen entfernt, braucht ein Modul
+  oder Template, das es behält (Joomla: ein Modul *Custom* / *Eigenes
+  HTML*, dessen Editor keine Scripts filtert), ein Cookie-Consent-Tool
+  muss den RASTATIME-Host auch für Scripts freigeben, und eine
+  `Content-Security-Policy` Ihrer Website braucht den Host auch in
+  `script-src`.
+
+---
+
 ## 2. Now Playing — Show Widget
 
 Drop-in-iframe:
@@ -58,8 +116,9 @@ Drop-in-iframe:
 ```html
 <iframe src="https://ihre-station.example/embed/now-playing-show"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Was es anzeigt
@@ -106,8 +165,9 @@ Drop-in-iframe:
 ```html
 <iframe src="https://ihre-station.example/embed/now-playing-track"
         width="100%" height="50" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Was es anzeigt
@@ -147,18 +207,20 @@ Drop-in-iframe (Next Shows):
 
 ```html
 <iframe src="https://ihre-station.example/embed/next-shows?show_id=42"
-        width="300" height="140" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="140" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 Drop-in-iframe (Latest Shows):
 
 ```html
 <iframe src="https://ihre-station.example/embed/latest-shows?show_id=42"
-        width="300" height="120" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="120" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 300px;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Was es anzeigt
@@ -260,9 +322,10 @@ Drop-in-iframe:
 
 ```html
 <iframe src="https://ihre-station.example/embed/on-air-today"
-        width="340" height="250" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="250" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 340px;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Was es anzeigt
@@ -352,9 +415,10 @@ Drop-in-iframe:
 
 ```html
 <iframe src="https://ihre-station.example/embed/weekly-program"
-        width="400" height="560" frameborder="0"
-        scrolling="no" style="border: 0; background: transparent;">
+        width="100%" height="670" frameborder="0"
+        scrolling="no" style="border: 0; background: transparent; max-width: 670px;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Was es anzeigt
@@ -419,9 +483,11 @@ MON  TUE  WED  THU  FRI  SAT  SUN                   ← Tagestabs
 > **Breite.** Das Weekly-Schedule-Widget ist **670 px breit**
 > (hochgesetzt von 400 px am 2026-05-25 auf Operator-Wunsch — alle
 > Schriften, Padding und die Day-Panel-Maxhöhe wurden proportional
-> mitskaliert; das iframe im empfohlenen Embed-Snippet ist
-> `width="670" height="670"`).  Setzen Sie die iframe-Werte im
-> einbettenden HTML auf diese Werte für bündige Darstellung.
+> mitskaliert).  Das empfohlene Embed-Snippet nutzt
+> `width="100%"` mit `max-width: 670px` und `height="670"` als
+> Rückfall; mit der Script-Zeile folgt die Höhe dem gewählten Tag
+> (siehe *Automatische Höhe*).  Bis 2026-11-12 stand im Snippet
+> dieses Kapitels noch 400 × 560.
 >
 > **Smartphones.** Unter 670 px folgt das Widget der iframe-Breite;
 > es passt auf einen 350 px breiten Smartphone-Bildschirm (iframe
@@ -461,6 +527,7 @@ bequem reinpasst):
         width="100%" height="600" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 ### Was es anzeigt
@@ -547,6 +614,7 @@ Load-More-Footer reinpassen):
         width="100%" height="500" frameborder="0"
         scrolling="no" style="border: 0; background: transparent;">
 </iframe>
+<script src="https://ihre-station.example/embed/widgets.js" async></script>
 ```
 
 ### URL-Parameter
@@ -640,6 +708,8 @@ Das Widget füllt genau die Höhe des iframes.  Passen die
 Zeilen nicht hinein (größere Pagesize, Load more), scrollt
 die Liste mit eigenem Scrollbalken; Kopfzeile und
 Load-More-Knopf bleiben sichtbar (seit 2026-11-10).
+Mit der Script-Zeile (siehe *Automatische Höhe*) wächst das
+iframe stattdessen mit den Zeilen, und die Seite scrollt.
 
 ---
 
@@ -786,7 +856,8 @@ Now Playing bleibt bewusst standardmäßig *aus*: Dieses Widget ist
 mit `height="50"` dokumentiert, Cover sind daher opt-in, damit sich
 keine bestehende Einbettung von selbst ändert.  Mit `?art=on` wächst
 die Box auf rund 48 px — geben Sie dem iframe dann `height="56"`
-oder mehr.
+oder mehr, oder ergänzen Sie die Script-Zeile (siehe *Automatische
+Höhe*), dann folgt die Höhe von selbst.
 
 Die Track History zeigt keine Cover.
 
@@ -916,7 +987,10 @@ frame-src / default-src" auf Seite 2.
 Wenn Sie zuvor versucht haben, über JavaScript-Snippet
 einzubetten und auf CORS-Fehler gestoßen sind, umgeht der
 Wechsel zum iframe-Ansatz (dieses Kapitel) das Problem
-vollständig.
+vollständig.  Die Script-Zeile der *Automatischen Höhe* ist
+kein solches Snippet: Sie bemisst nur die iframes und holt
+keine Daten, braucht also kein CORS - die Richtlinie Ihrer
+Website muss sie aber als Script erlauben (`script-src`).
 
 ---
 
@@ -944,6 +1018,18 @@ vollständig.
   iframe-URL auf dem öffentlichen Hostnamen ausliefert,
   der unter Einstellungen → Allgemeine Einstellungen
   konfiguriert ist.
+
+### "Das Widget behält seine feste Höhe / wird abgeschnitten"
+
+- Steht die Zeile `<script src=".../embed/widgets.js">` auf der
+  veröffentlichten Seite?  Manche Editoren entfernen `<script>`
+  beim Speichern - prüfen Sie den Seitenquelltext.
+- Browser-Konsole (F12): Ein blockiertes Script („Refused to
+  load the script", ein Consent-Tool) bedeutet Seite 2 aus
+  Abschnitt 13 - geben Sie den RASTATIME-Host für Scripts frei.
+- Das iframe darf kein `data-rt-autoheight="off"` tragen, und
+  sein `src` muss auf denselben RASTATIME-Host zeigen wie das
+  Script.
 
 ### "Widget-Hintergrund ist weiß, aber ich möchte dunkel"
 
