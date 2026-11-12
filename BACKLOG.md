@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### ✅ Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - GEBAUT 2026-11-12 (Go A, Stufe 1 + 2, §23.106; Nebenbefunde mit erledigt)
+### ✅ Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - GEBAUT 2026-11-12 (Go A, Stufe 1 + 2, `c86b26fb`, §23.106; Nebenbefunde mit erledigt)
 
 **Befund:** jedes Widget ist ein iframe mit fester Höhe und `scrolling="no"` (Weekly 670×670, Multi-View 100 %×600,
 Track History 100 %×500, On Air Today 340×250 …).  Wächst der Inhalt (mehr Zeilen, `?limit=`, `?art=on`), wird er

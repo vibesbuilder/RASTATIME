@@ -21,25 +21,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Widgets pages carry the line and `width="100%"` with a `max-width`; the
   previews size themselves too.  Manual WIDGETS (new section "Automatic
   height", fixed snippets) and SONG_REQUESTS x4, ARCHITECTURE 0.134 (23.106).
+  `c86b26fb`.
 
 ### Fixed
 
 - **Track History: `?min_sec=` reaches the list (2026-11-12)** - the widget JS
   forwarded `min_seconds`, the controller reads the documented `min_sec`, so a
-  threshold in the embed URL never applied.  Both names work now.
+  threshold in the embed URL never applied.  Both names work now.  `c86b26fb`.
 - **Public `show-history-feed` answered empty (2026-11-12)** - without `user_id`
   it looked up the logged-in user, which throws without a session; the
   exception was swallowed.  The API path now lists the shows without a host
   filter.  Its debug logging of the whole show list on every call is gone.
+  `c86b26fb`.
 - **Widget frame rule was case-sensitive (2026-11-12)** - `/Embed/song-request`
   (as the manual wrote it) kept `X-Frame-Options: SAMEORIGIN` and could not be
   embedded on the station website.  `infra/apache/rastatime-https.conf` matches
   case-insensitively; active after the next Apache restart.  The manual uses
-  `/embed/` now.
+  `/embed/` now.  `c86b26fb`.
 - **Manual: WIDGETS and API corrected (2026-11-12)** - the Weekly snippet said
   400 x 560 (the Widgets page: 670 x 670); API section 2 said the widgets read
   `live-info` and stop working without the public-API switch - they read their
-  own `/embed/` data, only the covers need the switch.
+  own `/embed/` data, only the covers need the switch.  `c86b26fb`.
 
 - **Entfernter Line-In ließ Liquidsoap einen toten Mount abfragen (2026-11-12)** — Wurde ein
   laufender Line-In im Kalender entfernt oder gekürzt, stoppte PLAYOUT nur die Aufnahme, nicht den
@@ -62,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   source URL (in the title and as `file_id`) and the studio login of the
   person who created the stream (checked live for the 08:00 BBC episode); now
   the stream's name only, `file_id` for files only.  No change while the switch
-  is on (it is, for the widgets).
+  is on (it is, for the widgets).  `c86b26fb`.
 
 ## [1.5.0] - 2026-11-11
 
