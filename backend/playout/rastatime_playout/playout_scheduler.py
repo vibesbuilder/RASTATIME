@@ -280,6 +280,17 @@ class PlayoutScheduler:
         # API (copy into the library).  None while nothing is recording or
         # after a PLAYOUT restart mid-show (the path is then unknown).
         self._open_show_recording: Optional[tuple[Optional[int], Path]] = None
+        # RASTATIME 2026-11-13 - "Record Start".  With a positive offset the
+        # END of a recording lies behind the show's end, where the show's
+        # rows have left the schedule fetch: a refresh in that window would
+        # cancel the END timer and find no event to arm again.  The END
+        # events seen so far are remembered per instance so the refresh can
+        # re-arm the one of the open recording (_rearm_open_recording_end).
+        self._record_end_events: dict[int, tuple[str, ShowRecordEvent]] = {}
+        # start and end of two recordings in a row fire in the same instant
+        # on two timer threads; the lock keeps each stop / set path / start
+        # sequence whole.
+        self._recording_lock = threading.RLock()
         # RASTATIME 2026-09-06 - did the constructor's recording.stop +
         # gate reset reach Liquidsoap?  False means telnet was not up yet
         # and ensure_liquidsoap_initial_state() has to keep trying.
@@ -765,6 +776,11 @@ class PlayoutScheduler:
 
                 else:
                     skipped_type += 1
+
+            # RASTATIME 2026-11-13 - the END of the open recording may have
+            # left the schedule (see _record_end_events)
+            if self._rearm_open_recording_end(now):
+                armed_count += 1
 
         t_end = time.monotonic()
         logger.info(
@@ -1944,6 +1960,9 @@ class PlayoutScheduler:
         # to match the existing tuple shape used by _on_stop's lookups.
         self._timers[key] = (None, t)
         self._armed_events[key] = event
+        instance_id = getattr(event, "instance_id", None)
+        if event.type == EventKind.SHOW_RECORD_END and instance_id is not None:
+            self._record_end_events[int(instance_id)] = (key, event)
         logger.debug(
             "Armed ShowRecordEvent %s: type=%s delay=%.1fs show_id=%s name=%r",
             key,
@@ -3674,7 +3693,41 @@ class PlayoutScheduler:
     # Show-record callbacks (Phase B / ARCHITECTURE Section 23.13)
     # ------------------------------------------------------------------
 
+    def _rearm_open_recording_end(self, now: datetime) -> bool:
+        """
+        RASTATIME 2026-11-13 - called by the refresh after the arming loop
+        (timers were cancelled before it): when a recording is open and the
+        END event of its instance is not among the armed ones any more, arm
+        the remembered one again (at once if its time has passed).  Also
+        forgets END events that are long over.
+        """
+        for inst, (_, old) in list(self._record_end_events.items()):
+            if (now - old.start).total_seconds() > 3600:
+                self._record_end_events.pop(inst, None)
+        open_rec = self._open_show_recording
+        if open_rec is None or open_rec[0] is None:
+            return False
+        remembered = self._record_end_events.get(int(open_rec[0]))
+        if remembered is None:
+            return False
+        key, event = remembered
+        if key in self._timers:
+            return False
+        logger.info(
+            "Show-record end %s of the open recording (instance %s) is no longer in "
+            "the schedule - keeping its timer (fires in %.1f s).",
+            key,
+            open_rec[0],
+            max(0.0, (event.start - now).total_seconds()),
+        )
+        self._arm_show_record_event(key, event, now)
+        return True
+
     def _on_show_record_start(self, key: str, event: ShowRecordEvent) -> None:
+        with self._recording_lock:
+            self._show_record_start_locked(key, event)
+
+    def _show_record_start_locked(self, key: str, event: ShowRecordEvent) -> None:
         """
         RASTATIME 2026-05-28 — Phase-C5 Teil 2d: Record-per-Show start
         handler.  Recording is owned by Liquidsoap's ``output.file
@@ -3756,6 +3809,12 @@ class PlayoutScheduler:
             event.show_name,
             output_path,
         )
+        # RASTATIME 2026-11-13 - a recording that is still open belongs to
+        # the show before: engine.recording_start() closes it (stop, set
+        # path, start).  Its own END fires in this same instant and finds
+        # nothing left to stop, so the closed file is reported from here.
+        previous = self._open_show_recording
+        instance_id = getattr(event, "instance_id", None)
         try:
             self._engine.recording_start(liq_path)
         except (OSError, ConnectionError, ValueError) as exc:
@@ -3767,9 +3826,23 @@ class PlayoutScheduler:
                 exc,
             )
             return
-        self._open_show_recording = (getattr(event, "instance_id", None), output_path)
+        self._open_show_recording = (instance_id, output_path)
+        if previous is not None and previous[1] != output_path:
+            logger.info(
+                "Show-record start closed the open recording of instance %s (%s) - "
+                "hand-over in one instant.",
+                previous[0],
+                previous[1],
+            )
+            if previous[0] is not None:
+                self._record_end_events.pop(int(previous[0]), None)
+            self._report_recording_finished(previous[0], previous[1])
 
     def _on_show_record_end(self, key: str, event: ShowRecordEvent) -> None:
+        with self._recording_lock:
+            self._show_record_end_locked(key, event)
+
+    def _show_record_end_locked(self, key: str, event: ShowRecordEvent) -> None:
         """
         RASTATIME 2026-05-28 — Phase-C5 Teil 2d: Record-per-Show end
         handler.  Calls ``engine.recording_stop()`` synchronously —
@@ -3778,6 +3851,28 @@ class PlayoutScheduler:
         deleted FfmpegRecorder's 1 s post-roll was a workaround for
         HTTP-source-buffering lag that doesn't apply to the bus tap).
         """
+        # RASTATIME 2026-11-13 - the next show's START ran first in this
+        # instant: it closed and reported our file and its own recording is
+        # open now - a stop here would cut that one.
+        ended_instance = getattr(event, "instance_id", None)
+        open_now = self._open_show_recording
+        if (
+            ended_instance is not None
+            and open_now is not None
+            and open_now[0] is not None
+            and int(open_now[0]) != int(ended_instance)
+        ):
+            logger.info(
+                "Show-record end %s (instance %s): the recording of instance %s is "
+                "open - already handed over, nothing to stop.",
+                key,
+                ended_instance,
+                open_now[0],
+            )
+            self._record_end_events.pop(int(ended_instance), None)
+            return
+        if ended_instance is not None:
+            self._record_end_events.pop(int(ended_instance), None)
         logger.info(
             "STOP (show-record end, Liquidsoap)  %s  |  show_id=%s name=%r",
             key,

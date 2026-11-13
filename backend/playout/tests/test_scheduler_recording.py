@@ -501,3 +501,183 @@ def test_record_start_failure_leaves_no_open_recording(tmp_path):
     start.instance_id = 1
     sched._on_show_record_start("k", start)
     assert sched._open_show_recording is None
+
+
+# ---- RASTATIME 2026-11-13: "Record Start" (offset of start and end) -----
+
+
+def test_record_start_offset_moves_both_events_and_keeps_the_file_name_time():
+    """A positive offset starts and ends the recording later by the same
+    amount; show_starts_at (the file name) stays the show's own start."""
+    from datetime import timedelta
+
+    from rastatime_playout.player.schedule import generate_show_record_events
+
+    events = {}
+    generate_show_record_events(
+        events,
+        {"id": 4711, "starts_at": "2026-11-13T08:15:00", "ends_at": "2026-11-13T09:00:00"},
+        {"id": 212, "name": "Morning Live"},
+        offset_seconds=3.5,
+    )
+    start = next(e for e in events.values() if e.type == EventKind.SHOW_RECORD_START)
+    end = next(e for e in events.values() if e.type == EventKind.SHOW_RECORD_END)
+    assert start.start == datetime(2026, 11, 13, 8, 15) + timedelta(seconds=3.5)
+    assert end.start == datetime(2026, 11, 13, 9, 0) + timedelta(seconds=3.5)
+    assert end.start - start.start == timedelta(minutes=45)
+    assert start.show_starts_at == datetime(2026, 11, 13, 8, 15)
+    assert end.show_starts_at == datetime(2026, 11, 13, 8, 15)
+
+
+def test_record_start_offset_negative_and_two_shows_in_a_row_meet_in_one_instant():
+    from datetime import timedelta
+
+    from rastatime_playout.player.schedule import generate_show_record_events
+
+    events = {}
+    generate_show_record_events(
+        events,
+        {"id": 1, "starts_at": "2026-11-13T08:00:00", "ends_at": "2026-11-13T08:15:00"},
+        {"id": 10, "name": "A"},
+        offset_seconds=-2,
+    )
+    generate_show_record_events(
+        events,
+        {"id": 2, "starts_at": "2026-11-13T08:15:00", "ends_at": "2026-11-13T09:00:00"},
+        {"id": 11, "name": "B"},
+        offset_seconds=-2,
+    )
+    assert len(events) == 4
+    end_a = next(
+        e for e in events.values() if e.type == EventKind.SHOW_RECORD_END and e.instance_id == 1
+    )
+    start_b = next(
+        e for e in events.values() if e.type == EventKind.SHOW_RECORD_START and e.instance_id == 2
+    )
+    assert end_a.start == start_b.start == datetime(2026, 11, 13, 8, 15) - timedelta(seconds=2)
+
+
+def test_fetch_record_start_offset_reads_clamps_and_survives_errors():
+    from rastatime_playout.player.schedule import fetch_record_start_offset
+
+    def client(payload=None, status=200, raises=None):
+        api = MagicMock()
+        if raises is not None:
+            api.session.get.side_effect = raises
+        else:
+            resp = MagicMock()
+            resp.status_code = status
+            resp.json.return_value = payload
+            api.session.get.return_value = resp
+        return api
+
+    assert fetch_record_start_offset(client({"record_start_offset": 2.5})) == 2.5
+    assert fetch_record_start_offset(client({"record_start_offset": -4})) == -4.0
+    assert fetch_record_start_offset(client({"record_start_offset": 999})) == 60.0
+    assert fetch_record_start_offset(client({"record_start_offset": -999})) == -60.0
+    assert fetch_record_start_offset(client({"folder": "x"})) == 0.0  # older API
+    assert fetch_record_start_offset(client({"record_start_offset": "abc"})) == 0.0
+    assert fetch_record_start_offset(client({}, status=500)) == 0.0
+    assert fetch_record_start_offset(client(raises=ConnectionError("down"))) == 0.0
+    assert fetch_record_start_offset(MagicMock()) == 0.0  # an unconfigured mock
+
+
+def _event_for(instance_id, type_, starts_at, name):
+    ev = _make_show_record_event(
+        type_=type_, show_id=instance_id, show_name=name, starts_at=starts_at
+    )
+    ev.instance_id = instance_id
+    return ev
+
+
+def test_next_start_first_reports_the_previous_file_and_its_end_stops_nothing(tmp_path):
+    """Two recorded shows in a row: START(B) and END(A) fire in one instant.
+    When START(B) runs first it closes A's file (recording_start stops what
+    is open) and reports it; END(A) must then leave B's recording alone."""
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    sched._on_show_record_start(
+        "k-a", _event_for(1, EventKind.SHOW_RECORD_START, datetime(2026, 11, 13, 8, 0), "A")
+    )
+    path_a = sched._open_show_recording[1]
+    path_a.parent.mkdir(parents=True, exist_ok=True)
+    path_a.write_bytes(b"a" * 50)
+
+    sched._on_show_record_start(
+        "k-b", _event_for(2, EventKind.SHOW_RECORD_START, datetime(2026, 11, 13, 8, 15), "B")
+    )
+    assert sched._open_show_recording[0] == 2
+    engine.recording_stop.reset_mock()
+
+    sched._on_show_record_end(
+        "k-a-end", _event_for(1, EventKind.SHOW_RECORD_END, datetime(2026, 11, 13, 8, 0), "A")
+    )
+    _join_report_threads()
+    engine.recording_stop.assert_not_called()
+    assert sched._open_show_recording[0] == 2  # B keeps recording
+    v1.notify_recording_finished.assert_called_once()
+    assert v1.notify_recording_finished.call_args.kwargs["instance_id"] == 1
+    assert v1.notify_recording_finished.call_args.kwargs["path"] == str(path_a)
+
+
+def test_previous_end_first_then_the_next_start_reports_once(tmp_path):
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    sched._on_show_record_start(
+        "k-a", _event_for(1, EventKind.SHOW_RECORD_START, datetime(2026, 11, 13, 8, 0), "A")
+    )
+    path_a = sched._open_show_recording[1]
+    path_a.parent.mkdir(parents=True, exist_ok=True)
+    path_a.write_bytes(b"a" * 50)
+    sched._on_show_record_end(
+        "k-a-end", _event_for(1, EventKind.SHOW_RECORD_END, datetime(2026, 11, 13, 8, 0), "A")
+    )
+    sched._on_show_record_start(
+        "k-b", _event_for(2, EventKind.SHOW_RECORD_START, datetime(2026, 11, 13, 8, 15), "B")
+    )
+    _join_report_threads()
+    assert sched._open_show_recording[0] == 2
+    v1.notify_recording_finished.assert_called_once()
+    assert v1.notify_recording_finished.call_args.kwargs["instance_id"] == 1
+
+
+def test_refresh_keeps_the_end_timer_of_an_open_recording_that_left_the_schedule(tmp_path):
+    """Positive Record Start: the END lies behind the show's end, where the
+    show's rows are gone from the fetch.  A refresh cancels all timers; the
+    remembered END of the open recording is armed again."""
+    from datetime import timedelta
+
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    now = datetime.utcnow()
+    end = _event_for(7, EventKind.SHOW_RECORD_END, now, "A")
+    end.start = end.end = now + timedelta(seconds=30)
+    sched._arm_show_record_event("k-end-7", end, now)
+    assert sched._record_end_events[7][0] == "k-end-7"
+
+    sched._cancel_all_timers()  # what a refresh does first
+    assert sched._rearm_open_recording_end(now) is False  # nothing is recording
+
+    sched._open_show_recording = (7, tmp_path / "a.mp3")
+    assert sched._rearm_open_recording_end(now) is True
+    assert "k-end-7" in sched._timers
+    assert sched._rearm_open_recording_end(now) is False  # armed already
+    sched._cancel_all_timers()
+
+    # an END that is long over is forgotten
+    old = _event_for(8, EventKind.SHOW_RECORD_END, now, "B")
+    old.start = old.end = now - timedelta(hours=2)
+    sched._record_end_events[8] = ("k-old", old)
+    sched._open_show_recording = None
+    sched._rearm_open_recording_end(now)
+    assert 8 not in sched._record_end_events
+
+
+def test_end_of_an_open_recording_forgets_its_remembered_event(tmp_path):
+    sched, engine, v1 = _recording_scheduler(tmp_path)
+    end = _event_for(9, EventKind.SHOW_RECORD_END, datetime(2026, 11, 13, 8, 0), "A")
+    sched._record_end_events[9] = ("k-end-9", end)
+    sched._open_show_recording = (9, tmp_path / "a.mp3")
+    (tmp_path / "a.mp3").write_bytes(b"abc")
+    sched._on_show_record_end("k-end-9", end)
+    _join_report_threads()
+    engine.recording_stop.assert_called()
+    assert 9 not in sched._record_end_events
+    assert sched._open_show_recording is None

@@ -861,20 +861,44 @@ class PreferenceController extends Zend_Controller_Action
             }
         }
 
+        // RASTATIME 2026-11-13 - "Record Start": offset of the recording's
+        // start and end in seconds (absent = keep the stored value)
+        $offsetBefore = Application_Model_Preference::getLocalRecordingStartOffset();
+        $startOffset = $offsetBefore;
+        if ($this->_getParam('start_offset') !== null) {
+            $startOffset = Application_Model_Preference::parseLocalRecordingStartOffset($this->_getParam('start_offset'));
+            if ($startOffset === null) {
+                $this->_helper->json->sendJson(['ok' => false, 'error' => _('Record Start must be a number of seconds between -60 and 60.')]);
+
+                return;
+            }
+        }
+
         // RASTATIME 2026-10-19 - copy finished recordings into the library
         $copyToLibrary = in_array(strtolower(trim((string) $this->_getParam('copy_to_library', 'false'))), ['true', '1', 'on', 'yes'], true);
         Application_Model_Preference::setLocalRecordingFolder($folder);
         Application_Model_Preference::setLocalRecordingFormat($format);
         Application_Model_Preference::setLocalRecordingBitrate($bitrate);
         Application_Model_Preference::setLocalRecordingCopyToLibrary($copyToLibrary);
+        Application_Model_Preference::setLocalRecordingStartOffset($startOffset);
+        if ((float) $startOffset !== (float) $offsetBefore) {
+            // the playout reads the offset with the schedule: fetch it now
+            try {
+                Application_Model_RabbitMq::PushSchedule();
+            } catch (Exception $e) {
+                Logging::warn('Record Start changed, schedule push failed: ' . $e->getMessage());
+            }
+        }
         Logging::info('Local Recording Folder set to: ' . ($folder === '' ? '(disabled)' : $folder)
-            . ", format {$format} {$bitrate}k, copy to library " . ($copyToLibrary ? 'on' : 'off'));
+            . ", format {$format} {$bitrate}k, copy to library " . ($copyToLibrary ? 'on' : 'off')
+            . ', record start ' . number_format((float) $startOffset, 1, '.', '') . ' s');
         $this->_helper->json->sendJson([
             'ok' => true,
             'folder' => $folder,
             'format' => $format,
             'bitrate' => $bitrate,
             'copy_to_library' => $copyToLibrary,
+            'start_offset' => (float) $startOffset,
         ]);
     }
 

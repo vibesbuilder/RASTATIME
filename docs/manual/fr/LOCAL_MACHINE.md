@@ -645,6 +645,21 @@ calme (ou à la prochaine limite de titre) ; les fichiers déjà écrits
 gardent leur format, les nouveaux reçoivent l'extension
 correspondante.
 
+**Début d'enregistrement (s)** *(depuis le 2026-11-13)* : nombre de
+secondes dont l'enregistrement d'une émission commence **et** se
+termine plus tard (positif) ou plus tôt (négatif) que l'émission
+elle-même, de -60 à 60 avec une décimale ; 0 par défaut.  Utilisez-le
+quand une source arrive en retard dans le mix : le Line Input a un
+retard de capture de quelques secondes ; avec 0, le fichier commence
+donc par la fin du programme précédent et il manque les dernières
+secondes de l'émission.  Début et fin se décalent ensemble -
+l'enregistrement garde la durée de l'émission, et deux émissions
+enregistrées à la suite se relaient toujours au même instant.  Le nom
+du fichier garde l'heure de début de l'émission.  Enregistré avec le
+**Save** de la page ; le playout lit la valeur à sa prochaine
+actualisation de la grille (aussitôt après un enregistrement).  L'API
+et le playout ont besoin d'un redémarrage après la mise à jour.
+
 **Copier les enregistrements d'émission dans la bibliothèque** *(depuis
 le 2026-10-19)* : si la case est cochée, une copie taguée de chaque
 enregistrement d'émission terminé est importée dans la bibliothèque

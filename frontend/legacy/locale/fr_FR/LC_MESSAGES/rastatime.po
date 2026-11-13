@@ -8715,3 +8715,15 @@ msgstr "Teaser du jour \"bientôt\" : une émission entre les deux, jusqu'à (mi
 #: RASTATIME 2026-11-13 day teasers soon / now
 msgid "A \"soon\" day teaser also plays when exactly one show lies between the teaser and the announced show and that show starts within this many minutes; a \"today\" day teaser no longer plays then. 0 switches this rule off."
 msgstr "Un teaser du jour \"bientôt\" passe aussi lorsqu'exactement une émission se trouve entre le teaser et l'émission annoncée et que celle-ci commence dans ce nombre de minutes au plus ; un teaser du jour \"aujourd'hui\" ne passe alors plus. 0 désactive cette règle."
+
+#: RASTATIME 2026-11-13 record start
+msgid "Record Start (s)"
+msgstr "Début d'enregistrement (s)"
+
+#: RASTATIME 2026-11-13 record start
+msgid "Seconds by which the recording of a show starts and ends later (positive) or earlier (negative) than the show itself, from -60 to 60.  Use it to line the file up with a source that reaches the mix late, such as the Line Input.  Start and end move together, so the length of the recording stays the same and two recorded shows in a row still hand over in the same moment.  0 records exactly on the show times."
+msgstr "Nombre de secondes dont l'enregistrement d'une émission commence et se termine plus tard (positif) ou plus tôt (négatif) que l'émission elle-même, de -60 à 60.  Sert à aligner le fichier sur une source qui arrive en retard dans le mix, comme le Line Input.  Début et fin se décalent ensemble : la durée de l'enregistrement reste la même et deux émissions enregistrées à la suite se relaient toujours au même instant.  0 enregistre exactement aux heures de l'émission."
+
+#: RASTATIME 2026-11-13 record start
+msgid "Record Start must be a number of seconds between -60 and 60."
+msgstr "Le début d'enregistrement doit être un nombre de secondes entre -60 et 60."

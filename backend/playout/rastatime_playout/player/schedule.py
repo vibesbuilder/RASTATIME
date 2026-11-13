@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, time, timedelta
 from operator import itemgetter
 from typing import Optional
@@ -88,6 +89,7 @@ def get_schedule(api_client: ApiClient) -> Events:
     # starts_at / ends_at of the instance below.
     show_instances: dict[int, dict] = {}
     shows: dict[int, dict] = {}
+    record_offset: Optional[float] = None
     for item in sorted(schedule, key=itemgetter("starts_at")):
         # 2026-09-29: keep the exact row times next to the whole seconds
         item["starts_at_exact"] = event_isoparse_exact(item["starts_at"])
@@ -125,7 +127,11 @@ def get_schedule(api_client: ApiClient) -> Events:
         # silent regression first shipped in 2026-05-17 that caused
         # the recorder to never start.)
         if show_instance.get("record_enabled"):
-            generate_show_record_events(events, show_instance, show)
+            # RASTATIME 2026-11-13 - "Record Start": one request per fetch,
+            # and only when the window holds a recorded show at all
+            if record_offset is None:
+                record_offset = fetch_record_start_offset(api_client)
+            generate_show_record_events(events, show_instance, show, offset_seconds=record_offset)
 
         if item["file"]:
             file = api_client.get_file(item["file"]).json()
@@ -357,13 +363,44 @@ def file_gain_db(file: dict, stream_preferences) -> Optional[float]:
     return None
 
 
+RECORD_START_OFFSET_MAX = 60.0
+
+
+def fetch_record_start_offset(api_client) -> float:
+    """
+    RASTATIME 2026-11-13 - Settings -> Local Machine -> Show Recording ->
+    "Record Start": seconds by which a show recording starts and ends later
+    (positive) or earlier (negative) than the show, to line the file up with
+    a source that reaches the bus late (the Line Input's capture delay).
+    Read from ``GET /api/v2/recording-folder``; 0.0 on any error, so a
+    failing request records exactly on the show times as before.
+    """
+    try:
+        resp = api_client.session.get("/api/v2/recording-folder", timeout=3)
+        if resp.status_code != 200:
+            return 0.0
+        value = float(resp.json().get("record_start_offset") or 0.0)
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logging.getLogger(__name__).warning("record start offset lookup failed: %s", exc)
+        return 0.0
+    if value != value:  # NaN
+        return 0.0
+    return max(-RECORD_START_OFFSET_MAX, min(RECORD_START_OFFSET_MAX, value))
+
+
 def generate_show_record_events(
     events: Events,
     show_instance: dict,
     show: dict,
+    offset_seconds: float = 0.0,
 ):
     """
     RASTATIME 2026-05-17 - Phase B: Record-per-Show.
+
+    RASTATIME 2026-11-13 - ``offset_seconds`` ("Record Start") moves BOTH
+    events by the same amount, so the file keeps the show's length and two
+    recorded shows in a row still hand over in one instant.  The file name
+    keeps the show's own start (``show_starts_at``).
 
     Emit exactly two events for a single show instance whose
     ``record`` flag is true:
@@ -389,28 +426,32 @@ def generate_show_record_events(
     if isinstance(ends_at, str):
         ends_at = event_isoparse(ends_at)
 
+    shift = timedelta(seconds=float(offset_seconds or 0.0))
+    record_start = starts_at + shift
+    record_end = ends_at + shift
+
     instance_id = show_instance.get("id")
     start_event = ShowRecordEvent(
         type=EventKind.SHOW_RECORD_START,
-        start=starts_at,
-        end=starts_at,
+        start=record_start,
+        end=record_start,
         show_id=int(show["id"]),
         show_name=str(show.get("name") or ""),
         show_starts_at=starts_at,
         instance_id=int(instance_id) if instance_id is not None else None,
     )
-    insert_event(events, make_event_key(starts_at, f"record-start-{instance_id}"), start_event)
+    insert_event(events, make_event_key(record_start, f"record-start-{instance_id}"), start_event)
 
     end_event = ShowRecordEvent(
         type=EventKind.SHOW_RECORD_END,
-        start=ends_at,
-        end=ends_at,
+        start=record_end,
+        end=record_end,
         show_id=int(show["id"]),
         show_name=str(show.get("name") or ""),
         show_starts_at=starts_at,
         instance_id=int(instance_id) if instance_id is not None else None,
     )
-    insert_event(events, make_event_key(ends_at, f"record-end-{instance_id}"), end_event)
+    insert_event(events, make_event_key(record_end, f"record-end-{instance_id}"), end_event)
 
 
 def generate_webstream_events(

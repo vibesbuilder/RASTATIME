@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Record Start: Versatz für Record per Show (2026-11-13, Operator-Go)** - Neu unter
+  Settings → Local Machine → Show Recording: „Record Start (s)", -60 bis 60 mit einer
+  Nachkommastelle.  Die Aufnahme einer Sendung beginnt UND endet um diesen Wert später
+  (positiv) oder früher (negativ) als die Sendung - gedacht für den Verzug des Line Input.
+  Die Länge bleibt gleich, zwei aufgezeichnete Sendungen hintereinander übergeben weiterhin
+  im selben Moment, der Dateiname behält die Sendungszeit.  API-Feld `record_start_offset`
+  an `GET /api/v2/recording-folder`; PLAYOUT liest es mit jedem Sendeplan-Abruf und
+  verschiebt beide Aufnahme-Ereignisse.  Dazu im Scheduler: das Ende einer offenen Aufnahme
+  übersteht eine Sendeplan-Aktualisierung nach dem Sendungsende, und Start / Ende zweier
+  Aufnahmen im selben Moment laufen nacheinander (wer zuerst läuft, ist egal).  Manual
+  LOCAL_MACHINE x4, ARCHITECTURE 0.137 (§23.109).  Wirksam nach Neustart API, dann PLAYOUT;
+  die Übersetzungen nach Apache-Neustart.
+
 - **Tagesteaser „soon" und „now" (2026-11-13, Operator-Go)** - Zwei weitere Teaser-Typen
   neben show / today / tomorrow.  „now" passt, wenn der Jingle das Letzte vor der
   angekündigten Sendung ist (endet höchstens 15 s vor ihrem Beginn; die feste Outro-Playlist

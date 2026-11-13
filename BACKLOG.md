@@ -8114,23 +8114,19 @@ Vorbedingungen:
   24/7-Aufnahme bestimmen (Bett auf gleichem Pegel).
 Aufwand ~250 Zeilen, ~12 Dateien, ~1-1,5 Tage.
 
-### 🟡 „Record Start": Versatz für Record per Show - DEFER (evaluiert 2026-11-13, Operator: ins Backlog)
-Ziel (Operator): den Verzug des Line Input ausgleichen.  Statt Pre-/
-Post-Record EIN Wert unter Settings → Local Machine → Show Recording:
-„Record Start" = Sekunden, um die die Aufnahme früher (negativ) oder
-später (positiv) beginnt als die Sendung; das Ende verschiebt sich um
-denselben Wert.  Damit bleibt die Länge gleich, und zwei direkt
-aufeinander folgende Aufzeichnungen übergeben weiterhin im selben
-Moment (die Aufnahme ist EIN `output.file(id="recording")`, es kann nur
-eine Datei zugleich offen sein) - die Einschränkung der ursprünglichen
-Pre-/Post-Idee entfällt.
-Umsetzung: Präferenz + Feld (Formular, ViewScript-Zeile), Playout liest
-den Wert und verschiebt SHOW_RECORD_START / SHOW_RECORD_END in
-`generate_show_record_events`; Dateiname bleibt die Sendungszeit.
-Vorbedingungen:
-- Go des Operators.
-- Wertebereich festlegen (Vorschlag −60..+60 s) und den Line-Input-Verzug
-  einmal messen (24/7-Aufnahme gegen Sendungsbeginn).
-- PLAYOUT-Neustart durch den Operator.
-Aufwand ~80 Zeilen, ~6 Dateien, Manual x4, ~0,5 Tag; Risiko niedrig
-(im Fehlerfall fehlt eine Aufzeichnung, das Programm ist nicht betroffen).
+### ✅ „Record Start": Versatz für Record per Show - GEBAUT 2026-11-13 (Go 2026-11-13, §23.109)
+Ein Wert unter Settings → Local Machine → Show Recording („Record Start
+(s)", -60..60, positiv = später): Start UND Ende der Sendungsaufnahme
+verschieben sich um denselben Wert, gedacht für den Verzug des Line
+Input.  Länge bleibt gleich, zwei Aufzeichnungen hintereinander
+übergeben im selben Moment, Dateiname behält die Sendungszeit.
+API-Feld `record_start_offset`, Playout verschiebt beide Ereignisse;
+das Ende einer offenen Aufnahme übersteht jetzt eine
+Sendeplan-Aktualisierung nach dem Sendungsende, Start / Ende zweier
+Aufnahmen im selben Moment sind entkoppelt.
+Offen:
+- Neustart API, dann PLAYOUT (Operator); Apache für die Übersetzungen.
+- Line-Input-Verzug einmal messen (24/7-Aufnahme gegen Sendungsbeginn)
+  und den Wert setzen.
+- Erste aufgezeichnete Line-Input-Sendung prüfen (Anfang und Ende der
+  Datei).

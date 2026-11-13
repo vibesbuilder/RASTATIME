@@ -2839,6 +2839,44 @@ class Application_Model_Preference
         self::setValue('local_recording_bitrate', (string) (int) $value);
     }
 
+    // RASTATIME 2026-11-13 - "Record Start": seconds by which a show
+    // recording starts AND ends later (positive) or earlier (negative) than
+    // the show, to line the file up with a source that reaches the mix late
+    // (the Line Input).  Read by the playout with every schedule fetch
+    // (GET /api/v2/recording-folder -> record_start_offset).
+    public const LOCAL_RECORDING_START_OFFSET_MAX = 60.0;
+
+    /** @return null|float the offset in seconds, null when $raw is no number in range */
+    public static function parseLocalRecordingStartOffset($raw)
+    {
+        $text = str_replace(',', '.', trim((string) $raw));
+        if ($text === '') {
+            return 0.0;
+        }
+        if (!preg_match('/^[+-]?\d{1,3}(\.\d+)?$/', $text)) {
+            return null;
+        }
+        $value = round((float) $text, 1);
+        if (abs($value) > self::LOCAL_RECORDING_START_OFFSET_MAX) {
+            return null;
+        }
+
+        return $value == 0.0 ? 0.0 : $value;
+    }
+
+    public static function getLocalRecordingStartOffset()
+    {
+        $value = self::parseLocalRecordingStartOffset(self::getValue('local_recording_start_offset'));
+
+        return $value === null ? 0.0 : $value;
+    }
+
+    public static function setLocalRecordingStartOffset($value)
+    {
+        $parsed = self::parseLocalRecordingStartOffset($value);
+        self::setValue('local_recording_start_offset', number_format($parsed === null ? 0.0 : $parsed, 1, '.', ''));
+    }
+
     // RASTATIME 2026-10-19 - "Copy Show Recordings into Library": a closed
     // per-show recording is imported (as a tagged copy, track type
     // "Recordings", linked to the show instance) when this is on.  Read by

@@ -696,6 +696,21 @@ Das Playout übernimmt eine Änderung im nächsten ruhigen Moment
 (oder an der nächsten Titelgrenze); bereits geschriebene Dateien
 behalten ihr Format, neue Dateien bekommen die passende Endung.
 
+**Aufnahmestart (s)** *(seit 2026-11-13)*: Sekunden, um die die
+Aufnahme einer Sendung später (positiv) oder früher (negativ) beginnt
+**und** endet als die Sendung selbst, von -60 bis 60 mit einer
+Nachkommastelle; Standard 0.  Verwenden Sie den Wert, wenn eine Quelle
+verzögert im Mix ankommt: Der Line Input hat eine Aufnahmeverzögerung
+von einigen Sekunden, mit 0 beginnt die Datei daher mit dem Ende des
+vorherigen Programms, und die letzten Sekunden der Sendung fehlen.
+Start und Ende verschieben sich gemeinsam - die Aufnahme behält die
+Länge der Sendung, und zwei aufgezeichnete Sendungen hintereinander
+übergeben weiterhin im selben Moment.  Der Dateiname behält die
+Startzeit der Sendung.  Gespeichert wird mit dem **Save** der Seite;
+das Playout liest den Wert mit der nächsten Aktualisierung des
+Sendeplans (nach dem Speichern sofort).  API und Playout brauchen nach
+dem Update einen Neustart.
+
 **Sendungsaufnahmen in die Bibliothek kopieren** *(seit 2026-10-19)*:
 Ist das Kästchen gesetzt, wird von jeder fertigen Sendungsaufnahme
 eine getaggte Kopie in die Bibliothek importiert (Track-Typ

@@ -632,6 +632,20 @@ El playout aplica un cambio en su próximo momento tranquilo (o en el
 siguiente límite de pista); los archivos ya escritos conservan su
 formato, los nuevos reciben la extensión correspondiente.
 
+**Inicio de grabación (s)** *(desde 2026-11-13)*: segundos que la
+grabación de un programa empieza **y** termina más tarde (positivo) o
+más temprano (negativo) que el propio programa, de -60 a 60 con un
+decimal; 0 por defecto.  Úselo cuando una fuente llega con retraso a la
+mezcla: el Line Input tiene un retardo de captura de unos segundos, así
+que con 0 el archivo empieza con el final del programa anterior y le
+faltan los últimos segundos del programa.  Inicio y final se desplazan
+juntos: la grabación conserva la duración del programa, y dos programas
+grabados seguidos se relevan en el mismo instante.  El nombre del
+archivo conserva la hora de inicio del programa.  Se guarda con el
+**Save** de la página; el playout lee el valor en su próxima
+actualización de la parrilla (enseguida tras guardar).  La API y el
+playout necesitan un reinicio tras la actualización.
+
 **Copiar las grabaciones de programas a la biblioteca** *(desde
 2026-10-19)*: si la casilla está marcada, se importa a la biblioteca
 una copia etiquetada de cada grabación de programa terminada (tipo de

@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.136
+Draft version: 0.137
 Date: 2026-11-13
 
 > **Revision history**
+> - **0.137 (2026-11-13)** - **Record Start** (§23.109): one offset (-60..60 s) moves the
+>   start and the end of every show recording; the END of an open recording survives a
+>   schedule refresh after the show's rows left the fetch, and start / end of two recorded
+>   shows in a row are serialized (whoever runs first, the other stops nothing).
 > - **0.136 (2026-11-13)** - **Day teasers "soon" and "now"** (§23.108): two more values of
 >   `cc_files.teaser_type`, fitted by the distance from the jingle's position to the next
 >   instance of the announced show; "today" no longer fits in those positions.  The fill
@@ -10114,3 +10118,62 @@ values, help icons).
 on; no restart except Apache for the new translations (PHP gettext
 caches the catalogue per process).  Rollback: `git revert` (tag
 `live-2026-11-13b`).
+
+### 23.109 Record Start: Offset of a Show Recording (2026-11-13)
+
+**Request.**  Operator 2026-11-13: the Line Input reaches the bus a few
+seconds late, so a live show's recording begins with the tail of the
+programme before and misses its own last seconds.  First idea pre- /
+post-record with two values; evaluated: the recording is ONE
+`output.file(id="recording")`, only one file can be open, so two
+recorded shows in a row cannot overlap.  Operator's simplification, Go
+2026-11-13: one value "Record Start" that moves start AND end.
+
+**Design.**
+- Setting: Settings → Local Machine → Show Recording → "Record Start
+  (s)", cc_pref `local_recording_start_offset`, -60..60, one decimal,
+  positive = later (`Preference::parseLocalRecordingStartOffset`, save
+  action `preference/local-recording-save`, which pushes the schedule
+  when the value changed).
+- API: `GET /api/v2/recording-folder` adds `record_start_offset`
+  (`LocalRecordingFolderView.record_start_offset`, clamped, 0 when unset).
+- Playout: `player.schedule.fetch_record_start_offset` (one request per
+  fetch, only when the window holds a recorded show; 0.0 on any error);
+  `generate_show_record_events(..., offset_seconds)` shifts both events
+  and their keys, `show_starts_at` (file name) stays the show start.
+  Every refresh re-arms all timers, so a changed value applies to the
+  recordings that have not started yet.
+
+**Two consequences handled in the scheduler.**
+1. *END behind the show end.*  With a positive offset the END fires
+   after the show's last row has ended; the schedule fetch
+   (`ends_after = now`) no longer returns the instance, and a refresh in
+   that window cancelled the timer for good - the file stayed open until
+   the next recorded show.  `_record_end_events` remembers the END
+   events per instance; after the arming loop
+   `_rearm_open_recording_end` arms the one of the open recording again
+   (entries older than an hour are dropped).
+2. *Hand-over order.*  START of the next show and END of the previous
+   one fire in the same instant on two timer threads.  Both handlers run
+   under `_recording_lock`.  START first: `engine.recording_start`
+   (stop, set path, start) closes the previous file, START reports it
+   (`recording-finished`) and the late END sees another instance's
+   recording open and stops nothing.  END first: as before.  Before, an
+   END running second would have stopped the new recording; the order
+   was only kept by the timers' creation order.
+
+**Verification.**  Playout suite 926 passed (7 new tests: offset on both
+events, negative offset and the hand-over instant, the fetch helper,
+both hand-over orders, the kept END timer, forgetting it at the end);
+API parsing test; the changed view called in-process against the live
+database (`record_start_offset: 0.0`); Local Machine page in the browser
+(field, limits, tooltip) and the save action's refusal of 999 / "abc"
+(nothing written).  `C:/Temp/optd/record_start_probe.php` checks the
+legacy parser.  Open: operator restarts API and PLAYOUT, sets the value
+and checks the next recorded Line Input show.
+
+**Risk.**  Low: with the value 0 the events are where they were; a
+failing lookup records on the show times; the worst case is a missing
+or shifted recording, never the programme.  The hand-over change is the
+only behaviour change at 0 and is covered by tests.  Rollback:
+`git revert` (tag `live-2026-11-13c`) + restart API and PLAYOUT.

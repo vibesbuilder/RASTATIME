@@ -645,6 +645,19 @@ The playout applies a change in its next quiet moment (or at the
 next track boundary); files already written keep their format,
 new files get the matching extension.
 
+**Record Start (s)** *(since 2026-11-13)*: seconds by which the
+recording of a show starts **and** ends later (positive) or earlier
+(negative) than the show itself, from -60 to 60 with one decimal;
+default 0.  Use it when a source reaches the mix late: the Line Input
+has a capture delay of a few seconds, so with 0 the file begins with
+the tail of the previous programme and misses the last seconds of the
+show.  Start and end move together - the recording keeps the length of
+the show, and two recorded shows in a row still hand over in the same
+moment.  The file name keeps the show's own start time.  Saved with
+the page's **Save**; the playout reads the value with its next
+schedule refresh (at once after a save).  The API and the playout need
+one restart after the update.
+
 **Copy Show Recordings into Library** *(since 2026-10-19)*: when
 ticked, a tagged copy of every finished show recording is imported
 into the library (track type "Recordings", title `<show> <date
