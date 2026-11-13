@@ -69,6 +69,34 @@ class Application_Form_AddTracktype extends Zend_Form
         $analyze_cue_points->setRequired(true);
         $this->addElement($analyze_cue_points);
 
+        // RASTATIME 2026-11-13 - loudness analysis per track type (migration
+        // 0083); the two fields appear once the columns exist.
+        if (Application_Model_Tracktype::loudnessColumnsReady()) {
+            $loudness = new Zend_Form_Element_Checkbox('analyze_loudness');
+            $loudness->setLabel(_('Analyze loudness:'));
+            $loudness->setRequired(false);
+            $loudness->setChecked(true);
+            $loudness->setDescription(_('Imports of this type are measured for loudness (ReplayGain and EBU R128) and levelled by Settings - Streams - Loudness Normalization. Unticked: tracks of this type are not measured and play with the Fixed Gain below instead - also tracks of this type that were measured earlier - and "Measure missing files" leaves them out. For spots whose sound bed must keep the same level from spot to spot.'));
+            $this->addElement($loudness);
+
+            $gain = new Zend_Form_Element_Text('fixed_gain_db');
+            $gain->setLabel(_('Fixed Gain (dB):'));
+            $gain->setAttrib('class', 'input_text');
+            $gain->setAttrib('style', 'width: 40%');
+            $gain->setAttrib('placeholder', '0');
+            $gain->setRequired(false);
+            $gain->setAllowEmpty(true);
+            $gain->addFilter('StringTrim');
+            $gain->addValidator('Callback', false, [
+                'callback' => function ($value) {
+                    return Application_Model_Tracktype::parseFixedGainDb($value) !== null;
+                },
+                'messages' => ['callbackValue' => _('Please enter a gain in dB between -30 and 30, e.g. -6 or 2.5.')],
+            ]);
+            $gain->setDescription(_('Gain in dB (-30 to 30) for tracks of this type while Analyze loudness is unticked. It replaces the measured adjustment when Loudness Normalization is on (ReplayGain or EBU R128); 0 plays the files as they are. Takes effect on the next schedule push.'));
+            $this->addElement($gain);
+        }
+
         // RASTATIME 2026-09-29 - crossfade per track type (migration 0062)
         $crossfade = new Zend_Form_Element_Text('crossfade_duration');
         $crossfade->setLabel(_('Crossfade Duration (s):'));

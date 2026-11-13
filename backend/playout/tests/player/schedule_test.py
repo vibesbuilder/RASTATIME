@@ -792,3 +792,36 @@ def test_file_gain_db_without_loudness_fields_follows_the_replaygain_switch():
     assert file_gain_db({"replay_gain": "2.0"}, OldPrefs()) == pytest.approx(3.0)
     OldPrefs.replay_gain_enabled = False
     assert file_gain_db({"replay_gain": "2.0"}, OldPrefs()) is None
+
+
+def test_file_gain_db_fixed_gain_of_a_track_type_replaces_the_measured_adjustment():
+    """RASTATIME 2026-11-13 - a track type with the loudness analysis off:
+    track_type_fixed_gain_db applies in both normalizing modes, whatever the
+    file's own (earlier) measurements say; "off" stays unity gain; null (a
+    measuring type, or an API before migration 0083) changes nothing."""
+    from types import SimpleNamespace
+
+    from rastatime_playout.player.schedule import file_gain_db
+
+    prefs = SimpleNamespace(
+        replay_gain_enabled=True,
+        replay_gain_offset=-3.5,
+        loudness_mode="r128",
+        loudness_target_lufs=-23.0,
+        loudness_true_peak_dbtp=-1.0,
+    )
+    measured = {"replay_gain": "4.52", "loudness_lufs": "-14.2", "true_peak_dbtp": "-0.4"}
+    spot = dict(measured, track_type_fixed_gain_db=-6.5)
+    assert file_gain_db(spot, prefs) == pytest.approx(-6.5)  # not -8.8
+    assert file_gain_db({"track_type_fixed_gain_db": 0}, prefs) == 0.0  # unmeasured, 0 dB
+    assert file_gain_db({"track_type_fixed_gain_db": "3.25"}, prefs) == pytest.approx(3.25)
+
+    prefs.loudness_mode = "replaygain"
+    assert file_gain_db(spot, prefs) == pytest.approx(-6.5)  # not 4.52 - 3.5
+
+    prefs.loudness_mode = "off"
+    assert file_gain_db(spot, prefs) is None
+
+    prefs.loudness_mode = "r128"
+    assert file_gain_db(dict(measured, track_type_fixed_gain_db=None), prefs) == pytest.approx(-8.8)
+    assert file_gain_db(dict(measured, track_type_fixed_gain_db=""), prefs) == pytest.approx(-8.8)

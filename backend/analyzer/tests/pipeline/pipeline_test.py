@@ -241,3 +241,101 @@ def test_unknown_tag_keeps_the_upload_type(tmp_path: Path, dest_dir: Path, monke
     assert "track_type_code" not in metadata
     assert "media_type" not in metadata
     assert len(cue_calls) == 1
+
+
+# ---- RASTATIME 2026-11-13: loudness analysis per track type --------------
+
+
+def test_analyze_loudness_option_defaults_to_measuring():
+    assert PipelineOptions().analyze_loudness is True  # an old message
+    assert PipelineOptions(analyze_loudness=False).analyze_loudness is False
+    types = PipelineOptions(track_types=TYPES).track_types
+    assert all(t.analyze_loudness for t in types)  # types sent without the key
+    spots = PipelineOptions(
+        track_types=[{"id": 9, "code": "spot", "name": "Spots", "analyze_loudness": False}]
+    )
+    assert spots.track_types[0].analyze_loudness is False
+
+
+def _run_measured(tmp_path: Path, dest_dir: Path, monkeypatch, options: PipelineOptions, tmed=None):
+    from mutagen.id3 import ID3, TMED
+
+    from ._synth import sine
+
+    src_dir = tmp_path / "organize"
+    src_dir.mkdir()
+    src = sine(src_dir / "8-Spot.mp3", "-c:a", "libmp3lame")
+    if tmed is not None:
+        id3 = ID3(src)
+        id3.add(TMED(encoding=3, text=tmed))
+        id3.save(src)
+    calls = []
+
+    def fake_replaygain(path, metadata):
+        calls.append("replaygain")
+        metadata["replay_gain"] = "1.0"
+        return metadata
+
+    def fake_loudness(path, metadata):
+        calls.append("loudness")
+        metadata["loudness_lufs"] = -20.0
+        return metadata
+
+    monkeypatch.setattr(pipeline_module, "analyze_replaygain", fake_replaygain)
+    monkeypatch.setattr(pipeline_module, "analyze_loudness", fake_loudness)
+    queue = Queue()
+    Pipeline.run_analysis(queue, str(src), str(dest_dir), "Spot.mp3", options)
+    return queue.get(), calls
+
+
+@requires_ffmpeg
+def test_upload_type_with_the_loudness_analysis_off_measures_nothing(
+    tmp_path: Path, dest_dir: Path, monkeypatch
+):
+    metadata, calls = _run_measured(
+        tmp_path, dest_dir, monkeypatch, PipelineOptions(analyze_loudness=False)
+    )
+    assert calls == []
+    assert "replay_gain" not in metadata
+    assert "loudness_lufs" not in metadata
+    assert metadata["import_status"] == 0  # imported all the same
+
+
+@requires_ffmpeg
+def test_measuring_is_the_default(tmp_path: Path, dest_dir: Path, monkeypatch):
+    metadata, calls = _run_measured(tmp_path, dest_dir, monkeypatch, PipelineOptions())
+    assert calls == ["replaygain", "loudness"]
+    assert metadata["loudness_lufs"] == -20.0
+
+
+@requires_ffmpeg
+def test_tag_type_decides_the_loudness_analysis(tmp_path: Path, dest_dir: Path, monkeypatch):
+    types = [
+        {"id": 2, "code": "music", "name": "Music", "analyze_cue_points": True},
+        {"id": 9, "code": "spot", "name": "Spots", "analyze_loudness": False},
+    ]
+    # uploaded as a measuring type, tagged as the type with the analysis off
+    metadata, calls = _run_measured(
+        tmp_path, dest_dir, monkeypatch, PipelineOptions(track_types=types), tmed="Spots"
+    )
+    assert metadata["track_type_code"] == "spot"
+    assert calls == []
+
+
+@requires_ffmpeg
+def test_tag_type_can_switch_the_loudness_analysis_back_on(
+    tmp_path: Path, dest_dir: Path, monkeypatch
+):
+    types = [
+        {"id": 2, "code": "music", "name": "Music", "analyze_cue_points": True},
+        {"id": 9, "code": "spot", "name": "Spots", "analyze_loudness": False},
+    ]
+    metadata, calls = _run_measured(
+        tmp_path,
+        dest_dir,
+        monkeypatch,
+        PipelineOptions(analyze_loudness=False, track_types=types),
+        tmed="music",
+    )
+    assert metadata["track_type_code"] == "music"
+    assert calls == ["replaygain", "loudness"]

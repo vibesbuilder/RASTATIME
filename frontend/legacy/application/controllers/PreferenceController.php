@@ -253,6 +253,9 @@ class PreferenceController extends Zend_Controller_Action
             $stmt = $con->query(
                 'SELECT COUNT(*) FILTER (WHERE loudness_lufs IS NOT NULL) AS measured, COUNT(*) AS total '
                 . 'FROM cc_files WHERE file_exists = true AND import_status = 0'
+                // RASTATIME 2026-11-13 - tracks of a type with the loudness
+                // analysis off are neither measured nor counted
+                . ' AND NOT ' . Application_Model_Tracktype::loudnessOffSql('cc_files')
             );
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -288,6 +291,9 @@ class PreferenceController extends Zend_Controller_Action
         $con = Propel::getConnection();
         $sql = 'SELECT id FROM cc_files WHERE file_exists = true AND import_status = 0'
             . ($force ? '' : ' AND loudness_lufs IS NULL')
+            // RASTATIME 2026-11-13 - a track type with the loudness analysis
+            // off: its tracks play with the type's fixed gain, not measured
+            . ' AND NOT ' . Application_Model_Tracktype::loudnessOffSql('cc_files')
             . ' ORDER BY id';
         $ids = $con->query($sql)->fetchAll(PDO::FETCH_COLUMN, 0);
 

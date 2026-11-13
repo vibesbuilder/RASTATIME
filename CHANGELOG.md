@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Lautheits-Analyse je Track Type abschaltbar, fester Pegel (2026-11-13, Operator-Go)** -
+  Gesprochene Spots über einem immer gleichen Soundbett pegelte die Messung je Datei nach
+  der Sprache ein, das Bett war von Spot zu Spot verschieden laut.  Neu im Track-Type-Editor:
+  „Analyze loudness" (Standard an) und „Fixed Gain (dB)" (-30 bis 30).  Ohne Haken misst der
+  Import weder ReplayGain noch EBU R128, PLAYOUT spielt Titel des Typs mit dem festen Pegel
+  statt der gemessenen Anpassung (auch früher gemessene; Modus „off" bleibt unverändert),
+  und „Measure missing files" samt Zähler lassen sie aus.  Migration 0083
+  (`cc_track_types.analyze_loudness`, `fixed_gain_db`); alle Leser gehen über
+  `to_jsonb(cc_track_types)`, darum dürfen Code, Migration und Neustarts in beliebiger
+  Reihenfolge kommen.  API-Feld `track_type_fixed_gain_db` an der Datei.  Manual SETTINGS x4,
+  ARCHITECTURE 0.138 (§23.110).  Wirksam nach Migration (Operator) und Neustart ANALYZER,
+  API, PLAYOUT; die Übersetzungen nach Apache-Neustart.
+
 - **Record Start: Versatz für Record per Show (2026-11-13, Operator-Go)** - Neu unter
   Settings → Local Machine → Show Recording: „Record Start (s)", -60 bis 60 mit einer
   Nachkommastelle.  Die Aufnahme einer Sendung beginnt UND endet um diesen Wert später

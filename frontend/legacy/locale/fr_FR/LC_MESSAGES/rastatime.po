@@ -8727,3 +8727,23 @@ msgstr "Nombre de secondes dont l'enregistrement d'une émission commence et se 
 #: RASTATIME 2026-11-13 record start
 msgid "Record Start must be a number of seconds between -60 and 60."
 msgstr "Le début d'enregistrement doit être un nombre de secondes entre -60 et 60."
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Analyze loudness:"
+msgstr "Analyser le niveau sonore :"
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Imports of this type are measured for loudness (ReplayGain and EBU R128) and levelled by Settings - Streams - Loudness Normalization. Unticked: tracks of this type are not measured and play with the Fixed Gain below instead - also tracks of this type that were measured earlier - and \"Measure missing files\" leaves them out. For spots whose sound bed must keep the same level from spot to spot."
+msgstr "Les imports de ce type sont mesurés (ReplayGain et EBU R128) et mis à niveau selon Settings - Streams - Loudness Normalization. Décoché : les pistes de ce type ne sont pas mesurées et passent avec le gain fixe ci-dessous - y compris les pistes de ce type mesurées auparavant - et « Measure missing files » les laisse de côté. Pour des spots dont le fond sonore doit garder le même niveau d'un spot à l'autre."
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Fixed Gain (dB):"
+msgstr "Gain fixe (dB) :"
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Gain in dB (-30 to 30) for tracks of this type while Analyze loudness is unticked. It replaces the measured adjustment when Loudness Normalization is on (ReplayGain or EBU R128); 0 plays the files as they are. Takes effect on the next schedule push."
+msgstr "Gain en dB (-30 à 30) pour les pistes de ce type tant que « Analyser le niveau sonore » est décoché. Il remplace la correction mesurée quand la Loudness Normalization est active (ReplayGain ou EBU R128) ; 0 passe les fichiers tels quels. Prend effet à la prochaine synchronisation de la grille."
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Please enter a gain in dB between -30 and 30, e.g. -6 or 2.5."
+msgstr "Veuillez saisir un gain en dB entre -30 et 30, p. ex. -6 ou 2,5."

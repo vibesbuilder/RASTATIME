@@ -201,6 +201,133 @@ class Application_Model_Tracktype
     private $_icyForward = true;
     private $_icyDirty = false;
 
+    /**
+     * RASTATIME 2026-11-13 - loudness analysis per track type (migration
+     * 0083).  analyze_loudness FALSE: imports of the type are not measured
+     * (ReplayGain, EBU R128), "Measure missing files" leaves its tracks
+     * out and the playout applies fixed_gain_db instead of the measured
+     * adjustment.  Reads go through to_jsonb(cc_track_types), which yields
+     * NULL while the columns do not exist yet; writes wait for them.
+     */
+    public const FIXED_GAIN_LIMIT_DB = 30.0;
+
+    private static $loudnessColumnsReady;
+
+    /** True once migration 0083 has added the two columns (cached per request when true). */
+    public static function loudnessColumnsReady()
+    {
+        if (self::$loudnessColumnsReady !== true) {
+            try {
+                $n = Application_Common_Database::prepareAndExecute(
+                    "SELECT count(*) FROM information_schema.columns WHERE table_name = 'cc_track_types' "
+                    . "AND column_name IN ('analyze_loudness', 'fixed_gain_db')",
+                    [],
+                    Application_Common_Database::COLUMN
+                );
+                self::$loudnessColumnsReady = ((int) $n === 2);
+            } catch (Exception $exc) {
+                return false;
+            }
+        }
+
+        return self::$loudnessColumnsReady;
+    }
+
+    /**
+     * SQL that is true for a cc_files row (alias $files) whose track type
+     * has the loudness analysis off; FALSE for every row before the
+     * migration.
+     *
+     * @param string $files table name or alias of cc_files
+     *
+     * @return string
+     */
+    public static function loudnessOffSql($files = 'cc_files')
+    {
+        return 'EXISTS (SELECT 1 FROM cc_track_types rt_tt WHERE rt_tt.id = ' . $files . '.track_type_id '
+            . "AND to_jsonb(rt_tt) ->> 'analyze_loudness' = 'false')";
+    }
+
+    /**
+     * @param mixed $raw
+     *
+     * @return null|float the gain in dB, null when $raw is no number in range
+     */
+    public static function parseFixedGainDb($raw)
+    {
+        $text = str_replace(',', '.', trim((string) $raw));
+        if ($text === '') {
+            return 0.0;
+        }
+        if (!preg_match('/^[+-]?\d{1,2}(\.\d+)?$/', $text)) {
+            return null;
+        }
+        $value = round((float) $text, 2);
+        if (abs($value) > self::FIXED_GAIN_LIMIT_DB) {
+            return null;
+        }
+
+        return $value == 0.0 ? 0.0 : $value;
+    }
+
+    /** @param mixed $value */
+    public function setAnalyzeLoudness($value)
+    {
+        $this->_analyzeLoudness = ($value === true || $value === 1 || $value === '1' || $value === 'true');
+        $this->_loudnessDirty = true;
+    }
+
+    /** @return bool */
+    public function getAnalyzeLoudness()
+    {
+        if ($this->_loudnessDirty) {
+            return $this->_analyzeLoudness;
+        }
+        $id = $this->_tracktypeInstance->getDbId();
+        if (!$id) {
+            return true;
+        }
+        $value = Application_Common_Database::prepareAndExecute(
+            "SELECT to_jsonb(t) ->> 'analyze_loudness' FROM cc_track_types t WHERE t.id = :id",
+            [':id' => $id],
+            Application_Common_Database::COLUMN
+        );
+
+        return $value !== 'false';
+    }
+
+    /** @param mixed $value a number of dB; anything else counts as 0 */
+    public function setFixedGainDb($value)
+    {
+        $parsed = self::parseFixedGainDb($value);
+        $this->_fixedGainDb = $parsed === null ? 0.0 : $parsed;
+        $this->_gainDirty = true;
+    }
+
+    /** @return float */
+    public function getFixedGainDb()
+    {
+        if ($this->_gainDirty) {
+            return $this->_fixedGainDb;
+        }
+        $id = $this->_tracktypeInstance->getDbId();
+        if (!$id) {
+            return 0.0;
+        }
+        $value = Application_Common_Database::prepareAndExecute(
+            "SELECT to_jsonb(t) ->> 'fixed_gain_db' FROM cc_track_types t WHERE t.id = :id",
+            [':id' => $id],
+            Application_Common_Database::COLUMN
+        );
+
+        return is_numeric($value) ? round((float) $value, 2) : 0.0;
+    }
+
+    private $_analyzeLoudness = true;
+    private $_loudnessDirty = false;
+    private $_fixedGainDb = 0.0;
+    private $_gainDirty = false;
+
 
     /**
      * @return array{crossfade: bool, no_fade: bool} which of the two crossover
@@ -209,7 +336,15 @@ class Application_Model_Tracktype
      */
     public function save()
     {
-        $changed = ['crossfade' => false, 'no_fade' => false, 'icy' => false];
+        $changed = ['crossfade' => false, 'no_fade' => false, 'icy' => false, 'gain' => false];
+        if ($this->_loudnessDirty || $this->_gainDirty) {
+            [$wantLoudness, $wantGain] = [$this->_analyzeLoudness, $this->_fixedGainDb];
+            [$loudnessDirty, $gainDirty] = [$this->_loudnessDirty, $this->_gainDirty];
+            $this->_loudnessDirty = $this->_gainDirty = false;
+            $changed['gain'] = ($loudnessDirty && $this->getAnalyzeLoudness() !== $wantLoudness)
+                || ($gainDirty && abs($this->getFixedGainDb() - $wantGain) > 0.004);
+            [$this->_loudnessDirty, $this->_gainDirty] = [$loudnessDirty, $gainDirty];
+        }
         if ($this->_crossfadeDirty) {
             $this->_crossfadeDirty = false;
             $before = $this->getCrossfadeDuration();
@@ -256,6 +391,29 @@ class Application_Model_Tracktype
                 Logging::warn('Tracktype::save icy_forward: ' . $exc->getMessage() . ' (migration 0068 pending?)');
             }
             $this->_icyDirty = false;
+        }
+        if ($this->_loudnessDirty || $this->_gainDirty) {
+            if (self::loudnessColumnsReady()) {
+                $sets = [];
+                $params = [':id' => $this->_tracktypeInstance->getDbId()];
+                if ($this->_loudnessDirty) {
+                    $sets[] = 'analyze_loudness = :l';
+                    $params[':l'] = $this->_analyzeLoudness ? 'true' : 'false';
+                }
+                if ($this->_gainDirty) {
+                    $sets[] = 'fixed_gain_db = :g';
+                    $params[':g'] = number_format($this->_fixedGainDb, 2, '.', '');
+                }
+                Application_Common_Database::prepareAndExecute(
+                    'UPDATE cc_track_types SET ' . implode(', ', $sets) . ' WHERE id = :id',
+                    $params,
+                    Application_Common_Database::EXECUTE
+                );
+            } else {
+                $changed['gain'] = false;
+                Logging::warn('Tracktype::save: loudness analysis / fixed gain not stored (migration 0083 pending)');
+            }
+            $this->_loudnessDirty = $this->_gainDirty = false;
         }
 
         return $changed;
@@ -344,7 +502,9 @@ class Application_Model_Tracktype
     public static function getTracktypeData($id)
     {
         $sql = <<<'SQL'
-SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration, no_fade_crossfade, icy_forward
+SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration, no_fade_crossfade, icy_forward,
+       COALESCE((to_jsonb(cc_track_types) ->> 'analyze_loudness')::boolean, TRUE) AS analyze_loudness,
+       COALESCE((to_jsonb(cc_track_types) ->> 'fixed_gain_db')::numeric, 0) AS fixed_gain_db
 FROM cc_track_types
 WHERE id = :id
 SQL;
@@ -369,7 +529,9 @@ SQL;
     {
         try {
             $rows = Application_Common_Database::prepareAndExecute(
-                'SELECT id, code, type_name, analyze_cue_points FROM cc_track_types WHERE visibility ORDER BY id',
+                'SELECT id, code, type_name, analyze_cue_points, '
+                . "COALESCE((to_jsonb(cc_track_types) ->> 'analyze_loudness')::boolean, TRUE) AS analyze_loudness "
+                . 'FROM cc_track_types WHERE visibility ORDER BY id',
                 [],
                 'all'
             );
@@ -385,6 +547,9 @@ SQL;
                 'code' => (string) $row['code'],
                 'name' => $row['type_name'] === null ? null : (string) $row['type_name'],
                 'analyze_cue_points' => (bool) $row['analyze_cue_points'],
+                // RASTATIME 2026-11-13 - false: imports of the type are not measured
+                'analyze_loudness' => !($row['analyze_loudness'] === false || $row['analyze_loudness'] === 'f'
+                    || $row['analyze_loudness'] === 0 || $row['analyze_loudness'] === '0'),
             ];
         }
 

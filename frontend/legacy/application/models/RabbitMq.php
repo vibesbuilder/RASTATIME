@@ -220,6 +220,9 @@ class Application_Model_RabbitMq
         if ($fileTrackTypeId) {
             $fileTrackType = new Application_Model_Tracktype($fileTrackTypeId);
             $options->analyze_cue_points = $fileTrackType->getAnalyzeCuePoints();
+            // RASTATIME 2026-11-13 - false: the type plays with a fixed gain,
+            // the analyzer measures neither ReplayGain nor EBU R128
+            $options->analyze_loudness = $fileTrackType->getAnalyzeLoudness();
         }
 
         // RASTATIME 2026-10-14 - lossless -> MP3 320 kbps (Settings -> Local

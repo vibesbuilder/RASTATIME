@@ -37,10 +37,18 @@ class TrackTypeOption(BaseModel):
     code: str
     name: Optional[str] = None
     analyze_cue_points: bool = False
+    # RASTATIME 2026-11-13 - False: the type plays with a fixed gain, the
+    # import measures neither ReplayGain nor EBU R128 (legacy migration 0083)
+    analyze_loudness: bool = True
 
 
 class PipelineOptions(BaseModel):
     analyze_cue_points: bool = False
+    # RASTATIME 2026-11-13 - loudness analysis per track type: False when the
+    # type chosen on upload has it switched off (it plays with a fixed gain
+    # instead).  True when the message does not carry it, so an old message
+    # measures as before.
+    analyze_loudness: bool = True
     # RASTATIME 2026-10-14 - Settings -> Local Machine "convert_lossless_to_mp3"
     # (the legacy app sends it with every import message).  False when the
     # message does not carry it, so an old message behaves as before.
@@ -69,11 +77,12 @@ def tagged_track_type(
         logger.info("Media Type tag %r in %s names no track type; ignored", raw, filepath)
         return None
     logger.info(
-        "Media Type tag %r in %s: track type %s (cue points %s)",
+        "Media Type tag %r in %s: track type %s (cue points %s, loudness %s)",
         raw,
         filepath,
         found.code,
         "analyzed" if found.analyze_cue_points else "not analyzed",
+        "measured" if found.analyze_loudness else "not measured",
     )
     return found
 
@@ -160,15 +169,26 @@ class Pipeline:
             # and decides the cue point analysis.
             tagged_type = tagged_track_type(metadata, options, audio_file_path)
             analyze_cues = options.analyze_cue_points
+            measure_loudness = options.analyze_loudness
             if tagged_type is not None:
                 metadata["track_type_code"] = tagged_type.code
                 analyze_cues = tagged_type.analyze_cue_points
+                measure_loudness = tagged_type.analyze_loudness
             try:
                 metadata = analyze_duration(audio_file_path, metadata)
                 if analyze_cues:
                     metadata = analyze_cuepoint(audio_file_path, metadata)
-                metadata = analyze_replaygain(audio_file_path, metadata)
-                metadata = analyze_loudness(audio_file_path, metadata)
+                # RASTATIME 2026-11-13 - a track type with the loudness
+                # analysis off plays with its fixed gain: neither ReplayGain
+                # nor EBU R128 is measured, the columns stay empty.
+                if measure_loudness:
+                    metadata = analyze_replaygain(audio_file_path, metadata)
+                    metadata = analyze_loudness(audio_file_path, metadata)
+                else:
+                    logger.info(
+                        "loudness not measured for %s: the track type has the analysis off",
+                        audio_file_path,
+                    )
                 metadata = analyze_playability(audio_file_path, metadata)
 
                 metadata = organise_file(

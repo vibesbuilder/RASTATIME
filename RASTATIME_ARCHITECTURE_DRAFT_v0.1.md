@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.137
+Draft version: 0.138
 Date: 2026-11-13
 
 > **Revision history**
+> - **0.138 (2026-11-13)** - **Loudness analysis per track type** (§23.110): a type can
+>   switch the measurement off and name a fixed gain that the playout applies instead
+>   (`cc_track_types.analyze_loudness`, `fixed_gain_db`, migration 0083).  All readers go
+>   through `to_jsonb(cc_track_types)`, so code and migration may arrive in any order.
 > - **0.137 (2026-11-13)** - **Record Start** (§23.109): one offset (-60..60 s) moves the
 >   start and the end of every show recording; the END of an open recording survives a
 >   schedule refresh after the show's rows left the fetch, and start / end of two recorded
@@ -10177,3 +10181,67 @@ failing lookup records on the show times; the worst case is a missing
 or shifted recording, never the programme.  The hand-over change is the
 only behaviour change at 0 and is covered by tests.  Rollback:
 `git revert` (tag `live-2026-11-13c`) + restart API and PLAYOUT.
+
+### 23.110 Loudness Analysis per Track Type, Fixed Gain (2026-11-13)
+
+**Request.**  Operator 2026-11-13: the spoken event spots are speech
+over an always identical sound bed.  The per-file loudness measurement
+levels each spot by its speech, so the bed comes out louder or quieter
+from spot to spot.  Wanted: switch the loudness analysis off per track
+type (like "Analyze cue points") and give the type one fixed gain.
+Evaluated (seven points); decisions: a fixed gain in dB per type, valid
+also for tracks of the type measured earlier, and such tracks are left
+out of "Measure missing files" and its counter.
+
+**Schema** (legacy migration 0083): `cc_track_types.analyze_loudness
+BOOLEAN NOT NULL DEFAULT TRUE`, `fixed_gain_db NUMERIC(5,2) NOT NULL
+DEFAULT 0` (-30..30).
+
+**Order independence.**  No Propel regeneration and no Django model
+field: every reader uses `to_jsonb(cc_track_types) ->> 'column'`, which
+is NULL while the column does not exist.  Writers (track type editor)
+and the two form fields wait for `Tracktype::loudnessColumnsReady()`.
+So the code can be live before the migration and API, analyzer and
+playout may restart before or after it - an unplanned API restart
+between deploy and migration cannot break the schedule fetch (an ORM
+field would).
+
+**Path of the value.**
+- Legacy: `Application_Model_Tracktype` (get/set `AnalyzeLoudness`,
+  `FixedGainDb`, `parseFixedGainDb`, `loudnessOffSql`), form
+  `AddTracktype` ("Analyze loudness", "Fixed Gain (dB)"), controller
+  (pushes the schedule when either changed), `tracktype.js`.
+  Import message: `options.analyze_loudness` (type chosen on upload) and
+  `track_types[].analyze_loudness` (Media Type tag).  "Measure missing
+  files" / "Re-measure all" and "Measured: N of M" exclude
+  `loudnessOffSql`.
+- Analyzer: `PipelineOptions.analyze_loudness` /
+  `TrackTypeOption.analyze_loudness` (default True); off = neither
+  `analyze_replaygain` nor `analyze_loudness` runs, the columns stay NULL.
+- API: `storage/track_type_gain.py` reads `{type id: gain}` of the types
+  with the analysis off (cached 5 s); `FileSerializer` adds
+  `track_type_fixed_gain_db` (null for every other type).
+- Playout: `file_gain_db` returns the fixed gain in the modes
+  `replaygain` and `r128` before it looks at any measurement; `off` stays
+  unity.  Decided by the file's CURRENT type at every schedule fetch, so
+  existing tracks of the type follow at once and a track moved to
+  another type is measured again by "Measure missing files".
+
+**Verification.**  Analyzer 413 passed (5 new), playout 927 passed (1
+new), API parser tests; the API reader and the legacy code were run
+against the live database as it is (no columns: defaults, form without
+the fields, queries unchanged) and inside a transaction that added the
+columns and was rolled back (`C:/Temp/optd/track_type_gain_probe.php`:
+save, read back, editor data, analyzer types, statistics 25,019 ->
+25,007 without the 12 files of the type, form validation;
+`gain_api_probe.py`: `{4: -6.5}`, serializer -6.5 / null).  Open: the
+migration and the restarts by the operator, then the editor in the
+browser and a first spot on air.
+
+**Risk.**  Low to medium.  Nothing changes until a type is unticked.
+Then its tracks play with the fixed gain: at 0 dB a spot produced at
+about -16 LUFS is ~7 dB louder than the -23 LUFS programme, so the
+value has to be set once by ear or from the 24/7 recording; a positive
+gain can run into the bus limiter (R128 mode).  Rollback: tick the box
+again (measurements stay in the database), or `git revert` (tag
+`live-2026-11-13d`); the two columns may stay.

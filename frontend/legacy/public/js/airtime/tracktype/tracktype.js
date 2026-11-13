@@ -28,13 +28,35 @@ function populateForm(entries) {
     "checked",
     !(entries.icy_forward === false || entries.icy_forward === "f" || entries.icy_forward === 0 || entries.icy_forward === "0"),
   );
+  // RASTATIME 2026-11-13 - loudness analysis per track type (default:
+  // measure; the fields exist once migration 0083 ran)
+  $("#analyze_loudness").prop(
+    "checked",
+    !(
+      entries.analyze_loudness === false ||
+      entries.analyze_loudness === "f" ||
+      entries.analyze_loudness === 0 ||
+      entries.analyze_loudness === "0"
+    ),
+  );
+  var gain = parseFloat(entries.fixed_gain_db);
+  $("#fixed_gain_db").val(isNaN(gain) ? "" : String(gain));
+  rtFixedGainState();
   if ($.rtDescriptionTooltips) {
     $.rtDescriptionTooltips($("#tracktype_details"), {
       where: "field",
-      only: ["crossfade_duration", "no_fade_crossfade", "icy_forward"],
+      only: ["crossfade_duration", "no_fade_crossfade", "icy_forward", "analyze_loudness", "fixed_gain_db"],
     });
   }
 }
+
+// RASTATIME 2026-11-13 - the fixed gain only counts while the loudness
+// analysis is off: shown dimmed (still sent) while it is on.
+function rtFixedGainState() {
+  var measuring = $("#analyze_loudness").prop("checked");
+  $("#fixed_gain_db").css("opacity", measuring ? 0.5 : 1);
+}
+$(document).on("change", "#analyze_loudness", rtFixedGainState);
 
 function rowClickCallback(row_id) {
   $.ajax({

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from ..models import File
+from ..track_type_gain import fixed_gain_for
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -29,6 +30,13 @@ class FileSerializer(serializers.ModelSerializer):
         read_only=True,
         default=True,
     )
+    # RASTATIME 2026-11-13 - a track type with the loudness analysis off
+    # plays its tracks with a fixed gain (dB) instead of the measured
+    # adjustment; null for every other type (and before migration 0083).
+    track_type_fixed_gain_db = serializers.SerializerMethodField()
+
+    def get_track_type_fixed_gain_db(self, obj):
+        return fixed_gain_for(getattr(obj, "library_id", None))
 
     class Meta:
         model = File

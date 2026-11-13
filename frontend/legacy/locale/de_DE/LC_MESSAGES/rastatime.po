@@ -8370,3 +8370,23 @@ msgstr "Sekunden, um die die Aufnahme einer Sendung später (positiv) oder früh
 #: RASTATIME 2026-11-13 record start
 msgid "Record Start must be a number of seconds between -60 and 60."
 msgstr "Aufnahmestart muss eine Zahl von Sekunden zwischen -60 und 60 sein."
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Analyze loudness:"
+msgstr "Lautheit analysieren:"
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Imports of this type are measured for loudness (ReplayGain and EBU R128) and levelled by Settings - Streams - Loudness Normalization. Unticked: tracks of this type are not measured and play with the Fixed Gain below instead - also tracks of this type that were measured earlier - and \"Measure missing files\" leaves them out. For spots whose sound bed must keep the same level from spot to spot."
+msgstr "Importe dieses Typs werden auf Lautheit gemessen (ReplayGain und EBU R128) und nach Settings - Streams - Loudness Normalization eingepegelt. Ohne Haken: Titel dieses Typs werden nicht gemessen und laufen stattdessen mit dem festen Pegel darunter - auch Titel dieses Typs, die früher gemessen wurden - und \"Measure missing files\" lässt sie aus. Für Spots, deren Soundbett von Spot zu Spot gleich laut bleiben soll."
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Fixed Gain (dB):"
+msgstr "Fester Pegel (dB):"
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Gain in dB (-30 to 30) for tracks of this type while Analyze loudness is unticked. It replaces the measured adjustment when Loudness Normalization is on (ReplayGain or EBU R128); 0 plays the files as they are. Takes effect on the next schedule push."
+msgstr "Pegel in dB (-30 bis 30) für Titel dieses Typs, solange „Lautheit analysieren“ nicht angehakt ist. Er ersetzt die gemessene Anpassung, wenn die Loudness Normalization eingeschaltet ist (ReplayGain oder EBU R128); 0 spielt die Dateien unverändert. Wirkt mit dem nächsten Sendeplan-Abgleich."
+
+#: RASTATIME 2026-11-13 loudness analysis per track type
+msgid "Please enter a gain in dB between -30 and 30, e.g. -6 or 2.5."
+msgstr "Bitte einen Pegel in dB zwischen -30 und 30 eingeben, z. B. -6 oder 2,5."

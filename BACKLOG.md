@@ -8088,31 +8088,23 @@ Abweichungen).  Offen: Apache-Neustart für die Übersetzungen (Operator),
 „soon"- / „now"-Jingles produzieren und verknüpfen, erste befüllte
 Episode ansehen.
 
-### 🟡 Fester Pegel je Track Type statt Lautheits-Messung - DEFER (evaluiert 2026-11-13, Operator: ins Backlog)
+### ✅ Fester Pegel je Track Type statt Lautheits-Messung - GEBAUT 2026-11-13 (Go 2026-11-13, §23.110)
 Ziel (Operator): die gesprochenen Hinweis-Spots sind Sprache über einem immer
-gleichen Soundbett; weil die Sprache verschieden laut ist, regelt die
-R128-Normalisierung je Datei anders und das Bett klingt von Hinweis zu
-Hinweis verschieden laut.  Entscheidungen des Operators 2026-11-13:
-- je Track Type ein Schalter „Lautheit messen" und ein fester Pegel in dB,
-  der statt der gemessenen Anpassung gilt;
-- der Schalter gilt auch für schon gemessene Titel des Typs (Playout
-  entscheidet nach Typ, Messwerte bleiben in der Datenbank);
-- Titel solcher Typen sind vom Knopf „Measure missing files" und vom
-  Zähler ausgenommen.
-Import-Schritte heute: Container-Reparatur, Tags, Formatnormalisierung,
-Media-Type-Tag, Länge, Cue-Punkte (je Typ), ReplayGain, EBU R128
-(Lautheit, True Peak, LRA), Abspielprobe, Einsortieren.
-Umsetzung: Spalten `cc_track_types.analyze_loudness` + `fixed_gain_db`
-(Muster wie `icy_forward`: Migration, Raw-SQL in Tracktype.php, Formular,
-Analyzer-Optionen inkl. Media-Type-Tag, API-Felder `track_type_...`,
-Playout `file_gain_db`).
-Vorbedingungen:
-- Go des Operators.
-- Migration durch den Operator (frisches Backup, außerhalb von
-  Sendungsgrenzen), danach Neustarts ANALYZER, API, PLAYOUT.
-- Einmal einpegeln: fester Wert für diese Spots aus der
-  24/7-Aufnahme bestimmen (Bett auf gleichem Pegel).
-Aufwand ~250 Zeilen, ~12 Dateien, ~1-1,5 Tage.
+gleichen Soundbett; die Messung je Datei regelte nach der Sprache, das
+Bett klang von Spot zu Spot verschieden laut.  Gebaut: je Track Type
+„Analyze loudness" (Standard an) und „Fixed Gain (dB)" (-30..30).  Ohne
+Haken: kein ReplayGain / R128 beim Import, Playout nimmt den festen
+Pegel statt der gemessenen Anpassung (auch für früher gemessene Titel),
+„Measure missing files" und der Zähler lassen den Typ aus.  Migration
+0083; Leser über `to_jsonb(cc_track_types)`, Reihenfolge von Code,
+Migration und Neustarts ist frei.
+Offen:
+- Migration 0083 (Operator, frisches Backup, außerhalb von
+  Sendungsgrenzen), Neustart ANALYZER, API, PLAYOUT; Apache für die
+  Übersetzungen.
+- Editor im Browser prüfen (Felder erscheinen erst nach der Migration).
+- Einmal einpegeln: festen Wert für die Spots aus der 24/7-Aufnahme
+  bestimmen (Bett auf gleichem Pegel), ersten Spot auf Sendung prüfen.
 
 ### ✅ „Record Start": Versatz für Record per Show - GEBAUT 2026-11-13 (Go 2026-11-13, §23.109)
 Ein Wert unter Settings → Local Machine → Show Recording („Record Start

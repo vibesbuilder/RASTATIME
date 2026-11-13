@@ -337,10 +337,19 @@ def file_gain_db(file: dict, stream_preferences) -> Optional[float]:
                   peak never exceeds the ceiling (the bus limiter stays the
                   safety net); an unmeasured file falls back to the
                   ReplayGain value shifted to the target.
+
+    RASTATIME 2026-11-13 - a track type with the loudness analysis off
+    (``track_type_fixed_gain_db`` on the file, legacy migration 0083):
+    its fixed gain applies INSTEAD of the measured adjustment in both
+    normalizing modes, whatever the file's own measurements say - spots
+    whose sound bed must keep one level.  "off" stays unity gain.
     """
     mode = getattr(stream_preferences, "loudness_mode", None) or (
         "replaygain" if stream_preferences.replay_gain_enabled else "off"
     )
+    fixed_gain = _float_or_none(file.get("track_type_fixed_gain_db"))
+    if fixed_gain is not None and mode in ("r128", "replaygain"):
+        return round(fixed_gain, 2)
     replay_gain = _float_or_none(file.get("replay_gain")) or 0.0
     if mode == "r128":
         target = float(getattr(stream_preferences, "loudness_target_lufs", -23.0))

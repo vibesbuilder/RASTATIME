@@ -59,11 +59,19 @@ class TracktypeController extends Zend_Controller_Action
                 $tracktype->setNoFadeCrossfade($formData['no_fade_crossfade'] ?? '0');
                 // RASTATIME 2026-10-14 - stream metadata preset
                 $tracktype->setIcyForward($formData['icy_forward'] ?? '0');
+                // RASTATIME 2026-11-13 - loudness analysis per track type (the
+                // fields exist once migration 0083 ran)
+                if (array_key_exists('analyze_loudness', $formData)) {
+                    $tracktype->setAnalyzeLoudness($formData['analyze_loudness']);
+                }
+                if (array_key_exists('fixed_gain_db', $formData)) {
+                    $tracktype->setFixedGainDb($formData['fixed_gain_db']);
+                }
                 $changed = $tracktype->save();
                 if ($changed['crossfade']) {
                     Application_Model_Scheduler::relayoutFutureInstances();
                 }
-                if ($changed['crossfade'] || $changed['no_fade'] || $changed['icy']) {
+                if ($changed['crossfade'] || $changed['no_fade'] || $changed['icy'] || $changed['gain']) {
                     Application_Model_RabbitMq::PushSchedule();
                 }
 
