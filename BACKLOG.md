@@ -80,6 +80,40 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟢 Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - Evaluierung 2026-11-13, wartet auf Go
+
+Operator-Frage 2026-11-13: warum fehlt das Song-Request-Widget unter WIDGETS?  Lücke, keine Entscheidung: die
+Widget-Seiten entstanden 2026-05-22 (Vorschau, Texte, Einbettungscode), das Widget kam 2026-06-07 als Phase 4
+des Song-Request-Features (`eca37b84`) nur mit der Pool-Auswahl unter Settings → General.  Zugang heute nur über
+die Adresse `/embed/song-request` (Manual SONG_REQUESTS §6).
+
+**Nebenbefund (wichtiger als der Menüpunkt):** das Widget hat kein Suchfeld und zeigt ohne Suchbegriff höchstens
+500 Titel (`AVAILABLE_LIMIT`, sortiert nach Künstler).  Der Pool hat 5.124 Titel; Titel 500 ist noch beim
+Buchstaben A - rund 90 % des Pools sind für Hörer unerreichbar.  Die API kann schon suchen (`?q=`, ab 2 Zeichen,
+höchstens 25 Treffer), das Widget nutzt es nicht.  Nutzung: letzte Wünsche 2026-06-16 (15 gespielt, 3 verfallen),
+im November 3 Aufrufe der Widget-Seite.
+
+**Optionen:**
+- **A Seite** Widgets → Song Request: Status (Pool gesetzt, Zahl der wünschbaren Titel, offene Wünsche, Blöcke mit
+  „Use requests", Link zur Pool-Auswahl), Vorschau (dunkel), Einbettungscode mit Script-Zeile, Parameter
+  `theme`.  Controller-Aktion, View, Navigation; keine Einstellung, keine Migration.
+- **B Texte** wie auf den anderen Widget-Seiten: 8 Texte (Laden, keine Titel, Knopf, Erfolg, doppelt, Limit,
+  Fehler, nicht verfügbar) als cc_pref, leer = übersetzter Standard (folgt heute schon der Standardsprache).
+- **C Suchfeld** im Widget: über der Tabelle, Verzögerung 300 ms, ab 2 Zeichen Suche über den ganzen Pool,
+  leer = Liste wie heute mit Hinweis „Suchen Sie in 5.124 Titeln"; Trefferzahl 25 → 50 (API-Konstante).  Drossel
+  60 Suchen/min je IP reicht mit Verzögerung.
+
+**Aufwand:** A ~3-4 h (≈ 250 Zeilen PHP/phtml, Übersetzungen de/fr/es), B ~2 h (Formular, 8 Getter/Setter,
+Template), C ~2-3 h (≈ 70 Zeilen JS + Template, API-Test); Manual WIDGETS + SONG_REQUESTS ×4, CHANGELOG ~1-2 h.
+A + C ≈ 1 Tag, mit B ≈ 1¼ Tage.  Legacy live ohne Neustart; nur C mit Trefferzahl 50 braucht einen API-Neustart.
+
+**Risiko:** niedrig - nur Verwaltungsseite und öffentliche `/embed/`-Seite, Sendebetrieb unberührt.  Fehlerbild:
+Widget lädt nicht oder Suche läuft in die Drossel (429 → Meldung „Limit erreicht").  Rückfall: Revert, Legacy
+sofort wirksam.  Keine neue öffentliche Schnittstelle (Such-Endpunkt ist schon offen).
+
+**Empfehlung:** Go für A + C; B nur, wenn eigene Formulierungen gewünscht sind (die Texte folgen schon der
+Standardsprache).
+
 ### ✅ Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - GEBAUT 2026-11-12 (Go A, Stufe 1 + 2, `c86b26fb`, §23.106; Nebenbefunde mit erledigt)
 
 **Befund:** jedes Widget ist ein iframe mit fester Höhe und `scrolling="no"` (Weekly 670×670, Multi-View 100 %×600,
