@@ -139,7 +139,7 @@ Normalbetrieb erreicht Liquidsoap 2816 MB vor dem Fenster kaum.
 **Vorbedingungen:** eine Woche ohne Poll-Leck beobachten (kommt die Warnung überhaupt noch?), dann
 Option wählen.
 
-### ✅ Puffer-Track für kleine Restlücken (Auto-DJ) - GEBAUT 2026-11-13 (Go Stufe 1 + 2, Variante a; §23.107; offen: Buffer Playlist anlegen + setzen, Neustart API → PLAYOUT für Fade/Cue-Fix, Abnahme)
+### ✅ Puffer-Track für kleine Restlücken (Auto-DJ) - GEBAUT 2026-11-13 (Go Stufe 1 + 2, Variante a; §23.107; LIVE seit 2026-11-13 11:50, erster Echtfall 12:45 abgenommen)
 
 (Überschrift am 2026-11-12 von `81c27e40` überschrieben, 2026-11-13 wiederhergestellt.)
 
@@ -202,11 +202,14 @@ time_filled / Show-Shift / Show Builder, Wiederholung ohne Puffer-Zeile, API
 Mode-Feld der Show-Form, Preflight `auto_dj_buffer_unusable`.  Geprüft: API 44 / PLAYOUT 919
 Tests, Liquidsoap-Bench (3 s / 1,5 s / Hauswert exakt), Legacy-Probe
 `C:/Temp/optd/buffer_probe.php` (10/10), Einstellungsseite live im Browser.
-**Offen:** (1) Operator legt die Buffer Playlist an (lange, ausblendbare Titel, neutral
-getaggt oder Stream Metadata „Do not forward") und setzt sie samt Maximum Gap / Cut-Fade;
-Stufe 1 wirkt sofort.  (2) Neustart API, dann PLAYOUT (geplanter Liquidsoap-Neustart) -
-erst dann Fade und Cue-Fix.  (3) Abnahme am ersten echten Fall: legacy.log
-„buffer track file … appended", Show Builder, Sendungsgrenze hören.
+**Live 2026-11-13:** Operator hat die Buffer Playlist angelegt (6 Titel, 62-118 s, alle
+„Do not forward") und gesetzt (Maximum Gap 60 s, Fade Out 3 s); Neustart API → PLAYOUT 11:50,
+Liquidsoap-Neustart durch PLAYOUT mit der neuen Vorlage.  **Erster Echtfall 12:45 abgenommen:**
+Fill-Pass hängte um 11:50:18 einen 97-s-Titel an eine Episode mit 7,4 s Rest (Podcast-Sendung,
+danach Podcast-Sendung); API Cue-Out 7,37 s / Ende = Sendungsende / `buffer_fade_out` 3.0;
+Übergang `show/new/3.00` (`[rt_cross] show/new/3.0`, tail 2,99 s); Mitschnitt am lokalen
+Icecast: Puffer-Titel 7,3 s, davon ~4,4 s voller Pegel, dann 3-s-Ausblendung, Folgesendung
+ohne Lücke; Live Text blieb beim Sendungsnamen; kein Stille-Alarm.
 🟡 Defer: Fade > 3 s und Fade vor Webstream / Line-In / Stille (braucht `fade.out` mit
 Metadaten an der Queue, Bench zuerst).  Verknüpfte Sendungen bekommen keinen Puffer-Track,
 bis B2 (Fill-Pass nur EINE Instanz) entschieden ist.  💡 Die Auto-DJ-Einstellungsseite ist
