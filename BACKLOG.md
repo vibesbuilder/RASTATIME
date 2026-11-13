@@ -8073,3 +8073,64 @@ dataTables.columnFilter, serverbrowser.  Zusammen 30 CodeQL-Hinweise
 incomplete-sanitization); heute nicht ausnutzbar, weil unser Code dort nur
 eigene Texte übergibt.  Teil der langfristigen Modernisierung; je
 Bibliothek einzeln und mit Live-Prüfung der betroffenen Seiten.
+
+## Dayteaser soon/now, Lautheits-Analyse je Track Type, Pre-/Post-Record (Evaluierung 2026-11-13)
+
+### 💡 Dayteaser-Typen „soon" und „now" - EVALUIERT 2026-11-13, wartet auf Go
+Zwei weitere Werte für `cc_files.teaser_type` (VARCHAR(16), keine Migration).
+Der Smart Block „Dayteaser" filtert nur `teaser_fits is yes`; die Regeln
+sitzen in `Block::teaserCriterionSql` und rechnen gegen den Füllkontext
+(Instanz, Slot).
+- now: der Slot liegt am Ende der Sendung direkt vor der angekündigten
+  Sendung.
+- soon: nicht now, und bis zum Start der angekündigten Sendung liegt nur
+  eine Sendung dazwischen oder weniger als 15 min.
+- today: wie bisher, aber nicht in den Fällen now und soon.
+Vorbedingungen / offene Entscheidungen:
+- „Nur eine Sendung dazwischen" ohne Zeitgrenze? (eine 2-h-Sendung
+  dazwischen ergäbe „in Kürze" zwei Stunden vorher)
+- Toleranz für „direkt davor" (Vorschlag: Teaser endet höchstens 15 s vor
+  dem Sendungsende, feste Outro-Position zählt immer).
+- 15 min fest oder Einstellung.
+- Der Füllkontext der festen Outro-Position meldet heute das Sendungsende
+  als Slot; für now/soon muss der Kontext die Restzeit mitgeben.
+Aufwand ~150 Zeilen PHP, 4-5 Dateien, .po ×3, Manual ×4, ~1 Tag, kein
+Neustart.
+
+### 💡 Lautheits-Analyse je Track Type abschaltbar - EVALUIERT 2026-11-13, wartet auf Go
+Import-Schritte heute: Container-Reparatur, Tags, Formatnormalisierung,
+Media-Type-Tag, Länge, Cue-Punkte (je Typ), ReplayGain, EBU R128
+(Lautheit, True Peak, LRA), Abspielprobe, Einsortieren.  Neues Flag
+`cc_track_types.analyze_loudness` (Muster wie `icy_forward`: Migration,
+Raw-SQL in Tracktype.php, Formular, Analyzer-Optionen, API-Feld
+`track_type_...`, Playout `file_gain_db`).
+Vorbedingungen / offene Entscheidungen:
+- Was spielt ein ungemessener Titel?  Heute im R128-Modus −5 dB
+  (ReplayGain 0 + Ziel − (−18)).  Sinnvoll ist nur „ohne Anpassung"
+  (0 dB) oder ein fester Gain je Typ; ohne Anpassung sind fertig
+  produzierte Beiträge (~−16 LUFS) rund 7 dB lauter als das Programm
+  (Ziel −23).
+- Gilt das Flag auch für schon gemessene Titel des Typs (Vorschlag: ja,
+  Playout entscheidet nach Typ) und für „Measure missing files" samt
+  Zähler (Vorschlag: ausnehmen).
+Aufwand ~200-250 Zeilen, ~12 Dateien, Migration (Operator), Neustarts
+ANALYZER, API, PLAYOUT, ~1-1,5 Tage.
+
+### 💡 Pre-/Post-Record für Record per Show - EVALUIERT 2026-11-13, wartet auf Go
+Zwei Werte unter Settings → Local Machine → Show Recording (Pre-Record
+0..60 s, Post-Record −60..+60 s).  Die Aufnahme ist EIN
+`output.file(id="recording")` in Liquidsoap: es kann nur eine Datei
+zugleich offen sein, `recording_start` schließt die laufende Datei.
+Zwei direkt aufeinander folgende aufgezeichnete Sendungen können sich
+deshalb nicht überlappen.
+- Variante A: Vor-/Nachlauf wird am Nachbarn gekappt (Übergabe an der
+  Grenze wie heute); nur Playout + Einstellungen, ~1 Tag,
+  PLAYOUT-Neustart.
+- Variante B: zweiter Aufnahme-Ausgang im Wechsel, Überlappung möglich;
+  zusätzlich Template, Engine, Telnet, Replikat-Test, Liquidsoap-Neustart,
+  ~2-3 Tage.
+Vorbedingungen / offene Entscheidungen:
+- A oder B (in den nächsten 14 Tagen: 30 aufgezeichnete Episoden, 2 Paare
+  direkt hintereinander).
+- Library-Kopie: Cue-In/Cue-Out auf den Vor-/Nachlauf setzen, damit eine
+  Wiederholung aus der Aufzeichnung exakt die Sendung spielt.
