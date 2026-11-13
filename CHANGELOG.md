@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   eines Blocks innerhalb einer Playlist-Expansion.  Solange eine Sendung keine „soon"- /
   „now"-Jingles hat, wird sie an diesen Stellen nicht angekündigt.  Manual TEASERS + SETTINGS
   x4, ARCHITECTURE 0.136 (§23.108).  Wirksam sofort für neu befüllte Episoden; die neuen
-  Übersetzungen nach Apache-Neustart.
+  Übersetzungen nach Apache-Neustart.  `d02d5ff1`.
 
 - **Auto-DJ-Puffer-Track für kleine Restlücken (2026-11-13, Operator-Go Stufe 1 + 2,
   Variante a)** - Am 2026-11-11 endete eine Episode 30,8 s zu früh in Stille: die
