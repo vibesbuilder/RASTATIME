@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `to_jsonb(cc_track_types)`, darum dürfen Code, Migration und Neustarts in beliebiger
   Reihenfolge kommen.  API-Feld `track_type_fixed_gain_db` an der Datei.  Manual SETTINGS x4,
   ARCHITECTURE 0.138 (§23.110).  Wirksam nach Migration (Operator) und Neustart ANALYZER,
-  API, PLAYOUT; die Übersetzungen nach Apache-Neustart.
+  API, PLAYOUT; die Übersetzungen nach Apache-Neustart.  `fa3754f2`.
 
 - **Record Start: Versatz für Record per Show (2026-11-13, Operator-Go)** - Neu unter
   Settings → Local Machine → Show Recording: „Record Start (s)", -60 bis 60 mit einer
