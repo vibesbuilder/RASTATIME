@@ -44,6 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Edit Track: „Save“ schloss den Tab nicht mehr (2026-11-13)** - Seit 2026-11-08 schließt
+  der Tab erst nach erfolgreichem Speichern; davor stand aber ein Neuzeichnen der Library über
+  eine globale Variable `oTable`, die keine Seite definiert (die Library hält ihre Tabelle
+  privat).  Der Fehler brach den Rückruf ab: gespeichert war, der Tab blieb offen.  Vorher lief
+  das Schließen direkt nach dem Absenden, der Fehler fiel nicht auf - neu gezeichnet wurde die
+  Library aber auch nie.  Jetzt: Tab schließen, dann die Library über `redrawLib()` neu
+  zeichnen (abgesichert).  Browser-Test mit abgefangenem Speichern: Tab zu, ein Feed-Abruf,
+  keine Fehler.
+
 - **Überbuchte Zeile endete um ihren Cue-In zu früh (2026-11-13)** - Die API kappt den
   Cue-Out einer Zeile, die über das Sendungsende läuft, gab aber „Sendungsende − Start"
   statt „Cue-In + Sendungsende − Start" zurück (der Cue-Out ist eine Position in der Datei).

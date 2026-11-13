@@ -1405,12 +1405,22 @@ var AIRTIME = (function (AIRTIME) {
             newTab.wrapper.find(".edit-md-dialog").scrollTop(0);
             return;
           }
+          // RASTATIME 2026-11-13 - close first: the redraw below named a
+          // global `oTable` that no page defines (the library keeps its
+          // table private), so it threw and, since 2026-11-08, kept the tab
+          // open after every successful save (before, the close ran right
+          // after the post and the error went unnoticed - the library never
+          // redrew either).
+          newTab.close();
           // don't redraw the library table if we are on calendar page
           // we would be on calendar if viewing recorded file metadata
           if ($("#schedule_calendar").length === 0) {
-            oTable.fnStandingRedraw();
+            try {
+              redrawLib();
+            } catch (e) {
+              // a failed redraw must not undo the save feedback
+            }
           }
-          newTab.close();
         },
       ).fail(function () {
         $save.prop("disabled", false);
