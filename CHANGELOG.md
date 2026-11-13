@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Widgets → Song Request + Suchfeld im Song-Request-Widget (2026-11-13, Operator-Go A + C)**
+  - Das Hörer-Widget `/embed/song-request` (seit 2026-06-07) hatte keine Seite unter
+  Widgets, nur die Adresse im Manual.  Neu: Settings → Widgets → Song Request mit Status
+  (Pool, wünschbare Titel, offene Wünsche und letzter Wunsch, Wunsch-Sendungen, Cover),
+  Live-Vorschau und fertigem Einbettungscode.  Das Widget bekommt ein Suchfeld: ab 2 Zeichen
+  über den ganzen Pool (bis 50 Treffer), ohne Suche die Liste wie bisher mit Hinweis „die
+  ersten 500 von 5.124" - bisher endete die Liste beim Buchstaben A, rund 90 % des Pools waren
+  für Hörer unerreichbar.  API: Trefferzahl 25 → 50, Antwort mit `limit` (wirksam nach
+  API-Neustart).  Manual WIDGETS + SONG_REQUESTS ×4, ARCHITECTURE 0.139 (§23.111).
+
 - **Lautheits-Analyse je Track Type abschaltbar, fester Pegel (2026-11-13, Operator-Go)** -
   Gesprochene Spots über einem immer gleichen Soundbett pegelte die Messung je Datei nach
   der Sprache ein, das Bett war von Spot zu Spot verschieden laut.  Neu im Track-Type-Editor:
@@ -82,6 +92,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `c86b26fb`.
 
 ### Fixed
+
+- **Song-Request-Widget: Antwort unsichtbar, Knopf abgeschnitten, Texte nur englisch
+  (2026-11-13)** - Die Antwort auf einen Wunsch („Danke!", „schon gewünscht", Limit) stand
+  unter der Tabelle; mit der selbst anpassenden Höhe (2026-11-12) ist die Liste die Seite und
+  die Zeile lag nach 500 Titeln außer Sicht.  Sie erscheint jetzt direkt unter dem angeklickten
+  Titel.  Ein langer Titel machte die Tabelle breiter als den Rahmen und schnitt den
+  Request-Knopf ab; jetzt Auslassungspunkte.  Die Hörertexte hatten keine Übersetzung; de /
+  fr / es ergänzt (Widgets folgen der Standardsprache).
 
 - **Edit Track: „Save“ schloss den Tab nicht mehr (2026-11-13)** - Seit 2026-11-08 schließt
   der Tab erst nach erfolgreichem Speichern; davor stand aber ein Neuzeichnen der Library über

@@ -35,6 +35,7 @@ them on an external site.
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Calendar-style widget powered by FullCalendar 6 (locally hosted). Operator-switchable Day / 2-Day / Week views via in-widget buttons or `?view=`. Show slots coloured from `cc_show.background_color`. Click → modal with show description + URL button. Auto-scrolls to the now-line. |
 | **Track History** | `/embed/track-history` | Recent-track playout log (last 7 days). HTML5 date-picker + time-picker + Now button + pagesize dropdown (10/20/50/100). Rows show "HH:MM - HH:MM Artist - Title"; click → modal with show context + URL link. Load-more button capped at 1000 rows total. |
 | **Stream Player** | `/embed/player` | Listen-live button with now-playing / next lines and a volume slider. Card and full-width bottom-bar layouts. Picks the first browser-decodable stream, falls back if one is down. |
+| **Song Request** | `/embed/song-request` | Listener request widget: a search box over the whole song request pool, a list of its first 500 tracks, a **Request** button per track. Set-up and request shows: [Song Requests](./SONG_REQUESTS.md). |
 
 More widgets are planned (see [BACKLOG.md](../../BACKLOG.md)).
 
@@ -866,6 +867,29 @@ URL parameters (all optional):
 Embed codes with a live preview are on **Settings → Widgets →
 Player**.  The empty-state wording of the metadata lines is shared
 with the Now-Playing widgets (section 9).
+
+---
+
+## Song Request widget (`/embed/song-request`)
+
+The listener side of [Song Requests](./SONG_REQUESTS.md): listeners
+search the tracks of the song request pool and ask for one with a
+click.  Pool, request shows and guardrails are described in that
+chapter, §6.
+
+**Settings → Widgets → Song Request** (since 2026-11-13) hosts:
+- a **Status** block: the pool (with a link to Settings → General),
+  how many tracks listeners can request, open requests and the last
+  one, the request shows (shows whose autoloading playlist holds a
+  smart block with *Use requests*), and whether covers are shown
+  (Public RASTATIME API);
+- a live preview on a dark backdrop - a click on **Request** in it
+  files a real request;
+- the ready-made embed code with the script line.
+
+The only URL parameter is `theme` (`auto` / `dark` / `light`).  The
+listener texts follow the station language (translated since
+2026-11-13); the page has no fields for them.
 
 ---
 

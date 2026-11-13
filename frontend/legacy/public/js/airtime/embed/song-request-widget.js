@@ -2,11 +2,22 @@
  * RASTATIME 2026-06-07 — Song Request Widget runtime (table view).
  *
  * Vanilla JS (no jQuery — runs inside its own iframe).  On load it
- * fetches the whole requestable pool from GET /api/v2/song-requests/
- * search (no query = whole pool) and renders a scrollable, non-paginated
- * table: cover | artist / title | "Request" button.  The button POSTs
- * {file_id} to /api/v2/song-requests and shows a status message based on
- * the HTTP code (201 ok, 409 duplicate, 429 rate-limited, else error).
+ * fetches the requestable pool from GET /api/v2/song-requests/search
+ * (no query = the listing, capped at 500) and renders a scrollable,
+ * non-paginated table: cover | artist / title | "Request" button.  The
+ * button POSTs {file_id} to /api/v2/song-requests and shows a message
+ * based on the HTTP code (201 ok, 409 duplicate, 429 rate-limited, else
+ * error).
+ *
+ * RASTATIME 2026-11-13 - search box: from 2 characters (the API's
+ * SEARCH_MIN_CHARS) the search runs over the whole pool, 300 ms after the
+ * last keystroke (the search endpoint allows 60 calls a minute per IP);
+ * an older answer arriving after a newer one is dropped.  Fewer than 2
+ * characters show the listing again (kept from the first load).  A note
+ * says when the listing or the matches are cut (`limit` in the answer).
+ * The answer to a request appears in a row under the track clicked: with
+ * the self-sizing frame the whole list is the page, and a status line at
+ * the end of 500 rows was out of sight.
  *
  * Covers come from /api/track?id=..&return=artwork-64 (only works when
  * "3rd party API" is enabled in settings) and are rendered only for
@@ -25,6 +36,9 @@
 (function () {
     'use strict';
 
+    var SEARCH_MIN_CHARS = 2;
+    var SEARCH_DELAY_MS = 300;
+
     var body = document.body;
     if (!body || !body.classList.contains('sr-widget')) {
         return;
@@ -34,10 +48,13 @@
         return; // disabled state — no pool configured
     }
     var statusEl = body.querySelector('.sr-status');
+    var searchEl = body.querySelector('.sr-search');
+    var noteEl = body.querySelector('.sr-note');
 
     var listUrl = body.getAttribute('data-list-url');
     var submitUrl = body.getAttribute('data-submit-url');
     var coverUrl = body.getAttribute('data-cover-url');
+    var total = parseInt(body.getAttribute('data-total'), 10) || 0;
 
     var L = {
         loading:   body.getAttribute('data-label-loading'),
@@ -46,7 +63,11 @@
         success:   body.getAttribute('data-label-success'),
         duplicate: body.getAttribute('data-label-duplicate'),
         ratelimit: body.getAttribute('data-label-ratelimit'),
-        error:     body.getAttribute('data-label-error')
+        error:     body.getAttribute('data-label-error'),
+        search:    body.getAttribute('data-label-search'),
+        noMatches: body.getAttribute('data-label-no-matches'),
+        more:      body.getAttribute('data-label-more'),
+        refine:    body.getAttribute('data-label-refine')
     };
 
     // Decode HTML entities (cc_files titles can be double-escaped). Plain
@@ -59,25 +80,77 @@
         return ta.value;
     }
 
+    // 5124 -> "5,124" / "5.124" in the station language (<html lang>)
+    function num(n) {
+        try {
+            return Number(n).toLocaleString(document.documentElement.lang || undefined);
+        } catch (e) {
+            return String(n);
+        }
+    }
+
+    function fill(tpl, a, b) {
+        return String(tpl || '').replace('%1$s', a).replace('%2$s', b).replace('%s', a);
+    }
+
     function setStatus(msg, kind) {
         statusEl.textContent = msg || '';
         statusEl.className = 'sr-status' + (kind ? ' sr-' + kind : '');
     }
 
-    function load() {
-        setStatus(L.loading, '');
-        fetch(listUrl, { headers: { 'Accept': 'application/json' }, credentials: 'omit' })
-            .then(function (r) { return r.json(); })
-            .then(function (data) { render((data && data.results) || []); })
-            .catch(function () { setStatus(L.error, 'err'); });
+    function setNote(msg) {
+        if (noteEl) { noteEl.textContent = msg || ''; }
     }
 
-    function render(results) {
+    var listing = null;   // {results, limit} of the empty query, kept
+    var seq = 0;          // newest request; older answers are dropped
+    var shownQuery = '';  // query of the list on screen ('' = listing)
+    var timer = null;
+
+    function show(results, q, limit) {
+        render(results, q);
+        if (!results.length) {
+            setNote('');
+        } else if (q) {
+            setNote(limit && results.length >= limit ? fill(L.refine, num(limit)) : '');
+        } else {
+            setNote(total > results.length ? fill(L.more, num(results.length), num(total)) : '');
+        }
+    }
+
+    function load(q) {
+        var my = ++seq;
+        if (!q && listing) {
+            show(listing.results, '', listing.limit);
+            return;
+        }
+        setStatus(L.loading, '');
+        var url = listUrl + (q ? '?q=' + encodeURIComponent(q) : '');
+        fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'omit' })
+            .then(function (r) {
+                if (r.status === 429) { throw new Error('ratelimit'); }
+                if (!r.ok) { throw new Error('http ' + r.status); }
+                return r.json();
+            })
+            .then(function (data) {
+                if (my !== seq) { return; }
+                var results = (data && data.results) || [];
+                var limit = (data && data.limit) || 0;
+                if (!q) { listing = { results: results, limit: limit }; }
+                show(results, q, limit);
+            })
+            .catch(function (err) {
+                if (my !== seq) { return; }
+                setStatus(err && err.message === 'ratelimit' ? L.ratelimit : L.error, 'err');
+            });
+    }
+
+    function render(results, q) {
         while (rowsEl.firstChild) {
             rowsEl.removeChild(rowsEl.firstChild);
         }
         if (!results.length) {
-            setStatus(L.noTracks, '');
+            setStatus(q ? L.noMatches : L.noTracks, '');
             return;
         }
         setStatus('', '');
@@ -130,7 +203,7 @@
             btn.className = 'sr-btn';
             btn.type = 'button';
             btn.textContent = L.request;
-            btn.addEventListener('click', function () { submit(t.id, btn); });
+            btn.addEventListener('click', function () { submit(t.id, btn, tr); });
             tdBtn.appendChild(btn);
             tr.appendChild(tdBtn);
 
@@ -138,7 +211,26 @@
         });
     }
 
-    function submit(fileId, btn) {
+    // the answer to a request, in a row right under the track clicked
+    function rowMessage(tr, msg, kind) {
+        if (!tr.parentNode) {  // the list changed (a search) while the request ran
+            setStatus(msg, kind);
+            return;
+        }
+        var old = rowsEl.querySelector('.sr-msg-row');
+        if (old) { old.parentNode.removeChild(old); }
+        var mr = document.createElement('tr');
+        mr.className = 'sr-msg-row';
+        var td = document.createElement('td');
+        td.colSpan = 3;
+        td.className = 'sr-msg sr-' + kind;
+        td.setAttribute('role', 'status');
+        td.textContent = msg;
+        mr.appendChild(td);
+        tr.parentNode.insertBefore(mr, tr.nextSibling);
+    }
+
+    function submit(fileId, btn, tr) {
         btn.disabled = true;
         setStatus('', '');
         fetch(submitUrl, {
@@ -147,16 +239,37 @@
             credentials: 'omit',
             body: JSON.stringify({ file_id: fileId })
         }).then(function (r) {
-            if (r.status === 201) { setStatus(L.success, 'ok'); return; }
-            if (r.status === 409) { setStatus(L.duplicate, 'err'); return; }
-            if (r.status === 429) { setStatus(L.ratelimit, 'err'); return; }
-            setStatus(L.error, 'err');
+            if (r.status === 201) { rowMessage(tr, L.success, 'ok'); return; }
+            if (r.status === 409) { rowMessage(tr, L.duplicate, 'err'); return; }
+            if (r.status === 429) { rowMessage(tr, L.ratelimit, 'err'); return; }
+            rowMessage(tr, L.error, 'err');
             btn.disabled = false;
         }).catch(function () {
-            setStatus(L.error, 'err');
+            rowMessage(tr, L.error, 'err');
             btn.disabled = false;
         });
     }
 
-    load();
+    if (searchEl) {
+        if (total > 0 && L.search) {
+            searchEl.placeholder = fill(L.search, num(total));
+        }
+        var run = function () {
+            clearTimeout(timer);
+            var q = searchEl.value.trim();
+            if (q.length < SEARCH_MIN_CHARS) { q = ''; }
+            if (q === shownQuery) { return; }
+            shownQuery = q;
+            load(q);
+        };
+        searchEl.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(run, SEARCH_DELAY_MS);
+        });
+        searchEl.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') { ev.preventDefault(); run(); }
+        });
+    }
+
+    load('');
 })();

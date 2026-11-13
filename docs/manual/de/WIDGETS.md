@@ -36,6 +36,7 @@ Sie sie auf einer externen Seite einbetten.
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Kalender-Widget basierend auf FullCalendar 6 (lokal gehostet). Operator-umschaltbare Day / 2-Day / Week Views via In-Widget-Buttons oder `?view=`. Show-Slots eingefärbt aus `cc_show.background_color`. Klick → Modal mit Sendungs-Beschreibung + URL-Button. Auto-Scroll zur Now-Linie. |
 | **Track History** | `/embed/track-history` | Tracker-History-Log (letzte 7 Tage). HTML5 Date-Picker + Time-Picker + Now-Button + Pagesize-Dropdown (10/20/50/100). Zeilen "HH:MM - HH:MM Künstler - Titel"; Klick → Modal mit Show-Kontext + URL-Link. Load-More-Button, hart-gecappt bei 1000 Zeilen. |
 | **Stream Player** | `/embed/player` | Listen-Live-Knopf mit Now-Playing-/Next-Zeile und Lautstärkeregler. Karten- und Bottom-Bar-Layout. Wählt den ersten im Browser dekodierbaren Stream, fällt bei Ausfall auf den nächsten zurück. |
+| **Song Request** | `/embed/song-request` | Wunsch-Widget für Hörer: Suchfeld über den ganzen Song-Request-Pool, Liste seiner ersten 500 Titel, je Titel ein Wunsch-Knopf. Einrichtung und Wunsch-Sendungen: [Song Requests](./SONG_REQUESTS.md). |
 
 Weitere Widgets sind geplant (siehe [BACKLOG.md](../../../BACKLOG.md)).
 
@@ -748,6 +749,29 @@ URL-Parameter (alle optional):
 Embed-Codes mit Live-Vorschau stehen unter **Settings → Widgets →
 Player**.  Die Empty-State-Texte der Metadaten-Zeilen teilen sich
 das Widget mit den Now-Playing-Widgets (Abschnitt 9).
+
+---
+
+## Song-Request-Widget (`/embed/song-request`)
+
+Die Hörerseite der [Song Requests](./SONG_REQUESTS.md): Hörer
+durchsuchen die Titel des Song-Request-Pools und wünschen sich einen
+mit einem Klick.  Pool, Wunsch-Sendungen und Schutzmechanismen
+beschreibt dieses Kapitel in §6.
+
+**Settings → Widgets → Song Request** (seit 2026-11-13) enthält:
+- einen **Status**-Block: den Pool (mit Link zu Settings → General),
+  wie viele Titel gewünscht werden können, offene Wünsche und den
+  letzten Wunsch, die Wunsch-Sendungen (Sendungen, deren
+  Autoloading-Playlist einen Smart Block mit *Use requests* enthält)
+  und ob Cover angezeigt werden (Public RASTATIME API);
+- eine Live-Vorschau auf dunklem Hintergrund - ein Klick auf den
+  Wunsch-Knopf darin legt einen echten Wunsch an;
+- den fertigen Einbettungscode mit Script-Zeile.
+
+Einziger URL-Parameter ist `theme` (`auto` / `dark` / `light`).  Die
+Hörertexte folgen der Sendersprache (übersetzt seit 2026-11-13); auf
+der Seite gibt es keine Felder dafür.
 
 ---
 

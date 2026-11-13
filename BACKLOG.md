@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟢 Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - Evaluierung 2026-11-13, wartet auf Go
+### ✅ Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - GEBAUT 2026-11-13 (Go A + C, §23.111; offen: API-Neustart für 50 Treffer)
 
 Operator-Frage 2026-11-13: warum fehlt das Song-Request-Widget unter WIDGETS?  Lücke, keine Entscheidung: die
 Widget-Seiten entstanden 2026-05-22 (Vorschau, Texte, Einbettungscode), das Widget kam 2026-06-07 als Phase 4
@@ -113,6 +113,17 @@ sofort wirksam.  Keine neue öffentliche Schnittstelle (Such-Endpunkt ist schon 
 
 **Empfehlung:** Go für A + C; B nur, wenn eigene Formulierungen gewünscht sind (die Texte folgen schon der
 Standardsprache).
+
+**Go 2026-11-13:** A + C; B nicht gewünscht.  Korrektur zur Evaluierung: die Hörertexte hatten gar keine
+Übersetzung (nur englisch) - de / fr / es im selben Paket ergänzt.
+**Gebaut 2026-11-13:** Seite (`EmbeddablewidgetsController::songRequestAction`,
+`Application_Service_SongRequestStatus`, Menüpunkt nach Track History), Suchfeld im Widget (300 ms Verzögerung,
+alte Antworten verworfen, Hinweis „die ersten 500 von …" / „verfeinern"), API `SEARCH_LIMIT` 50 + `limit`.
+Nebenbefunde im selben Paket: Antwort auf einen Wunsch erscheint unter dem angeklickten Titel (stand nach
+500 Zeilen außer Sicht), lange Titel schneiden den Knopf nicht mehr ab.  Geprüft: API-Tests 5, Browser lesend
+(Suche, Hinweise, Antwortzeile mit abgefangenem Senden, Seite).
+**Offen:** API-Neustart (danach 50 statt 25 Treffer und der Hinweis „verfeinern").  💡 Die Widget-Seiten sind
+insgesamt englisch (keine Übersetzung), die neue auch.
 
 ### ✅ Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - GEBAUT 2026-11-12 (Go A, Stufe 1 + 2, `c86b26fb`, §23.106; Nebenbefunde mit erledigt)
 

@@ -266,12 +266,18 @@ chapitre indiquait `/Embed/`, et ainsi écrit le widget ne pouvait pas
 être intégré dans un autre site.
 
 Intégrez-le dans une `<iframe>` sur votre site (thèmes : `light`,
-`dark`, `auto`). Il affiche un tableau défilant de chaque titre
-demandable — pochette · artiste / titre · un bouton **Request** — sans
-champ de recherche ni pagination :
+`dark`, `auto`). Le code prêt à l'emploi se trouve aussi sous
+**Settings → Widgets → Song Request** (depuis le 2026-11-13), avec un
+bloc de statut et un aperçu en direct (voir [Widgets](./WIDGETS.md)).
+
+Le widget affiche un champ de recherche au-dessus d'un tableau
+défilant — pochette · artiste / titre · un bouton de demande
+(**Request**, « Demander » si la station est en français) :
 
 ```
    ┌──────────────────────────────────────────────┐
+   │ [ Rechercher parmi 5 124 titres…            ] │
+   │ Les 500 premiers titres sur 5 124 – …         │
    │ [poch.] Robb — Down with It          [Request]│
    │ [poch.] Leyya — Butter               [Request]│
    │         Viech — Steuermann           [Request]│
@@ -279,8 +285,15 @@ champ de recherche ni pagination :
    └──────────────────────────────────────────────┘
 ```
 
-Un clic envoie la demande et affiche une ligne de statut : merci,
-« déjà demandé récemment » ou « limite de demandes atteinte ».
+Sans recherche, le tableau liste les 500 premiers titres du pool
+(triés par artiste) et l'indique lorsque le pool est plus grand.  À
+partir de deux caractères, la recherche porte sur tout le pool (titre,
+artiste, album ; jusqu'à 50 résultats).  Jusqu'au 2026-11-13 le widget
+n'avait pas de champ de recherche : d'un pool plus grand, seuls les 500
+premiers titres pouvaient être demandés.
+
+Un clic envoie la demande ; la réponse s'affiche juste sous le titre :
+merci, « déjà demandé récemment » ou « limite de demandes atteinte ».
 
 Garde-fous intégrés (aucune file de modération nécessaire) :
 

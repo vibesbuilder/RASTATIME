@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.138
+Draft version: 0.139
 Date: 2026-11-13
 
 > **Revision history**
+> - **0.139 (2026-11-13)** - **Widgets -> Song Request** (§23.111): settings page (status,
+>   preview, embed code) for the song request widget, which had none; the widget gets a search
+>   box over the whole pool (the listing stops at 500 of 5,124 tracks), the request answer under
+>   the track clicked, listener texts translated; API search cap 25 -> 50 plus `limit`.
 > - **0.138 (2026-11-13)** - **Loudness analysis per track type** (§23.110): a type can
 >   switch the measurement off and name a fixed gain that the playout applies instead
 >   (`cc_track_types.analyze_loudness`, `fixed_gain_db`, migration 0083).  All readers go
@@ -10245,3 +10249,57 @@ value has to be set once by ear or from the 24/7 recording; a positive
 gain can run into the bus limiter (R128 mode).  Rollback: tick the box
 again (measurements stay in the database), or `git revert` (tag
 `live-2026-11-13d`); the two columns may stay.
+
+### 23.111 Widgets -> Song Request Page, Search Box in the Song Request Widget (2026-11-13)
+
+**Request.**  Operator question 2026-11-13: why is there no entry for
+the song request widget under Widgets?  A gap, not a decision: the
+widget pages came on 2026-05-22, the widget (`/embed/song-request`) on
+2026-06-07 as phase 4 of song requests with only the pool picker under
+Settings -> General.  The evaluation found the larger problem: the
+widget had no search box and listed at most 500 tracks
+(`AVAILABLE_LIMIT`, by artist) - the pool had 5,124, the listing ended
+at the letter A.  Go for A (page) and C (search box); B (own texts per
+field) not wanted.
+
+**Page** (`EmbeddablewidgetsController::songRequestAction`, menu entry
+after Track History, `embeddablewidgets` ACL resource as the siblings).
+Read-only: `Application_Service_SongRequestStatus::overview()` - pool
+blocks, requestable tracks (the catalogue filter: `requestable`, on
+disk, not disabled), open requests (`pending` / `queued`) and the last
+one in station time, smart blocks with the `use_requests` criterion and
+the shows whose autoloading playlist holds one (request shows), covers
+(`third_party_api`).  Preview with `theme=dark` and the embed code with
+the script line; no `/embed/widgets.js` on the page itself (the list
+would grow to 500 rows).  English like the other widget pages.
+
+**Widget.**  A search input above the list; from 2 characters
+(`SEARCH_MIN_CHARS`) `GET /api/v2/song-requests/search?q=` 300 ms after
+the last keystroke (throttle 60/min per IP), a sequence number drops
+answers that arrive after a newer one; fewer characters show the kept
+listing again.  `data-total` (the requestable count from the embed
+controller) feeds the placeholder ("Search 5,124 tracks...") and the
+note "Showing the first 500 of 5,124"; with a query the note "refine"
+appears when the answer reaches its `limit`.  The answer to a request
+moved from a status line under the table to a row under the track
+clicked: with the self-sizing frame (section 23.106) the list is the
+page and the line sat after 500 rows.  A long title widened the table
+past the frame and cut the Request button off (`.sr-track { width:
+100%; max-width: 0 }` - ellipsis).  The listener texts got de / fr / es
+translations (there were none; widgets follow the default language).
+
+**API.**  `SEARCH_LIMIT` 25 -> 50; the search answer carries the cap it
+applied (`limit`).  Tests: `tests/test_song_request_search.py` (5).
+
+**Verified.**  Browser (logged-in Chrome, read-only): listing 500 with
+the note, "zappa" / "qxqxqx" no matches, "love" 25 matches (50 after
+the API restart), one character and clearing back to the listing; a
+request answer under the clicked row with the submit stubbed (201 /
+409); page status, preview without horizontal overflow, embed code.
+
+**Risk.**  Low: the admin page and the public widget only, no playout
+path.  Failure mode: the widget does not load or the search runs into
+the throttle (429 -> "request limit" message).  Rollback: `git revert`
+(tag `live-2026-11-13e`), legacy live at once; the API change needs a
+restart (until then the search answers with up to 25 tracks and no
+`limit`, which the widget handles).

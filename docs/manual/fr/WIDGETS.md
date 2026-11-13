@@ -38,6 +38,7 @@ les intégrer sur un site externe.
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendrier basé sur FullCalendar 6 (hébergé localement). Vues Day / 2-Day / Week commutables via boutons in-widget ou `?view=`. Créneaux d'émission colorés depuis `cc_show.background_color`. Clic → modal avec description + bouton URL. Auto-scroll vers la ligne now. |
 | **Track History** | `/embed/track-history` | Journal de lecture des pistes (7 derniers jours). Date-picker HTML5 + time-picker + bouton Now + dropdown pagesize (10/20/50/100). Lignes "HH:MM - HH:MM Artiste - Titre"; clic → modal avec contexte d'émission + lien URL. Bouton Load-more avec cap dur à 1000 lignes. |
 | **Stream Player** | `/embed/player` | Bouton d'écoute en direct avec lignes now-playing / next et curseur de volume. Layouts carte et barre inférieure pleine largeur. Choisit le premier stream décodable par le navigateur, bascule sur le suivant en cas de panne. |
+| **Song Request** | `/embed/song-request` | Widget de demandes pour les auditeurs : un champ de recherche sur tout le pool de demandes, la liste de ses 500 premiers titres, un bouton de demande par titre. Mise en place et émissions à la demande : [Song Requests](./SONG_REQUESTS.md). |
 
 D'autres widgets sont prévus (voir [BACKLOG.md](../../../BACKLOG.md)).
 
@@ -718,6 +719,29 @@ Paramètres d'URL (tous optionnels) :
 Les codes d'intégration avec aperçu sont sous **Settings →
 Widgets → Player**.  Les libellés d'état vide sont partagés avec
 les widgets Now-Playing (section 9).
+
+---
+
+## Widget Song Request (`/embed/song-request`)
+
+Le côté auditeur des [Song Requests](./SONG_REQUESTS.md) : les
+auditeurs cherchent dans les titres du pool de demandes et en demandent
+un d'un clic.  Le pool, les émissions à la demande et les garde-fous
+sont décrits dans ce chapitre, §6.
+
+**Settings → Widgets → Song Request** (depuis le 2026-11-13) propose :
+- un bloc **Status** : le pool (avec un lien vers Settings → General),
+  le nombre de titres demandables, les demandes ouvertes et la
+  dernière, les émissions à la demande (émissions dont la playlist
+  d'autoloading contient un smart block avec *Use requests*) et
+  l'affichage ou non des pochettes (Public RASTATIME API) ;
+- un aperçu en direct sur fond sombre - un clic sur le bouton de
+  demande y crée une vraie demande ;
+- le code d'intégration prêt à l'emploi avec la ligne de script.
+
+Le seul paramètre d'URL est `theme` (`auto` / `dark` / `light`).  Les
+textes pour les auditeurs suivent la langue de la station (traduits
+depuis le 2026-11-13) ; la page n'a pas de champs pour eux.
 
 ---
 

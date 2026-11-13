@@ -127,6 +127,14 @@ $pages[] = [
             'controller' => 'embeddablewidgets',
             'action' => 'track-history',
         ],
+        // RASTATIME 2026-11-13 - the song request widget (2026-06-07) had no
+        // page here; status, preview and embed code
+        [
+            'label' => 'Song Request',
+            'module' => 'default',
+            'controller' => 'embeddablewidgets',
+            'action' => 'song-request',
+        ],
     ],
 ];
 $pages[] = [

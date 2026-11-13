@@ -265,12 +265,18 @@ este capítulo decía `/Embed/`, y así escrito el widget no se podía
 incrustar en otro sitio web.
 
 Incrústelo en un `<iframe>` en su web (temas: `light`, `dark`,
-`auto`). Muestra una tabla desplazable de cada pista solicitable
-—carátula · artista / título · un botón **Request**— sin campo de
-búsqueda ni paginación:
+`auto`). El código listo para usar también está en **Settings →
+Widgets → Song Request** (desde el 2026-11-13), junto con un bloque de
+estado y una vista previa en directo (véase [Widgets](./WIDGETS.md)).
+
+El widget muestra un campo de búsqueda sobre una tabla desplazable
+—carátula · artista / título · un botón de petición (**Request**,
+«Pedir» si la emisora está en español)—:
 
 ```
    ┌──────────────────────────────────────────────┐
+   │ [ Buscar en 5124 canciones…                 ] │
+   │ Se muestran las primeras 500 de 5124 – …      │
    │ [carát.] Robb — Down with It         [Request]│
    │ [carát.] Leyya — Butter              [Request]│
    │          Viech — Steuermann          [Request]│
@@ -278,8 +284,16 @@ búsqueda ni paginación:
    └──────────────────────────────────────────────┘
 ```
 
-Un clic envía la petición y muestra una línea de estado: gracias, «ya
-pedida recientemente» o «límite de peticiones alcanzado».
+Sin búsqueda, la tabla lista las primeras 500 canciones del pool
+(ordenadas por artista) y lo indica cuando el pool es mayor.  A partir
+de dos caracteres, la búsqueda abarca todo el pool (título, artista,
+álbum; hasta 50 resultados).  Hasta el 2026-11-13 el widget no tenía
+campo de búsqueda: de un pool mayor solo se podían pedir las primeras
+500 canciones.
+
+Un clic envía la petición; la respuesta aparece justo debajo de la
+canción: gracias, «ya pedida recientemente» o «límite de peticiones
+alcanzado».
 
 Salvaguardas integradas (sin necesidad de cola de moderación):
 

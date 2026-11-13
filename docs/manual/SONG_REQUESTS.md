@@ -252,12 +252,17 @@ chapter said `/Embed/`, and spelled that way the widget could not be
 embedded in another website.
 
 Embed it in an `<iframe>` on your website (themes: `light`, `dark`,
-`auto`). It shows a scrollable table of every requestable track —
-cover · artist / title · a **Request** button — with no search box
-and no pagination:
+`auto`). The ready-made code is also on **Settings → Widgets → Song
+Request** (since 2026-11-13), together with a status block and a live
+preview (see [Widgets](./WIDGETS.md)).
+
+The widget shows a search box above a scrollable table — cover ·
+artist / title · a **Request** button:
 
 ```
    ┌──────────────────────────────────────────────┐
+   │ [ Search 5,124 tracks…                      ] │
+   │ Showing the first 500 of 5,124 tracks - …     │
    │ [cover] Robb — Down with It          [Request]│
    │ [cover] Leyya — Butter               [Request]│
    │         Viech — Steuermann           [Request]│
@@ -265,8 +270,14 @@ and no pagination:
    └──────────────────────────────────────────────┘
 ```
 
-A click posts the request and shows a status line: thanks, "already
-requested recently", or "request limit reached".
+Without a search the table lists the first 500 tracks of the pool
+(sorted by artist) and says so when the pool is larger.  From two
+characters the search covers the whole pool (title, artist, album; up
+to 50 matches).  Until 2026-11-13 the widget had no search box: of a
+larger pool only the first 500 tracks could be requested.
+
+A click posts the request; the answer appears right under the track:
+thanks, "already requested recently", or "request limit reached".
 
 Built-in guardrails (no moderation queue needed):
 

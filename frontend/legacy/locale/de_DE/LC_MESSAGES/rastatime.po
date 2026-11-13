@@ -8390,3 +8390,63 @@ msgstr "Pegel in dB (-30 bis 30) für Titel dieses Typs, solange „Lautheit ana
 #: RASTATIME 2026-11-13 loudness analysis per track type
 msgid "Please enter a gain in dB between -30 and 30, e.g. -6 or 2.5."
 msgstr "Bitte einen Pegel in dB zwischen -30 und 30 eingeben, z. B. -6 oder 2,5."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Song Request"
+msgstr "Musikwunsch"
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Loading available tracks…"
+msgstr "Titel werden geladen…"
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "No tracks are available for requests right now."
+msgstr "Im Moment können keine Titel gewünscht werden."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Request"
+msgstr "Wünschen"
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Thanks! Your request has been received."
+msgstr "Danke! Ihr Wunsch ist angekommen."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "You already requested this track recently."
+msgstr "Sie haben diesen Titel vor Kurzem schon gewünscht."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "You have reached the request limit. Please try again later."
+msgstr "Sie haben die Höchstzahl an Wünschen erreicht. Bitte versuchen Sie es später noch einmal."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Something went wrong. Please try again."
+msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es noch einmal."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Song requests are currently unavailable."
+msgstr "Musikwünsche sind im Moment nicht möglich."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Search %s tracks…"
+msgstr "%s Titel durchsuchen…"
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Search…"
+msgstr "Suchen…"
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Search the tracks you can request"
+msgstr "Wünschbare Titel durchsuchen"
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "No tracks match your search."
+msgstr "Kein Titel passt zu Ihrer Suche."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Showing the first %1$s of %2$s tracks - use the search to find the others."
+msgstr "Die ersten %1$s von %2$s Titeln – die übrigen finden Sie über die Suche."
+
+#: RASTATIME 2026-11-13 song request widget (listener texts)
+msgid "Showing the first %s matches - refine your search to find more."
+msgstr "Die ersten %s Treffer – verfeinern Sie die Suche, um weitere zu finden."

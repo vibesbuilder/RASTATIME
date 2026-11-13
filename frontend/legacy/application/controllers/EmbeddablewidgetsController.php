@@ -467,6 +467,22 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         $this->view->publicUrl = Config::getPublicUrl();
     }
 
+    /**
+     * RASTATIME 2026-11-13 - Widgets -> Song Request: the song request
+     * widget (/embed/song-request, built 2026-06-07 with the feature) had
+     * no page here - only its address in the manual.  Read-only: status of
+     * the feature (pool, requestable tracks, open requests, request shows,
+     * covers), preview and embed code.  The pool is picked under
+     * Settings -> General; the widget's texts follow the default language.
+     */
+    public function songRequestAction()
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
+
+        $this->view->publicUrl = Config::getPublicUrl();
+        $this->view->status = Application_Service_SongRequestStatus::overview();
+    }
+
     // The Facebook widget is untested & unsupported, the widget has been removed from the navigation in navigation.php
     public function facebookAction()
     {

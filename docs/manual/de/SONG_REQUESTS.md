@@ -261,12 +261,19 @@ diesem Kapitel `/Embed/`, und so geschrieben ließ sich das Widget
 nicht in eine andere Website einbetten.
 
 Betten Sie es in ein `<iframe>` auf Ihrer Website ein (Themes:
-`light`, `dark`, `auto`). Es zeigt eine scrollbare Tabelle jedes
-wünschbaren Tracks — Cover · Artist / Title · einen **Request**-Button
-— ohne Suchfeld und ohne Pagination:
+`light`, `dark`, `auto`). Den fertigen Code gibt es auch unter
+**Settings → Widgets → Song Request** (seit 2026-11-13), zusammen mit
+einem Status-Block und einer Live-Vorschau (siehe
+[Widgets](./WIDGETS.md)).
+
+Das Widget zeigt ein Suchfeld über einer scrollbaren Tabelle — Cover ·
+Artist / Title · ein Wunsch-Knopf (**Request**, bei deutscher
+Sendersprache „Wünschen“):
 
 ```
    ┌──────────────────────────────────────────────┐
+   │ [ 5.124 Titel durchsuchen…                  ] │
+   │ Die ersten 500 von 5.124 Titeln – …           │
    │ [Cover] Robb — Down with It          [Request]│
    │ [Cover] Leyya — Butter               [Request]│
    │         Viech — Steuermann           [Request]│
@@ -274,8 +281,15 @@ wünschbaren Tracks — Cover · Artist / Title · einen **Request**-Button
    └──────────────────────────────────────────────┘
 ```
 
-Ein Klick sendet den Request und zeigt eine Statuszeile: Danke,
-„bereits kürzlich gewünscht" oder „Request-Limit erreicht".
+Ohne Suche listet die Tabelle die ersten 500 Titel des Pools
+(nach Artist sortiert) und sagt es, wenn der Pool größer ist.  Ab zwei
+Zeichen sucht das Feld im ganzen Pool (Titel, Artist, Album; bis zu 50
+Treffer).  Bis 2026-11-13 hatte das Widget kein Suchfeld: von einem
+größeren Pool ließen sich nur die ersten 500 Titel wünschen.
+
+Ein Klick sendet den Wunsch; die Antwort erscheint direkt unter dem
+Titel: Danke, „bereits kürzlich gewünscht" oder „Wunsch-Limit
+erreicht".
 
 Eingebaute Schutzmechanismen (keine Moderations-Queue nötig):
 

@@ -1,0 +1,127 @@
+<?php
+// RASTATIME 2026-11-13 - Widgets -> Song Request.  Same shape as the other
+// widget pages (status instead of a label form, preview, embed code), read-
+// only: the pool is picked under Settings -> General, the listener texts
+// follow the default language.
+//
+// No /embed/widgets.js on this page: the song request list grows to all
+// its rows with it (up to 500), the preview keeps its own scroll box.
+
+$publicUrl = rtrim($this->publicUrl, '/');
+$widgetsJs = $publicUrl . '/embed/widgets.js';
+$previewUrl = $publicUrl . '/embed/song-request?theme=dark';
+$embedUrl = $publicUrl . '/embed/song-request';
+$st = $this->status;
+$e = static fn ($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+$names = static fn (array $rows) => implode(', ', array_map(static fn ($r) => $r['name'], $rows));
+$settingsLink = '<a href="' . $e($this->baseUrl('preference')) . '">' . $e(_('Settings → General')) . '</a>';
+$poolSet = !empty($st['pool']);
+?>
+<div id="widget-song-request"
+     class="prefpanel ui-widget simple-formblock clearfix padded-strong"
+     style="max-width: 800px;">
+
+    <h2 style="text-align:center"><?php echo _('Song Request Widget'); ?></h2>
+    <div style="clear:both"></div>
+
+    <p style="margin-bottom: 1.5em; color: #666;">
+        <?php echo $e(_('Drop-in iframe widget for your station\'s public website.  Listeners search the tracks of the song request pool and ask for one with a click; the requested tracks air in your request shows.  The search covers the whole pool, the list without a search shows the first 500 tracks.')); ?>
+    </p>
+
+    <!-- ───── Status ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _('Status'); ?></h3>
+    <fieldset class="padded">
+        <style>
+            .sr-status-table td { padding: 4px 0; vertical-align: top; }
+            .sr-status-table td.sr-st-label { padding-right: 12px; font-weight: 600; white-space: nowrap; }
+        </style>
+        <table class="sr-status-table" style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td class="sr-st-label" style="width: 38%;"><?php echo _('Song request pool'); ?></td>
+                <td style="padding: 4px 0;">
+                    <?php if ($poolSet): ?>
+                        <?php echo $e($names($st['pool'])); ?>
+                        <span style="color: #888;">(<?php echo $settingsLink; ?>)</span>
+                    <?php else: ?>
+                        <span style="color: #d9534f;"><?php echo $e(_('Not set - the widget says "Song requests are currently unavailable."')); ?></span>
+                        <?php echo sprintf($e(_('Pick the smart blocks under %s.')), $settingsLink); ?>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <tr>
+                <td class="sr-st-label"><?php echo _('Tracks listeners can request'); ?></td>
+                <td style="padding: 4px 0;"><?php echo $e(number_format($st['requestable'])); ?></td>
+            </tr>
+            <tr>
+                <td class="sr-st-label"><?php echo _('Open requests'); ?></td>
+                <td style="padding: 4px 0;">
+                    <?php echo $e(sprintf(_('%1$d waiting, %2$d scheduled'), $st['pending'], $st['queued'])); ?>
+                    <?php if ($st['last_request']): ?>
+                        <span style="color: #888;">- <?php echo $e(sprintf(_('last request %s'), $st['last_request'])); ?></span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <tr>
+                <td class="sr-st-label"><?php echo _('Request shows'); ?></td>
+                <td style="padding: 4px 0;">
+                    <?php if (!empty($st['request_shows'])): ?>
+                        <?php echo $e(implode(', ', $st['request_shows'])); ?>
+                    <?php else: ?>
+                        <span style="color: #d9534f;"><?php echo $e(_('None - requests are taken but never played.')); ?></span>
+                    <?php endif; ?>
+                    <div style="color: #888; font-size: 0.9em;">
+                        <?php echo $e(_('Shows whose autoloading playlist holds a smart block with "Use requests":')); ?>
+                        <?php echo $st['request_blocks'] ? $e($names($st['request_blocks'])) : $e(_('none')); ?>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="sr-st-label"><?php echo _('Covers'); ?></td>
+                <td style="padding: 4px 0;">
+                    <?php if ($st['covers']): ?>
+                        <?php echo $e(_('Shown')); ?>
+                    <?php else: ?>
+                        <?php echo $e(_('Not shown - "Public RASTATIME API" is off')); ?>
+                        <span style="color: #888;">(<?php echo $settingsLink; ?>)</span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _('Preview'); ?></h3>
+    <fieldset class="padded">
+        <iframe src="<?php echo $e($previewUrl); ?>"
+                width="100%" height="420" frameborder="0"
+                style="border: 1px solid #444; background: #222; max-width: 560px; display: block;"></iframe>
+        <p style="margin-top: 0.6em; color: #666;">
+            <?php echo $e(_('The preview is live: a click on "Request" in it files a real request.')); ?>
+        </p>
+    </fieldset>
+
+    <!-- ───── Embed-code block ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _('Embeddable code'); ?></h3>
+    <fieldset class="padded">
+        <label style="display: block; margin-top: 0.8em;"><strong>
+            <?php echo _('Song Request widget'); ?>:
+        </strong></label>
+        <textarea style="width: 98%; font-family: monospace;" rows="3" readonly="readonly"
+        ><iframe src="<?php echo $e($embedUrl); ?>" width="100%" height="420" frameborder="0" scrolling="no" style="border: 0; background: transparent;"></iframe>
+<script src="<?php echo $e($widgetsJs); ?>" async></script></textarea>
+
+        <p style="margin-top: 0.8em; color: #666;">
+            <?php echo $e(_('The script line lets the widget grow and shrink with its content (once per page is enough); without it the iframe keeps the height in the code and the list scrolls inside it.')); ?>
+        </p>
+
+        <p style="margin-top: 1em; color: #666;">
+            <?php echo _('Optional URL parameter: '); ?>
+            <code>theme=auto|dark|light</code>
+            <?php echo $e(_('(auto follows the visitor\'s device).')); ?>
+            <?php echo _('Example: '); ?>
+            <code>...song-request?theme=dark</code>.
+            <?php echo $e(_('See the operator manual chapter "Song Requests" for how request shows play the requests.')); ?>
+        </p>
+    </fieldset>
+
+</div>

@@ -251,6 +251,10 @@ class EmbedController extends Zend_Controller_Action
         // rather than an always-empty search box.
         $poolIds = Application_Model_Preference::getRequestablePoolBlockIds();
         $this->view->requestsEnabled = !empty($poolIds);
+        // RASTATIME 2026-11-13 - pool size for the search box ("Search 5,124
+        // tracks") and the "first 500 of ..." note under the listing
+        $this->view->poolTotal = $this->view->requestsEnabled
+            ? Application_Service_SongRequestStatus::requestableCount() : 0;
 
         $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
         $this->view->widgetJs  = Assets::url('js/airtime/embed/song-request-widget.js');

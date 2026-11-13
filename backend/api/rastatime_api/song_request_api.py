@@ -55,7 +55,9 @@ from rest_framework.throttling import AnonRateThrottle
 
 # --- tunables (operator-approved defaults 2026-06-07) ----------------------
 SEARCH_MIN_CHARS = 2
-SEARCH_LIMIT = 25
+# RASTATIME 2026-11-13 - 25 -> 50: the widget got a search box; the pool
+# outgrew the 500-row listing (5,124 tracks, the listing ended at "A")
+SEARCH_LIMIT = 50
 AVAILABLE_LIMIT = 500  # whole-pool table listing cap (no query)
 DEDUP_WINDOW_MINUTES = 30
 
@@ -99,6 +101,10 @@ def song_request_search(request):
     query shorter than SEARCH_MIN_CHARS) the WHOLE pool is returned (up to
     AVAILABLE_LIMIT) — this is what the table-view widget uses.  With a
     query the pool is filtered (up to SEARCH_LIMIT).
+
+    RASTATIME 2026-11-13 - the response carries the cap it applied
+    (``limit``) so the widget can tell "these are all" from "refine your
+    search".
     """
     q = (request.GET.get("q") or "").strip()
 
@@ -132,7 +138,7 @@ def song_request_search(request):
         }
         for r in rows
     ]
-    return Response({"results": results})
+    return Response({"results": results, "limit": limit})
 
 
 @api_view(["POST"])

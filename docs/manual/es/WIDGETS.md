@@ -37,6 +37,7 @@ un sitio externo.
 | **Multi-View Schedule** | `/embed/multi-view-schedule` | Widget calendario basado en FullCalendar 6 (alojado localmente). Vistas Day / 2-Day / Week conmutables vía botones in-widget o `?view=`. Slots de programa coloreados desde `cc_show.background_color`. Clic → modal con descripción + botón URL. Auto-scroll a la línea now. |
 | **Track History** | `/embed/track-history` | Registro de reproducción de pistas (últimos 7 días). Date-picker HTML5 + time-picker + botón Now + dropdown pagesize (10/20/50/100). Filas "HH:MM - HH:MM Artista - Título"; clic → modal con contexto de programa + enlace URL. Botón Load-more con tope duro a 1000 filas. |
 | **Stream Player** | `/embed/player` | Botón de escucha en directo con líneas now-playing / next y control de volumen. Layouts tarjeta y barra inferior a ancho completo. Elige el primer stream decodificable por el navegador y cae al siguiente si uno falla. |
+| **Song Request** | `/embed/song-request` | Widget de peticiones para oyentes: un campo de búsqueda sobre todo el pool de peticiones, la lista de sus primeras 500 canciones y un botón de petición por canción. Configuración y programas de peticiones: [Song Requests](./SONG_REQUESTS.md). |
 
 Más widgets están planificados (vea [BACKLOG.md](../../../BACKLOG.md)).
 
@@ -712,6 +713,29 @@ Parámetros de URL (todos opcionales):
 Los códigos de inserción con vista previa están en **Settings →
 Widgets → Player**.  Los textos de estado vacío se comparten con
 los widgets Now-Playing (sección 9).
+
+---
+
+## Widget Song Request (`/embed/song-request`)
+
+El lado del oyente de las [Song Requests](./SONG_REQUESTS.md): los
+oyentes buscan entre las canciones del pool de peticiones y piden una
+con un clic.  El pool, los programas de peticiones y las salvaguardas
+se describen en ese capítulo, §6.
+
+**Settings → Widgets → Song Request** (desde el 2026-11-13) ofrece:
+- un bloque **Status**: el pool (con un enlace a Settings → General),
+  cuántas canciones se pueden pedir, las peticiones abiertas y la
+  última, los programas de peticiones (programas cuya playlist de
+  autoloading contiene un smart block con *Use requests*) y si se
+  muestran las carátulas (Public RASTATIME API);
+- una vista previa en directo sobre fondo oscuro - un clic en el botón
+  de petición crea una petición real;
+- el código de inserción listo para usar con la línea de script.
+
+El único parámetro de URL es `theme` (`auto` / `dark` / `light`).  Los
+textos para los oyentes siguen el idioma de la emisora (traducidos
+desde el 2026-11-13); la página no tiene campos para ellos.
 
 ---
 
