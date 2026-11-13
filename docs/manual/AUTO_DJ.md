@@ -17,7 +17,9 @@ enabled:
    the Auto-DJ playlist autoloaded.
 2. **Fill-pass** (optional) — if any upcoming show ends up
    more than 5 s short of its slot after its build, top the
-   tail up with the Auto-DJ playlist.
+   tail up with the Auto-DJ playlist; a small leftover gap
+   that nothing fits can be closed with a buffer track
+   (since 2026-11-13, §4).
 
 The result: as long as Auto DJ is enabled and pointed at a
 healthy playlist, your station never falls silent.
@@ -249,6 +251,62 @@ existing episode. It does not change the show's name,
 hosts, autoplaylist attachment, or any other definition
 field. The operator's intent for the show stays intact;
 only the empty tail is filled.
+
+### The buffer track for small leftover gaps (since 2026-11-13)
+
+The fill-pass only appends tracks that fit; it never overbooks.
+When the Auto-DJ playlist has nothing short enough for the rest
+of an episode, the end of the show stays silent (2026-11-11: a
+podcast episode left 30.8 s free, the shortest music track that
+could play was 40 s long - 31 s of silence and a dead-air alert).
+
+**Settings → Auto DJ → Buffer Track** closes such gaps:
+
+| Field | Meaning |
+|---|---|
+| **Buffer Playlist** | A playlist of long tracks produced so that they can be faded out at any moment (a music bed, an ambient piece, several minutes each). **— No buffer track —** switches the feature off. Under the field the page shows how many playable tracks the playlist holds and the longest one, or a warning when none is long enough. |
+| **Maximum Gap (s)** | The buffer track fills gaps of more than 5 s and at most this length (6-600 s, default 60). Larger gaps stay with the Auto-DJ playlist. |
+| **At the End of the Show** | **Cut**: the buffer track ends at the show end with the show crossfade of Settings → General. **Fade Out**: it fades out over the **Fade Out Duration** (0.5-3 s) and ends at the show end. |
+
+How it works:
+
+1. After the Auto-DJ playlist, the fill-pass measures the rest of
+   the episode again. Is it more than 5 s and at most the maximum
+   gap?
+2. It takes a playable track of the buffer playlist that is longer
+   than the gap + 5 s - the one played least recently first, so the
+   tracks take turns - and appends it after the last item, also
+   after a fixed outro or a webstream.
+3. It is the only item allowed to run past the show end. The
+   playout cuts it exactly at the show end or fades it out up to
+   it; the next show starts on time. A following show with **Allow
+   delayed start** is not moved by it.
+4. The episode counts as exactly full: the calendar shows it full,
+   the show builder footer shows 00:00, and the buffer row carries
+   the note *(Auto DJ buffer track, ends with the show)* instead of
+   the overbooking colour.
+
+Limits and notes:
+
+- Like the whole fill-pass it works only before the episode starts
+  (up to one hour ahead). A gap that arises during the broadcast is
+  not covered.
+- **Linked shows** get no buffer track: a change to a linked show
+  lands in every one of its episodes.
+- The fade applies when the next show starts with a track. Before a
+  webstream, a line-in or silence the buffer track ends at the show
+  end without a fade of its own.
+- A row counts as a buffer track when its file is in the buffer
+  playlist and it runs past its show end. Keep the buffer tracks for
+  this purpose.
+- A repeat (**Repeat of show**) does not copy the buffer track of
+  its source; it gets its own if it needs one.
+- Artist and title of the buffer track reach the stream metadata and
+  the Live Text like any track; tag it neutrally, or set its **Stream
+  Metadata** to *Do not forward* (Library → Edit Metadata).
+- If the buffer playlist is deleted, or none of its playable tracks
+  is longer than the maximum gap + 5 s, the dashboard shows the
+  warning *Auto DJ: ...* (and an alert goes out when alerts are on).
 
 ---
 

@@ -167,6 +167,12 @@ table.datatable tr.cursor-selected-row td, table.datatable tr.cursor-selected-ro
     background-color: rgba(var(--rt-accent-rgb), 0.5);
 }
 
+/* RASTATIME 2026-11-13 - Auto DJ buffer track (runs past the show end on purpose) */
+.sb-buffer td.sb-title .sb-buffer-label {
+    font-style: italic;
+    opacity: 0.75;
+}
+
 .sb-over td.sb-image,
 .sb-over td.sb-starts,
 .sb-over td.sb-ends,

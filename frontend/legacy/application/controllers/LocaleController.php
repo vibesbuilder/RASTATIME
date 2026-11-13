@@ -165,6 +165,12 @@ final class LocaleController extends Zend_Controller_Action
             'Look on cba.media first, then link the post or archive again under Archive Online in the calendar.' => _('Look on cba.media first, then link the post or archive again under Archive Online in the calendar.'),
             'Archive it by hand under Archive Online in the calendar.' => _('Archive it by hand under Archive Online in the calendar.'),
             'Open Archive Status' => _('Open Archive Status'),
+            // RASTATIME 2026-11-13 - Auto DJ buffer track (preflight warning, show builder)
+            'Auto DJ: the buffer playlist no longer exists.' => _('Auto DJ: the buffer playlist no longer exists.'),
+            'Auto DJ: no playable track of the buffer playlist is longer than the maximum gap + 5 s' => _('Auto DJ: no playable track of the buffer playlist is longer than the maximum gap + 5 s'),
+            'Small leftover gaps at show ends stay silent.' => _('Small leftover gaps at show ends stay silent.'),
+            'Open Settings → Auto DJ' => _('Open Settings → Auto DJ'),
+            '(Auto DJ buffer track, ends with the show)' => _('(Auto DJ buffer track, ends with the show)'),
             // RASTATIME 2026-10-08 - preflight warning: failed podcast download
             'Podcast download failed:' => _('Podcast download failed:'),
             '%s attempt(s), last %s' => _('%s attempt(s), last %s'),

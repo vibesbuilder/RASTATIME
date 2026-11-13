@@ -18,7 +18,9 @@ les deux entièrement automatiques une fois activés :
    autoloaded.
 2. **Fill-pass** (optionnel) — si une émission à venir
    finit plus de 5 s courte de son créneau après son
-   build, complète la queue avec la playlist Auto-DJ.
+   build, complète la queue avec la playlist Auto-DJ ; un
+   petit trou restant où rien ne tient peut être comblé par
+   une piste tampon (depuis le 2026-11-13, §4).
 
 Résultat : tant qu'Auto DJ est activé et pointe vers une
 playlist saine, votre station ne tombe jamais en silence.
@@ -223,6 +225,65 @@ animateurs, l'attachement d'autoplaylist ou tout autre
 champ de définition de l'émission. L'intention de
 l'opérateur pour l'émission reste intacte ; seule la
 queue vide est remplie.
+
+### La piste tampon pour les petits trous restants (depuis le 2026-11-13)
+
+Le fill-pass n'ajoute que des pistes qui tiennent ; il ne
+surréserve jamais. Quand la playlist Auto-DJ n'a rien d'assez court
+pour le reste d'un épisode, la fin de l'émission reste silencieuse
+(2026-11-11 : un épisode de podcast laissait 30,8 s libres, la plus
+courte piste musicale jouable durait 40 s - 31 s de silence et une
+alerte de blanc d'antenne).
+
+**Paramètres → Auto DJ → Buffer Track** comble ces trous :
+
+| Champ | Signification |
+|---|---|
+| **Buffer Playlist** | Une playlist de pistes longues, produites pour pouvoir être fondues à tout moment (un tapis musical, une pièce d'ambiance, plusieurs minutes chacune). **— No buffer track —** désactive la fonction. Sous le champ, la page indique combien de pistes jouables la playlist contient et la plus longue, ou un avertissement si aucune n'est assez longue. |
+| **Maximum Gap (s)** | La piste tampon comble les trous de plus de 5 s et d'au plus cette durée (6-600 s, 60 par défaut). Les trous plus grands restent l'affaire de la playlist Auto-DJ. |
+| **At the End of the Show** | **Cut** : la piste tampon se termine à la fin de l'émission avec le fondu d'émission de Paramètres → Général. **Fade Out** : elle est fondue sur la **Fade Out Duration** (0,5-3 s) et se termine à la fin de l'émission. |
+
+Fonctionnement :
+
+1. Après la playlist Auto-DJ, le fill-pass mesure à nouveau le reste
+   de l'épisode. Est-il de plus de 5 s et d'au plus l'écart maximal ?
+2. Il prend une piste jouable de la playlist tampon plus longue que
+   le trou + 5 s - celle jouée il y a le plus longtemps d'abord, les
+   pistes alternent donc - et l'ajoute après le dernier élément,
+   même après un outro fixe ou un webstream.
+3. C'est le seul élément autorisé à dépasser la fin de l'émission.
+   Le playout la coupe exactement à la fin de l'émission ou la fond
+   jusque-là ; l'émission suivante commence à l'heure. Une émission
+   suivante avec **Allow delayed start** n'est pas décalée.
+4. L'épisode compte comme exactement plein : le calendrier l'affiche
+   plein, le pied du show builder indique 00:00, et la ligne tampon
+   porte la mention *(Auto DJ buffer track, ends with the show)* au
+   lieu de la couleur de surréservation.
+
+Limites et remarques :
+
+- Comme tout le fill-pass, elle n'agit qu'avant le début de
+  l'épisode (jusqu'à une heure à l'avance). Un trou qui apparaît
+  pendant la diffusion n'est pas couvert.
+- Les **émissions liées** n'ont pas de piste tampon : une
+  modification d'une émission liée s'applique à chacun de ses
+  épisodes.
+- Le fondu s'applique quand l'émission suivante commence par une
+  piste. Avant un webstream, une entrée ligne ou du silence, la piste
+  tampon se termine à la fin de l'émission sans fondu propre.
+- Une ligne compte comme piste tampon quand son fichier figure dans
+  la playlist tampon et qu'elle dépasse la fin de son émission.
+  Réservez les pistes tampon à cet usage.
+- Une rediffusion (**Repeat of show**) ne copie pas la piste tampon
+  de sa source ; elle reçoit la sienne si nécessaire.
+- L'artiste et le titre de la piste tampon apparaissent dans les
+  métadonnées du flux et le Live Text comme pour toute piste ;
+  étiquetez-la de façon neutre ou réglez son **Stream Metadata** sur
+  *Do not forward* (Library → Edit Metadata).
+- Si la playlist tampon est supprimée, ou si aucune de ses pistes
+  jouables ne dépasse l'écart maximal + 5 s, le tableau de bord
+  affiche l'avertissement *Auto DJ : ...* (et une alerte part si les
+  alertes sont activées).
 
 ---
 

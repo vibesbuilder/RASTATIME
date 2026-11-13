@@ -682,6 +682,21 @@ function loadPreflightWarnings() {
               " - " + $.i18n._("the show would run silent. Edit the show and pick a playlist.")
             )
           );
+        } else if (w.warning_type === "auto_dj_buffer_unusable") {
+          // RASTATIME 2026-11-13: the Auto DJ buffer playlist is gone or has
+          // no track that outlasts the maximum gap (Section 23.107).
+          var bufferText = detail.reason === "missing"
+            ? $.i18n._("Auto DJ: the buffer playlist no longer exists.")
+            : $.i18n._("Auto DJ: no playable track of the buffer playlist is longer than the maximum gap + 5 s")
+              + " (" + Math.round(detail.required_seconds || 0) + " s).";
+          $li.append(
+            document.createTextNode(
+              " " + bufferText + " " + $.i18n._("Small leftover gaps at show ends stay silent.") + " "
+            )
+          );
+          if (typeof userType !== "undefined" && userType === "A") {
+            $li.append($("<a></a>").attr("href", baseUrl + "preference/auto-dj").text($.i18n._("Open Settings → Auto DJ")));
+          }
         } else if (w.warning_type === "storage_root_unavailable") {
           // RASTATIME 2026-09-16: the media library root (Settings -> Local
           // Machine -> Media Library Location) is missing or read-only.

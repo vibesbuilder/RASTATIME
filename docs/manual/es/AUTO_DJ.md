@@ -19,7 +19,8 @@ totalmente automáticos una vez habilitados:
 2. **Fill-pass** (opcional) — si cualquier programa
    próximo termina más de 5 s corto de su slot después de
    su construcción, completa la cola con la playlist
-   Auto-DJ.
+   Auto-DJ; un pequeño hueco restante en el que no cabe nada
+   puede cerrarlo una pista de reserva (desde 2026-11-13, §4).
 
 Resultado: mientras Auto DJ esté habilitado y apunte a una
 playlist sana, su emisora nunca cae en silencio.
@@ -176,6 +177,66 @@ operador podía fallar con un mensaje de error.
 
 El fill-pass solo inserta **items de planning** en el
 episodio existente.
+
+### La pista de reserva para pequeños huecos restantes (desde 2026-11-13)
+
+El fill-pass solo añade pistas que caben; nunca sobrerreserva.
+Cuando la playlist Auto-DJ no tiene nada lo bastante corto para el
+resto de un episodio, el final del programa queda en silencio
+(2026-11-11: un episodio de podcast dejó 30,8 s libres, la pista
+musical más corta que podía sonar duraba 40 s - 31 s de silencio y
+una alerta de aire muerto).
+
+**Ajustes → Auto DJ → Buffer Track** cierra esos huecos:
+
+| Campo | Significado |
+|---|---|
+| **Buffer Playlist** | Una playlist de pistas largas, producidas para poder desvanecerse en cualquier momento (una cama musical, una pieza ambiental, de varios minutos cada una). **— No buffer track —** desactiva la función. Bajo el campo la página muestra cuántas pistas reproducibles tiene la playlist y la más larga, o un aviso cuando ninguna es lo bastante larga. |
+| **Maximum Gap (s)** | La pista de reserva llena huecos de más de 5 s y como máximo esta duración (6-600 s, por defecto 60). Los huecos mayores siguen siendo cosa de la playlist Auto-DJ. |
+| **At the End of the Show** | **Cut**: la pista de reserva termina al final del programa con el fundido de programa de Ajustes → General. **Fade Out**: se desvanece durante la **Fade Out Duration** (0,5-3 s) y termina al final del programa. |
+
+Cómo funciona:
+
+1. Tras la playlist Auto-DJ, el fill-pass vuelve a medir el resto
+   del episodio. ¿Es de más de 5 s y como máximo el hueco máximo?
+2. Toma una pista reproducible de la playlist de reserva más larga
+   que el hueco + 5 s - primero la que lleva más tiempo sin sonar,
+   así las pistas se turnan - y la añade tras el último elemento,
+   también tras un outro fijo o un webstream.
+3. Es el único elemento al que se permite pasar del final del
+   programa. El playout la corta exactamente al final del programa o
+   la desvanece hasta ese momento; el programa siguiente empieza a su
+   hora. Un programa siguiente con **Allow delayed start** no se
+   desplaza por ella.
+4. El episodio cuenta como exactamente lleno: el calendario lo
+   muestra lleno, el pie del show builder indica 00:00 y la fila de
+   reserva lleva la nota *(Auto DJ buffer track, ends with the show)*
+   en lugar del color de sobrerreserva.
+
+Límites y notas:
+
+- Como todo el fill-pass, solo actúa antes de que empiece el
+  episodio (hasta una hora antes). Un hueco que surge durante la
+  emisión no queda cubierto.
+- Los **programas vinculados** no reciben pista de reserva: un cambio
+  en un programa vinculado llega a cada uno de sus episodios.
+- El desvanecimiento se aplica cuando el programa siguiente empieza
+  con una pista. Antes de un webstream, una entrada de línea o
+  silencio, la pista de reserva termina al final del programa sin
+  desvanecimiento propio.
+- Una fila cuenta como pista de reserva cuando su archivo está en la
+  playlist de reserva y pasa del final de su programa. Reserve esas
+  pistas para este fin.
+- Una repetición (**Repeat of show**) no copia la pista de reserva de
+  su origen; recibe la suya si la necesita.
+- El artista y el título de la pista de reserva llegan a los
+  metadatos del stream y al Live Text como cualquier pista; etiquétela
+  de forma neutra o ponga su **Stream Metadata** en *Do not forward*
+  (Library → Edit Metadata).
+- Si se borra la playlist de reserva, o ninguna de sus pistas
+  reproducibles dura más que el hueco máximo + 5 s, el panel muestra
+  el aviso *Auto DJ: ...* (y sale una alerta si las alertas están
+  activadas).
 
 ---
 

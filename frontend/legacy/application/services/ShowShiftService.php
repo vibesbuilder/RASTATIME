@@ -98,12 +98,16 @@ class Application_Service_ShowShiftService
         $lowerUtc = gmdate('Y-m-d H:i:s', time() - 86400);  // 1 day back (perf bound)
 
         // content_end computed once per row via LATERAL.
+        // RASTATIME 2026-11-13 - an Auto DJ buffer track runs past the show
+        // end on purpose and is cut there (Section 23.107): it counts up to
+        // the show end only and never shifts or clears the next show.
+        $contentEnd = Application_Service_AutoDjService::bufferAwareEndSql('s', 'a.ends');
         $triggers = Application_Common_Database::prepareAndExecute(
             "SELECT a.id, a.starts, a.ends, ce.content_end
                FROM cc_show_instances a
                JOIN LATERAL (
-                   SELECT MAX(ends) AS content_end
-                     FROM cc_schedule WHERE instance_id = a.id
+                   SELECT MAX({$contentEnd}) AS content_end
+                     FROM cc_schedule s WHERE s.instance_id = a.id
                ) ce ON true
               WHERE a.delayed_start_from IS NULL
                 AND a.modified_instance = false
@@ -322,7 +326,12 @@ class Application_Service_ShowShiftService
         $endsTs = self::utcToTs($endsUtc);
         $contentEndTs = 0.0;
         foreach ($rows as $r) {
-            $contentEndTs = max($contentEndTs, self::utcToTs($r['ends']));
+            $rowEndTs = self::utcToTs($r['ends']);
+            // RASTATIME 2026-11-13 - a buffer track is cut at the show end
+            if (Application_Service_AutoDjService::isBufferFile($r['file_id'])) {
+                $rowEndTs = min($rowEndTs, $endsTs);
+            }
+            $contentEndTs = max($contentEndTs, $rowEndTs);
         }
         if ($contentEndTs - $endsTs < self::MIN_OVERRUN_SECONDS) {
             return 0;   // fits after all
@@ -449,11 +458,13 @@ class Application_Service_ShowShiftService
             );
         }
         // RASTATIME 2026-10-06 - the laid-out length, as
-        // CcShowInstances::computeDbTimeFilled (rows overlap by their crossfade)
+        // CcShowInstances::computeDbTimeFilled (rows overlap by their crossfade;
+        // 2026-11-13: a buffer track up to the show end)
+        $filledEnd = Application_Service_AutoDjService::bufferAwareEndSql('s', 'i.ends');
         Application_Common_Database::prepareAndExecute(
             "UPDATE cc_show_instances i
                 SET time_filled = COALESCE(
-                    (SELECT GREATEST(EXTRACT(EPOCH FROM (MAX(s.ends) - i.starts)), 0) * INTERVAL '1 second'
+                    (SELECT GREATEST(EXTRACT(EPOCH FROM (MAX({$filledEnd}) - i.starts)), 0) * INTERVAL '1 second'
                        FROM cc_schedule s WHERE s.instance_id = i.id),
                     '00:00:00'::interval)
               WHERE i.id = :id",

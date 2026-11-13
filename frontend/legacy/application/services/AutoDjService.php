@@ -27,6 +27,8 @@
  *   - auto_dj_playlist_id    cc_playlist.id of the filler playlist
  *   - auto_dj_fill_any_show  enables runFillPass()
  *   - auto_dj_logo_path      absolute path to default show logo (optional)
+ *   - auto_dj_buffer_*       buffer track (RASTATIME 2026-11-13, Section 23.107):
+ *                            playlist, maximum gap, cut / fade at the show end
  *
  * Owner / permissions: programmatic show-creation needs an admin
  * user in the Zend_Auth session because ShowService::addUpdateShow()
@@ -66,6 +68,18 @@ class Application_Service_AutoDjService
      * Section-23.19 outro reserve safety margin (5 s).
      */
     private const FILL_THRESHOLD_SECS = 5;
+
+    /**
+     * RASTATIME 2026-11-13 - Auto DJ buffer track (Section 23.107): a
+     * buffer track has to outlast the leftover gap by the crossfade overlap
+     * it is laid out with (at most the playout's 3-s buffer) plus a margin,
+     * so it always reaches past the show end.  Same value in the API
+     * (schedule/buffer.py MARGIN_SECONDS).
+     */
+    public const BUFFER_MARGIN_SECS = 5;
+
+    /** @var null|int[] file ids of the buffer playlist, per request */
+    private static $bufferFileIds;
 
     /**
      * Pre-pass: find the next gap within LOOKAHEAD_SECS and create a
@@ -117,7 +131,10 @@ class Application_Service_AutoDjService
             return;
         }
         $playlistId = Application_Model_Preference::GetAutoDjPlaylistId();
-        if (!$playlistId) {
+        // RASTATIME 2026-11-13 - the buffer track step runs after the
+        // playlist, also when no Auto DJ playlist is set
+        $bufferPlaylistId = Application_Model_Preference::GetAutoDjBufferPlaylistId();
+        if (!$playlistId && $bufferPlaylistId <= 0) {
             return;
         }
 
@@ -168,16 +185,18 @@ class Application_Service_AutoDjService
         foreach ($rows as $row) {
             $instanceId = (int) $row['id'];
             try {
-                $si = new Application_Model_ShowInstance($instanceId);
-                // checkUserPerm = false because we are running in the
-                // task-manager polling context; reserve = 0 because
-                // there is no outro to protect (fill-pass runs *after*
-                // the autoplaylist build, including outro insertion).
-                // RASTATIME 2026-11-07 - skipIfBusy: a show the operator is
-                // editing right now is left alone (next pass in a minute);
-                // before, both ran side by side and deadlocked on
-                // cc_files.is_scheduled (2026-11-06 16:09-16:13).
-                $si->addPlaylistToShow((int) $playlistId, false, 0, true);
+                if ($playlistId) {
+                    $si = new Application_Model_ShowInstance($instanceId);
+                    // checkUserPerm = false because we are running in the
+                    // task-manager polling context; reserve = 0 because
+                    // there is no outro to protect (fill-pass runs *after*
+                    // the autoplaylist build, including outro insertion).
+                    // RASTATIME 2026-11-07 - skipIfBusy: a show the operator is
+                    // editing right now is left alone (next pass in a minute);
+                    // before, both ran side by side and deadlocked on
+                    // cc_files.is_scheduled (2026-11-06 16:09-16:13).
+                    $si->addPlaylistToShow((int) $playlistId, false, 0, true);
+                }
             } catch (Throwable $e) {
                 if ((int) $e->getCode() === Application_Model_Scheduler::ERR_INSTANCE_BUSY) {
                     Logging::info(
@@ -192,7 +211,208 @@ class Application_Service_AutoDjService
                     . 'instance_id=' . $instanceId . ': ' . $e->getMessage()
                 );
             }
+            if ($bufferPlaylistId > 0) {
+                try {
+                    self::appendBufferTrack(
+                        $instanceId,
+                        $bufferPlaylistId,
+                        Application_Model_Preference::GetAutoDjBufferMaxGap()
+                    );
+                } catch (Throwable $e) {
+                    if ((int) $e->getCode() === Application_Model_Scheduler::ERR_INSTANCE_BUSY) {
+                        continue;
+                    }
+                    Logging::warn(
+                        'AutoDjService::runFillPass: buffer track for instance_id=' . $instanceId
+                        . ' failed: ' . $e->getMessage()
+                    );
+                }
+            }
         }
+    }
+
+    /**
+     * RASTATIME 2026-11-13 - Auto DJ buffer track (Section 23.107, operator
+     * idea and go 2026-11-13).  After the Auto DJ playlist: when the show
+     * still ends more than 5 s (FILL_THRESHOLD_SECS) and at most $maxGap
+     * seconds early - nothing short enough was found - append ONE track of
+     * the buffer playlist that outlasts the gap.  It is the only row meant
+     * to run past the show end: the API caps its cue-out at the end, the
+     * playout cuts or fades it there (Settings -> Auto DJ), Show-Shift and
+     * time_filled count it up to the show end only (bufferAwareEndSql).
+     * Largest gaps stay with the playlist (next pass in a minute).
+     *
+     * Not for linked shows: an insert there lands in every linked instance
+     * (BACKLOG "Fill-Pass auf einer verknüpften Sendung", option B2 open).
+     * Public with explicit arguments for the CLI probe.
+     *
+     * @return null|array the appended track (file_id, seconds, gap), null = nothing done
+     */
+    public static function appendBufferTrack(int $instanceId, int $playlistId, float $maxGap): ?array
+    {
+        if ($playlistId <= 0) {
+            return null;
+        }
+        // the laid-out end of the last row, read fresh (the playlist insert
+        // above may just have changed it)
+        $inst = Application_Common_Database::prepareAndExecute(
+            "SELECT EXTRACT(EPOCH FROM (i.ends - COALESCE(
+                        (SELECT MAX(s.ends) FROM cc_schedule s WHERE s.instance_id = i.id), i.starts))) AS gap,
+                    COALESCE(sh.linked, FALSE) AS linked,
+                    (SELECT s.file_id FROM cc_schedule s WHERE s.instance_id = i.id
+                      ORDER BY s.ends DESC, s.id DESC LIMIT 1) AS last_file_id
+               FROM cc_show_instances i
+               JOIN cc_show sh ON sh.id = i.show_id
+              WHERE i.id = :id",
+            [':id' => $instanceId],
+            Application_Common_Database::SINGLE
+        );
+        if (!$inst) {
+            return null;
+        }
+        $gap = (float) $inst['gap'];
+        if ($gap <= self::FILL_THRESHOLD_SECS || $gap > $maxGap) {
+            return null;
+        }
+        if (self::pgBool($inst['linked'])) {
+            Logging::info(
+                "AutoDjService: instance {$instanceId} ends " . round($gap, 1)
+                . ' s early, but its show is linked - no buffer track (it would land in every linked instance).'
+            );
+
+            return null;
+        }
+        if ($inst['last_file_id'] !== null && self::isBufferFile((int) $inst['last_file_id'])) {
+            return null;    // its buffer track already ends before the show end (edited since): left as it is
+        }
+        $track = self::pickBufferTrack($playlistId, $gap + self::BUFFER_MARGIN_SECS);
+        if ($track === null) {
+            Logging::warn(
+                "AutoDjService: instance {$instanceId} ends " . round($gap, 1) . ' s early and the buffer playlist '
+                . "{$playlistId} has no playable track longer than " . round($gap + self::BUFFER_MARGIN_SECS) . ' s.'
+            );
+
+            return null;
+        }
+        $si = new Application_Model_ShowInstance($instanceId);
+        $lastId = (int) $si->getLastAudioItemId();
+        $si->addFilesAfter($lastId, [[
+            'type' => 0,
+            'id' => (int) $track['file_id'],
+            'cliplength' => $track['cliplength'],
+            'cuein' => $track['cuein'],
+            'cueout' => $track['cueout'],
+            'fadein' => $track['fadein'] ?: '00:00:00',
+            'fadeout' => $track['fadeout'] ?: '00:00:00',
+        ]], true);
+        Logging::info(
+            "AutoDjService: buffer track file {$track['file_id']} (" . round((float) $track['seconds'], 1)
+            . " s) appended to instance {$instanceId}, which ended " . round($gap, 1) . ' s early.'
+        );
+
+        return ['file_id' => (int) $track['file_id'], 'seconds' => (float) $track['seconds'], 'gap' => $gap];
+    }
+
+    /**
+     * RASTATIME 2026-11-13 - a playable track of the buffer playlist longer
+     * than $minSecs, the one played least recently first (rotation), else
+     * any of them.  Same playable rule as the API's buffer status.
+     */
+    public static function pickBufferTrack(int $playlistId, float $minSecs): ?array
+    {
+        $row = Application_Common_Database::prepareAndExecute(
+            "SELECT c.file_id,
+                    c.cliplength::text AS cliplength,
+                    c.cuein::text      AS cuein,
+                    c.cueout::text     AS cueout,
+                    c.fadein::text     AS fadein,
+                    c.fadeout::text    AS fadeout,
+                    EXTRACT(EPOCH FROM c.cliplength) AS seconds
+               FROM cc_playlistcontents c
+               JOIN cc_files f ON f.id = c.file_id
+              WHERE c.playlist_id = :pid
+                AND c.type = 0
+                AND f.file_exists = true
+                AND NOT COALESCE(f.hidden, false)
+                AND NOT COALESCE(f.disabled, false)
+                AND EXTRACT(EPOCH FROM c.cliplength) > :min
+              ORDER BY f.lptime ASC NULLS FIRST, random()
+              LIMIT 1",
+            [':pid' => $playlistId, ':min' => $minSecs],
+            Application_Common_Database::SINGLE
+        );
+
+        return $row ?: null;
+    }
+
+    /**
+     * RASTATIME 2026-11-13 - file ids of the buffer playlist (Section
+     * 23.107): a schedule row is a buffer row when its file is one of them
+     * and it runs past its show's end (operator decision 2026-11-13,
+     * "variant a" - no column of its own).  [] = no buffer configured.
+     * Read once per request.
+     *
+     * @return int[]
+     */
+    public static function bufferFileIds(): array
+    {
+        if (self::$bufferFileIds === null) {
+            $ids = [];
+            $playlistId = Application_Model_Preference::GetAutoDjBufferPlaylistId();
+            if ($playlistId > 0) {
+                try {
+                    $rows = Application_Common_Database::prepareAndExecute(
+                        'SELECT DISTINCT file_id FROM cc_playlistcontents
+                          WHERE playlist_id = :pid AND type = 0 AND file_id IS NOT NULL',
+                        [':pid' => $playlistId],
+                        Application_Common_Database::ALL
+                    );
+                    foreach ($rows as $r) {
+                        $ids[] = (int) $r['file_id'];
+                    }
+                } catch (Throwable $e) {
+                    Logging::warn('AutoDjService::bufferFileIds: ' . $e->getMessage());
+                }
+            }
+            self::$bufferFileIds = $ids;
+        }
+
+        return self::$bufferFileIds;
+    }
+
+    /** Forget the per-request buffer file ids (settings saved, probes). */
+    public static function forgetBufferFileIds(): void
+    {
+        self::$bufferFileIds = null;
+    }
+
+    public static function isBufferFile($fileId): bool
+    {
+        return $fileId !== null && in_array((int) $fileId, self::bufferFileIds(), true);
+    }
+
+    /**
+     * RASTATIME 2026-11-13 - SQL for a schedule row's end as its show counts
+     * it: a buffer row up to the show end at most (it is cut there), every
+     * other row as it is.  $row = the cc_schedule alias, $showEnds = an SQL
+     * expression for the show instance's end.  Plain "<row>.ends" when no
+     * buffer is configured - Show-Shift, time_filled and the show builder
+     * read this.
+     */
+    public static function bufferAwareEndSql(string $row, string $showEnds): string
+    {
+        $ids = self::bufferFileIds();
+        if (empty($ids)) {
+            return "{$row}.ends";
+        }
+        $list = implode(',', array_map('intval', $ids));
+
+        return "CASE WHEN {$row}.file_id IN ({$list}) THEN LEAST({$row}.ends, {$showEnds}) ELSE {$row}.ends END";
+    }
+
+    private static function pgBool($v): bool
+    {
+        return $v === true || $v === 't' || $v === 'true' || $v === 1 || $v === '1';
     }
 
     /**

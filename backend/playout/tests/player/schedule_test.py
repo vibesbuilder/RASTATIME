@@ -367,6 +367,26 @@ def test_generate_file_events(stream_preferences):
     }
 
 
+def test_generate_file_events_carries_the_auto_dj_buffer_fade(monkeypatch):
+    """RASTATIME 2026-11-13 (§23.107) - buffer_fade_out of the API row."""
+    from rastatime_playout.player import schedule as schedule_mod
+
+    monkeypatch.setattr(schedule_mod, "file_gain_db", lambda *_: None)
+    stream_preferences = None
+    schedule_1 = SCHEDULE_1.copy()
+    schedule_1["starts_at"] = event_isoparse(schedule_1["starts_at"])
+    schedule_1["ends_at"] = event_isoparse(schedule_1["ends_at"])
+
+    result = {}
+    generate_file_events(result, schedule_1, FILE_2, SHOW_1, stream_preferences)
+    assert result["2022-09-05-11-00-00#file-1"].buffer_fade is None
+
+    schedule_1["buffer_fade_out"] = 2.5
+    result = {}
+    generate_file_events(result, schedule_1, FILE_2, SHOW_1, stream_preferences)
+    assert result["2022-09-05-11-00-00#file-1"].buffer_fade == 2.5
+
+
 def test_generate_webstream_events():
     schedule_5 = SCHEDULE_5.copy()
     schedule_5["starts_at"] = event_isoparse(schedule_5["starts_at"])

@@ -126,6 +126,7 @@ def test_song_request_ip_hash_ignores_forged_forwarded_for():
         ("/api/v2/preflight/warnings", "get"),
         ("/api/v2/preflight/warnings/replace", "post"),
         ("/api/v2/streams/outputs", "get"),
+        ("/api/v2/auto-dj/buffer", "get"),
     ],
 )
 def test_routes_refuse_proxied_calls_without_key(client, path, method):

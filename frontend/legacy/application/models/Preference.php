@@ -543,6 +543,60 @@ class Application_Model_Preference
     public static function GetAutoDjShowTextColor()       { return self::getValue('auto_dj_show_text_color'); }
     public static function SetAutoDjShowTextColor($v)     { self::setValue('auto_dj_show_text_color',  (string) $v); }
 
+    // RASTATIME 2026-11-13 - Auto DJ buffer track (Section 23.107).  A
+    // playlist of long, fade-ready tracks; the fill pass appends one of them
+    // when a leftover gap of more than 5 s and at most "Maximum Gap" seconds
+    // finds no fitting track.  The API reads the same keys
+    // (backend/api/rastatime_api/schedule/buffer.py).
+    //   auto_dj_buffer_playlist_id   integer, '' = off
+    //   auto_dj_buffer_max_gap       seconds (6..600, default 60)
+    //   auto_dj_buffer_end_mode      "cut" | "fade"
+    //   auto_dj_buffer_fade_seconds  0.5..3.0 (default 3.0)
+    public static function GetAutoDjBufferPlaylistId()
+    {
+        return (int) self::getValue('auto_dj_buffer_playlist_id');
+    }
+
+    public static function SetAutoDjBufferPlaylistId($id)
+    {
+        self::setValue('auto_dj_buffer_playlist_id', $id ? (string) (int) $id : '');
+    }
+
+    public static function GetAutoDjBufferMaxGap()
+    {
+        $v = (int) self::getValue('auto_dj_buffer_max_gap');
+
+        return $v > 0 ? max(6, min(600, $v)) : 60;
+    }
+
+    public static function SetAutoDjBufferMaxGap($secs)
+    {
+        self::setValue('auto_dj_buffer_max_gap', (string) max(6, min(600, (int) $secs)));
+    }
+
+    public static function GetAutoDjBufferEndMode()
+    {
+        return self::getValue('auto_dj_buffer_end_mode') === 'fade' ? 'fade' : 'cut';
+    }
+
+    public static function SetAutoDjBufferEndMode($mode)
+    {
+        self::setValue('auto_dj_buffer_end_mode', $mode === 'fade' ? 'fade' : 'cut');
+    }
+
+    public static function GetAutoDjBufferFadeSeconds()
+    {
+        $v = self::getValue('auto_dj_buffer_fade_seconds');
+
+        return $v === '' || $v === null ? 3.0 : max(0.5, min(3.0, (float) $v));
+    }
+
+    public static function SetAutoDjBufferFadeSeconds($secs)
+    {
+        // %F, not %f: the locale-independent decimal point (the API parses it)
+        self::setValue('auto_dj_buffer_fade_seconds', sprintf('%.1F', max(0.5, min(3.0, (float) $secs))));
+    }
+
     // RASTATIME 2026-05-22 — Now-Playing Widget empty-state texts.
     // Four operator-configurable labels that the Current Show /
     // Track widgets render when there is no current / next item.

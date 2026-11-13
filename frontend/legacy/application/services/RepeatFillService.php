@@ -475,11 +475,12 @@ class Application_Service_RepeatFillService
     public static function planRows(int $srcInstanceId): array
     {
         $src = Application_Common_Database::prepareAndExecute(
-            'SELECT starts FROM cc_show_instances WHERE id = :id',
+            'SELECT starts, ends FROM cc_show_instances WHERE id = :id',
             [':id' => $srcInstanceId],
             Application_Common_Database::SINGLE
         );
         $srcStart = $src ? new DateTime($src['starts'], new DateTimeZone('UTC')) : null;
+        $srcEnd = $src ? new DateTime($src['ends'], new DateTimeZone('UTC')) : null;
         $recording = self::recordingOf($srcInstanceId);
         $rows = Application_Common_Database::prepareAndExecute(
             'SELECT sch.file_id, sch.stream_id, sch.linein_id, sch.starts, sch.ends, sch.clip_length, sch.cue_in, sch.cue_out,
@@ -526,6 +527,16 @@ class Application_Service_RepeatFillService
                 continue;
             }
             if ($r['file_id']) {
+                // RASTATIME 2026-11-13 - the source's Auto DJ buffer track
+                // (runs past its show end, Section 23.107) is not copied: the
+                // repeat gets its own from the fill pass if it needs one
+                if (
+                    $srcEnd !== null
+                    && Application_Service_AutoDjService::isBufferFile($r['file_id'])
+                    && new DateTime((string) $r['ends'], new DateTimeZone('UTC')) > $srcEnd
+                ) {
+                    continue;
+                }
                 if (!self::pg($r['file_exists']) || (int) $r['import_status'] !== 0) {
                     ++$skipped;
 

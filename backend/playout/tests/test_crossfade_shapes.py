@@ -683,6 +683,30 @@ def test_cross_mode_carries_the_overlap_only_when_it_differs(sched):
     assert s._cross_mode(_typed(now, 6, exclude=True), other_show, skip=True) == "show_skip/old"
 
 
+def test_auto_dj_buffer_track_fades_over_its_own_seconds_at_the_show_boundary(sched):
+    """RASTATIME 2026-11-13 (§23.107) - the buffer row's fade rides in the third component."""
+    s, _ = sched  # cross buffer 2.0 s
+    now = datetime.utcnow()
+    bed = _typed(now, 1).model_copy(update={"buffer_fade": 1.5})
+    other_show = _typed(now, 2, instance=2)
+    assert s._cross_mode(bed, other_show, skip=False) == "show/-/1.50"
+    # never longer than the cross buffer
+    assert (
+        s._cross_mode(bed.model_copy(update={"buffer_fade": 3.0}), other_show, skip=False)
+        == "show/-/2.00"
+    )
+    # a buffer track whose type takes no crossfade is faded all the same
+    typed0 = _typed(now, 3, crossfade=0.0).model_copy(update={"buffer_fade": 1.0})
+    assert s._cross_mode(typed0, other_show, skip=False) == "show/-/1.00"
+    # the hold before a show that starts later keeps its place
+    assert s._cross_mode(bed, other_show, skip=False, hold=0.8) == "show/-/1.50/0.00/0.80"
+    # the new side's "No Fade" flag is kept
+    nofade_new = _typed(now, 4, instance=2, no_fade=True)
+    assert s._cross_mode(bed, nofade_new, skip=False) == "show/new/1.50"
+    # without the field the boundary keeps the house show crossfade
+    assert s._cross_mode(_typed(now, 5), other_show, skip=False) == "show/-"
+
+
 def test_engine_sends_the_overlap_of_the_transition():
     eng, telnet = _engine()
     eng._state = PlayoutState.PLAYING

@@ -69,7 +69,9 @@ class TestScheduleViewSet(APITestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertEqual(dateparse.parse_datetime(result[0]["ends_at"]), show.ends_at)
-        expected = show.ends_at - schedule_item.starts_at
+        # RASTATIME 2026-11-13 - the capped cue out is a file position: the
+        # row's cue in plus the time to the show end
+        expected = schedule_item.cue_in + (show.ends_at - schedule_item.starts_at)
         self.assertEqual(dateparse.parse_duration(result[0]["cue_out"]), expected)
         self.assertNotEqual(dateparse.parse_datetime(result[0]["ends_at"]), schedule_item.ends_at)
 

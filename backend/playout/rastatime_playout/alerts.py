@@ -46,6 +46,7 @@ PREFLIGHT_TITLES: dict[str, str] = {
     "stereotool_unavailable": "Stereo Tool unavailable",
     "autoplaylist_missing": "Autoloading playlist missing",
     "imports_failed": "Imports failed",
+    "auto_dj_buffer_unusable": "Auto DJ buffer track unusable",
 }
 
 SERVICE_TITLES: dict[str, str] = {

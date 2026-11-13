@@ -34,9 +34,11 @@ class TestSchedule(TestCase):
         self.assertEqual(item1.get_ends_at(), item1_starts + self.length)
 
         # Mixed overlapping schedule datetimes (only ends is overlapping):
+        # RASTATIME 2026-11-13 - the cue out is a file position: cue in (1 s)
+        # plus the 5 min to the show end
         item_2_starts = datetime(year=2021, month=10, day=2, hour=1, minute=55)
         item_2 = self.create_schedule(item_2_starts)
-        self.assertEqual(item_2.get_cue_out(), timedelta(minutes=5))
+        self.assertEqual(item_2.get_cue_out(), timedelta(minutes=5, seconds=1))
         self.assertEqual(item_2.get_ends_at(), self.show_instance.ends_at)
 
         # Fully overlapping schedule datetimes (starts and ends are overlapping):

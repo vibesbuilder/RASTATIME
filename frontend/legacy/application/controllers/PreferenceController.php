@@ -1712,6 +1712,15 @@ class PreferenceController extends Zend_Controller_Action
                 $fg = ltrim(trim((string) ($values['auto_dj_show_text_color'] ?? '')), '#');
                 Application_Model_Preference::SetAutoDjShowBgColor(substr($bg, 0, 6));
                 Application_Model_Preference::SetAutoDjShowTextColor(substr($fg, 0, 6));
+                // RASTATIME 2026-11-13 - buffer track (Section 23.107)
+                $bufId = $values['auto_dj_buffer_playlist_id'] ?? '';
+                Application_Model_Preference::SetAutoDjBufferPlaylistId($bufId === '' ? null : (int) $bufId);
+                Application_Model_Preference::SetAutoDjBufferMaxGap((int) ($values['auto_dj_buffer_max_gap'] ?? 60));
+                Application_Model_Preference::SetAutoDjBufferEndMode((string) ($values['auto_dj_buffer_end_mode'] ?? 'cut'));
+                Application_Model_Preference::SetAutoDjBufferFadeSeconds(
+                    (float) str_replace(',', '.', (string) ($values['auto_dj_buffer_fade_seconds'] ?? '3'))
+                );
+                Application_Service_AutoDjService::forgetBufferFileIds();
                 $msg = 'Auto DJ settings saved.';
             } catch (Throwable $e) {
                 Logging::warn('autoDjAction save failed: ' . $e->getMessage());
@@ -1741,6 +1750,59 @@ class PreferenceController extends Zend_Controller_Action
         $this->view->autoDjShowBgColor     = Application_Model_Preference::GetAutoDjShowBgColor();
         $this->view->autoDjShowTextColor   = Application_Model_Preference::GetAutoDjShowTextColor();
         $this->view->playlists             = $playlists;
+
+        // RASTATIME 2026-11-13 - buffer track (Section 23.107) and a status
+        // line under its playlist: playable tracks, the longest, and whether
+        // one outlasts the maximum gap (the same rule as the fill pass and
+        // the preflight warning auto_dj_buffer_unusable)
+        $bufferPlaylistId = Application_Model_Preference::GetAutoDjBufferPlaylistId();
+        $bufferMaxGap = Application_Model_Preference::GetAutoDjBufferMaxGap();
+        $this->view->bufferPlaylistId  = $bufferPlaylistId;
+        $this->view->bufferMaxGap      = $bufferMaxGap;
+        $this->view->bufferEndMode     = Application_Model_Preference::GetAutoDjBufferEndMode();
+        $this->view->bufferFadeSeconds = Application_Model_Preference::GetAutoDjBufferFadeSeconds();
+        $this->view->bufferStatus      = '';
+        $this->view->bufferStatusOk    = true;
+        if ($bufferPlaylistId > 0) {
+            $need = $bufferMaxGap + Application_Service_AutoDjService::BUFFER_MARGIN_SECS;
+            if (!isset($playlists[$bufferPlaylistId])) {
+                $this->view->bufferStatus = _('The selected playlist no longer exists.');
+                $this->view->bufferStatusOk = false;
+            } else {
+                try {
+                    $st = Application_Common_Database::prepareAndExecute(
+                        'SELECT COUNT(*) AS n,
+                                MAX(EXTRACT(EPOCH FROM c.cliplength)) AS longest,
+                                COUNT(*) FILTER (WHERE EXTRACT(EPOCH FROM c.cliplength) > :need) AS usable
+                           FROM cc_playlistcontents c
+                           JOIN cc_files f ON f.id = c.file_id
+                          WHERE c.playlist_id = :pid
+                            AND c.type = 0
+                            AND f.file_exists = true
+                            AND NOT COALESCE(f.hidden, false)
+                            AND NOT COALESCE(f.disabled, false)',
+                        [':pid' => $bufferPlaylistId, ':need' => $need],
+                        Application_Common_Database::SINGLE
+                    );
+                    if ((int) $st['usable'] > 0) {
+                        $longest = (int) round((float) $st['longest']);
+                        $this->view->bufferStatus = sprintf(
+                            _('%d playable track(s), the longest %s.'),
+                            (int) $st['n'],
+                            sprintf('%d:%02d', intdiv($longest, 60), $longest % 60)
+                        );
+                    } else {
+                        $this->view->bufferStatus = sprintf(
+                            _('No playable track of this playlist is longer than %d s (maximum gap + 5 s) - small gaps stay silent.'),
+                            $need
+                        );
+                        $this->view->bufferStatusOk = false;
+                    }
+                } catch (Throwable $e) {
+                    Logging::warn('autoDjAction buffer status: ' . $e->getMessage());
+                }
+            }
+        }
 
         // RASTATIME 2026-05-21 v3 — embed the logo image as a
         // data-URI so the operator gets a visual preview of the

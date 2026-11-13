@@ -720,8 +720,19 @@ def test_crossfade_block_track_and_show_shapes():
     assert "sequence([blank(duration=wait), fade.in(duration=t_in, new.source)])" in block
     # natural show boundary: old fades over its last 2.5 s, new follows
     assert "sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])" in block
-    assert "s_out = if old_nf then 0.001 else 2.5 end" in block
-    assert "s_delay = if old_nf then 999999.0 else 0.0 end" in block
+    # RASTATIME 2026-11-13 - the fade sd is the house show crossfade unless
+    # rt_dur carries one for THIS boundary (Auto DJ buffer track), never
+    # more than the buffer; sd < 0.05 = the old track plays out
+    assert "sd0 = if d0 < 0. then 2.5 else d0 end" in block
+    assert "sd = if sd0 > buf then buf else sd0 end" in block
+    assert "s_out = if old_nf then 0.001 else (if sd < 0.05 then 0.05 else sd end) end" in block
+    assert "s_delay = if old_nf then 999999.0 else buf - sd end" in block
+    assert (
+        'elsif mode == "show" then\n    if cut > 0.05 then' in block
+        and "    else\n    if sd < 0.05 then\n      sequence([old_s, new.source])\n    else\n"
+        "      sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])\n    end\n"
+        in block
+    )
     # overbook at a show boundary: new at once, old fades under it
     assert (
         'elsif mode == "show_skip" then\n    s_cut2 = if cut > 0.05 then 0.3 else s_cut end\n    add(normalize=false, [fade.in(duration=0.05, new.source),\n                          fade.out(duration=s_cut2, max_duration(s_cut2, old_s))])'
@@ -742,7 +753,8 @@ def test_crossfade_block_track_and_show_shapes():
     assert 'rt_hold = interactive.float("rt_hold", 0.0)' in block
     assert "hold = rt_hold()" in block
     assert (
-        "elsif hold > 0.05 then\n    sequence([fade.out(duration=s_out, delay=s_delay, old_s), blank(duration=hold), new.source])"
+        "elsif hold > 0.05 then\n    if sd < 0.05 then\n      sequence([old_s, blank(duration=hold), new.source])\n"
+        "    else\n      sequence([fade.out(duration=s_out, delay=s_delay, old_s), blank(duration=hold), new.source])"
         in block
     )
     # in-show skip trims the tail to the track crossfade

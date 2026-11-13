@@ -169,6 +169,64 @@
             </div>
         </fieldset>
 
+        <?php // RASTATIME 2026-11-13 - buffer track (Section 23.107) ?>
+        <fieldset style="padding: 1em; border: 1px solid #444; border-radius: 4px; margin-top: 1em;">
+            <legend><?php echo _("Buffer Track") ?></legend>
+
+            <div style="margin-bottom: 1em;">
+                <label for="auto_dj_buffer_playlist_id" style="display: block; margin-bottom: 0.3em;">
+                    <?php echo _("Buffer Playlist") ?>
+                    <span class="help_icon auto_dj_buffer_playlist_help_icon"></span>
+                </label>
+                <select id="auto_dj_buffer_playlist_id" name="auto_dj_buffer_playlist_id" style="width: 210px; box-sizing: border-box;">
+                    <option value=""><?php echo _("— No buffer track —") ?></option>
+                    <?php foreach ($this->playlists as $plId => $plName): ?>
+                        <option value="<?php echo (int) $plId; ?>"
+                            <?php echo ((int) $plId === (int) $this->bufferPlaylistId) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($plName, ENT_QUOTES, 'UTF-8'); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if (!empty($this->bufferStatus)): ?>
+                    <p style="margin: 0.4em 0 0; color: <?php echo $this->bufferStatusOk ? '#888' : '#d88'; ?>;">
+                        <?php echo htmlspecialchars($this->bufferStatus, ENT_QUOTES, 'UTF-8'); ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <div style="margin-bottom: 1em;">
+                <label for="auto_dj_buffer_max_gap" style="display: block; margin-bottom: 0.3em;">
+                    <?php echo _("Maximum Gap (s)") ?>
+                    <span class="help_icon auto_dj_buffer_gap_help_icon"></span>
+                </label>
+                <input type="number" id="auto_dj_buffer_max_gap" name="auto_dj_buffer_max_gap"
+                       min="6" max="600" step="1"
+                       value="<?php echo (int) $this->bufferMaxGap; ?>"
+                       style="width: 210px; box-sizing: border-box;" />
+            </div>
+
+            <div style="margin-bottom: 1em;">
+                <label for="auto_dj_buffer_end_mode" style="display: block; margin-bottom: 0.3em;">
+                    <?php echo _("At the End of the Show") ?>
+                    <span class="help_icon auto_dj_buffer_end_help_icon"></span>
+                </label>
+                <select id="auto_dj_buffer_end_mode" name="auto_dj_buffer_end_mode" style="width: 210px; box-sizing: border-box;">
+                    <option value="cut" <?php echo $this->bufferEndMode === 'fade' ? '' : 'selected'; ?>><?php echo _("Cut") ?></option>
+                    <option value="fade" <?php echo $this->bufferEndMode === 'fade' ? 'selected' : ''; ?>><?php echo _("Fade Out") ?></option>
+                </select>
+            </div>
+
+            <div id="auto_dj_buffer_fade_row" style="margin-bottom: 0.3em;<?php echo $this->bufferEndMode === 'fade' ? '' : ' display: none;'; ?>">
+                <label for="auto_dj_buffer_fade_seconds" style="display: block; margin-bottom: 0.3em;">
+                    <?php echo _("Fade Out Duration (s)") ?>
+                </label>
+                <input type="number" id="auto_dj_buffer_fade_seconds" name="auto_dj_buffer_fade_seconds"
+                       min="0.5" max="3" step="0.5"
+                       value="<?php echo sprintf('%.1F', (float) $this->bufferFadeSeconds); ?>"
+                       style="width: 210px; box-sizing: border-box;" />
+            </div>
+        </fieldset>
+
         <?php /* RASTATIME 2026-05-25 — duplicate bottom Save-Button
                removed.  The single Save-Button is now next to the
                heading at the top of the page (HTML5 `form=` attr
@@ -225,6 +283,48 @@
             classes: "ui-tooltip-dark ui-tooltip-rounded"
         },
         position: { my: "left bottom", at: "right center" }
+    });
+
+    // RASTATIME 2026-11-13 - buffer track tooltips (Section 23.107); the
+    // texts come translated from PHP gettext
+    $(".auto_dj_buffer_playlist_help_icon").rtTooltip({
+        content: {
+            text: <?php echo json_encode(htmlspecialchars(_('A playlist of long tracks that can be faded out at any moment (a music bed, an ambient piece). When a show would end more than 5 s early and nothing of the Auto DJ playlist fits the gap, Auto DJ appends one of them, the one played least recently first. It is the only track allowed to run past the show end and ends with the show. Not used for linked shows.'), ENT_QUOTES, 'UTF-8')); ?>
+        },
+        hide:  { delay: 500, fixed: true },
+        style: {
+            border: { width: 0, radius: 4 },
+            classes: "ui-tooltip-dark ui-tooltip-rounded"
+        },
+        position: { my: "left bottom", at: "right center" }
+    });
+
+    $(".auto_dj_buffer_gap_help_icon").rtTooltip({
+        content: {
+            text: <?php echo json_encode(htmlspecialchars(_('The buffer track only fills gaps up to this length; larger gaps stay with the Auto DJ playlist. A track of the buffer playlist is only used when it is longer than the gap + 5 s.'), ENT_QUOTES, 'UTF-8')); ?>
+        },
+        hide:  { delay: 500, fixed: true },
+        style: {
+            border: { width: 0, radius: 4 },
+            classes: "ui-tooltip-dark ui-tooltip-rounded"
+        },
+        position: { my: "left bottom", at: "right center" }
+    });
+
+    $(".auto_dj_buffer_end_help_icon").rtTooltip({
+        content: {
+            text: <?php echo json_encode(htmlspecialchars(_('Cut: the buffer track ends at the show end with the show crossfade of Settings → General. Fade Out: it fades out over the seconds set below (at most 3 s). The fade applies when the next show starts with a track; before a webstream, a line-in or silence the buffer track ends at the show end without a fade of its own.'), ENT_QUOTES, 'UTF-8')); ?>
+        },
+        hide:  { delay: 500, fixed: true },
+        style: {
+            border: { width: 0, radius: 4 },
+            classes: "ui-tooltip-dark ui-tooltip-rounded"
+        },
+        position: { my: "left bottom", at: "right center" }
+    });
+
+    $(document).on("change", "#auto_dj_buffer_end_mode", function () {
+        $("#auto_dj_buffer_fade_row").toggle($(this).val() === "fade");
     });
 
     $(document).on("click", "#auto-dj-upload-logo", function () {

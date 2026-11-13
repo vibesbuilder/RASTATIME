@@ -2212,20 +2212,28 @@ def _render_crossfade_block(
 
     # natural show shape: the old track fades over its last SHOW seconds and
     # the new one FOLLOWS (no overlap - the boundary is the old track's end)
-    if show < 0.05:
-        show_natural = "    sequence([old_s, new.source])\n"
-        show_hold = "    sequence([old_s, blank(duration=hold), new.source])\n"
-    else:
-        show_natural = (
-            "    sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])\n"
-        )
-        # RASTATIME 2026-11-07 - the old track ends before the new show's row
-        # start: hold silence for the gap (rt_hold), the new show starts on
-        # its row instead of at the old track's end
-        show_hold = (
-            "    sequence([fade.out(duration=s_out, delay=s_delay, old_s), "
-            "blank(duration=hold), new.source])\n"
-        )
+    # RASTATIME 2026-11-13 - the fade of a natural show transition is ``sd``:
+    # the house show crossfade, or THIS transition's value from rt_dur (the
+    # Auto DJ buffer track fades over its own seconds, §23.107).  sd < 0.05
+    # = no fade, the old track plays out (the former render for show = 0).
+    show_natural = (
+        "    if sd < 0.05 then\n"
+        "      sequence([old_s, new.source])\n"
+        "    else\n"
+        "      sequence([fade.out(duration=s_out, delay=s_delay, old_s), new.source])\n"
+        "    end\n"
+    )
+    # RASTATIME 2026-11-07 - the old track ends before the new show's row
+    # start: hold silence for the gap (rt_hold), the new show starts on its
+    # row instead of at the old track's end
+    show_hold = (
+        "    if sd < 0.05 then\n"
+        "      sequence([old_s, blank(duration=hold), new.source])\n"
+        "    else\n"
+        "      sequence([fade.out(duration=s_out, delay=s_delay, old_s), "
+        "blank(duration=hold), new.source])\n"
+        "    end\n"
+    )
     if show < 0.05:
         show_skip = "    rt_instant(old_s, new.source)\n"
     else:
@@ -2263,7 +2271,8 @@ def _render_crossfade_block(
         "# rt_cross: shape of the NEXT queue transition, set by PLAYOUT over telnet\n"
         "#   var.set rt_cross = track | show | track_skip | show_skip | instant\n"
         "# rt_nofade: which side is flagged 'No Fade during Crossover' (old | new | both | -)\n"
-        "# rt_dur: overlap of the NEXT in-show transition in seconds (0 = none, -1 = house value)\n"
+        "# rt_dur: overlap of the NEXT in-show transition in seconds (0 = none, -1 = house value);\n"
+        "# at a show boundary the fade of the ending track (2026-11-13, Auto DJ buffer track)\n"
         'rt_cross = interactive.string("rt_cross", "track")\n'
         'rt_nofade = interactive.string("rt_nofade", "-")\n'
         'rt_dur = interactive.float("rt_dur", -1.0)\n'
@@ -2328,18 +2337,21 @@ def _render_crossfade_block(
         "  d = if d1 > buf then buf else d1 end\n"
         "  wait = buf - d\n"
         "  fd = if d < 0.05 then 0.05 else d end\n"
+        "  # 2026-11-13: the show shapes read rt_dur as the fade of the ending track\n"
+        f"  sd0 = if d0 < 0. then {f(show)} else d0 end\n"
+        "  sd = if sd0 > buf then buf else sd0 end\n"
         "  cut = rt_cut()\n"
         "  hold = rt_hold()\n"
         '  log(level=3, label="rt_cross", "#{mode}/#{nofade}/#{d}/#{cut}/#{hold}: #{old.metadata[\\"title\\"]} -> '
         '#{new.metadata[\\"title\\"]} (tail #{rem} s)")\n'
         "  t_in = if new_nf then 0.05 else fd end\n"
         f"  t_out = if old_nf then {nofade} else fd end\n"
-        f"  s_out = if old_nf then {nofade} else {f(max(show, 0.05))} end\n"
+        f"  s_out = if old_nf then {nofade} else (if sd < 0.05 then 0.05 else sd end) end\n"
         "  t_cut = if old_nf then 0.05 else fd end\n"
         f"  s_cut = if old_nf then 0.05 else {f(max(show, 0.05))} end\n"
         f"  t_delay = if old_nf then {never} else wait end\n"
-        f"  s_delay = if old_nf then {never} else {f(max(0.0, buf - show))} end\n"
-        "  ignore(t_in) ignore(t_out) ignore(s_out) ignore(t_cut) ignore(s_cut) ignore(t_delay) ignore(s_delay) ignore(wait)\n"
+        f"  s_delay = if old_nf then {never} else buf - sd end\n"
+        "  ignore(t_in) ignore(t_out) ignore(s_out) ignore(t_cut) ignore(s_cut) ignore(t_delay) ignore(s_delay) ignore(wait) ignore(sd)\n"
         "  # 2026-11-09 metadata guard: when the new track becomes audible in the shape\n"
         "  at =\n"
         '    if mode == "show" then\n'

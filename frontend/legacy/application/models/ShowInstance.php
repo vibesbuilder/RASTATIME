@@ -292,12 +292,15 @@ SQL;
      *
      * @param int   $afterRowId
      * @param array $files
+     * @param bool  $skipIfBusy RASTATIME 2026-11-13 - throw Scheduler::ERR_INSTANCE_BUSY
+     *                          instead of waiting for an editor (Auto DJ buffer track)
      */
-    public function addFilesAfter($afterRowId, array $files)
+    public function addFilesAfter($afterRowId, array $files, $skipIfBusy = false)
     {
         $fresh = CcShowInstancesQuery::create()->findPk($this->_instanceId);
         $ts = $fresh ? (intval($fresh->getDbLastScheduled('U')) ?: 0) : 0;
         $scheduler = new Application_Model_Scheduler(false);
+        $scheduler->setSkipBusyInstances($skipIfBusy);
         $scheduler->scheduleFilesAfter(
             [['id' => (int) $afterRowId, 'instance' => $this->_instanceId, 'timestamp' => $ts]],
             $files

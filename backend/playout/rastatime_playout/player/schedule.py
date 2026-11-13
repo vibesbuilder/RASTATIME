@@ -263,6 +263,8 @@ def generate_file_events(
         icy_hidden=_effective_icy_hidden(file),
         # RASTATIME 2026-11-06 - strict show boundary unless the show allows a delayed start
         allow_delayed_start=bool(show.get("allow_delayed_start") or False),
+        # RASTATIME 2026-11-13 - Auto DJ buffer track: fade at the show end
+        buffer_fade=_float_or_none(schedule.get("buffer_fade_out")),
     )
 
     event.replay_gain = file_gain_db(file, stream_preferences)

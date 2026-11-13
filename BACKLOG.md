@@ -139,6 +139,10 @@ Normalbetrieb erreicht Liquidsoap 2816 MB vor dem Fenster kaum.
 **Vorbedingungen:** eine Woche ohne Poll-Leck beobachten (kommt die Warnung überhaupt noch?), dann
 Option wählen.
 
+### ✅ Puffer-Track für kleine Restlücken (Auto-DJ) - GEBAUT 2026-11-13 (Go Stufe 1 + 2, Variante a; §23.107; offen: Buffer Playlist anlegen + setzen, Neustart API → PLAYOUT für Fade/Cue-Fix, Abnahme)
+
+(Überschrift am 2026-11-12 von `81c27e40` überschrieben, 2026-11-13 wiederhergestellt.)
+
 Operator-Idee 2026-11-12 nach der Stille vom 2026-11-11 13:44 (30,8 s Rest am Ende einer
 Podcast-Sendung; der Auto-DJ-Block hatte keinen passenden kurzen Titel, Dead-Air-Alarm).  Ein eigens
 produzierter, mehrere Minuten langer Titel (jederzeit ausblendbar) füllt eine Restlücke, wenn der
@@ -187,6 +191,27 @@ der Sendung entstehen, deckt der Puffer-Track nicht ab.
 **Offen beim Go:** Mindestlücke (5 s wie heute?), ein Titel oder mehrere zur Abwechslung,
 Fade-Länge (≤ 3 s genügt?), Puffer auch nach einem festen Outro und in Webstream-Sendungen,
 Variante (a) / (b).
+
+**Go 2026-11-13:** ab 5 s; mehrere Titel als Playlist (wie die Show-Shift-Filler-Playlist);
+Fade bis 3 s; egal womit die Sendung gefüllt ist; Variante (a); Nebenbefund mitnehmen.
+**Gebaut 2026-11-13:** Settings → Auto DJ → Buffer Track (Playlist, Maximum Gap, Cut / Fade
+Out + Dauer, Statuszeile), `AutoDjService::appendBufferTrack` im Fill-Pass (Rest frisch aus
+cc_schedule, Titel > Rest + 5 s, am längsten nicht gespielt zuerst), `bufferAwareEndSql` in
+time_filled / Show-Shift / Show Builder, Wiederholung ohne Puffer-Zeile, API
+`buffer_fade_out` + Cue-In-Fix + `GET /api/v2/auto-dj/buffer`, PLAYOUT Fade-Länge im dritten
+Mode-Feld der Show-Form, Preflight `auto_dj_buffer_unusable`.  Geprüft: API 44 / PLAYOUT 919
+Tests, Liquidsoap-Bench (3 s / 1,5 s / Hauswert exakt), Legacy-Probe
+`C:/Temp/optd/buffer_probe.php` (10/10), Einstellungsseite live im Browser.
+**Offen:** (1) Operator legt die Buffer Playlist an (lange, ausblendbare Titel, neutral
+getaggt oder Stream Metadata „Do not forward") und setzt sie samt Maximum Gap / Cut-Fade;
+Stufe 1 wirkt sofort.  (2) Neustart API, dann PLAYOUT (geplanter Liquidsoap-Neustart) -
+erst dann Fade und Cue-Fix.  (3) Abnahme am ersten echten Fall: legacy.log
+„buffer track file … appended", Show Builder, Sendungsgrenze hören.
+🟡 Defer: Fade > 3 s und Fade vor Webstream / Line-In / Stille (braucht `fade.out` mit
+Metadaten an der Queue, Bench zuerst).  Verknüpfte Sendungen bekommen keinen Puffer-Track,
+bis B2 (Fill-Pass nur EINE Instanz) entschieden ist.  💡 Die Auto-DJ-Einstellungsseite ist
+insgesamt nicht übersetzt (nur englisch); die neuen Texte darauf auch nicht, Banner und
+Show-Builder-Hinweis schon.
 
 ### 🟡 Radioplayer Feed (Distributionspartner) - GEBAUT und eingeschaltet 2026-11-10 (`10c66559`, `a69d0e17`, §23.103), wartet auf Antworten des Partners
 

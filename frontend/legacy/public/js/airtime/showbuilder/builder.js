@@ -819,7 +819,20 @@ var AIRTIME = (function (AIRTIME) {
         }
 
         //status used to colour tracks.
-        if (aData.status === 2) {
+        // RASTATIME 2026-11-13 - the Auto DJ buffer track crosses the show end
+        // on purpose (it is cut or faded there): its own look, not the
+        // overbooking colour
+        if (aData.buffer === true) {
+          $nRow.addClass("sb-buffer");
+          $nRow
+            .find("td.sb-title")
+            .not(":has(.sb-buffer-label)")
+            .append(
+              $("<span class='sb-buffer-label'></span>").text(
+                " " + $.i18n._("(Auto DJ buffer track, ends with the show)"),
+              ),
+            );
+        } else if (aData.status === 2) {
           $nRow.addClass("sb-boundry");
         } else if (aData.status === 0) {
           $nRow.addClass("sb-over");

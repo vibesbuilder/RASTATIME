@@ -17,7 +17,9 @@ vollautomatisch, sobald aktiviert:
    Ihren Standards, mit der Auto-DJ-Playlist autoloaded.
 2. **Fill-Pass** (optional) — wenn eine kommende Sendung
    nach ihrem Build mehr als 5 s kurz vor ihrem Slot endet,
-   ergänzt er den Schwanz mit der Auto-DJ-Playlist.
+   ergänzt er den Schwanz mit der Auto-DJ-Playlist; eine
+   kleine Restlücke, in die nichts passt, kann ein Puffer-Track
+   schließen (seit 2026-11-13, §4).
 
 Das Ergebnis: Solange Auto DJ aktiviert ist und auf eine
 gesunde Playlist zeigt, fällt Ihre Station nie in Stille.
@@ -270,6 +272,67 @@ Episode ein. Er ändert weder den Namen, die Hosts, die
 Autoplaylist-Anbringung noch ein anderes Definitionsfeld
 der Sendung. Die Absicht des Operators für die Sendung
 bleibt intakt; nur der leere Schwanz wird gefüllt.
+
+### Der Puffer-Track für kleine Restlücken (seit 2026-11-13)
+
+Der Fill-Pass hängt nur Titel an, die passen; er überbucht nie.
+Findet die Auto-DJ-Playlist nichts, das kurz genug für den Rest
+einer Episode ist, bleibt das Ende der Sendung still (2026-11-11:
+eine Podcast-Folge ließ 30,8 s frei, der kürzeste spielbare
+Musiktitel war 40 s lang - 31 s Stille und ein Dead-Air-Alarm).
+
+**Einstellungen → Auto DJ → Buffer Track** schließt solche Lücken:
+
+| Feld | Bedeutung |
+|---|---|
+| **Buffer Playlist** | Eine Playlist mit langen Titeln, die so produziert sind, dass man sie jederzeit ausblenden kann (ein Musikbett, ein Ambient-Stück, jeweils mehrere Minuten). **— No buffer track —** schaltet die Funktion aus. Unter dem Feld zeigt die Seite, wie viele spielbare Titel die Playlist hat und welcher der längste ist, oder eine Warnung, wenn keiner lang genug ist. |
+| **Maximum Gap (s)** | Der Puffer-Track füllt Lücken von mehr als 5 s und höchstens dieser Länge (6-600 s, Standard 60). Größere Lücken bleiben Sache der Auto-DJ-Playlist. |
+| **At the End of the Show** | **Cut**: Der Puffer-Track endet am Sendungsende mit dem Show-Crossfade aus Einstellungen → Allgemein. **Fade Out**: Er wird über die **Fade Out Duration** (0,5-3 s) ausgeblendet und endet am Sendungsende. |
+
+So funktioniert es:
+
+1. Nach der Auto-DJ-Playlist misst der Fill-Pass den Rest der
+   Episode neu. Ist er größer als 5 s und höchstens so groß wie die
+   maximale Lücke?
+2. Er nimmt einen spielbaren Titel der Puffer-Playlist, der länger
+   ist als die Lücke + 5 s - den am längsten nicht gespielten
+   zuerst, die Titel wechseln sich also ab - und hängt ihn hinter
+   das letzte Element, auch hinter ein festes Outro oder einen
+   Webstream.
+3. Er ist das einzige Element, das über das Sendungsende laufen
+   darf. Das Playout schneidet ihn genau am Sendungsende ab oder
+   blendet ihn bis dahin aus; die nächste Sendung beginnt
+   pünktlich. Eine folgende Sendung mit **Allow delayed start**
+   wird dadurch nicht verschoben.
+4. Die Episode gilt als genau voll: Der Kalender zeigt sie voll, die
+   Fußzeile im Show Builder zeigt 00:00, und die Puffer-Zeile trägt
+   den Hinweis *(Auto DJ buffer track, ends with the show)* statt
+   der Überbuchungsfarbe.
+
+Grenzen und Hinweise:
+
+- Wie der ganze Fill-Pass arbeitet er nur vor Beginn der Episode
+  (bis zu einer Stunde voraus). Eine Lücke, die erst während der
+  Sendung entsteht, deckt er nicht ab.
+- **Verknüpfte Sendungen** bekommen keinen Puffer-Track: Eine
+  Änderung an einer verknüpften Sendung landet in jeder ihrer
+  Episoden.
+- Das Ausblenden greift, wenn die nächste Sendung mit einem Titel
+  beginnt. Vor einem Webstream, einem Line-In oder Stille endet der
+  Puffer-Track am Sendungsende ohne eigenes Ausblenden.
+- Als Puffer-Track gilt eine Zeile, deren Datei in der
+  Puffer-Playlist steht und die über ihr Sendungsende läuft.
+  Verwenden Sie die Puffer-Titel nur für diesen Zweck.
+- Eine Wiederholung (**Repeat of show**) übernimmt den Puffer-Track
+  ihrer Quelle nicht; sie bekommt bei Bedarf einen eigenen.
+- Künstler und Titel des Puffer-Tracks gehen wie bei jedem Titel in
+  die Stream-Metadaten und den Live Text; taggen Sie ihn neutral oder
+  stellen Sie seine **Stream Metadata** auf *Do not forward*
+  (Library → Edit Metadata).
+- Wird die Puffer-Playlist gelöscht oder ist keiner ihrer spielbaren
+  Titel länger als die maximale Lücke + 5 s, zeigt das Dashboard die
+  Warnung *Auto DJ: ...* (und bei eingeschalteten Alarmen geht eine
+  Meldung hinaus).
 
 ---
 

@@ -149,6 +149,12 @@ class FileEvent(BaseEvent):
     # track's show allows a delayed start (operator rule 2026-11-06).
     allow_delayed_start: bool = False
 
+    # RASTATIME 2026-11-13 - Auto DJ buffer track (§23.107): seconds this
+    # row fades out at the show end (the API's buffer_fade_out; None = the
+    # house show crossfade).  Only the buffer row of a show set to "Fade
+    # Out" carries it.
+    buffer_fade: Optional[float] = None
+
     file_ready: bool = False
 
     @property

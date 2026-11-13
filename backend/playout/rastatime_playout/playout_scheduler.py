@@ -2522,12 +2522,21 @@ class PlayoutScheduler:
             old_nf = old_nf or self._track_crossfade(prev) < 0.05
         else:
             shape = "track_skip" if skip else "track"
+        # RASTATIME 2026-11-13 - Auto DJ buffer track (§23.107): at the show
+        # boundary it fades over its own seconds (third component, rt_dur in
+        # the show shapes) instead of the house show crossfade - also when
+        # its type takes no crossfade
+        buffer_fade = getattr(prev, "buffer_fade", None) if shape.startswith("show") else None
+        if buffer_fade is not None:
+            old_nf = False
         nofade = "both" if (old_nf and new_nf) else "old" if old_nf else "new" if new_nf else "-"
         overlap = self._pair_crossfade(prev, nxt)
         overlap_str = "-"
         if shape.startswith("track") and abs(overlap - self._track_crossfade_seconds) > 0.005:
             # the overlap of THIS transition differs from the house value
             overlap_str = f"{overlap:.2f}"
+        elif buffer_fade is not None:
+            overlap_str = f"{max(0.0, min(float(buffer_fade), self._cross_buffer_seconds)):.2f}"
         if hold > 0:
             return f"{shape}/{nofade}/{overlap_str}/{cut:.2f}/{hold:.2f}"
         if cut > 0:

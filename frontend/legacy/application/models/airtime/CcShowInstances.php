@@ -179,8 +179,12 @@ class CcShowInstances extends BaseCcShowInstances
         // remaining" smart block all read this column.  Seconds x
         // INTERVAL '1 second' keeps hours (no "1 day"); no rows = 0.
         // ShowShiftService::finishShift() writes the same expression.
+        // RASTATIME 2026-11-13 - an Auto DJ buffer track counts up to the
+        // show end only (it is cut there, Section 23.107): the show is full,
+        // not overbooked by minutes.
+        $end = Application_Service_AutoDjService::bufferAwareEndSql('s', 'i.ends');
         $stmt = $con->prepare(
-            'SELECT GREATEST(EXTRACT(EPOCH FROM (MAX(s.ends) - i.starts)), 0) * INTERVAL \'1 second\''
+            'SELECT GREATEST(EXTRACT(EPOCH FROM (MAX(' . $end . ') - i.starts)), 0) * INTERVAL \'1 second\''
             . ' FROM cc_show_instances i LEFT JOIN cc_schedule s ON s.instance_id = i.id'
             . ' WHERE i.id = :p1 GROUP BY i.starts'
         );

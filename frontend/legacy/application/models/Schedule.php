@@ -504,6 +504,7 @@ SELECT DISTINCT sched.starts AS sched_starts,
                 sched.fade_out AS fade_out,
                 sched.playout_status AS playout_status,
                 sched.instance_id AS sched_instance_id,
+                sched.file_id AS sched_file_id,
 
                 %%columns%%
                 FROM (%%join%%)

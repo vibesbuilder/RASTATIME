@@ -92,6 +92,10 @@ class PreflightChecker:
     #: RASTATIME 2026-10-28 - failed uploads waiting on the Upload page, or
     #: files left in the analyzer's organize/ folder.
     WARNING_TYPE_IMPORTS_FAILED = "imports_failed"
+    #: RASTATIME 2026-11-13 - Auto DJ fills small leftover gaps with a
+    #: buffer track (§23.107), but its playlist is gone or holds no track
+    #: that outlasts the maximum gap: those gaps would stay silent.
+    WARNING_TYPE_AUTO_DJ_BUFFER = "auto_dj_buffer_unusable"
     FAILED_IMPORT_MIN_AGE_SECS = 60 * 60  # a failure younger than this is still "being looked at"
     ORGANIZE_LEFTOVER_MIN_AGE_SECS = 24 * 60 * 60  # a pending import may sit here for a while
 
@@ -215,6 +219,7 @@ class PreflightChecker:
         self._scan_stereotool()
         self._scan_autoplaylist_missing()
         self._scan_imports_failed()
+        self._scan_auto_dj_buffer()
 
     # ------------------------------------------------------------------
     # Liquidsoap process health (RASTATIME 2026-09-05)
@@ -651,6 +656,67 @@ class PreflightChecker:
                 }
             )
         self._submit_warnings(self.WARNING_TYPE_AUTOPLAYLIST_MISSING, str(uuid.uuid4()), warnings)
+
+    # ------------------------------------------------------------------
+    # Auto DJ buffer track (RASTATIME 2026-11-13)
+    # ------------------------------------------------------------------
+
+    def _scan_auto_dj_buffer(self) -> None:
+        """
+        ``auto_dj_buffer_unusable``: Auto DJ, "fill any show" and a buffer
+        playlist are on (Settings -> Auto DJ), but the playlist no longer
+        exists or none of its playable tracks outlasts the maximum gap + 5 s
+        - a leftover gap at a show end would stay silent.  An old API
+        without the endpoint (404) or an unreachable one submits nothing
+        (the type keeps its last state).
+        """
+        try:
+            resp = self._api_client.session.get("/api/v2/auto-dj/buffer", timeout=10)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.debug("preflight: auto dj buffer status unavailable: %s", exc)
+            return
+        if resp.status_code != 200:
+            return
+        try:
+            data = resp.json()
+        except ValueError:
+            return
+        if not isinstance(data, dict):
+            return
+        warnings: list[dict] = []
+        if data.get("active"):
+            reason = None
+            if not data.get("playlist_exists"):
+                reason = "missing"
+                message = (
+                    "Auto DJ: the buffer playlist no longer exists - small leftover gaps "
+                    "at show ends stay silent. Pick a playlist under Settings -> Auto DJ."
+                )
+            elif not data.get("usable"):
+                reason = "too_short" if data.get("playable") else "empty"
+                message = (
+                    "Auto DJ: no playable track of the buffer playlist is longer than "
+                    f"{float(data.get('required_seconds') or 0):.0f} s (maximum gap + 5 s) - "
+                    "small leftover gaps at show ends stay silent."
+                )
+            if reason is not None:
+                warnings.append(
+                    {
+                        "severity": "warning",
+                        "show_id": None,
+                        "show_instance_id": None,
+                        "starts_at": None,
+                        "detail": {
+                            "reason": reason,
+                            "playlist_id": data.get("playlist_id"),
+                            "max_gap": data.get("max_gap"),
+                            "required_seconds": data.get("required_seconds"),
+                            "longest_seconds": data.get("longest_seconds"),
+                            "message": message,
+                        },
+                    }
+                )
+        self._submit_warnings(self.WARNING_TYPE_AUTO_DJ_BUFFER, str(uuid.uuid4()), warnings)
 
     def _fetch_lookahead_instances(self) -> Optional[list]:
         """

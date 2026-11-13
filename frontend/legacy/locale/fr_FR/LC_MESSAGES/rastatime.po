@@ -8671,3 +8671,19 @@ msgstr "La colonne de la catégorie manque - exécutez d'abord la migration de b
 #: application/views/scripts/embeddablewidgets/schedule.phtml
 msgid "The script line lets the widget grow and shrink with its content (once per page is enough); without it the iframe keeps the height in the code."
 msgstr "La ligne script fait grandir et rétrécir le widget avec son contenu (une fois par page suffit) ; sans elle, l'iframe garde la hauteur indiquée dans le code."
+
+#: public/js/airtime/common/common.js public/js/airtime/showbuilder/builder.js
+msgid "Auto DJ: the buffer playlist no longer exists."
+msgstr "Auto DJ : la playlist tampon n'existe plus."
+
+msgid "Auto DJ: no playable track of the buffer playlist is longer than the maximum gap + 5 s"
+msgstr "Auto DJ : aucune piste lisible de la playlist tampon ne dure plus que l'écart maximal + 5 s"
+
+msgid "Small leftover gaps at show ends stay silent."
+msgstr "Les petits trous restant en fin d'émission restent silencieux."
+
+msgid "Open Settings → Auto DJ"
+msgstr "Ouvrir Paramètres → Auto DJ"
+
+msgid "(Auto DJ buffer track, ends with the show)"
+msgstr "(piste tampon de l'Auto DJ, se termine avec l'émission)"

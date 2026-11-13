@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 from django.utils.timezone import now
 
@@ -90,13 +92,20 @@ class Schedule(models.Model):
 
         - When the schedule starts before the end of the show instance
         and ends after the show instance ends,
-        return timedelta between schedule starts and show instance ends.
+        return the cue in plus the timedelta between schedule starts and
+        show instance ends.
 
         - When the schedule starts after the end of the show instance,
         return the stored cue_out even if the schedule WILL NOT BE PLAYED.
+
+        RASTATIME 2026-11-13 - the cue out is a position in the file, the
+        audio starts at the cue in: upstream returned the time to the show
+        end alone, so every overbooked row ended its cue in early (0.03 s
+        before the 17:15 boundary on 2026-11-07); the Auto DJ buffer track
+        (§23.107) always overbooks.
         """
         if self.starts_at < self.instance.ends_at and self.instance.ends_at < self.ends_at:
-            return self.instance.ends_at - self.starts_at
+            return (self.cue_in or timedelta(0)) + (self.instance.ends_at - self.starts_at)
         return self.cue_out
 
     def get_ends_at(self):

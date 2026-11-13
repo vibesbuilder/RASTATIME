@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Auto-DJ-Puffer-Track für kleine Restlücken (2026-11-13, Operator-Go Stufe 1 + 2,
+  Variante a)** - Am 2026-11-11 endete eine Episode 30,8 s zu früh in Stille: die
+  Auto-DJ-Playlist hatte keinen passenden kurzen Titel, und der Fill-Pass überbucht nie.
+  Neu unter Settings → Auto DJ → Buffer Track: eine Playlist mit langen, jederzeit
+  ausblendbaren Titeln, Maximum Gap (6-600 s, Standard 60) und am Sendungsende Cut oder Fade
+  Out (0,5-3 s).  Bleibt nach der Auto-DJ-Playlist ein Rest von mehr als 5 s und höchstens
+  Maximum Gap, hängt der Fill-Pass einen Puffer-Titel an, der länger als Rest + 5 s ist (der am
+  längsten nicht gespielte zuerst) - das einzige Element, das über das Sendungsende laufen
+  darf.  Erkannt an der Datei (keine eigene Spalte): time_filled, Show-Shift (verschiebt keine
+  Folgesendung mit „Allow delayed start") und der Show Builder (Hinweis statt
+  Überbuchungsfarbe, Fußzeile 00:00) zählen ihn bis zum Sendungsende; Wiederholungen kopieren
+  ihn nicht; verknüpfte Sendungen bekommen keinen.  Fade: API-Feld `buffer_fade_out`,
+  PLAYOUT schickt die Länge an der Sendungsgrenze, die Show-Formen der Vorlage lesen sie aus
+  `rt_dur` (Bench: 3 s / 1,5 s / Hauswert 1 s exakt).  Preflight-Warnung
+  `auto_dj_buffer_unusable` + Endpunkt `GET /api/v2/auto-dj/buffer`.  Manual AUTO_DJ x4,
+  ARCHITECTURE 0.135 (§23.107).  Wirksam: Stufe 1 sofort, sobald eine Buffer Playlist gesetzt
+  ist; Fade und Cue-Fix nach Neustart API, dann PLAYOUT (geplanter Liquidsoap-Neustart).
+
 - **Widgets size themselves (2026-11-12, operator Go A, stages 1 + 2)** - every
   `/embed/` widget reports its content height to the page around it, and the new
   `/embed/widgets.js` on the station website sets the iframe height: it follows
@@ -24,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `c86b26fb`.
 
 ### Fixed
+
+- **Überbuchte Zeile endete um ihren Cue-In zu früh (2026-11-13)** - Die API kappt den
+  Cue-Out einer Zeile, die über das Sendungsende läuft, gab aber „Sendungsende − Start"
+  statt „Cue-In + Sendungsende − Start" zurück (der Cue-Out ist eine Position in der Datei).
+  Jede überbuchte Zeile endete deshalb um ihren Cue-In vor der Grenze (2026-11-07 17:15:
+  0,03 s).  `Schedule.get_cue_out` rechnet den Cue-In mit; wirksam nach API-Neustart.
 
 - **Track History: `?min_sec=` reaches the list (2026-11-12)** - the widget JS
   forwarded `min_seconds`, the controller reads the documented `min_sec`, so a

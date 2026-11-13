@@ -300,6 +300,21 @@ class Application_Model_ShowBuilder
             $row['pos'] = $this->pos++;
 
             $this->contentDT = $schedEndDT;
+
+            // RASTATIME 2026-11-13 - the Auto DJ buffer track (Section
+            // 23.107): runs past the show end on purpose and is cut there -
+            // marked as such, and the footer counts it up to the show end
+            // (the show is full, not overbooked by minutes)
+            if (
+                $endsEpoch > $showEndEpoch
+                && $startsEpoch < $showEndEpoch
+                && Application_Service_AutoDjService::isBufferFile($p_item['sched_file_id'] ?? null)
+            ) {
+                $row['buffer'] = true;
+                $capped = clone $showEndDT;
+                $capped->setTimezone(new DateTimeZone($this->timezone));
+                $this->contentDT = $capped;
+            }
         }
         // RASTATIME 2026-05-17 - record-per-show no longer produces a
         // "special kind of show" placeholder row; a recorded show

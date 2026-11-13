@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.134
-Date: 2026-11-12
+Draft version: 0.135
+Date: 2026-11-13
 
 > **Revision history**
+> - **0.135 (2026-11-13)** - **Auto DJ buffer track** (§23.107): a playlist of fade-ready
+>   tracks closes leftover gaps of 5 s..maximum gap that nothing fits; the only row allowed
+>   past the show end (cut or faded up to 3 s there), counted up to the show end by
+>   time_filled, Show-Shift and the show builder.  Same change: the capped cue out of an
+>   overbooked row keeps its cue in.
 > - **0.134 (2026-11-12)** - **Self-sizing widgets** (§23.106): the /embed/ iframes report
 >   their content height by postMessage and /embed/widgets.js on the website sets it; inert
 >   without the script.  Same change: five legacy read endpoints behind the public-API switch,
@@ -9934,3 +9939,108 @@ restart).  Existing embed codes behave exactly as before until the
 website adds the script line.  Failure mode: a wrong height on the
 website (clamped).  Rollback: drop the script line on the website, or
 `git revert` (tag `live-2026-11-12b`).
+
+### 23.107 Auto DJ Buffer Track for Small Leftover Gaps (2026-11-13)
+
+**Request.**  2026-11-11 13:44: an episode filled with one podcast
+episode ended 30.8 s early; the Auto DJ playlist (one "time remaining"
+block, no overflow) had nothing short enough - the only track under 31 s
+was artist-blocked - so the fill pass inserted nothing (it never
+overbooks) and the slot ended in silence with a dead-air alert.
+Operator idea 2026-11-13: a buffer track, long and produced to be faded
+at any moment, that may run past the show end and is cut or faded
+there.  Evaluated (seven points, BACKLOG); the overflow checkbox of the
+smart block was checked as a no-code alternative and rejected - it
+switches the block from the subset-sum best fit (`SSPSolution`) to
+random picks until the limit is exceeded, so every fill would end with a
+cut track, and a follow-up show with "Allow delayed start" would be
+moved by the overrun.  Go for stages 1 and 2 with: a playlist of buffer
+tracks, threshold 5 s, fade up to 3 s, any show content, rows recognised
+by the file ("variant a").
+
+**Settings** (Settings -> Auto DJ -> Buffer Track, `cc_pref`):
+`auto_dj_buffer_playlist_id` ('' = off), `auto_dj_buffer_max_gap`
+(6..600 s, default 60), `auto_dj_buffer_end_mode` (`cut` | `fade`),
+`auto_dj_buffer_fade_seconds` (0.5..3.0, written with `%.1F`).  The page
+shows the playable tracks of the playlist and the longest, or a warning
+when none outlasts the maximum gap + 5 s.
+
+**Fill pass** (`AutoDjService::runFillPass` -> `appendBufferTrack`).
+After the Auto DJ playlist (also without one) the rest of the episode is
+measured fresh from `cc_schedule` (instance end minus the end of the
+last row - `time_filled` may lag the insert).  5 s < rest <= maximum gap
+-> `pickBufferTrack`: a playable file of the playlist (`file_exists`,
+not hidden, not disabled) whose clip is longer than rest + 5 s
+(`BUFFER_MARGIN_SECS`: the crossfade overlap it is laid out with, at
+most the 3-s cross buffer, plus a margin), least recently played first
+(`lptime NULLS FIRST`, then random).  Appended after the last row with
+`ShowInstance::addFilesAfter(..., $skipIfBusy = true)` (prepared row
+from the playlist entry, so its cue points).  Not for linked shows - an
+insert there lands in every linked instance (BACKLOG "Fill-Pass auf
+einer verknuepften Sendung", B2 open).  Not again when the last row
+already is a buffer file.
+
+**A buffer row** is a `cc_schedule` row whose file is in the buffer
+playlist and that runs past its instance end (no column of its own).
+`AutoDjService::bufferFileIds()` (once per request),
+`isBufferFile()`, `bufferAwareEndSql($row, $showEnds)` = `CASE WHEN
+file_id IN (...) THEN LEAST(ends, show end) ELSE ends END` (plain
+`ends` without a buffer).  Read by:
+
+- `CcShowInstances::computeDbTimeFilled` and `ShowShiftService::
+  finishShift`: the episode counts as exactly full (calendar, fill-pass
+  threshold, show builder budget);
+- `ShowShiftService::applyDelayedStarts` (trigger query) and
+  `fillShiftedTail`: the buffer track never shifts or clears a show with
+  "Allow delayed start" (12 shows have it);
+- `RepeatFillService::planRows`: a repeat does not copy the source's
+  buffer row;
+- the show builder: `buffer` flag (class `sb-buffer`, a note instead of
+  the boundary colour), footer content end capped at the show end
+  (`sched_file_id` in `Schedule::GetScheduleDetailItems`).
+
+**API.**  `Schedule.get_cue_out` of an overbooked row returns cue in +
+(show end - start): the cue out is a file position, upstream returned
+the time to the show end alone, so every overbooked row ended its cue in
+early (0.03 s on 2026-11-07 17:15; up to the 0.17 s cue in of a buffer
+track).  `ReadScheduleSerializer.buffer_fade_out`: the fade seconds for
+a buffer row in fade mode (bounded to 0.1..3.0), else null; the settings
+are read once per request (`schedule/buffer.py`).  `GET
+/api/v2/auto-dj/buffer` (internal only): active, playlist exists,
+tracks / playable / usable, longest.
+
+**Playout.**  `FileEvent.buffer_fade`; at a show boundary
+`_cross_mode` sends it as the third component (`show/-/2.50`, capped at
+the cross buffer) and drops the old side's no-fade flag.  The template's
+show shapes read `rt_dur` as the fade of the ending track: `sd` = the
+house show crossfade at -1, else `min(rt_dur, buf)`; `s_out` = `sd`,
+`s_delay` = `buf - sd`; `sd` < 0.05 plays the old track out (the former
+render for show = 0).  The cap of the cue out ends the track at the
+boundary by itself, the natural show shape fades it.  Before a
+webstream, a line-in or silence there is no queue transition: the
+buffer track ends at the cue out without a fade (deferred, BACKLOG).
+Preflight `auto_dj_buffer_unusable` (playlist gone, empty or nothing
+longer than maximum gap + 5 s), alert title, dashboard banner.
+
+**Verified.**  API 44 tests (cue out, buffer field in fade / cut / no
+preferences, fade bound, status); playout 919 (mode strings, event
+parsing, preflight, renderer, `liquidsoap --check` of the full render).
+Bench (Liquidsoap 2.4.6, rendered block, two sine files, A cue out
+10 s): rt_dur 3.0 fades A from 7.0 to 10.0 s, 1.5 from 8.5 s, -1 the
+house 1 s from 9.0 s; B starts at 10.0 s at full level.  Legacy probe
+`C:/Temp/optd/buffer_probe.php` on a temporary instance (buffer file ids
+injected for the process only): max-gap refusal, append after 30.3 s
+free (row 3 s before the end of the last track, status 2, 2:42 past the
+end), `time_filled` 260/260 s, Show-Shift content end = show end, second
+call refused, repeat plan without the buffer row, show builder flag and
+footer 0 s; everything deleted again.
+
+**Risk.**  Low for stage 1: legacy PHP, inert until a buffer playlist is
+set (`bufferAwareEndSql` returns plain `ends`, the fill pass skips the
+step).  Failure mode: a buffer track at a show end where none belongs;
+rollback: Buffer Playlist "- No buffer track -" (immediate, no restart)
+or `git revert` (tag `live-2026-11-13`).  Stage 2 (cue-out fix, fade)
+needs the API restart, then PLAYOUT (renders the template, planned
+Liquidsoap restart at a track boundary); medium - the show shapes of
+every boundary are re-rendered, the house value path is unchanged
+(bench, tests); rollback: the previous template / `git revert`.

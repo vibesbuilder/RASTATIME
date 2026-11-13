@@ -10,6 +10,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.permissions import IsAuthenticated
 
 from .audio_devices import audio_devices
+from .auto_dj_api import auto_dj_buffer_status
 from .core.router import urls as core_urls
 from .health import health
 from .history.router import urls as history_urls
@@ -58,6 +59,8 @@ urlpatterns = [
     path("api/v2/audio/soundcard-settings", soundcard_settings, name="soundcard-settings"),
     path("api/v2/audio/linein", linein_list_or_create, name="linein-list"),
     path("api/v2/audio/linein/<str:linein_id>", linein_detail, name="linein-detail"),
+    # RASTATIME 2026-11-13 - Auto DJ buffer status for the preflight scan (§23.107)
+    path("api/v2/auto-dj/buffer", auto_dj_buffer_status, name="auto-dj-buffer"),
     path("api/v2/preflight/warnings", preflight_warnings_list, name="preflight-warnings-list"),
     path(
         "api/v2/preflight/warnings/replace",
