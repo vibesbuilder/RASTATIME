@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   das Schließen direkt nach dem Absenden, der Fehler fiel nicht auf - neu gezeichnet wurde die
   Library aber auch nie.  Jetzt: Tab schließen, dann die Library über `redrawLib()` neu
   zeichnen (abgesichert).  Browser-Test mit abgefangenem Speichern: Tab zu, ein Feed-Abruf,
-  keine Fehler.
+  keine Fehler.  (`112ccafb`)
 
 - **Überbuchte Zeile endete um ihren Cue-In zu früh (2026-11-13)** - Die API kappt den
   Cue-Out einer Zeile, die über das Sendungsende läuft, gab aber „Sendungsende − Start"
