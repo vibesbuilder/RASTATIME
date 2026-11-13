@@ -255,6 +255,9 @@ class EmbedController extends Zend_Controller_Action
         // tracks") and the "first 500 of ..." note under the listing
         $this->view->poolTotal = $this->view->requestsEnabled
             ? Application_Service_SongRequestStatus::requestableCount() : 0;
+        // RASTATIME 2026-11-14 - listener texts: the operator's own
+        // (Widgets -> Song Request) or the standard text in the station language
+        $this->view->texts = Application_Service_SongRequestTexts::effective();
 
         $this->view->widgetCss = Assets::url('css/embed/now-playing-widget.css');
         $this->view->widgetJs  = Assets::url('js/airtime/embed/song-request-widget.js');

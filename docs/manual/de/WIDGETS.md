@@ -765,13 +765,29 @@ beschreibt dieses Kapitel in §6.
   letzten Wunsch, die Wunsch-Sendungen (Sendungen, deren
   Autoloading-Playlist einen Smart Block mit *Use requests* enthält)
   und ob Cover angezeigt werden (Public RASTATIME API);
+- **Listener texts** (seit 2026-11-14): je Text des Widgets ein Feld -
+  Suchfeld, Laden, leerer Pool, keine Treffer, die beiden Hinweise,
+  der Knopf, die vier Antworten und „nicht verfügbar“.  Ein leeres
+  Feld behält den Standardtext, der grau im Feld steht;
 - eine Live-Vorschau auf dunklem Hintergrund - ein Klick auf den
   Wunsch-Knopf darin legt einen echten Wunsch an;
 - den fertigen Einbettungscode mit Script-Zeile.
 
-Einziger URL-Parameter ist `theme` (`auto` / `dark` / `light`).  Die
-Hörertexte folgen der Sendersprache (übersetzt seit 2026-11-13); auf
-der Seite gibt es keine Felder dafür.
+Einziger URL-Parameter ist `theme` (`auto` / `dark` / `light`).
+
+**Eigene Texte.**  Die Standardtexte folgen der Sendersprache
+(Settings → General → Default Language; übersetzt seit 2026-11-13); der
+graue Text in jedem Feld zeigt sie in dieser Sprache.  Ein eigener Text
+erscheint genau so, wie Sie ihn eingeben, unabhängig von der
+Sendersprache - schreiben Sie ihn in der Sprache Ihrer Website.  Drei
+Texte nehmen Zahlen auf: im Suchfeld wird `{total}` zur Zahl der
+wünschbaren Titel (*{total} Titel durchsuchen…*), im Hinweis unter der
+Liste `{shown}` zur Zahl der gelisteten Titel und `{total}` zur Größe
+des Pools, im Hinweis bei vielen Treffern `{shown}` zur Zahl der
+gelisteten Treffer.  Der Knopf nimmt bis zu 40 Zeichen auf, jeder
+andere Text bis zu 200.  Um zum Standardtext zurückzukehren, leeren Sie
+das Feld und speichern.  Nach dem Speichern zeigt die Vorschau auf der
+Seite die neuen Texte.
 
 ---
 

@@ -1,8 +1,10 @@
 <?php
 // RASTATIME 2026-11-13 - Widgets -> Song Request.  Same shape as the other
-// widget pages (status instead of a label form, preview, embed code), read-
-// only: the pool is picked under Settings -> General, the listener texts
-// follow the default language.
+// widget pages (status instead of a label form, preview, embed code); the
+// pool is picked under Settings -> General.
+// RASTATIME 2026-11-14 - own listener texts (form below the status): an
+// empty field keeps the standard text, the placeholder shows it in the
+// station language.
 //
 // No /embed/widgets.js on this page: the song request list grows to all
 // its rows with it (up to 500), the preview keeps its own scroll box.
@@ -23,6 +25,13 @@ $poolSet = !empty($st['pool']);
 
     <h2 style="text-align:center"><?php echo _('Song Request Widget'); ?></h2>
     <div style="clear:both"></div>
+
+    <?php if (!empty($this->saved)): ?>
+        <div class="success" style="margin-bottom: 1em; padding: 0.6em 1em;
+             background: #2a4a2a; color: #cdc; border-radius: 4px;">
+            <?php echo $e(_('Texts saved.  The preview below shows them.')); ?>
+        </div>
+    <?php endif; ?>
 
     <p style="margin-bottom: 1.5em; color: #666;">
         <?php echo $e(_('Drop-in iframe widget for your station\'s public website.  Listeners search the tracks of the song request pool and ask for one with a click; the requested tracks air in your request shows.  The search covers the whole pool, the list without a search shows the first 500 tracks.')); ?>
@@ -88,6 +97,27 @@ $poolSet = !empty($st['pool']);
             </tr>
         </table>
     </fieldset>
+
+    <!-- ───── Listener texts (RASTATIME 2026-11-14) ───── -->
+    <h3 style="margin-top: 1.5em;"><?php echo _('Listener texts'); ?></h3>
+    <fieldset class="padded" id="sr-texts">
+        <p style="margin-bottom: 1em; color: #666;">
+            <?php echo $e(_('Every text the widget shows to listeners.  Leave a field empty to keep the standard text: the greyed text in the field shows it, in the station language (Settings → General → Default Language).  Your own text is shown as typed, whatever the station language.')); ?>
+        </p>
+        <?php echo $this->form; ?>
+    </fieldset>
+    <style>
+    /* one label column, so the twelve fields line up (longest label + icon ~160 px) */
+    #widget_song_request_form dt { width: 170px; white-space: nowrap; }
+    </style>
+    <script>
+    // RASTATIME 2026-11-14 - field descriptions as help icons (tooltip.js)
+    jQuery(function ($) {
+        if ($.rtDescriptionTooltips) {
+            $.rtDescriptionTooltips('#widget_song_request_form', { where: 'label' });
+        }
+    });
+    </script>
 
     <!-- ───── Preview (dark backdrop to match the admin theme) ───── -->
     <h3 style="margin-top: 1.5em;"><?php echo _('Preview'); ?></h3>

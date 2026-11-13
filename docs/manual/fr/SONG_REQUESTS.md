@@ -295,6 +295,10 @@ premiers titres pouvaient être demandés.
 Un clic envoie la demande ; la réponse s'affiche juste sous le titre :
 merci, « déjà demandé récemment » ou « limite de demandes atteinte ».
 
+Chaque texte du widget peut être remplacé par le vôtre sous **Settings
+→ Widgets → Song Request** → *Listener texts* (depuis le 2026-11-14,
+voir [Widgets](./WIDGETS.md)).
+
 Garde-fous intégrés (aucune file de modération nécessaire) :
 
 | Garde-fou | Défaut |

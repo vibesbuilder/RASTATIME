@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### ✅ Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - GEBAUT 2026-11-13 (Go A + C, §23.111; offen: API-Neustart für 50 Treffer)
+### ✅ Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - GEBAUT 2026-11-13 (Go A + C, §23.111; offen: API-Neustart für 50 Treffer); eigene Texte (B) GEBAUT 2026-11-14 (§23.112)
 
 Operator-Frage 2026-11-13: warum fehlt das Song-Request-Widget unter WIDGETS?  Lücke, keine Entscheidung: die
 Widget-Seiten entstanden 2026-05-22 (Vorschau, Texte, Einbettungscode), das Widget kam 2026-06-07 als Phase 4
@@ -124,6 +124,14 @@ Nebenbefunde im selben Paket: Antwort auf einen Wunsch erscheint unter dem angek
 (Suche, Hinweise, Antwortzeile mit abgefangenem Senden, Seite).
 **Offen:** API-Neustart (danach 50 statt 25 Treffer und der Hinweis „verfeinern").  💡 Die Widget-Seiten sind
 insgesamt englisch (keine Übersetzung), die neue auch.
+
+**Go B 2026-11-14:** Operator möchte eigene Texte.  **Gebaut 2026-11-14:** Abschnitt *Listener texts* auf
+Widgets → Song Request, zwölf Texte statt der acht der Evaluierung (mit C kamen Suchfeld, keine Treffer und
+die beiden Hinweise dazu).  Eine Einstellung `widget_song_request_texts` (JSON) statt zwölf Zeilen (das Widget
+liest sie bei jedem Aufruf); leer = Standardtext in der Sendersprache, im Feld grau zu sehen (auch wenn die
+Verwaltung in einer anderen Sprache läuft).  Zahlen als `{total}` / `{shown}`.  Geprüft: CLI (Übersetzungen,
+Formular, Speichern in zurückgerollter Transaktion), Browser ohne Speichern (Seite, Tooltips, Widget-Kopie mit
+eigenen Texten).  Kein Neustart nötig.
 
 ### ✅ Widgets passen ihre Höhe selbst an (statt fester iframe-Höhe) - GEBAUT 2026-11-12 (Go A, Stufe 1 + 2, `c86b26fb`, §23.106; Nebenbefunde mit erledigt)
 

@@ -729,13 +729,31 @@ se describen en ese capítulo, §6.
   última, los programas de peticiones (programas cuya playlist de
   autoloading contiene un smart block con *Use requests*) y si se
   muestran las carátulas (Public RASTATIME API);
+- **Listener texts** (desde el 2026-11-14): un campo por cada texto
+  del widget - campo de búsqueda, carga, pool vacío, sin resultados,
+  las dos notas, el botón, las cuatro respuestas y «no disponible».
+  Un campo vacío conserva el texto estándar, que aparece en gris en el
+  campo;
 - una vista previa en directo sobre fondo oscuro - un clic en el botón
   de petición crea una petición real;
 - el código de inserción listo para usar con la línea de script.
 
-El único parámetro de URL es `theme` (`auto` / `dark` / `light`).  Los
-textos para los oyentes siguen el idioma de la emisora (traducidos
-desde el 2026-11-13); la página no tiene campos para ellos.
+El único parámetro de URL es `theme` (`auto` / `dark` / `light`).
+
+**Textos propios.**  Los textos estándar siguen el idioma de la emisora
+(Settings → General → Default Language; traducidos desde el
+2026-11-13), y el texto en gris de cada campo los muestra en ese
+idioma.  Un texto propio aparece exactamente como lo escribe,
+independientemente del idioma de la emisora: escríbalo en el idioma de
+su web.  Tres textos admiten números: en el campo de búsqueda,
+`{total}` se convierte en el número de canciones que se pueden pedir
+(*Buscar en {total} canciones…*); en la nota bajo la lista, `{shown}`
+en el número de canciones listadas y `{total}` en el tamaño del pool;
+en la nota sobre muchos resultados, `{shown}` en el número de
+resultados listados.  El botón admite hasta 40 caracteres y cualquier
+otro texto hasta 200.  Para volver al texto estándar, vacíe el campo y
+guarde.  Tras guardar, la vista previa de la página muestra los textos
+nuevos.
 
 ---
 

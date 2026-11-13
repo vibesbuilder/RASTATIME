@@ -829,6 +829,22 @@ class Application_Model_Preference
     }
     public static function SetWidgetTrackHistoryLoadMore($v) { self::setValue('widget_track_history_load_more', trim((string) $v)); }
 
+    // RASTATIME 2026-11-14 - own listener texts of the song request widget
+    // (key => text, JSON in one row); keys and defaults live in
+    // Application_Service_SongRequestTexts, a missing key = standard text.
+    public static function GetWidgetSongRequestTexts(): array
+    {
+        $raw = (string) self::getValue('widget_song_request_texts');
+        $texts = $raw === '' ? [] : json_decode($raw, true);
+
+        return is_array($texts) ? $texts : [];
+    }
+
+    public static function SetWidgetSongRequestTexts(array $texts): void
+    {
+        self::setValue('widget_song_request_texts', json_encode($texts, JSON_UNESCAPED_UNICODE));
+    }
+
     // RASTATIME 2026-05-22 v14 — exclude tracks shorter than N
     // seconds from the Track History widget (operator-typical:
     // short fillers / jingles / silence-tail entries clutter

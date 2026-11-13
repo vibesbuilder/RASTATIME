@@ -735,13 +735,31 @@ sont décrits dans ce chapitre, §6.
   dernière, les émissions à la demande (émissions dont la playlist
   d'autoloading contient un smart block avec *Use requests*) et
   l'affichage ou non des pochettes (Public RASTATIME API) ;
+- **Listener texts** (depuis le 2026-11-14) : un champ par texte du
+  widget - champ de recherche, chargement, pool vide, aucun résultat,
+  les deux remarques, le bouton, les quatre réponses et
+  « indisponible ».  Un champ vide conserve le texte standard, affiché
+  en gris dans le champ ;
 - un aperçu en direct sur fond sombre - un clic sur le bouton de
   demande y crée une vraie demande ;
 - le code d'intégration prêt à l'emploi avec la ligne de script.
 
-Le seul paramètre d'URL est `theme` (`auto` / `dark` / `light`).  Les
-textes pour les auditeurs suivent la langue de la station (traduits
-depuis le 2026-11-13) ; la page n'a pas de champs pour eux.
+Le seul paramètre d'URL est `theme` (`auto` / `dark` / `light`).
+
+**Textes personnalisés.**  Les textes standard suivent la langue de la
+station (Settings → General → Default Language ; traduits depuis le
+2026-11-13), et le texte grisé de chaque champ les affiche dans cette
+langue.  Un texte personnalisé s'affiche exactement tel que vous le
+saisissez, quelle que soit la langue de la station - rédigez-le dans la
+langue de votre site.  Trois textes acceptent des nombres : dans le
+champ de recherche, `{total}` devient le nombre de titres demandables
+(*Rechercher parmi {total} titres…*) ; dans la remarque sous la liste,
+`{shown}` devient le nombre de titres listés et `{total}` la taille du
+pool ; dans la remarque sur les nombreux résultats, `{shown}` devient
+le nombre de résultats listés.  Le bouton accepte jusqu'à 40
+caractères, chaque autre texte jusqu'à 200.  Pour revenir au texte
+standard, videz le champ et enregistrez.  Après l'enregistrement,
+l'aperçu de la page affiche les nouveaux textes.
 
 ---
 

@@ -473,12 +473,34 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
      * no page here - only its address in the manual.  Read-only: status of
      * the feature (pool, requestable tracks, open requests, request shows,
      * covers), preview and embed code.  The pool is picked under
-     * Settings -> General; the widget's texts follow the default language.
+     * Settings -> General.
+     *
+     * RASTATIME 2026-11-14 - own listener texts (operator): every widget
+     * text can be replaced; an empty field keeps the standard text in the
+     * station language (Application_Service_SongRequestTexts).
      */
     public function songRequestAction()
     {
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Widgets');
 
+        $request = $this->getRequest();
+        $form = new Application_Form_WidgetSongRequest(Application_Service_SongRequestTexts::stationDefaults());
+
+        $keepPosted = $request->isPost();
+        if ($keepPosted && $form->isValid($request->getPost())) {
+            Application_Service_SongRequestTexts::save($form->getTexts());
+            $this->view->saved = true;
+            $keepPosted = false; // show what was stored (trimmed)
+        }
+        if (!$keepPosted) {
+            $populate = [];
+            foreach (Application_Service_SongRequestTexts::custom() as $key => $text) {
+                $populate['sr_' . $key] = $text;
+            }
+            $form->populate($populate);
+        }
+
+        $this->view->form = $form;
         $this->view->publicUrl = Config::getPublicUrl();
         $this->view->status = Application_Service_SongRequestStatus::overview();
     }

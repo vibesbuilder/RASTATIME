@@ -89,8 +89,12 @@
         }
     }
 
-    function fill(tpl, a, b) {
-        return String(tpl || '').replace('%1$s', a).replace('%2$s', b).replace('%s', a);
+    // RASTATIME 2026-11-14 - counts travel as tokens (own texts from
+    // Widgets -> Song Request use them too): {shown} rows, {total} pool
+    function fill(tpl, vals) {
+        return String(tpl || '').replace(/\{(shown|total)\}/g, function (m, k) {
+            return vals[k] !== undefined ? vals[k] : m;
+        });
     }
 
     function setStatus(msg, kind) {
@@ -112,9 +116,9 @@
         if (!results.length) {
             setNote('');
         } else if (q) {
-            setNote(limit && results.length >= limit ? fill(L.refine, num(limit)) : '');
+            setNote(limit && results.length >= limit ? fill(L.refine, { shown: num(limit), total: num(total) }) : '');
         } else {
-            setNote(total > results.length ? fill(L.more, num(results.length), num(total)) : '');
+            setNote(total > results.length ? fill(L.more, { shown: num(results.length), total: num(total) }) : '');
         }
     }
 
@@ -252,7 +256,7 @@
 
     if (searchEl) {
         if (total > 0 && L.search) {
-            searchEl.placeholder = fill(L.search, num(total));
+            searchEl.placeholder = fill(L.search, { total: num(total) });
         }
         var run = function () {
             clearTimeout(timer);

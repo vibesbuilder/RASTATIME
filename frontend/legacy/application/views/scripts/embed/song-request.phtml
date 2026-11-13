@@ -10,8 +10,12 @@
 // covers the whole pool.  The answer to a request shows under the track
 // clicked (with the self-sizing frame the list is the page, a status line
 // at the end of 500 rows was out of sight).
+// RASTATIME 2026-11-14 - the listener texts come from
+// Application_Service_SongRequestTexts (own text or the translated
+// standard); counts as {total} / {shown}, filled in by the script.
 $enabled = !empty($this->requestsEnabled);
-$e = static fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+$e = static fn ($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+$t = $this->texts;
 ?>
 <!DOCTYPE html>
 <html lang="<?php /* RASTATIME 2026-10-25 - station language */ echo htmlspecialchars($this->widgetLang ?: 'en', ENT_QUOTES, 'UTF-8'); ?>">
@@ -96,20 +100,20 @@ $e = static fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
       data-submit-url="/api/v2/song-requests"
       data-cover-url="/api/track"
       data-total="<?php echo (int) $this->poolTotal; ?>"
-      data-label-search="<?php echo $e(_('Search %s tracks…')); ?>"
-      data-label-no-matches="<?php echo $e(_('No tracks match your search.')); ?>"
-      data-label-more="<?php echo $e(_('Showing the first %1$s of %2$s tracks - use the search to find the others.')); ?>"
-      data-label-refine="<?php echo $e(_('Showing the first %s matches - refine your search to find more.')); ?>"
-      data-label-loading="<?php echo htmlspecialchars(_('Loading available tracks…'), ENT_QUOTES, 'UTF-8'); ?>"
-      data-label-no-tracks="<?php echo htmlspecialchars(_('No tracks are available for requests right now.'), ENT_QUOTES, 'UTF-8'); ?>"
-      data-label-request="<?php echo htmlspecialchars(_('Request'), ENT_QUOTES, 'UTF-8'); ?>"
-      data-label-success="<?php echo htmlspecialchars(_('Thanks! Your request has been received.'), ENT_QUOTES, 'UTF-8'); ?>"
-      data-label-duplicate="<?php echo htmlspecialchars(_('You already requested this track recently.'), ENT_QUOTES, 'UTF-8'); ?>"
-      data-label-ratelimit="<?php echo htmlspecialchars(_('You have reached the request limit. Please try again later.'), ENT_QUOTES, 'UTF-8'); ?>"
-      data-label-error="<?php echo htmlspecialchars(_('Something went wrong. Please try again.'), ENT_QUOTES, 'UTF-8'); ?>">
+      data-label-search="<?php echo $e($t['search']); ?>"
+      data-label-no-matches="<?php echo $e($t['no_matches']); ?>"
+      data-label-more="<?php echo $e($t['more']); ?>"
+      data-label-refine="<?php echo $e($t['refine']); ?>"
+      data-label-loading="<?php echo $e($t['loading']); ?>"
+      data-label-no-tracks="<?php echo $e($t['no_tracks']); ?>"
+      data-label-request="<?php echo $e($t['request']); ?>"
+      data-label-success="<?php echo $e($t['success']); ?>"
+      data-label-duplicate="<?php echo $e($t['duplicate']); ?>"
+      data-label-ratelimit="<?php echo $e($t['ratelimit']); ?>"
+      data-label-error="<?php echo $e($t['error']); ?>">
 
 <?php if (!$enabled): ?>
-    <div class="sr-unavailable"><?php echo htmlspecialchars(_('Song requests are currently unavailable.'), ENT_QUOTES, 'UTF-8'); ?></div>
+    <div class="sr-unavailable"><?php echo $e($t['unavailable']); ?></div>
 <?php else: ?>
     <input type="search" class="sr-search" maxlength="80" autocomplete="off"
            placeholder="<?php echo $e(_('Search…')); ?>"

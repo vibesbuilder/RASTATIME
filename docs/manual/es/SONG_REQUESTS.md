@@ -295,6 +295,10 @@ Un clic envía la petición; la respuesta aparece justo debajo de la
 canción: gracias, «ya pedida recientemente» o «límite de peticiones
 alcanzado».
 
+Cada texto del widget puede sustituirse por uno propio en **Settings →
+Widgets → Song Request** → *Listener texts* (desde el 2026-11-14, véase
+[Widgets](./WIDGETS.md)).
+
 Salvaguardas integradas (sin necesidad de cola de moderación):
 
 | Salvaguarda | Por defecto |

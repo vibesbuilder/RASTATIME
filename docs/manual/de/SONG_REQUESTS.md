@@ -291,6 +291,10 @@ Ein Klick sendet den Wunsch; die Antwort erscheint direkt unter dem
 Titel: Danke, „bereits kürzlich gewünscht" oder „Wunsch-Limit
 erreicht".
 
+Jeden Text des Widgets können Sie unter **Settings → Widgets → Song
+Request** → *Listener texts* durch einen eigenen ersetzen (seit
+2026-11-14, siehe [Widgets](./WIDGETS.md)).
+
 Eingebaute Schutzmechanismen (keine Moderations-Queue nötig):
 
 | Schutz | Standard |

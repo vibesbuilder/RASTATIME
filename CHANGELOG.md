@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Song-Request-Widget: eigene Hörertexte (2026-11-14, Operator-Go B)** - Settings → Widgets →
+  Song Request hat einen Abschnitt *Listener texts*: alle zwölf Texte des Widgets (Suchfeld, Laden,
+  leerer Pool, keine Treffer, die beiden Hinweise, Knopf, die vier Antworten, „nicht verfügbar")
+  lassen sich ersetzen.  Leeres Feld = Standardtext in der Sendersprache (grau im Feld zu sehen);
+  ein eigener Text gilt unabhängig von der Sendersprache.  Zahlen als `{total}` / `{shown}`.  Eine
+  Einstellung (JSON), keine Migration, kein Neustart.  Manual WIDGETS + SONG_REQUESTS ×4,
+  ARCHITECTURE 0.140 (§23.112).
+
 - **Widgets → Song Request + Suchfeld im Song-Request-Widget (2026-11-13, Operator-Go A + C)**
   - Das Hörer-Widget `/embed/song-request` (seit 2026-06-07) hatte keine Seite unter
   Widgets, nur die Adresse im Manual.  Neu: Settings → Widgets → Song Request mit Status

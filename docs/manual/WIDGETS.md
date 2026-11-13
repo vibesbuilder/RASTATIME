@@ -883,13 +883,28 @@ chapter, §6.
   one, the request shows (shows whose autoloading playlist holds a
   smart block with *Use requests*), and whether covers are shown
   (Public RASTATIME API);
+- **Listener texts** (since 2026-11-14): one field per text the
+  widget shows - search box, loading, empty pool, no matches, the two
+  notes, the button, the four answers and "unavailable".  An empty
+  field keeps the standard text, shown greyed in the field;
 - a live preview on a dark backdrop - a click on **Request** in it
   files a real request;
 - the ready-made embed code with the script line.
 
-The only URL parameter is `theme` (`auto` / `dark` / `light`).  The
-listener texts follow the station language (translated since
-2026-11-13); the page has no fields for them.
+The only URL parameter is `theme` (`auto` / `dark` / `light`).
+
+**Own texts.**  The standard texts follow the station language
+(Settings → General → Default Language; translated since 2026-11-13),
+and the greyed text in each field shows them in that language.  An own
+text is shown exactly as typed, whatever the station language - write
+it in the language of your website.  Three texts take numbers: in the
+search box `{total}` becomes the number of tracks listeners can request
+(*Search {total} tracks…*), in the note under the list `{shown}` the
+tracks listed and `{total}` the pool, in the note on many matches
+`{shown}` the matches listed.  The button takes up to 40 characters,
+every other text up to 200.  To go back to the standard text, empty the
+field and save.  After saving, the preview on the page shows the new
+texts.
 
 ---
 

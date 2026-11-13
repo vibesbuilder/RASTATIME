@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.139
-Date: 2026-11-13
+Draft version: 0.140
+Date: 2026-11-14
 
 > **Revision history**
+> - **0.140 (2026-11-14)** - **Own listener texts in the song request widget** (§23.112):
+>   twelve texts on Widgets -> Song Request, one JSON preference, empty = standard text in
+>   the station language; counts as `{total}` / `{shown}` tokens.
 > - **0.139 (2026-11-13)** - **Widgets -> Song Request** (§23.111): settings page (status,
 >   preview, embed code) for the song request widget, which had none; the widget gets a search
 >   box over the whole pool (the listing stops at 500 of 5,124 tracks), the request answer under
@@ -10303,3 +10306,54 @@ the throttle (429 -> "request limit" message).  Rollback: `git revert`
 (tag `live-2026-11-13e`), legacy live at once; the API change needs a
 restart (until then the search answers with up to 25 tracks and no
 `limit`, which the widget handles).
+
+### 23.112 Own Listener Texts in the Song Request Widget (2026-11-14)
+
+**Request.**  Option B of the evaluation of section 23.111, first not
+wanted, Go on 2026-11-14: the operator wants own texts.  The widget
+shows twelve listener texts - search box, loading, empty pool, no
+matches, the note under a cut listing, the note on many matches, the
+button, the answers (received, already requested, limit, error) and
+"unavailable".
+
+**Storage.**  One preference `widget_song_request_texts`, JSON key =>
+text, written only with the keys that hold a text (empty = the
+standard text again).  One row instead of twelve: the widget reads it
+on every load and `Preference::getValue` costs two queries per key.
+`Application_Service_SongRequestTexts` owns the keys, the standard
+texts (gettext, so they follow the station language), the length
+limits (button 40, others 200 characters, cut on save and checked by
+the form) and `effective()` - own text or standard text.
+
+**Counts as tokens.**  The standard texts carry gettext placeholders
+(`%s`, `%1$s` / `%2$s`); the service turns them into `{total}` (tracks
+in the pool) and `{shown}` (rows listed) so the widget script fills one
+format, the same one an operator writes.  Tokens it does not know stay
+as typed.
+
+**Page.**  Widgets -> Song Request gets a *Listener texts* form between
+status and preview (`Application_Form_WidgetSongRequest`, fields
+`sr_<key>`, help icons via `$.rtDescriptionTooltips`).  The placeholder
+of each field is the standard text in the station language, not in the
+language of the person on the page: `stationDefaults()` switches
+gettext to the default locale for the twelve strings and back
+(`configureLocalization()` without argument, as `PageLayoutInitPlugin`
+sets it).  An own text is shown as typed in every station language.
+
+**Widget.**  `EmbedController::songRequestAction` passes `effective()`;
+the template writes the texts into the `data-label-*` attributes and
+the "unavailable" box (escaped, the script inserts via `textContent`).
+
+**Verified.**  CLI: standard texts with tokens in de / fr / es; form
+with 12 fields and 6 help texts, 41-character button rejected; save ->
+read -> `effective()` inside a rolled-back transaction (trim, unknown
+key dropped, empty = standard).  Browser (logged-in Chrome, nothing
+saved): page with aligned fields and tooltips, no console errors; a
+copy of the widget with own texts in a test frame - placeholder and
+note filled with 5,124 / 500, an unknown token kept, `<b>` shown as
+text.  `curl /embed/song-request` 200 with the standard texts.
+
+**Risk.**  Low: admin page and public widget only, no playout path.
+Failure mode: a broken JSON row -> standard texts (decode guarded).
+Rollback: `git revert` (tag `live-2026-11-14`), legacy live at once;
+the preference row may stay.

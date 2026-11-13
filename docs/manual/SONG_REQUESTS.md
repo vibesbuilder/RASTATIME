@@ -279,6 +279,10 @@ larger pool only the first 500 tracks could be requested.
 A click posts the request; the answer appears right under the track:
 thanks, "already requested recently", or "request limit reached".
 
+Every text of the widget can be replaced with your own on **Settings →
+Widgets → Song Request** → *Listener texts* (since 2026-11-14, see
+[Widgets](./WIDGETS.md)).
+
 Built-in guardrails (no moderation queue needed):
 
 | Guardrail | Default |
