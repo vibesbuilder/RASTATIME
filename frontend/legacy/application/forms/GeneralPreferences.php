@@ -220,6 +220,31 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $fillerSelect->setDescription(_('When a delayed start pushes a show past its slot, the tracks that no longer fit are replaced by tracks from this playlist so only a filler gets cut, never a show track. A show that ends with its outro playlist keeps the outro; the tracks before it are replaced.'));
         $this->addElement($fillerSelect);
 
+        // RASTATIME 2026-11-13 - day teasers "soon" / "now": the two limits
+        // of the "soon" rule (Block::teaserCriterionSql).
+        $teaserMinutes = [
+            ['regex', false, ['/^\d{1,4}$/', 'messages' => _('Please enter whole minutes (0 to 1440).')]],
+            Application_Form_Helper_ValidationTypes::overrideBetweenValidator(0, Application_Model_Preference::TEASER_MINUTES_MAX),
+        ];
+        $this->addElement('text', 'teaserSoonMinutes', [
+            'class' => 'input_text',
+            'label' => _('Day Teaser "soon": Minutes Before the Show:'),
+            'description' => _('A "soon" day teaser plays when the announced show starts in less than this many minutes; a "today" day teaser no longer plays then. 0 switches this rule off.'),
+            'required' => true,
+            'filters' => ['StringTrim'],
+            'validators' => $teaserMinutes,
+            'value' => Application_Model_Preference::getTeaserSoonMinutes(),
+        ]);
+        $this->addElement('text', 'teaserSoonOneShowMinutes', [
+            'class' => 'input_text',
+            'label' => _('Day Teaser "soon": One Show in Between, up to (min):'),
+            'description' => _('A "soon" day teaser also plays when exactly one show lies between the teaser and the announced show and that show starts within this many minutes; a "today" day teaser no longer plays then. 0 switches this rule off.'),
+            'required' => true,
+            'filters' => ['StringTrim'],
+            'validators' => $teaserMinutes,
+            'value' => Application_Model_Preference::getTeaserSoonOneShowMinutes(),
+        ]);
+
         $podcast_album_override = new Zend_Form_Element_Radio('podcastAlbumOverride');
         $podcast_album_override->setLabel(_('Overwrite Podcast Episode Metatags'));
         $podcast_album_override->setMultiOptions([

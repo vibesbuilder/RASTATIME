@@ -848,10 +848,14 @@ class Application_Model_StoredFile
      * RASTATIME 2026-10-16 - teaser automation.  A jingle may announce one
      * show (cc_files.teaser_show_id) in one way (cc_files.teaser_type):
      * 'show' = show teaser, usable any day; 'today' = "the show airs
-     * today"; 'tomorrow' = "the show airs tomorrow".  Smart blocks pick
-     * the fitting jingles (Block::teaserCriterionSql).
+     * today"; 'tomorrow' = "the show airs tomorrow"; since 2026-11-13
+     * 'soon' = "the show airs shortly" and 'now' = "the show is next".
+     * Smart blocks pick the fitting jingles (Block::teaserCriterionSql).
      */
-    public const TEASER_TYPES = ['show', 'today', 'tomorrow'];
+    public const TEASER_TYPES = ['show', 'today', 'tomorrow', 'soon', 'now'];
+
+    /** The types the library column names behind the show ("Show · today"). */
+    public const TEASER_DAY_TYPES = ['today', 'tomorrow', 'soon', 'now'];
 
     private static $teaserColumnsReady;
 
@@ -1082,13 +1086,15 @@ class Application_Model_StoredFile
         return Application_Common_Database::prepareAndExecute($sql, [':q' => $like, ':q2' => $like, ':sid' => (int) $showId], 'all');
     }
 
-    /** value => label of the three teaser types (translated). */
+    /** value => label of the teaser types (translated). */
     public static function teaserTypeLabels()
     {
         return [
             'show' => _('Show teaser (any day)'),
             'today' => _('Day teaser: "today"'),
             'tomorrow' => _('Day teaser: "tomorrow"'),
+            'soon' => _('Day teaser: "soon"'),
+            'now' => _('Day teaser: "now"'),
         ];
     }
 
@@ -1553,7 +1559,7 @@ SQL;
                 // stay unambiguous (cc_show has both columns too)
                 $fileSelect[] = self::teaserColumnsReady($con)
                     ? '(tz.names'
-                      . " || CASE WHEN FILES.teaser_type IN ('today', 'tomorrow') THEN ' Â· ' || FILES.teaser_type ELSE '' END)::text AS " . $key
+                      . " || CASE WHEN FILES.teaser_type IN ('" . implode("', '", self::TEASER_DAY_TYPES) . "') THEN ' Â· ' || FILES.teaser_type ELSE '' END)::text AS " . $key
                     : 'NULL::text AS ' . $key;
                 $streamSelect[] = 'NULL::text AS ' . $key;
             } elseif ($key === 'is_scheduled' || $key === 'is_playlist') {

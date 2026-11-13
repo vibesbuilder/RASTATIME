@@ -204,7 +204,9 @@ class AutoPlaylistManager
         if ($outroId !== null && !$outroFills) {
             $rows = self::instanceRows($instanceId);
             $gap = $showEnd - self::chainEnd($rows, $showStart, $house);
-            Application_Model_Block::setFillContext($instanceId, $showId, $slotAt($showEnd));
+            // RASTATIME 2026-11-13 - end-anchored: the outro ends at the slot
+            // (day teasers "now" / "soon", Block::teaserFitsSql)
+            Application_Model_Block::setFillContext($instanceId, $showId, $slotAt($showEnd), 'end');
             $counts['outro'] = self::insertFitting(
                 $si, $rows, count($rows), self::expandPlaylist($outroId, $gap, false, self::neighbourFile($rows, count($rows) - 1), false), $showStart, $showEnd, $house, 'outro', $nextMaySlide
             );
@@ -424,7 +426,11 @@ class AutoPlaylistManager
                 // and a "time remaining" block is picked against it between its
                 // real neighbours (Scheduler::pickRemainingBlock, shared with the
                 // show builder; insertFitting() still checks the real end).
-                $budget = max(0.0, (float) $budgetSecs - Application_Model_Scheduler::laidOutLength($rowsOf($out), $prevFileId, $nextFileId));
+                $gathered = Application_Model_Scheduler::laidOutLength($rowsOf($out), $prevFileId, $nextFileId);
+                $budget = max(0.0, (float) $budgetSecs - $gathered);
+                // RASTATIME 2026-11-13 - the block plays that much after the
+                // context's slot (day teasers "now" / "soon")
+                Application_Model_Block::setFillSlotOffset($gathered);
                 // RASTATIME 2026-10-23 - the files gathered so far are out for
                 // the block's "played lately" filters (Block::setPickedInFill)
                 Application_Model_Block::setPickedInFill(array_map(function ($c) {

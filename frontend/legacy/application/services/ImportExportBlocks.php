@@ -189,7 +189,7 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
                     }
                     $rule['value'] = (string) $showId;
                 } elseif ($field === 'teaser_type' && !in_array($rule['value'], Application_Model_StoredFile::TEASER_TYPES, true)) {
-                    $rec['_errors'][] = sprintf(_('criterion "teaser_type": "%s" is not show, today or tomorrow'), $rule['value']);
+                    $rec['_errors'][] = sprintf(_('criterion "teaser_type": "%s" is not show, today, tomorrow, soon or now'), $rule['value']);
                     continue;
                 } elseif ($field === 'teaser_fits' && $rule['value'] !== 'yes') {
                     $rec['_errors'][] = _('criterion "teaser_fits": the value must be "yes"');

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tagesteaser „soon" und „now" (2026-11-13, Operator-Go)** - Zwei weitere Teaser-Typen
+  neben show / today / tomorrow.  „now" passt, wenn der Jingle das Letzte vor der
+  angekündigten Sendung ist (endet höchstens 15 s vor ihrem Beginn; die feste Outro-Playlist
+  zählt als Sendungsende).  „soon" passt, wenn die Sendung in weniger als 15 min beginnt oder
+  genau eine andere Sendung dazwischen liegt und sie innerhalb von 60 min beginnt.  Ein
+  „today"-Teaser passt in beiden Fällen nicht mehr.  Beide Grenzen unter Settings → General →
+  Automation (0 = Regel aus).  Keine Migration (`teaser_type` VARCHAR(16)); die Regel sitzt in
+  `Block::teaserFitsSql()`, der Füllkontext kennt jetzt Anker (Start / Ende) und den Versatz
+  eines Blocks innerhalb einer Playlist-Expansion.  Solange eine Sendung keine „soon"- /
+  „now"-Jingles hat, wird sie an diesen Stellen nicht angekündigt.  Manual TEASERS + SETTINGS
+  x4, ARCHITECTURE 0.136 (§23.108).  Wirksam sofort für neu befüllte Episoden; die neuen
+  Übersetzungen nach Apache-Neustart.
+
 - **Auto-DJ-Puffer-Track für kleine Restlücken (2026-11-13, Operator-Go Stufe 1 + 2,
   Variante a)** - Am 2026-11-11 endete eine Episode 30,8 s zu früh in Stille: die
   Auto-DJ-Playlist hatte keinen passenden kurzen Titel, und der Fill-Pass überbucht nie.

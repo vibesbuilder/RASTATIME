@@ -835,6 +835,8 @@ function selectCriteriaOptions(t) {
       show: $.i18n._("Show teaser (any day)"),
       today: $.i18n._('Day teaser: "today"'),
       tomorrow: $.i18n._('Day teaser: "tomorrow"'),
+      soon: $.i18n._('Day teaser: "soon"'),
+      now: $.i18n._('Day teaser: "now"'),
     };
   }
   return {

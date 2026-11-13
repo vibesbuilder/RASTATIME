@@ -269,6 +269,9 @@ $(document).ready(function () {
       "stationDefaultShowCrossfadeDuration",
       "trafficAlertBlockSelect",
       "showShiftFillerPlaylistSelect",
+      // day teasers "soon" / "now" (2026-11-13)
+      "teaserSoonMinutes",
+      "teaserSoonOneShowMinutes",
       "podcastAlbumOverride",
       "podcastAutoSmartblock",
       "thirdPartyApi",

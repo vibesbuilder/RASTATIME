@@ -102,6 +102,8 @@ section ; une section qui contient une erreur de validation après
 | **Song-Request Pool (smart blocks)** | Les smart blocks dont les auditeurs peuvent demander les titres. | [Demandes de titres](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | Le bloc des infos trafic. | [Infos trafic](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Remplit le trou quand une émission est décalée. | [Démarrage différé](./DELAYED_START.md) |
+| **Teaser du jour "bientôt" : minutes avant l'émission** | Un teaser du jour « bientôt » passe lorsque l'émission annoncée commence dans moins de minutes que cette valeur ; un teaser « aujourd'hui » ne passe alors plus.  Par défaut 15, 0 = désactivé. | [Automatisation des teasers](./TEASERS.md) |
+| **Teaser du jour "bientôt" : une émission entre les deux, jusqu'à (min)** | Un teaser du jour « bientôt » passe aussi lorsqu'exactement une émission se trouve entre les deux et que l'émission annoncée commence dans ce nombre de minutes au plus.  Par défaut 60, 0 = désactivé. | [Automatisation des teasers](./TEASERS.md) |
 | **Overwrite Podcast Episode Metatags** | Fixe artiste, titre et album des épisodes téléchargés d'après le flux du podcast. | [Bibliothèque](./LIBRARY.md) |
 | **Generate a smartblock and a playlist upon creation of a new podcast** | Crée un smart block et une playlist correspondants pour chaque nouvel abonnement podcast. | [Bibliothèque](./LIBRARY.md) |
 

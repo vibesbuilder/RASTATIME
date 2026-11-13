@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.135
+Draft version: 0.136
 Date: 2026-11-13
 
 > **Revision history**
+> - **0.136 (2026-11-13)** - **Day teasers "soon" and "now"** (§23.108): two more values of
+>   `cc_files.teaser_type`, fitted by the distance from the jingle's position to the next
+>   instance of the announced show; "today" no longer fits in those positions.  The fill
+>   context carries an anchor (start / end) and the offset of a block inside an expansion.
 > - **0.135 (2026-11-13)** - **Auto DJ buffer track** (§23.107): a playlist of fade-ready
 >   tracks closes leftover gaps of 5 s..maximum gap that nothing fits; the only row allowed
 >   past the show end (cut or faded up to 3 s there), counted up to the show end by
@@ -10044,3 +10048,69 @@ needs the API restart, then PLAYOUT (renders the template, planned
 Liquidsoap restart at a track boundary); medium - the show shapes of
 every boundary are re-rendered, the house value path is unchanged
 (bench, tests); rollback: the previous template / `git revert`.
+
+### 23.108 Day Teasers "soon" and "now" (2026-11-13)
+
+**Request.**  Operator 2026-11-13: a "today" day teaser ("today you will
+hear ...") right before its show sounds wrong.  Two more teaser types -
+"soon" ("coming up shortly") and "now" - and a "today" teaser must not
+play as the last item before its show, nor when only one show or less
+than 15 minutes lie in between.  Evaluated (seven points, BACKLOG), Go
+with both limits as settings and a 60-minute cap on the one-show rule.
+
+**Design.**  No schema change: `cc_files.teaser_type` is VARCHAR(16)
+without a check (migration 0069); `StoredFile::TEASER_TYPES` gains
+`soon` and `now` (`TEASER_DAY_TYPES` = the types the library column
+names).  The operator's block filters only "Teaser: fits the schedule",
+so the rule change is all in `Block::teaserFitsSql()` (split out of
+`teaserCriterionSql`).  Everything is measured against **nx**, the next
+instance of each linked show at or after the slot (LATERAL `min(starts)`):
+
+| Type | Fits when |
+|---|---|
+| now | the jingle ends at most `TEASER_NOW_TOLERANCE_SECS` (15 s) before nx starts |
+| soon | not "now", and nx starts in less than `teaser_soon_minutes` (15), or exactly one other instance starts between the slot and nx and nx starts within `teaser_soon_one_show_minutes` (60) |
+| today | as before (an instance on the slot's day after the slot) and neither of the two cases above |
+| tomorrow, show | unchanged |
+
+A limit of 0 drops its rule.  "Between" counts instances with
+`starts >= slot AND starts < nx`, the instance being filled excluded.
+
+**Fill context.**  The slot used to be one moment per playlist
+expansion.  Two additions, read only by the teaser rule (the planned-rows
+exclusion and `availableAtSql` keep the context slot):
+
+- `anchor`: `'end'` for the fixed outro of `AutoPlaylistManager::fillInstance`
+  (its slot is the show end, the rows end there): the jingle's end is the
+  slot itself.  Every other caller is start-anchored: the jingle ends at
+  slot + clip length (`cueout - cuein`).
+- `offset`: `expandPlaylist` passes the laid-out length of the items
+  gathered so far before each dynamic block (`setFillSlotOffset`), so a
+  teaser block behind a music block is measured where it will play
+  (`Block::teaserSlot()`).
+
+**Settings.**  Settings → General → Automation: "Day Teaser "soon":
+Minutes Before the Show" and "... One Show in Between, up to (min)"
+(`Preference::getTeaserSoonMinutes` / `getTeaserSoonOneShowMinutes`,
+0..1440, defaults 15 / 60).
+
+**Consequences.**  Until a show has "soon" / "now" jingles it is not
+announced in those positions (the block draws another show's jingle).
+A "tomorrow" teaser is not barred by the new cases (a show right after
+midnight).  The show builder's manual insert keeps the end of the row
+it inserts after as slot (no offset inside a dropped playlist).
+
+**Verification.**  `C:/Temp/optd/teaser_soon_now_probe.php` (read-only:
+the type is substituted in a derived table named `cc_files`): six real
+links, five slots each, expectation computed independently - 91 checks,
+0 mismatches; the rule equals the old one for today's library (no
+"soon" / "now" files, no barred "today" at that moment); whole-library
+query 58 ms.  `teaser_pool_probe.php` lists the pool at the outro of the
+next news episodes; `teaser_settings_probe.php` renders the form and
+checks the validators.  Settings page checked in the browser (fields,
+values, help icons).
+
+**Risk.**  Low: legacy PHP only, effective for episodes filled from now
+on; no restart except Apache for the new translations (PHP gettext
+caches the catalogue per process).  Rollback: `git revert` (tag
+`live-2026-11-13b`).

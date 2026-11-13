@@ -8074,63 +8074,63 @@ incomplete-sanitization); heute nicht ausnutzbar, weil unser Code dort nur
 eigene Texte übergibt.  Teil der langfristigen Modernisierung; je
 Bibliothek einzeln und mit Live-Prüfung der betroffenen Seiten.
 
-## Dayteaser soon/now, Lautheits-Analyse je Track Type, Pre-/Post-Record (Evaluierung 2026-11-13)
+## Dayteaser soon/now, fester Pegel je Track Type, Record Start (Evaluierung 2026-11-13)
 
-### 💡 Dayteaser-Typen „soon" und „now" - EVALUIERT 2026-11-13, wartet auf Go
-Zwei weitere Werte für `cc_files.teaser_type` (VARCHAR(16), keine Migration).
-Der Smart Block „Dayteaser" filtert nur `teaser_fits is yes`; die Regeln
-sitzen in `Block::teaserCriterionSql` und rechnen gegen den Füllkontext
-(Instanz, Slot).
-- now: der Slot liegt am Ende der Sendung direkt vor der angekündigten
-  Sendung.
-- soon: nicht now, und bis zum Start der angekündigten Sendung liegt nur
-  eine Sendung dazwischen oder weniger als 15 min.
-- today: wie bisher, aber nicht in den Fällen now und soon.
-Vorbedingungen / offene Entscheidungen:
-- „Nur eine Sendung dazwischen" ohne Zeitgrenze? (eine 2-h-Sendung
-  dazwischen ergäbe „in Kürze" zwei Stunden vorher)
-- Toleranz für „direkt davor" (Vorschlag: Teaser endet höchstens 15 s vor
-  dem Sendungsende, feste Outro-Position zählt immer).
-- 15 min fest oder Einstellung.
-- Der Füllkontext der festen Outro-Position meldet heute das Sendungsende
-  als Slot; für now/soon muss der Kontext die Restzeit mitgeben.
-Aufwand ~150 Zeilen PHP, 4-5 Dateien, .po ×3, Manual ×4, ~1 Tag, kein
-Neustart.
+### ✅ Dayteaser-Typen „soon" und „now" - GEBAUT 2026-11-13 (Go 2026-11-13, §23.108)
+Zwei weitere Werte für `cc_files.teaser_type` (keine Migration); Regeln in
+`Block::teaserFitsSql()` gegen die nächste Episode der angekündigten
+Sendung: now = Jingle endet höchstens 15 s vor ihrem Beginn (feste
+Outro-Position zählt als Sendungsende), soon = weniger als 15 min oder
+genau eine Sendung dazwischen und höchstens 60 min, today nicht mehr in
+beiden Fällen.  Beide Grenzen unter Settings → General → Automation.
+Probe `C:/Temp/optd/teaser_soon_now_probe.php` (91 Prüfungen, 0
+Abweichungen).  Offen: Apache-Neustart für die Übersetzungen (Operator),
+„soon"- / „now"-Jingles produzieren und verknüpfen, erste befüllte
+Episode ansehen.
 
-### 💡 Lautheits-Analyse je Track Type abschaltbar - EVALUIERT 2026-11-13, wartet auf Go
+### 🟡 Fester Pegel je Track Type statt Lautheits-Messung - DEFER (evaluiert 2026-11-13, Operator: ins Backlog)
+Ziel (Operator): die gesprochenen Hinweis-Spots sind Sprache über einem immer
+gleichen Soundbett; weil die Sprache verschieden laut ist, regelt die
+R128-Normalisierung je Datei anders und das Bett klingt von Hinweis zu
+Hinweis verschieden laut.  Entscheidungen des Operators 2026-11-13:
+- je Track Type ein Schalter „Lautheit messen" und ein fester Pegel in dB,
+  der statt der gemessenen Anpassung gilt;
+- der Schalter gilt auch für schon gemessene Titel des Typs (Playout
+  entscheidet nach Typ, Messwerte bleiben in der Datenbank);
+- Titel solcher Typen sind vom Knopf „Measure missing files" und vom
+  Zähler ausgenommen.
 Import-Schritte heute: Container-Reparatur, Tags, Formatnormalisierung,
 Media-Type-Tag, Länge, Cue-Punkte (je Typ), ReplayGain, EBU R128
-(Lautheit, True Peak, LRA), Abspielprobe, Einsortieren.  Neues Flag
-`cc_track_types.analyze_loudness` (Muster wie `icy_forward`: Migration,
-Raw-SQL in Tracktype.php, Formular, Analyzer-Optionen, API-Feld
-`track_type_...`, Playout `file_gain_db`).
-Vorbedingungen / offene Entscheidungen:
-- Was spielt ein ungemessener Titel?  Heute im R128-Modus −5 dB
-  (ReplayGain 0 + Ziel − (−18)).  Sinnvoll ist nur „ohne Anpassung"
-  (0 dB) oder ein fester Gain je Typ; ohne Anpassung sind fertig
-  produzierte Beiträge (~−16 LUFS) rund 7 dB lauter als das Programm
-  (Ziel −23).
-- Gilt das Flag auch für schon gemessene Titel des Typs (Vorschlag: ja,
-  Playout entscheidet nach Typ) und für „Measure missing files" samt
-  Zähler (Vorschlag: ausnehmen).
-Aufwand ~200-250 Zeilen, ~12 Dateien, Migration (Operator), Neustarts
-ANALYZER, API, PLAYOUT, ~1-1,5 Tage.
+(Lautheit, True Peak, LRA), Abspielprobe, Einsortieren.
+Umsetzung: Spalten `cc_track_types.analyze_loudness` + `fixed_gain_db`
+(Muster wie `icy_forward`: Migration, Raw-SQL in Tracktype.php, Formular,
+Analyzer-Optionen inkl. Media-Type-Tag, API-Felder `track_type_...`,
+Playout `file_gain_db`).
+Vorbedingungen:
+- Go des Operators.
+- Migration durch den Operator (frisches Backup, außerhalb von
+  Sendungsgrenzen), danach Neustarts ANALYZER, API, PLAYOUT.
+- Einmal einpegeln: fester Wert für diese Spots aus der
+  24/7-Aufnahme bestimmen (Bett auf gleichem Pegel).
+Aufwand ~250 Zeilen, ~12 Dateien, ~1-1,5 Tage.
 
-### 💡 Pre-/Post-Record für Record per Show - EVALUIERT 2026-11-13, wartet auf Go
-Zwei Werte unter Settings → Local Machine → Show Recording (Pre-Record
-0..60 s, Post-Record −60..+60 s).  Die Aufnahme ist EIN
-`output.file(id="recording")` in Liquidsoap: es kann nur eine Datei
-zugleich offen sein, `recording_start` schließt die laufende Datei.
-Zwei direkt aufeinander folgende aufgezeichnete Sendungen können sich
-deshalb nicht überlappen.
-- Variante A: Vor-/Nachlauf wird am Nachbarn gekappt (Übergabe an der
-  Grenze wie heute); nur Playout + Einstellungen, ~1 Tag,
-  PLAYOUT-Neustart.
-- Variante B: zweiter Aufnahme-Ausgang im Wechsel, Überlappung möglich;
-  zusätzlich Template, Engine, Telnet, Replikat-Test, Liquidsoap-Neustart,
-  ~2-3 Tage.
-Vorbedingungen / offene Entscheidungen:
-- A oder B (in den nächsten 14 Tagen: 30 aufgezeichnete Episoden, 2 Paare
-  direkt hintereinander).
-- Library-Kopie: Cue-In/Cue-Out auf den Vor-/Nachlauf setzen, damit eine
-  Wiederholung aus der Aufzeichnung exakt die Sendung spielt.
+### 🟡 „Record Start": Versatz für Record per Show - DEFER (evaluiert 2026-11-13, Operator: ins Backlog)
+Ziel (Operator): den Verzug des Line Input ausgleichen.  Statt Pre-/
+Post-Record EIN Wert unter Settings → Local Machine → Show Recording:
+„Record Start" = Sekunden, um die die Aufnahme früher (negativ) oder
+später (positiv) beginnt als die Sendung; das Ende verschiebt sich um
+denselben Wert.  Damit bleibt die Länge gleich, und zwei direkt
+aufeinander folgende Aufzeichnungen übergeben weiterhin im selben
+Moment (die Aufnahme ist EIN `output.file(id="recording")`, es kann nur
+eine Datei zugleich offen sein) - die Einschränkung der ursprünglichen
+Pre-/Post-Idee entfällt.
+Umsetzung: Präferenz + Feld (Formular, ViewScript-Zeile), Playout liest
+den Wert und verschiebt SHOW_RECORD_START / SHOW_RECORD_END in
+`generate_show_record_events`; Dateiname bleibt die Sendungszeit.
+Vorbedingungen:
+- Go des Operators.
+- Wertebereich festlegen (Vorschlag −60..+60 s) und den Line-Input-Verzug
+  einmal messen (24/7-Aufnahme gegen Sendungsbeginn).
+- PLAYOUT-Neustart durch den Operator.
+Aufwand ~80 Zeilen, ~6 Dateien, Manual x4, ~0,5 Tag; Risiko niedrig
+(im Fehlerfall fehlt eine Aufzeichnung, das Programm ist nicht betroffen).

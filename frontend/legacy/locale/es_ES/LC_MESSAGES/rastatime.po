@@ -6489,8 +6489,8 @@ msgid "criterion \"teaser_show\": unknown show \"%s\""
 msgstr "criterio \"teaser_show\": programa desconocido \"%s\""
 
 #: RASTATIME 2026-10-16 teaser automation
-msgid "criterion \"teaser_type\": \"%s\" is not show, today or tomorrow"
-msgstr "criterio \"teaser_type\": \"%s\" no es show, today ni tomorrow"
+msgid "criterion \"teaser_type\": \"%s\" is not show, today, tomorrow, soon or now"
+msgstr "criterio \"teaser_type\": \"%s\" no es show, today, tomorrow, soon ni now"
 
 #: RASTATIME 2026-10-16 teaser automation
 msgid "criterion \"teaser_fits\": the value must be \"yes\""
@@ -6513,8 +6513,8 @@ msgid "Choose a teaser type before you pick shows"
 msgstr "Elija primero un tipo de teaser y después los programas"
 
 #: RASTATIME 2026-10-16 teaser checkboxes
-msgid "The shows this jingle announces (tick one or several, none ticked = no teaser). Smart blocks with the criterion \"Teaser: fits the schedule\" play it only when one of these shows airs on the right day: a \"today\" teaser on the day of the show, a \"tomorrow\" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself."
-msgstr "Los programas que anuncia este jingle (marque uno o varios, ninguno = no es teaser). Los bloques inteligentes con el criterio \"Teaser: encaja con la parrilla\" solo lo emiten cuando uno de estos programas se emite el día adecuado: un teaser \"hoy\" el día del programa, un teaser \"mañana\" el día anterior, un teaser de programa cualquier día - nunca para un programa que ya terminó por hoy, y nunca dentro del propio programa."
+msgid "The shows this jingle announces (tick one or several, none ticked = no teaser). Smart blocks with the criterion \"Teaser: fits the schedule\" play it only when one of these shows airs at the right time: a \"today\" teaser on the day of the show, a \"tomorrow\" teaser the day before, a \"soon\" teaser shortly before the show, a \"now\" teaser as the last item before it, a show teaser any day - never for a show that is over for today, and never inside the show itself."
+msgstr "Los programas que anuncia este jingle (marque uno o varios, ninguno = no es teaser). Los bloques inteligentes con el criterio \"Teaser: encaja con la parrilla\" solo lo emiten cuando uno de estos programas se emite en el momento adecuado: un teaser \"hoy\" el día del programa, un teaser \"mañana\" el día anterior, un teaser \"en breve\" poco antes del programa, un teaser \"ahora\" como último elemento antes de él, un teaser de programa cualquier día - nunca para un programa que ya terminó por hoy, y nunca dentro del propio programa."
 
 #: RASTATIME 2026-10-16 teaser checkboxes
 msgid "Nothing ticked leaves the links unchanged; \"None\" removes them."
@@ -6549,8 +6549,8 @@ msgid "The teaser tables are missing - run the database migrations 0069 and 0070
 msgstr "Faltan las tablas de teasers: ejecute primero las migraciones 0069 y 0070."
 
 #: RASTATIME 2026-10-16 teaser stage 2
-msgid "Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before and a show teaser any day."
-msgstr "Jingles que anuncian este programa. El tipo pertenece al jingle y vale para cada programa que anuncia; los bloques inteligentes con \"Teaser: encaja con la parrilla\" emiten un jingle \"hoy\" el día del programa, un jingle \"mañana\" el día anterior y un teaser de programa cualquier día."
+msgid "Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before, a \"soon\" jingle shortly before the show, a \"now\" jingle as the last item before it and a show teaser any day."
+msgstr "Jingles que anuncian este programa. El tipo pertenece al jingle y vale para cada programa que anuncia; los bloques inteligentes con \"Teaser: encaja con la parrilla\" emiten un jingle \"hoy\" el día del programa, un jingle \"mañana\" el día anterior, un jingle \"en breve\" poco antes del programa, un jingle \"ahora\" como último elemento antes de él y un teaser de programa cualquier día."
 
 #: RASTATIME 2026-10-16 teaser stage 2
 msgid "Also announces"
@@ -8523,3 +8523,31 @@ msgstr "Abrir Ajustes → Auto DJ"
 
 msgid "(Auto DJ buffer track, ends with the show)"
 msgstr "(pista de reserva del Auto DJ, termina con el programa)"
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day teaser: \"soon\""
+msgstr "Teaser del día: \"en breve\""
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day teaser: \"now\""
+msgstr "Teaser del día: \"ahora\""
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Please enter whole minutes (0 to 1440)."
+msgstr "Introduzca minutos enteros (0 a 1440)."
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day Teaser \"soon\": Minutes Before the Show:"
+msgstr "Teaser del día \"en breve\": minutos antes del programa:"
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "A \"soon\" day teaser plays when the announced show starts in less than this many minutes; a \"today\" day teaser no longer plays then. 0 switches this rule off."
+msgstr "Un teaser del día \"en breve\" se emite cuando el programa anunciado empieza en menos de estos minutos; un teaser del día \"hoy\" ya no se emite entonces. 0 desactiva esta regla."
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day Teaser \"soon\": One Show in Between, up to (min):"
+msgstr "Teaser del día \"en breve\": un programa entre medias, hasta (min):"
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "A \"soon\" day teaser also plays when exactly one show lies between the teaser and the announced show and that show starts within this many minutes; a \"today\" day teaser no longer plays then. 0 switches this rule off."
+msgstr "Un teaser del día \"en breve\" también se emite cuando hay exactamente un programa entre el teaser y el programa anunciado y este empieza dentro de estos minutos; un teaser del día \"hoy\" ya no se emite entonces. 0 desactiva esta regla."

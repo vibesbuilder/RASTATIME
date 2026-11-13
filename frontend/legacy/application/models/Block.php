@@ -1478,9 +1478,18 @@ SQL;
      * is now and no show is excluded.  Set by AutoPlaylistManager and
      * Scheduler around the expansion, cleared afterwards.
      *
-     * @var null|array{instance_id: ?int, show_id: ?int, slot: DateTime}
+     * RASTATIME 2026-11-13 - 'anchor' says what the slot is: 'start' = the
+     * picked rows begin there, 'end' = they end there (the fixed outro,
+     * whose slot is the show's end); 'offset' = seconds the items gathered
+     * so far in the running expansion take, so the block picked next plays
+     * that much after a start-anchored slot (teaserSlot()).
+     *
+     * @var null|array{instance_id: ?int, show_id: ?int, slot: DateTime, anchor: string, offset: float}
      */
     private static $fillContext;
+
+    /** A "now" day teaser ends at most this many seconds before the announced show starts. */
+    public const TEASER_NOW_TOLERANCE_SECS = 15;
 
     /**
      * RASTATIME 2026-10-23 - the file ids the running expansion gathered so
@@ -1495,8 +1504,9 @@ SQL;
      * @param null|int      $instanceId
      * @param null|int      $showId
      * @param null|DateTime $slotUtc    when the picked rows will play (UTC)
+     * @param string        $anchor     'start' (default) or 'end': the rows begin / end at the slot
      */
-    public static function setFillContext($instanceId, $showId, $slotUtc)
+    public static function setFillContext($instanceId, $showId, $slotUtc, $anchor = 'start')
     {
         $slot = $slotUtc instanceof DateTime ? clone $slotUtc : new DateTime('now', new DateTimeZone('UTC'));
         $slot->setTimezone(new DateTimeZone('UTC'));
@@ -1504,8 +1514,41 @@ SQL;
             'instance_id' => $instanceId ? (int) $instanceId : null,
             'show_id' => $showId ? (int) $showId : null,
             'slot' => $slot,
+            'anchor' => $anchor === 'end' ? 'end' : 'start',
+            'offset' => 0.0,
         ];
         self::$fillPicked = [];
+    }
+
+    /**
+     * RASTATIME 2026-11-13 - seconds the items gathered so far in the
+     * running expansion take (see $fillContext 'offset').
+     *
+     * @param float $secs
+     */
+    public static function setFillSlotOffset($secs)
+    {
+        if (self::$fillContext !== null) {
+            self::$fillContext['offset'] = max(0.0, (float) $secs);
+        }
+    }
+
+    /**
+     * RASTATIME 2026-11-13 - where the block picked next plays: the
+     * context's slot plus the offset (start anchor) or the slot itself
+     * (end anchor: the rows end there).
+     *
+     * @return array{at: DateTime, anchor: string}
+     */
+    public static function teaserSlot()
+    {
+        $ctx = self::fillContext();
+        $at = clone $ctx['slot'];
+        if ($ctx['anchor'] !== 'end' && $ctx['offset'] >= 1.0) {
+            $at->modify('+' . (int) floor($ctx['offset']) . ' seconds');
+        }
+
+        return ['at' => $at, 'anchor' => $ctx['anchor']];
     }
 
     public static function clearFillContext()
@@ -1531,14 +1574,18 @@ SQL;
         return self::$fillPicked;
     }
 
-    /** @return array{instance_id: ?int, show_id: ?int, slot: DateTime} */
+    /** @return array{instance_id: ?int, show_id: ?int, slot: DateTime, anchor: string, offset: float} */
     public static function fillContext()
     {
         if (self::$fillContext === null) {
-            return ['instance_id' => null, 'show_id' => null, 'slot' => new DateTime('now', new DateTimeZone('UTC'))];
+            return ['instance_id' => null, 'show_id' => null, 'slot' => new DateTime('now', new DateTimeZone('UTC')), 'anchor' => 'start', 'offset' => 0.0];
         }
 
-        return ['instance_id' => self::$fillContext['instance_id'], 'show_id' => self::$fillContext['show_id'], 'slot' => clone self::$fillContext['slot']];
+        return [
+            'instance_id' => self::$fillContext['instance_id'], 'show_id' => self::$fillContext['show_id'],
+            'slot' => clone self::$fillContext['slot'],
+            'anchor' => self::$fillContext['anchor'], 'offset' => self::$fillContext['offset'],
+        ];
     }
 
     /**
@@ -1584,10 +1631,18 @@ SQL;
      * like any other rule).
      *
      * teaser_show  is / is not <show id>
-     * teaser_type  is / is not show|today|tomorrow
+     * teaser_type  is / is not show|today|tomorrow|soon|now
      * teaser_fits  is yes: the jingle fits the slot of the fill context -
+     *   'now'      (2026-11-13) the jingle ends at most
+     *              TEASER_NOW_TOLERANCE_SECS before the next instance of
+     *              the teased show starts (it is the last thing before it);
+     *   'soon'     (2026-11-13) not "now", and the next instance starts in
+     *              less than Preference::getTeaserSoonMinutes(), or exactly
+     *              one other show lies in between and it starts within
+     *              Preference::getTeaserSoonOneShowMinutes();
      *   'today'    the teased show has an instance on the slot's day
-     *              (station timezone) that starts after the slot;
+     *              (station timezone) that starts after the slot - and
+     *              neither the "now" nor the "soon" case applies;
      *   'tomorrow' the teased show has an instance on the following day;
      *   'show'     any day, unless the show is over for today (it had an
      *              instance today that ended before the slot and has no
@@ -1663,6 +1718,76 @@ SQL;
         return 'FALSE';
     }
 
+    /**
+     * RASTATIME 2026-11-13 - the "teaser_fits is yes" SQL for the slot of
+     * the fill context (see teaserCriterionSql): true for a cc_files row
+     * that announces at least one fitting show.  Everything is measured
+     * against the next instance of each linked show at or after the slot
+     * ("nx"); the show being filled never counts.
+     *
+     * @return string
+     */
+    public static function teaserFitsSql()
+    {
+        $ctx = self::fillContext();
+        $where = self::teaserSlot();
+        $tz = Application_Model_Preference::GetDefaultTimezone() ?: 'UTC';
+        $tzSql = str_replace("'", "''", $tz);
+        $slotUtc = $where['at']->format('Y-m-d H:i:s');
+        $s = "TIMESTAMP '{$slotUtc}'";
+        $local = clone $where['at'];
+        $local->setTimezone(new DateTimeZone($tz));
+        $day = $local->format('Y-m-d');
+        $next = (clone $local)->modify('+1 day')->format('Y-m-d');
+        $inst = 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = ft.show_id AND i.modified_instance = FALSE '
+            . "AND ((i.starts AT TIME ZONE 'UTC') AT TIME ZONE '{$tzSql}')::date = DATE '%s'";
+        $onDay = sprintf($inst, $day);
+        $onNext = sprintf($inst, $next);
+        $laterToday = "EXISTS ({$onDay} AND i.starts > {$s})";
+        $overToday = "EXISTS ({$onDay} AND i.ends <= {$s})";
+        $airsTomorrow = "EXISTS ({$onNext})";
+
+        // "now": the jingle ends right before the next instance starts.  A
+        // start-anchored slot is where the jingle begins, an end-anchored
+        // one (fixed outro) where the outro ends.
+        $endsAt = $where['anchor'] === 'end'
+            ? $s
+            : "({$s} + COALESCE(cc_files.cueout - cc_files.cuein, cc_files.length, INTERVAL '0 seconds'))";
+        $now = "(nx.t IS NOT NULL AND nx.t <= {$endsAt} + INTERVAL '" . (int) self::TEASER_NOW_TOLERANCE_SECS . " seconds')";
+
+        // "soon": close in time, or exactly one other show in between
+        $soonMin = (int) Application_Model_Preference::getTeaserSoonMinutes();
+        $oneShowMin = (int) Application_Model_Preference::getTeaserSoonOneShowMinutes();
+        $between = '(SELECT count(*) FROM cc_show_instances b WHERE b.modified_instance = FALSE '
+            . "AND b.starts >= {$s} AND b.starts < nx.t"
+            . ($ctx['instance_id'] ? ' AND b.id <> ' . (int) $ctx['instance_id'] : '') . ')';
+        $soonRules = [];
+        if ($soonMin > 0) {
+            $soonRules[] = "nx.t < {$s} + INTERVAL '{$soonMin} minutes'";
+        }
+        if ($oneShowMin > 0) {
+            $soonRules[] = "(nx.t <= {$s} + INTERVAL '{$oneShowMin} minutes' AND {$between} = 1)";
+        }
+        $soon = $soonRules ? '(nx.t IS NOT NULL AND (' . implode(' OR ', $soonRules) . '))' : 'FALSE';
+
+        // one fitting linked show is enough; the show being filled never counts
+        $sql = 'EXISTS (SELECT 1 FROM cc_file_teaser ft LEFT JOIN LATERAL ('
+            . 'SELECT min(n.starts) AS t FROM cc_show_instances n WHERE n.show_id = ft.show_id '
+            . "AND n.modified_instance = FALSE AND n.starts >= {$s}) nx ON TRUE "
+            . 'WHERE ft.file_id = cc_files.id';
+        if ($ctx['show_id']) {
+            $sql .= ' AND ft.show_id <> ' . (int) $ctx['show_id'];
+        }
+
+        return $sql . ' AND ('
+            . "(cc_files.teaser_type = 'now' AND {$now})"
+            . " OR (cc_files.teaser_type = 'soon' AND NOT {$now} AND {$soon})"
+            . " OR (cc_files.teaser_type = 'today' AND {$laterToday} AND NOT ({$now} OR {$soon}))"
+            . " OR (cc_files.teaser_type = 'tomorrow' AND {$airsTomorrow})"
+            . " OR (cc_files.teaser_type = 'show' AND (NOT {$overToday} OR {$laterToday}))"
+            . '))';
+    }
+
     public static function teaserCriterionSql($key, $modifier, $value)
     {
         if (!Application_Model_StoredFile::teaserColumnsReady()) {
@@ -1694,31 +1819,7 @@ SQL;
         if ($key !== 'teaser_fits') {
             return 'FALSE';
         }
-        $ctx = self::fillContext();
-        $tz = Application_Model_Preference::GetDefaultTimezone() ?: 'UTC';
-        $tzSql = str_replace("'", "''", $tz);
-        $slotUtc = $ctx['slot']->format('Y-m-d H:i:s');
-        $local = clone $ctx['slot'];
-        $local->setTimezone(new DateTimeZone($tz));
-        $day = $local->format('Y-m-d');
-        $next = (clone $local)->modify('+1 day')->format('Y-m-d');
-        $inst = 'SELECT 1 FROM cc_show_instances i WHERE i.show_id = ft.show_id AND i.modified_instance = FALSE '
-            . "AND ((i.starts AT TIME ZONE 'UTC') AT TIME ZONE '{$tzSql}')::date = DATE '%s'";
-        $onDay = sprintf($inst, $day);
-        $onNext = sprintf($inst, $next);
-        $laterToday = "EXISTS ({$onDay} AND i.starts > TIMESTAMP '{$slotUtc}')";
-        $overToday = "EXISTS ({$onDay} AND i.ends <= TIMESTAMP '{$slotUtc}')";
-        $airsTomorrow = "EXISTS ({$onNext})";
-        // one fitting linked show is enough; the show being filled never counts
-        $sql = "EXISTS ({$linked}";
-        if ($ctx['show_id']) {
-            $sql .= ' AND ft.show_id <> ' . (int) $ctx['show_id'];
-        }
-        $sql .= ' AND ('
-            . "(cc_files.teaser_type = 'today' AND {$laterToday})"
-            . " OR (cc_files.teaser_type = 'tomorrow' AND {$airsTomorrow})"
-            . " OR (cc_files.teaser_type = 'show' AND (NOT {$overToday} OR {$laterToday}))"
-            . '))';
+        $sql = self::teaserFitsSql();
 
         return $not ? "NOT {$sql}" : $sql;
     }

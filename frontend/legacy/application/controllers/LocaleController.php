@@ -142,6 +142,8 @@ final class LocaleController extends Zend_Controller_Action
             'Show teaser (any day)' => _('Show teaser (any day)'),
             'Day teaser: "today"' => _('Day teaser: "today"'),
             'Day teaser: "tomorrow"' => _('Day teaser: "tomorrow"'),
+            'Day teaser: "soon"' => _('Day teaser: "soon"'),
+            'Day teaser: "now"' => _('Day teaser: "now"'),
             'the day of the show being filled' => _('the day of the show being filled'),
             'Shows' => _('Shows'),
             'Re-read Tags' => _('Re-read Tags'),

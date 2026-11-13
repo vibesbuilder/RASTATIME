@@ -10,7 +10,7 @@ $baseUrl = Config::getBasePath();
 <?php if (!$this->ready): ?>
     <p class="rt-teaser-note"><?php echo _("The teaser tables are missing - run the database migrations 0069 and 0070 first."); ?></p>
 <?php else: ?>
-    <p class="rt-teaser-note"><?php echo _("Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before and a show teaser any day."); ?></p>
+    <p class="rt-teaser-note"><?php echo _("Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before, a \"soon\" jingle shortly before the show, a \"now\" jingle as the last item before it and a show teaser any day."); ?></p>
     <table class="datatable rt-teaser-table" width="100%" cellspacing="0" cellpadding="0">
         <thead>
             <tr>

@@ -30,7 +30,7 @@ double-clic) et renseignez
 
 | Champ | Signification |
 |---|---|
-| **Type de teaser** | **Teaser d'émission (tout jour)**, **Teaser du jour : « aujourd'hui »** ou **Teaser du jour : « demain »**.  Choisissez-le d'abord : la liste des émissions reste grisée tant qu'aucun type n'est défini, et un enregistrement avec des émissions sans type est refusé. |
+| **Type de teaser** | **Teaser d'émission (tout jour)**, **Teaser du jour : « aujourd'hui »**, **Teaser du jour : « demain »**, **Teaser du jour : « bientôt »** ou **Teaser du jour : « maintenant »**.  Choisissez-le d'abord : la liste des émissions reste grisée tant qu'aucun type n'est défini, et un enregistrement avec des émissions sans type est refusé. |
 | **Teaser pour les émissions** | les émissions que ce jingle annonce - le bouton **Émissions** ouvre le même panneau de cases que le pool de demandes ; cochez-en une ou plusieurs, le bouton affiche le nombre.  La liste contient chaque émission ayant une diffusion à venir, avec sa prochaine heure (`bbc (Sat 12:00)`) afin de distinguer les émissions homonymes ; les créneaux d'informations horaires sont des émissions distinctes et un seul jingle « BBC aujourd'hui » peut les annoncer toutes.  Aucune sélection = pas de teaser ; remettre le type sur *None* vide la liste. |
 
 Pour de nombreux jingles à la fois, sélectionnez-les dans la
@@ -39,7 +39,7 @@ champs ; aucune sélection conserve un champ, *None* retire les liens,
 les émissions choisies remplacent la liste - et exigent un type dans le
 même enregistrement, car les pistes sélectionnées n'en ont pas forcément.  La
 colonne de bibliothèque **Teaser** (sélecteur de colonnes, masquée par
-défaut) affiche `Nom de l'émission · today` (`· tomorrow` ; les teasers d'émission n'ont pas de suffixe) et se recherche, de sorte
+défaut) affiche `Nom de l'émission · today` (`· tomorrow`, `· soon`, `· now` ; les teasers d'émission n'ont pas de suffixe) et se recherche, de sorte
 que « Teaser contient Worldwide » liste tous les jingles de cette
 émission.
 
@@ -52,7 +52,7 @@ annoncer la même émission avec des types différents.
 | Critère | Modificateurs | Valeur | Correspond à |
 |---|---|---|---|
 | **Teaser : émission** | est / n'est pas | une émission | les jingles qui annoncent cette émission (entre autres) |
-| **Teaser : type** | est / n'est pas | teaser d'émission, aujourd'hui, demain | les jingles de ce type |
+| **Teaser : type** | est / n'est pas | teaser d'émission, aujourd'hui, demain, bientôt, maintenant | les jingles de ce type |
 | **Teaser : correspond à la grille** | est | le jour de l'émission remplie | voir ci-dessous |
 
 **Teaser : correspond à la grille** est l'automatisation.  « Le jour »
@@ -75,6 +75,34 @@ vous le déposez.  Avec ce jour *D* et l'instant *T* du créneau :
 
 Une diffusion annulée ou déplacée emporte donc ses teasers du jour : le
 critère lit le calendrier au moment du remplissage, pas une liste fixe.
+
+### Teasers du jour « bientôt » et « maintenant » (depuis le 2026-11-13)
+
+Deux autres types de teasers du jour suivent la distance jusqu'à
+l'émission annoncée plutôt que le jour calendaire (« Around the World -
+dans un instant », « Around the World - maintenant »).  On mesure de la
+position du jingle jusqu'à la prochaine diffusion de son émission :
+
+* un teaser **« maintenant »** correspond quand le jingle est le
+  dernier élément avant l'émission : il se termine au plus 15 secondes
+  avant le début de l'émission.  Une playlist d'outro fixe compte comme
+  la fin de l'émission.
+* un teaser **« bientôt »** correspond quand ce n'est pas le cas et que
+  l'émission commence dans moins de **15 minutes**, ou quand exactement
+  **une autre émission** se trouve entre les deux et que l'émission
+  annoncée commence dans les **60 minutes**.
+* dans ces deux positions, un teaser **« aujourd'hui »** de cette
+  émission ne correspond plus.  Une émission sans jingle « bientôt » ou
+  « maintenant » n'y est pas annoncée ; le bloc choisit le jingle d'une
+  autre émission.
+
+Les deux limites sont des réglages : **Settings → General → Automation →
+Teaser du jour "bientôt" : minutes avant l'émission** et **Teaser du
+jour "bientôt" : une émission entre les deux, jusqu'à (min)** ; 0
+désactive une règle.  Les teasers « demain » et les teasers d'émission
+ne changent pas.  Dans une playlist de contenu, c'est la position du
+bloc dans la playlist qui compte : les titres qui le précèdent dans la
+même playlist s'ajoutent au créneau.
 
 ## 3. Rotation : jamais deux fois le même jingle dans une émission
 
@@ -125,7 +153,7 @@ l'émission et non pour la diffusion.
 
 [Import / Export](./IMPORT_EXPORT.md) transporte les critères dans
 `blocks.json` : `teaser_show` par nom d'émission (la première émission
-de ce nom à l'import), `teaser_type` en `show`, `today` ou `tomorrow`,
+de ce nom à l'import), `teaser_type` en `show`, `today`, `tomorrow`, `soon` ou `now`,
 `teaser_fits` avec la valeur `yes`.  Les liens des jingles eux-mêmes
 sont des métadonnées des fichiers et ne font pas partie de l'archive.
 

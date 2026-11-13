@@ -125,6 +125,11 @@
 
         <?php echo $this->element->getElement('showShiftFillerPlaylistSelect')->render() ?>
 
+        <?php /* RASTATIME 2026-11-13 - day teasers "soon" / "now" */ ?>
+        <?php echo $this->element->getElement('teaserSoonMinutes')->render() ?>
+
+        <?php echo $this->element->getElement('teaserSoonOneShowMinutes')->render() ?>
+
         <?php echo $this->element->getElement('podcastAlbumOverride')->render() ?>
 
         <?php echo $this->element->getElement('podcastAutoSmartblock')->render() ?>

@@ -31,7 +31,7 @@ establezca
 
 | Campo | Significado |
 |---|---|
-| **Tipo de teaser** | **Teaser de programa (cualquier día)**, **Teaser del día: «hoy»** o **Teaser del día: «mañana»**.  Elíjalo primero: la lista de programas permanece atenuada hasta que haya un tipo, y un guardado con programas sin tipo se rechaza. |
+| **Tipo de teaser** | **Teaser de programa (cualquier día)**, **Teaser del día: «hoy»**, **Teaser del día: «mañana»**, **Teaser del día: «en breve»** o **Teaser del día: «ahora»**.  Elíjalo primero: la lista de programas permanece atenuada hasta que haya un tipo, y un guardado con programas sin tipo se rechaza. |
 | **Teaser para los programas** | los programas que anuncia este jingle; el botón **Programas** abre el mismo panel de casillas que el pool de peticiones; marque uno o varios, el botón muestra el número.  La lista contiene cada programa con un episodio próximo, con su siguiente hora (`bbc (Sat 12:00)`) para distinguir programas homónimos; los huecos de noticias de cada hora son programas distintos y un solo jingle «BBC hoy» puede anunciarlos todos.  Nada seleccionado = no es teaser; volver a poner el tipo en *None* vacía la lista. |
 
 Para muchos jingles a la vez, selecciónelos en la biblioteca y use
@@ -40,7 +40,7 @@ conserva un campo, *None* quita los vínculos, los programas elegidos
 sustituyen la lista, y necesitan un tipo en el mismo guardado, porque las
 pistas seleccionadas aún pueden no tenerlo.  La columna de biblioteca
 **Teaser** (selector de columnas, oculta por defecto) muestra `Nombre
-del programa · today` (`· tomorrow`; los teasers de programa no llevan sufijo) y se puede buscar, de modo que «Teaser contiene
+del programa · today` (`· tomorrow`, `· soon`, `· now`; los teasers de programa no llevan sufijo) y se puede buscar, de modo que «Teaser contiene
 Worldwide» lista todos los jingles de ese programa.
 
 Un jingle tiene un tipo y anuncia uno o varios programas; encaja en
@@ -52,7 +52,7 @@ anunciar el mismo programa con tipos distintos.
 | Criterio | Modificadores | Valor | Coincide con |
 |---|---|---|---|
 | **Teaser: programa** | es / no es | un programa | los jingles que anuncian ese programa (entre otros) |
-| **Teaser: tipo** | es / no es | teaser de programa, hoy, mañana | los jingles de ese tipo |
+| **Teaser: tipo** | es / no es | teaser de programa, hoy, mañana, en breve, ahora | los jingles de ese tipo |
 | **Teaser: encaja con la parrilla** | es | el día del programa que se rellena | véase abajo |
 
 **Teaser: encaja con la parrilla** es la automatización.  «El día» es el
@@ -76,6 +76,31 @@ día *D* y el instante *T* del hueco:
 Un episodio cancelado o movido se lleva, por tanto, sus teasers del día:
 el criterio mira el calendario en el momento del relleno, no una lista
 fija.
+
+### Teasers del día «en breve» y «ahora» (desde 2026-11-13)
+
+Otros dos tipos de teaser del día siguen la distancia hasta el programa
+anunciado en lugar del día del calendario («Around the World - en
+breve», «Around the World - ahora»).  Se mide desde la posición del
+jingle hasta el próximo episodio de su programa:
+
+* un teaser **«ahora»** encaja cuando el jingle es lo último antes del
+  programa: termina como máximo 15 segundos antes de que empiece el
+  programa.  Una lista de outro fija cuenta como el final del programa.
+* un teaser **«en breve»** encaja cuando no es ese el caso y el programa
+  empieza en menos de **15 minutos**, o cuando hay exactamente **otro
+  programa** entre medias y el programa anunciado empieza dentro de
+  **60 minutos**.
+* en ambas posiciones un teaser **«hoy»** de ese programa ya no encaja.
+  Un programa sin jingle «en breve» o «ahora» no se anuncia ahí; el
+  bloque elige el jingle de otro programa.
+
+Ambos límites son ajustes: **Settings → General → Automation → Teaser
+del día "en breve": minutos antes del programa** y **Teaser del día "en
+breve": un programa entre medias, hasta (min)**; 0 desactiva una regla.
+Los teasers «mañana» y los teasers de programa no cambian.  En una lista
+de contenido cuenta la posición del bloque dentro de la lista: los
+temas anteriores de la misma lista se suman al hueco.
 
 ## 3. Rotación: ningún jingle dos veces en un programa
 
@@ -124,8 +149,7 @@ con el episodio.
 
 [Importar / Exportar](./IMPORT_EXPORT.md) lleva los criterios en
 `blocks.json`: `teaser_show` por nombre de programa (el primer programa
-con ese nombre al importar), `teaser_type` como `show`, `today` o
-`tomorrow`, `teaser_fits` con el valor `yes`.  Los vínculos de los
+con ese nombre al importar), `teaser_type` como `show`, `today`, `tomorrow`, `soon` o `now`, `teaser_fits` con el valor `yes`.  Los vínculos de los
 propios jingles son metadatos de los archivos y no forman parte del
 paquete.
 

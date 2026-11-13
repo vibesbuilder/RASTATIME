@@ -6296,8 +6296,8 @@ msgid "criterion \"teaser_show\": unknown show \"%s\""
 msgstr "Kriterium \"teaser_show\": unbekannte Sendung \"%s\""
 
 #: RASTATIME 2026-10-16 teaser automation
-msgid "criterion \"teaser_type\": \"%s\" is not show, today or tomorrow"
-msgstr "Kriterium \"teaser_type\": \"%s\" ist nicht show, today oder tomorrow"
+msgid "criterion \"teaser_type\": \"%s\" is not show, today, tomorrow, soon or now"
+msgstr "Kriterium \"teaser_type\": \"%s\" ist nicht show, today, tomorrow, soon oder now"
 
 #: RASTATIME 2026-10-16 teaser automation
 msgid "criterion \"teaser_fits\": the value must be \"yes\""
@@ -6320,8 +6320,8 @@ msgid "Choose a teaser type before you pick shows"
 msgstr "Wählen Sie zuerst einen Teaser-Typ, dann die Sendungen"
 
 #: RASTATIME 2026-10-16 teaser checkboxes
-msgid "The shows this jingle announces (tick one or several, none ticked = no teaser). Smart blocks with the criterion \"Teaser: fits the schedule\" play it only when one of these shows airs on the right day: a \"today\" teaser on the day of the show, a \"tomorrow\" teaser the day before, a show teaser any day - never for a show that is over for today, and never inside the show itself."
-msgstr "Die Sendungen, die dieser Jingle ankündigt (eine oder mehrere anhaken, keine = kein Teaser). Smart Blocks mit dem Kriterium \"Teaser: passt zum Sendeplan\" spielen ihn nur, wenn eine dieser Sendungen am passenden Tag läuft: ein \"heute\"-Teaser am Tag der Sendung, ein \"morgen\"-Teaser am Vortag, ein Showteaser an jedem Tag - nie für eine Sendung, die für heute vorbei ist, und nie in der Sendung selbst."
+msgid "The shows this jingle announces (tick one or several, none ticked = no teaser). Smart blocks with the criterion \"Teaser: fits the schedule\" play it only when one of these shows airs at the right time: a \"today\" teaser on the day of the show, a \"tomorrow\" teaser the day before, a \"soon\" teaser shortly before the show, a \"now\" teaser as the last item before it, a show teaser any day - never for a show that is over for today, and never inside the show itself."
+msgstr "Die Sendungen, die dieser Jingle ankündigt (eine oder mehrere anhaken, keine = kein Teaser). Smart Blocks mit dem Kriterium \"Teaser: passt zum Sendeplan\" spielen ihn nur, wenn eine dieser Sendungen zur passenden Zeit läuft: ein \"heute\"-Teaser am Tag der Sendung, ein \"morgen\"-Teaser am Vortag, ein \"in Kürze\"-Teaser kurz vor der Sendung, ein \"jetzt\"-Teaser als letztes Element davor, ein Showteaser an jedem Tag - nie für eine Sendung, die für heute vorbei ist, und nie in der Sendung selbst."
 
 #: RASTATIME 2026-10-16 teaser checkboxes
 msgid "Nothing ticked leaves the links unchanged; \"None\" removes them."
@@ -6356,8 +6356,8 @@ msgid "The teaser tables are missing - run the database migrations 0069 and 0070
 msgstr "Die Teaser-Tabellen fehlen - zuerst die Datenbank-Migrationen 0069 und 0070 ausführen."
 
 #: RASTATIME 2026-10-16 teaser stage 2
-msgid "Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before and a show teaser any day."
-msgstr "Jingles, die diese Sendung ankündigen. Der Typ gehört zum Jingle und gilt für jede Sendung, die er ankündigt; Smart Blocks mit \"Teaser: passt zum Sendeplan\" spielen einen \"heute\"-Jingle am Tag der Sendung, einen \"morgen\"-Jingle am Vortag und einen Showteaser an jedem Tag."
+msgid "Jingles announcing this show. The type belongs to the jingle and applies to every show it announces; smart blocks with \"Teaser: fits the schedule\" play a \"today\" jingle on the day of the show, a \"tomorrow\" jingle the day before, a \"soon\" jingle shortly before the show, a \"now\" jingle as the last item before it and a show teaser any day."
+msgstr "Jingles, die diese Sendung ankündigen. Der Typ gehört zum Jingle und gilt für jede Sendung, die er ankündigt; Smart Blocks mit \"Teaser: passt zum Sendeplan\" spielen einen \"heute\"-Jingle am Tag der Sendung, einen \"morgen\"-Jingle am Vortag, einen \"in Kürze\"-Jingle kurz vor der Sendung, einen \"jetzt\"-Jingle als letztes Element davor und einen Showteaser an jedem Tag."
 
 #: RASTATIME 2026-10-16 teaser stage 2
 msgid "Also announces"
@@ -8330,3 +8330,31 @@ msgstr "Einstellungen → Auto DJ öffnen"
 
 msgid "(Auto DJ buffer track, ends with the show)"
 msgstr "(Auto-DJ-Puffer-Track, endet mit der Sendung)"
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day teaser: \"soon\""
+msgstr "Tagesteaser: \"in Kürze\""
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day teaser: \"now\""
+msgstr "Tagesteaser: \"jetzt\""
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Please enter whole minutes (0 to 1440)."
+msgstr "Bitte ganze Minuten eingeben (0 bis 1440)."
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day Teaser \"soon\": Minutes Before the Show:"
+msgstr "Tagesteaser \"in Kürze\": Minuten vor der Sendung:"
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "A \"soon\" day teaser plays when the announced show starts in less than this many minutes; a \"today\" day teaser no longer plays then. 0 switches this rule off."
+msgstr "Ein \"in Kürze\"-Tagesteaser läuft, wenn die angekündigte Sendung in weniger als so vielen Minuten beginnt; ein \"heute\"-Tagesteaser läuft dann nicht mehr. 0 schaltet diese Regel ab."
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "Day Teaser \"soon\": One Show in Between, up to (min):"
+msgstr "Tagesteaser \"in Kürze\": eine Sendung dazwischen, bis (min):"
+
+#: RASTATIME 2026-11-13 day teasers soon / now
+msgid "A \"soon\" day teaser also plays when exactly one show lies between the teaser and the announced show and that show starts within this many minutes; a \"today\" day teaser no longer plays then. 0 switches this rule off."
+msgstr "Ein \"in Kürze\"-Tagesteaser läuft auch, wenn genau eine Sendung zwischen dem Teaser und der angekündigten Sendung liegt und diese innerhalb so vieler Minuten beginnt; ein \"heute\"-Tagesteaser läuft dann nicht mehr. 0 schaltet diese Regel ab."

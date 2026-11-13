@@ -2980,6 +2980,45 @@ class Application_Model_Preference
         self::setValue('show_shift_filler_playlist_id', (int) $value);
     }
 
+    // RASTATIME 2026-11-13 - day teasers "soon" / "now"
+    // (Block::teaserCriterionSql).  A "soon" jingle fits when the announced
+    // show starts within TeaserSoonMinutes, or when exactly one show lies in
+    // between and it starts within TeaserSoonOneShowMinutes.  0 switches the
+    // rule off.
+    public const TEASER_SOON_MINUTES_DEFAULT = 15;
+    public const TEASER_SOON_ONE_SHOW_MINUTES_DEFAULT = 60;
+    public const TEASER_MINUTES_MAX = 1440;
+
+    private static function teaserMinutes($key, $default)
+    {
+        $raw = self::getValue($key);
+        if ($raw === '' || $raw === null || !is_numeric($raw)) {
+            return $default;
+        }
+
+        return max(0, min(self::TEASER_MINUTES_MAX, (int) $raw));
+    }
+
+    public static function getTeaserSoonMinutes()
+    {
+        return self::teaserMinutes('teaser_soon_minutes', self::TEASER_SOON_MINUTES_DEFAULT);
+    }
+
+    public static function setTeaserSoonMinutes($value)
+    {
+        self::setValue('teaser_soon_minutes', max(0, min(self::TEASER_MINUTES_MAX, (int) $value)));
+    }
+
+    public static function getTeaserSoonOneShowMinutes()
+    {
+        return self::teaserMinutes('teaser_soon_one_show_minutes', self::TEASER_SOON_ONE_SHOW_MINUTES_DEFAULT);
+    }
+
+    public static function setTeaserSoonOneShowMinutes($value)
+    {
+        self::setValue('teaser_soon_one_show_minutes', max(0, min(self::TEASER_MINUTES_MAX, (int) $value)));
+    }
+
     public static function getTrafficAlertBlockId()
     {
         return (int) self::getValue('traffic_alert_block_id');

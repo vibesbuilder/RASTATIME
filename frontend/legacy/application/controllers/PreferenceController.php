@@ -88,6 +88,14 @@ class PreferenceController extends Zend_Controller_Action
                 Application_Model_Preference::setShowShiftFillerPlaylistId(
                     $values['showShiftFillerPlaylistSelect'] ?? 0
                 );
+                // RASTATIME 2026-11-13 - day teasers "soon" / "now": the two
+                // limits of the "soon" rule (absent = keep the stored value)
+                if (isset($values['teaserSoonMinutes'])) {
+                    Application_Model_Preference::setTeaserSoonMinutes($values['teaserSoonMinutes']);
+                }
+                if (isset($values['teaserSoonOneShowMinutes'])) {
+                    Application_Model_Preference::setTeaserSoonOneShowMinutes($values['teaserSoonOneShowMinutes']);
+                }
                 Application_Model_Preference::setRadioPageDisplayLoginButton($values['radioPageLoginButton']);
                 Application_Model_Preference::setRadioPageDisabled($values['radioPageDisabled']);
                 // RASTATIME 2026-09-29 - UI primary colour ('' = default).

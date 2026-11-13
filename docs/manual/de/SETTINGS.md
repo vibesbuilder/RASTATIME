@@ -102,6 +102,8 @@ Die Seite ist in **eingeklappte Abschnitte** gegliedert (seit
 | **Song-Request Pool (smart blocks)** | Die Smart Blocks, deren Titel Hörer wünschen dürfen. | [Musikwünsche](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | Der Block für Verkehrsmeldungen. | [Verkehrsmeldungen](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Füllt die Lücke, wenn eine Sendung verschoben wird. | [Verzögerter Sendungsstart](./DELAYED_START.md) |
+| **Tagesteaser "in Kürze": Minuten vor der Sendung** | Ein „in Kürze"-Tagesteaser läuft, wenn die angekündigte Sendung in weniger als so vielen Minuten beginnt; ein „heute"-Teaser läuft dann nicht mehr.  Standard 15, 0 = aus. | [Teaser-Automatik](./TEASERS.md) |
+| **Tagesteaser "in Kürze": eine Sendung dazwischen, bis (min)** | Ein „in Kürze"-Tagesteaser läuft auch, wenn genau eine Sendung dazwischen liegt und die angekündigte Sendung innerhalb so vieler Minuten beginnt.  Standard 60, 0 = aus. | [Teaser-Automatik](./TEASERS.md) |
 | **Overwrite Podcast Episode Metatags** | Setzt Interpret, Titel und Album heruntergeladener Episoden aus dem Podcast-Feed. | [Bibliothek](./LIBRARY.md) |
 | **Generate a smartblock and a playlist upon creation of a new podcast** | Legt für jedes neue Podcast-Abo einen passenden Smart Block und eine Playlist an. | [Bibliothek](./LIBRARY.md) |
 

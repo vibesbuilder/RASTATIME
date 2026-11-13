@@ -100,6 +100,8 @@ segment that holds a validation error after **Save** opens by itself.
 | **Song-Request Pool (smart blocks)** | The smart blocks whose tracks listeners may request. | [Song Requests](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | The block for traffic announcements. | [Traffic Alerts](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Fills the gap when a show is shifted. | [Delayed Show Start](./DELAYED_START.md) |
+| **Day Teaser "soon": Minutes Before the Show** | A "soon" day teaser plays when the announced show starts in less than this many minutes; a "today" teaser no longer plays then.  Default 15, 0 = off. | [Teaser Automation](./TEASERS.md) |
+| **Day Teaser "soon": One Show in Between, up to (min)** | A "soon" day teaser also plays when exactly one show lies in between and the announced show starts within this many minutes.  Default 60, 0 = off. | [Teaser Automation](./TEASERS.md) |
 | **Overwrite Podcast Episode Metatags** | Sets artist, title and album of downloaded episodes from the podcast feed. | [Library](./LIBRARY.md) |
 | **Generate a smartblock and a playlist upon creation of a new podcast** | Creates a matching smart block and playlist for every new podcast subscription. | [Library](./LIBRARY.md) |
 

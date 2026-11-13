@@ -102,6 +102,8 @@ se abre sola.
 | **Song-Request Pool (smart blocks)** | Los bloques inteligentes cuyas pistas pueden pedir los oyentes. | [Peticiones de canciones](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | El bloque para avisos de tráfico. | [Avisos de tráfico](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Rellena el hueco cuando se desplaza un programa. | [Inicio retrasado](./DELAYED_START.md) |
+| **Teaser del día "en breve": minutos antes del programa** | Un teaser del día «en breve» se emite cuando el programa anunciado empieza en menos de estos minutos; un teaser «hoy» ya no se emite entonces.  Por defecto 15, 0 = desactivado. | [Automatización de teasers](./TEASERS.md) |
+| **Teaser del día "en breve": un programa entre medias, hasta (min)** | Un teaser del día «en breve» también se emite cuando hay exactamente un programa entre medias y el programa anunciado empieza dentro de estos minutos.  Por defecto 60, 0 = desactivado. | [Automatización de teasers](./TEASERS.md) |
 | **Overwrite Podcast Episode Metatags** | Fija artista, título y álbum de los episodios descargados a partir del feed del podcast. | [Biblioteca](./LIBRARY.md) |
 | **Generate a smartblock and a playlist upon creation of a new podcast** | Crea un bloque inteligente y una lista correspondientes para cada nueva suscripción a un podcast. | [Biblioteca](./LIBRARY.md) |
 

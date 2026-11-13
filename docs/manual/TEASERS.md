@@ -28,14 +28,14 @@ and set
 
 | Field | Meaning |
 |---|---|
-| **Teaser type** | **Show teaser (any day)**, **Day teaser: "today"** or **Day teaser: "tomorrow"**.  Choose it first: the shows list below stays greyed out until a type is set, and a save with shows but no type is refused. |
+| **Teaser type** | **Show teaser (any day)**, **Day teaser: "today"**, **Day teaser: "tomorrow"**, **Day teaser: "soon"** or **Day teaser: "now"**.  Choose it first: the shows list below stays greyed out until a type is set, and a save with shows but no type is refused. |
 | **Teaser for shows** | the shows this jingle announces - the **Shows** button opens the same checkbox panel as the Song-Request Pool; tick one or several, the button shows the count.  The list holds every show with an upcoming broadcast, each with its next airing (`bbc (Sat 12:00)`) so shows that share a name can be told apart; the hourly news slots are separate shows and one "BBC today" jingle can announce them all.  Nothing selected = no teaser; setting the type back to *None* empties the list. |
 
 For many jingles at once select them in the library and use **Edit**
 (bulk edit): the same two fields; nothing selected keeps a field,
 *None* clears the links, selected shows replace the list - and need a
 type in the same save, because the selected tracks need not have one yet.  The library column **Teaser** (columns picker,
-hidden by default) shows `Show name · today` (`· tomorrow`; show teasers carry no suffix) and is searchable, so
+hidden by default) shows `Show name · today` (`· tomorrow`, `· soon`, `· now`; show teasers carry no suffix) and is searchable, so
 "Teaser contains Worldwide" lists every jingle of that show.
 
 A jingle has one type and announces one or more shows; it fits as soon
@@ -47,7 +47,7 @@ show with different types.
 | Criterion | Modifiers | Value | Matches |
 |---|---|---|---|
 | **Teaser: show** | is / is not | a show | jingles that announce that show (among others) |
-| **Teaser: type** | is / is not | show teaser, today, tomorrow | jingles of that type |
+| **Teaser: type** | is / is not | show teaser, today, tomorrow, soon, now | jingles of that type |
 | **Teaser: fits the schedule** | is | the day of the show being filled | see below |
 
 **Teaser: fits the schedule** is the automation.  "The day" is the
@@ -69,6 +69,30 @@ slot:
 
 A cancelled or moved broadcast therefore takes its day teasers with it:
 the criterion looks at the calendar at fill time, not at a fixed list.
+
+### Day teasers "soon" and "now" (since 2026-11-13)
+
+Two more day teaser types follow the distance to the announced show
+instead of the calendar day ("Around the World - coming up shortly",
+"Around the World - now").  They are measured from the position of the
+jingle to the next broadcast of its show:
+
+* a **"now"** teaser fits when the jingle is the last thing before the
+  show: it ends at most 15 seconds before the show starts.  A fixed
+  outro playlist counts as the end of the show.
+* a **"soon"** teaser fits when that is not the case and the show
+  starts in less than **15 minutes**, or when exactly **one other show**
+  lies in between and the announced show starts within **60 minutes**.
+* in both positions a **"today"** teaser of that show no longer fits.
+  A show without a "soon" or "now" jingle is not announced there; the
+  block picks a jingle of another show.
+
+Both limits are settings: **Settings → General → Automation → Day
+Teaser "soon": Minutes Before the Show** and **Day Teaser "soon": One
+Show in Between, up to (min)**; 0 switches a rule off.  "Tomorrow"
+teasers and show teasers are unchanged.  In a content playlist the
+position of the block inside the playlist counts: the tracks before it
+in the same playlist are added to the slot.
 
 ## 3. Rotation: no jingle twice in a show
 
@@ -113,7 +137,7 @@ the show, not to the broadcast.
 
 [Import / Export](./IMPORT_EXPORT.md) carries the criteria in
 `blocks.json`: `teaser_show` by show name (the first show of that name
-on import), `teaser_type` as `show`, `today` or `tomorrow`,
+on import), `teaser_type` as `show`, `today`, `tomorrow`, `soon` or `now`,
 `teaser_fits` with the value `yes`.  The jingles' own links are
 metadata of the files and are not part of the bundle.
 

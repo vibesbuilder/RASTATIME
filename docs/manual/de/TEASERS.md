@@ -29,7 +29,7 @@ Doppelklick) und setzen Sie
 
 | Feld | Bedeutung |
 |---|---|
-| **Teaser-Typ** | **Showteaser (jederzeit)**, **Tagesteaser: „heute"** oder **Tagesteaser: „morgen"**.  Wählen Sie ihn zuerst: Die Sendungsliste darunter bleibt ausgegraut, bis ein Typ gesetzt ist, und ein Speichern mit Sendungen ohne Typ wird abgewiesen. |
+| **Teaser-Typ** | **Showteaser (jederzeit)**, **Tagesteaser: „heute"**, **Tagesteaser: „morgen"**, **Tagesteaser: „in Kürze"** oder **Tagesteaser: „jetzt"**.  Wählen Sie ihn zuerst: Die Sendungsliste darunter bleibt ausgegraut, bis ein Typ gesetzt ist, und ein Speichern mit Sendungen ohne Typ wird abgewiesen. |
 | **Teaser für Sendungen** | die Sendungen, die dieser Jingle ankündigt - der Knopf **Sendungen** öffnet dasselbe Kästchen-Panel wie der Song-Request-Pool; eine oder mehrere anhaken, der Knopf zeigt die Anzahl.  Die Liste enthält jede Sendung mit bevorstehender Episode, jeweils mit der nächsten Sendezeit (`bbc (Sat 12:00)`), damit gleichnamige Sendungen unterscheidbar sind; die stündlichen Nachrichten-Slots sind eigene Sendungen, und ein „BBC heute"-Jingle kann sie alle ankündigen.  Keine Auswahl = kein Teaser; wird der Typ wieder auf *None* gesetzt, leert sich die Liste. |
 
 Für viele Jingles auf einmal markieren Sie sie in der Bibliothek und
@@ -38,7 +38,7 @@ Auswahl lässt ein Feld unberührt, *None* löst die Verknüpfungen,
 gewählte Sendungen ersetzen die Liste - und brauchen im selben Speichern
 einen Typ, weil die markierten Tracks noch keinen haben müssen.  Die
 Bibliotheksspalte **Teaser** (Spaltenwähler, standardmäßig
-ausgeblendet) zeigt `Sendungsname · today` (`· tomorrow`; Showteaser ohne Zusatz) und ist durchsuchbar, sodass
+ausgeblendet) zeigt `Sendungsname · today` (`· tomorrow`, `· soon`, `· now`; Showteaser ohne Zusatz) und ist durchsuchbar, sodass
 „Teaser enthält Worldwide" alle Jingles dieser Sendung listet.
 
 Ein Jingle hat einen Typ und kündigt eine oder mehrere Sendungen an;
@@ -50,7 +50,7 @@ natürlich dieselbe Sendung mit verschiedenen Typen ankündigen.
 | Kriterium | Modifikatoren | Wert | Trifft |
 |---|---|---|---|
 | **Teaser: Sendung** | ist / ist nicht | eine Sendung | Jingles, die diese Sendung (unter anderen) ankündigen |
-| **Teaser: Typ** | ist / ist nicht | Showteaser, heute, morgen | Jingles dieses Typs |
+| **Teaser: Typ** | ist / ist nicht | Showteaser, heute, morgen, in Kürze, jetzt | Jingles dieses Typs |
 | **Teaser: passt zum Sendeplan** | ist | dem Tag der befüllten Sendung | siehe unten |
 
 **Teaser: passt zum Sendeplan** ist die Automatik.  „Der Tag" ist der
@@ -74,6 +74,32 @@ ziehen - das Ende der Zeile, hinter die Sie ihn legen.  Mit diesem Tag
 Eine abgesagte oder verschobene Episode nimmt ihre Tagesteaser
 also mit: Das Kriterium schaut zur Füllzeit in den Kalender, nicht in
 eine feste Liste.
+
+### Tagesteaser „in Kürze" und „jetzt" (seit 2026-11-13)
+
+Zwei weitere Tagesteaser-Typen richten sich nach dem Abstand zur
+angekündigten Sendung statt nach dem Kalendertag („Around the World -
+in Kürze", „Around the World - jetzt").  Gemessen wird von der Position
+des Jingles bis zur nächsten Episode seiner Sendung:
+
+* ein **„jetzt"**-Teaser passt, wenn der Jingle das Letzte vor der
+  Sendung ist: Er endet höchstens 15 Sekunden vor dem Sendungsbeginn.
+  Eine feste Outro-Playlist zählt als Ende der Sendung.
+* ein **„in Kürze"**-Teaser passt, wenn das nicht der Fall ist und die
+  Sendung in weniger als **15 Minuten** beginnt, oder wenn genau **eine
+  andere Sendung** dazwischen liegt und die angekündigte Sendung
+  innerhalb von **60 Minuten** beginnt.
+* an beiden Positionen passt ein **„heute"**-Teaser dieser Sendung
+  nicht mehr.  Eine Sendung ohne „in Kürze"- oder „jetzt"-Jingle wird
+  dort nicht angekündigt; der Block wählt den Jingle einer anderen
+  Sendung.
+
+Beide Grenzen sind Einstellungen: **Settings → General → Automation →
+Tagesteaser "in Kürze": Minuten vor der Sendung** und **Tagesteaser
+"in Kürze": eine Sendung dazwischen, bis (min)**; 0 schaltet eine Regel
+ab.  „Morgen"-Teaser und Showteaser bleiben unverändert.  In einer
+Inhalts-Playlist zählt die Position des Blocks in der Playlist: Die
+Titel davor in derselben Playlist werden zum Slot addiert.
 
 ## 3. Rotation: kein Jingle zweimal in einer Sendung
 
@@ -123,8 +149,7 @@ Sendung, nicht der Episode.
 
 [Import / Export](./IMPORT_EXPORT.md) trägt die Kriterien in
 `blocks.json`: `teaser_show` mit dem Sendungsnamen (beim Import die
-erste Sendung dieses Namens), `teaser_type` als `show`, `today` oder
-`tomorrow`, `teaser_fits` mit dem Wert `yes`.  Die Verknüpfungen der
+erste Sendung dieses Namens), `teaser_type` als `show`, `today`, `tomorrow`, `soon` oder `now`, `teaser_fits` mit dem Wert `yes`.  Die Verknüpfungen der
 Jingles selbst sind Metadaten der Dateien und nicht Teil des Bündels.
 
 ## 7. Häufig gestellte Fragen
