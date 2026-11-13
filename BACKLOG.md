@@ -171,6 +171,16 @@ ohne neuen Mechanismus; PLAYOUT + Template, geplanter Liquidsoap-Neustart.  🟡
 (brauchen `fade.out` mit Metadaten an der Queue, Bench zuerst) und ein Fade, wenn der Puffer-Track in
 Stille endet (heute harter Schluss am Cue-Out; nur bei Lücken < 60 s zwischen zwei Sendungen).
 
+**Alternative ohne Code geprüft (Operator-Frage 2026-11-13):** „Allow last track to exceed time
+limit" am Auto-DJ-Block schaltet die Auswahl um - ohne Häkchen Teilsummen-Suche (`SSPSolution`, beste
+Füllung), mit Häkchen zufällige Titel, bis die Zeit überschritten ist (`Block::getListOfFilesUnderLimit`);
+`Scheduler::pickRemainingBlock` nimmt aus bis zu 8 Ziehungen den kleinsten Überhang.  Folge: JEDE
+Auto-DJ-Befüllung endet mit einem abgeschnittenen Titel (1-s-Show-Fade), und eine Folgesendung mit
+„Allow delayed start" wird um den Überhang verschoben statt geschnitten.  Zweiter Block nur mit dem
+Puffer-Track (Häkchen an) hinter dem exakten Block: bekommt meist < 1 s Restzeit, fügt den Titel
+trotzdem ein (Prüfung erst nach dem Einfügen) → kurzer Fetzen im Crossfade, Minuten Überbuchung,
+verschobene Folgesendung.  Beides nicht empfohlen.
+
 **Grenze:** der Fill-Pass arbeitet nur vor Sendungsbeginn (1 h voraus); Lücken, die erst während
 der Sendung entstehen, deckt der Puffer-Track nicht ab.
 
