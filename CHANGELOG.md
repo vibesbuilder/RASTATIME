@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   übersteht eine Sendeplan-Aktualisierung nach dem Sendungsende, und Start / Ende zweier
   Aufnahmen im selben Moment laufen nacheinander (wer zuerst läuft, ist egal).  Manual
   LOCAL_MACHINE x4, ARCHITECTURE 0.137 (§23.109).  Wirksam nach Neustart API, dann PLAYOUT;
-  die Übersetzungen nach Apache-Neustart.
+  die Übersetzungen nach Apache-Neustart.  `df0ccf2e`.
 
 - **Tagesteaser „soon" und „now" (2026-11-13, Operator-Go)** - Zwei weitere Teaser-Typen
   neben show / today / tomorrow.  „now" passt, wenn der Jingle das Letzte vor der
