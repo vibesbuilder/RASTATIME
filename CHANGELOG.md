@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lassen sich ersetzen.  Leeres Feld = Standardtext in der Sendersprache (grau im Feld zu sehen);
   ein eigener Text gilt unabhängig von der Sendersprache.  Zahlen als `{total}` / `{shown}`.  Eine
   Einstellung (JSON), keine Migration, kein Neustart.  Manual WIDGETS + SONG_REQUESTS ×4,
-  ARCHITECTURE 0.140 (§23.112).
+  ARCHITECTURE 0.140 (§23.112). (`ded7da27`)
 
 - **Widgets → Song Request + Suchfeld im Song-Request-Widget (2026-11-13, Operator-Go A + C)**
   - Das Hörer-Widget `/embed/song-request` (seit 2026-06-07) hatte keine Seite unter
