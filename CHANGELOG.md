@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `auto_dj_buffer_unusable` + Endpunkt `GET /api/v2/auto-dj/buffer`.  Manual AUTO_DJ x4,
   ARCHITECTURE 0.135 (§23.107).  Wirksam: Stufe 1 sofort, sobald eine Buffer Playlist gesetzt
   ist; Fade und Cue-Fix nach Neustart API, dann PLAYOUT (geplanter Liquidsoap-Neustart).
+  `8ca9630e`.
 
 - **Widgets size themselves (2026-11-12, operator Go A, stages 1 + 2)** - every
   `/embed/` widget reports its content height to the page around it, and the new
@@ -48,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   statt „Cue-In + Sendungsende − Start" zurück (der Cue-Out ist eine Position in der Datei).
   Jede überbuchte Zeile endete deshalb um ihren Cue-In vor der Grenze (2026-11-07 17:15:
   0,03 s).  `Schedule.get_cue_out` rechnet den Cue-In mit; wirksam nach API-Neustart.
+  `8ca9630e`.
 
 - **Track History: `?min_sec=` reaches the list (2026-11-12)** - the widget JS
   forwarded `min_seconds`, the controller reads the documented `min_sec`, so a
