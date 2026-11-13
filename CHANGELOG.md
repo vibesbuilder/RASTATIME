@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   über den ganzen Pool (bis 50 Treffer), ohne Suche die Liste wie bisher mit Hinweis „die
   ersten 500 von 5.124" - bisher endete die Liste beim Buchstaben A, rund 90 % des Pools waren
   für Hörer unerreichbar.  API: Trefferzahl 25 → 50, Antwort mit `limit` (wirksam nach
-  API-Neustart).  Manual WIDGETS + SONG_REQUESTS ×4, ARCHITECTURE 0.139 (§23.111).
+  API-Neustart).  Manual WIDGETS + SONG_REQUESTS ×4, ARCHITECTURE 0.139 (§23.111).  (`ad5b4872`)
 
 - **Lautheits-Analyse je Track Type abschaltbar, fester Pegel (2026-11-13, Operator-Go)** -
   Gesprochene Spots über einem immer gleichen Soundbett pegelte die Messung je Datei nach
@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   die Zeile lag nach 500 Titeln außer Sicht.  Sie erscheint jetzt direkt unter dem angeklickten
   Titel.  Ein langer Titel machte die Tabelle breiter als den Rahmen und schnitt den
   Request-Knopf ab; jetzt Auslassungspunkte.  Die Hörertexte hatten keine Übersetzung; de /
-  fr / es ergänzt (Widgets folgen der Standardsprache).
+  fr / es ergänzt (Widgets folgen der Standardsprache).  (`ad5b4872`)
 
 - **Edit Track: „Save“ schloss den Tab nicht mehr (2026-11-13)** - Seit 2026-11-08 schließt
   der Tab erst nach erfolgreichem Speichern; davor stand aber ein Neuzeichnen der Library über
