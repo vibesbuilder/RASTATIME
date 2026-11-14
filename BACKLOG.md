@@ -8267,20 +8267,22 @@ Offen:
 
 ## Sendungsaufzeichnungen an die Sendungsmachenden weitergeben (Evaluierung 2026-11-14)
 
-### 🟢 Aufzeichnungen auf das Netzlaufwerk der Sendungsmachenden kopieren - ENTSCHIEDEN 2026-11-14 (Operator: Spiegel reicht), Details offen
-Die Sendungsmachenden holen ihre Mitschnitte schon heute aus einem
-Ordner eines Netzlaufwerks; dorthin sollen neu ankommende Dateien.
-Geplant: Skript + geplante Aufgabe (wie backup-auto.ps1), alle 2 min,
-kopiert nur fertig geschriebene Dateien (Sperrtest), zuerst als
-`.part`, dann umbenannt; löscht am Ziel NIE (kein /MIR - es würde die
-vorhandenen Dateien dort entfernen); Protokoll in logs/.
-Vorbedingungen:
-- Zielpfad (UNC) und gewünschte Ordnerstruktur dort.
-- Konto mit Schreibrecht: die RASTATIME-Aufgaben laufen als SYSTEM, das
-  auf ein NAS in der Regel nicht zugreifen darf - die Aufgabe braucht ein
-  Benutzerkonto (Kennwort gibt der Operator beim Registrieren ein).
-- Nur neue Aufnahmen oder auch der Bestand (56 Dateien, 5 GB)?
-- Go des Operators für Skript und Aufgabe.
+### ✅ Aufzeichnungen auf das Netzlaufwerk der Sendungsmachenden kopieren - GEBAUT 2026-11-14 (Go 2026-11-14, §23.114)
+Feld „Copy finished recordings to" unter Settings → Local Machine → Show
+Recording (Netzwerkpfad, leer = aus) mit Statuszeile; Windows-Aufgabe
+RASTATIME-RecordingCopy alle 2 min unter einem Konto mit Schreibrecht.
+Jede fertige Aufnahme genau einmal, alle in einen Ordner, Dateiname
+unverändert, zuerst als `.part`, nur ab dem Setzen des Ordners; am Ziel
+wird nie gelöscht oder überschrieben (kein /MIR - dort liegen fremde
+Dateien).
+Offen:
+- Aufgabe registrieren (Operator, erhöhte PowerShell, Kennwort):
+  `infra/scripts/register-recording-copy.ps1 -User <Konto>`.
+- Ordner im Feld eintragen; erste Kopie auf das Netzlaufwerk prüfen
+  (Schreibrecht des Kontos dort ist ungetestet).
+- Apache-Neustart für die Übersetzungen.
+- 💡 Idee: Preflight-Warnung, wenn die Aufgabe länger als 10 min nicht
+  gelaufen ist oder das Ziel nicht erreicht (heute nur die Statuszeile).
 
 ### 🟡 Download-Link per E-Mail nach Sendungsende + Kalender-Eintrag „Download Recording" - DEFER (evaluiert 2026-11-14; Operator wählt vorerst den Spiegel)
 Frage des Operators: Aufzeichnungen gleich nach Sendungsende bereitstellen -

@@ -264,36 +264,63 @@ danach lässt es sich jederzeit ohne Neustart ein- und ausschalten.
 
 ## 4. Eine Aufnahme finden und herunterladen
 
-### Aus dem Kalender
+### Aus der Bibliothek
 
-Klicken Sie die Sendung → **Aufnahmedatei ansehen** im
-Kontextmenü. Erscheint nur, nachdem die Aufnahme fertig
-geschrieben wurde (typischerweise ein paar Sekunden nach
-Sendungsende).
+Ist **Sendungsaufnahmen in die Bibliothek kopieren** eingeschaltet
+(Abschnitt 3.6), ist jede Aufnahme wenige Sekunden nach der Sendung ein
+Titel des Typs **Recordings**: **Tracks**, nach dem Sendungsnamen suchen
+oder den Track-Typ filtern, Kontextmenü → **Download**.  Das kann jedes
+angemeldete Konto.  (Bis 2026-11-14 beschrieb dieses Kapitel einen
+Kalender-Dialog „Aufnahmedatei ansehen"; es gibt ihn nicht mehr.)
 
-Der Dialog zeigt:
+### Aus dem Kopierordner *(seit 2026-11-14)*
 
-| Feld | Wert |
-|---|---|
-| **Dateiname** | `1234-2026-05-21_14-00-00.mp3` |
-| **Größe** | `144.5 MB` |
-| **Dauer** | `01:00:00` |
-| **Bitrate** | `320 kbps` |
-| **Download** | Direkter Download-Link |
+Einstellungen → Local Machine → Sendungsaufnahme → **Fertige Aufnahmen
+kopieren nach** nennt einen zweiten Ordner - üblicherweise einen auf
+einem Netzlaufwerk, von dem die Sendungsmachenden ihr Material schon
+abholen.  Etwa zwei Minuten nach einer Sendung liegt ihre Aufnahme dort:
+
+- alle Aufnahmen in diesem einen Ordner, mit ihrem Dateinamen
+  (`<Datum Uhrzeit> - <Sendung>.<Endung>`), ohne Tagesordner;
+- jede Aufnahme **einmal**: Eine Datei, die jemand weggeräumt hat, wird
+  nicht wieder hingelegt;
+- nur Aufnahmen, die nach dem Setzen (oder Ändern) des Ordners fertig
+  wurden;
+- am Ziel wird nie etwas gelöscht oder überschrieben - eine andere Datei
+  gleichen Namens bleibt, die Kopie bekommt ` (2)`;
+- eine Aufnahme, die noch geschrieben wird, bleibt unberührt, und die
+  Kopie kommt zuerst unter einem vorläufigen Namen (`.part`) an, damit
+  niemand eine halbe Datei abholt.
+
+Geben Sie den Ordner als **Netzwerkpfad** an
+(`\\server\freigabe\ordner`).  Ein verbundener Laufwerksbuchstabe
+(`S:`) gehört einem angemeldeten Benutzer und ist für die Kopier-Aufgabe
+nicht sichtbar; die Seite weist ihn ab.
+
+Kopiert wird von der Windows-Aufgabe **RASTATIME-RecordingCopy**, alle
+zwei Minuten.  Sie muss unter einem Konto laufen, das in den Ordner
+schreiben darf - die RASTATIME-Dienste laufen als SYSTEM, das ein
+Netzlaufwerk nicht erreicht.  Registrieren Sie sie einmal in einer
+PowerShell mit Administratorrechten:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-recording-copy.ps1 -User <Konto>
+```
+
+Windows fragt nach dem Kennwort dieses Kontos und verwahrt es selbst;
+RASTATIME sieht es nie.  Nach einer Kennwortänderung führen Sie den
+Befehl erneut aus.
+
+Die Zeile unter dem Feld zeigt die letzte Meldung der Aufgabe: den
+letzten Lauf, die zuletzt kopierte Datei oder den Fehler (Ziel nicht
+erreichbar).  Sie wird rot, wenn die Aufgabe zehn Minuten nicht gelaufen
+ist.  Kopierte Dateien und Fehler stehen außerdem in
+`logs\recording-copy.log`.
 
 ### Aus dem Dateisystem
 
-Browsen Sie `C:\rastatime\recordings\` direkt. Das
-Verzeichnis ist aus Sicherheitsgründen nicht über die
-Web-Oberfläche exponiert; nur der per-show
-"Aufnahmedatei ansehen"-Dialog gibt Zugriff über die
-Oberfläche.
-
-> **Wie es unter der Haube funktioniert.** Der Dialog ruft
-> `/api/v2/recordings/<show-instance-id>` auf, das die
-> Datei-Metadaten zurückgibt (per ffprobe gemessen). Der
-> Download wird über den Storage-Endpunkt mit einer
-> Streaming-Antwort bereitgestellt.
+Öffnen Sie den Aufnahmeordner (Einstellungen → Local Machine →
+Sendungsaufnahme → Ordnerpfad) direkt; ein Unterordner je Tag.
 
 ---
 

@@ -2866,6 +2866,98 @@ class Application_Model_Preference
         self::setValue('local_recording_bitrate', (string) (int) $value);
     }
 
+    // RASTATIME 2026-11-14 - "Copy finished recordings to": a second
+    // folder (usually on a network drive) where the show makers pick up
+    // their recordings.  manage.py recording_copy (Windows task
+    // RASTATIME-RecordingCopy, every two minutes, under a user account that
+    // may write there) copies each recording finished after ..._since once
+    // and reports into ..._state (JSON); empty folder = off.
+    public static function getLocalRecordingCopyFolder()
+    {
+        return trim((string) self::getValue('local_recording_copy_folder'));
+    }
+
+    /**
+     * Stores the folder; a changed folder restarts the "only recordings
+     * finished from now on" mark and clears the status of the old target.
+     *
+     * @param mixed $value
+     */
+    public static function setLocalRecordingCopyFolder($value)
+    {
+        $folder = rtrim(trim((string) $value), "\\/");
+        if (preg_match('/^[A-Za-z]:$/', $folder)) {
+            $folder .= '\\';
+        }
+        if (strcasecmp($folder, rtrim(self::getLocalRecordingCopyFolder(), "\\/")) !== 0
+            && strcasecmp($folder, self::getLocalRecordingCopyFolder()) !== 0) {
+            self::setValue('local_recording_copy_since', $folder === '' ? '' : gmdate('Y-m-d\TH:i:s\Z'));
+            self::setValue('local_recording_copy_state', '');
+        }
+        self::setValue('local_recording_copy_folder', $folder);
+    }
+
+    /**
+     * Why $value is no usable target folder, or null when it is fine
+     * ('' = off).  The web server runs as SYSTEM and cannot look into a
+     * network share, so a network path is only checked for its form; a
+     * drive-letter path must exist here - a mapped drive does not, and the
+     * copy task would not see it either.
+     *
+     * @param mixed $value
+     *
+     * @return null|string
+     */
+    public static function localRecordingCopyFolderError($value)
+    {
+        $folder = trim((string) $value);
+        if ($folder === '') {
+            return null;
+        }
+        // plain string tests: \\server\share[\...] or X:\...
+        $norm = str_replace('/', '\\', $folder);
+        $parts = array_values(array_filter(explode('\\', $norm), 'strlen'));
+        $isUnc = strncmp($norm, '\\\\', 2) === 0 && count($parts) >= 2;
+        $isDrive = !$isUnc && strlen($norm) >= 3 && ctype_alpha($norm[0]) && $norm[1] === ':' && $norm[2] === '\\';
+        if (!$isUnc && !$isDrive) {
+            return _('Enter the folder as a network path (\\\\server\\share\\folder) or as a path on a local drive.');
+        }
+        if ($isDrive && !is_dir($folder)) {
+            return _('Folder not found. A mapped network drive (a letter like S:) is not visible to the copy task - enter the network path (\\\\server\\share\\folder) instead.');
+        }
+        $source = rtrim(str_replace('/', '\\', self::getLocalRecordingFolder()), '\\');
+        $target = rtrim(str_replace('/', '\\', $folder), '\\');
+        if ($source !== '' && (strcasecmp($target, $source) === 0 || stripos($target . '\\', $source . '\\') === 0)) {
+            return _('The folder must not be the recording folder itself or lie inside it.');
+        }
+
+        return null;
+    }
+
+    /**
+     * The copy task's last report for the status line.
+     *
+     * @return array{enabled: bool, since: string, last_run: ?string, ok: ?bool, message: string,
+     *               last_file: ?string, last_copied_at: ?string, pending: int, copied_total: int}
+     */
+    public static function getLocalRecordingCopyStatus()
+    {
+        $state = json_decode((string) self::getValue('local_recording_copy_state'), true);
+        $state = is_array($state) ? $state : [];
+
+        return [
+            'enabled' => self::getLocalRecordingCopyFolder() !== '',
+            'since' => (string) self::getValue('local_recording_copy_since'),
+            'last_run' => isset($state['last_run']) ? (string) $state['last_run'] : null,
+            'ok' => array_key_exists('ok', $state) && $state['ok'] !== null ? (bool) $state['ok'] : null,
+            'message' => isset($state['message']) ? (string) $state['message'] : '',
+            'last_file' => isset($state['last_file']) ? (string) $state['last_file'] : null,
+            'last_copied_at' => isset($state['last_copied_at']) ? (string) $state['last_copied_at'] : null,
+            'pending' => (int) ($state['pending'] ?? 0),
+            'copied_total' => (int) ($state['copied_total'] ?? 0),
+        ];
+    }
+
     // RASTATIME 2026-11-13 - "Record Start": seconds by which a show
     // recording starts AND ends later (positive) or earlier (negative) than
     // the show, to line the file up with a source that reaches the mix late

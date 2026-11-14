@@ -645,6 +645,16 @@ The playout applies a change in its next quiet moment (or at the
 next track boundary); files already written keep their format,
 new files get the matching extension.
 
+**Copy finished recordings to** *(since 2026-11-14)*: a second folder,
+typically on a network drive, into which every finished show recording
+is copied once, about two minutes after the show - all in one folder,
+file name unchanged, nothing ever deleted there.  Enter a network path
+(`\\server\share\folder`), not a mapped drive letter.  Needs the
+Windows task RASTATIME-RecordingCopy under an account that may write to
+the folder; the line under the field shows its last report.  Details
+and the registration command in
+[Record-per-Show, section 4](./RECORD_PER_SHOW.md).  Empty = off.
+
 **Record Start (s)** *(since 2026-11-13)*: seconds by which the
 recording of a show starts **and** ends later (positive) or earlier
 (negative) than the show itself, from -60 to 60 with one decimal;

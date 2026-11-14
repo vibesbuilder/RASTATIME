@@ -252,32 +252,57 @@ time without a restart.
 
 ## 4. Finding and downloading a recording
 
-### From the calendar
+### From the library
 
-Click the show → **View Recorded File** in the context menu.
-Only appears after the recording finished writing (typically
-a few seconds after show end).
+With **Copy Show Recordings into Library** on (section 3.6), every
+recording is a track of the type **Recordings** a few seconds after the
+show: **Tracks**, search for the show name or filter the track type,
+context menu → **Download**.  Any signed-in account can do that.
+(Until 2026-11-14 this chapter described a calendar dialog "View
+Recorded File"; it does not exist any more.)
 
-The dialog shows:
+### From the copy folder *(since 2026-11-14)*
 
-| Field | Value |
-|---|---|
-| **Filename** | `1234-2026-05-21_14-00-00.mp3` |
-| **Size** | `144.5 MB` |
-| **Duration** | `01:00:00` |
-| **Bitrate** | `320 kbps` |
-| **Download** | Direct download link |
+Settings → Local Machine → Show Recording → **Copy finished recordings
+to** names a second folder - typically one on a network drive where the
+show makers already pick up their material.  About two minutes after a
+show, its recording appears there:
+
+- all recordings in that one folder, with their file name
+  (`<date time> - <show>.<ext>`), no day folders;
+- each recording **once**: a file somebody moved away is not put back;
+- only recordings finished after the folder was set (or changed);
+- nothing is ever deleted or overwritten at the target - a different
+  file of the same name stays, the copy gets ` (2)`;
+- a recording that is still being written is left alone, and the copy
+  arrives under a temporary name (`.part`) first, so nobody picks up
+  half a file.
+
+Enter the folder as a **network path** (`\\server\share\folder`).  A
+mapped drive letter (`S:`) belongs to a logged-on user and is not
+visible to the copy task; the page refuses it.
+
+The copying is done by the Windows task **RASTATIME-RecordingCopy**,
+every two minutes.  It must run under an account that may write to the
+folder - the RASTATIME services run as SYSTEM, which cannot reach a
+network share.  Register it once, in an elevated PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-recording-copy.ps1 -User <account>
+```
+
+Windows asks for that account's password and keeps it itself; RASTATIME
+never sees it.  After a password change run the command again.
+
+The line under the field shows the task's last report: the last run,
+the last copied file, or the error (target not reachable).  It turns
+red when the task has not run for ten minutes.  Copied files and errors
+are also listed in `logs\recording-copy.log`.
 
 ### From the file system
 
-Browse `C:\rastatime\recordings\` directly. The directory is
-not exposed via the web UI for security; only the per-show
-"View Recorded File" dialog gives access through the UI.
-
-> **How it works under the hood.** The dialog calls
-> `/api/v2/recordings/<show-instance-id>` which returns the
-> file metadata (probed via ffprobe). The download is served
-> via the storage endpoint with a streaming response.
+Browse the recording folder (Settings → Local Machine → Show Recording
+→ Folder path) directly; one sub-folder per day.
 
 ---
 

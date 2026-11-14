@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.141
+Draft version: 0.142
 Date: 2026-11-14
 
 > **Revision history**
+> - **0.142 (2026-11-14)** - **Copy finished recordings to a second folder** (§23.114): a
+>   Windows task under a user account copies each finished show recording once, flat, into
+>   a folder (network share) named under Settings - Local Machine; ledger and status in
+>   cc_pref, nothing ever deleted at the target.
 > - **0.141 (2026-11-14)** - **Published until for My Podcast** (§23.113): column
 >   `podcast_episodes.published_until` (migration 0084), StationPodcastExpiryTask unpublishes
 >   after the last day; publish actions whitelisted; My Podcast episode list fixed.
@@ -10430,3 +10434,73 @@ Failure mode: a wrong date comparison withdraws too much or too little
 - limited to episodes WITH a date, each withdrawal logged, files stay
 in the library, re-publishing possible.  Rollback: `git revert` (tag
 `live-2026-11-14c`), legacy live at once; the empty column may stay.
+
+### 23.114 Copy Finished Recordings to a Second Folder (2026-11-14)
+
+**Request.**  Operator 2026-11-14: hand show recordings to the show
+makers right after the show.  Evaluated (seven points, BACKLOG): a
+robocopy mirror, a mailed download link with a calendar entry, or the
+station podcast with a one-week end date.  Operator's decision: the show
+makers already collect their material from one folder of a network
+drive - copy new recordings there; the target as a setting, the Windows
+account not.
+
+**Why not robocopy /MIR.**  The target holds other people's files (1,649
+on the day of the build): a mirror would delete them.  Robocopy also has
+no minute-level age filter, so a running recording would be copied half,
+again and again, and a file a show maker moved away would be put back.
+
+**Design.**
+- Setting: Settings → Local Machine → Show Recording → "Copy finished
+  recordings to" (`cc_pref local_recording_copy_folder`, empty = off).
+  `Preference::localRecordingCopyFolderError` accepts a UNC path by form
+  (the web server runs as SYSTEM and cannot look into a share) and a
+  drive-letter path only if it exists there - a mapped drive letter does
+  not, and the task would not see it either; the recording folder and
+  anything inside it are refused.  A changed folder sets
+  `local_recording_copy_since` to now ("only recordings finished from now
+  on") and clears the status.
+- Logic: `storage/recording_copy.py` (pure functions on paths and a state
+  dict; `run_from_settings` is the only part that touches cc_pref) and
+  `manage.py recording_copy`.  A pass walks the recording folder and
+  takes audio files that are at least 64 KiB, were last written at or
+  after the since mark and at least 15 s ago, are not in the ledger and
+  are not open for writing (`is_locked`: CreateFileW with share mode
+  READ - a writer makes it fail, readers such as the library import are
+  neither counted nor disturbed).  Each is copied flat as `<name>.part`,
+  size-checked, renamed; a same-named file of the same size counts as
+  copied, a different one is kept and the copy gets " (2)".  The first
+  failed copy ends the pass (the share is gone); the next pass retries.
+- State: `local_recording_copy_state` (JSON): last run, ok, message,
+  pending, last file, total, and the ledger `{relative path: {at,
+  size}}`, pruned when the recording leaves the recording folder.
+- Task: `scripts/recording-copy.ps1` (logs copied files and errors to
+  `logs/recording-copy.log`, silent when idle), registered by
+  `infra/scripts/register-recording-copy.ps1 -User <account>`: every two
+  minutes, also after boot, `IgnoreNew`, logon type Password - Windows
+  asks for the password and keeps it; RASTATIME never handles it.  The
+  trigger has no UTC offset.
+- Status line under the field: waiting for the first run / last run and
+  last file / the error / red when the last run is older than ten
+  minutes.
+
+**Verification.**  14 tests on temporary folders (flat copy and name,
+what is left out, once only after the file was taken away, no overwrite,
+same size counts, unreachable target, failed copy retried, leftover
+`.part`, short copy refused, ledger pruning, order, time helpers, the
+open-file probe with a writer and a reader).  The logic copied a real
+415 MB recording with an umlaut in its name from the recording folder
+to a local test folder (0.5 s; second pass 0 files).  Path check probed
+with twelve example paths (`C:/Temp/optd/recording_copy_probe.php`); the
+page and the refusal of a mapped drive, a relative path and a folder
+inside the recording folder checked in the browser.  The task
+definition is valid XML; the runner exits 0 with the setting empty.
+Open: registration of the task and the first copy to the share by the
+operator (write permission of the account there is untested).
+
+**Risk.**  Low.  Nothing on air depends on it; the copy reads finished
+files only.  Failure modes are a missing copy (share offline, password
+changed - visible in the status line) and disk use at the target, where
+nothing is pruned.  Rollback: empty the field, or
+`Unregister-ScheduledTask -TaskName RASTATIME-RecordingCopy`;
+`git revert` (tag `live-2026-11-14e`).

@@ -8502,3 +8502,43 @@ msgstr "Dieser Track ist nicht mehr veröffentlicht."
 #: RASTATIME 2026-11-14 My Podcast published until
 msgid "Optional. The track stays published through this day (station time) and is unpublished automatically shortly after midnight - feed and download included. Empty = no end."
 msgstr "Optional. Der Track bleibt bis einschließlich dieses Tages (Senderzeit) veröffentlicht und wird kurz nach Mitternacht automatisch zurückgezogen - Feed und Download eingeschlossen. Leer = ohne Ende."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Copy finished recordings to"
+msgstr "Fertige Aufnahmen kopieren nach"
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Finished show recordings are also copied into this folder - all in one folder, with their file name - so the show makers can pick them up; typically a folder on a network drive.  Enter the network path (\\\\server\\share\\folder): a mapped drive letter is not visible to the copy task.  Each recording is copied once, within about two minutes after the show, and only recordings finished after you set the folder; nothing is ever deleted or overwritten there.  Needs the Windows task RASTATIME-RecordingCopy, registered once under an account that may write to the folder (see the manual).  Empty = off."
+msgstr "Fertige Sendungsaufnahmen werden zusätzlich in diesen Ordner kopiert - alle in einen Ordner, mit ihrem Dateinamen -, damit die Sendungsmachenden sie abholen können; üblicherweise ein Ordner auf einem Netzlaufwerk.  Geben Sie den Netzwerkpfad an (\\\\server\\share\\folder): Ein verbundener Laufwerksbuchstabe ist für die Kopier-Aufgabe nicht sichtbar.  Jede Aufnahme wird einmal kopiert, etwa zwei Minuten nach der Sendung, und nur Aufnahmen, die nach dem Setzen des Ordners fertig wurden; dort wird nie etwas gelöscht oder überschrieben.  Benötigt die Windows-Aufgabe RASTATIME-RecordingCopy, einmal registriert unter einem Konto, das in den Ordner schreiben darf (siehe Handbuch).  Leer = aus."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Waiting for the first run of the Windows task RASTATIME-RecordingCopy."
+msgstr "Warte auf den ersten Lauf der Windows-Aufgabe RASTATIME-RecordingCopy."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "The copy task has not run since %s - check the Windows task RASTATIME-RecordingCopy."
+msgstr "Die Kopier-Aufgabe ist seit %s nicht gelaufen - Windows-Aufgabe RASTATIME-RecordingCopy prüfen."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Last run %1$s: %2$s"
+msgstr "Letzter Lauf %1$s: %2$s"
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Last run %1$s - OK. Last copied: %2$s (%3$s)."
+msgstr "Letzter Lauf %1$s - OK. Zuletzt kopiert: %2$s (%3$s)."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Last run %s - OK. Nothing copied yet: only recordings finished after the folder was set are copied."
+msgstr "Letzter Lauf %s - OK. Noch nichts kopiert: Kopiert werden nur Aufnahmen, die nach dem Setzen des Ordners fertig wurden."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Enter the folder as a network path (\\\\server\\share\\folder) or as a path on a local drive."
+msgstr "Bitte den Ordner als Netzwerkpfad (\\\\server\\share\\folder) oder als Pfad auf einem lokalen Laufwerk angeben."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "Folder not found. A mapped network drive (a letter like S:) is not visible to the copy task - enter the network path (\\\\server\\share\\folder) instead."
+msgstr "Ordner nicht gefunden. Ein verbundenes Netzlaufwerk (ein Buchstabe wie S:) ist für die Kopier-Aufgabe nicht sichtbar - bitte den Netzwerkpfad (\\\\server\\share\\folder) angeben."
+
+#: RASTATIME 2026-11-14 copy finished recordings
+msgid "The folder must not be the recording folder itself or lie inside it."
+msgstr "Der Ordner darf nicht der Aufnahmeordner selbst sein oder darin liegen."

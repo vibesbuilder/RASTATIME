@@ -645,6 +645,17 @@ calme (ou à la prochaine limite de titre) ; les fichiers déjà écrits
 gardent leur format, les nouveaux reçoivent l'extension
 correspondante.
 
+**Copier les enregistrements terminés vers** *(depuis le 2026-11-14)* :
+un second dossier, en général sur un lecteur réseau, dans lequel chaque
+enregistrement d'émission terminé est copié une fois, environ deux
+minutes après l'émission - tous dans un seul dossier, nom de fichier
+inchangé, rien n'y est jamais supprimé.  Saisissez un chemin réseau
+(`\\serveur\partage\dossier`), pas une lettre de lecteur connecté.
+Nécessite la tâche Windows RASTATIME-RecordingCopy sous un compte
+autorisé à écrire dans le dossier ; la ligne sous le champ montre son
+dernier rapport.  Détails et commande d'enregistrement dans
+[Record-per-Show, section 4](./RECORD_PER_SHOW.md).  Vide = désactivé.
+
 **Début d'enregistrement (s)** *(depuis le 2026-11-13)* : nombre de
 secondes dont l'enregistrement d'une émission commence **et** se
 termine plus tard (positif) ou plus tôt (négatif) que l'émission

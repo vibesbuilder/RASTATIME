@@ -255,18 +255,64 @@ service RASTATIME-PLAYOUT suivant la mise à jour ; ensuite elle peut
 
 ## 4. Trouver et télécharger un enregistrement
 
-### Depuis le calendrier
+### Depuis la bibliothèque
 
-Cliquez sur l'émission → **Voir le fichier enregistré**
-dans le menu contextuel. Apparaît seulement après que
-l'enregistrement a fini d'écrire.
+Avec **Copier les enregistrements d'émission dans la bibliothèque**
+activé (section 3.6), chaque enregistrement est une piste de type
+**Recordings** quelques secondes après l'émission : **Tracks**, cherchez
+le nom de l'émission ou filtrez le type de piste, menu contextuel →
+**Download**.  Tout compte connecté peut le faire.  (Jusqu'au 2026-11-14,
+ce chapitre décrivait un dialogue du calendrier « Voir le fichier
+enregistré » ; il n'existe plus.)
 
-Le dialogue montre nom de fichier, taille, durée,
-bitrate et un lien de téléchargement direct.
+### Depuis le dossier de copie *(depuis le 2026-11-14)*
+
+Paramètres → Local Machine → Show Recording → **Copier les
+enregistrements terminés vers** désigne un second dossier - en général
+sur un lecteur réseau où les animateurs récupèrent déjà leur matériel.
+Environ deux minutes après une émission, son enregistrement s'y trouve :
+
+- tous les enregistrements dans ce seul dossier, avec leur nom de
+  fichier (`<date heure> - <émission>.<ext>`), sans dossiers par jour ;
+- chaque enregistrement **une fois** : un fichier que quelqu'un a
+  déplacé n'est pas remis ;
+- seulement les enregistrements terminés après la définition (ou la
+  modification) du dossier ;
+- rien n'est jamais supprimé ni écrasé à destination - un autre fichier
+  du même nom reste, la copie reçoit ` (2)` ;
+- un enregistrement encore en cours d'écriture est laissé de côté, et
+  la copie arrive d'abord sous un nom provisoire (`.part`), pour que
+  personne ne récupère un demi-fichier.
+
+Saisissez le dossier comme **chemin réseau**
+(`\\serveur\partage\dossier`).  Une lettre de lecteur connecté (`S:`)
+appartient à un utilisateur connecté et n'est pas visible pour la tâche
+de copie ; la page la refuse.
+
+La copie est faite par la tâche Windows **RASTATIME-RecordingCopy**,
+toutes les deux minutes.  Elle doit s'exécuter sous un compte autorisé
+à écrire dans le dossier - les services RASTATIME tournent sous SYSTEM,
+qui n'atteint pas un partage réseau.  Enregistrez-la une fois, dans un
+PowerShell avec élévation :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-recording-copy.ps1 -User <compte>
+```
+
+Windows demande le mot de passe de ce compte et le conserve lui-même ;
+RASTATIME ne le voit jamais.  Après un changement de mot de passe,
+relancez la commande.
+
+La ligne sous le champ montre le dernier rapport de la tâche : la
+dernière exécution, le dernier fichier copié ou l'erreur (destination
+inaccessible).  Elle passe au rouge quand la tâche ne s'est pas
+exécutée depuis dix minutes.  Les fichiers copiés et les erreurs
+figurent aussi dans `logs\recording-copy.log`.
 
 ### Depuis le système de fichiers
 
-Parcourez `C:\rastatime\recordings\` directement.
+Parcourez directement le dossier d'enregistrement (Paramètres → Local
+Machine → Show Recording → Folder path) ; un sous-dossier par jour.
 
 ---
 

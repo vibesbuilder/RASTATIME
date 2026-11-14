@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Fertige Aufnahmen in einen zweiten Ordner kopieren (2026-11-14, Operator-Go)** - Die
+  Sendungsmachenden holen ihre Mitschnitte aus einem Ordner eines Netzlaufwerks; neue
+  Sendungsaufnahmen landen jetzt von selbst dort.  Neu unter Settings → Local Machine →
+  Show Recording: „Copy finished recordings to" (Netzwerkpfad, leer = aus) mit Statuszeile.
+  Die Windows-Aufgabe RASTATIME-RecordingCopy (alle 2 min, unter einem Konto mit
+  Schreibrecht; Registrierung `infra/scripts/register-recording-copy.ps1 -User <Konto>`,
+  das Kennwort verwahrt Windows) kopiert jede fertige Aufnahme genau einmal, alle in einen
+  Ordner, Dateiname unverändert, zuerst als `.part`; nur Aufnahmen ab dem Setzen des
+  Ordners; laufende Aufnahmen bleiben unberührt; am Ziel wird nie gelöscht oder
+  überschrieben.  Kein Robocopy-Spiegel: er hätte die vorhandenen Dateien dort gelöscht.
+  Logik `storage/recording_copy.py` + `manage.py recording_copy`, Protokoll
+  `logs/recording-copy.log`.  Manual RECORD_PER_SHOW 4 (neu geschrieben: der dort
+  beschriebene Kalender-Dialog existierte nicht mehr) und LOCAL_MACHINE x4,
+  ARCHITECTURE 0.142 (§23.114).  Wirksam ohne Dienst-Neustart, sobald die Aufgabe
+  registriert und der Ordner gesetzt ist; die Übersetzungen nach Apache-Neustart.
+
 - **My Podcast: „Published until“ (2026-11-14, Operator-Go B)** - im Publish-Dialog lässt sich der letzte
   Tag angeben, an dem ein Track im Sender-Podcast bleibt (inklusive, leer = ohne Ende); bei veröffentlichten
   Tracks änderbar („Save date“).  Kurz nach Mitternacht (spätestens ~7 min) zieht der neue

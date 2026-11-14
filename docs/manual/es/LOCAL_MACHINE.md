@@ -632,6 +632,17 @@ El playout aplica un cambio en su próximo momento tranquilo (o en el
 siguiente límite de pista); los archivos ya escritos conservan su
 formato, los nuevos reciben la extensión correspondiente.
 
+**Copiar las grabaciones terminadas a** *(desde 2026-11-14)*: una
+segunda carpeta, normalmente en una unidad de red, a la que se copia
+una vez cada grabación de programa terminada, unos dos minutos después
+del programa: todas en una carpeta, nombre de archivo sin cambios, allí
+nunca se borra nada.  Introduzca una ruta de red
+(`\\servidor\recurso\carpeta`), no una letra de unidad conectada.
+Necesita la tarea de Windows RASTATIME-RecordingCopy con una cuenta que
+pueda escribir en la carpeta; la línea bajo el campo muestra su último
+informe.  Detalles y comando de registro en
+[Record-per-Show, sección 4](./RECORD_PER_SHOW.md).  Vacío = desactivado.
+
 **Inicio de grabación (s)** *(desde 2026-11-13)*: segundos que la
 grabación de un programa empieza **y** termina más tarde (positivo) o
 más temprano (negativo) que el propio programa, de -60 a 60 con un

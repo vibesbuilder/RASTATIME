@@ -906,6 +906,27 @@ class PreferenceController extends Zend_Controller_Action
             }
         }
 
+        // RASTATIME 2026-11-14 - "Copy finished recordings to" (absent =
+        // keep the stored value)
+        $copyFolder = null;
+        if ($this->_getParam('copy_folder') !== null) {
+            $copyFolder = trim((string) $this->_getParam('copy_folder'));
+            $copyError = Application_Model_Preference::localRecordingCopyFolderError($copyFolder);
+            if ($copyError === null && $copyFolder !== '' && $folder !== '') {
+                // against the recording folder of THIS save
+                $src = rtrim(str_replace('/', '\\', $folder), '\\');
+                $dst = rtrim(str_replace('/', '\\', $copyFolder), '\\');
+                if (strcasecmp($dst, $src) === 0 || stripos($dst . '\\', $src . '\\') === 0) {
+                    $copyError = _('The folder must not be the recording folder itself or lie inside it.');
+                }
+            }
+            if ($copyError !== null) {
+                $this->_helper->json->sendJson(['ok' => false, 'error' => $copyError]);
+
+                return;
+            }
+        }
+
         // RASTATIME 2026-10-19 - copy finished recordings into the library
         $copyToLibrary = in_array(strtolower(trim((string) $this->_getParam('copy_to_library', 'false'))), ['true', '1', 'on', 'yes'], true);
         Application_Model_Preference::setLocalRecordingFolder($folder);
@@ -913,6 +934,9 @@ class PreferenceController extends Zend_Controller_Action
         Application_Model_Preference::setLocalRecordingBitrate($bitrate);
         Application_Model_Preference::setLocalRecordingCopyToLibrary($copyToLibrary);
         Application_Model_Preference::setLocalRecordingStartOffset($startOffset);
+        if ($copyFolder !== null) {
+            Application_Model_Preference::setLocalRecordingCopyFolder($copyFolder);
+        }
         if ((float) $startOffset !== (float) $offsetBefore) {
             // the playout reads the offset with the schedule: fetch it now
             try {
@@ -931,6 +955,7 @@ class PreferenceController extends Zend_Controller_Action
             'bitrate' => $bitrate,
             'copy_to_library' => $copyToLibrary,
             'start_offset' => (float) $startOffset,
+            'copy_folder' => Application_Model_Preference::getLocalRecordingCopyFolder(),
         ]);
     }
 

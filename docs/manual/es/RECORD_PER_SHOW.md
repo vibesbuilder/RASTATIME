@@ -234,15 +234,64 @@ activarse o desactivarse en cualquier momento sin reiniciar.
 
 ## 4. Encontrar y descargar una grabación
 
-### Desde el calendario
+### Desde la biblioteca
 
-Clic en el programa → **Ver archivo grabado** en el menú
-contextual. Aparece solo después de que la grabación ha
-terminado de escribir.
+Con **Copiar las grabaciones de programas a la biblioteca** activado
+(sección 3.6), cada grabación es una pista del tipo **Recordings** unos
+segundos después del programa: **Tracks**, busque el nombre del programa
+o filtre el tipo de pista, menú contextual → **Download**.  Cualquier
+cuenta con sesión iniciada puede hacerlo.  (Hasta 2026-11-14 este
+capítulo describía un diálogo del calendario «Ver archivo grabado»; ya
+no existe.)
+
+### Desde la carpeta de copia *(desde 2026-11-14)*
+
+Ajustes → Local Machine → Show Recording → **Copiar las grabaciones
+terminadas a** indica una segunda carpeta, normalmente en una unidad de
+red de la que los realizadores ya recogen su material.  Unos dos
+minutos después de un programa, su grabación está allí:
+
+- todas las grabaciones en esa única carpeta, con su nombre de archivo
+  (`<fecha hora> - <programa>.<ext>`), sin carpetas por día;
+- cada grabación **una vez**: un archivo que alguien haya movido no se
+  vuelve a poner;
+- solo las grabaciones terminadas después de fijar (o cambiar) la
+  carpeta;
+- en el destino nunca se borra ni se sobrescribe nada: otro archivo con
+  el mismo nombre se queda, la copia recibe ` (2)`;
+- una grabación que todavía se está escribiendo no se toca, y la copia
+  llega primero con un nombre provisional (`.part`), para que nadie
+  recoja medio archivo.
+
+Introduzca la carpeta como **ruta de red**
+(`\\servidor\recurso\carpeta`).  Una letra de unidad conectada (`S:`)
+pertenece a un usuario con sesión iniciada y no es visible para la tarea
+de copia; la página la rechaza.
+
+La copia la hace la tarea de Windows **RASTATIME-RecordingCopy**, cada
+dos minutos.  Debe ejecutarse con una cuenta que pueda escribir en la
+carpeta: los servicios de RASTATIME se ejecutan como SYSTEM, que no
+alcanza un recurso de red.  Regístrela una vez, en un PowerShell con
+privilegios de administrador:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-recording-copy.ps1 -User <cuenta>
+```
+
+Windows pide la contraseña de esa cuenta y la guarda él mismo;
+RASTATIME nunca la ve.  Tras un cambio de contraseña, ejecute de nuevo
+el comando.
+
+La línea bajo el campo muestra el último informe de la tarea: la última
+ejecución, el último archivo copiado o el error (destino inaccesible).
+Se pone roja cuando la tarea lleva diez minutos sin ejecutarse.  Los
+archivos copiados y los errores figuran además en
+`logs\recording-copy.log`.
 
 ### Desde el sistema de archivos
 
-Navegue `C:\rastatime\recordings\` directamente.
+Abra directamente la carpeta de grabaciones (Ajustes → Local Machine →
+Show Recording → Folder path); una subcarpeta por día.
 
 ---
 

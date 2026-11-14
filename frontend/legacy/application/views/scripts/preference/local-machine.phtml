@@ -746,6 +746,41 @@ $rtTip = function ($text) {
     $localRecordingBitrate = Application_Model_Preference::getLocalRecordingBitrate();
     // RASTATIME 2026-10-19 - copy finished recordings into the library
     $localRecordingCopy = Application_Model_Preference::getLocalRecordingCopyToLibrary();
+    // RASTATIME 2026-11-14 - "Copy finished recordings to" + the copy
+    // task's last report (status line under the field)
+    $localRecordingCopyFolder = Application_Model_Preference::getLocalRecordingCopyFolder();
+    $rcStatus = Application_Model_Preference::getLocalRecordingCopyStatus();
+    $rcLocal = function ($iso) {
+        try {
+            $at = new DateTime((string) $iso, new DateTimeZone('UTC'));
+            $at->setTimezone(new DateTimeZone(Application_Model_Preference::GetDefaultTimezone() ?: 'UTC'));
+
+            return $at->format('Y-m-d H:i');
+        } catch (Exception $e) {
+            return (string) $iso;
+        }
+    };
+    $rcText = '';
+    $rcColor = '#888';
+    if ($rcStatus['enabled']) {
+        $rcAge = $rcStatus['last_run'] ? time() - strtotime($rcStatus['last_run']) : null;
+        if ($rcStatus['last_run'] === null) {
+            $rcText = _('Waiting for the first run of the Windows task RASTATIME-RecordingCopy.');
+            $rcColor = '#c98a1b';
+        } elseif ($rcAge > 600) {
+            $rcText = sprintf(_('The copy task has not run since %s - check the Windows task RASTATIME-RecordingCopy.'), $rcLocal($rcStatus['last_run']));
+            $rcColor = '#d9534f';
+        } elseif ($rcStatus['ok'] === false) {
+            $rcText = sprintf(_('Last run %1$s: %2$s'), $rcLocal($rcStatus['last_run']), $rcStatus['message']);
+            $rcColor = '#d9534f';
+        } elseif ($rcStatus['last_file'] !== null) {
+            $rcText = sprintf(_('Last run %1$s - OK. Last copied: %2$s (%3$s).'), $rcLocal($rcStatus['last_run']), $rcStatus['last_file'], $rcLocal($rcStatus['last_copied_at']));
+            $rcColor = '#5cb85c';
+        } else {
+            $rcText = sprintf(_('Last run %s - OK. Nothing copied yet: only recordings finished after the folder was set are copied.'), $rcLocal($rcStatus['last_run']));
+            $rcColor = '#5cb85c';
+        }
+    }
     // RASTATIME 2026-11-13 - "Record Start": offset of start and end (s)
     $localRecordingStartOffset = rtrim(rtrim(number_format(Application_Model_Preference::getLocalRecordingStartOffset(), 1, '.', ''), '0'), '.');
     ?>
@@ -792,6 +827,15 @@ $rtTip = function ($text) {
             <dt><label for="local_recording_copy_to_library"><?php echo _("Copy Show Recordings into Library") ?></label><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("When a recorded show ends, a copy of its recording is imported into the media library as track type \"Recordings\" (title: show name and start time) and linked to the episode, so it can be scheduled again or used in playlists.  The file in the recording folder stays where it is.  Needs ffmpeg for the tags; takes effect for shows that end after the playout was restarted once.")) ?>"></span></dt>
             <dd>
                 <input id="local_recording_copy_to_library" name="local_recording_copy_to_library" type="checkbox" value="1"<?php echo $localRecordingCopy ? ' checked="checked"' : ''; ?> />
+            </dd>
+            <dt><label for="local_recording_copy_folder"><?php echo _("Copy finished recordings to") ?></label></dt>
+            <dd>
+                <input id="local_recording_copy_folder" name="local_recording_copy_folder"
+                       type="text" class="input_text"
+                       style="width: 372px; max-width: 100%;"
+                       value="<?php echo htmlspecialchars((string) $localRecordingCopyFolder, ENT_QUOTES); ?>"
+                       placeholder="\\server\share\recordings" /><span class="help_icon" data-rt-tip="<?php echo $rtTip(_("Finished show recordings are also copied into this folder - all in one folder, with their file name - so the show makers can pick them up; typically a folder on a network drive.  Enter the network path (\\\\server\\share\\folder): a mapped drive letter is not visible to the copy task.  Each recording is copied once, within about two minutes after the show, and only recordings finished after you set the folder; nothing is ever deleted or overwritten there.  Needs the Windows task RASTATIME-RecordingCopy, registered once under an account that may write to the folder (see the manual).  Empty = off.")); ?>"></span>
+                <div id="local_recording_copy_status" style="margin-top: 4px; color: <?php echo $rcColor; ?>;"><?php echo htmlspecialchars($rcText, ENT_QUOTES); ?></div>
             </dd>
             <dt></dt>
             <dd>
@@ -924,8 +968,9 @@ $rtTip = function ($text) {
 
         // RASTATIME 2026-05-17 - Recording Folder save handler (a section
         // of the page's Save since 2026-10-27).
+        var rtCopyFolderAtLoad = $("#local_recording_copy_folder").val();
         var recordingSection = RtPageSave.register("show_recording",
-            "#local_recording_folder, #local_recording_format, #local_recording_bitrate, #local_recording_start_offset, #local_recording_copy_to_library", function () {
+            "#local_recording_folder, #local_recording_format, #local_recording_bitrate, #local_recording_start_offset, #local_recording_copy_to_library, #local_recording_copy_folder", function () {
             var done = $.Deferred();
             var path = $("#local_recording_folder").val();
             $.post(
@@ -935,6 +980,7 @@ $rtTip = function ($text) {
                     format: $("#local_recording_format").val(),
                     bitrate: $("#local_recording_bitrate").val(),
                     start_offset: $("#local_recording_start_offset").val(),
+                    copy_folder: $("#local_recording_copy_folder").val(),
                     copy_to_library: $("#local_recording_copy_to_library").is(":checked") ? "true" : "false",
                     csrf_token: $("#csrf").val()
                 },
@@ -943,6 +989,12 @@ $rtTip = function ($text) {
                     if (resp && resp.ok) {
                         msg.text("✓ " + (path ? "Saved.  A changed format or bitrate is applied by the playout in the next quiet moment (or at the next track boundary)." : "Disabled (empty path)."))
                            .css("color", "#5cb85c");
+                        // RASTATIME 2026-11-14 - the copy task reports within two minutes
+                        if (resp.copy_folder !== rtCopyFolderAtLoad) {
+                            rtCopyFolderAtLoad = resp.copy_folder;
+                            $("#local_recording_copy_status").css("color", "#888").text(
+                                resp.copy_folder ? "Saved.  The copy task reports here after its next run (reload the page in two minutes)." : "");
+                        }
                         done.resolve();
                     } else {
                         msg.text("✗ " + (resp.error || "Save failed."))

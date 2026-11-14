@@ -696,6 +696,18 @@ Das Playout übernimmt eine Änderung im nächsten ruhigen Moment
 (oder an der nächsten Titelgrenze); bereits geschriebene Dateien
 behalten ihr Format, neue Dateien bekommen die passende Endung.
 
+**Fertige Aufnahmen kopieren nach** *(seit 2026-11-14)*: ein zweiter
+Ordner, üblicherweise auf einem Netzlaufwerk, in den jede fertige
+Sendungsaufnahme einmal kopiert wird, etwa zwei Minuten nach der Sendung
+- alle in einen Ordner, Dateiname unverändert, dort wird nie etwas
+gelöscht.  Geben Sie einen Netzwerkpfad an
+(`\\server\freigabe\ordner`), keinen verbundenen
+Laufwerksbuchstaben.  Benötigt die Windows-Aufgabe
+RASTATIME-RecordingCopy unter einem Konto, das in den Ordner schreiben
+darf; die Zeile unter dem Feld zeigt ihre letzte Meldung.  Details und
+der Registrierbefehl in
+[Record-per-Show, Abschnitt 4](./RECORD_PER_SHOW.md).  Leer = aus.
+
 **Aufnahmestart (s)** *(seit 2026-11-13)*: Sekunden, um die die
 Aufnahme einer Sendung später (positiv) oder früher (negativ) beginnt
 **und** endet als die Sendung selbst, von -60 bis 60 mit einer
