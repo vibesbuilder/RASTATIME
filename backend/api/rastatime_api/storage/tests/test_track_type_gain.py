@@ -46,14 +46,14 @@ class TestFixedGainOfTheFileSerializer(APITestCase):
         )
 
     def test_measuring_type_and_no_type_report_null(self):
-        measuring = baker.make("storage.Library", code="mus1")
+        measuring = baker.make("storage.Library", code="mus1", name="Test Music", description="")
         for file in (self._file(measuring), self._file()):
             response = self.client.get(f"/api/v2/files/{file.id}")
             self.assertEqual(response.status_code, 200)
             self.assertIsNone(response.json()["track_type_fixed_gain_db"])
 
     def test_type_with_the_analysis_off_reports_its_fixed_gain(self):
-        spots = baker.make("storage.Library", code="spt1")
+        spots = baker.make("storage.Library", code="spt1", name="Test Spots", description="")
         with connection.cursor() as cursor:
             cursor.execute(
                 "UPDATE cc_track_types SET analyze_loudness = FALSE, fixed_gain_db = %s "
