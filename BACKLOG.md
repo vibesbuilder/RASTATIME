@@ -8267,7 +8267,22 @@ Offen:
 
 ## Sendungsaufzeichnungen an die Sendungsmachenden weitergeben (Evaluierung 2026-11-14)
 
-### 💡 Download-Link per E-Mail nach Sendungsende + Kalender-Eintrag „Download Recording" - EVALUIERT 2026-11-14, wartet auf Go
+### 🟢 Aufzeichnungen auf das Netzlaufwerk der Sendungsmachenden kopieren - ENTSCHIEDEN 2026-11-14 (Operator: Spiegel reicht), Details offen
+Die Sendungsmachenden holen ihre Mitschnitte schon heute aus einem
+Ordner eines Netzlaufwerks; dorthin sollen neu ankommende Dateien.
+Geplant: Skript + geplante Aufgabe (wie backup-auto.ps1), alle 2 min,
+kopiert nur fertig geschriebene Dateien (Sperrtest), zuerst als
+`.part`, dann umbenannt; löscht am Ziel NIE (kein /MIR - es würde die
+vorhandenen Dateien dort entfernen); Protokoll in logs/.
+Vorbedingungen:
+- Zielpfad (UNC) und gewünschte Ordnerstruktur dort.
+- Konto mit Schreibrecht: die RASTATIME-Aufgaben laufen als SYSTEM, das
+  auf ein NAS in der Regel nicht zugreifen darf - die Aufgabe braucht ein
+  Benutzerkonto (Kennwort gibt der Operator beim Registrieren ein).
+- Nur neue Aufnahmen oder auch der Bestand (56 Dateien, 5 GB)?
+- Go des Operators für Skript und Aufgabe.
+
+### 🟡 Download-Link per E-Mail nach Sendungsende + Kalender-Eintrag „Download Recording" - DEFER (evaluiert 2026-11-14; Operator wählt vorerst den Spiegel)
 Frage des Operators: Aufzeichnungen gleich nach Sendungsende bereitstellen -
 Robocopy-Spiegel des Aufnahmeordners, eigene Integration oder My Podcast
 mit einer Woche Laufzeit?
