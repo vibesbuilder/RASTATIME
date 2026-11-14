@@ -80,6 +80,54 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Publish to My Podcast: Veröffentlichung bis zu einem Datum - Evaluierung 2026-11-14, wartet auf Go
+
+**Wunsch (Operator 2026-11-14):** Beim Veröffentlichen eines Tracks im Sender-Podcast festlegen, dass er nur
+bis zu einem bestimmten Datum veröffentlicht bleibt.
+
+**Ist-Stand:** „Publish" legt eine Zeile in `podcast_episodes` an (Sender-Podcast id 1, öffentlich, derzeit
+2 Episoden vom 2026-11-13); „Unpublish" löscht sie.  Diese eine Zeile entscheidet an vier Stellen: RSS-Feed
+(`PodcastService::createStationRssFeed`), Datei-Download für Podcast-Apps (`Acl_plugin::isVerifiedDownload`
+→ `StationPodcast::hasEpisodeForFile`), öffentliche Podcast-Seite (`IndexController`, `getPodcastEpisodes`)
+und Status im Publish-Dialog.  Es gibt kein Ablaufdatum und keinen Zeitplan.
+
+**Optionen:**
+- **A - Ablauf beim Lesen (empfohlen):** neue Spalte `podcast_episodes.published_until` (Datum, leer = ohne
+  Ende).  Alle vier Stellen blenden abgelaufene Episoden aus, auf die Minute genau, ohne Hintergrundlauf.
+  Die Zeile bleibt: Der Dialog zeigt „abgelaufen am …" und lässt das Datum verlängern oder neu
+  veröffentlichen.
+- **B - Automatisch zurückziehen:** gleiche Spalte, dazu ein TaskManager-Lauf, der abgelaufene Episoden
+  wie „Unpublish" löscht.  Hängt am Task-Takt (läuft mit den Playout-API-Aufrufen, also einige Minuten
+  verspätet), ohne zusätzlichen Lesefilter steht die Episode bis dahin noch im Feed; danach ist nicht mehr
+  sichtbar, was wann veröffentlicht war.
+- **C - ohne Schema (JSON-Einstellung je Episode):** keine Migration, aber Filter nur in PHP, verwaiste
+  Einträge, kein SQL-Join.  Nicht empfohlen.
+
+**Offene Entscheidungen:** (1) Datum inklusive - „bis 31.12." heißt am 31.12. noch online, ab 01.01. 00:00
+Senderzeit weg (Vorschlag; das Track-Ablaufdatum zählt dagegen ab 00:00 des Tages als abgelaufen).
+(2) Download sperren: ja (Vorschlag) - sonst bleibt die Datei über den bekannten Link abrufbar; bereits
+heruntergeladene Kopien in Hörer-Apps kann niemand zurückholen.  (3) Datum auch für schon veröffentlichte
+Episoden nachträglich setzbar: ja (im Dialog, „Change").
+
+**Evaluierung (Option A):**
+1. **Machbarkeit:** ja, alles im vorhandenen Stack (Legacy PHP + eine Django-Migration).
+2. **Eingriff:** eine Spalte (Migration 0084, nullable), Propel-Modell + Map von Hand, Django-Modellfeld;
+   Filter in Feed, Download-Prüfung, öffentlicher Seite, Dialog-Status; REST `rest/media/{id}/publish`
+   nimmt das Datum an; Publish-Dialog bekommt ein Feld „Published until" (YYYY-MM-DD, leer = ohne Ende)
+   und bei „Published on" das Datum mit „Change"; Liste „My Podcast" zeigt die Spalte.  Kein Playout-Pfad.
+3. **Aufwand:** ca. 300-400 Zeilen in 12-15 Dateien, keine neue Abhängigkeit; Übersetzung de/fr/es;
+   Manual PODCASTS ×4.
+4. **Dauer:** ca. 1 Arbeitstag (Bau 4-6 h, Prüfung + Doku 2 h).
+5. **Sinn:** Zeitlich begrenzte Inhalte (Rechte, Aktionen, Gewinnspiele) verschwinden pünktlich von selbst,
+   ohne dass jemand an „Unpublish" denken muss.  Heute noch wenig Episoden, der Nutzen wächst mit dem Podcast.
+6. **Empfehlung:** Go für A, Datum inklusive, Download mit gesperrt.
+7. **Risiko:** niedrig - nur Feed, Download und Dialog des Sender-Podcasts, kein Sendebetrieb.  Fehlerbild:
+   Feed oder Dialog mit Fehler 500 bis zum Rückbau (Podcast-Apps zeigen solange den alten Stand).  Reihenfolge
+   zwingend: erst Migration (Operator), dann Legacy-Code (sonst fragt der Feed eine fehlende Spalte ab).
+   Rückfall: `git revert`, die leere Spalte darf bleiben.
+
+💡 Später möglich: Standard-Laufzeit für neue Episoden (z. B. 30 Tage) in den Einstellungen von My Podcast.
+
 ### ✅ Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - GEBAUT 2026-11-13 (Go A + C, §23.111; API-Neustart 2026-11-14); eigene Texte (B) GEBAUT 2026-11-14 (§23.112)
 
 Operator-Frage 2026-11-13: warum fehlt das Song-Request-Widget unter WIDGETS?  Lücke, keine Entscheidung: die

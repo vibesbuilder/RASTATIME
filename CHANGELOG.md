@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tooltips für Intro / Outro Autoloading Playlist (2026-11-14, Operator-Wunsch)** - Settings → General →
   Automation: beide Felder haben ein Info-Symbol (wann die Playlist läuft, Outro mit „time remaining in
   show" als Füller, nicht in Wunsch-/Verkehrsfunk-Sendungen, eigene Wahl je Sendung, None = keine);
-  Übersetzung de/fr/es.  Manual SETTINGS ×4 präzisiert.  Kein Neustart.
+  Übersetzung de/fr/es.  Manual SETTINGS ×4 präzisiert.  Kein Neustart.  (`a6a3fab8`)
 - **Song-Request-Widget: eigene Hörertexte (2026-11-14, Operator-Go B)** - Settings → Widgets →
   Song Request hat einen Abschnitt *Listener texts*: alle zwölf Texte des Widgets (Suchfeld, Laden,
   leerer Pool, keine Treffer, die beiden Hinweise, Knopf, die vier Antworten, „nicht verfügbar")
