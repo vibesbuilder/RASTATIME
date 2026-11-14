@@ -7031,8 +7031,15 @@ fast nur World/Reggae mit Tags in halber Zeit (59-80), gemessen wird Doppelzeit 
 eine Konvention, keine Messfrage; das Verhältnis halbe/doppelte Tempogramm-Stärke trennt nicht (0,75-1,28 bei
 fast allen) -> taugt nicht als „unsicher“-Merkmal.  Key: Verteilung plausibel (C/G/D/A/E-Dur, a/e/d-Moll vorn,
 106 Moll / 94 Dur), aber ohne Referenz unverifiziert; Abstand bester/zweitbester Kandidat Median 0,085.
-Offen vor dem Bau: Operator-Ja zur Installation der dauerhaften venv (PyPI, ~420 MB), Oktav-Konvention,
-Key-Schreibweise (Camelot „8A“ / kurz „Am“ / beides).
+**Operator-Entscheidungen 2026-11-14:** (1) dauerhafte venv ja, (2) Tempo-Oktave wie gemessen (Reggae meist
+120-160; die 37 vorhandenen bpm-Tags bleiben als Handwerte), (3) Key als „8A · Am“ (Camelot gespeichert, Kurzform
+abgeleitet; die Textsortierung der Camelot-Codes ist eine Drehung des Quintenzirkels).  Teil 1 gebaut
+(`c6a32566`): `backend/features/tempo_key.py` (JSON-Zeilen über stdin/stdout, 0,25 s je Titel, misst wie die
+Stichprobe), `requirements.txt` gepinnt, `infra/scripts/install-features-venv.ps1`; `.venv-features` installiert
+2026-11-14 (415 MB, Selbsttest OK).  Teil 2 offen (nach der Nachkalibrierung von Stufe 1): Migration 0086
+(`musical_key`), Aufruf aus `analyze_audio_features` (Ergebnis unter `audio_features->'tk'`, Stufe-1-Schreiben
+erhält `tk`), Tempo in `bpm` mit Handwert-Regel, Library-Spalte Key, Edit Track (Key-Auswahl, gemessene Werte im
+Hilfe-Symbol), Kriterium Key (ist / ist nicht, nimmt „8A“ und „Am“), Doku x4.
 
 ## Test-Hygiene (2026-10-22)
 
