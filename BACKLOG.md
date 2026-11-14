@@ -6975,6 +6975,30 @@ Subprozess aus dem Analyzer), die Produktiv-venv bleibt unveraendert.  Operator 
 Backlog (Defer), Bench-Umgebung C:/Temp/optd/librosa_bench bleibt fuer einen spaeteren Anlauf liegen.  Alternative ohne librosa: Tempo/Key/Energy per ffmpeg-Filtern
 (ebur128/astats liefern Energie, kein Tempo/Key) - nur Teilabdeckung.
 
+**Neubewertung 2026-11-14 (Operator will das Thema angehen; Entscheidung offen).**  Neue Fakten:
+Bestand 25.020 Titel (24.224 music); `bpm` nur bei 37 Titeln, `mood` bei 24 (fast nur „<Unbekannt>“),
+keine Key-Spalte; Stichprobe 1.500 Musikdateien (mutagen, nur lesen): 0 mit Key-Tag, 12 mit BPM-Tag,
+11 mit Mood-Tag -> es gibt praktisch keine Referenzdaten, der alte Plan „Tempo nur wenn bpm leer,
+Abgleich gegen vorhandene bpm“ ist hinfällig; prüfen lässt sich nur per Hörprobe.  Smart Blocks (142)
+filtern heute nach album_title (108) und genre (50).  Bench-venv läuft noch (librosa 1.0.0, Python 3.13.14
+wie produktiv; aktuell 1.0.1).  Essentia (bessere Key/Tempo-Erkennung) hat keine Windows-Wheels -> raus.
+ffmpeg 9.0.1 des Analyzers kann `aspectralstats`: Spektral-Schwerpunkt (Helligkeit) und Spektral-Fluss
+auf 30 s aus der Mitte in 0,1 s je Titel (8 Titel, `C:/Temp/optd/librosa_bench/ffmpeg_spectral_probe.py`),
+ohne neue Abhängigkeit, aber ohne Tempo und Key.  Befund: rohe „Energie“ (RMS im Bench, Fluss hier) misst
+vor allem die Mastering-Lautheit (Fluss 0,004 bei -25,1 LUFS, 0,07 bei -7,9 LUFS) -> nur pegelbereinigt
+sinnvoll (auf -23 LUFS gerechnet; loudness_lufs liegt für jeden Musiktitel vor).
+Optionen: A) Analyse im Import-Pfad (Subprozess je Datei: ~8 s JIT je Titel, Massenimport +1 Tag,
+librosa-Fehler im Import); B) eigener Merkmal-Worker als Windows-Aufgabe (Muster RecordingCopy,
+niedrige Priorität, ein Thread), füllt Musiktitel ohne Werte, Bestand und Neuimporte über denselben Weg,
+Import und Playout unberührt; C) nur ffmpeg (Energy + Helligkeit, kein Tempo/Key).
+Empfehlung: Stufe 1 = B mit ffmpeg: Energy 1-10 (pegelbereinigt, Fluss + Lautheitsumfang) und
+Helligkeit 1-10 (= lesbares Timbre), nur in der DB (keine Tags in Dateien), Worker füllt nur leere Werte,
+Hand-Edit gewinnt, Smart-Block-Kriterien (Muster Country/BPM in Criteria.php), Bibliothek + Edit Track;
+Bestand ~45 min; Kalibrier-Hörprobe (~20 Titel quer über die Skala) vor der Freigabe der Kriterien.
+Aufwand ~1,5 Tage.  Stufe 2 Tempo + Key per librosa in eigener venv im selben Worker: Defer bis Stufe 1
+im Einsatz ist (Tempo-Oktavfehler 6/15, keine Referenz); Key ohne tonart-bewusste Reihenfolge der Titel
+kaum nutzbar.  Mood-Regeln (nur DJ/Electronic): No-Go.
+
 ## Test-Hygiene (2026-10-22)
 
 ### ✅ Drei Suiten wieder gruen ueber `scripts/run_tests.ps1` - erledigt 2026-10-22
