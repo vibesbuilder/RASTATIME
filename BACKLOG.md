@@ -7016,9 +7016,23 @@ RASTATIME-AudioFeatures (alle 10 min, SYSTEM), Library-Spalten, Edit Track, Krit
 nur DB.  Skala aus 823 Kalibrier-Tracks (`C:/Temp/optd/features_calib/`), nach dem Bestandslauf aus dem
 ganzen Bestand nachkalibrieren (`--rescale`).  Abweichung vom Vorschlag: die Kriterien sind sofort nach der
 Migration sichtbar (wie Country); die „Freigabe“ ist die Reihenfolge Migration -> Bestandslauf -> Hörprobe ->
-Blöcke bauen.  Bulk-Edit für die beiden Felder nicht in Stufe 1.  Offen: Migration 0085 + Registrierung der
-Aufgabe (Operator), Bestandslauf, Hörprobe (Library nach Energy sortieren).  Stufe 2 (Tempo + Key mit librosa
-in eigener venv, GetSongBPM als Schiedsrichter sobald Konto/Schlüssel da) folgt.
+Blöcke bauen.  Bulk-Edit für die beiden Felder nicht in Stufe 1.  Migration 0085 + Registrierung der Aufgabe
+durch den Operator 2026-11-14 abends, Bestandslauf läuft (je Runde ~1.000 Tracks in ~2 min, 137 Tracks unter
+10 s bleiben leer, 5 Aufnahmen/Tracks mit stiller Mitte nicht messbar); Legacy-Probe nach der Migration 16/16.
+Offen: Nachkalibrierung aus dem ganzen Bestand, Hörprobe (Library nach Energy sortieren).  Stufe 2 (Tempo + Key
+mit librosa in eigener venv, GetSongBPM als Schiedsrichter sobald Konto/Schlüssel da) folgt.
+
+**Stufe-2-Stichprobe 2026-11-14** (`C:/Temp/optd/librosa_bench/sample2.py`, Bench-venv, nur lesen; 37 Musiktitel
+mit bpm-Tag + 200 zufällige): ffmpeg dekodiert denselben 30-s-Ausschnitt wie Stufe 1 -> **0,31 s je Titel**
+(Median, max 0,51 s; Oktober-Bench mit librosa.load ~2 s) -> Bestand ~2,2 h.  Tempo: der Beat-Tracker liefert
+ein ~5-%-Raster (Hop 512: 117,5/123,0/129,2 ...); Tempo aus der Regression der Beat-Zeiten ist feiner und kostet
+nichts extra -> innerhalb 3 % inkl. Oktave 28/37 (76 %), davon nur 11 in derselben Oktave: die Referenz ist
+fast nur World/Reggae mit Tags in halber Zeit (59-80), gemessen wird Doppelzeit (120-160).  Die Oktave ist
+eine Konvention, keine Messfrage; das Verhältnis halbe/doppelte Tempogramm-Stärke trennt nicht (0,75-1,28 bei
+fast allen) -> taugt nicht als „unsicher“-Merkmal.  Key: Verteilung plausibel (C/G/D/A/E-Dur, a/e/d-Moll vorn,
+106 Moll / 94 Dur), aber ohne Referenz unverifiziert; Abstand bester/zweitbester Kandidat Median 0,085.
+Offen vor dem Bau: Operator-Ja zur Installation der dauerhaften venv (PyPI, ~420 MB), Oktav-Konvention,
+Key-Schreibweise (Camelot „8A“ / kurz „Am“ / beides).
 
 ## Test-Hygiene (2026-10-22)
 
