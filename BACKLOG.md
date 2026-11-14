@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Publish to My Podcast: Veröffentlichung bis zu einem Datum - Evaluierung 2026-11-14, wartet auf Go
+### 🟡 Publish to My Podcast: Veröffentlichung bis zu einem Datum - Evaluierung 2026-11-14 (A, auf Wunsch auch B), wartet auf Go
 
 **Wunsch (Operator 2026-11-14):** Beim Veröffentlichen eines Tracks im Sender-Podcast festlegen, dass er nur
 bis zu einem bestimmten Datum veröffentlicht bleibt.
@@ -92,14 +92,15 @@ bis zu einem bestimmten Datum veröffentlicht bleibt.
 und Status im Publish-Dialog.  Es gibt kein Ablaufdatum und keinen Zeitplan.
 
 **Optionen:**
-- **A - Ablauf beim Lesen (empfohlen):** neue Spalte `podcast_episodes.published_until` (Datum, leer = ohne
+- **A - Ablauf beim Lesen:** neue Spalte `podcast_episodes.published_until` (Datum, leer = ohne
   Ende).  Alle vier Stellen blenden abgelaufene Episoden aus, auf die Minute genau, ohne Hintergrundlauf.
   Die Zeile bleibt: Der Dialog zeigt „abgelaufen am …" und lässt das Datum verlängern oder neu
   veröffentlichen.
 - **B - Automatisch zurückziehen:** gleiche Spalte, dazu ein TaskManager-Lauf, der abgelaufene Episoden
   wie „Unpublish" löscht.  Hängt am Task-Takt (läuft mit den Playout-API-Aufrufen, also einige Minuten
   verspätet), ohne zusätzlichen Lesefilter steht die Episode bis dahin noch im Feed; danach ist nicht mehr
-  sichtbar, was wann veröffentlicht war.
+  sichtbar, was wann veröffentlicht war.  (Nachgemessen 2026-11-14, siehe Evaluierung B: höchstens etwa
+  7 Minuten nach Mitternacht.)
 - **C - ohne Schema (JSON-Einstellung je Episode):** keine Migration, aber Filter nur in PHP, verwaiste
   Einträge, kein SQL-Join.  Nicht empfohlen.
 
@@ -120,11 +121,50 @@ Episoden nachträglich setzbar: ja (im Dialog, „Change").
 4. **Dauer:** ca. 1 Arbeitstag (Bau 4-6 h, Prüfung + Doku 2 h).
 5. **Sinn:** Zeitlich begrenzte Inhalte (Rechte, Aktionen, Gewinnspiele) verschwinden pünktlich von selbst,
    ohne dass jemand an „Unpublish" denken muss.  Heute noch wenig Episoden, der Nutzen wächst mit dem Podcast.
-6. **Empfehlung:** Go für A, Datum inklusive, Download mit gesperrt.
+6. **Empfehlung:** Go für A, Datum inklusive, Download mit gesperrt.  *(Überholt: nach der Evaluierung B
+   unten Empfehlung B.)*
 7. **Risiko:** niedrig - nur Feed, Download und Dialog des Sender-Podcasts, kein Sendebetrieb.  Fehlerbild:
    Feed oder Dialog mit Fehler 500 bis zum Rückbau (Podcast-Apps zeigen solange den alten Stand).  Reihenfolge
    zwingend: erst Migration (Operator), dann Legacy-Code (sonst fragt der Feed eine fehlende Spalte ab).
    Rückfall: `git revert`, die leere Spalte darf bleiben.
+
+**Evaluierung (Option B, Operator-Wunsch 2026-11-14):**
+
+*Nachgemessen:* Der TaskManager läuft nur in Legacy-`/api/`-Anfragen ohne Login.  Heute 10-14 Uhr: Playout
+schickt `push-stream-stats` alle 2 Minuten (120 in 4 h), dazu `notify-media-item-start-play` je Titel und die
+Widget-Abrufe `/api/track`.  Der Takt steht also mindestens alle 2 Minuten.  Vorbild im Code:
+`TrackExpiryTask` (stündlich, Track-Ablaufdatum) - gleiches Muster, eigene Spalte, Spaltenprüfung vor der
+Migration (`trackDatesReady`).
+
+1. **Machbarkeit:** ja.  Neue Klasse `StationPodcastExpiryTask` in `TaskManager.php` (wird automatisch
+   erkannt), Intervall 5 Minuten.  Sie löscht die Episoden des Sender-Podcasts, deren `published_until`
+   vor dem heutigen Tag in der Senderzeitzone liegt - genau wie der Knopf „Unpublish", mit einer Logzeile
+   je Episode.  Holt verpasste Läufe beim nächsten Mal nach (Abfrage „vor heute", nicht „gestern").
+2. **Eingriff:** eine Spalte `podcast_episodes.published_until` (Datum, Migration 0084, leer = ohne Ende),
+   gelesen/geschrieben per SQL ohne Änderung der generierten Propel-Klassen; Django-Modellfeld.  Feed,
+   Download, öffentliche Seite und Dialog-Status bleiben unverändert - eine Episode ist da oder nicht.
+   Neu: Feld „Published until" im Publish-Dialog (leer = ohne Ende, kein Datum in der Vergangenheit), bei
+   „Published on" das Datum mit „Change"; REST `rest/media/{id}/publish` nimmt das Datum an; Liste
+   „My Podcast" zeigt die Spalte.  Kein Playout-Pfad (der Task läuft nur im Takt von dessen API-Aufrufen,
+   eine Abfrage auf ~215 Zeilen, Fehler abgefangen).
+3. **Aufwand:** ca. 250-350 Zeilen in 12-14 Dateien, keine neue Abhängigkeit; Übersetzung de/fr/es.  Das
+   Manual hat noch KEIN Kapitel zu My Podcast (nur Erwähnungen in ARCHIVING und USERS_AND_ROLES) - neues
+   Kapitel MY_PODCAST ×4 + Inhaltsverzeichnis ×4 (Publish, Unpublish, Feed, Datum).
+4. **Dauer:** ca. 1 Arbeitstag (Bau 4-5 h, Prüfung 1-2 h, Doku mit neuem Kapitel 2 h).
+5. **Sinn:** wie A - zeitlich begrenzte Inhalte verschwinden von selbst.  Einfacheres Modell: „abgelaufen"
+   heißt dasselbe wie „Unpublish".  Die Verspätung (höchstens ~7 Minuten nach Mitternacht) spielt keine
+   Rolle: Podcast-Apps holen den Feed ohnehin nur alle paar Stunden.
+6. **Empfehlung:** Go für B (statt A).  Weniger berührte Lesestellen (eine Wahrheit: Zeile da oder nicht),
+   bewährtes Muster, Code darf schon vor der Migration live sein.  A nur, wenn abgelaufene Episoden
+   sichtbar bleiben und sich mit ursprünglichem Veröffentlichungsdatum verlängern lassen sollen.
+7. **Risiko:** niedrig.  Live-Auswirkung: keine auf den Sendebetrieb.  Fehlerbild: falsche Datumsabfrage
+   zieht zu viel oder zu wenig zurück - begrenzt auf Episoden MIT Datum (`published_until IS NOT NULL`),
+   jede Löschung im Log, Dateien bleiben in der Library, Wiederveröffentlichen jederzeit; Probe in
+   zurückgerollter Transaktion vor dem Einschalten.  Rückfall: `git revert`, die leere Spalte darf bleiben.
+
+*Unterschied zu A für den Betrieb:* Nach Ablauf ist die Episode weg, als hätte jemand „Unpublish" gedrückt.
+Wer sie wieder will, veröffentlicht neu - sie bekommt dann ein neues Veröffentlichungsdatum und steht in den
+Podcast-Apps wieder oben.  Was wann veröffentlicht war, steht nur noch im Log.
 
 💡 Später möglich: Standard-Laufzeit für neue Episoden (z. B. 30 Tage) in den Einstellungen von My Podcast.
 
