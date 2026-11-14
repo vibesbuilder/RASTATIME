@@ -111,6 +111,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **My Podcast „Save" endete mit Fehler 500 (2026-11-14)** - seit der AngularJS-Ablösung (2026-06-01)
+  schickt die Seite die Privatsphäre-Einstellung als Formular, der Server las nur JSON: die Podcast-Angaben
+  wurden gespeichert, Privatsphäre und Feed-Adresse nicht (gesehen 14:45:49).  Jetzt beides; ohne Wert
+  bleibt die bisherige Einstellung.  Dazu: UPGRADE.md - `migrate --check` gibt bei Erfolg nichts aus.
 - **My Podcast zeigte keine Episoden (2026-11-14)** - die Episodenliste übernahm die Spalten der
   importierten Podcasts („Imported? / Author / Link") und lud nie Daten; jetzt eigene Spalten, Laden beim
   Öffnen und nach „Unpublish".  Dazu: Publish-Aktionen nur noch publish / unpublish / update (der

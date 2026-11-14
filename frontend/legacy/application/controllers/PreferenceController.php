@@ -183,12 +183,38 @@ class PreferenceController extends Zend_Controller_Action
         $this->view->form = $form;
     }
 
+    /**
+     * RASTATIME 2026-11-14 - My Podcast "Save" ended in a 500 at this step
+     * since the AngularJS removal (2026-06-01): podcast.js posts the value
+     * form-encoded, this action only read a JSON body.  Accepts both; no
+     * value at all keeps the current setting.  Pure.
+     *
+     * @param mixed $param the form-encoded stationPodcastPrivacy, or null
+     *
+     * @return int 1 = private, 0 = public
+     */
+    public static function stationPodcastPrivacyFromRequest(string $rawBody, $param, bool $current): int
+    {
+        $json = json_decode($rawBody);
+        $value = (is_object($json) && isset($json->stationPodcastPrivacy)) ? $json->stationPodcastPrivacy : $param;
+        if ($value === null || $value === '') {
+            return $current ? 1 : 0;
+        }
+
+        return ((int) $value) === 1 ? 1 : 0;
+    }
+
     public function stationPodcastSettingsAction()
     {
         $this->view->layout()->disableLayout();
         $this->_helper->viewRenderer->setNoRender(true);
 
-        $values = json_decode($this->getRequest()->getRawBody());
+        $privacy = self::stationPodcastPrivacyFromRequest(
+            (string) $this->getRequest()->getRawBody(),
+            $this->getRequest()->getParam('stationPodcastPrivacy'),
+            (bool) Application_Model_Preference::getStationPodcastPrivacy()
+        );
+        $values = (object) ['stationPodcastPrivacy' => $privacy];
 
         if (!Application_Model_Preference::getStationPodcastPrivacy() && $values->stationPodcastPrivacy == 1) {
             // Refresh the download key when enabling privacy

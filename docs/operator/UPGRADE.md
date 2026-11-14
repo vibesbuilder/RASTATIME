@@ -179,7 +179,8 @@ python rastatime_api\manage.py migrate
 
 # Confirm no pending migrations remain:
 python rastatime_api\manage.py migrate --check
-# Expected: exit code 0, "No migrations to apply."
+# Expected: no output and exit code 0 ($LASTEXITCODE); exit code 1 means a
+# migration is still pending.  (Plain `migrate` prints "No migrations to apply.")
 ```
 
 > `manage.py` lives at `backend\api\rastatime_api\manage.py` — the

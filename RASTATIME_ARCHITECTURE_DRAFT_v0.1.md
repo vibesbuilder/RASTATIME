@@ -10416,7 +10416,13 @@ live (last run stamped, no log error).  Browser (logged-in Chrome, PUT
 intercepted, nothing published): dialog field, datepicker with past
 days blocked, help icon, request bodies for publish and update, error
 line; My Podcast list with both episodes and the new column, no
-console errors.
+console errors.  After the migration (operator, 2026-11-14) the probe
+runs its other branch: 27 checks - publish with a date, update to
+today and to no end, expiry keeps today (inclusive) and removes
+yesterday, feed / download check agrees, no other episode touched,
+update on an unpublished track refused.  The probe's rolled-back
+expiry still writes its log line (episode 344, 15:42:53) - that
+withdrawal never happened.
 
 **Risk.**  Low: station podcast only, no playout path (the task is one
 query on ~215 rows inside the playout's API calls, errors caught).
