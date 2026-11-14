@@ -6998,6 +6998,18 @@ Bestand ~45 min; Kalibrier-Hörprobe (~20 Titel quer über die Skala) vor der Fr
 Aufwand ~1,5 Tage.  Stufe 2 Tempo + Key per librosa in eigener venv im selben Worker: Defer bis Stufe 1
 im Einsatz ist (Tempo-Oktavfehler 6/15, keine Referenz); Key ohne tonart-bewusste Reihenfolge der Titel
 kaum nutzbar.  Mood-Regeln (nur DJ/Electronic): No-Go.
+Frage des Operators 2026-11-14: Tempo (und Key) von Online-Portalen holen, eigene Analyse nur als Rückfall?
+Geprüft: songbpm.com verbietet automatischen Zugriff (AGB Abschnitt 3, Daten von der Spotify-API);
+Tunebat ohne bekannte API, AGB-Seite für automatische Leser gesperrt; ReccoBeats kostenlos ohne Schlüssel,
+aber keine Suche nach Künstler/Titel (nur IDs) und kein Key; Spotify hat audio-features im November 2024
+für neue Apps geschlossen.  Einzige saubere Quelle: GetSongBPM-API (kostenlos, API-Schlüssel, 3.000
+Anfragen/h, sichtbarer Backlink auf der Sender-Website Pflicht, sonst Sperre ohne Vorwarnung; Seite für
+automatische Leser gesperrt, Angaben aus der Websuche).  Bibliothek: 0 Musiktitel mit gültiger ISRC ->
+Abgleich nur über Künstler + Titel, 1.376 Titel mit Remix/Edit/Live/Version im Titel (Versions-Risiko).
+Portalwerte sind selbst Schätzungen (meist Spotify-Herkunft), keine Wahrheit.  Vorschlag: eigene Analyse
+für alle, Portal als Schiedsrichter - Portal-Tempo nur übernehmen, wenn es zum eigenen Wert passt (±3 %
+oder halb/doppelt -> Oktave vom Portal), sonst eigener Wert als „unsicher“; vorher 200-Titel-Stichprobe
+(Trefferquote, Übereinstimmung).  Vorbedingungen: Konto + Backlink + Schlüssel durch den Operator.
 
 ## Test-Hygiene (2026-10-22)
 
