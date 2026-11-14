@@ -323,6 +323,40 @@ class Application_Form_EditAudioMD extends Zend_Form
             ]);
         $this->addElement($bpm);
 
+        // RASTATIME 2026-11-14 - energy / brightness 1..10 (migration 0085):
+        // measured by the task RASTATIME-AudioFeatures (manage.py
+        // analyze_audio_features), editable; a value entered here differs
+        // from the measured one and is never replaced.  Raw SQL in StoredFile.
+        if (Application_Model_StoredFile::fileColumnReady('energy')) {
+            $measured = Application_Model_StoredFile::audioFeaturesOf(Propel::getConnection(), (int) $p_id);
+            $levels = [
+                'energy' => [
+                    _('Energy:'),
+                    _('1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value.'),
+                ],
+                'brightness' => [
+                    _('Brightness:'),
+                    _('1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value.'),
+                ],
+            ];
+            foreach ($levels as $name => [$label, $help]) {
+                $value = $measured['measured_' . $name];
+                $help .= ' ' . ($value === null ? _('Not measured yet.') : sprintf(_('Measured: %d.'), $value));
+                $element = new Zend_Form_Element_Text($name);
+                $element->class = 'input_text';
+                $element->setLabel($label)
+                    ->setFilters(['StringTrim'])
+                    ->setValidators([
+                        new Zend_Validate_Digits(),
+                        new Zend_Validate_Between(['min' => 1, 'max' => 10, 'inclusive' => true]),
+                    ])
+                    ->setAttrib('inputmode', 'numeric')
+                    ->setAttrib('maxlength', '2')
+                    ->setDescription($help);
+                $this->addElement($element);
+            }
+        }
+
         // Add copyright field
         $copyright = new Zend_Form_Element('copyright');
         $copyright->class = 'input_text';

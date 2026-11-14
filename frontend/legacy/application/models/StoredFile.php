@@ -356,6 +356,20 @@ class Application_Model_StoredFile
             $stmt->execute();
         }
 
+        // RASTATIME 2026-11-14 - energy / brightness 1..10 (migration 0085), raw
+        // SQL like the country; empty = no value.  A value that differs from
+        // the measured one (audio_features) counts as set by hand and is
+        // never replaced by the measurement (manage.py analyze_audio_features).
+        foreach (['energy', 'brightness'] as $featureColumn) {
+            if (array_key_exists($featureColumn, $posted) && self::fileColumnReady($featureColumn, $this->_con)) {
+                $level = self::featureLevel($posted[$featureColumn]);
+                $stmt = $this->_con->prepare("UPDATE cc_files SET {$featureColumn} = :v WHERE id = :id");
+                $stmt->bindValue(':v', $level, $level === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+                $stmt->bindValue(':id', (int) $this->_file->getDbId(), PDO::PARAM_INT);
+                $stmt->execute();
+            }
+        }
+
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060):
         // the checkbox posts '1' / '0'; only touched when the key is present
         // (the analyzer's metadata import never sends it).
@@ -533,6 +547,59 @@ class Application_Model_StoredFile
     public static function cleanCountry($value)
     {
         return mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $value)), 0, 64);
+    }
+
+    /**
+     * RASTATIME 2026-11-14 - an energy / brightness level as stored: a whole
+     * number 1..10, null for anything else (empty clears).  Pure.
+     *
+     * @param mixed $value
+     *
+     * @return null|int
+     */
+    public static function featureLevel($value)
+    {
+        $text = trim((string) $value);
+        if (!preg_match('/^\d{1,2}$/', $text)) {
+            return null;
+        }
+        $level = (int) $text;
+
+        return ($level >= 1 && $level <= 10) ? $level : null;
+    }
+
+    /**
+     * RASTATIME 2026-11-14 - energy / brightness of a track as shown and the
+     * levels its last measurement produced (null = not measured or failed).
+     *
+     * @param PDO $con
+     * @param int $fileId
+     *
+     * @return array{energy: ?int, brightness: ?int, measured_energy: ?int, measured_brightness: ?int}
+     */
+    public static function audioFeaturesOf($con, $fileId)
+    {
+        $out = ['energy' => null, 'brightness' => null, 'measured_energy' => null, 'measured_brightness' => null];
+        if (!self::fileColumnReady('audio_features', $con)) {
+            return $out;
+        }
+        try {
+            $stmt = $con->prepare(
+                "SELECT energy, brightness, (audio_features->>'energy') AS measured_energy,
+                        (audio_features->>'brightness') AS measured_brightness
+                 FROM cc_files WHERE id = :id"
+            );
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            foreach ($out as $k => $_) {
+                $out[$k] = isset($row[$k]) && $row[$k] !== '' ? (int) $row[$k] : null;
+            }
+        } catch (Exception $exc) {
+            Logging::warn('audioFeaturesOf: ' . $exc->getMessage());
+        }
+
+        return $out;
     }
 
     /**
@@ -812,6 +879,11 @@ class Application_Model_StoredFile
                 Logging::warn('getDbColMetadata: could not read country: ' . $exc->getMessage());
             }
         }
+
+        // RASTATIME 2026-11-14 - energy / brightness (migration 0085)
+        $features = self::audioFeaturesOf($this->_con, (int) $this->_file->getDbId());
+        $md['energy'] = $features['energy'] === null ? '' : (string) $features['energy'];
+        $md['brightness'] = $features['brightness'] === null ? '' : (string) $features['brightness'];
 
         // RASTATIME 2026-11-08 - "Track disabled" checkbox, '1' / '0', and
         // who ticked it (the editor's hidden field, migration 0080)
@@ -1482,6 +1554,8 @@ SQL;
             // RASTATIME 2026-11-08 - enable date (migration 0080) and the
             // COUNTRY tag (migration 0081)
             'enabled_from', 'country',
+            // RASTATIME 2026-11-14 - energy / brightness 1..10 (migration 0085)
+            'energy', 'brightness',
             // RASTATIME 2026-10-07 - times aired (rows of cc_playout_history)
             'play_count',
             // RASTATIME 2026-10-16 - "Show name (type)" of a teaser jingle
@@ -1631,6 +1705,12 @@ SQL;
                 $blSelect[] = 'NULL::text AS ' . $key;
                 $fileSelect[] = self::fileColumnReady('country', $con) ? "FILES.{$key}::text AS {$key}" : 'NULL::text AS ' . $key;
                 $streamSelect[] = 'NULL::text AS ' . $key;
+            } elseif ($key === 'energy' || $key === 'brightness') {
+                // RASTATIME 2026-11-14 - SMALLINT 1..10; NULL before migration 0085
+                $plSelect[] = 'NULL::int AS ' . $key;
+                $blSelect[] = 'NULL::int AS ' . $key;
+                $fileSelect[] = self::fileColumnReady($key, $con) ? "FILES.{$key}::int AS {$key}" : 'NULL::int AS ' . $key;
+                $streamSelect[] = 'NULL::int AS ' . $key;
             } elseif ($key === 'disabled') {
                 // RASTATIME 2026-05-31: disabled is BOOLEAN in cc_files — same
                 // UNION-type fix as expires_at above (was NULL::text via else).
@@ -1718,6 +1798,8 @@ SQL;
                 case 'sample_rate':
                 case 'bpm':
                 case 'track_type_id':
+                case 'energy':
+                case 'brightness':
                     $lineinSelect[] = "NULL::int AS {$key}";
                     break;
                 case 'mime':

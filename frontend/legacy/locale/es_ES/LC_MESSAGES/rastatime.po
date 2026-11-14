@@ -8735,3 +8735,35 @@ msgstr "Carpeta no encontrada. Una unidad de red conectada (una letra como S:) n
 #: RASTATIME 2026-11-14 copy finished recordings
 msgid "The folder must not be the recording folder itself or lie inside it."
 msgstr "La carpeta no puede ser la propia carpeta de grabaciones ni estar dentro de ella."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Energy"
+msgstr "Energía"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Brightness"
+msgstr "Brillo"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Energy:"
+msgstr "Energía:"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Brightness:"
+msgstr "Brillo:"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
+msgstr "1 = tranquilo ... 10 = muy enérgico, en comparación con el resto de la biblioteca. Se mide automáticamente unos minutos después de la subida; un valor introducido aquí sustituye la medición y se conserva. Vacío = sin valor."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
+msgstr "1 = oscuro (cálido, pocos agudos) ... 10 = brillante (muchos agudos), en comparación con el resto de la biblioteca. Se mide automáticamente unos minutos después de la subida; un valor introducido aquí sustituye la medición y se conserva. Vacío = sin valor."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Not measured yet."
+msgstr "Aún no medido."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Measured: %d."
+msgstr "Medido: %d."

@@ -91,6 +91,8 @@ class BlockCriteria
 {
     /** RASTATIME 2026-10-16 - criteria resolved by Block::teaserCriterionSql */
     public const TEASER_KEYS = ['teaser_show', 'teaser_type', 'teaser_fits'];
+    /** RASTATIME 2026-11-14 - cc_files columns of migration 0085, Block::audioFeatureCriterionSql */
+    public const AUDIO_FEATURE_KEYS = ['energy', 'brightness'];
     public const SELECT_TYPES = [ModifierType::TRACK_TYPE, ModifierType::TEASER_SHOW, ModifierType::TEASER_TYPE, ModifierType::TEASER_FITS];
 
     public string $key;
@@ -162,6 +164,11 @@ class BlockCriteria
                 new BlockCriteria('artist_name', ModifierType::STRING, 'DbArtistName', _('Creator')),
                 new BlockCriteria('bit_rate', ModifierType::NUMBER, 'DbBitRate', _('Bit Rate (Kbps)')),
                 new BlockCriteria('bpm', ModifierType::NUMBER, 'DbBpm', _('BPM')),
+                // RASTATIME 2026-11-14 - energy / brightness 1..10 (migration 0085,
+                // measured by manage.py analyze_audio_features): virtual like the
+                // country, the INTEGER peer only drives the number validation;
+                // Block::audioFeatureCriterionSql
+                new BlockCriteria('brightness', ModifierType::NUMBER, 'DbBpm', _('Brightness')),
                 new BlockCriteria('composer', ModifierType::STRING, 'DbComposer', _('Composer')),
                 new BlockCriteria('conductor', ModifierType::STRING, 'DbConductor', _('Conductor')),
                 new BlockCriteria('copyright', ModifierType::STRING, 'DbCopyright', _('Copyright')),
@@ -173,6 +180,7 @@ class BlockCriteria
                 new BlockCriteria('cueout', ModifierType::NUMBER, 'DbCueout', _('Cue Out')),
                 new BlockCriteria('description', ModifierType::STRING, 'DbDescription', _('Description')),
                 new BlockCriteria('encoded_by', ModifierType::STRING, 'DbEncodedBy', _('Encoded By')),
+                new BlockCriteria('energy', ModifierType::NUMBER, 'DbBpm', _('Energy')),
                 new BlockCriteria('utime', ModifierType::DATE, 'DbUtime', _('Uploaded')),
                 new BlockCriteria('mtime', ModifierType::DATE, 'DbMtime', _('Last Modified')),
                 new BlockCriteria('lptime', ModifierType::DATE, 'DbLPtime', _('Last Played')),

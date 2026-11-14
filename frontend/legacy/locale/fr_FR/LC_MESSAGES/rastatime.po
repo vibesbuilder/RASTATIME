@@ -8899,3 +8899,35 @@ msgstr "Dossier introuvable. Un lecteur réseau connecté (une lettre comme S:) 
 #: RASTATIME 2026-11-14 copy finished recordings
 msgid "The folder must not be the recording folder itself or lie inside it."
 msgstr "Le dossier ne doit pas être le dossier d'enregistrement lui-même ni se trouver à l'intérieur."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Energy"
+msgstr "Énergie"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Brightness"
+msgstr "Brillance"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Energy:"
+msgstr "Énergie :"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Brightness:"
+msgstr "Brillance :"
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
+msgstr "1 = calme ... 10 = très énergique, par rapport au reste de la médiathèque. Mesuré automatiquement quelques minutes après le téléversement ; une valeur saisie ici remplace la mesure et est conservée. Vide = aucune valeur."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
+msgstr "1 = sombre (chaud, peu d'aigus) ... 10 = brillant (beaucoup d'aigus), par rapport au reste de la médiathèque. Mesuré automatiquement quelques minutes après le téléversement ; une valeur saisie ici remplace la mesure et est conservée. Vide = aucune valeur."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Not measured yet."
+msgstr "Pas encore mesuré."
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Measured: %d."
+msgstr "Mesuré : %d."

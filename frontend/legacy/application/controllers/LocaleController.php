@@ -133,6 +133,9 @@ final class LocaleController extends Zend_Controller_Action
             'Expiry Date' => _('Expiry Date'),
             'Enabled From' => _('Enabled From'),
             'Country' => _('Country'),
+            // RASTATIME 2026-11-14 - library columns (migration 0085)
+            'Energy' => _('Energy'),
+            'Brightness' => _('Brightness'),
             // RASTATIME 2026-10-16 - library column: database id of a file
             'ID' => _('ID'),
             // RASTATIME 2026-10-16 - teaser automation (library column, block editor selects)

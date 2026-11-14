@@ -23,6 +23,8 @@ var AIRTIME = (function (AIRTIME) {
     artist_name: "s",
     bit_rate: "n",
     bpm: "n",
+    brightness: "n",
+    energy: "n",
     comments: "s",
     composer: "s",
     conductor: "s",
@@ -1178,6 +1180,15 @@ var AIRTIME = (function (AIRTIME) {
         sClass: "library_bpm",
         sWidth: "50px",
       },
+      /* Brightness - RASTATIME 2026-11-14: 1 (dark) .. 10 (bright),
+         cc_files.brightness (migration 0085), measured by the task
+         RASTATIME-AudioFeatures or set in Edit Track; hidden by default. */ {
+        sTitle: $.i18n._("Brightness"),
+        mDataProp: "brightness",
+        bVisible: false,
+        sClass: "library_bpm",
+        sWidth: "60px",
+      },
       /* Composer */ {
         sTitle: $.i18n._("Composer"),
         mDataProp: "composer",
@@ -1234,6 +1245,14 @@ var AIRTIME = (function (AIRTIME) {
         bVisible: false,
         sClass: "library_encoded",
         sWidth: "150px",
+      },
+      /* Energy - RASTATIME 2026-11-14: 1 (calm) .. 10 (very energetic),
+         cc_files.energy (migration 0085), like Brightness; hidden by default. */ {
+        sTitle: $.i18n._("Energy"),
+        mDataProp: "energy",
+        bVisible: false,
+        sClass: "library_bpm",
+        sWidth: "60px",
       },
       /* Track Type */ {
         sTitle: $.i18n._("Type"),
@@ -3058,6 +3077,8 @@ var validationTypes = {
   artist_name: "s",
   bit_rate: "i",
   bpm: "i",
+  brightness: "i",
+  energy: "i",
   comments: "s",
   composer: "s",
   conductor: "s",

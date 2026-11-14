@@ -1587,3 +1587,35 @@ msgstr ""
 
 msgid "(Auto DJ buffer track, ends with the show)"
 msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Energy"
+msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Brightness"
+msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Energy:"
+msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Brightness:"
+msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
+msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
+msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Not measured yet."
+msgstr ""
+
+#: RASTATIME 2026-11-14 energy / brightness
+msgid "Measured: %d."
+msgstr ""

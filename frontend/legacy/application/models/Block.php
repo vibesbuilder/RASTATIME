@@ -1719,6 +1719,58 @@ SQL;
     }
 
     /**
+     * RASTATIME 2026-11-14 - SQL of the virtual "Energy" / "Brightness"
+     * criteria (cc_files.energy / brightness 1..10, migration 0085) with the
+     * number modifiers.  Tracks without a value (not measured yet) never
+     * match a comparison; "is not" includes them, like the country.  Values
+     * are whole numbers - anything else matches nothing.
+     *
+     * @param string $column one of BlockCriteria::AUDIO_FEATURE_KEYS
+     * @param string $modifier
+     * @param mixed  $value
+     * @param mixed  $extra    upper end of "is in the range"
+     *
+     * @return string
+     */
+    public static function audioFeatureCriterionSql($column, $modifier, $value, $extra = null)
+    {
+        if (!in_array($column, BlockCriteria::AUDIO_FEATURE_KEYS, true)
+            || !Application_Model_StoredFile::fileColumnReady($column)) {
+            return 'FALSE';
+        }
+        $number = function ($v) {
+            $v = trim((string) $v);
+
+            return preg_match('/^-?\d{1,6}$/', $v) ? (int) $v : null;
+        };
+        $a = $number($value);
+        if ($a === null) {
+            return 'FALSE';
+        }
+        $col = 'cc_files.' . $column;
+        switch (trim((string) $modifier)) {
+            case CriteriaModifier::IS:
+                return "{$col} = {$a}";
+
+            case CriteriaModifier::IS_NOT:
+                return "({$col} IS NULL OR {$col} <> {$a})";
+
+            case CriteriaModifier::IS_GREATER_THAN:
+                return "{$col} > {$a}";
+
+            case CriteriaModifier::IS_LESS_THAN:
+                return "{$col} < {$a}";
+
+            case CriteriaModifier::IS_IN_THE_RANGE:
+                $b = $number($extra);
+
+                return $b === null ? 'FALSE' : "{$col} BETWEEN " . min($a, $b) . ' AND ' . max($a, $b);
+        }
+
+        return 'FALSE';
+    }
+
+    /**
      * RASTATIME 2026-11-13 - the "teaser_fits is yes" SQL for the slot of
      * the fill context (see teaserCriterionSql): true for a cc_files row
      * that announces at least one fitting show.  Everything is measured
@@ -2399,6 +2451,15 @@ SQL;
                     // RASTATIME 2026-11-08 - the country criterion likewise
                     if ($spCriteria === 'country') {
                         $virtualSql = self::countryCriterionSql($spCriteriaModifier, (string) $criteria['value']);
+                    }
+                    // RASTATIME 2026-11-14 - energy / brightness likewise
+                    if (in_array($spCriteria, BlockCriteria::AUDIO_FEATURE_KEYS, true)) {
+                        $virtualSql = self::audioFeatureCriterionSql(
+                            $spCriteria,
+                            $spCriteriaModifier,
+                            $criteria['value'],
+                            $criteria['extra'] ?? null
+                        );
                     }
 
                     $column = CcFilesPeer::getTableMap()->getColumnByPhpName($allCriteria[$spCriteria]->peer);
