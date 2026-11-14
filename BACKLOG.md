@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### ✅ Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - GEBAUT 2026-11-13 (Go A + C, §23.111; offen: API-Neustart für 50 Treffer); eigene Texte (B) GEBAUT 2026-11-14 (§23.112)
+### ✅ Menüpunkt Widgets → Song Request + Suchfeld im Song-Request-Widget - GEBAUT 2026-11-13 (Go A + C, §23.111; API-Neustart 2026-11-14); eigene Texte (B) GEBAUT 2026-11-14 (§23.112)
 
 Operator-Frage 2026-11-13: warum fehlt das Song-Request-Widget unter WIDGETS?  Lücke, keine Entscheidung: die
 Widget-Seiten entstanden 2026-05-22 (Vorschau, Texte, Einbettungscode), das Widget kam 2026-06-07 als Phase 4
@@ -122,7 +122,8 @@ alte Antworten verworfen, Hinweis „die ersten 500 von …" / „verfeinern"), 
 Nebenbefunde im selben Paket: Antwort auf einen Wunsch erscheint unter dem angeklickten Titel (stand nach
 500 Zeilen außer Sicht), lange Titel schneiden den Knopf nicht mehr ab.  Geprüft: API-Tests 5, Browser lesend
 (Suche, Hinweise, Antwortzeile mit abgefangenem Senden, Seite).
-**Offen:** API-Neustart (danach 50 statt 25 Treffer und der Hinweis „verfeinern").  💡 Die Widget-Seiten sind
+**API-Neustart 2026-11-14 13:30** (Operator): Suche liefert 50 Treffer mit `limit`, das Widget zeigt den
+Hinweis „verfeinern" (geprüft 13:46, Pool inzwischen sechs Tagesplaylists = 20.142 Titel).  💡 Die Widget-Seiten sind
 insgesamt englisch (keine Übersetzung), die neue auch.
 
 **Go B 2026-11-14:** Operator möchte eigene Texte.  **Gebaut 2026-11-14:** Abschnitt *Listener texts* auf
