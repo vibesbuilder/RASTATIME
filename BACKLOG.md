@@ -389,7 +389,7 @@ Vorbedingungen:
   Bau per Abruf prüfen.
 - Danach Operator-Go für Stufe 1 (und ggf. 2); Außenzugang erst abschalten, wenn der Partner auf die Datei-Adresse umgestellt hat.
 
-### 🟡 Kurze Abrisse an den Sendestationen (DEVA DB6400 schaltet auf Fallback) - Evaluierung 2026-11-09, wartet auf Zeitstempel der Geräte und Werte des Streaming-Anbieters
+### ❌ Kurze Abrisse an den Sendestationen (DEVA DB6400 schaltet auf Fallback) - GESTRICHEN 2026-11-14 (Operator; Evaluierung 2026-11-09 bleibt als Beleg)
 
 **Kette:** Liquidsoap -> Icecast `/rastatime` (MP3 CBR 320 kbit/s = 40.000 B/s) -> Apache `/stream/rastatime`
 (HTTPS, mod_proxy) -> Relay des Streaming-Anbieters (Liquidsoap 2.4.0 auf Linux, holt seit 2026-11-05 15:00)
@@ -524,7 +524,7 @@ im Webstream-Slot gewinnen (Befund 2).  (2) **Abfolge-Formen in der Replik NICHT
 Pakete kommen an) - Mechanismus live-spezifisch, noch offen.  Ursache NICHT 4c7bcc39 (betrifft nur die
 Off-Air-Marke beim Wechsel auf den leeren Datei-Arm).
 
-### 💡 Hörer-Aussetzer beim Sendungsstart 12:07 (foobar2000, Stream 1 über den Apache-Proxy) - Befund 2026-11-07, Analyse offen, gemeinsamer Test 2026-11-08 Mittag
+### ✅ Hörer-Aussetzer beim Sendungsstart 12:07 (foobar2000, Stream 1 über den Apache-Proxy) - ERLEDIGT 2026-11-14 (Operator; Befund 2026-11-07)
 
 Operator hörte beim Start der 12:07-Sendung: erster Titel ~1 s hörbar, dann 2-3 s nichts, dann weiter.
 Ausgeschlossen: Playout (kein Hold, Kette -0,04 s), Liquidsoap (normale show/old-Transition, keine
@@ -682,7 +682,7 @@ nicht getestet (Rollen-Audit 2026-10-25); die API kennt nur API-Key + PHP-Sitzun
 Zuordnung auf die vier Rollen, lokaler `admin` als Notzugang.
 **Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
 
-### 💡 Aufnahme je Sendung: Vorlauf und Nachlauf einstellbar - IDEA (Operator 2026-11-07, noch nicht recherchiert)
+### ✅ Aufnahme je Sendung: Vorlauf und Nachlauf einstellbar - ERLEDIGT 2026-11-14 (Operator; „Record Start" seit 2026-11-13, §23.109; Idee 2026-11-07)
 
 Wunsch: je Sendung einstellen, wie viele Sekunden die Aufnahme vor dem Sendungsstart beginnt
 und nach dem Sendungsende weiterläuft; manche Sendungen brauchen 5-10 s.  Bezug: Recording je
@@ -7414,7 +7414,7 @@ frischen VM nicht veröffentlichen - sonst scheitert der erste fremde Nutzer an 
 
 ## CBA-Anbindung und Veroeffentlichung (Evaluierung 2026-11-01, Operator-Notizen)
 
-### 🟢 CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 + 3 abgenommen 2026-11-03 (evaluiert 2026-11-01)
+### ✅ CBA-Anbindung ("Archiving"): Episoden auf cba.media archivieren - Stufe 1 + 2 + 3 abgenommen 2026-11-03, als erledigt markiert 2026-11-14 (evaluiert 2026-11-01)
 
 Operator-Wunsch: Sendungen werden heute von Hand ueber die CBA-Weboberflaeche
 hochgeladen; RASTATIME soll die Aufzeichnung jeder Instanz nach dem Ende
@@ -7706,7 +7706,7 @@ nur Hinweis.  Migration 0078 live 2026-11-04 08:36; Abnahme 2026-11-04 an
 Route Rock 11:30 bestanden (nach dem Fix c08967ca: Werte auf die neue
 Instanzzeile).
 
-### 🟡 Archiv-Status-Seite (laufende Uploads, Historie, CSV) - in der Archivierungs-Sitzung bauen (Operator 2026-11-03)
+### ✅ Archiv-Status-Seite (laufende Uploads, Historie, CSV) - GEBAUT 2026-11-04 (`399360e8`, §23.86), als erledigt markiert 2026-11-14 (Operator 2026-11-03)
 
 Daten in cc_cba_upload vorhanden; Seite mit Fortschritt, Wiederholen/Abbrechen,
 Historie und Filtern.  ~300 Zeilen, 1 Tag.
@@ -7918,7 +7918,7 @@ Operator-Go; prüfen, ob Telnet die laufende URL liefert.
 
 ## Doppelter Queue-Push nach manuellem Liquidsoap-Neustart (Befund 2026-11-05, 11:00-Testshow)
 
-### 🟡 Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - GEBAUT 2026-11-05 (Go 2026-11-05, Vorschläge 2+3, §23.89; Abnahme 2026-11-05 12:35 + 13:15 bestanden: Catch-up 5 s bzw. 7 s nach manuellem Neustart, Reconnect-Erkennung 1,3 s, kein Duplikat; Übernahme-Pfad nur per Test abgedeckt)
+### ✅ Dateikette 4:27 spät nach zweitem Liquidsoap-Neustart - drei Jingles der bbc-test-Show verloren - GEBAUT 2026-11-05 (Go 2026-11-05, Vorschläge 2+3, §23.89; Abnahme 2026-11-05 12:35 + 13:15 bestanden: Catch-up 5 s bzw. 7 s nach manuellem Neustart, Reconnect-Erkennung 1,3 s, kein Duplikat; Übernahme-Pfad nur per Test abgedeckt)
 
 Hergang (playout-stdout.log, liquidsoap-stdout.log): 10:29:23 PLAYOUT-Neustart
 (Operator) rendert rastatime.liq neu (Brücken-Variablen) -> geplanter
