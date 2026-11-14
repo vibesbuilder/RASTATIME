@@ -99,7 +99,7 @@ Die Seite ist in **eingeklappte Abschnitte** gegliedert (seit
 
 | Feld | Hinweise | Kapitel |
 |---|---|---|
-| **Intro / Outro Autoloading Playlist** | Läuft zu Beginn / am Ende jeder Sendung mit Autoloading. | [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md) |
+| **Intro / Outro Autoloading Playlist** | Läuft einmal zu Beginn / am Ende jeder Sendung, die von ihrer Autoloading-Playlist befüllt wird (nicht in Wunsch- oder Verkehrsfunk-Sendungen); eine Sendung kann ein eigenes wählen. None = kein Intro / Outro. | [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md) |
 | **Song-Request Pool (smart blocks)** | Die Smart Blocks, deren Titel Hörer wünschen dürfen. | [Musikwünsche](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | Der Block für Verkehrsmeldungen. | [Verkehrsmeldungen](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Füllt die Lücke, wenn eine Sendung verschoben wird. | [Verzögerter Sendungsstart](./DELAYED_START.md) |

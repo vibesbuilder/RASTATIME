@@ -267,6 +267,9 @@ $(document).ready(function () {
       "uiSecondaryColor",
       "stationDefaultCrossfadeDuration",
       "stationDefaultShowCrossfadeDuration",
+      // intro / outro autoloading playlist (2026-11-14)
+      "introPlaylistSelect",
+      "outroPlaylistSelect",
       "trafficAlertBlockSelect",
       "showShiftFillerPlaylistSelect",
       // day teasers "soon" / "now" (2026-11-13)

@@ -99,7 +99,7 @@ section ; une section qui contient une erreur de validation après
 
 | Champ | Notes | Chapitre |
 |---|---|---|
-| **Intro / Outro Autoloading Playlist** | Jouée au début / à la fin de chaque émission avec autoloading. | [Playlists autoloading](./AUTOLOADING_PLAYLISTS.md) |
+| **Intro / Outro Autoloading Playlist** | Jouée une fois au début / à la fin de chaque émission remplie par sa playlist autoloading (pas dans les émissions de dédicaces ou d'infos trafic) ; une émission peut choisir la sienne. None = pas d'intro / d'outro. | [Playlists autoloading](./AUTOLOADING_PLAYLISTS.md) |
 | **Song-Request Pool (smart blocks)** | Les smart blocks dont les auditeurs peuvent demander les titres. | [Demandes de titres](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | Le bloc des infos trafic. | [Infos trafic](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Remplit le trou quand une émission est décalée. | [Démarrage différé](./DELAYED_START.md) |

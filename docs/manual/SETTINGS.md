@@ -97,7 +97,7 @@ segment that holds a validation error after **Save** opens by itself.
 
 | Field | Notes | Chapter |
 |---|---|---|
-| **Intro / Outro Autoloading Playlist** | Played at the start / end of every show with autoloading. | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) |
+| **Intro / Outro Autoloading Playlist** | Played once at the start / end of every show filled by its autoloading playlist (not in request or traffic-alert shows); a show can pick its own. None = no intro / outro. | [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md) |
 | **Song-Request Pool (smart blocks)** | The smart blocks whose tracks listeners may request. | [Song Requests](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | The block for traffic announcements. | [Traffic Alerts](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Fills the gap when a show is shifted. | [Delayed Show Start](./DELAYED_START.md) |

@@ -8450,3 +8450,11 @@ msgstr "Die ersten %1$s von %2$s Titeln – die übrigen finden Sie über die Su
 #: RASTATIME 2026-11-13 song request widget (listener texts)
 msgid "Showing the first %s matches - refine your search to find more."
 msgstr "Die ersten %s Treffer – verfeinern Sie die Suche, um weitere zu finden."
+
+#: RASTATIME 2026-11-14 Settings -> General -> Automation (help icons)
+msgid "Plays once at the start of every show filled by its autoloading playlist, before the autoloading content (not in request or traffic-alert shows). A show can pick its own intro in its Autoloading Playlist section. None = no intro."
+msgstr "Läuft einmal am Anfang jeder Sendung, die von ihrer automatischen Playlist befüllt wird, vor deren Inhalt (nicht in Wunsch- oder Verkehrsfunk-Sendungen). Eine Sendung kann im Abschnitt Autoloading Playlist ein eigenes Intro wählen. Kein = kein Intro."
+
+#: RASTATIME 2026-11-14 Settings -> General -> Automation (help icons)
+msgid "Plays once at the end of every show filled by its autoloading playlist and ends with the show (not in request or traffic-alert shows). An outro with a \"time remaining in show\" smart block instead fills the time left after the content. A show can pick its own outro in its Autoloading Playlist section. None = no outro."
+msgstr "Läuft einmal am Ende jeder Sendung, die von ihrer automatischen Playlist befüllt wird, und endet mit der Sendung (nicht in Wunsch- oder Verkehrsfunk-Sendungen). Ein Outro mit einem Smart Block „verbleibende Zeit in Sendung“ füllt stattdessen die Zeit, die nach dem Inhalt übrig bleibt. Eine Sendung kann im Abschnitt Autoloading Playlist ein eigenes Outro wählen. Kein = kein Outro."

@@ -172,12 +172,15 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $introPlaylistSelect->setLabel(_('Intro Autoloading Playlist'));
         $introPlaylistSelect->setMultiOptions($playlistNames);
         $introPlaylistSelect->setValue(Application_Model_Preference::GetIntroPlaylist());
+        // RASTATIME 2026-11-14 - help icons (AutoPlaylistManager::fillInstance)
+        $introPlaylistSelect->setDescription(_('Plays once at the start of every show filled by its autoloading playlist, before the autoloading content (not in request or traffic-alert shows). A show can pick its own intro in its Autoloading Playlist section. None = no intro.'));
         $this->addElement($introPlaylistSelect);
 
         $outroPlaylistSelect = new Zend_Form_Element_Select('outroPlaylistSelect');
         $outroPlaylistSelect->setLabel(_('Outro Autoloading Playlist'));
         $outroPlaylistSelect->setMultiOptions($playlistNames);
         $outroPlaylistSelect->setValue(Application_Model_Preference::GetOutroPlaylist());
+        $outroPlaylistSelect->setDescription(_('Plays once at the end of every show filled by its autoloading playlist and ends with the show (not in request or traffic-alert shows). An outro with a "time remaining in show" smart block instead fills the time left after the content. A show can pick its own outro in its Autoloading Playlist section. None = no outro.'));
         $this->addElement($outroPlaylistSelect);
 
         // RASTATIME 2026-06-07 — Song Requests: pick the smart block(s)

@@ -99,7 +99,7 @@ se abre sola.
 
 | Campo | Notas | Capítulo |
 |---|---|---|
-| **Intro / Outro Autoloading Playlist** | Suena al principio / al final de cada programa con autoloading. | [Listas de autoloading](./AUTOLOADING_PLAYLISTS.md) |
+| **Intro / Outro Autoloading Playlist** | Suena una vez al principio / al final de cada programa que se llena con su lista de autoloading (no en programas de peticiones ni de tráfico); un programa puede elegir la suya. None = sin introducción / salida. | [Listas de autoloading](./AUTOLOADING_PLAYLISTS.md) |
 | **Song-Request Pool (smart blocks)** | Los bloques inteligentes cuyas pistas pueden pedir los oyentes. | [Peticiones de canciones](./SONG_REQUESTS.md) |
 | **Traffic-Alert Smart Block** | El bloque para avisos de tráfico. | [Avisos de tráfico](./TRAFFIC_ALERTS.md) |
 | **Show-Shift Filler Playlist** | Rellena el hueco cuando se desplaza un programa. | [Inicio retrasado](./DELAYED_START.md) |
