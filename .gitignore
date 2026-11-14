@@ -35,6 +35,7 @@ htmlcov/
 # Virtual environments
 # -----------------------------------------------------------------------------
 .venv/
+.venv-features/
 venv/
 env/
 
