@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Tracks änderbar („Save date“).  Kurz nach Mitternacht (spätestens ~7 min) zieht der neue
   `StationPodcastExpiryTask` die Episode zurück wie „Unpublish“ - Feed, Download und Liste zugleich, eine
   Logzeile je Episode.  Spalte `podcast_episodes.published_until` (Migration 0084; Code läuft auch davor,
-  ein Datum wird dann abgelehnt).  Neues Manual-Kapitel MY_PODCAST ×4, ARCHITECTURE 0.141 (§23.113).
+  ein Datum wird dann abgelehnt).  Neues Manual-Kapitel MY_PODCAST ×4, ARCHITECTURE 0.141 (§23.113).  (`132fe1d0`)
 - **Tooltips für Intro / Outro Autoloading Playlist (2026-11-14, Operator-Wunsch)** - Settings → General →
   Automation: beide Felder haben ein Info-Symbol (wann die Playlist läuft, Outro mit „time remaining in
   show" als Füller, nicht in Wunsch-/Verkehrsfunk-Sendungen, eigene Wahl je Sendung, None = keine);
@@ -115,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   importierten Podcasts („Imported? / Author / Link") und lud nie Daten; jetzt eigene Spalten, Laden beim
   Öffnen und nach „Unpublish".  Dazu: Publish-Aktionen nur noch publish / unpublish / update (der
   Aktionsname wurde vorher ungeprüft als Methodenname aufgerufen); „Unpublish" auf eine schon entfernte
-  Episode scheitert nicht mehr.
+  Episode scheitert nicht mehr.  (`132fe1d0`)
 - **Song-Request-Widget: Antwort unsichtbar, Knopf abgeschnitten, Texte nur englisch
   (2026-11-13)** - Die Antwort auf einen Wunsch („Danke!", „schon gewünscht", Limit) stand
   unter der Tabelle; mit der selbst anpassenden Höhe (2026-11-12) ist die Liste die Seite und
