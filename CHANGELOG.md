@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `logs/recording-copy.log`.  Manual RECORD_PER_SHOW 4 (neu geschrieben: der dort
   beschriebene Kalender-Dialog existierte nicht mehr) und LOCAL_MACHINE x4,
   ARCHITECTURE 0.142 (§23.114).  Wirksam ohne Dienst-Neustart, sobald die Aufgabe
-  registriert und der Ordner gesetzt ist; die Übersetzungen nach Apache-Neustart.
+  registriert und der Ordner gesetzt ist; die Übersetzungen nach Apache-Neustart.  `9340c30f`.
 
 - **My Podcast: „Published until“ (2026-11-14, Operator-Go B)** - im Publish-Dialog lässt sich der letzte
   Tag angeben, an dem ein Track im Sender-Podcast bleibt (inklusive, leer = ohne Ende); bei veröffentlichten
