@@ -428,6 +428,41 @@ class TrackExpiryTask implements AirtimeTask
 }
 
 /**
+ * Class StationPodcastExpiryTask.
+ *
+ * RASTATIME 2026-11-14 - "published until" for My Podcast (option B,
+ * migration 0084).  Every 5 minutes unpublishes the station episodes whose
+ * last published day lies before today (station time zone), exactly like
+ * the Unpublish button - feed, download and public page drop them together.
+ * The TaskManager runs inside the playout's legacy API calls
+ * (push-stream-stats every 2 minutes), so an episode goes at the latest
+ * about 7 minutes after midnight.  A missed run is caught up (the query
+ * asks "before today").  Does nothing before the migration ran.
+ */
+class StationPodcastExpiryTask implements AirtimeTask
+{
+    public const STATION_PODCAST_EXPIRY_INTERVAL_SECONDS = 300;  // 5 minutes
+
+    public function shouldBeRun()
+    {
+        $lastRun = Application_Model_Preference::getStationPodcastExpiryLastRun();
+
+        return empty($lastRun)
+            || (microtime(true) > $lastRun + self::STATION_PODCAST_EXPIRY_INTERVAL_SECONDS);
+    }
+
+    public function run()
+    {
+        try {
+            Application_Service_PodcastEpisodeService::expireStationEpisodes();
+        } catch (Throwable $exc) {
+            Logging::error('StationPodcastExpiryTask failed: ' . $exc->getMessage());
+        }
+        Application_Model_Preference::setStationPodcastExpiryLastRun(microtime(true));
+    }
+}
+
+/**
  * Class LocalImportScanTask.
  *
  * RASTATIME 2026-05-16 - Drop-folder importer.  Every 5 minutes (and

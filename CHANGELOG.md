@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **My Podcast: „Published until“ (2026-11-14, Operator-Go B)** - im Publish-Dialog lässt sich der letzte
+  Tag angeben, an dem ein Track im Sender-Podcast bleibt (inklusive, leer = ohne Ende); bei veröffentlichten
+  Tracks änderbar („Save date“).  Kurz nach Mitternacht (spätestens ~7 min) zieht der neue
+  `StationPodcastExpiryTask` die Episode zurück wie „Unpublish“ - Feed, Download und Liste zugleich, eine
+  Logzeile je Episode.  Spalte `podcast_episodes.published_until` (Migration 0084; Code läuft auch davor,
+  ein Datum wird dann abgelehnt).  Neues Manual-Kapitel MY_PODCAST ×4, ARCHITECTURE 0.141 (§23.113).
 - **Tooltips für Intro / Outro Autoloading Playlist (2026-11-14, Operator-Wunsch)** - Settings → General →
   Automation: beide Felder haben ein Info-Symbol (wann die Playlist läuft, Outro mit „time remaining in
   show" als Füller, nicht in Wunsch-/Verkehrsfunk-Sendungen, eigene Wahl je Sendung, None = keine);
@@ -105,6 +111,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **My Podcast zeigte keine Episoden (2026-11-14)** - die Episodenliste übernahm die Spalten der
+  importierten Podcasts („Imported? / Author / Link") und lud nie Daten; jetzt eigene Spalten, Laden beim
+  Öffnen und nach „Unpublish".  Dazu: Publish-Aktionen nur noch publish / unpublish / update (der
+  Aktionsname wurde vorher ungeprüft als Methodenname aufgerufen); „Unpublish" auf eine schon entfernte
+  Episode scheitert nicht mehr.
 - **Song-Request-Widget: Antwort unsichtbar, Knopf abgeschnitten, Texte nur englisch
   (2026-11-13)** - Die Antwort auf einen Wunsch („Danke!", „schon gewünscht", Limit) stand
   unter der Tabelle; mit der selbst anpassenden Höhe (2026-11-12) ist die Liste die Seite und

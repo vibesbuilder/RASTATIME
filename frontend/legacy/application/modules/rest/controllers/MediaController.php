@@ -242,10 +242,20 @@ class Rest_MediaController extends Zend_Rest_Controller
 
         try {
             // Is there a better way to do this?
-            $data = json_decode($this->getRequest()->getRawBody(), true)['sources'];
-            Application_Service_PublishService::publish($id, $data);
+            $body = json_decode($this->getRequest()->getRawBody(), true);
+            $data = $body['sources'] ?? [];
+            // RASTATIME 2026-11-14 - optional "published until" (YYYY-MM-DD,
+            // '' = no end) for "publish" and "update"
+            Application_Service_PublishService::publish($id, $data, $body['published_until'] ?? null);
             $this->getResponse()
                 ->setHttpResponseCode(200);
+        } catch (InvalidArgumentException|DomainException $e) {
+            // a date the operator can fix: the message goes to the dialog
+            $this->getResponse()
+                ->setHttpResponseCode(400)
+                ->setHeader('Content-Type', 'application/json', true)
+                ->appendBody(json_encode(['message' => $e->getMessage()]));
+            Logging::warn('rest/media publish: ' . $e->getMessage());
         } catch (Exception $e) {
             $this->unknownErrorResponse();
             Logging::error($e->getMessage());

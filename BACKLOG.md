@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 Publish to My Podcast: Veröffentlichung bis zu einem Datum - Evaluierung 2026-11-14 (A, auf Wunsch auch B), wartet auf Go
+### ✅ Publish to My Podcast: Veröffentlichung bis zu einem Datum - GEBAUT 2026-11-14 (Go B, Datum inklusive, Download mitgesperrt; §23.113; Migration 0084 offen)
 
 **Wunsch (Operator 2026-11-14):** Beim Veröffentlichen eines Tracks im Sender-Podcast festlegen, dass er nur
 bis zu einem bestimmten Datum veröffentlicht bleibt.

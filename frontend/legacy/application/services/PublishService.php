@@ -16,11 +16,23 @@ class Application_Service_PublishService
      * @param int   $fileId ID of the file to be published
      * @param array $data   request data containing what services to publish to
      */
-    public static function publish($fileId, $data)
+    public static function publish($fileId, $data, $until = null)
     {
-        foreach ($data as $k => $v) {
+        // RASTATIME 2026-11-14 - only these actions (the action name used to
+        // be called as a method name as sent), "update" changes the
+        // "published until" date of a published track; $until is checked
+        // before anything is written (InvalidArgumentException)
+        $until = Application_Service_PodcastEpisodeService::normalizeUntil($until);
+        foreach ((array) $data as $k => $v) {
             $service = PublishServiceFactory::getService($k);
-            $service->{$v}($fileId);
+            if ($service === null || !in_array($v, ['publish', 'unpublish', 'update'], true)) {
+                throw new InvalidArgumentException("unknown publish source or action: {$k} / {$v}");
+            }
+            if ($v === 'unpublish') {
+                $service->unpublish($fileId);
+            } else {
+                $service->{$v}($fileId, $until);
+            }
         }
     }
 
@@ -56,6 +68,9 @@ class Application_Service_PublishService
                 'source' => $source,
                 'label' => _($label),
                 'status' => $status,
+                // RASTATIME 2026-11-14 - last day published (null = no end)
+                'published_until' => (abs($status) == 1 && method_exists($service, 'getPublishedUntil'))
+                    ? $service->getPublishedUntil($fileId) : null,
             ]);
         }
 

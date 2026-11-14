@@ -266,6 +266,14 @@ var AIRTIME = (function (AIRTIME) {
             sClass: "podcast_episodes_description",
             sWidth: "300px",
           },
+          // RASTATIME 2026-11-14 - last day in My Podcast (empty = no end)
+          /* Published until */ {
+            sTitle: $.i18n._("Published until"),
+            mDataProp: "published_until",
+            sDefaultContent: "",
+            sClass: "podcast_episodes_published_until",
+            sWidth: "110px",
+          },
         ],
       };
 
@@ -292,6 +300,9 @@ var AIRTIME = (function (AIRTIME) {
     );
 
     mod.stationPodcastTable = this.episodeTable.getDatatable();
+    // RASTATIME 2026-11-14 - the table starts empty (no Ajax source): load
+    // the station episodes, as the imported-podcast tables do
+    this.episodeTable.reload($scope.podcast.id);
   };
 
   /**
@@ -308,7 +319,8 @@ var AIRTIME = (function (AIRTIME) {
    * Reload the Station podcast episode table.
    */
   StationPodcastController.prototype.reloadEpisodeTable = function () {
-    this.episodeTable.getDatatable().fnDraw();
+    // RASTATIME 2026-11-14 - fetch again (fnDraw only redrew the old rows)
+    this.episodeTable.reload(this.$scope.podcast.id);
   };
 
   /**
@@ -1038,6 +1050,16 @@ var AIRTIME = (function (AIRTIME) {
     buttons,
     config,
   ) {
+    // RASTATIME 2026-11-14 - a caller with its own columns (the station
+    // podcast, My Podcast) keeps them: the deep extend below used to merge
+    // the imported-podcast columns over them index by index, so My Podcast
+    // showed "Imported? / Author / Link" and no episode.  Copied first,
+    // the extend changes the array in place.
+    var ownColumns = params.aoColumns
+      ? params.aoColumns.map(function (c) {
+          return $.extend({}, c);
+        })
+      : null;
     params = $.extend(true, params, {
       aoColumns: [
         /* GUID */ {
@@ -1162,6 +1184,12 @@ var AIRTIME = (function (AIRTIME) {
             .css("visibility", "hidden");
       },
     });
+    if (ownColumns) {
+      // only the checkbox column is fixed then (no GUID / imported column)
+      params.aoColumns = ownColumns;
+      params.oColVis.aiExclude = [0];
+      params.oColReorder.iFixedColumns = 1;
+    }
 
     if (typeof PodcastEpisodeTable === "undefined") {
       _initPodcastEpisodeTable();

@@ -4771,6 +4771,31 @@ li .ui-state-hover {
     float: right;
 }
 
+/* RASTATIME 2026-11-14 - "published until" (My Podcast) */
+.pub-until-row {
+    margin: 2px 0 10px 7px;
+}
+
+.pub-until-row .pub-until {
+    width: 8em;
+    margin-left: 8px;
+}
+
+.published-sources > .pub-row-until {
+    width: 8em;
+    margin: 0 8px 0 0;
+    vertical-align: middle;
+}
+
+.published-sources > .pub-save-until {
+    margin-right: 8px;
+}
+
+.pub-error {
+    color: #ff7b72;
+    margin: 6px 0 0 7px;
+}
+
 #upgrade-feature-locked {
     margin: 0 auto;
     width: 50%;

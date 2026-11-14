@@ -1083,5 +1083,7 @@ class LibraryController extends Zend_Controller_Action
     {
         $this->_helper->layout->disableLayout();
         // This just spits out publish-dialog.phtml!
+        // RASTATIME 2026-11-14 - earliest "published until" date (station day)
+        $this->view->stationToday = Application_Service_PodcastEpisodeService::stationToday();
     }
 }

@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.140
+Draft version: 0.141
 Date: 2026-11-14
 
 > **Revision history**
+> - **0.141 (2026-11-14)** - **Published until for My Podcast** (§23.113): column
+>   `podcast_episodes.published_until` (migration 0084), StationPodcastExpiryTask unpublishes
+>   after the last day; publish actions whitelisted; My Podcast episode list fixed.
 > - **0.140 (2026-11-14)** - **Own listener texts in the song request widget** (§23.112):
 >   twelve texts on Widgets -> Song Request, one JSON preference, empty = standard text in
 >   the station language; counts as `{total}` / `{shown}` tokens.
@@ -10357,3 +10360,67 @@ text.  `curl /embed/song-request` 200 with the standard texts.
 Failure mode: a broken JSON row -> standard texts (decode guarded).
 Rollback: `git revert` (tag `live-2026-11-14`), legacy live at once;
 the preference row may stay.
+
+### 23.113 Published Until for My Podcast (2026-11-14)
+
+**Request.**  A track published to the station podcast (My Podcast)
+should stay published only up to a date.  Evaluated with three options
+(A filter at read time, B withdraw by a task, C JSON preference); Go for
+B on 2026-11-14: date inclusive, download blocked with the episode.
+
+**Storage.**  `podcast_episodes.published_until DATE NULL` (legacy
+migration 0084), NULL = no end.  Propel classes are not regenerated and
+the Django model does not carry the column: readers use
+`to_jsonb(pe) ->> 'published_until'` (NULL before the migration),
+writers check `information_schema` first
+(`PodcastEpisodeService::publishedUntilReady`).  The code may be live
+before the migration; a date sent before it is refused before anything
+is written, publishing without a date keeps working.
+
+**Withdrawal.**  `StationPodcastExpiryTask` (TaskManager, every 5
+minutes) unpublishes every station episode whose date lies before
+today in the station time zone (`Config general.timezone`) - through
+Propel like the Unpublish button, one log line each.  The row going is
+the one truth for feed (`createStationRssFeed`), download
+(`Acl_plugin::isVerifiedDownload` -> `hasEpisodeForFile`), public page
+and dialog, so none of them needed a filter.  The TaskManager runs
+inside the playout's legacy API calls (`push-stream-stats` every 2
+minutes, measured 2026-11-14), so an episode goes at the latest about
+7 minutes after midnight; "before today" catches a missed run up.
+
+**Writing.**  `PublishService::publish` takes the date, validates it
+(`normalizeUntil`: real YYYY-MM-DD, not before the station's today) and
+accepts only the actions publish / unpublish / update - the action name
+used to be called as a method name as sent.  Episode and date are
+written in one transaction.  `rest/media/{id}/publish` answers a date
+the operator can fix with 400 and a JSON message (shown in the dialog).
+`unpublish` no longer fails on an episode already gone.
+
+**Dialog.**  "Published until:" (datepicker, minimum = station today
+rendered by the server, help icon) under Publish to; a published track
+shows its date with "Save date" (enabled once changed).  The source
+list carries `published_until`.
+
+**My Podcast list (fixed on the way).**  `initPodcastEpisodeDatatable`
+deep-merged the imported-podcast columns over the station table's own
+columns and set no source, so the page showed "Imported? / Author /
+Link" and no episode at all.  A caller's own columns are kept now, the
+station table loads its episodes (`reload`) and reloads after
+Unpublish; new column "Published until".
+
+**Verified.**  CLI probe (`pod_until_probe.php`, writes rolled back)
+before the migration: 22 checks (validation, refused actions, refused
+date before 0084 with nothing written, publish / unpublish without a
+date, double unpublish, expiry no-op, task registered).  The task ran
+live (last run stamped, no log error).  Browser (logged-in Chrome, PUT
+intercepted, nothing published): dialog field, datepicker with past
+days blocked, help icon, request bodies for publish and update, error
+line; My Podcast list with both episodes and the new column, no
+console errors.
+
+**Risk.**  Low: station podcast only, no playout path (the task is one
+query on ~215 rows inside the playout's API calls, errors caught).
+Failure mode: a wrong date comparison withdraws too much or too little
+- limited to episodes WITH a date, each withdrawal logged, files stay
+in the library, re-publishing possible.  Rollback: `git revert` (tag
+`live-2026-11-14c`), legacy live at once; the empty column may stay.

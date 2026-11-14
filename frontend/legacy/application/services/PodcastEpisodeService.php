@@ -302,12 +302,176 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
     }
 
     /**
+     * RASTATIME 2026-11-14 - "published until" (migration 0084, option B):
+     * podcast_episodes.published_until, NULL = no end.  The episode stays
+     * published through that day (station time zone); StationPodcastExpiryTask
+     * unpublishes it after midnight like the Unpublish button, so feed,
+     * download and public page drop it together.  Propel does not know the
+     * column: reads go through to_jsonb (NULL before the migration), writes
+     * check the column first.
+     */
+    public const UNTIL_COLUMN = 'published_until';
+
+    /** @var null|bool */
+    private static $untilReady;
+
+    /** Whether migration 0084 ran (cached per process once true). */
+    public static function publishedUntilReady(): bool
+    {
+        if (self::$untilReady !== true) {
+            self::$untilReady = (bool) Application_Common_Database::prepareAndExecute(
+                "SELECT 1 FROM information_schema.columns
+                  WHERE table_name = 'podcast_episodes' AND column_name = :c",
+                [':c' => self::UNTIL_COLUMN],
+                Application_Common_Database::COLUMN
+            );
+        }
+
+        return self::$untilReady;
+    }
+
+    /** Today in the station time zone, YYYY-MM-DD. */
+    public static function stationToday(): string
+    {
+        try {
+            $tz = new DateTimeZone((string) Application_Model_Preference::GetDefaultTimezone());
+        } catch (Exception $e) {
+            $tz = new DateTimeZone(date_default_timezone_get());
+        }
+
+        return (new DateTime('now', $tz))->format('Y-m-d');
+    }
+
+    /**
+     * '' / null = no end; otherwise a real YYYY-MM-DD date, today or later
+     * (station time zone).
+     *
+     * @param mixed $value
+     *
+     * @throws InvalidArgumentException with a translated message
+     */
+    public static function normalizeUntil($value): ?string
+    {
+        $v = trim((string) $value);
+        if ($v === '') {
+            return null;
+        }
+        $d = DateTime::createFromFormat('!Y-m-d', $v);
+        if (!$d || $d->format('Y-m-d') !== $v) {
+            throw new InvalidArgumentException(_('Please enter the date as YYYY-MM-DD.'));
+        }
+        if ($v < self::stationToday()) {
+            throw new InvalidArgumentException(_('The date lies in the past.'));
+        }
+
+        return $v;
+    }
+
+    /** The "published until" date of the file's station episode, or null. */
+    public function getPublishedUntil($fileId): ?string
+    {
+        $v = Application_Common_Database::prepareAndExecute(
+            "SELECT to_jsonb(pe) ->> 'published_until' FROM podcast_episodes pe
+              WHERE pe.podcast_id = :p AND pe.file_id = :f LIMIT 1",
+            [':p' => (int) Application_Model_Preference::getStationPodcastId(), ':f' => (int) $fileId],
+            Application_Common_Database::COLUMN
+        );
+
+        return ($v === false || $v === null || $v === '') ? null : (string) $v;
+    }
+
+    /**
+     * Set (or clear with null) the date of the file's station episode.
+     *
+     * @throws DomainException when a date is given before migration 0084
+     */
+    public function setPublishedUntil($fileId, ?string $until): void
+    {
+        if (!self::publishedUntilReady()) {
+            if ($until === null) {
+                return;
+            }
+
+            throw new DomainException(_('"Published until" needs the database update 0084 first.'));
+        }
+        Application_Common_Database::prepareAndExecute(
+            'UPDATE podcast_episodes SET published_until = CAST(:u AS date)
+              WHERE podcast_id = :p AND file_id = :f',
+            [':u' => $until, ':p' => (int) Application_Model_Preference::getStationPodcastId(), ':f' => (int) $fileId],
+            Application_Common_Database::EXECUTE
+        );
+    }
+
+    /**
+     * Change the date of an already published track (dialog "Save date").
+     *
+     * @param int         $fileId
+     * @param null|string $until  normalised (normalizeUntil)
+     */
+    public function update($fileId, $until = null)
+    {
+        if (!$this->getPublishStatus($fileId)) {
+            throw new DomainException(_('This track is no longer published.'));
+        }
+        $this->setPublishedUntil($fileId, $until);
+    }
+
+    /**
+     * StationPodcastExpiryTask: unpublish every station episode whose
+     * "published until" day lies before today (station time zone) - each
+     * through Propel like the Unpublish button, one log line each.  "Before
+     * today", not "yesterday", so a missed run is caught up.
+     *
+     * @return int episodes unpublished
+     */
+    public static function expireStationEpisodes(): int
+    {
+        if (!self::publishedUntilReady()) {
+            return 0;
+        }
+        $today = self::stationToday();
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT id, file_id, published_until::text AS until, episode_title
+               FROM podcast_episodes
+              WHERE podcast_id = :p AND published_until IS NOT NULL AND published_until < CAST(:t AS date)
+              ORDER BY id',
+            [':p' => (int) Application_Model_Preference::getStationPodcastId(), ':t' => $today],
+            Application_Common_Database::ALL
+        );
+        $done = 0;
+        foreach ($rows as $r) {
+            $episode = PodcastEpisodesQuery::create()->findPk((int) $r['id']);
+            if ($episode === null) {
+                continue;
+            }
+            $episode->delete();
+            ++$done;
+            Logging::info(sprintf(
+                'StationPodcastExpiryTask: unpublished episode %d (file %d, "%s") - published until %s, today %s',
+                (int) $r['id'],
+                (int) $r['file_id'],
+                (string) $r['episode_title'],
+                (string) $r['until'],
+                $today
+            ));
+        }
+
+        return $done;
+    }
+
+    /**
      * Publish the file with the given file ID to the station podcast.
      *
-     * @param int $fileId ID of the file to be published
+     * @param int         $fileId ID of the file to be published
+     * @param null|string $until  RASTATIME 2026-11-14 - last day published
+     *                            (normalised, see normalizeUntil), null = no end
      */
-    public function publish($fileId)
+    public function publish($fileId, $until = null)
     {
+        // a date before migration 0084 is refused before anything is written
+        if ($until !== null && !self::publishedUntilReady()) {
+            throw new DomainException(_('"Published until" needs the database update 0084 first.'));
+        }
         $id = Application_Model_Preference::getStationPodcastId();
         $url = $guid = Config::getPublicUrl() . "rest/media/{$fileId}/download";
         if (!PodcastEpisodesQuery::create()
@@ -333,8 +497,22 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
                 // Last-resort fallback: a non-empty title is required.
                 $title = 'Track ' . $fileId;
             }
-            $e = $this->_buildEpisode($id, $url, $guid, date('r'), $title, $description);
-            $e->setDbFileId($fileId)->save();
+            // RASTATIME 2026-11-14 - episode and date together or neither
+            $con = Propel::getConnection(PodcastEpisodesPeer::DATABASE_NAME);
+            $con->beginTransaction();
+
+            try {
+                $e = $this->_buildEpisode($id, $url, $guid, date('r'), $title, $description);
+                $e->setDbFileId($fileId)->save($con);
+                if ($until !== null) {
+                    $this->setPublishedUntil($fileId, $until);
+                }
+                $con->commit();
+            } catch (Throwable $t) {
+                $con->rollBack();
+
+                throw $t;
+            }
         }
     }
 
@@ -346,10 +524,14 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
     public function unpublish($fileId)
     {
         $id = Application_Model_Preference::getStationPodcastId();
-        PodcastEpisodesQuery::create()
+        // RASTATIME 2026-11-14 - already gone (the expiry task may have
+        // unpublished it while the dialog was open): nothing to do
+        $episode = PodcastEpisodesQuery::create()
             ->filterByDbPodcastId($id)
-            ->findOneByDbFileId($fileId)
-            ->delete();
+            ->findOneByDbFileId($fileId);
+        if ($episode !== null) {
+            $episode->delete();
+        }
     }
 
     /**
@@ -473,9 +655,21 @@ class Application_Service_PodcastEpisodeService extends Application_Service_Thir
     private function _getStationPodcastEpisodeArray($episodes)
     {
         $episodesArray = [];
+        // RASTATIME 2026-11-14 - "published until" for the My Podcast list
+        // (one query; NULL before migration 0084)
+        $until = [];
+        foreach (Application_Common_Database::prepareAndExecute(
+            "SELECT pe.id, to_jsonb(pe) ->> 'published_until' AS until FROM podcast_episodes pe
+              WHERE pe.podcast_id = :p",
+            [':p' => (int) Application_Model_Preference::getStationPodcastId()],
+            Application_Common_Database::ALL
+        ) as $r) {
+            $until[(int) $r['id']] = $r['until'];
+        }
         foreach ($episodes as $episode) {
             /** @var PodcastEpisodes $episode */
             $episodeArr = $episode->toArray(BasePeer::TYPE_FIELDNAME, true, [], true);
+            $episodeArr['published_until'] = $until[(int) $episode->getDbId()] ?? null;
             array_push($episodesArray, $episodeArr);
         }
 

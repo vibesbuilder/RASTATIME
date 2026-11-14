@@ -8458,3 +8458,47 @@ msgstr "Läuft einmal am Anfang jeder Sendung, die von ihrer automatischen Playl
 #: RASTATIME 2026-11-14 Settings -> General -> Automation (help icons)
 msgid "Plays once at the end of every show filled by its autoloading playlist and ends with the show (not in request or traffic-alert shows). An outro with a \"time remaining in show\" smart block instead fills the time left after the content. A show can pick its own outro in its Autoloading Playlist section. None = no outro."
 msgstr "Läuft einmal am Ende jeder Sendung, die von ihrer automatischen Playlist befüllt wird, und endet mit der Sendung (nicht in Wunsch- oder Verkehrsfunk-Sendungen). Ein Outro mit einem Smart Block „verbleibende Zeit in Sendung“ füllt stattdessen die Zeit, die nach dem Inhalt übrig bleibt. Eine Sendung kann im Abschnitt Autoloading Playlist ein eigenes Outro wählen. Kein = kein Outro."
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "Published until:"
+msgstr "Veröffentlicht bis:"
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "Published until"
+msgstr "Veröffentlicht bis"
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "YYYY-MM-DD"
+msgstr "JJJJ-MM-TT"
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "no end date"
+msgstr "ohne Enddatum"
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "Save date"
+msgstr "Datum speichern"
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "Could not save. Please try again."
+msgstr "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut."
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "Please enter the date as YYYY-MM-DD."
+msgstr "Bitte geben Sie das Datum als JJJJ-MM-TT ein."
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "The date lies in the past."
+msgstr "Das Datum liegt in der Vergangenheit."
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "\"Published until\" needs the database update 0084 first."
+msgstr "„Veröffentlicht bis“ braucht zuerst das Datenbank-Update 0084."
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "This track is no longer published."
+msgstr "Dieser Track ist nicht mehr veröffentlicht."
+
+#: RASTATIME 2026-11-14 My Podcast published until
+msgid "Optional. The track stays published through this day (station time) and is unpublished automatically shortly after midnight - feed and download included. Empty = no end."
+msgstr "Optional. Der Track bleibt bis einschließlich dieses Tages (Senderzeit) veröffentlicht und wird kurz nach Mitternacht automatisch zurückgezogen - Feed und Download eingeschlossen. Leer = ohne Ende."

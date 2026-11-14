@@ -2659,6 +2659,17 @@ class Application_Model_Preference
         self::setValue('track_expiry_last_run', $value);
     }
 
+    // RASTATIME 2026-11-14 - StationPodcastExpiryTask ("published until")
+    public static function getStationPodcastExpiryLastRun()
+    {
+        return self::getValue('station_podcast_expiry_last_run');
+    }
+
+    public static function setStationPodcastExpiryLastRun($value)
+    {
+        self::setValue('station_podcast_expiry_last_run', $value);
+    }
+
     // RASTATIME 2026-05-16 - Local Import Folder.  Operator-configured
     // absolute path on the RASTATIME host (Settings -> Local Machine).
     // A LocalImportScanTask (TaskManager, 5-min interval) walks the

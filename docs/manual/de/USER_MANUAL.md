@@ -133,6 +133,7 @@ sie alle voraussetzen.
 | [Kalender](./CALENDAR.md) | Sendungen erstellen, bearbeiten, Drag-and-Drop, wiederkehrende Sendungen, Wiederholungen, Hosts. |
 | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) | Sendungseinstellungen wiederverwenden, ohne sie jede Woche neu einzugeben. |
 | [Archivierung](./ARCHIVING.md) | Episoden auf cba.media archivieren: Produzenten und CBA-Konten (Einstellungen → Archivierung), die Archivierungs-Vorgaben einer Sendung, Titel, Teaser und Bild je Episode, „Online archivieren“ aus dem Kalender, die Teilnehmenden je Eigenproduktion und die Seite Archiv-Status. |
+| [My Podcast](./MY_PODCAST.md) | Der eigene Podcast-Feed des Senders: Tracks veröffentlichen, „Published until“ (automatisches Zurückziehen nach dem letzten Tag), zurückziehen, Feed-Privatsphäre und die Episodenliste. |
 | [Import / Export](./IMPORT_EXPORT.md) | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON exportieren, in der Tabelle pflegen und mit Vorschau wieder importieren. |
 | [Verzögerter Sendungsstart](./DELAYED_START.md) | Eine freigeschaltete Sendung später beginnen lassen, wenn die Sendung davor überzogen hat, statt diese abzuschneiden. Die Verzögerung pflanzt sich über aufeinanderfolgende freigeschaltete Sendungen bis zum ersten zeitgebundenen Anker fort. |
 
