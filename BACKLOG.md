@@ -8264,3 +8264,41 @@ Offen:
   und den Wert setzen.
 - Erste aufgezeichnete Line-Input-Sendung prüfen (Anfang und Ende der
   Datei).
+
+## Sendungsaufzeichnungen an die Sendungsmachenden weitergeben (Evaluierung 2026-11-14)
+
+### 💡 Download-Link per E-Mail nach Sendungsende + Kalender-Eintrag „Download Recording" - EVALUIERT 2026-11-14, wartet auf Go
+Frage des Operators: Aufzeichnungen gleich nach Sendungsende bereitstellen -
+Robocopy-Spiegel des Aufnahmeordners, eigene Integration oder My Podcast
+mit einer Woche Laufzeit?
+Ist-Stand: die Kopie liegt Sekunden nach Sendungsende in der Library
+(Track Type Recordings, mit der Episode verknüpft; letzte 7 Tage 15 von
+15) und lässt sich von jedem angemeldeten Konto über Tracks → Download
+laden.  Es gibt aber nur 6 Konten, und keine der 18 aufgezeichneten
+Sendungen der nächsten 14 Tage hat einen Host zugewiesen.  Das Manual
+(RECORD_PER_SHOW 4, „View Recorded File") beschreibt einen Dialog, den
+es nicht mehr gibt.
+Varianten:
+- A Robocopy-Spiegel: kein Produktcode, aber alle sehen alles, kein
+  Ablauf, laufende Aufnahmen werden halb kopiert (kein Minuten-Filter),
+  Pflege außerhalb von RASTATIME.  Nur als Übergang.
+- B My Podcast automatisch, eine Woche: technisch klein (Published until
+  existiert), aber EIN Sender-Feed - jede Rohaufnahme wäre öffentlich
+  (Musikrechte, ungeprüfte Inhalte, Feed der Hörer geflutet) oder, privat
+  gestellt, mit einem gemeinsamen Schlüssel für alle.  No-Go als
+  Übergabeweg.
+- C Empfehlung: nach dem Import eine E-Mail mit persönlichem,
+  signiertem Download-Link (ohne Anmeldung, N Tage gültig) an die
+  Adressen der Sendung; SMTP aus den Alarmen ist vorhanden.
+- D dazu: Kalender-Eintrag „Download Recording" an der beendeten Episode
+  für Hosts der Sendung, PM und Admin; Manual-Abschnitt richtigstellen.
+Vorbedingungen / offene Entscheidungen:
+- Woher kommen die Adressen: zugewiesene Hosts (Konten) oder ein neues
+  Feld je Sendung (Migration)?
+- Gültigkeit des Links (Vorschlag 7 Tage) und ob die Library-Kopie
+  danach bleibt (heute kein Ablauf, ~5 GB in vier Wochen).
+- Gibt es schon eine Ablage (NAS / Cloud), die alle nutzen?  Dann wäre A
+  als Übergang vertretbar.
+Aufwand C+D ~1,5-2 Tage, ~10 Dateien, Manual x4; Risiko niedrig bis
+mittel (neuer öffentlicher Endpunkt: nur signierte, befristete Links auf
+Dateien des Typs Recordings).
