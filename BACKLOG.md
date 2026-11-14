@@ -61,7 +61,7 @@ Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe 
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
-Metadaten Energy/Tempo/Key/Timbre (Bench liegt vor) · JavaScript-Build-Pipeline 🔴 Hold (2026-10-28) ·
+Metadaten Energy/Tempo/Key/Timbre: Stufe 1 gebaut 2026-11-14, Stufe 2 Go · JavaScript-Build-Pipeline 🔴 Hold (2026-10-28) ·
 Payware/Tier-System 🔴 Hold (bestätigt 2026-10-28).
 
 **Ideen, nur notiert:** Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · Line-In-Gain live nachregeln · Kanalwahl im
@@ -6951,7 +6951,7 @@ RASTATIME-Spalten bleiben, Bestaetigung im Dialog.  Kein automatischer Abgleich 
 stillschweigend ueberschreiben).  Abnahme 2026-10-21: Knopf im Browser bestaetigt (Operator), Live-Probe des
 Endpunkts mit zwei Dateien, deren Tags der DB entsprechen: 2 gelesen, 0 geaendert, Zeilen unveraendert.
 
-### 🟡 Metadaten Energy, Tempo, Key, Timbre + Analyse beim Import (Mood-Detector-Fork) - DEFER (Operator 2026-10-21: unsicher)
+### 🟢 Metadaten Energy, Tempo, Key, Timbre - Stufe 1 (Energy + Helligkeit) GEBAUT 2026-11-14 (§23.115), Stufe 2 (Tempo + Key) GO danach (Operator 2026-11-14; DEFER 2026-10-21)
 
 Evaluierung: moeglich (Mood-Detector, MIT, librosa-basiert, ~2 s je Titel, 30 s aus der Mitte; Tempo per
 Beat-Tracking, Energy RMS, Key per Chroma, Brightness; Mood per Regeltabelle, nur DJ/Electronic-Kategorien,
@@ -7010,6 +7010,15 @@ Portalwerte sind selbst Schätzungen (meist Spotify-Herkunft), keine Wahrheit.  
 für alle, Portal als Schiedsrichter - Portal-Tempo nur übernehmen, wenn es zum eigenen Wert passt (±3 %
 oder halb/doppelt -> Oktave vom Portal), sonst eigener Wert als „unsicher“; vorher 200-Titel-Stichprobe
 (Trefferquote, Übereinstimmung).  Vorbedingungen: Konto + Backlink + Schlüssel durch den Operator.
+**Operator-Go 2026-11-14: Stufe 1, danach Stufe 2.**  Stufe 1 gebaut 2026-11-14 wie empfohlen (ffmpeg, Option B):
+Migration 0085 (`energy`, `brightness`, `audio_features`), `manage.py analyze_audio_features`, Aufgabe
+RASTATIME-AudioFeatures (alle 10 min, SYSTEM), Library-Spalten, Edit Track, Kriterien; Hand-Wert gewinnt,
+nur DB.  Skala aus 823 Kalibrier-Tracks (`C:/Temp/optd/features_calib/`), nach dem Bestandslauf aus dem
+ganzen Bestand nachkalibrieren (`--rescale`).  Abweichung vom Vorschlag: die Kriterien sind sofort nach der
+Migration sichtbar (wie Country); die „Freigabe“ ist die Reihenfolge Migration -> Bestandslauf -> Hörprobe ->
+Blöcke bauen.  Bulk-Edit für die beiden Felder nicht in Stufe 1.  Offen: Migration 0085 + Registrierung der
+Aufgabe (Operator), Bestandslauf, Hörprobe (Library nach Energy sortieren).  Stufe 2 (Tempo + Key mit librosa
+in eigener venv, GetSongBPM als Schiedsrichter sobald Konto/Schlüssel da) folgt.
 
 ## Test-Hygiene (2026-10-22)
 

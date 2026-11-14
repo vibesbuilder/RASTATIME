@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.142
+Draft version: 0.143
 Date: 2026-11-14
 
 > **Revision history**
+> - **0.143 (2026-11-14)** - **Energy and brightness, stage 1** (§23.115): ffmpeg measures
+>   30 s per track at the on-air level, `cc_files.energy` / `brightness` 1..10 (migration
+>   0085), a Windows task fills new tracks; library columns, Edit Track, smart block
+>   criteria; hand values are never replaced.
 > - **0.142 (2026-11-14)** - **Copy finished recordings to a second folder** (§23.114): a
 >   Windows task under a user account copies each finished show recording once, flat, into
 >   a folder (network share) named under Settings - Local Machine; ledger and status in
@@ -10504,3 +10508,92 @@ changed - visible in the status line) and disk use at the target, where
 nothing is pruned.  Rollback: empty the field, or
 `Unregister-ScheduledTask -TaskName RASTATIME-RecordingCopy`;
 `git revert` (tag `live-2026-11-14e`).
+
+### 23.115 Energy and Brightness, Stage 1 (2026-11-14)
+
+**Request.**  Operator, backlog item "Metadaten Energy, Tempo, Key,
+Timbre": descriptive values per track for programming.  Evaluated
+2026-10-21 (librosa bench, deferred over the dependency chain) and again
+2026-11-14 (seven points, BACKLOG): the library has practically no
+reference tags (bpm on 37 of 25,020 tracks, no key column, 0 key tags in
+1,500 sampled files), Essentia has no Windows wheels, ffmpeg 9's
+`aspectralstats` measures spectral shape and change in 0.1 s per track
+without a new dependency.  Online BPM portals were checked as a source
+for tempo: only the GetSongBPM API is usable (key, mandatory backlink),
+the library has no ISRC - kept for stage 2 as a referee.  Operator's go
+2026-11-14: stage 1 (energy + brightness, ffmpeg), then stage 2 (tempo +
+key with librosa in its own venv).
+
+**Why level-corrected.**  The first probe showed raw spectral flux
+tracking the master loudness (0.004 at -25 LUFS, 0.07 at -8 LUFS).  Every
+excerpt is therefore brought to -23 LUFS with the track's integrated
+loudness (R128, measured on import) before anything is measured; the
+master loudness enters the energy score once, with half weight.
+
+**Design.**
+- Columns (migration 0085): `cc_files.energy`, `brightness` (SMALLINT,
+  CHECK 1..10, NULL = none) and `audio_features` (JSONB: version, scale
+  version, time, excerpt start, LUFS / LRA used, centroid, rolloff,
+  flatness, flux, onsets/s, RMS mean / spread, energy score and the two
+  levels the measurement produced; or `{error}`; NULL = not measured).
+- Measurement (`storage/audio_features.py`, pure Python - the production
+  venv has no numpy): 30 s centred in the cue range, ffmpeg graph
+  `aresample=22050, mono, volume=-23-LUFS, asetnsamples=1024,
+  aspectralstats (centroid, rolloff, flux, flatness), astats RMS per frame,
+  ametadata=print`; frames below -60 dBFS are pauses; at least 50 audible
+  frames.  Onsets: flux peaks above a moving median + 3 MAD, 0.1 s apart.
+- Energy score: robust z-scores (median / IQR of a stratified calibration
+  sample of 823 music tracks) of flux (1.0), onsets (0.5), flatness
+  (0.75), loudness range of the whole track (-0.5) and master loudness
+  (0.5).  Levels: deciles of the sample (`ENERGY_EDGES`); brightness: the
+  level-weighted spectral centroid, deciles likewise.  Calibration
+  sample: electronic and R&B median 8-9, rock / pop 5, the quietest
+  weekly playlist 1.
+- Hand values: a level that differs from the one in `audio_features` was
+  set by hand (Edit Track) and is never replaced - neither by a new
+  measurement (`--ids`, new `FEATURE_VERSION`) nor by a new scale
+  (`--rescale` recomputes the levels from the stored raw values without
+  ffmpeg).  One SQL `CASE` per column decides it.
+- Runner: `manage.py analyze_audio_features` (newest first, `--limit`,
+  `--max-seconds`, `--ids`, `--retry-failed`, `--rescale`, `--dry-run`,
+  `--ffmpeg-dir`), one run at a time (advisory lock), `lock_timeout 2s`
+  per row (a row the fill pass holds is retried next run), single-row
+  autocommit updates, ffmpeg `-threads 1` below normal priority.  Only
+  tracks with a loudness value (types without loudness measurement get
+  none); unreadable / silent tracks keep an `{error}` document.
+- Task: `scripts/audio-features.ps1` every ten minutes as SYSTEM
+  (`infra/scripts/register-audio-features.ps1`, IgnoreNew, priority 7,
+  no UTC offset), log `logs/audio-features.log` only when it did
+  something.  Import and playout do not depend on it.
+- Legacy: library columns Energy / Brightness (hidden by default,
+  numeric, range search; NULL::int in the playlist / block / stream /
+  line-in branches of the union), Edit Track fields (digits 1..10, empty
+  clears, the help icon names the measured value), smart block criteria
+  `energy` / `brightness` (virtual like the country, INTEGER peer for the
+  validator, `Block::audioFeatureCriterionSql`: is, is not incl. NULL,
+  greater, less, range).  All raw SQL behind `fileColumnReady`, so code
+  and migration may come in either order.  Propel and the Django File
+  model are unchanged.
+
+**Verification.**  16 API tests (parsing incl. -inf frames, excerpt
+start, ffmpeg graph, onsets, silence, score, levels, the document; the
+database pass: newest first, failures kept and retried on request, no
+loudness = not measured, hand values survive re-measuring and rescaling,
+dry run, command output).  Legacy probe before 0085
+(`C:/Temp/optd/audio_features_probe.php`, 11/11: feed sorted by both
+columns for files and all types, text search, fields hidden, criterion
+SQL `FALSE`); the library page loaded with the new columns and no
+console error.
+
+**Risk.**  Low.  Nothing on air depends on it: the values are read by
+smart blocks only.  A block filtering on energy before the library is
+measured finds fewer tracks (tracks without a value never match) - the
+first pass therefore runs right after the migration, before blocks use
+the criteria.  CPU: about 0.1 s per track, one thread, below normal
+priority.  Adding two library columns makes DataTables 1.13 discard each
+user's saved layout once (column order, sort, rows per page - a state
+with another column count is ignored); the visible columns come from the
+per-type column profiles, which are keyed by column name, and stay.
+Rollback: `Unregister-ScheduledTask -TaskName
+RASTATIME-AudioFeatures`; `git revert` (tag `live-2026-11-14f`); the
+columns may stay.

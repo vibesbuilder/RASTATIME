@@ -326,6 +326,57 @@ sans perte converti en MP3 garde le tag.  Le 2026-11-09, aucune piste
 de la bibliothèque ne portait ce tag ; les pistes existantes sont donc
 inchangées.
 
+### Énergie et brillance (depuis le 2026-11-14)
+
+RASTATIME mesure lui-même deux valeurs de chaque piste et les affiche
+sur une échelle de 1 à 10 :
+
+| Valeur | 1 | 10 | Ce qui est mesuré |
+|---|---|---|---|
+| **Énergie** | calme | très énergique | ce qui se passe dans la musique : attaques et changements, un son dense ou rugueux, la plage de sonie de toute la piste (large = calme) et le niveau de son mastering |
+| **Brillance** | sombre (chaud, peu d'aigus) | brillant (beaucoup d'aigus) | où se situe le poids du son entre graves et aigus |
+
+- **Par rapport à votre propre médiathèque :** l'échelle est la
+  répartition de la médiathèque elle-même - 5 est une piste typique de
+  cette station, 1 et 10 sont le dixième à chaque extrémité.  Les
+  valeurs sont une estimation à partir de 30 secondes au milieu de la
+  piste (entre les points de cue), ramenées d'abord au niveau
+  d'antenne, pour que la sonie ne décide pas seule : le niveau du
+  mastering n'est qu'un facteur sur cinq.
+- **Quand :** la tâche Windows *RASTATIME-AudioFeatures* mesure toutes
+  les dix minutes ce qui est nouveau ; une piste reçoit donc ses
+  valeurs quelques minutes après le téléversement (environ 0,1 s de
+  calcul par piste, en priorité basse).  L'import et la diffusion ne
+  l'attendent pas.  Les pistes sans valeur de sonie (types de piste
+  sans mesure de sonie, comme les infos) n'en reçoivent pas.
+- **Votre valeur l'emporte :** Edit Track → **Énergie** /
+  **Brillance** accepte un nombre entier de 1 à 10, vide efface la
+  valeur.  Une valeur que vous saisissez n'est jamais remplacée par
+  une mesure ; l'icône d'aide à côté du champ indique la valeur
+  mesurée.
+- **Médiathèque :** les colonnes *Énergie* et *Brillance* sont
+  masquées par défaut (sélecteur de colonnes) ; elles se trient et
+  acceptent une plage dans la recherche par colonne (p. ex. `7` à
+  `10`).  Trier par *Énergie* est le moyen le plus rapide d'écouter
+  les pistes les plus calmes et les plus énergiques.
+- **Smart blocks :** critères *Énergie* et *Brillance*
+  ([Smart Blocks](#3-smart-blocks)).
+- **Uniquement dans la base de données :** les fichiers eux-mêmes ne
+  sont pas modifiés.
+
+Pour les administrateurs : enregistrer la tâche une fois après la mise
+à jour de base de données 0085, dans un PowerShell administrateur :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-audio-features.ps1
+```
+
+Le premier passage sur toute une médiathèque se lance à la main avec
+`manage.py analyze_audio_features --limit 0 --max-seconds 0` (environ
+35 minutes pour 25 000 pistes) ; `--dry-run` montre seulement ce qui
+serait mesuré.  La tâche n'écrit dans `logs\audio-features.log` que si
+elle a mesuré quelque chose ou si une piste n'a pas pu être mesurée.
+
 ### Modifier les métadonnées de piste
 
 Cliquez sur une ligne de piste → **Modifier les
@@ -340,6 +391,7 @@ métadonnées** dans le menu d'action de la ligne.  Si l'enregistrement est refu
 | **Année** | `cc_files.year` |
 | **Pays** (depuis le 2026-11-08) | `cc_files.country` - texte libre, depuis le tag `Country` à l'import ; le champ propose les pays déjà utilisés. La base d'Analytics → [Music by Country](./ANALYTICS.md) ; les blocs intelligents peuvent filtrer dessus (critère *Pays*). Colonne de la bibliothèque *Pays* (masquée par défaut, cherchable). |
 | **BPM** | `cc_files.bpm` |
+| **Énergie** / **Brillance** (depuis le 2026-11-14) | `cc_files.energy` / `brightness` - 1 (calme / sombre) à 10 (très énergique / brillant), mesurées quelques minutes après le téléversement ; une valeur saisie remplace la mesure définitivement, vide l'efface. Voir [Énergie et brillance](#énergie-et-brillance-depuis-le-2026-11-14). |
 | **Type de piste** | `cc_files.track_type` — utilisé par les filtres smart-block |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — couper le début / la fin sans re-encodage. Depuis le 30/09/2026, les valeurs restent à l'intérieur du fichier : un cue out au-delà de la longueur est ramené à la longueur, un cue in négatif devient zéro. Une modification est copiée dans les lignes des émissions à venir qui programment la piste (les lignes déjà commencées ne sont pas touchées), et ces émissions sont recalculées - pas besoin de les remplir à nouveau. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
@@ -407,7 +459,7 @@ Bibliothèque → **+ Nouveau** → **Smart Block**.
 |---|---|
 | **Nom** | Visible dans la bibliothèque et sur le calendrier. |
 | **Type** | **Statique** — choisit une fois au moment de la création ; l'ensemble ne change jamais. **Dynamique** — re-choisit chaque fois que le block est planifié. |
-| **Critères** | Ajouter des lignes : *artiste contient "Bowie"*, *bpm est dans le champ 100 à 130*, *genre est pop*, etc. Les lignes se combinent en ET ; le **+** à côté d'une ligne ajoute une alternative pour le même champ (OU), ex. *genre est pop* **+** *genre est rock*. Depuis le 2026-11-08 aussi *Pays* (p. ex. *pays est Austria* ; *est* et *n'est pas* comparent exactement, *n'est pas* et *ne contient pas* incluent les pistes sans pays). Détails sous [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Critères** | Ajouter des lignes : *artiste contient "Bowie"*, *bpm est dans le champ 100 à 130*, *genre est pop*, etc. Les lignes se combinent en ET ; le **+** à côté d'une ligne ajoute une alternative pour le même champ (OU), ex. *genre est pop* **+** *genre est rock*. Depuis le 2026-11-08 aussi *Pays* (p. ex. *pays est Austria* ; *est* et *n'est pas* comparent exactement, *n'est pas* et *ne contient pas* incluent les pistes sans pays). Depuis le 2026-11-14 aussi *Énergie* et *Brillance* (1 à 10, p. ex. *énergie est supérieur à 6* ; les pistes pas encore mesurées ne correspondent jamais, *n'est pas* les inclut). Détails sous [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limiter à** | L'un de : **Nombre de pistes** (ex. 10), **Durée en temps** (ex. 30:00), **Temps restant dans l'émission** (laisse le smart block remplir exactement jusqu'à la fin de l'émission). |
 | **Trier** | Aléatoire / plus récent en premier / par artiste / par nombre de lectures / etc. |
 

@@ -273,6 +273,55 @@ está.  Un archivo sin pérdida convertido a MP3 conserva la etiqueta.
 El 2026-11-09 ninguna pista de la biblioteca llevaba esta etiqueta;
 las pistas existentes no cambian.
 
+### Energía y brillo (desde 2026-11-14)
+
+RASTATIME mide por sí mismo dos valores de cada pista y los muestra en
+una escala de 1 a 10:
+
+| Valor | 1 | 10 | Qué se mide |
+|---|---|---|---|
+| **Energía** | tranquila | muy enérgica | cuánto pasa en la música: ataques y cambios, un sonido denso o áspero, el rango de sonoridad de toda la pista (amplio = tranquila) y lo fuerte que se masterizó |
+| **Brillo** | oscuro (cálido, pocos agudos) | brillante (muchos agudos) | dónde está el peso del sonido entre graves y agudos |
+
+- **En comparación con su propia biblioteca:** la escala es la
+  dispersión de la propia biblioteca - 5 es una pista típica de esta
+  emisora, 1 y 10 son la décima parte de cada extremo.  Los valores
+  son una estimación a partir de 30 segundos en el centro de la pista
+  (entre los puntos de cue), llevados antes al nivel de emisión para
+  que la sonoridad no decida sola: lo fuerte que se masterizó una
+  pista es solo uno de cinco factores.
+- **Cuándo:** la tarea de Windows *RASTATIME-AudioFeatures* mide cada
+  diez minutos lo nuevo; una pista recibe sus valores unos minutos
+  después de la subida (unos 0,1 s de cálculo por pista, con prioridad
+  baja).  La importación y la emisión no la esperan.  Las pistas sin
+  valor de sonoridad (tipos de pista sin medición de sonoridad, como
+  las noticias) no reciben ninguno.
+- **Su valor manda:** Edit Track → **Energía** / **Brillo** acepta un
+  número entero de 1 a 10; vacío borra el valor.  Un valor que usted
+  introduce nunca se sustituye por una medición; el icono de ayuda
+  junto al campo muestra el valor medido.
+- **Biblioteca:** las columnas *Energía* y *Brillo* están ocultas por
+  defecto (selector de columnas); se pueden ordenar y aceptan un rango
+  en la búsqueda por columna (p. ej. `7` a `10`).  Ordenar por
+  *Energía* es la forma más rápida de escuchar las pistas más
+  tranquilas y las más enérgicas.
+- **Smart blocks:** criterios *Energía* y *Brillo*
+  ([Smart Blocks](#3-smart-blocks)).
+- **Solo en la base de datos:** los archivos no se modifican.
+
+Para administradores: registrar la tarea una vez tras la actualización
+de base de datos 0085, en un PowerShell con derechos de administrador:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-audio-features.ps1
+```
+
+La primera pasada sobre toda una biblioteca se lanza a mano con
+`manage.py analyze_audio_features --limit 0 --max-seconds 0` (unos 35
+minutos para 25.000 pistas); `--dry-run` solo muestra lo que mediría.
+La tarea solo escribe en `logs\audio-features.log` cuando ha medido
+algo o una pista no se pudo medir.
+
 ### Editar metadatos de pista
 
 Haga clic en una fila de pista → **Editar metadatos** en
@@ -287,6 +336,7 @@ el menú de acción de la fila.  Si se rechaza el guardado (por ejemplo, una fec
 | **Año** | `cc_files.year` |
 | **País** (desde 2026-11-08) | `cc_files.country` - texto libre, desde la etiqueta `Country` al importar; el campo sugiere los países ya usados. La base de Analytics → [Music by Country](./ANALYTICS.md); los smart blocks pueden filtrar por él (criterio *País*). Columna de la biblioteca *País* (oculta por defecto, se puede buscar). |
 | **BPM** | `cc_files.bpm` |
+| **Energía** / **Brillo** (desde 2026-11-14) | `cc_files.energy` / `brightness` - 1 (tranquila / oscuro) a 10 (muy enérgica / brillante), medidos unos minutos después de la subida; un valor introducido sustituye la medición para siempre, vacío lo borra. Ver [Energía y brillo](#energía-y-brillo-desde-2026-11-14). |
 | **Tipo de pista** | `cc_files.track_type` — usado por filtros smart-block |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar. Desde el 30/09/2026 los valores se mantienen dentro del archivo: un cue out más allá de la duración se limita a la duración, un cue in negativo pasa a cero. Un cambio se copia en las filas de los programas futuros que programan la pista (las filas ya iniciadas no se tocan) y esos programas se recalculan - no hace falta volver a llenarlos. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
@@ -338,7 +388,7 @@ Biblioteca → **+ Nuevo** → **Smart Block**.
 |---|---|
 | **Nombre** | Visible en biblioteca y calendario. |
 | **Tipo** | **Estático** — elige una vez al crear; el conjunto nunca cambia. **Dinámico** — re-elige cada vez que el block se planifica. |
-| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm está en el rango de 100 a 130*, etc. Las filas se combinan con Y; el **+** junto a una fila añade una alternativa para el mismo campo (O), p. ej. *género es pop* **+** *género es rock*. Desde 2026-11-08 también *País* (p. ej. *país es Austria*; *es* y *no es* comparan exactamente, *no es* y *no contiene* incluyen las pistas sin país). Detalles en [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm está en el rango de 100 a 130*, etc. Las filas se combinan con Y; el **+** junto a una fila añade una alternativa para el mismo campo (O), p. ej. *género es pop* **+** *género es rock*. Desde 2026-11-08 también *País* (p. ej. *país es Austria*; *es* y *no es* comparan exactamente, *no es* y *no contiene* incluyen las pistas sin país). Desde 2026-11-14 también *Energía* y *Brillo* (1 a 10, p. ej. *energía es mayor que 6*; las pistas aún no medidas nunca coinciden, *no es* las incluye). Detalles en [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limitar a** | **Número de pistas** (ej. 10), **Duración en tiempo** (ej. 30:00), **Tiempo restante en el programa**. |
 | **Ordenar** | Aleatorio / más reciente primero / por artista / por número de reproducciones / etc. |
 

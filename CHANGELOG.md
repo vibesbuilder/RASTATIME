@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Energie und Helligkeit je Track, Stufe 1 (2026-11-14, Operator-Go)** - RASTATIME misst
+  für jeden Track zwei Werte auf einer Skala 1-10, im Vergleich zur eigenen Bibliothek:
+  **Energy** (ruhig .. sehr energiegeladen) und **Brightness** (dunkel .. hell, die lesbare
+  Seite von „Timbre“).  Nur ffmpeg, keine neue Abhängigkeit: 30 s aus der Mitte des
+  Cue-Bereichs, vorher auf Sendepegel gebracht (rohe Energie maß sonst vor allem die
+  Mastering-Lautheit), dann Spektral-Fluss, Anschläge, Flachheit, Spektral-Schwerpunkt;
+  Skala aus einer Kalibrier-Stichprobe von 823 Musiktracks (Electronic/RnB Median 8-9,
+  Rock/Pop 5, die ruhigste Wochen-Playlist 1).  Neue Spalten `cc_files.energy` /
+  `brightness` / `audio_features` (Migration 0085); `manage.py analyze_audio_features`,
+  alle 10 min über die Windows-Aufgabe RASTATIME-AudioFeatures
+  (`infra/scripts/register-audio-features.ps1`, SYSTEM, niedrige Priorität, ~0,1 s je
+  Track), Import und Playout unberührt.  Library-Spalten Energy / Brightness (ausgeblendet,
+  sortier- und bereichssuchbar), Felder in Edit Track (1-10, leer löscht, Hilfe-Symbol nennt
+  den Messwert), Smart-Block-Kriterien *Energy* / *Brightness*.  Ein von Hand gesetzter
+  Wert wird nie ersetzt, auch nicht durch Neu-Messung oder neue Skala (`--rescale`).  Nur
+  Datenbank, Dateien unverändert.  Tempo + Key folgen als Stufe 2.  Manual LIBRARY x4,
+  ARCHITECTURE 0.143 (§23.115).  Wirksam nach Migration 0085 + Registrierung der Aufgabe;
+  die Übersetzungen nach Apache-Neustart.  `745fd6d7`.
+
 - **Fertige Aufnahmen in einen zweiten Ordner kopieren (2026-11-14, Operator-Go)** - Die
   Sendungsmachenden holen ihre Mitschnitte aus einem Ordner eines Netzlaufwerks; neue
   Sendungsaufnahmen landen jetzt von selbst dort.  Neu unter Settings → Local Machine →

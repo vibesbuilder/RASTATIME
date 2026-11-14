@@ -319,6 +319,55 @@ wie er ist.  Eine verlustfreie Datei, die in MP3 umgewandelt wird,
 behält den Tag.  Am 2026-11-09 trug kein Track der Bibliothek diesen
 Tag; bestehende Tracks sind also unverändert.
 
+### Energie und Helligkeit (seit 2026-11-14)
+
+RASTATIME misst für jeden Track selbst zwei Werte und zeigt sie auf
+einer Skala von 1 bis 10:
+
+| Wert | 1 | 10 | Was gemessen wird |
+|---|---|---|---|
+| **Energie** | ruhig | sehr energiegeladen | wie viel in der Musik passiert: Anschläge und Wechsel, ein dichter oder rauer Klang, der Lautheitsumfang des ganzen Tracks (groß = ruhig) und wie laut er gemastert ist |
+| **Helligkeit** | dunkel (warm, wenig Höhen) | hell (viele Höhen) | wo das Gewicht des Klangs zwischen Bässen und Höhen liegt |
+
+- **Im Vergleich zur eigenen Bibliothek:** Die Skala ist die Streuung
+  der eigenen Bibliothek - 5 ist ein typischer Track dieses Senders,
+  1 und 10 sind jeweils das Zehntel an den Enden.  Die Werte sind eine
+  Schätzung aus 30 Sekunden in der Mitte des Tracks (zwischen den
+  Cue-Punkten), vorher auf Sendepegel gebracht, damit die Lautheit
+  nicht allein entscheidet: Wie laut ein Track gemastert ist, ist nur
+  einer von fünf Faktoren.
+- **Wann:** Die Windows-Aufgabe *RASTATIME-AudioFeatures* misst alle
+  zehn Minuten, was neu ist; ein Track erhält seine Werte also einige
+  Minuten nach dem Hochladen (etwa 0,1 s Rechenzeit je Track, mit
+  niedriger Priorität).  Import und Playout warten nicht darauf.
+  Tracks ohne Lautheitswert (Track-Typen ohne Lautheitsmessung, etwa
+  Nachrichten) erhalten keine.
+- **Ihr Wert gewinnt:** Edit Track → **Energie** / **Helligkeit**
+  nimmt eine ganze Zahl von 1 bis 10, leer löscht den Wert.  Ein von
+  Ihnen eingetragener Wert wird nie durch eine Messung ersetzt; das
+  Hilfe-Symbol neben dem Feld zeigt den gemessenen Wert.
+- **Bibliothek:** Die Spalten *Energie* und *Helligkeit* sind
+  standardmäßig ausgeblendet (Spaltenauswahl); sie lassen sich
+  sortieren und in der Spaltensuche mit einem Bereich filtern (z. B.
+  `7` bis `10`).  Nach *Energie* zu sortieren ist der schnellste Weg,
+  die ruhigsten und die energiegeladensten Tracks anzuhören.
+- **Smart Blocks:** Kriterien *Energie* und *Helligkeit*
+  ([Smart Blocks](#3-smart-blocks)).
+- **Nur in der Datenbank:** Die Dateien selbst werden nicht verändert.
+
+Für Administratoren: Die Aufgabe einmal nach dem Datenbank-Update 0085
+registrieren, in einer PowerShell mit Administratorrechten:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-audio-features.ps1
+```
+
+Der erste Durchlauf über eine ganze Bibliothek läuft von Hand mit
+`manage.py analyze_audio_features --limit 0 --max-seconds 0` (etwa 35
+Minuten für 25.000 Tracks); `--dry-run` zeigt nur, was gemessen würde.
+Die Aufgabe schreibt nur dann in `logs\audio-features.log`, wenn sie
+etwas gemessen hat oder ein Track nicht messbar war.
+
 ### Track-Metadaten bearbeiten
 
 Klicken Sie auf eine Track-Zeile → **Metadaten bearbeiten**
@@ -333,6 +382,7 @@ im Aktionsmenü der Zeile.  Wird das Speichern abgelehnt (etwa ein Datum im fals
 | **Jahr** | `cc_files.year` |
 | **Land** (seit 2026-11-08) | `cc_files.country` - freier Text, beim Import aus dem Tag `Country`; das Feld schlägt die schon verwendeten Länder vor. Grundlage von Analytics → [Music by Country](./ANALYTICS.md); Smart Blocks können danach filtern (Kriterium *Land*). Library-Spalte *Land* (standardmäßig ausgeblendet, durchsuchbar). |
 | **BPM** | `cc_files.bpm` |
+| **Energie** / **Helligkeit** (seit 2026-11-14) | `cc_files.energy` / `brightness` - 1 (ruhig / dunkel) bis 10 (sehr energiegeladen / hell), einige Minuten nach dem Hochladen gemessen; ein eingetragener Wert ersetzt die Messung dauerhaft, leer löscht ihn. Siehe [Energie und Helligkeit](#energie-und-helligkeit-seit-2026-11-14). |
 | **Track-Typ** | `cc_files.track_type` — von Smart-Block-Filtern verwendet |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — Anfang / Ende ohne Neu-Kodierung trimmen. Seit dem 30.09.2026 bleiben die Werte innerhalb der Datei: ein Cue Out hinter der Dateilänge wird auf die Länge gekappt, ein Cue In unter null wird null. Eine Änderung wird in die Zeilen der kommenden Sendungen kopiert, die den Track enthalten (bereits gestartete Zeilen bleiben unberührt), und diese Sendungen werden neu ausgelegt - kein Neu-Befüllen nötig. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
@@ -398,7 +448,7 @@ Bibliothek → **+ Neu** → **Smart Block**.
 |---|---|
 | **Name** | Sichtbar in der Bibliothek und im Kalender. |
 | **Typ** | **Statisch** — wählt einmalig zum Erstellungszeitpunkt; die Menge ändert sich nie. **Dynamisch** — wählt jedes Mal neu, wenn der Block eingeplant wird. |
-| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Seit 2026-11-08 auch *Land* (z. B. *Land ist Austria*; *ist* und *ist nicht* vergleichen genau, *ist nicht* und *enthält nicht* schließen Tracks ohne Land ein). Details unter [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Seit 2026-11-08 auch *Land* (z. B. *Land ist Austria*; *ist* und *ist nicht* vergleichen genau, *ist nicht* und *enthält nicht* schließen Tracks ohne Land ein). Seit 2026-11-14 auch *Energie* und *Helligkeit* (1 bis 10, z. B. *Energie ist größer als 6*; noch nicht gemessene Tracks passen nie, *ist nicht* schließt sie ein). Details unter [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Begrenzen auf** | Eines von: **Anzahl Tracks** (z.B. 10), **Dauer in Zeit** (z.B. 30:00), **Verbleibende Zeit in der Sendung** (lässt den Smart Block exakt bis zum Ende der Sendung füllen). |
 | **Sortieren** | Zufällig / neueste zuerst / nach Künstler / nach Spielzahl / etc. |
 

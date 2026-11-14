@@ -292,6 +292,53 @@ unknown or missing tag leaves the type as it is.  A lossless file that
 is converted to MP3 keeps the tag.  On 2026-11-09 no track in the
 library carried the tag, so existing tracks are unchanged.
 
+### Energy and brightness (since 2026-11-14)
+
+RASTATIME measures two values of every track by itself and shows them
+on a scale of 1 to 10:
+
+| Value | 1 | 10 | What is measured |
+|---|---|---|---|
+| **Energy** | calm | very energetic | how much happens in the music: attacks and changes, a dense or rough sound, the loudness range of the whole track (wide = calm) and how loud it was mastered |
+| **Brightness** | dark (warm, little treble) | bright (much treble) | where the weight of the sound lies between bass and treble |
+
+- **Compared with your own library:** the scale is the library's own
+  spread - 5 is a typical track of this station, 1 and 10 are the
+  tenth at either end.  The values are an estimate from 30 seconds in
+  the middle of the track (between the cue points), brought to the
+  on-air level first, so loudness does not decide on its own: how loud
+  a track was mastered is only one of five inputs.
+- **When:** the Windows task *RASTATIME-AudioFeatures* measures what
+  is new every ten minutes, so a track gets its values a few minutes
+  after the upload (about 0.1 s of computing time per track, below
+  normal priority).  Import and playout do not wait for it.  Tracks
+  without a loudness value (track types that are not measured for
+  loudness, such as news) get none.
+- **Your value wins:** Edit Track → **Energy** / **Brightness** takes a
+  whole number from 1 to 10, empty clears the value.  A value you
+  enter is never replaced by a measurement; the help icon next to the
+  field shows the measured value.
+- **Library:** the columns *Energy* and *Brightness* are hidden by
+  default (columns picker); they sort and take a range in the column
+  search (e.g. `7` to `10`).  Sorting by *Energy* is the quickest way
+  to listen to the calmest and the most energetic tracks.
+- **Smart blocks:** criteria *Energy* and *Brightness*
+  ([Smart Blocks](#3-smart-blocks)).
+- **Only in the database:** the files themselves are not changed.
+
+For administrators: register the task once after the database update
+0085, in an elevated PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\register-audio-features.ps1
+```
+
+The first pass over a whole library runs by hand with
+`manage.py analyze_audio_features --limit 0 --max-seconds 0` (about 35
+minutes for 25,000 tracks); `--dry-run` only shows what it would
+measure.  The task writes to `logs\audio-features.log` only when it
+measured something or a track could not be measured.
+
 ### Editing track metadata
 
 Click a track row → **Edit Metadata** in the row's action menu.  If a save is refused (for example a date in the wrong format), the editor stays open and lists the reason above the fields (since 2026-11-08).
@@ -305,6 +352,7 @@ Click a track row → **Edit Metadata** in the row's action menu.  If a save is 
 | **Year** | `cc_files.year` |
 | **Country** (since 2026-11-08) | `cc_files.country` - free text, from the `Country` tag on import; the field suggests the countries already in use. The base of Analytics → [Music by Country](./ANALYTICS.md); smart blocks can filter on it (criterion *Country*). Library column *Country* (hidden by default, searchable). |
 | **BPM** | `cc_files.bpm` |
+| **Energy** / **Brightness** (since 2026-11-14) | `cc_files.energy` / `brightness` - 1 (calm / dark) to 10 (very energetic / bright), measured a few minutes after the upload; a value you enter replaces the measurement for good, empty clears it. See [Energy and brightness](#energy-and-brightness-since-2026-11-14). |
 | **Track type** | `cc_files.track_type` — used by smart-block filters |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — trim the start / end without re-encoding. Since 2026-09-30 the values are kept inside the file: a cue out past the file length is capped at the length, a cue in below zero becomes zero. A change is copied into the rows of the upcoming shows that schedule the track (rows that have already started are left alone), and those shows are laid out again - no refilling needed. |
 | **Fade In / Out** | `cc_files.fadein` / `fadeout` |
@@ -369,7 +417,7 @@ Library → **+ New** → **Smart Block**.
 |---|---|
 | **Name** | Visible in the library and on the calendar. |
 | **Type** | **Static** — picks once at creation time; the set never changes. **Dynamic** — re-picks every time the block is scheduled. |
-| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm is in the range 100 to 130*, *genre is pop*, etc. Rows combine with AND; the **+** next to a row adds an alternative for the same field (OR), e.g. *genre is pop* **+** *genre is rock*. Since 2026-11-08 also *Country* (e.g. *country is Austria*; *is* and *is not* compare exactly, *is not* and *does not contain* include tracks without a country). Details under [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm is in the range 100 to 130*, *genre is pop*, etc. Rows combine with AND; the **+** next to a row adds an alternative for the same field (OR), e.g. *genre is pop* **+** *genre is rock*. Since 2026-11-08 also *Country* (e.g. *country is Austria*; *is* and *is not* compare exactly, *is not* and *does not contain* include tracks without a country). Since 2026-11-14 also *Energy* and *Brightness* (1 to 10, e.g. *energy is greater than 6*; tracks that are not measured yet never match, *is not* includes them). Details under [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limit to** | One of: **Number of tracks** (e.g. 10), **Duration in time** (e.g. 30:00), **Time remaining in show** (let the smart block fill exactly to the show's end). |
 | **Sort** | Random / newest first / by artist / by play count / etc. |
 
