@@ -7056,8 +7056,10 @@ Erkennung verschärft `14e50497`), Browser sauber.  **Nur Music (Operator 2026-1
 features* je Track Type gebaut (`7bf1f8b2`, §23.117, Migration 0087, bis dahin Code `music`), Messwerte von 674
 Nicht-Music-Tracks entfernt (keine Handwerte, Sicherung `C:/Temp/optd/clear_unselected_backup_2026-11-15.json`).
 Bestandslauf Tempo/Tonart neu gestartet 13:40, nur Music (~0,3 s je Track).
-Offen: Migration 0087 + Apache-Neustart (Operator), Probe `C:/Temp/optd/tracktype_features_probe.php` nach
-0087, Ergebnis Bestandslauf eintragen, Hörprobe (BPM/Key + Energy) durch den Operator.
+Migration 0087 live 2026-11-15 13:45 + Apache-Neustart 13:45 (Operator); Probe danach 9/9 (Formularfeld, Speichern,
+Auswahl folgt dem Haken).  13:46 hat der Operator zusätzlich **Jingles** angehakt (bestätigt: mitmessen) - die Aufgabe
+misst sie nach dem Bestandslauf; Skala bleibt die der Musik, Jingles unter 10 s bekommen keine Werte.
+Offen: Ergebnis Bestandslauf eintragen, Hörprobe (BPM/Key + Energy) durch den Operator.
 
 ## Test-Hygiene (2026-10-22)
 

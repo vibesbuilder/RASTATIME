@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Sendung leert.  Einmalig ausgeführt: 674 Tracks (Jingles, Shows, Recordings, News, ohne Typ),
   keine Handwerte, Sicherung `C:/Temp/optd/clear_unselected_backup_2026-11-15.json`.  Hilfetexte
   in Edit Track nennen die Einstellung; DE/FR/ES.  Manual LIBRARY + SETTINGS x4, ARCHITECTURE
-  0.145 (§23.117).  `7bf1f8b2`.
+  0.145 (§23.117).  `7bf1f8b2`.  Migration 0087 live 2026-11-15 13:45 (Operator), Probe 9/9; der
+  Operator hat zusätzlich Jingles angehakt.
 
 - **Tempo und Tonart je Track, Stufe 2 der Audio-Merkmale (2026-11-15, Operator-Go 2026-11-14)** -
   dieselbe Aufgabe RASTATIME-AudioFeatures misst nach Energie/Helligkeit auch **Tempo** und
