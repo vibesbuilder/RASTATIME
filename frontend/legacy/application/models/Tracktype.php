@@ -328,6 +328,70 @@ class Application_Model_Tracktype
     private $_fixedGainDb = 0.0;
     private $_gainDirty = false;
 
+    /**
+     * RASTATIME 2026-11-15 - audio features per track type (migration 0087,
+     * ARCHITECTURE 23.117): only tracks of a type with analyze_audio_features
+     * get energy / brightness and tempo / key (manage.py
+     * analyze_audio_features).  Before the migration the stock type with the
+     * code 'music' stands in - the same rule as the measuring task.
+     */
+    private static $featuresColumnReady;
+
+    /** True once migration 0087 has added the column (cached per request when true). */
+    public static function featuresColumnReady()
+    {
+        if (self::$featuresColumnReady !== true) {
+            try {
+                $n = Application_Common_Database::prepareAndExecute(
+                    "SELECT count(*) FROM information_schema.columns WHERE table_name = 'cc_track_types' "
+                    . "AND column_name = 'analyze_audio_features'",
+                    [],
+                    Application_Common_Database::COLUMN
+                );
+                self::$featuresColumnReady = ((int) $n === 1);
+            } catch (Exception $exc) {
+                return false;
+            }
+        }
+
+        return self::$featuresColumnReady;
+    }
+
+    /** SQL of the setting for a cc_track_types row (alias $types), with the 'music' fallback. */
+    public static function featuresOnSql($types = 'cc_track_types')
+    {
+        return "COALESCE((to_jsonb({$types}) ->> 'analyze_audio_features')::boolean, {$types}.code = 'music')";
+    }
+
+    /** @param mixed $value */
+    public function setAnalyzeAudioFeatures($value)
+    {
+        $this->_analyzeFeatures = ($value === true || $value === 1 || $value === '1' || $value === 'true');
+        $this->_featuresDirty = true;
+    }
+
+    /** @return bool */
+    public function getAnalyzeAudioFeatures()
+    {
+        if ($this->_featuresDirty) {
+            return $this->_analyzeFeatures;
+        }
+        $id = $this->_tracktypeInstance->getDbId();
+        if (!$id) {
+            return false;
+        }
+        $value = Application_Common_Database::prepareAndExecute(
+            'SELECT ' . self::featuresOnSql('t') . ' FROM cc_track_types t WHERE t.id = :id',
+            [':id' => $id],
+            Application_Common_Database::COLUMN
+        );
+
+        return $value === true || $value === 't' || $value === 'true' || $value === 1 || $value === '1';
+    }
+
+    private $_analyzeFeatures = false;
+    private $_featuresDirty = false;
+
 
     /**
      * @return array{crossfade: bool, no_fade: bool} which of the two crossover
@@ -414,6 +478,19 @@ class Application_Model_Tracktype
                 Logging::warn('Tracktype::save: loudness analysis / fixed gain not stored (migration 0083 pending)');
             }
             $this->_loudnessDirty = $this->_gainDirty = false;
+        }
+        if ($this->_featuresDirty) {
+            // RASTATIME 2026-11-15 - read by the measuring task on its next run
+            if (self::featuresColumnReady()) {
+                Application_Common_Database::prepareAndExecute(
+                    'UPDATE cc_track_types SET analyze_audio_features = :a WHERE id = :id',
+                    [':a' => $this->_analyzeFeatures ? 'true' : 'false', ':id' => $this->_tracktypeInstance->getDbId()],
+                    Application_Common_Database::EXECUTE
+                );
+            } else {
+                Logging::warn('Tracktype::save: audio features setting not stored (migration 0087 pending)');
+            }
+            $this->_featuresDirty = false;
         }
 
         return $changed;
@@ -504,7 +581,8 @@ class Application_Model_Tracktype
         $sql = <<<'SQL'
 SELECT code, type_name, description, visibility, id, analyze_cue_points, crossfade_duration, no_fade_crossfade, icy_forward,
        COALESCE((to_jsonb(cc_track_types) ->> 'analyze_loudness')::boolean, TRUE) AS analyze_loudness,
-       COALESCE((to_jsonb(cc_track_types) ->> 'fixed_gain_db')::numeric, 0) AS fixed_gain_db
+       COALESCE((to_jsonb(cc_track_types) ->> 'fixed_gain_db')::numeric, 0) AS fixed_gain_db,
+       COALESCE((to_jsonb(cc_track_types) ->> 'analyze_audio_features')::boolean, code = 'music') AS analyze_audio_features
 FROM cc_track_types
 WHERE id = :id
 SQL;

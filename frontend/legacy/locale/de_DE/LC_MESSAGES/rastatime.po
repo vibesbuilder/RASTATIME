@@ -8560,12 +8560,12 @@ msgid "Brightness:"
 msgstr "Helligkeit:"
 
 #: RASTATIME 2026-11-14 energy / brightness
-msgid "1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
-msgstr "1 = ruhig ... 10 = sehr energiegeladen, im Vergleich zum Rest der Bibliothek. Wird einige Minuten nach dem Hochladen automatisch gemessen; ein hier eingetragener Wert ersetzt die Messung und bleibt. Leer = kein Wert."
+msgid "1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload when the track type has Analyze audio features (Music); a value you enter replaces the measurement and stays. Empty = no value."
+msgstr "1 = ruhig ... 10 = sehr energiegeladen, im Vergleich zum Rest der Bibliothek. Wird bei Titeltypen mit „Audio-Merkmale analysieren“ (Music) einige Minuten nach dem Hochladen automatisch gemessen; ein hier eingetragener Wert ersetzt die Messung und bleibt. Leer = kein Wert."
 
 #: RASTATIME 2026-11-14 energy / brightness
-msgid "1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value."
-msgstr "1 = dunkel (warm, wenig Höhen) ... 10 = hell (viele Höhen), im Vergleich zum Rest der Bibliothek. Wird einige Minuten nach dem Hochladen automatisch gemessen; ein hier eingetragener Wert ersetzt die Messung und bleibt. Leer = kein Wert."
+msgid "1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload when the track type has Analyze audio features (Music); a value you enter replaces the measurement and stays. Empty = no value."
+msgstr "1 = dunkel (warm, wenig Höhen) ... 10 = hell (viele Höhen), im Vergleich zum Rest der Bibliothek. Wird bei Titeltypen mit „Audio-Merkmale analysieren“ (Music) einige Minuten nach dem Hochladen automatisch gemessen; ein hier eingetragener Wert ersetzt die Messung und bleibt. Leer = kein Wert."
 
 #: RASTATIME 2026-11-14 energy / brightness
 msgid "Not measured yet."
@@ -8593,14 +8593,22 @@ msgid "Measured: %s."
 msgstr "Gemessen: %s."
 
 #: RASTATIME 2026-11-15 tempo / key
-msgid "Beats per minute, measured automatically a few minutes after the upload. The measurement counts the strongest pulse, so reggae, for example, usually comes out at double time. A value you enter, or a BPM tag of the file, replaces the measurement and stays. Empty = no value."
-msgstr "Schläge pro Minute, einige Minuten nach dem Hochladen automatisch gemessen. Die Messung zählt den stärksten Puls, Reggae etwa landet deshalb meist beim doppelten Tempo. Ein hier eingetragener Wert oder ein BPM-Tag der Datei ersetzt die Messung und bleibt. Leer = kein Wert."
+msgid "Beats per minute, measured automatically a few minutes after the upload when the track type has Analyze audio features (Music). The measurement counts the strongest pulse, so reggae, for example, usually comes out at double time. A value you enter, or a BPM tag of the file, replaces the measurement and stays. Empty = no value."
+msgstr "Schläge pro Minute, bei Titeltypen mit „Audio-Merkmale analysieren“ (Music) einige Minuten nach dem Hochladen automatisch gemessen. Die Messung zählt den stärksten Puls, Reggae etwa landet deshalb meist beim doppelten Tempo. Ein hier eingetragener Wert oder ein BPM-Tag der Datei ersetzt die Messung und bleibt. Leer = kein Wert."
 
 #: RASTATIME 2026-11-15 tempo / key
-msgid "Musical key as Camelot code and chord name: A = minor, B = major (8A · Am = A minor, 8B · C = C major). Keys with the same number, or one number up or down, sound well together. Measured automatically a few minutes after the upload; a key you pick replaces the measurement and stays. Empty = no key."
-msgstr "Tonart als Camelot-Code und Akkordname: A = Moll, B = Dur (8A · Am = a-Moll, 8B · C = C-Dur). Tonarten mit derselben Zahl oder einer Zahl darüber oder darunter klingen gut zusammen. Wird einige Minuten nach dem Hochladen automatisch gemessen; eine hier gewählte Tonart ersetzt die Messung und bleibt. Leer = keine Tonart."
+msgid "Musical key as Camelot code and chord name: A = minor, B = major (8A · Am = A minor, 8B · C = C major). Keys with the same number, or one number up or down, sound well together. Measured automatically a few minutes after the upload when the track type has Analyze audio features (Music); a key you pick replaces the measurement and stays. Empty = no key."
+msgstr "Tonart als Camelot-Code und Akkordname: A = Moll, B = Dur (8A · Am = a-Moll, 8B · C = C-Dur). Tonarten mit derselben Zahl oder einer Zahl darüber oder darunter klingen gut zusammen. Wird bei Titeltypen mit „Audio-Merkmale analysieren“ (Music) einige Minuten nach dem Hochladen automatisch gemessen; eine hier gewählte Tonart ersetzt die Messung und bleibt. Leer = keine Tonart."
 
 #: RASTATIME 2026-11-15 tempo / key
 #, c-format
 msgid "criterion \"musical_key\": \"%s\" is not a key such as 8A or Am"
 msgstr "Kriterium \"musical_key\": \"%s\" ist keine Tonart wie 8A oder Am"
+
+#: RASTATIME 2026-11-15 audio features per track type
+msgid "Analyze audio features:"
+msgstr "Audio-Merkmale analysieren:"
+
+#: RASTATIME 2026-11-15 audio features per track type
+msgid "Tracks of this type get Energy, Brightness, BPM and Key measured a few minutes after the upload (Library). Ticked for Music only by default. Unticking stops new measurements; values measured before stay until an administrator removes them. A value entered by hand in Edit Track is never replaced."
+msgstr "Titel dieses Typs bekommen Energy, Brightness, BPM und Key einige Minuten nach dem Hochladen gemessen (Bibliothek). Standardmäßig nur bei Music angehakt. Ohne Haken wird nichts mehr neu gemessen; früher gemessene Werte bleiben, bis ein Administrator sie entfernt. Ein in Titel bearbeiten von Hand eingetragener Wert wird nie ersetzt."

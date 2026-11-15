@@ -39,13 +39,29 @@ function populateForm(entries) {
       entries.analyze_loudness === "0"
     ),
   );
+  // RASTATIME 2026-11-15 - audio features per track type (default: off;
+  // the field exists once migration 0087 ran)
+  $("#analyze_audio_features").prop(
+    "checked",
+    entries.analyze_audio_features === true ||
+      entries.analyze_audio_features === "t" ||
+      entries.analyze_audio_features === 1 ||
+      entries.analyze_audio_features === "1",
+  );
   var gain = parseFloat(entries.fixed_gain_db);
   $("#fixed_gain_db").val(isNaN(gain) ? "" : String(gain));
   rtFixedGainState();
   if ($.rtDescriptionTooltips) {
     $.rtDescriptionTooltips($("#tracktype_details"), {
       where: "field",
-      only: ["crossfade_duration", "no_fade_crossfade", "icy_forward", "analyze_loudness", "fixed_gain_db"],
+      only: [
+        "crossfade_duration",
+        "no_fade_crossfade",
+        "icy_forward",
+        "analyze_loudness",
+        "fixed_gain_db",
+        "analyze_audio_features",
+      ],
     });
   }
 }

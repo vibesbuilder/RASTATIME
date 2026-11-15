@@ -333,6 +333,16 @@ def find_ffmpeg(directory: Optional[str] = None) -> Optional[str]:
 COLUMNS = ("energy", "brightness", "audio_features")
 LOCK_KEY = "rastatime_audio_features"
 
+#: Only tracks of a type with "Analyze audio features" are measured
+#: (cc_track_types.analyze_audio_features, legacy migration 0087, operator
+#: 2026-11-15: music only); before the migration the stock type with the
+#: code 'music'.  Tracks without a type never.  to_jsonb yields NULL for the
+#: missing column, so this runs before and after 0087.
+SELECTED_TYPE = (
+    "EXISTS (SELECT 1 FROM cc_track_types rt_tt WHERE rt_tt.id = f.track_type_id"
+    " AND COALESCE((to_jsonb(rt_tt) ->> 'analyze_audio_features')::boolean, rt_tt.code = 'music'))"
+)
+
 #: A value set by hand differs from the one the last measurement produced;
 #: only a value equal to it (or none on both sides) follows a new one.
 _UPDATE = """
@@ -354,9 +364,10 @@ FROM cc_files f
 WHERE f.file_exists AND f.import_status = 0 AND NOT COALESCE(f.hidden, FALSE)
   AND f.loudness_lufs IS NOT NULL AND COALESCE(f.filepath, '') <> ''
   AND f.length >= INTERVAL '10 seconds'
+  AND {selected}
   AND {which}
 ORDER BY f.id DESC
-"""
+""".replace("{selected}", SELECTED_TYPE)
 
 
 def columns_ready(cursor) -> bool:
@@ -650,9 +661,10 @@ SELECT f.id, f.filepath, (f.audio_features->>'start_s')::float
 FROM cc_files f
 WHERE f.file_exists AND f.import_status = 0 AND NOT COALESCE(f.hidden, FALSE)
   AND COALESCE(f.filepath, '') <> '' AND f.audio_features ? 'energy_score'
+  AND {selected}
   AND {which}
 ORDER BY f.id DESC
-"""
+""".replace("{selected}", SELECTED_TYPE)
 _TK_DUE = "(NOT f.audio_features ? 'tk' OR COALESCE((f.audio_features->'tk'->>'v')::int, 0) < %s)"
 
 #: like _UPDATE: a column that differs from the last measurement was set by
@@ -771,4 +783,75 @@ def run_tempo_key(
         log(f"tempo / key: worker stopped - {exc}")
     finally:
         worker.close()
+    return counts
+
+
+# --------------------------------------------------------------------------
+# tracks of a type without the audio analysis (ARCHITECTURE 23.117)
+# --------------------------------------------------------------------------
+#
+# A track type without "Analyze audio features" gets no new values, but
+# what was measured before (the first stock pass took every type, a track
+# can change its type, a type can be unticked) stays until this runs: the
+# measured energy / brightness / tempo / key go, a value set by hand (it
+# differs from the measurement) or a BPM from the file's tag stays.  Not
+# part of the regular task on purpose: unticking a type by mistake must not
+# empty smart blocks on air.
+
+_UNSELECTED = "f.audio_features IS NOT NULL AND NOT " + SELECTED_TYPE
+
+_CLEAR_STAGE1 = """
+    energy = CASE WHEN f.audio_features->>'energy' IS NOT NULL
+                       AND f.energy = (f.audio_features->>'energy')::smallint
+                  THEN NULL ELSE f.energy END,
+    brightness = CASE WHEN f.audio_features->>'brightness' IS NOT NULL
+                           AND f.brightness = (f.audio_features->>'brightness')::smallint
+                      THEN NULL ELSE f.brightness END,
+    bpm = CASE WHEN f.audio_features->'tk'->>'bpm' IS NOT NULL
+                    AND NULLIF(f.bpm, 0) = (f.audio_features->'tk'->>'bpm')::int
+               THEN NULL ELSE f.bpm END,
+    audio_features = NULL"""
+
+_CLEAR_KEY = """,
+    musical_key = CASE WHEN f.audio_features->'tk'->>'key' IS NOT NULL
+                            AND f.musical_key = f.audio_features->'tk'->>'key'
+                       THEN NULL ELSE f.musical_key END"""
+
+
+def clear_unselected(cursor, *, dry_run: bool = False) -> dict[str, int]:
+    """Removes the measured values of tracks whose type is not analysed (hand and tag values stay)."""
+    key = tempo_key_columns_ready(cursor)
+    cursor.execute(
+        "SELECT count(*),"
+        " count(*) FILTER (WHERE f.energy IS NOT NULL"
+        "   AND f.energy IS DISTINCT FROM (f.audio_features->>'energy')::smallint),"
+        " count(*) FILTER (WHERE f.brightness IS NOT NULL"
+        "   AND f.brightness IS DISTINCT FROM (f.audio_features->>'brightness')::smallint),"
+        " count(*) FILTER (WHERE NULLIF(f.bpm, 0) IS NOT NULL AND f.audio_features ? 'tk'"
+        "   AND NULLIF(f.bpm, 0) IS DISTINCT FROM (f.audio_features->'tk'->>'bpm')::int)"
+        + (
+            ", count(*) FILTER (WHERE f.musical_key IS NOT NULL"
+            "   AND f.musical_key IS DISTINCT FROM f.audio_features->'tk'->>'key')"
+            if key
+            else ", 0"
+        )
+        + " FROM cc_files f WHERE "
+        + _UNSELECTED
+    )
+    tracks, energy, brightness, bpm, musical_key = cursor.fetchone()
+    counts = {
+        "tracks": tracks,
+        "kept_energy": energy,
+        "kept_brightness": brightness,
+        "kept_bpm": bpm,
+        "kept_key": musical_key,
+    }
+    if tracks and not dry_run:
+        cursor.execute(
+            "UPDATE cc_files f SET"
+            + _CLEAR_STAGE1
+            + (_CLEAR_KEY if key else "")
+            + " WHERE "
+            + _UNSELECTED
+        )
     return counts

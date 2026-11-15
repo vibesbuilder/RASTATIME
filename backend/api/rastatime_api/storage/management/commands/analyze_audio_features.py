@@ -1,7 +1,9 @@
 """
 RASTATIME 2026-11-14 - measure energy and brightness of library tracks
 (``storage/audio_features.py``, ARCHITECTURE 23.115); since 2026-11-15 also
-tempo and key (stage 2, ARCHITECTURE 23.116).
+tempo and key (stage 2, ARCHITECTURE 23.116).  Only tracks of a track type
+with "Analyze audio features" (Settings -> Track Types, legacy migration
+0087; before it the type with the code 'music') - ARCHITECTURE 23.117.
 
 Fired every ten minutes by the Windows task RASTATIME-AudioFeatures
 (``scripts/audio-features.ps1``); by hand for the first pass over the
@@ -19,6 +21,8 @@ summary line per part that did something; an idle run prints nothing.
                      (after a new scale; no ffmpeg)
   --no-tempo-key     energy / brightness only
   --tempo-key-only   tempo / key only
+  --clear-unselected remove the measured values of tracks whose type is not
+                     analysed (hand values and BPM tags stay; no ffmpeg)
   --dry-run          measure and print, write nothing
 
 Only one run at a time (PostgreSQL advisory lock); a run that finds the
@@ -56,6 +60,11 @@ class Command(BaseCommand):
         )
         parser.add_argument("--no-tempo-key", action="store_true", help="energy / brightness only")
         parser.add_argument("--tempo-key-only", action="store_true", help="tempo / key only")
+        parser.add_argument(
+            "--clear-unselected",
+            action="store_true",
+            help="remove measured values of tracks whose type is not analysed",
+        )
         parser.add_argument("--dry-run", action="store_true", help="write nothing")
         parser.add_argument("--ffmpeg-dir", help="directory holding ffmpeg")
 
@@ -73,6 +82,16 @@ class Command(BaseCommand):
             try:
                 # a row the fill pass or an editor holds is tried again next run
                 cursor.execute("SET lock_timeout = '2s'")
+                if options["clear_unselected"]:
+                    counts = af.clear_unselected(cursor, dry_run=options["dry_run"])
+                    note = " (dry run, nothing written)" if options["dry_run"] else ""
+                    self.stdout.write(
+                        f"cleared the measured values of {counts['tracks']} tracks of types without "
+                        f"the audio analysis; kept by hand or tag: energy {counts['kept_energy']}, "
+                        f"brightness {counts['kept_brightness']}, bpm {counts['kept_bpm']}, "
+                        f"key {counts['kept_key']}{note}"
+                    )
+                    return
                 if options["rescale"]:
                     counts = af.rescale(cursor, dry_run=options["dry_run"])
                     note = " (dry run)" if options["dry_run"] else ""

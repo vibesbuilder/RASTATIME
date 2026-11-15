@@ -3,7 +3,8 @@ RASTATIME 2026-11-14 - energy and brightness (``storage/audio_features.py``,
 ``manage.py analyze_audio_features``): parsing, features, scale, and the
 database pass (newest first, hand values stay, failures are kept, rescale).
 2026-11-15 - tempo and key (stage 2): the worker protocol, the pass with
-hand and tag values, failures and a dead worker.
+hand and tag values, failures and a dead worker; only track types with the
+audio analysis are measured, and the values of the others can be cleared.
 """
 
 from __future__ import annotations
@@ -165,9 +166,33 @@ def library(tmp_path, monkeypatch, db):
     sr.invalidate()
 
 
+def _type(code, analyse):
+    """A track type with "Analyze audio features" on or off (migration 0087)."""
+    track_type = baker.make("storage.Library", code=code, name=code.title(), description="")
+    with connection.cursor() as cur:
+        cur.execute(
+            "UPDATE cc_track_types SET analyze_audio_features = %s WHERE id = %s",
+            [analyse, track_type.id],
+        )
+    return track_type
+
+
+def _music_type():
+    from rastatime_api.storage.models import Library
+
+    return Library.objects.filter(code="tmus").first() or _type("tmus", True)
+
+
+@pytest.fixture
+def music(db):
+    return _music_type()
+
+
 def _track(media, name, lufs=-12.0, on_disk=True, **row):
     if on_disk:
         (media / "imported" / name).write_bytes(b"not audio - the runner is faked")
+    if "library" not in row:
+        row["library"] = _music_type()
     return baker.make(
         "storage.File",
         filepath=f"imported/{name}",
@@ -275,6 +300,26 @@ def test_the_command_reports_and_stays_quiet_when_idle(library, monkeypatch):
     out = StringIO()
     call_command("analyze_audio_features", stdout=out)
     assert out.getvalue() == ""
+
+
+def test_only_tracks_of_an_analysed_type_are_measured(library, music):
+    song = _track(library, "song.mp3", library=music)
+    jingle = _track(library, "jingle.mp3", library=_type("tjin", False))
+    untyped = _track(library, "untyped.mp3", library=None)
+
+    assert _pass(library)["measured"] == 1
+    assert _row(song.id)[2] and _row(jingle.id)[2] is None and _row(untyped.id)[2] is None
+    assert _pass(library, ids=[jingle.id, untyped.id])["measured"] == 0  # --ids too
+    with connection.cursor() as cur:
+        assert af.remaining(cur) == 0
+
+    # before migration 0087 the stock type with the code 'music' stands in
+    with connection.cursor() as cur:
+        cur.execute("ALTER TABLE cc_track_types DROP COLUMN analyze_audio_features")
+    stock = _track(library, "stock.mp3", library=baker.make("storage.Library", code="music",
+                                                             name="Music", description=""))  # fmt: skip
+    assert _pass(library) == {"measured": 1, "failed": 0, "skipped": 0}
+    assert _row(stock.id)[2] and _row(jingle.id)[2] is None
 
 
 # ------------------------------------------------------------ tempo and key
@@ -491,3 +536,31 @@ def test_the_command_runs_tempo_key_after_energy(library, monkeypatch):
     out = StringIO()
     call_command("analyze_audio_features", "--tempo-key-only", stdout=out)
     assert "install-features-venv.ps1" in out.getvalue()
+
+
+def test_clearing_the_unselected_types_keeps_hand_and_tag_values(library, music):
+    song = _track(library, "song.mp3", library=music)
+    spot = _track(library, "spot.mp3", library=music)
+    hand = _track(library, "hand.mp3", library=music, bpm=140)  # BPM tag
+    _pass(library)
+    _tk_pass(library, lambda _id: {"tempo": 120.2, "key": "8A"})
+    energy = _row(hand.id)[0] % 10 + 1
+    _set(hand.id, energy=energy, musical_key="3B")  # by hand
+
+    jingles = _type("tjin", False)
+    with connection.cursor() as cur:
+        cur.execute(
+            "UPDATE cc_files SET track_type_id = %s WHERE id = ANY(%s)",
+            [jingles.id, [spot.id, hand.id]],
+        )
+        assert af.clear_unselected(cur, dry_run=True)["tracks"] == 2
+        assert _row(spot.id)[2] is not None
+        counts = af.clear_unselected(cur)
+    assert counts == {"tracks": 2, "kept_energy": 1, "kept_brightness": 0, "kept_bpm": 1,
+                      "kept_key": 1}  # fmt: skip
+    assert _row(spot.id) == (None, None, None) and _tk_row(spot.id) == (None, None, None)
+    assert _row(hand.id) == (energy, None, None) and _tk_row(hand.id) == (140, "3B", None)
+    assert _row(song.id)[2]["energy"] and _tk_row(song.id)[:2] == (120, "8A")
+    with connection.cursor() as cur:
+        assert af.clear_unselected(cur)["tracks"] == 0
+        assert af.remaining(cur) == 0  # the cleared ones are not measured again

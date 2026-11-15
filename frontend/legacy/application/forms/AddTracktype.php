@@ -97,6 +97,17 @@ class Application_Form_AddTracktype extends Zend_Form
             $this->addElement($gain);
         }
 
+        // RASTATIME 2026-11-15 - audio features per track type (migration
+        // 0087); the field appears once the column exists.
+        if (Application_Model_Tracktype::featuresColumnReady()) {
+            $features = new Zend_Form_Element_Checkbox('analyze_audio_features');
+            $features->setLabel(_('Analyze audio features:'));
+            $features->setRequired(false);
+            $features->setChecked(false);
+            $features->setDescription(_('Tracks of this type get Energy, Brightness, BPM and Key measured a few minutes after the upload (Library). Ticked for Music only by default. Unticking stops new measurements; values measured before stay until an administrator removes them. A value entered by hand in Edit Track is never replaced.'));
+            $this->addElement($features);
+        }
+
         // RASTATIME 2026-09-29 - crossfade per track type (migration 0062)
         $crossfade = new Zend_Form_Element_Text('crossfade_duration');
         $crossfade->setLabel(_('Crossfade Duration (s):'));

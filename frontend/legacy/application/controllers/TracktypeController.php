@@ -67,6 +67,11 @@ class TracktypeController extends Zend_Controller_Action
                 if (array_key_exists('fixed_gain_db', $formData)) {
                     $tracktype->setFixedGainDb($formData['fixed_gain_db']);
                 }
+                // RASTATIME 2026-11-15 - audio features per track type (the
+                // field exists once migration 0087 ran)
+                if (array_key_exists('analyze_audio_features', $formData)) {
+                    $tracktype->setAnalyzeAudioFeatures($formData['analyze_audio_features']);
+                }
                 $changed = $tracktype->save();
                 if ($changed['crossfade']) {
                     Application_Model_Scheduler::relayoutFutureInstances();

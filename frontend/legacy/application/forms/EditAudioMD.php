@@ -330,7 +330,7 @@ class Application_Form_EditAudioMD extends Zend_Form
         if (Application_Model_StoredFile::fileColumnReady('musical_key')) {
             $tk = Application_Model_StoredFile::tempoKeyOf(Propel::getConnection(), (int) $p_id);
             $bpm->setDescription(
-                _('Beats per minute, measured automatically a few minutes after the upload. The measurement counts the strongest pulse, so reggae, for example, usually comes out at double time. A value you enter, or a BPM tag of the file, replaces the measurement and stays. Empty = no value.')
+                _('Beats per minute, measured automatically a few minutes after the upload when the track type has Analyze audio features (Music). The measurement counts the strongest pulse, so reggae, for example, usually comes out at double time. A value you enter, or a BPM tag of the file, replaces the measurement and stays. Empty = no value.')
                 . ' ' . ($tk['measured_bpm'] === null
                     ? _('Not measured yet.')
                     : sprintf(_('Measured: %s.'), sprintf('%d (%.1f)', $tk['measured_bpm'], (float) $tk['measured_tempo'])))
@@ -344,7 +344,7 @@ class Application_Form_EditAudioMD extends Zend_Form
             $musicalKey->setLabel(_('Key:'))
                 ->setMultiOptions($keyOptions)
                 ->setDescription(
-                    _('Musical key as Camelot code and chord name: A = minor, B = major (8A · Am = A minor, 8B · C = C major). Keys with the same number, or one number up or down, sound well together. Measured automatically a few minutes after the upload; a key you pick replaces the measurement and stays. Empty = no key.')
+                    _('Musical key as Camelot code and chord name: A = minor, B = major (8A · Am = A minor, 8B · C = C major). Keys with the same number, or one number up or down, sound well together. Measured automatically a few minutes after the upload when the track type has Analyze audio features (Music); a key you pick replaces the measurement and stays. Empty = no key.')
                     . ' ' . ($tk['measured_key'] === null
                         ? _('Not measured yet.')
                         : sprintf(_('Measured: %s.'), Application_Model_StoredFile::musicalKeyLabel($tk['measured_key'])))
@@ -361,11 +361,11 @@ class Application_Form_EditAudioMD extends Zend_Form
             $levels = [
                 'energy' => [
                     _('Energy:'),
-                    _('1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value.'),
+                    _('1 = calm ... 10 = very energetic, compared with the rest of the library. Measured automatically a few minutes after the upload when the track type has Analyze audio features (Music); a value you enter replaces the measurement and stays. Empty = no value.'),
                 ],
                 'brightness' => [
                     _('Brightness:'),
-                    _('1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload; a value you enter replaces the measurement and stays. Empty = no value.'),
+                    _('1 = dark (warm, little treble) ... 10 = bright (much treble), compared with the rest of the library. Measured automatically a few minutes after the upload when the track type has Analyze audio features (Music); a value you enter replaces the measurement and stays. Empty = no value.'),
                 ],
             ];
             foreach ($levels as $name => [$label, $help]) {
