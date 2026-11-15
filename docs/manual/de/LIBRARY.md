@@ -321,8 +321,8 @@ Tag; bestehende Tracks sind also unverändert.
 
 ### Energie und Helligkeit (seit 2026-11-14)
 
-RASTATIME misst für jeden Track selbst zwei Werte und zeigt sie auf
-einer Skala von 1 bis 10:
+RASTATIME misst für jeden Musiktitel selbst zwei Werte und zeigt sie
+auf einer Skala von 1 bis 10:
 
 | Wert | 1 | 10 | Was gemessen wird |
 |---|---|---|---|
@@ -336,6 +336,12 @@ einer Skala von 1 bis 10:
   Cue-Punkten), vorher auf Sendepegel gebracht, damit die Lautheit
   nicht allein entscheidet: Wie laut ein Track gemastert ist, ist nur
   einer von fünf Faktoren.
+- **Welche Tracks (seit 2026-11-15):** nur Tracks eines Track-Typs mit
+  *Audio-Merkmale analysieren* (Einstellungen → Track-Typen) - nach dem
+  Datenbank-Update 0087 ist das allein *Music*.  Jingles, Sendungen,
+  Aufnahmen, Nachrichten und Tracks ohne Track-Typ werden nicht
+  gemessen; ein Track, der einen solchen Typ bekommt, wird einige
+  Minuten später gemessen.
 - **Wann:** Die Windows-Aufgabe *RASTATIME-AudioFeatures* misst alle
   zehn Minuten, was neu ist; ein Track erhält seine Werte also einige
   Minuten nach dem Hochladen (etwa 0,1 s Rechenzeit je Track, mit
@@ -368,10 +374,19 @@ Minuten für 25.000 Tracks); `--dry-run` zeigt nur, was gemessen würde.
 Die Aufgabe schreibt nur dann in `logs\audio-features.log`, wenn sie
 etwas gemessen hat oder ein Track nicht messbar war.
 
+Wird bei einem Track-Typ der Haken *Audio-Merkmale analysieren*
+entfernt - oder ein Track in einen solchen Typ verschoben -, wird nichts
+mehr neu gemessen, die früher gemessenen Werte bleiben aber, damit Smart
+Blocks ihre Auswahl behalten, bis Sie anders entscheiden.
+`manage.py analyze_audio_features --clear-unselected` entfernt sie
+(Energie, Helligkeit, gemessenes BPM und Tonart; von Hand eingetragene
+Werte und BPM-Tags der Dateien bleiben; `--dry-run` zählt nur).
+
 ### Tempo und Tonart (seit 2026-11-15)
 
-Dieselbe Aufgabe misst auch das **Tempo** und die **Tonart** jedes
-Tracks, an denselben 30 Sekunden wie Energie und Helligkeit:
+Dieselbe Aufgabe misst auch das **Tempo** und die **Tonart** derselben
+Tracks (Track-Typen mit *Audio-Merkmale analysieren*), an denselben 30
+Sekunden wie Energie und Helligkeit:
 
 | Wert | Wo er erscheint | Was er bedeutet |
 |---|---|---|

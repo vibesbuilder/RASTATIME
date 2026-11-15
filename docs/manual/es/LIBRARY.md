@@ -275,8 +275,8 @@ las pistas existentes no cambian.
 
 ### Energía y brillo (desde 2026-11-14)
 
-RASTATIME mide por sí mismo dos valores de cada pista y los muestra en
-una escala de 1 a 10:
+RASTATIME mide por sí mismo dos valores de cada pista musical y los
+muestra en una escala de 1 a 10:
 
 | Valor | 1 | 10 | Qué se mide |
 |---|---|---|---|
@@ -290,6 +290,11 @@ una escala de 1 a 10:
   (entre los puntos de cue), llevados antes al nivel de emisión para
   que la sonoridad no decida sola: lo fuerte que se masterizó una
   pista es solo uno de cinco factores.
+- **Qué pistas (desde 2026-11-15):** solo las pistas de un tipo de pista
+  con *Analizar características de audio* (Ajustes → Tipos de pista) -
+  tras la actualización de base de datos 0087 es solo *Music*.  Jingles,
+  programas, grabaciones, noticias y pistas sin tipo no se miden; una
+  pista que recibe un tipo así se mide unos minutos después.
 - **Cuándo:** la tarea de Windows *RASTATIME-AudioFeatures* mide cada
   diez minutos lo nuevo; una pista recibe sus valores unos minutos
   después de la subida (unos 0,1 s de cálculo por pista, con prioridad
@@ -322,10 +327,20 @@ minutos para 25.000 pistas); `--dry-run` solo muestra lo que mediría.
 La tarea solo escribe en `logs\audio-features.log` cuando ha medido
 algo o una pista no se pudo medir.
 
+Desmarcar *Analizar características de audio* en un tipo de pista - o
+mover una pista a un tipo así - detiene las mediciones nuevas, pero
+conserva los valores medidos antes, para que los smart blocks mantengan
+su selección hasta que usted decida otra cosa.
+`manage.py analyze_audio_features --clear-unselected` los elimina
+(energía, brillo, BPM y tonalidad medidos; los valores introducidos a
+mano y las etiquetas BPM de los archivos se conservan; `--dry-run` solo
+cuenta).
+
 ### Tempo y tonalidad (desde 2026-11-15)
 
-La misma tarea mide también el **tempo** y la **tonalidad** de cada
-pista, sobre los mismos 30 segundos que la energía y el brillo:
+La misma tarea mide también el **tempo** y la **tonalidad** de las
+mismas pistas (tipos de pista con *Analizar características de audio*),
+sobre los mismos 30 segundos que la energía y el brillo:
 
 | Valor | Dónde aparece | Qué significa |
 |---|---|---|

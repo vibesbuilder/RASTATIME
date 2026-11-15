@@ -328,8 +328,8 @@ inchangées.
 
 ### Énergie et brillance (depuis le 2026-11-14)
 
-RASTATIME mesure lui-même deux valeurs de chaque piste et les affiche
-sur une échelle de 1 à 10 :
+RASTATIME mesure lui-même deux valeurs de chaque piste musicale et les
+affiche sur une échelle de 1 à 10 :
 
 | Valeur | 1 | 10 | Ce qui est mesuré |
 |---|---|---|---|
@@ -343,6 +343,12 @@ sur une échelle de 1 à 10 :
   piste (entre les points de cue), ramenées d'abord au niveau
   d'antenne, pour que la sonie ne décide pas seule : le niveau du
   mastering n'est qu'un facteur sur cinq.
+- **Quelles pistes (depuis le 2026-11-15) :** seulement les pistes d'un
+  type de piste avec *Analyser les caractéristiques audio* (Paramètres →
+  Types de piste) - après la mise à jour de base de données 0087, c'est
+  *Music* seul.  Jingles, émissions, enregistrements, informations et
+  pistes sans type ne sont pas mesurés ; une piste qui reçoit un tel type
+  est mesurée quelques minutes plus tard.
 - **Quand :** la tâche Windows *RASTATIME-AudioFeatures* mesure toutes
   les dix minutes ce qui est nouveau ; une piste reçoit donc ses
   valeurs quelques minutes après le téléversement (environ 0,1 s de
@@ -377,10 +383,20 @@ Le premier passage sur toute une médiathèque se lance à la main avec
 serait mesuré.  La tâche n'écrit dans `logs\audio-features.log` que si
 elle a mesuré quelque chose ou si une piste n'a pas pu être mesurée.
 
+Décocher *Analyser les caractéristiques audio* sur un type de piste - ou
+déplacer une piste vers un tel type - arrête les nouvelles mesures mais
+conserve les valeurs mesurées auparavant, pour que les smart blocks
+gardent leur sélection jusqu'à ce que vous en décidiez autrement.
+`manage.py analyze_audio_features --clear-unselected` les supprime
+(énergie, brillance, BPM et tonalité mesurés ; les valeurs saisies à la
+main et les tags BPM des fichiers restent ; `--dry-run` ne fait que
+compter).
+
 ### Tempo et tonalité (depuis le 2026-11-15)
 
-La même tâche mesure aussi le **tempo** et la **tonalité** de chaque
-piste, sur les mêmes 30 secondes que l'énergie et la brillance :
+La même tâche mesure aussi le **tempo** et la **tonalité** des mêmes
+pistes (types de piste avec *Analyser les caractéristiques audio*), sur
+les mêmes 30 secondes que l'énergie et la brillance :
 
 | Valeur | Où elle apparaît | Ce qu'elle signifie |
 |---|---|---|

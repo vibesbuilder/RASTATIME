@@ -294,8 +294,8 @@ library carried the tag, so existing tracks are unchanged.
 
 ### Energy and brightness (since 2026-11-14)
 
-RASTATIME measures two values of every track by itself and shows them
-on a scale of 1 to 10:
+RASTATIME measures two values of every music track by itself and shows
+them on a scale of 1 to 10:
 
 | Value | 1 | 10 | What is measured |
 |---|---|---|---|
@@ -308,6 +308,11 @@ on a scale of 1 to 10:
   the middle of the track (between the cue points), brought to the
   on-air level first, so loudness does not decide on its own: how loud
   a track was mastered is only one of five inputs.
+- **Which tracks (since 2026-11-15):** only tracks of a track type
+  with *Analyze audio features* (Settings → Track Types) - after the
+  database update 0087 that is *Music* alone.  Jingles, shows,
+  recordings, news and tracks without a track type are not measured;
+  a track that gets such a type is measured a few minutes later.
 - **When:** the Windows task *RASTATIME-AudioFeatures* measures what
   is new every ten minutes, so a track gets its values a few minutes
   after the upload (about 0.1 s of computing time per track, below
@@ -339,10 +344,18 @@ minutes for 25,000 tracks); `--dry-run` only shows what it would
 measure.  The task writes to `logs\audio-features.log` only when it
 measured something or a track could not be measured.
 
+Unticking *Analyze audio features* on a track type - or moving a track
+to such a type - stops new measurements but keeps the values measured
+before, so smart blocks keep their picks until you decide otherwise.
+`manage.py analyze_audio_features --clear-unselected` removes them
+(energy, brightness, the measured BPM and key; values entered by hand
+and BPM tags of the files stay; `--dry-run` only counts).
+
 ### Tempo and key (since 2026-11-15)
 
 The same task also measures the **tempo** and the **musical key** of
-every track, on the same 30 seconds as energy and brightness:
+the same tracks (track types with *Analyze audio features*), on the
+same 30 seconds as energy and brightness:
 
 | Value | Where it shows | What it means |
 |---|---|---|

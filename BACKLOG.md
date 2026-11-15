@@ -7051,6 +7051,13 @@ Bestandslauf Tempo/Tonart (~2 h, die Aufgabe holt ihn in ~900er-Runden selbst na
 `--tempo-key-only --limit 0 --max-seconds 0`), Probe nach 0086, Stichproben-Hörtest (BPM-/Key-Spalte
 sortieren).  **Stufe 2b (Idee/Defer):** GetSongBPM als Schiedsrichter für Tempo und Tonart -
 Vorbedingungen: Konto + Backlink + Schlüssel durch den Operator.
+**2026-11-15 nach 0086:** Migration 0086 live (Operator, API + Apache neu ~13:20), Probe 25/25 (Tonart-
+Erkennung verschärft `14e50497`), Browser sauber.  **Nur Music (Operator 2026-11-15):** Haken *Analyze audio
+features* je Track Type gebaut (`7bf1f8b2`, §23.117, Migration 0087, bis dahin Code `music`), Messwerte von 674
+Nicht-Music-Tracks entfernt (keine Handwerte, Sicherung `C:/Temp/optd/clear_unselected_backup_2026-11-15.json`).
+Bestandslauf Tempo/Tonart neu gestartet 13:40, nur Music (~0,3 s je Track).
+Offen: Migration 0087 + Apache-Neustart (Operator), Probe `C:/Temp/optd/tracktype_features_probe.php` nach
+0087, Ergebnis Bestandslauf eintragen, Hörprobe (BPM/Key + Energy) durch den Operator.
 
 ## Test-Hygiene (2026-10-22)
 

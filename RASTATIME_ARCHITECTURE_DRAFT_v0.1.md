@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.144
+Draft version: 0.145
 Date: 2026-11-15
 
 > **Revision history**
+> - **0.145 (2026-11-15)** - **Audio features per track type** (§23.117): a track type
+>   decides whether its tracks get energy / brightness and tempo / key
+>   (`cc_track_types.analyze_audio_features`, migration 0087, music only);
+>   `--clear-unselected` removes the values of the other types.
 > - **0.144 (2026-11-15)** - **Tempo and key, stage 2 of the audio features** (§23.116):
 >   librosa in its own environment (`.venv-features`, `backend/features/tempo_key.py`, JSON
 >   lines over stdin / stdout) measures the stage-1 excerpt; tempo into `cc_files.bpm`, key as
@@ -10694,3 +10698,56 @@ once (visibility stays, as in §23.115).  The tempo octave follows the
 beat tracker (reggae mostly at double time) - by decision, documented in
 the manual.  Rollback: `git revert` (tag `live-2026-11-15`), remove
 `.venv-features`; the column may stay.
+
+### 23.117 Audio Features per Track Type (2026-11-15)
+
+**Request.**  Operator 2026-11-15, during the first tempo / key stock
+pass: tempo, key, brightness and energy are only needed for tracks of
+the track type *Music*.  Stage 1 (§23.115) had measured every track with
+a loudness value - 24,209 music tracks and 674 others (jingles, shows,
+recordings, news, tracks without a type) - and the stock pass of stage 2
+(§23.116) was measuring them too.  Operator's decisions (asked
+2026-11-15): (1) a checkbox per track type rather than a fixed code,
+(2) the values already measured for other types are removed, (3)
+tracks without a type are not measured.
+
+**Design.**
+- Migration 0087: `cc_track_types.analyze_audio_features BOOLEAN NOT
+  NULL DEFAULT FALSE`, set TRUE for the code `music`; a new type starts
+  without it.
+- One selection rule (`audio_features.SELECTED_TYPE`, legacy
+  `Application_Model_Tracktype::featuresOnSql`):
+  `COALESCE((to_jsonb(type)->>'analyze_audio_features')::boolean,
+  type.code = 'music')` - before the migration the stock music type
+  stands in, so code and migration may come in any order (as §23.110).
+  Both pending queries (energy / brightness, tempo / key) carry it,
+  `--ids` as well; a track without a type never matches.
+- `analyze_audio_features --clear-unselected` (with `--dry-run`): for
+  tracks with a measurement whose type is not selected, energy,
+  brightness, BPM and key go back to NULL where they still equal the
+  measurement, `audio_features` becomes NULL; a value set by hand or a
+  BPM tag (differs from the measurement) stays.  Not part of the
+  regular task on purpose - unticking a type by mistake must not empty
+  smart blocks with energy / key criteria on air; ticking it again
+  re-measures what was cleared.  Edge case: a BPM tag that happened to
+  equal the measured tempo is cleared too (Re-read Tags restores it).
+- Legacy: Settings → Track Types checkbox *Analyze audio features* with
+  help (shown once the column exists), saved by `Tracktype::save`; the
+  Edit Track help of BPM / Key / Energy / Brightness names the setting;
+  DE / FR / ES strings.
+
+**Verification.**  2 new tests (only analysed types and `--ids`, the
+'music' fallback with the column dropped inside the test transaction;
+clearing keeps hand and tag values and is idempotent), API suite 272.
+Probe `C:/Temp/optd/tracktype_features_probe.php` before 0087: 7/7
+(data, getter, selection = music, form without the field, help texts,
+.mo).  Live 2026-11-15: dry run 674 tracks, 0 hand values; rows saved to
+`C:/Temp/optd/clear_unselected_backup_2026-11-15.json`, then cleared;
+per type afterwards only *Music* holds values.  The stock pass was
+stopped at 13:28 and restarted music-only at 13:40 (~0.3 s per track).
+
+**Risk.**  Low.  Nothing on air reads the values; smart blocks do, and
+music keeps all of them.  Before 0087 the behaviour equals the default
+after it.  Rollback: `git revert 7bf1f8b2` (tag `live-2026-11-15c`); the
+cleared values can be re-measured (`--ids ...` after ticking the type)
+or restored from the JSON backup; the column may stay.

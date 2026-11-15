@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Audio-Merkmale je Track Type (2026-11-15, Operator-Wunsch 2026-11-15)** - Tempo, Key,
+  Brightness und Energy werden nur noch für Tracks eines Track Types mit dem neuen Haken
+  *Analyze audio features* gemessen (Settings → Track Types, wie *Analyze loudness*); Migration
+  0087 setzt ihn nur bei *Music*, ein neuer Typ beginnt ohne.  Vor der Migration gilt der Typ mit
+  dem Code `music`, Tracks ohne Typ werden nie gemessen.  `analyze_audio_features
+  --clear-unselected` entfernt die Messwerte der übrigen Typen (Handwerte und BPM-Tags bleiben);
+  bewusst nicht in der Aufgabe, damit ein versehentlich entfernter Haken keine Smart Blocks auf
+  Sendung leert.  Einmalig ausgeführt: 674 Tracks (Jingles, Shows, Recordings, News, ohne Typ),
+  keine Handwerte, Sicherung `C:/Temp/optd/clear_unselected_backup_2026-11-15.json`.  Hilfetexte
+  in Edit Track nennen die Einstellung; DE/FR/ES.  Manual LIBRARY + SETTINGS x4, ARCHITECTURE
+  0.145 (§23.117).  `7bf1f8b2`.
+
 - **Tempo und Tonart je Track, Stufe 2 der Audio-Merkmale (2026-11-15, Operator-Go 2026-11-14)** -
   dieselbe Aufgabe RASTATIME-AudioFeatures misst nach Energie/Helligkeit auch **Tempo** und
   **Tonart**, an denselben 30 s.  librosa läuft in einer eigenen Python-Umgebung
@@ -27,7 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   übersprungen.  Stichprobe 2026-11-14: 237 Tracks, 28/37 BPM-Tags innerhalb 3 % inkl. Oktave.
   Manual LIBRARY x4, ARCHITECTURE 0.144 (§23.116), Komponenten-Liste.  Wirksam nach Migration
   0086; Re-read-Fix nach API-Neustart, Übersetzungen nach Apache-Neustart.  `c6a32566`,
-  `8009fd39`.
+  `8009fd39`.  Migration 0086 live 2026-11-15 ~13:19 (Operator), Probe danach 25/25, Browser
+  (Edit Track, Key-Spalte, Kriterium) sauber; dabei die Tonart-Erkennung verschärft (nur Code
+  oder Code mit eigenem Akkordnamen, `14e50497`).
 
 - **Energie und Helligkeit je Track, Stufe 1 (2026-11-14, Operator-Go)** - RASTATIME misst
   für jeden Track zwei Werte auf einer Skala 1-10, im Vergleich zur eigenen Bibliothek:
