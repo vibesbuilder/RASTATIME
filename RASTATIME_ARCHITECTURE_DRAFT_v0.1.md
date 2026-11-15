@@ -10744,7 +10744,13 @@ Probe `C:/Temp/optd/tracktype_features_probe.php` before 0087: 7/7
 .mo).  Live 2026-11-15: dry run 674 tracks, 0 hand values; rows saved to
 `C:/Temp/optd/clear_unselected_backup_2026-11-15.json`, then cleared;
 per type afterwards only *Music* holds values.  The stock pass was
-stopped at 13:28 and restarted music-only at 13:40 (~0.3 s per track).
+stopped at 13:28 and restarted music-only at 13:40 (~0.3 s per track);
+it finished at 15:24: all 24,209 music tracks have tempo and key, 0
+failures, ~0.28 s per track.  Keys: D, G, Em, C, A, Am in front, 54 %
+major; tempo median 121.6 BPM (middle half 106-136).  32 BPM tags or hand
+values that differ stayed (17 an octave apart, 6 within 3 %, 9 other).
+Migration 0087 ran at 13:45; the operator ticked *Jingles* as well, the
+task measures them after the stock pass.
 
 **Risk.**  Low.  Nothing on air reads the values; smart blocks do, and
 music keeps all of them.  Before 0087 the behaviour equals the default
