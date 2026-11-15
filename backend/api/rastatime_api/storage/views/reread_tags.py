@@ -17,7 +17,9 @@ expiry and enable date come from tags on import too (operator decision
 2026-11-08: a date set in RASTATIME stays).  The track type follows a
 Media Type tag (ID3 TMED) that names a visible track type, by code or name
 (operator decision 2026-11-09, the import's rule); an unknown or missing
-tag leaves the type as it is.  The checksum, size and modification
+tag leaves the type as it is.  A missing BPM tag gives the measured tempo
+(audio features, since 2026-11-15) instead of an empty field.  The
+checksum, size and modification
 time follow the file so the duplicate check and the library stay in
 step.  Reading is harmless for a file that is on air; nothing is written
 to the file.
@@ -30,12 +32,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from django.db import transaction
+from django.db import connection, transaction
 from rastatime_shared.track_types import match_track_type
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .. import audio_features
 from ..models import File, Library
 from ..root import get_storage_root
 
@@ -91,6 +94,18 @@ def _normalise(field: str, value: Any) -> Any:
     return text or None
 
 
+def _measured_bpm(file_id: int) -> Optional[int]:
+    """RASTATIME 2026-11-15 - the tempo the audio features measured (None without one)."""
+    with connection.cursor() as cursor:
+        if not audio_features.columns_ready(cursor):
+            return None
+        cursor.execute(
+            "SELECT (audio_features->'tk'->>'bpm')::int FROM cc_files WHERE id = %s", [file_id]
+        )
+        row = cursor.fetchone()
+    return row[0] if row else None
+
+
 def _reread_one(
     file: File, root: Path, track_types: Optional[list[Library]] = None
 ) -> tuple[dict[str, list[Any]], Optional[str]]:
@@ -113,6 +128,10 @@ def _reread_one(
     changes: dict[str, list[Any]] = {}
     for key, field in TAG_FIELDS.items():
         new = _normalise(field, found.get(key))
+        if field == "bpm" and not new:
+            # RASTATIME 2026-11-15 - no BPM tag: the measured tempo, not an empty
+            # field (an empty one would count as set by hand and stay empty)
+            new = _measured_bpm(file.pk)
         old = _normalise(field, getattr(file, field))
         if new != old:
             changes[field] = [old, new]

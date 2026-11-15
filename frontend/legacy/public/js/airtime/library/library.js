@@ -39,6 +39,7 @@ var AIRTIME = (function (AIRTIME) {
     id: "n",
     teaser: "s",
     country: "s",
+    musical_key: "s",
     disc_number: "n",
     encoded_by: "s",
     genre: "s",
@@ -1179,6 +1180,22 @@ var AIRTIME = (function (AIRTIME) {
         bVisible: false,
         sClass: "library_bpm",
         sWidth: "50px",
+      },
+      /* Key - RASTATIME 2026-11-15: cc_files.musical_key (migration 0086),
+         a Camelot code shown as "8A · Am" (MUSICAL_KEYS from the layout
+         plugin); sorting by it walks round the wheel.  Hidden by default. */ {
+        sTitle: $.i18n._("Key"),
+        mDataProp: "musical_key",
+        bVisible: false,
+        sClass: "library_key",
+        sWidth: "80px",
+        mRender: function (data, type) {
+          if (type !== "display" || !data) {
+            return data || "";
+          }
+          var labels = typeof MUSICAL_KEYS === "object" ? MUSICAL_KEYS : {};
+          return $("<span>").text(labels[data] || data).html();
+        },
       },
       /* Brightness - RASTATIME 2026-11-14: 1 (dark) .. 10 (bright),
          cc_files.brightness (migration 0085), measured by the task
@@ -3094,6 +3111,7 @@ var validationTypes = {
   id: "i",
   teaser: "s",
   country: "s",
+  musical_key: "s",
   disc_number: "i",
   genre: "s",
   isrc_number: "s",

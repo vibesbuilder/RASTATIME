@@ -798,8 +798,8 @@ class Application_Form_SmartBlockCriteria extends Zend_Form_SubForm
                     if ($d['sp_criteria_field'] == '0' || $d['sp_criteria_modifier'] == '0') {
                         $element->addError(_('You must select Criteria and Modifier'));
                         $isValid = false;
-                    } elseif (in_array($d['sp_criteria_field'], BlockCriteria::TEASER_KEYS, true)) {
-                        // RASTATIME 2026-10-16 - teaser criteria: the value must be one of the select's keys
+                    } elseif (in_array($d['sp_criteria_field'], BlockCriteria::TEASER_KEYS, true) || $d['sp_criteria_field'] === 'musical_key') {
+                        // RASTATIME 2026-10-16 - teaser criteria (2026-11-15 also the key): the value must be one of the select's keys
                         $options = Application_Model_Block::teaserCriteriaOptions($d['sp_criteria_field'], false);
                         if (!isset($options[(string) $d['sp_criteria_value']])) {
                             $element->addError(_('Pick a value from the list'));

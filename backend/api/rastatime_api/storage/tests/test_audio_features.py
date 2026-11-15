@@ -2,6 +2,8 @@
 RASTATIME 2026-11-14 - energy and brightness (``storage/audio_features.py``,
 ``manage.py analyze_audio_features``): parsing, features, scale, and the
 database pass (newest first, hand values stay, failures are kept, rescale).
+2026-11-15 - tempo and key (stage 2): the worker protocol, the pass with
+hand and tag values, failures and a dead worker.
 """
 
 from __future__ import annotations
@@ -266,9 +268,226 @@ def test_the_command_reports_and_stays_quiet_when_idle(library, monkeypatch):
     _track(library, "a.mp3")
     monkeypatch.setattr(af, "find_ffmpeg", lambda _dir=None: "ffmpeg")
     monkeypatch.setattr(af, "subprocess_runner", lambda _cmd: _output(_music()))
+    monkeypatch.setattr(af, "find_features_worker", lambda: None)  # tempo / key: own test
     out = StringIO()
     call_command("analyze_audio_features", stdout=out)
     assert out.getvalue().startswith("measured 1, failed 0, not written 0, waiting 0")
     out = StringIO()
     call_command("analyze_audio_features", stdout=out)
     assert out.getvalue() == ""
+
+
+# ------------------------------------------------------------ tempo and key
+
+
+def test_tempo_key_doc_rounds_the_bpm_and_refuses_nonsense():
+    doc = af.tempo_key_doc(
+        {"id": 1, "tempo": 127.94, "key": "8A", "beats": 63, "key_margin": 0.08, "x": 1},
+        "librosa 1.0.0",
+        now=0,
+    )
+    assert doc["bpm"] == 128 and doc["tempo"] == 127.9 and doc["key"] == "8A"
+    assert doc["v"] == af.TK_VERSION and doc["src"] == "librosa 1.0.0" and doc["beats"] == 63
+    assert "x" not in doc
+    for answer in ({"error": "silent"}, {"tempo": 400, "key": "8A"}, {"tempo": 120, "key": "13A"},
+                   {"tempo": 120, "key": "Am"}, {"key": "8A"}):  # fmt: skip
+        with pytest.raises(af.MeasureError):
+            af.tempo_key_doc(answer, "librosa")
+
+
+class _FakeWorker:
+    src = "librosa test"
+
+    def __init__(self, answer):
+        self.answer = answer
+        self.jobs = []
+        self.closed = False
+
+    def analyse(self, file_id, path, start):
+        self.jobs.append((file_id, start))
+        result = self.answer(file_id)
+        if isinstance(result, Exception):
+            raise result
+        return {"id": file_id, **result}
+
+    def close(self):
+        self.closed = True
+
+
+def _tk_pass(media, answer, started=None, **kwargs):
+    worker = _FakeWorker(answer)
+
+    def start():
+        if started is not None:
+            started.append(1)
+        return worker
+
+    with connection.cursor() as cur:
+        counts = af.run_tempo_key(cur, str(media), start_worker=start, **kwargs)
+    return counts, worker
+
+
+def _tk_row(file_id):
+    with connection.cursor() as cur:
+        cur.execute(
+            "SELECT bpm, musical_key, audio_features FROM cc_files WHERE id = %s", [file_id]
+        )
+        bpm, key, doc = cur.fetchone()
+    if isinstance(doc, str):
+        doc = json.loads(doc)
+    return bpm, key, (doc or {}).get("tk")
+
+
+def test_tempo_key_follow_the_measurement_but_never_a_tag_or_a_hand_value(library):
+    plain = _track(library, "plain.mp3")
+    tagged = _track(library, "tagged.mp3", bpm=127)
+    unknown = _track(library, "unknown.mp3", bpm=0)  # the legacy importer's "no BPM"
+    keyed = _track(library, "keyed.mp3")
+    later = _track(library, "later.mp3")
+    _set(keyed.id, musical_key="5A")
+    _pass(library)  # stage 1 first: tempo / key need its excerpt
+
+    started = []
+    counts, worker = _tk_pass(library, lambda _id: {"tempo": 128.4, "key": "8A"}, started)
+    assert counts == {"measured": 5, "failed": 0, "skipped": 0} and worker.closed
+    assert [job[0] for job in worker.jobs] == sorted(
+        (t.id for t in (plain, tagged, unknown, keyed, later)), reverse=True
+    )
+    start_s = _row(plain.id)[2]["start_s"]
+    assert dict(worker.jobs)[plain.id] == start_s
+    bpm, key, tk = _tk_row(plain.id)
+    assert (bpm, key, tk["tempo"], tk["bpm"], tk["src"]) == (128, "8A", 128.4, 128, "librosa test")
+    assert _tk_row(tagged.id)[:2] == (127, "8A")
+    assert _tk_row(unknown.id)[:2] == (128, "8A")
+    assert _tk_row(keyed.id)[:2] == (128, "5A")
+
+    assert _tk_pass(library, lambda _id: {"tempo": 1, "key": "1A"}, started)[0]["measured"] == 0
+    assert len(started) == 1  # nothing pending: the worker is not even started
+
+    _set(later.id, bpm=100, musical_key="3B")  # by hand after the measurement
+    _tk_pass(library, lambda _id: {"tempo": 90.2, "key": "9B"}, ids=[plain.id, later.id, tagged.id])
+    assert _tk_row(plain.id)[:2] == (90, "9B")
+    assert _tk_row(later.id)[:2] == (100, "3B")
+    assert _tk_row(tagged.id)[:2] == (127, "9B")
+
+    # energy / brightness measured again or rescaled: the tempo / key result stays
+    _pass(library, centroid=3000.0, ids=[plain.id])
+    with connection.cursor() as cur:
+        cur.execute(
+            "UPDATE cc_files SET audio_features = jsonb_set(audio_features, '{scale}', '0') WHERE id = %s",
+            [plain.id],
+        )
+        af.rescale(cur)
+    assert _tk_row(plain.id)[2]["bpm"] == 90 and _row(plain.id)[2]["scale"] == af.SCALE_VERSION
+
+
+def test_tempo_key_failures_wait_for_retry_and_a_dead_worker_ends_the_pass(library):
+    unmeasured = _track(library, "raw.mp3", lufs=None)  # no stage-1 excerpt: not pending
+    a = _track(library, "a.mp3")
+    b = _track(library, "b.mp3")
+    c = _track(library, "c.mp3")
+    _pass(library)
+    lines = []
+
+    def answer(file_id):
+        if file_id == c.id:
+            return {"error": "silent"}
+        return af.WorkerError("no answer within 120 s")
+
+    counts, worker = _tk_pass(library, answer, log=lines.append)
+    assert counts == {"measured": 0, "failed": 1, "skipped": 0} and worker.closed
+    assert _tk_row(c.id)[2]["error"] == "silent" and _tk_row(c.id)[:2] == (None, None)
+    assert _tk_row(b.id)[2] is None and _tk_row(a.id)[2] is None
+    assert lines[-1] == "tempo / key: worker stopped - no answer within 120 s"
+
+    counts, worker = _tk_pass(library, lambda _id: {"tempo": 100, "key": "8B"})
+    assert counts["measured"] == 2 and c.id not in dict(worker.jobs)
+    assert (
+        _tk_pass(library, lambda _id: {"tempo": 100, "key": "8B"}, retry_failed=True)[0]["measured"]
+        == 1
+    )
+    assert _tk_row(c.id)[:2] == (100, "8B")
+    assert _tk_row(unmeasured.id)[2] is None
+
+    with connection.cursor() as cur:
+        assert af.remaining_tempo_key(cur) == 0
+
+
+def test_tempo_key_dry_run_writes_nothing(library):
+    track = _track(library, "a.mp3")
+    _pass(library)
+    lines = []
+    counts, _worker = _tk_pass(
+        library, lambda _id: {"tempo": 99.6, "key": "11B"}, dry_run=True, log=lines.append
+    )
+    assert counts["measured"] == 1 and lines == [f"id {track.id}: tempo 99.6 (bpm 100), key 11B"]
+    assert _tk_row(track.id) == (None, None, None)
+
+
+_PROTOCOL = """
+import json, sys
+mode = sys.argv[sys.argv.index("--ffmpeg") + 1]
+if mode == "dies":
+    sys.exit(3)
+print(json.dumps({"ready": True, "v": 99 if mode == "old" else 1, "librosa": "9.9"}), flush=True)
+if mode == "mute":
+    sys.stdin.read()
+for line in sys.stdin:
+    job = json.loads(line)
+    print(json.dumps({"id": job["id"], "tempo": 120.0 + job["start"], "key": "8A"}), flush=True)
+"""
+
+
+def test_the_worker_session_speaks_json_lines_and_times_out(tmp_path):
+    import sys  # noqa: PLC0415
+
+    script = tmp_path / "fake_worker.py"
+    script.write_text(_PROTOCOL, encoding="utf-8")
+    worker = af.TempoKeyWorker(sys.executable, str(script), "ok", ready_timeout=30)
+    try:
+        assert worker.src == "librosa 9.9"
+        assert worker.analyse(7, "x.mp3", 1.5) == {"id": 7, "tempo": 121.5, "key": "8A"}
+        assert worker.analyse(8, "y.mp3", 0.0)["tempo"] == 120.0
+    finally:
+        worker.close()
+    with pytest.raises(af.WorkerError, match="worker ended"):
+        af.TempoKeyWorker(sys.executable, str(script), "dies", ready_timeout=30)
+    with pytest.raises(af.WorkerError, match="version 99"):
+        af.TempoKeyWorker(sys.executable, str(script), "old", ready_timeout=30)
+    worker = af.TempoKeyWorker(
+        sys.executable, str(script), "mute", ready_timeout=30, job_timeout=0.5
+    )
+    try:
+        with pytest.raises(af.WorkerError, match="no answer within"):
+            worker.analyse(1, "x.mp3", 0.0)
+    finally:
+        worker.close()
+    with pytest.raises(af.WorkerError, match="cannot start"):
+        af.TempoKeyWorker(str(tmp_path / "no-python.exe"), str(script), "ok")
+
+
+def test_the_command_runs_tempo_key_after_energy(library, monkeypatch):
+    track = _track(library, "a.mp3")
+    monkeypatch.setattr(af, "find_ffmpeg", lambda _dir=None: "ffmpeg")
+    monkeypatch.setattr(af, "subprocess_runner", lambda _cmd: _output(_music()))
+    monkeypatch.setattr(af, "find_features_worker", lambda: ("python", "tempo_key.py"))
+    monkeypatch.setattr(
+        af,
+        "TempoKeyWorker",
+        lambda *_a, **_k: _FakeWorker(lambda _id: {"tempo": 140.2, "key": "4A"}),
+    )
+    out = StringIO()
+    call_command("analyze_audio_features", stdout=out)
+    assert out.getvalue().splitlines() == [
+        "measured 1, failed 0, not written 0, waiting 0",
+        "tempo / key: measured 1, failed 0, not written 0, waiting 0",
+    ]
+    assert _tk_row(track.id)[:2] == (140, "4A")
+    out = StringIO()
+    call_command("analyze_audio_features", "--tempo-key-only", stdout=out)
+    assert out.getvalue() == ""
+
+    monkeypatch.setattr(af, "find_features_worker", lambda: None)
+    out = StringIO()
+    call_command("analyze_audio_features", "--tempo-key-only", stdout=out)
+    assert "install-features-venv.ps1" in out.getvalue()

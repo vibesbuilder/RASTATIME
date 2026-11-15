@@ -10,6 +10,8 @@ class ModifierType
     public const TEASER_SHOW = 'tsh';
     public const TEASER_TYPE = 'tty';
     public const TEASER_FITS = 'tft';
+    // RASTATIME 2026-11-15 - musical key: a select of the 24 Camelot codes
+    public const MUSICAL_KEY = 'mk';
 }
 
 class CriteriaModifier
@@ -93,7 +95,7 @@ class BlockCriteria
     public const TEASER_KEYS = ['teaser_show', 'teaser_type', 'teaser_fits'];
     /** RASTATIME 2026-11-14 - cc_files columns of migration 0085, Block::audioFeatureCriterionSql */
     public const AUDIO_FEATURE_KEYS = ['energy', 'brightness'];
-    public const SELECT_TYPES = [ModifierType::TRACK_TYPE, ModifierType::TEASER_SHOW, ModifierType::TEASER_TYPE, ModifierType::TEASER_FITS];
+    public const SELECT_TYPES = [ModifierType::TRACK_TYPE, ModifierType::TEASER_SHOW, ModifierType::TEASER_TYPE, ModifierType::TEASER_FITS, ModifierType::MUSICAL_KEY];
 
     public string $key;
     public string $type;
@@ -131,6 +133,7 @@ class BlockCriteria
             case ModifierType::TRACK_TYPE:
             case ModifierType::TEASER_SHOW:
             case ModifierType::TEASER_TYPE:
+            case ModifierType::MUSICAL_KEY:
                 $modifiers = CriteriaModifier::FOR_TRACK_TYPE;
 
                 break;
@@ -192,6 +195,10 @@ class BlockCriteria
                 new BlockCriteria('length', ModifierType::NUMBER, 'DbLength', _('Length')),
                 new BlockCriteria('mime', ModifierType::STRING, 'DbMime', _('Mime')),
                 new BlockCriteria('mood', ModifierType::STRING, 'DbMood', _('Mood')),
+                // RASTATIME 2026-11-15 - musical key (migration 0086), virtual like
+                // the country: a select of Camelot codes, the VARCHAR peer only
+                // feeds the validators; Block::musicalKeyCriterionSql
+                new BlockCriteria('musical_key', ModifierType::MUSICAL_KEY, 'DbTrackTitle', _('Key')),
                 new BlockCriteria('owner_id', ModifierType::STRING, 'DbOwnerId', _('Owner')),
                 new BlockCriteria('replay_gain', ModifierType::NUMBER, 'DbReplayGain', _('Replay Gain')),
                 new BlockCriteria('sample_rate', ModifierType::NUMBER, 'DbSampleRate', _('Sample Rate (kHz)')),

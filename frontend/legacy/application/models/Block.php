@@ -1618,6 +1618,16 @@ SQL;
 
                 break;
 
+            case 'musical_key':
+                // RASTATIME 2026-11-15 - the 24 keys in wheel order, "8A · Am"
+                $opts = [];
+                foreach (array_keys(Application_Model_StoredFile::MUSICAL_KEYS) as $code) {
+                    $opts[$code] = Application_Model_StoredFile::musicalKeyLabel($code);
+                }
+                $head = ['0' => _('Select key')];
+
+                break;
+
             default:
                 return [];
         }
@@ -1674,6 +1684,33 @@ SQL;
         return "(NOT cc_files.disabled_by_hand"
             . " AND (cc_files.expires_at IS NULL OR cc_files.expires_at > {$ts})"
             . " AND (cc_files.enabled_from IS NULL OR cc_files.enabled_from <= {$ts}))";
+    }
+
+    /**
+     * RASTATIME 2026-11-15 - SQL of the virtual "Key" criterion
+     * (cc_files.musical_key, migration 0086): the value is a Camelot code
+     * from the select ("8A"; a chord name such as "Am" works too); "is not"
+     * includes tracks without a key.  FALSE before the migration or for an
+     * unknown value.
+     *
+     * @param string $modifier
+     * @param string $value
+     *
+     * @return string
+     */
+    public static function musicalKeyCriterionSql($modifier, $value)
+    {
+        $code = Application_Model_StoredFile::musicalKey($value);
+        if ($code === null || !Application_Model_StoredFile::fileColumnReady('musical_key')) {
+            return 'FALSE';
+        }
+        // the code is one of 24 fixed strings (musicalKey), safe to inline
+        $modifier = trim((string) $modifier);
+        if ($modifier === CriteriaModifier::IS_NOT) {
+            return "(cc_files.musical_key IS NULL OR cc_files.musical_key <> '{$code}')";
+        }
+
+        return $modifier === CriteriaModifier::IS ? "cc_files.musical_key = '{$code}'" : 'FALSE';
     }
 
     /**
@@ -2451,6 +2488,10 @@ SQL;
                     // RASTATIME 2026-11-08 - the country criterion likewise
                     if ($spCriteria === 'country') {
                         $virtualSql = self::countryCriterionSql($spCriteriaModifier, (string) $criteria['value']);
+                    }
+                    // RASTATIME 2026-11-15 - musical key likewise
+                    if ($spCriteria === 'musical_key') {
+                        $virtualSql = self::musicalKeyCriterionSql($spCriteriaModifier, (string) $criteria['value']);
                     }
                     // RASTATIME 2026-11-14 - energy / brightness likewise
                     if (in_array($spCriteria, BlockCriteria::AUDIO_FEATURE_KEYS, true)) {

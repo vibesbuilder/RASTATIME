@@ -172,6 +172,12 @@ class PageLayoutInitPlugin extends Zend_Controller_Plugin_Abstract
         $view->headScript()->appendScript(
             'var TEASER_SHOWS = ' . json_encode(Application_Model_StoredFile::teaserShows(), JSON_FORCE_OBJECT) . ';'
         );
+        // RASTATIME 2026-11-15 - musical keys, Camelot code => "8A · Am" (library column, smart block select)
+        $musicalKeys = [];
+        foreach (array_keys(Application_Model_StoredFile::MUSICAL_KEYS) as $code) {
+            $musicalKeys[$code] = Application_Model_StoredFile::musicalKeyLabel($code);
+        }
+        $view->headScript()->appendScript('var MUSICAL_KEYS = ' . json_encode($musicalKeys, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE) . ';');
     }
 
     protected function _initHeadLink()

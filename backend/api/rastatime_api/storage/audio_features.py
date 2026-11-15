@@ -39,9 +39,11 @@ from __future__ import annotations
 import json
 import math
 import os
+import queue
 import re
 import shutil
 import subprocess
+import threading
 import time
 from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime
@@ -340,6 +342,8 @@ UPDATE cc_files SET
     brightness = CASE WHEN brightness IS NOT DISTINCT FROM (audio_features->>'brightness')::smallint
                       THEN %(brightness)s ELSE brightness END,
     audio_features = %(features)s::jsonb
+        || CASE WHEN audio_features ? 'tk' THEN jsonb_build_object('tk', audio_features->'tk')
+                ELSE '{}'::jsonb END
 WHERE id = %(id)s
 """
 
@@ -482,4 +486,289 @@ def rescale(cursor, *, dry_run: bool = False) -> dict[str, int]:
             int(file_id),
             {**doc, "energy": energy, "brightness": brightness, "scale": SCALE_VERSION},
         )
+    return counts
+
+
+# --------------------------------------------------------------------------
+# tempo and key (stage 2, ARCHITECTURE 23.116)
+# --------------------------------------------------------------------------
+#
+# librosa does not live in this environment: backend/features/tempo_key.py
+# runs in its own (.venv-features, infra/scripts/install-features-venv.ps1)
+# and answers one JSON line per track, measured on the stage-1 excerpt
+# (``start_s``).  The answer sits under ``audio_features->'tk'``; ``bpm``
+# and ``musical_key`` follow it unless they were set by hand or came from a
+# BPM tag - the stage-1 rule again (0 counts as an empty BPM, the legacy
+# importer writes it for "unknown").  Without the environment, or before
+# legacy migration 0086, the pass is simply skipped.
+
+#: Version the worker announces; a new one means: measure tempo / key again.
+TK_VERSION = 1
+TK_COLUMNS = ("musical_key",)
+TK_READY_TIMEOUT_S = 180.0
+TK_JOB_TIMEOUT_S = 120.0
+REPO_ROOT = Path(__file__).resolve().parents[4]
+FEATURES_WORKER = REPO_ROOT / "backend" / "features" / "tempo_key.py"
+#: what cc_files_musical_key_camelot accepts: 1A..12A (minor), 1B..12B (major)
+CAMELOT = re.compile(r"^(1[0-2]|[1-9])[AB]$")
+
+
+class WorkerError(Exception):
+    """The tempo / key worker did not start, died or stopped answering."""
+
+
+def find_features_worker() -> Optional[tuple[str, str]]:
+    """(python, script) of the tempo / key worker; None while its environment is missing."""
+    venv = REPO_ROOT / ".venv-features"
+    default = venv / "Scripts" / "python.exe" if os.name == "nt" else venv / "bin" / "python"
+    python = Path(os.environ.get("RASTATIME_FEATURES_PYTHON") or default)
+    if not (python.is_file() and FEATURES_WORKER.is_file()):
+        return None
+    return str(python), str(FEATURES_WORKER)
+
+
+def tempo_key_doc(answer: dict[str, Any], src: str, now: Optional[float] = None) -> dict[str, Any]:
+    """The ``audio_features->'tk'`` document of one worker answer (MeasureError if unusable)."""
+    if answer.get("error"):
+        raise MeasureError(str(answer["error"])[:MAX_ERROR])
+    try:
+        tempo = float(answer["tempo"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise MeasureError("answer without a tempo") from exc
+    key = str(answer.get("key") or "")
+    if not (30.0 <= tempo <= 300.0) or not CAMELOT.match(key):
+        raise MeasureError(f"implausible answer: tempo {tempo}, key {key!r}")
+    doc: dict[str, Any] = {
+        "v": TK_VERSION,
+        "src": src,
+        "at": utc_iso(now),
+        "tempo": round(tempo, 1),
+        "bpm": int(round(tempo)),
+        "key": key,
+    }
+    for name in ("tempo_grid", "beats", "key_corr", "key_margin", "key_second"):
+        if name in answer:
+            doc[name] = answer[name]
+    return doc
+
+
+def tempo_key_failed(reason: str, now: Optional[float] = None) -> dict[str, Any]:
+    """The ``tk`` document of a track without tempo / key (not retried without --retry-failed)."""
+    return {"v": TK_VERSION, "at": utc_iso(now), "error": reason[:MAX_ERROR]}
+
+
+class TempoKeyWorker:
+    """The worker process: one JSON line in, one out; a reader thread enforces the timeouts."""
+
+    def __init__(
+        self,
+        python: str,
+        script: str,
+        ffmpeg: str,
+        *,
+        ready_timeout: float = TK_READY_TIMEOUT_S,
+        job_timeout: float = TK_JOB_TIMEOUT_S,
+    ) -> None:
+        flags = getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0) | getattr(
+            subprocess, "CREATE_NO_WINDOW", 0
+        )
+        self.job_timeout = job_timeout
+        self.src = "librosa ?"
+        self._lines: queue.Queue[Optional[str]] = queue.Queue()
+        try:
+            self._proc = subprocess.Popen(  # pylint: disable=consider-using-with
+                [python, "-I", script, "--ffmpeg", ffmpeg],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                bufsize=1,
+                creationflags=flags,
+            )
+        except OSError as exc:
+            raise WorkerError(f"cannot start {python}: {exc}") from exc
+        threading.Thread(target=self._read, daemon=True).start()
+        try:
+            ready = self._next(ready_timeout)
+            if ready.get("v") != TK_VERSION:
+                raise WorkerError(f"worker version {ready.get('v')!r}, expected {TK_VERSION}")
+        except WorkerError:
+            self.close()
+            raise
+        self.src = f"librosa {ready.get('librosa') or '?'}"
+
+    def _read(self) -> None:
+        stdout = self._proc.stdout
+        if stdout is not None:
+            for line in stdout:
+                self._lines.put(line)
+        self._lines.put(None)
+
+    def _next(self, timeout: float) -> dict[str, Any]:
+        try:
+            line = self._lines.get(timeout=timeout)
+        except queue.Empty as exc:
+            raise WorkerError(f"no answer within {timeout:.0f} s") from exc
+        if line is None:
+            raise WorkerError(f"worker ended (exit {self._proc.poll()})")
+        try:
+            return json.loads(line)
+        except ValueError as exc:
+            raise WorkerError(f"unreadable answer {line.strip()[:80]!r}") from exc
+
+    def analyse(self, file_id: int, path: str, start: float) -> dict[str, Any]:
+        job = json.dumps({"id": file_id, "path": path, "start": start})
+        try:
+            if self._proc.stdin is None:
+                raise OSError("no stdin")
+            self._proc.stdin.write(job + "\n")
+            self._proc.stdin.flush()
+        except OSError as exc:
+            raise WorkerError(f"worker gone: {exc}") from exc
+        answer = self._next(self.job_timeout)
+        if answer.get("id") != file_id:
+            raise WorkerError(f"answer for id {answer.get('id')!r} instead of {file_id}")
+        return answer
+
+    def close(self) -> None:
+        try:
+            if self._proc.stdin:
+                self._proc.stdin.close()
+        except OSError:
+            pass
+        try:
+            self._proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            self._proc.kill()
+            self._proc.wait(timeout=10)
+
+
+_PENDING_TK = """
+SELECT f.id, f.filepath, (f.audio_features->>'start_s')::float
+FROM cc_files f
+WHERE f.file_exists AND f.import_status = 0 AND NOT COALESCE(f.hidden, FALSE)
+  AND COALESCE(f.filepath, '') <> '' AND f.audio_features ? 'energy_score'
+  AND {which}
+ORDER BY f.id DESC
+"""
+_TK_DUE = "(NOT f.audio_features ? 'tk' OR COALESCE((f.audio_features->'tk'->>'v')::int, 0) < %s)"
+
+#: like _UPDATE: a column that differs from the last measurement was set by
+#: hand (or by a tag) and stays; SET sees the old row, so the CASE compares
+#: with the previous ``tk``.
+_UPDATE_TK = """
+UPDATE cc_files SET
+    bpm = CASE WHEN NULLIF(bpm, 0) IS NOT DISTINCT FROM (audio_features->'tk'->>'bpm')::int
+               THEN %(bpm)s ELSE bpm END,
+    musical_key = CASE WHEN musical_key IS NOT DISTINCT FROM (audio_features->'tk'->>'key')
+                       THEN %(key)s ELSE musical_key END,
+    audio_features = jsonb_set(COALESCE(audio_features, '{}'::jsonb), '{tk}', %(tk)s::jsonb)
+WHERE id = %(id)s
+"""
+
+
+def tempo_key_columns_ready(cursor) -> bool:
+    cursor.execute(
+        "SELECT count(*) FROM information_schema.columns WHERE table_name = 'cc_files' AND column_name = ANY(%s)",
+        [list(TK_COLUMNS)],
+    )
+    return cursor.fetchone()[0] == len(TK_COLUMNS)
+
+
+def pending_tempo_key(
+    cursor, limit: int, ids: Optional[Iterable[int]] = None, retry_failed: bool = False
+) -> list[tuple]:
+    params: list[Any] = []
+    if ids:
+        which = "f.id = ANY(%s)"
+        params.append(sorted(set(ids)))
+    elif retry_failed:
+        which = f"({_TK_DUE} OR f.audio_features->'tk' ? 'error')"
+        params.append(TK_VERSION)
+    else:
+        which = _TK_DUE
+        params.append(TK_VERSION)
+    sql = _PENDING_TK.format(which=which)
+    if limit > 0:
+        sql += " LIMIT %s"
+        params.append(limit)
+    cursor.execute(sql, params)
+    return cursor.fetchall()
+
+
+def remaining_tempo_key(cursor) -> int:
+    sql = "SELECT count(*) FROM (" + _PENDING_TK.format(which=_TK_DUE) + ") AS p"
+    cursor.execute(sql, [TK_VERSION])
+    return cursor.fetchone()[0]
+
+
+def write_tempo_key(cursor, file_id: int, doc: dict[str, Any]) -> None:
+    cursor.execute(
+        _UPDATE_TK,
+        {
+            "id": file_id,
+            "bpm": doc.get("bpm"),
+            "key": doc.get("key"),
+            "tk": json.dumps(doc, separators=(",", ":")),
+        },
+    )
+
+
+def run_tempo_key(
+    cursor,
+    root: str,
+    *,
+    start_worker: Callable[[], Any],
+    limit: int = 1000,
+    max_seconds: float = 300.0,
+    ids: Optional[Sequence[int]] = None,
+    retry_failed: bool = False,
+    dry_run: bool = False,
+    log: Callable[[str], None] = lambda _line: None,
+    clock: Callable[[], float] = time.monotonic,
+) -> dict[str, int]:
+    """One pass over tracks without tempo / key; the worker starts only when there is work."""
+    counts = {"measured": 0, "failed": 0, "skipped": 0}
+    rows = pending_tempo_key(cursor, limit, ids, retry_failed)
+    if not rows:
+        return counts
+    started = clock()
+    try:
+        worker = start_worker()
+    except WorkerError as exc:
+        log(f"tempo / key: worker did not start - {exc}")
+        return counts
+    base = Path(root)
+    try:
+        for file_id, filepath, start_s in rows:
+            if max_seconds > 0 and clock() - started > max_seconds:
+                break
+            path = base / str(filepath or "").lstrip("/\\").replace("\\", "/")
+            try:
+                if not path.is_file():
+                    raise MeasureError("file not found")
+                answer = worker.analyse(int(file_id), str(path), float(start_s or 0.0))
+                doc = tempo_key_doc(answer, worker.src)
+                counts["measured"] += 1
+                if dry_run:
+                    log(f"id {file_id}: tempo {doc['tempo']} (bpm {doc['bpm']}), key {doc['key']}")
+            except MeasureError as exc:
+                doc = tempo_key_failed(str(exc))
+                counts["failed"] += 1
+                log(f"id {file_id}: no tempo / key - {exc}")
+            if dry_run:
+                continue
+            try:
+                write_tempo_key(cursor, int(file_id), doc)
+            except Exception as exc:  # noqa: BLE001 - a locked row is tried again next run
+                counts["skipped"] += 1
+                log(
+                    f"id {file_id}: not written - {type(exc).__name__}: {str(exc).strip()[:MAX_ERROR]}"
+                )
+    except WorkerError as exc:
+        log(f"tempo / key: worker stopped - {exc}")
+    finally:
+        worker.close()
     return counts

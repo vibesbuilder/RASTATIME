@@ -8574,3 +8574,33 @@ msgstr "Noch nicht gemessen."
 #: RASTATIME 2026-11-14 energy / brightness
 msgid "Measured: %d."
 msgstr "Gemessen: %d."
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Key"
+msgstr "Tonart"
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Key:"
+msgstr "Tonart:"
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Select key"
+msgstr "Tonart wählen"
+
+#: RASTATIME 2026-11-15 tempo / key
+#, c-format
+msgid "Measured: %s."
+msgstr "Gemessen: %s."
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Beats per minute, measured automatically a few minutes after the upload. The measurement counts the strongest pulse, so reggae, for example, usually comes out at double time. A value you enter, or a BPM tag of the file, replaces the measurement and stays. Empty = no value."
+msgstr "Schläge pro Minute, einige Minuten nach dem Hochladen automatisch gemessen. Die Messung zählt den stärksten Puls, Reggae etwa landet deshalb meist beim doppelten Tempo. Ein hier eingetragener Wert oder ein BPM-Tag der Datei ersetzt die Messung und bleibt. Leer = kein Wert."
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Musical key as Camelot code and chord name: A = minor, B = major (8A · Am = A minor, 8B · C = C major). Keys with the same number, or one number up or down, sound well together. Measured automatically a few minutes after the upload; a key you pick replaces the measurement and stays. Empty = no key."
+msgstr "Tonart als Camelot-Code und Akkordname: A = Moll, B = Dur (8A · Am = a-Moll, 8B · C = C-Dur). Tonarten mit derselben Zahl oder einer Zahl darüber oder darunter klingen gut zusammen. Wird einige Minuten nach dem Hochladen automatisch gemessen; eine hier gewählte Tonart ersetzt die Messung und bleibt. Leer = keine Tonart."
+
+#: RASTATIME 2026-11-15 tempo / key
+#, c-format
+msgid "criterion \"musical_key\": \"%s\" is not a key such as 8A or Am"
+msgstr "Kriterium \"musical_key\": \"%s\" ist keine Tonart wie 8A oder Am"

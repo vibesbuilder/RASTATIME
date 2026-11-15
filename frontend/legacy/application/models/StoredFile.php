@@ -370,6 +370,16 @@ class Application_Model_StoredFile
             }
         }
 
+        // RASTATIME 2026-11-15 - musical key (migration 0086), likewise: a key
+        // that differs from the measured one (audio_features->'tk') stays.
+        if (array_key_exists('musical_key', $posted) && self::fileColumnReady('musical_key', $this->_con)) {
+            $key = self::musicalKey($posted['musical_key']);
+            $stmt = $this->_con->prepare('UPDATE cc_files SET musical_key = :v WHERE id = :id');
+            $stmt->bindValue(':v', $key, $key === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':id', (int) $this->_file->getDbId(), PDO::PARAM_INT);
+            $stmt->execute();
+        }
+
         // RASTATIME 2026-09-27 - "No Fade during Crossover" (migrations 0059/0060):
         // the checkbox posts '1' / '0'; only touched when the key is present
         // (the analyzer's metadata import never sends it).
@@ -597,6 +607,99 @@ class Application_Model_StoredFile
             }
         } catch (Exception $exc) {
             Logging::warn('audioFeaturesOf: ' . $exc->getMessage());
+        }
+
+        return $out;
+    }
+
+    /**
+     * RASTATIME 2026-11-15 - musical keys as stored in cc_files.musical_key
+     * (migration 0086): Camelot code => chord name, in wheel order.  A = minor,
+     * B = major; the same number or one step up / down sounds harmonic.
+     */
+    public const MUSICAL_KEYS = [
+        '1A' => 'G#m', '1B' => 'B', '2A' => 'Ebm', '2B' => 'F#', '3A' => 'Bbm', '3B' => 'Db',
+        '4A' => 'Fm', '4B' => 'Ab', '5A' => 'Cm', '5B' => 'Eb', '6A' => 'Gm', '6B' => 'Bb',
+        '7A' => 'Dm', '7B' => 'F', '8A' => 'Am', '8B' => 'C', '9A' => 'Em', '9B' => 'G',
+        '10A' => 'Bm', '10B' => 'D', '11A' => 'F#m', '11B' => 'A', '12A' => 'C#m', '12B' => 'E',
+    ];
+
+    /** RASTATIME 2026-11-15 - other spellings of the same keys (MUSICAL_KEYS has one each) */
+    private const MUSICAL_KEY_ALIASES = [
+        'Abm' => '1A', 'Cb' => '1B', 'D#m' => '2A', 'Gb' => '2B', 'A#m' => '3A', 'C#' => '3B',
+        'G#' => '4B', 'D#' => '5B', 'A#' => '6B', 'Dbm' => '12A', 'Gbm' => '11A',
+    ];
+
+    /**
+     * RASTATIME 2026-11-15 - "8A · Am" for a stored key, '' for none.  Pure.
+     *
+     * @param null|string $code
+     *
+     * @return string
+     */
+    public static function musicalKeyLabel($code)
+    {
+        $code = (string) $code;
+
+        return isset(self::MUSICAL_KEYS[$code]) ? $code . ' · ' . self::MUSICAL_KEYS[$code] : '';
+    }
+
+    /**
+     * RASTATIME 2026-11-15 - a key as stored: the Camelot code ("8a", "8A",
+     * "8A · Am") or a chord name ("Am", "C#m", "Db"); null for anything else
+     * (empty clears).  Pure.
+     *
+     * @param mixed $value
+     *
+     * @return null|string
+     */
+    public static function musicalKey($value)
+    {
+        $text = trim((string) $value);
+        if (preg_match('/^(1[0-2]|[1-9])\s*([AaBb])\b/u', $text, $m)) {
+            return $m[1] . strtoupper($m[2]);
+        }
+        $name = ucfirst(str_replace(['♯', '♭'], ['#', 'b'], $text));
+        $code = array_search($name, self::MUSICAL_KEYS, true);
+        if ($code !== false) {
+            return (string) $code;
+        }
+
+        return self::MUSICAL_KEY_ALIASES[$name] ?? null;
+    }
+
+    /**
+     * RASTATIME 2026-11-15 - key of a track as shown and what its last
+     * tempo / key measurement produced (audio_features->'tk', migration
+     * 0086; null = not measured or failed).
+     *
+     * @param PDO $con
+     * @param int $fileId
+     *
+     * @return array{musical_key: ?string, measured_key: ?string, measured_bpm: ?int, measured_tempo: ?float}
+     */
+    public static function tempoKeyOf($con, $fileId)
+    {
+        $out = ['musical_key' => null, 'measured_key' => null, 'measured_bpm' => null, 'measured_tempo' => null];
+        if (!self::fileColumnReady('musical_key', $con)) {
+            return $out;
+        }
+        try {
+            $stmt = $con->prepare(
+                "SELECT musical_key, audio_features->'tk'->>'key' AS measured_key,
+                        audio_features->'tk'->>'bpm' AS measured_bpm,
+                        audio_features->'tk'->>'tempo' AS measured_tempo
+                 FROM cc_files WHERE id = :id"
+            );
+            $stmt->bindValue(':id', (int) $fileId, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $out['musical_key'] = self::musicalKey($row['musical_key'] ?? '');
+            $out['measured_key'] = self::musicalKey($row['measured_key'] ?? '');
+            $out['measured_bpm'] = isset($row['measured_bpm']) && $row['measured_bpm'] !== '' ? (int) $row['measured_bpm'] : null;
+            $out['measured_tempo'] = isset($row['measured_tempo']) && $row['measured_tempo'] !== '' ? (float) $row['measured_tempo'] : null;
+        } catch (Exception $exc) {
+            Logging::warn('tempoKeyOf: ' . $exc->getMessage());
         }
 
         return $out;
@@ -884,6 +987,8 @@ class Application_Model_StoredFile
         $features = self::audioFeaturesOf($this->_con, (int) $this->_file->getDbId());
         $md['energy'] = $features['energy'] === null ? '' : (string) $features['energy'];
         $md['brightness'] = $features['brightness'] === null ? '' : (string) $features['brightness'];
+        // RASTATIME 2026-11-15 - musical key (migration 0086)
+        $md['musical_key'] = (string) self::tempoKeyOf($this->_con, (int) $this->_file->getDbId())['musical_key'];
 
         // RASTATIME 2026-11-08 - "Track disabled" checkbox, '1' / '0', and
         // who ticked it (the editor's hidden field, migration 0080)
@@ -1556,6 +1661,8 @@ SQL;
             'enabled_from', 'country',
             // RASTATIME 2026-11-14 - energy / brightness 1..10 (migration 0085)
             'energy', 'brightness',
+            // RASTATIME 2026-11-15 - musical key, Camelot code (migration 0086)
+            'musical_key',
             // RASTATIME 2026-10-07 - times aired (rows of cc_playout_history)
             'play_count',
             // RASTATIME 2026-10-16 - "Show name (type)" of a teaser jingle
@@ -1711,6 +1818,13 @@ SQL;
                 $blSelect[] = 'NULL::int AS ' . $key;
                 $fileSelect[] = self::fileColumnReady($key, $con) ? "FILES.{$key}::int AS {$key}" : 'NULL::int AS ' . $key;
                 $streamSelect[] = 'NULL::int AS ' . $key;
+            } elseif ($key === 'musical_key') {
+                // RASTATIME 2026-11-15 - Camelot code ("8A"); the text sort is
+                // a turn of the wheel (10..12, 1..9).  NULL before migration 0086
+                $plSelect[] = 'NULL::text AS ' . $key;
+                $blSelect[] = 'NULL::text AS ' . $key;
+                $fileSelect[] = self::fileColumnReady($key, $con) ? "FILES.{$key}::text AS {$key}" : 'NULL::text AS ' . $key;
+                $streamSelect[] = 'NULL::text AS ' . $key;
             } elseif ($key === 'disabled') {
                 // RASTATIME 2026-05-31: disabled is BOOLEAN in cc_files — same
                 // UNION-type fix as expires_at above (was NULL::text via else).

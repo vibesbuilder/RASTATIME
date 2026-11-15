@@ -136,6 +136,9 @@ final class LocaleController extends Zend_Controller_Action
             // RASTATIME 2026-11-14 - library columns (migration 0085)
             'Energy' => _('Energy'),
             'Brightness' => _('Brightness'),
+            // RASTATIME 2026-11-15 - musical key (library column, smart block select)
+            'Key' => _('Key'),
+            'Select key' => _('Select key'),
             // RASTATIME 2026-10-16 - library column: database id of a file
             'ID' => _('ID'),
             // RASTATIME 2026-10-16 - teaser automation (library column, block editor selects)

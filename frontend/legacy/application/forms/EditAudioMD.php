@@ -323,6 +323,35 @@ class Application_Form_EditAudioMD extends Zend_Form
             ]);
         $this->addElement($bpm);
 
+        // RASTATIME 2026-11-15 - tempo / key (migration 0086): measured by the
+        // task RASTATIME-AudioFeatures with librosa; the tempo goes into BPM,
+        // the key is a Camelot code shown as "8A · Am".  A value entered here
+        // (or a BPM tag of the file) differs from the measured one and stays.
+        if (Application_Model_StoredFile::fileColumnReady('musical_key')) {
+            $tk = Application_Model_StoredFile::tempoKeyOf(Propel::getConnection(), (int) $p_id);
+            $bpm->setDescription(
+                _('Beats per minute, measured automatically a few minutes after the upload. The measurement counts the strongest pulse, so reggae, for example, usually comes out at double time. A value you enter, or a BPM tag of the file, replaces the measurement and stays. Empty = no value.')
+                . ' ' . ($tk['measured_bpm'] === null
+                    ? _('Not measured yet.')
+                    : sprintf(_('Measured: %s.'), sprintf('%d (%.1f)', $tk['measured_bpm'], (float) $tk['measured_tempo'])))
+            );
+            $keyOptions = ['' => ''];
+            foreach (array_keys(Application_Model_StoredFile::MUSICAL_KEYS) as $code) {
+                $keyOptions[$code] = Application_Model_StoredFile::musicalKeyLabel($code);
+            }
+            $musicalKey = new Zend_Form_Element_Select('musical_key');
+            $musicalKey->class = 'input_text';
+            $musicalKey->setLabel(_('Key:'))
+                ->setMultiOptions($keyOptions)
+                ->setDescription(
+                    _('Musical key as Camelot code and chord name: A = minor, B = major (8A · Am = A minor, 8B · C = C major). Keys with the same number, or one number up or down, sound well together. Measured automatically a few minutes after the upload; a key you pick replaces the measurement and stays. Empty = no key.')
+                    . ' ' . ($tk['measured_key'] === null
+                        ? _('Not measured yet.')
+                        : sprintf(_('Measured: %s.'), Application_Model_StoredFile::musicalKeyLabel($tk['measured_key'])))
+                );
+            $this->addElement($musicalKey);
+        }
+
         // RASTATIME 2026-11-14 - energy / brightness 1..10 (migration 0085):
         // measured by the task RASTATIME-AudioFeatures (manage.py
         // analyze_audio_features), editable; a value entered here differs

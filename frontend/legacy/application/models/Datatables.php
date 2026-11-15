@@ -53,6 +53,11 @@ class Application_Model_Datatables
                     if ($dbname == 'track_type_id') {
                         $where['clause'][$dbname] = $dbname . ' = :' . $dbname . '1';
                         $where['params'][$dbname . '1'] = $input1;
+                    } elseif ($dbname == 'musical_key' && Application_Model_StoredFile::musicalKey($input1) !== null) {
+                        // RASTATIME 2026-11-15 - "8A" or "Am" finds exactly that key
+                        // (a pattern would find 11A for "1A")
+                        $where['clause'][$dbname] = $dbname . ' = :' . $dbname . '1';
+                        $where['params'][$dbname . '1'] = Application_Model_StoredFile::musicalKey($input1);
                     } else {
                         $where['clause'][$dbname] = $dbname . ' ILIKE :' . $dbname . '1';
                         $where['params'][$dbname . '1'] = '%' . $input1 . '%';

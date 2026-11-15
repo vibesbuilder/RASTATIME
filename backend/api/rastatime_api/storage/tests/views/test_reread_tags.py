@@ -237,3 +237,32 @@ def test_reread_sets_a_type_on_a_track_without_one(api_client, root):
     assert response.json()["files"][0]["changes"]["track_type"] == [None, "t_jngl"]
     file.refresh_from_db()
     assert file.library_id == jngl.pk
+
+
+@pytest.mark.django_db
+def test_reread_without_a_bpm_tag_falls_back_to_the_measured_tempo(api_client, root):
+    """RASTATIME 2026-11-15 - an empty BPM would count as set by hand for good."""
+    from django.db import connection  # noqa: PLC0415
+
+    _tagged_copy(root, "measured.mp3", title="Measured")
+    _tagged_copy(root, "unmeasured.mp3", title="Unmeasured")
+    measured = baker.make("storage.File", filepath="imported/measured.mp3", exists=True,
+                          mime="audio/mp3", track_title="Measured", bpm=140)  # fmt: skip
+    unmeasured = baker.make("storage.File", filepath="imported/unmeasured.mp3", exists=True,
+                            mime="audio/mp3", track_title="Unmeasured", bpm=90)  # fmt: skip
+    with connection.cursor() as cur:
+        cur.execute(
+            """UPDATE cc_files SET audio_features = '{"tk": {"v": 1, "bpm": 128, "key": "8A"}}'::jsonb
+               WHERE id = %s""",
+            [measured.id],
+        )
+    response = api_client.post(
+        "/api/v2/files/reread-tags", {"ids": [measured.id, unmeasured.id]}, format="json"
+    )
+    assert response.status_code == 200, response.content
+    by_id = {e["id"]: e for e in response.json()["files"]}
+    assert by_id[measured.id]["changes"]["bpm"] == [140, 128]
+    assert by_id[unmeasured.id]["changes"]["bpm"] == [90, None]
+    measured.refresh_from_db()
+    unmeasured.refresh_from_db()
+    assert (measured.bpm, unmeasured.bpm) == (128, None)

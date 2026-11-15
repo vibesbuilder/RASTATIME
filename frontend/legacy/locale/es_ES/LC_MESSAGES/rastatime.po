@@ -8767,3 +8767,33 @@ msgstr "Aún no medido."
 #: RASTATIME 2026-11-14 energy / brightness
 msgid "Measured: %d."
 msgstr "Medido: %d."
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Key"
+msgstr "Tonalidad"
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Key:"
+msgstr "Tonalidad:"
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Select key"
+msgstr "Elegir tonalidad"
+
+#: RASTATIME 2026-11-15 tempo / key
+#, c-format
+msgid "Measured: %s."
+msgstr "Medido: %s."
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Beats per minute, measured automatically a few minutes after the upload. The measurement counts the strongest pulse, so reggae, for example, usually comes out at double time. A value you enter, or a BPM tag of the file, replaces the measurement and stays. Empty = no value."
+msgstr "Pulsaciones por minuto, medidas automáticamente unos minutos después de la subida. La medición cuenta el pulso más fuerte, por eso el reggae, por ejemplo, suele salir al doble de tempo. Un valor introducido aquí, o una etiqueta BPM del archivo, sustituye la medición y se conserva. Vacío = sin valor."
+
+#: RASTATIME 2026-11-15 tempo / key
+msgid "Musical key as Camelot code and chord name: A = minor, B = major (8A · Am = A minor, 8B · C = C major). Keys with the same number, or one number up or down, sound well together. Measured automatically a few minutes after the upload; a key you pick replaces the measurement and stays. Empty = no key."
+msgstr "Tonalidad como código Camelot y nombre de acorde: A = menor, B = mayor (8A · Am = la menor, 8B · C = do mayor). Las tonalidades con el mismo número, o con un número más o menos, suenan bien juntas. Se mide automáticamente unos minutos después de la subida; una tonalidad elegida aquí sustituye la medición y se conserva. Vacío = sin tonalidad."
+
+#: RASTATIME 2026-11-15 tempo / key
+#, c-format
+msgid "criterion \"musical_key\": \"%s\" is not a key such as 8A or Am"
+msgstr "criterio \"musical_key\": \"%s\" no es una tonalidad como 8A o Am"

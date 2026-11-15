@@ -1,20 +1,25 @@
 """
 RASTATIME 2026-11-14 - measure energy and brightness of library tracks
-(``storage/audio_features.py``, ARCHITECTURE 23.115).
+(``storage/audio_features.py``, ARCHITECTURE 23.115); since 2026-11-15 also
+tempo and key (stage 2, ARCHITECTURE 23.116).
 
 Fired every ten minutes by the Windows task RASTATIME-AudioFeatures
 (``scripts/audio-features.ps1``); by hand for the first pass over the
 library (``--limit 0 --max-seconds 0``).  Measures tracks that have a
-loudness value but no ``audio_features`` yet, newest first; a value set by
-hand in Edit Track is never replaced.  Prints one line per track that could
-not be measured and one summary line when it did something; an idle run
-prints nothing.
+loudness value but no ``audio_features`` yet, newest first, then - in the
+time left - tempo and key of measured tracks that have none yet (librosa
+in its own environment, ``.venv-features``; skipped while it or legacy
+migration 0086 is missing).  A value set by hand in Edit Track is never
+replaced.  Prints one line per track that could not be measured and one
+summary line per part that did something; an idle run prints nothing.
 
-  --ids 12 34       measure these tracks again (hand values stay)
-  --retry-failed    also the tracks whose measurement failed before
-  --rescale         energy / brightness again from the stored raw values
-                    (after a new scale; no ffmpeg)
-  --dry-run         measure and print, write nothing
+  --ids 12 34        measure these tracks again (hand values stay)
+  --retry-failed     also the tracks whose measurement failed before
+  --rescale          energy / brightness again from the stored raw values
+                     (after a new scale; no ffmpeg)
+  --no-tempo-key     energy / brightness only
+  --tempo-key-only   tempo / key only
+  --dry-run          measure and print, write nothing
 
 Only one run at a time (PostgreSQL advisory lock); a run that finds the
 lock taken ends quietly.  Exit code 1 = ffmpeg not found.
@@ -22,6 +27,7 @@ lock taken ends quietly.  Exit code 1 = ffmpeg not found.
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -32,11 +38,11 @@ from ...root import get_storage_root
 
 
 class Command(BaseCommand):
-    help = "Measure energy and brightness of library tracks that have none yet (ffmpeg)."
+    help = "Measure energy / brightness and tempo / key of library tracks that have none yet."
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
-            "--limit", type=int, default=1000, help="at most this many tracks (0 = all)"
+            "--limit", type=int, default=1000, help="at most this many tracks per part (0 = all)"
         )
         parser.add_argument(
             "--max-seconds", type=float, default=300.0, help="stop after this long (0 = no limit)"
@@ -48,10 +54,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--rescale", action="store_true", help="recompute the levels from stored values"
         )
+        parser.add_argument("--no-tempo-key", action="store_true", help="energy / brightness only")
+        parser.add_argument("--tempo-key-only", action="store_true", help="tempo / key only")
         parser.add_argument("--dry-run", action="store_true", help="write nothing")
         parser.add_argument("--ffmpeg-dir", help="directory holding ffmpeg")
 
     def handle(self, *args: Any, **options: Any) -> None:
+        started = time.monotonic()
         with connection.cursor() as cursor:
             if not af.columns_ready(cursor):
                 self.stdout.write(
@@ -76,23 +85,64 @@ class Command(BaseCommand):
                     raise CommandError(
                         "ffmpeg not found - set FFMPEG_PATH, put ffmpeg on PATH or pass --ffmpeg-dir"
                     )
-                counts = af.run(
-                    cursor,
-                    str(get_storage_root()),
-                    ffmpeg=ffmpeg,
-                    limit=options["limit"],
-                    max_seconds=options["max_seconds"],
-                    ids=options.get("ids"),
-                    retry_failed=options["retry_failed"],
-                    dry_run=options["dry_run"],
-                    log=self.stdout.write,
-                )
-                if counts["measured"] or counts["failed"] or counts["skipped"]:
-                    left = af.remaining(cursor)
-                    note = " (dry run, nothing written)" if options["dry_run"] else ""
-                    self.stdout.write(
-                        f"measured {counts['measured']}, failed {counts['failed']}, "
-                        f"not written {counts['skipped']}, waiting {left}{note}"
+                root = str(get_storage_root())
+                note = " (dry run, nothing written)" if options["dry_run"] else ""
+                if not options["tempo_key_only"]:
+                    counts = af.run(
+                        cursor,
+                        root,
+                        ffmpeg=ffmpeg,
+                        limit=options["limit"],
+                        max_seconds=options["max_seconds"],
+                        ids=options.get("ids"),
+                        retry_failed=options["retry_failed"],
+                        dry_run=options["dry_run"],
+                        log=self.stdout.write,
                     )
+                    if counts["measured"] or counts["failed"] or counts["skipped"]:
+                        self.stdout.write(
+                            f"measured {counts['measured']}, failed {counts['failed']}, "
+                            f"not written {counts['skipped']}, waiting {af.remaining(cursor)}{note}"
+                        )
+                if not options["no_tempo_key"]:
+                    self._tempo_key(cursor, root, ffmpeg, started, note, options)
             finally:
                 cursor.execute("SELECT pg_advisory_unlock(hashtext(%s))", [af.LOCK_KEY])
+
+    def _tempo_key(
+        self, cursor, root: str, ffmpeg: str, started: float, note: str, options
+    ) -> None:
+        explicit = options["tempo_key_only"]
+        if not af.tempo_key_columns_ready(cursor):
+            if explicit:
+                self.stdout.write("cc_files has no musical_key yet - legacy migration 0086 first")
+            return
+        worker = af.find_features_worker()
+        if worker is None:
+            if explicit:
+                self.stdout.write(
+                    "no tempo / key environment - run infra/scripts/install-features-venv.ps1"
+                )
+            return
+        max_seconds = options["max_seconds"]
+        if max_seconds > 0:
+            max_seconds -= time.monotonic() - started
+            if max_seconds <= 0:
+                return  # the energy part used the run; tempo / key next time
+        python, script = worker
+        counts = af.run_tempo_key(
+            cursor,
+            root,
+            start_worker=lambda: af.TempoKeyWorker(python, script, ffmpeg),
+            limit=options["limit"],
+            max_seconds=max_seconds,
+            ids=options.get("ids"),
+            retry_failed=options["retry_failed"],
+            dry_run=options["dry_run"],
+            log=self.stdout.write,
+        )
+        if counts["measured"] or counts["failed"] or counts["skipped"]:
+            self.stdout.write(
+                f"tempo / key: measured {counts['measured']}, failed {counts['failed']}, "
+                f"not written {counts['skipped']}, waiting {af.remaining_tempo_key(cursor)}{note}"
+            )

@@ -194,6 +194,14 @@ class Application_Service_ImportExportBlocks extends Application_Service_ImportE
                 } elseif ($field === 'teaser_fits' && $rule['value'] !== 'yes') {
                     $rec['_errors'][] = _('criterion "teaser_fits": the value must be "yes"');
                     continue;
+                } elseif ($field === 'musical_key') {
+                    // RASTATIME 2026-11-15 - Camelot code or chord name
+                    $code = Application_Model_StoredFile::musicalKey($rule['value']);
+                    if ($code === null) {
+                        $rec['_errors'][] = sprintf(_('criterion "musical_key": "%s" is not a key such as 8A or Am'), $rule['value']);
+                        continue;
+                    }
+                    $rule['value'] = $code;
                 }
                 $rec['criteria'][] = $rule;
             }

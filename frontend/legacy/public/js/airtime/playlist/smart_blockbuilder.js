@@ -816,7 +816,7 @@ function enableAndShowTracktypeDropdown(valEle, index) {
  * tft = "fits the schedule".  TEASER_SHOWS is injected by the layout
  * plugin (id -> show name). */
 function isSelectCriteriaType(t) {
-  return t === "tsh" || t === "tty" || t === "tft";
+  return t === "tsh" || t === "tty" || t === "tft" || t === "mk";
 }
 
 function selectCriteriaOptions(t) {
@@ -828,6 +828,17 @@ function selectCriteriaOptions(t) {
       }
     }
     return shows;
+  }
+  if (t === "mk") {
+    /* RASTATIME 2026-11-15 - musical key: Camelot code => "8A · Am" */
+    var keys = { 0: $.i18n._("Select key") };
+    var labels = typeof MUSICAL_KEYS === "object" ? MUSICAL_KEYS : {};
+    for (var code in labels) {
+      if (labels.hasOwnProperty(code)) {
+        keys[code] = labels[code];
+      }
+    }
+    return keys;
   }
   if (t === "tty") {
     return {
@@ -1209,6 +1220,7 @@ var criteriaTypes = {
   length: "n",
   mime: "s",
   mood: "s",
+  musical_key: "mk",
   owner_id: "s",
   replay_gain: "n",
   sample_rate: "n",
