@@ -7081,7 +7081,8 @@ misst sie nach dem Bestandslauf; Skala bleibt die der Musik, Jingles unter 10 s 
 **Bestandslauf fertig 2026-11-15 15:24** (13:40-15:24, 22.349 + 1.860 vorher = alle 24.209 Musiktitel, 0 Fehler,
 ~0,28 s je Track).  Tonarten: D 8,5 %, G 7,7 %, Em 7,1 %, C 7,1 %, A 6,9 %, Am 6,5 %; Dur 54 % / Moll 46 %.  Tempo
 Median 121,6 BPM, Mitte 106-136, 10-90 % 94-154.  32 abweichende BPM-Tags/Handwerte blieben stehen: 17 eine Oktave
-daneben, 6 innerhalb 3 %, 9 andere.  Jingles (angehakt 13:46) misst die 10-min-Aufgabe ab 15:25.
+daneben, 6 innerhalb 3 %, 9 andere.  Jingles (angehakt 13:46): Aufgabenlauf 15:25 hat 334 von 462 gemessen (Energie/Helligkeit + Tempo/Tonart,
+0 Fehler); 128 sind kürzer als 10 s oder ohne Lautheitswert und bekommen keine Werte.
 Offen: Hörprobe (BPM/Key + Energy) durch den Operator.
 
 ## Test-Hygiene (2026-10-22)
