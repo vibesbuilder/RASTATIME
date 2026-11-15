@@ -21,15 +21,15 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 
 | Seite | Zweck | Wer | Kapitel |
 |---|---|---|---|
-| **Allgemein** | Stationsname und -beschreibung, Sprache, Wochenbeginn, öffentliche API, Radio-Seite, Logo, Hintergrund der Startseite, Favicon, Primärfarbe, Crossfades, Track-Typ für Uploads, Automations-Playlisten, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Dieses Kapitel §2 |
 | **Mein Profil** | Eigener Name, E-Mail, Passwort, Oberflächensprache und Zeitzone. | alle | [Benutzer und Rollen](./USERS_AND_ROLES.md) §4 |
+| **Allgemein** | Stationsname und -beschreibung, Sprache, Wochenbeginn, öffentliche API, Radio-Seite, Logo, Hintergrund der Startseite, Favicon, Primärfarbe, Crossfades, Track-Typ für Uploads, Automations-Playlisten, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Dieses Kapitel §2 |
 | **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
-| **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import. | Admin | [Bibliothek](./LIBRARY.md) |
-| **Show Templates** | Übersicht der gespeicherten Show-Vorlagen: umbenennen, löschen. | Program Manager, Admin | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
-| **Archivierung** | Produzenten der Sendungen - je eine Person oder ein Team (Name, optional Login; einer je Sendung, unter Archivierung gewählt); für Admins darunter die cba.media-Benutzer, unter denen die Sendungen archiviert werden (Benutzername, Anwendungspasswort), Verbindungstest, Upload-Grenze, Wartezeit des automatischen Archivierens. Bis 2026-11-03 zwei Einträge, *Redaktionsteam* und *CBA-Konten*. | Program Manager (Produzenten), Admin | [Archivierung](./ARCHIVING.md) |
-| **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Ausgabe-Streams (Bitrate, Mount, Codec), Eingänge für Live-Einwahlen, Master-Login. | Admin | [Streams](./STREAMS.md) |
 | **Lokale Maschine** | Soundkarte, Import-Ordner und -Format, Aufnahme-Ordner und -Format, Speicherort der Bibliothek. | Admin | [Lokale Maschine](./LOCAL_MACHINE.md) |
+| **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import. | Admin | [Bibliothek](./LIBRARY.md) |
+| **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
+| **Show Templates** | Übersicht der gespeicherten Show-Vorlagen: umbenennen, löschen. | Program Manager, Admin | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
+| **Archivierung** | Produzenten der Sendungen - je eine Person oder ein Team (Name, optional Login; einer je Sendung, unter Archivierung gewählt); für Admins darunter die cba.media-Benutzer, unter denen die Sendungen archiviert werden (Benutzername, Anwendungspasswort), Verbindungstest, Upload-Grenze, Wartezeit des automatischen Archivierens. Bis 2026-11-03 zwei Einträge, *Redaktionsteam* und *CBA-Konten*. | Program Manager (Produzenten), Admin | [Archivierung](./ARCHIVING.md) |
 | **Alarme** | Meldungen per E-Mail und Telegram bei Stille (Dead Air), ausgefallenen Diensten und Preflight-Warnungen; je Kanal ein Schalter. Seit 2026-11-03; seit 2026-11-04 unter Lokale Maschine. | Admin | Dieses Kapitel §6 |
 | **Import / Export** | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Sicherungen von Datenbank und Konfiguration, der Medienspiegel, automatische Backups, Wiederherstellung. | Admin | [Backup](./BACKUP.md) |

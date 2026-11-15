@@ -21,15 +21,15 @@ Navegación izquierda → **Ajustes** abre el submenú:
 
 | Página | Para qué | Quién | Capítulo |
 |---|---|---|---|
-| **General** | Nombre y descripción de la emisora, idioma, inicio de semana, API pública, página de radio, logo, fondo de la página de inicio, favicon, color principal, crossfades, tipo de pista de las subidas, listas de automatización, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Este capítulo §2 |
 | **Mi Perfil** | Su nombre, correo, contraseña, idioma de la interfaz y zona horaria. | todos | [Usuarios y roles](./USERS_AND_ROLES.md) §4 |
+| **General** | Nombre y descripción de la emisora, idioma, inicio de semana, API pública, página de radio, logo, fondo de la página de inicio, favicon, color principal, crossfades, tipo de pista de las subidas, listas de automatización, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Este capítulo §2 |
 | **Usuarios** | Crear, editar y eliminar usuarios y definir su tipo. | Admin | [Usuarios y roles](./USERS_AND_ROLES.md) §3 |
-| **Tipos de pista** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream y su análisis de puntos de cue al importar. | Admin | [Biblioteca](./LIBRARY.md) |
-| **Show Templates** | Resumen de las plantillas de programa guardadas: renombrar, eliminar. | Program Manager, Admin | [Plantillas de programa](./SHOW_TEMPLATES.md) |
-| **Archivo** | Productores de los programas: una persona o un equipo cada uno (nombre, cuenta opcional; uno por programa, elegido en Archivo); para los Admins, debajo, los usuarios de cba.media con los que se archivan los programas (usuario, contraseña de aplicación), prueba de conexión, límite de subida, tiempo de espera del archivo automático. Hasta el 2026-11-03, dos entradas, *Equipo de redacción* y *Cuentas de CBA*. | Program Manager (productores), Admin | [Archivo](./ARCHIVING.md) |
-| **Auto DJ** | Relleno de huecos y completado de programas incompletos. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Streams de salida (bitrate, punto de montaje, códec), entradas para conexiones en directo, credencial Master. | Admin | [Streams](./STREAMS.md) |
 | **Máquina local** | Tarjeta de sonido, carpeta y formato de importación, carpeta y formato de grabación, ubicación de la biblioteca. | Admin | [Máquina local](./LOCAL_MACHINE.md) |
+| **Tipos de pista** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream y su análisis de puntos de cue al importar. | Admin | [Biblioteca](./LIBRARY.md) |
+| **Auto DJ** | Relleno de huecos y completado de programas incompletos. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
+| **Show Templates** | Resumen de las plantillas de programa guardadas: renombrar, eliminar. | Program Manager, Admin | [Plantillas de programa](./SHOW_TEMPLATES.md) |
+| **Archivo** | Productores de los programas: una persona o un equipo cada uno (nombre, cuenta opcional; uno por programa, elegido en Archivo); para los Admins, debajo, los usuarios de cba.media con los que se archivan los programas (usuario, contraseña de aplicación), prueba de conexión, límite de subida, tiempo de espera del archivo automático. Hasta el 2026-11-03, dos entradas, *Equipo de redacción* y *Cuentas de CBA*. | Program Manager (productores), Admin | [Archivo](./ARCHIVING.md) |
 | **Alertas** | Mensajes por correo y Telegram en caso de silencio (dead air), servicios caídos y avisos previos (pre-flight); un interruptor por canal. Desde 2026-11-03; debajo de Máquina local desde 2026-11-04. | Admin | Este capítulo §6 |
 | **Importar / Exportar** | Usuarios, programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como archivos CSV/JSON, con vista previa al importar. | Admin | [Importar / Exportar](./IMPORT_EXPORT.md) |
 | **Backup** | Copias de seguridad de la base de datos y la configuración, el espejo de medios, copias automáticas, restauración. | Admin | [Backup](./BACKUP.md) |

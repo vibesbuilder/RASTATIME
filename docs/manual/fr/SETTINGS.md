@@ -21,15 +21,15 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 
 | Page | Rôle | Qui | Chapitre |
 |---|---|---|---|
-| **Général** | Nom et description de la station, langue, début de semaine, API publique, page radio, logo, fond de la page d'accueil, favicon, couleur principale, fondus enchaînés, type de piste des téléversements, playlists d'automatisation, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Ce chapitre §2 |
 | **Mon profil** | Vos nom, e-mail, mot de passe, langue d'interface et fuseau horaire. | tous | [Utilisateurs et rôles](./USERS_AND_ROLES.md) §4 |
+| **Général** | Nom et description de la station, langue, début de semaine, API publique, page radio, logo, fond de la page d'accueil, favicon, couleur principale, fondus enchaînés, type de piste des téléversements, playlists d'automatisation, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | Ce chapitre §2 |
 | **Utilisateurs** | Créer, modifier et supprimer des utilisateurs, définir leur type. | Admin | [Utilisateurs et rôles](./USERS_AND_ROLES.md) §3 |
-| **Types de piste** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux et leur analyse des points de repère à l'import. | Admin | [Bibliothèque](./LIBRARY.md) |
-| **Show Templates** | Aperçu des modèles d'émission enregistrés : renommer, supprimer. | Program Manager, Admin | [Modèles d'émission](./SHOW_TEMPLATES.md) |
-| **Archivage** | Producteurs des émissions - une personne ou une équipe chacune (nom, compte facultatif ; un par émission, choisi sous Archivage) ; pour les Admins, en dessous, les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi, délai de l'archivage automatique. Jusqu'au 2026-11-03, deux entrées, *Équipe de rédaction* et *Comptes CBA*. | Program Manager (producteurs), Admin | [Archivage](./ARCHIVING.md) |
-| **Auto DJ** | Remplissage des trous et complément des émissions incomplètes. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Flux** | Flux de sortie (débit, point de montage, codec), entrées pour les connexions en direct, identifiant Master. | Admin | [Flux](./STREAMS.md) |
 | **Machine locale** | Carte son, dossier et format d'import, dossier et format d'enregistrement, emplacement de la bibliothèque. | Admin | [Machine locale](./LOCAL_MACHINE.md) |
+| **Types de piste** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux et leur analyse des points de repère à l'import. | Admin | [Bibliothèque](./LIBRARY.md) |
+| **Auto DJ** | Remplissage des trous et complément des émissions incomplètes. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
+| **Show Templates** | Aperçu des modèles d'émission enregistrés : renommer, supprimer. | Program Manager, Admin | [Modèles d'émission](./SHOW_TEMPLATES.md) |
+| **Archivage** | Producteurs des émissions - une personne ou une équipe chacune (nom, compte facultatif ; un par émission, choisi sous Archivage) ; pour les Admins, en dessous, les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi, délai de l'archivage automatique. Jusqu'au 2026-11-03, deux entrées, *Équipe de rédaction* et *Comptes CBA*. | Program Manager (producteurs), Admin | [Archivage](./ARCHIVING.md) |
 | **Alertes** | Messages par e-mail et Telegram en cas de silence (dead air), de service arrêté et d'avertissement de pré-vol ; un interrupteur par canal. Depuis le 2026-11-03 ; sous Machine locale depuis le 2026-11-04. | Admin | Ce chapitre §6 |
 | **Import / Export** | Utilisateurs, émissions, playlists, smart blocks, webstreams et abonnements podcast en fichiers CSV/JSON, avec aperçu à l'import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Sauvegardes de la base de données et de la configuration, le miroir média, sauvegardes automatiques, restauration. | Admin | [Backup](./BACKUP.md) |

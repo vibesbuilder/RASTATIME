@@ -181,6 +181,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings-Menü neu geordnet (2026-11-15, Operator)** - *My Profile* steht ganz oben, *Streams* und
+  *Local Machine* folgen direkt auf *Users*, *Auto DJ* auf *Track Types*; Reihenfolge jetzt My Profile,
+  General, Users, Streams, Local Machine, Track Types, Auto DJ, Show Templates, Archiving, Alerts,
+  Import / Export, Backup, Status.  Tabelle „The Settings menu“ im Manual SETTINGS x4 angepasst.
 - **Energie-/Helligkeits-Skala aus dem ganzen Bestand (2026-11-15)** - nach dem Bestandslauf
   (24.873 Tracks gemessen, Lauf 2026-11-14 20:13 bis 2026-11-15 00:16) sind die Stufengrenzen
   die Dezile aller 24.209 gemessenen Musiktracks statt der 823er-Stichprobe (Skala 2,

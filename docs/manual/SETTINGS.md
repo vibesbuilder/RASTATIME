@@ -20,15 +20,15 @@ Left navigation → **Settings** opens the sub-menu:
 
 | Page | Purpose | Who | Manual chapter |
 |---|---|---|---|
-| **General** | Station name and description, language, week start, public API, radio page, logo, landing page background, favicon, primary colour, crossfades, upload track type, automation playlists, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | This chapter §2 |
 | **My Profile** | Your own name, e-mail, password, interface language and time zone. | everyone | [Users and Roles](./USERS_AND_ROLES.md) §4 |
+| **General** | Station name and description, language, week start, public API, radio page, logo, landing page background, favicon, primary colour, crossfades, upload track type, automation playlists, Live Text Info, Radioplayer Feed, TuneIn, Dangerous Options. | Admin | This chapter §2 |
 | **Users** | Create, edit and delete users and set their user type. | Admin | [Users and Roles](./USERS_AND_ROLES.md) §3 |
-| **Track Types** | Track types with their crossfade, crossover and stream-metadata presets and their cue point analysis on import. | Admin | [Library](./LIBRARY.md) |
-| **Show Templates** | Overview of the saved show templates: rename, delete. | Program Manager, Admin | [Show Templates](./SHOW_TEMPLATES.md) |
-| **Archiving** | Producers of the shows - one person or a team each (name, optional login; one per show, chosen under Archiving); for Admins below them the cba.media users the shows are archived under (user name, application password), connection test, upload limit, waiting time of the automatic archiving. Until 2026-11-03 two entries, *Editorial Team* and *CBA Accounts*. | Program Manager (producers), Admin | [Archiving](./ARCHIVING.md) |
-| **Auto DJ** | Gap filler and top-up of incomplete shows. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Streams** | Output streams (bitrate, mount, codec), live dial-in inputs, Master login. | Admin | [Streams](./STREAMS.md) |
 | **Local Machine** | Sound card, import folder and format, recording folder and format, library location. | Admin | [Local Machine](./LOCAL_MACHINE.md) |
+| **Track Types** | Track types with their crossfade, crossover and stream-metadata presets and their cue point analysis on import. | Admin | [Library](./LIBRARY.md) |
+| **Auto DJ** | Gap filler and top-up of incomplete shows. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
+| **Show Templates** | Overview of the saved show templates: rename, delete. | Program Manager, Admin | [Show Templates](./SHOW_TEMPLATES.md) |
+| **Archiving** | Producers of the shows - one person or a team each (name, optional login; one per show, chosen under Archiving); for Admins below them the cba.media users the shows are archived under (user name, application password), connection test, upload limit, waiting time of the automatic archiving. Until 2026-11-03 two entries, *Editorial Team* and *CBA Accounts*. | Program Manager (producers), Admin | [Archiving](./ARCHIVING.md) |
 | **Alerts** | Messages by e-mail and Telegram on dead air, services down and pre-flight warnings; one switch per channel. Since 2026-11-03; below Local Machine since 2026-11-04. | Admin | This chapter §6 |
 | **Import / Export** | Users, shows, playlists, smart blocks, webstreams and podcast subscriptions as CSV/JSON files, with a preview step on import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Database and configuration backups, the media mirror, automatic backups, restoring. | Admin | [Backup](./BACKUP.md) |

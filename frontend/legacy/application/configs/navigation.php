@@ -146,15 +146,17 @@ $pages[] = [
     'title' => 'Settings',
     'pages' => [
         [
+            // RASTATIME 2026-11-15 - first entry (operator); Streams and Local
+            // Machine below Users, Auto DJ below Track Types
+            'label' => 'My Profile',
+            'controller' => 'user',
+            'action' => 'edit-user',
+        ],
+        [
             'label' => 'General',
             'module' => 'default',
             'controller' => 'preference',
             'resource' => 'preference',
-        ],
-        [
-            'label' => 'My Profile',
-            'controller' => 'user',
-            'action' => 'edit-user',
         ],
         [
             'label' => 'Users',
@@ -162,12 +164,45 @@ $pages[] = [
             'controller' => 'user',
             'action' => 'add-user',
             'resource' => 'user',
-        ], [
+        ],
+        [
+            'label' => 'Streams',
+            'module' => 'default',
+            'controller' => 'preference',
+            'action' => 'stream-setting',
+            'resource' => 'preference',
+        ],
+        [
+            // RASTATIME 2026-05-16 - Renamed from "Soundcard" to "Local Machine".
+            // The page now covers both audio devices (output/input) and the
+            // Local Import Folder feature (drop-folder for the analyzer).
+            // The controller action stays "soundcard-setting" so existing
+            // bookmarks/links keep working without a route rewrite.
+            'label' => 'Local Machine',
+            'module' => 'default',
+            'controller' => 'preference',
+            'action' => 'local-machine',
+            'resource' => 'preference',
+        ],
+        [
             'label' => 'Track Types',
             'module' => 'default',
             'controller' => 'tracktype',
             'action' => 'add-tracktype',
             'resource' => 'tracktype',
+        ],
+        [
+            // RASTATIME 2026-05-21 — Auto-DJ settings page
+            // (Section 23.20).  Master switch + filler-playlist
+            // selection + default show name / logo for automatic
+            // gap filling.
+            'label' => 'Auto DJ',
+            'module' => 'default',
+            'controller' => 'preference',
+            'action' => 'auto-dj',
+            'resource' => 'preference',
+            // RASTATIME 2026-10-25 - also Program Managers (ACL privilege)
+            'privilege' => 'auto-dj',
         ],
         [
             // RASTATIME 2026-05-19 — Show-Template management page
@@ -192,41 +227,10 @@ $pages[] = [
             'privilege' => 'settings',
         ],
         [
-            // RASTATIME 2026-05-21 — Auto-DJ settings page
-            // (Section 23.20).  Master switch + filler-playlist
-            // selection + default show name / logo for automatic
-            // gap filling.
-            'label' => 'Auto DJ',
-            'module' => 'default',
-            'controller' => 'preference',
-            'action' => 'auto-dj',
-            'resource' => 'preference',
-            // RASTATIME 2026-10-25 - also Program Managers (ACL privilege)
-            'privilege' => 'auto-dj',
-        ],
-        [
-            'label' => 'Streams',
-            'module' => 'default',
-            'controller' => 'preference',
-            'action' => 'stream-setting',
-            'resource' => 'preference',
-        ],
-        [
-            // RASTATIME 2026-05-16 - Renamed from "Soundcard" to "Local Machine".
-            // The page now covers both audio devices (output/input) and the
-            // Local Import Folder feature (drop-folder for the analyzer).
-            // The controller action stays "soundcard-setting" so existing
-            // bookmarks/links keep working without a route rewrite.
-            'label' => 'Local Machine',
-            'module' => 'default',
-            'controller' => 'preference',
-            'action' => 'local-machine',
-            'resource' => 'preference',
-        ],
-        [
             // RASTATIME 2026-11-03 - alerts stage 1: e-mail and Telegram for
             // dead air, services down and pre-flight warnings (admins);
-            // below Local Machine since 2026-11-04 (operator)
+            // below Local Machine 2026-11-04, stays above Import / Export
+            // since Local Machine moved up 2026-11-15 (operator)
             'label' => 'Alerts',
             'module' => 'default',
             'controller' => 'alerts',
