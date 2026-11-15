@@ -8,7 +8,7 @@ radio station from one Windows 11 PC.**
 
 https://github.com/user-attachments/assets/f54bfc6e-1a4b-489b-9353-f03872ed2170
 
-*A three-minute tour of RASTATIME (v1.4.0): dashboard, scheduling, library, playlists and
+*A three-minute tour of RASTATIME (v1.6.0): dashboard, scheduling, library, playlists and
 smart blocks, sources, Auto DJ, playout and streams, widgets, archiving, reporting, operations,
 four languages.*
 
