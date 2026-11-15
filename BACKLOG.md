@@ -4921,6 +4921,18 @@ die bestehende Liquidsoap-Telnet-Verbindung.  Erkennung des Alert-Items via
 `file_id ∈ Traffic-Block-Pool` (kein Schema) oder Marker-Spalte auf
 `cc_schedule` (Migration 0058).  ~80–150 Z.  Erst bauen, wenn die Vorbedingung
 im Betrieb eintritt.
+**Nachgeprüft 2026-11-15 (Operator: so belassen, 🟡 bleibt):** Traffic Alerts sind in Produktion
+**aus** (`traffic_alert_block_id` = 0), die Vorbedingung kann also gar nicht eintreten.  Die
+Juni-Schätzung ist überholt: der Playout ist zeilen- und zeitbasiert (Übergabe an Liquidsoap erst
+kurz vor dem Zeilenstart, seit 11/2026 Schnitt/Hold an Sendungsgrenzen §23.92-23.96, Puffer-Track
+§23.107) - ein nackter `source.skip` zöge die Meldung nicht vor, sondern hinterließe vermutlich
+Stille bis zur nächsten Zeile.  Ein echter Skip hieße: laufende Zeile mit Fade kürzen, Meldung und
+alle Folgezeilen vorziehen, Loch am Sendungsende füllen = das im Juni gestrichene Einfügen mit
+Nachrücken, Eingriff in den Live-Playout.  Leichtere Alternative ohne Playout-Eingriff: die
+inkrementelle Befüllung wählt vor einem Traffic-Slot nur Titel, die die Frist halten, plus Warnung,
+wenn zwei Slots weiter als die Frist auseinanderliegen.
+**Vorbedingungen zum Wiederaufgreifen:** (1) Operator will Traffic Alerts einsetzen (z. B. Partner
+liefert Meldungen), (2) dann Sieben-Punkte-Evaluierung inkl. Risiko, leichte Alternative zuerst.
 
 **Verworfen:** Weg B (Liquidsoap interrupting queue, AzuraCast-Stil) — Playout-
 Eingriff + Drift mit pypos zeitbasiertem Modell + nicht in History.  Nur falls
