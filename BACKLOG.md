@@ -7019,7 +7019,8 @@ Migration sichtbar (wie Country); die „Freigabe“ ist die Reihenfolge Migrati
 Blöcke bauen.  Bulk-Edit für die beiden Felder nicht in Stufe 1.  Migration 0085 + Registrierung der Aufgabe
 durch den Operator 2026-11-14 abends, Bestandslauf läuft (je Runde ~1.000 Tracks in ~2 min, 137 Tracks unter
 10 s bleiben leer, 5 Aufnahmen/Tracks mit stiller Mitte nicht messbar); Legacy-Probe nach der Migration 16/16.
-Offen: Nachkalibrierung aus dem ganzen Bestand, Hörprobe (Library nach Energy sortieren).  Stufe 2 (Tempo + Key
+Bestandslauf fertig 2026-11-15 00:16 (24.873 Tracks); Skala 2 aus den Dezilen aller 24.209 Musiktracks 2026-11-15
+(`--rescale`, 7 s, Stufen 2.420 ± 15).  Offen: Hörprobe (Library nach Energy sortieren).  Stufe 2 (Tempo + Key
 mit librosa in eigener venv, GetSongBPM als Schiedsrichter sobald Konto/Schlüssel da) folgt.
 
 **Stufe-2-Stichprobe 2026-11-14** (`C:/Temp/optd/librosa_bench/sample2.py`, Bench-venv, nur lesen; 37 Musiktitel

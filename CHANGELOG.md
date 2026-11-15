@@ -144,6 +144,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   height", fixed snippets) and SONG_REQUESTS x4, ARCHITECTURE 0.134 (23.106).
   `c86b26fb`.
 
+### Changed
+
+- **Energie-/Helligkeits-Skala aus dem ganzen Bestand (2026-11-15)** - nach dem Bestandslauf
+  (24.873 Tracks gemessen, Lauf 2026-11-14 20:13 bis 2026-11-15 00:16) sind die Stufengrenzen
+  die Dezile aller 24.209 gemessenen Musiktracks statt der 823er-Stichprobe (Skala 2,
+  `SCALE_VERSION`); `--rescale` ohne ffmpeg in 7 s, jede Stufe hat jetzt 2.420 ± 15
+  Musiktracks (vorher 7-12 %).  Von Hand gesetzte Werte bleiben.
+
 ### Fixed
 
 - **My Podcast „Save" endete mit Fehler 500 (2026-11-14)** - seit der AngularJS-Ablösung (2026-06-01)

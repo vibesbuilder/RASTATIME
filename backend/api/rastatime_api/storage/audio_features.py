@@ -51,7 +51,7 @@ from typing import Any, Optional
 #: Raw measurement.  A new version means: measure everything again.
 FEATURE_VERSION = 1
 #: Mapping score -> 1..10.  A new scale means: ``--rescale`` (no ffmpeg).
-SCALE_VERSION = 1
+SCALE_VERSION = 2
 
 SAMPLE_RATE = 22050
 FRAME = 1024
@@ -81,19 +81,21 @@ ENERGY_WEIGHTS: dict[str, float] = {
     "lra": -0.5,
     "lufs": 0.5,
 }
-#: Upper edges of the levels 1..9 (a score above the last edge is 10).
+#: Upper edges of the levels 1..9 (a score above the last edge is 10):
+#: deciles of all 24,209 measured music tracks (scale 2, 2026-11-15; scale 1
+#: came from the 823-track calibration sample).
 ENERGY_EDGES: tuple[float, ...] = (
-    -2.145,
-    -1.288,
-    -0.734,
-    -0.356,
-    -0.01,
-    0.358,
-    0.701,
-    1.107,
-    1.499,
+    -2.158,
+    -1.385,
+    -0.859,
+    -0.458,
+    -0.102,
+    0.219,
+    0.556,
+    0.942,
+    1.445,
 )
-BRIGHTNESS_EDGES_HZ: tuple[float, ...] = (1371, 1685, 1843, 2007, 2154, 2275, 2397, 2519, 2727)
+BRIGHTNESS_EDGES_HZ: tuple[float, ...] = (1369, 1632, 1826, 1984, 2127, 2263, 2397, 2545, 2742)
 
 _METADATA = re.compile(r"lavfi\.(?:aspectralstats|astats)\.1\.(\w+)=(\S+)")
 

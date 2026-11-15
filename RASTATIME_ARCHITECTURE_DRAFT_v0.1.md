@@ -10545,7 +10545,8 @@ master loudness enters the energy score once, with half weight.
 - Energy score: robust z-scores (median / IQR of a stratified calibration
   sample of 823 music tracks) of flux (1.0), onsets (0.5), flatness
   (0.75), loudness range of the whole track (-0.5) and master loudness
-  (0.5).  Levels: deciles of the sample (`ENERGY_EDGES`); brightness: the
+  (0.5).  Levels: deciles of the sample (`ENERGY_EDGES`; since 2026-11-15
+  scale 2 = deciles of all 24,209 measured music tracks); brightness: the
   level-weighted spectral centroid, deciles likewise.  Calibration
   sample: electronic and R&B median 8-9, rock / pop 5, the quietest
   weekly playlist 1.
