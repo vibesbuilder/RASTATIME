@@ -368,6 +368,62 @@ Minuten für 25.000 Tracks); `--dry-run` zeigt nur, was gemessen würde.
 Die Aufgabe schreibt nur dann in `logs\audio-features.log`, wenn sie
 etwas gemessen hat oder ein Track nicht messbar war.
 
+### Tempo und Tonart (seit 2026-11-15)
+
+Dieselbe Aufgabe misst auch das **Tempo** und die **Tonart** jedes
+Tracks, an denselben 30 Sekunden wie Energie und Helligkeit:
+
+| Wert | Wo er erscheint | Was er bedeutet |
+|---|---|---|
+| **BPM** | das vorhandene BPM-Feld und die BPM-Spalte | Schläge pro Minute, gerundet |
+| **Tonart** | Edit Track → **Tonart**, Bibliotheksspalte *Tonart* | die Tonart als Camelot-Code und Akkordname, z. B. **8A · Am** (a-Moll) |
+
+- **Tempo so, wie der Schlag gezählt wird:** Die Messung zählt den
+  stärksten Puls.  So machen es die meisten DJ-Programme, es ist aber
+  nicht immer die Art, wie ein Stil notiert wird: Reggae etwa landet
+  meist beim doppelten Tempo (um 120 bis 160 statt 60 bis 80).  Die
+  Werte bleiben über die ganze Bibliothek einheitlich, ein Smart Block
+  wie *BPM liegt im Bereich 120 bis 130* findet also, was ähnlich klingt.
+- **Die Tonart lesen:** Die Zahl (1 bis 12) ist die Stelle im
+  Quintenzirkel, **A** ist Moll, **B** ist Dur; 8A · Am ist a-Moll,
+  8B · C ist C-Dur.  Tonarten mit **derselben Zahl** oder **einer Zahl
+  darüber oder darunter** (8A neben 7A, 9A und 8B) klingen gut
+  zusammen.  Nach der Spalte *Tonart* zu sortieren geht deshalb einmal
+  um den Zirkel.  Die Tonart ist eine Schätzung; sie kann die
+  Dur-Parallele statt der Moll-Tonart nennen (oder umgekehrt), die
+  ohnehin verwandt klingen.
+- **Ihr Wert gewinnt:** Ein BPM-Wert oder eine Tonart, die Sie in Edit
+  Track eintragen - und ein BPM-Wert, der beim Import aus dem Tag der
+  Datei kam -, wird nie durch die Messung ersetzt; die Hilfe-Symbole
+  neben den Feldern zeigen die gemessenen Werte.  Leer löscht den Wert.
+- **Bibliothek:** Die Spalte *Tonart* ist standardmäßig ausgeblendet
+  (Spaltenauswahl).  Ihre Spaltensuche nimmt einen Code oder einen
+  Akkordnamen (`8A`, `Am`) und findet genau diese Tonart.
+- **Smart Blocks:** Kriterium *Tonart* mit *ist* / *ist nicht* und einer
+  Liste der 24 Tonarten ([Smart Blocks](#3-smart-blocks)); *BPM* gab es
+  schon vorher.
+- **Wann:** Nach Energie und Helligkeit, in der Zeit, die der Aufgabe
+  bleibt (etwa 0,3 s je Track); ein neuer Upload erhält seine Werte
+  einige Minuten nach dem Import.  Nur in der Datenbank, die Dateien
+  werden nicht verändert.
+
+Für Administratoren: Tempo und Tonart brauchen eine eigene
+Python-Umgebung (etwa 420 MB, die Produktivumgebung bleibt unberührt).
+Einmal installieren - und erneut, wenn sich
+`backend\features\requirements.txt` ändert -, ohne einen Dienst
+anzuhalten:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\install-features-venv.ps1
+```
+
+Nach dem Datenbank-Update 0086 nimmt die Aufgabe sie von selbst auf;
+ohne die Umgebung werden Tempo und Tonart einfach übersprungen.  Eine
+ganze Bibliothek dauert etwa zwei Stunden (`manage.py
+analyze_audio_features --tempo-key-only --limit 0 --max-seconds 0`
+erledigt sie in einem Durchgang; `--no-tempo-key` misst nur Energie und
+Helligkeit).
+
 ### Track-Metadaten bearbeiten
 
 Klicken Sie auf eine Track-Zeile → **Metadaten bearbeiten**
@@ -381,7 +437,8 @@ im Aktionsmenü der Zeile.  Wird das Speichern abgelehnt (etwa ein Datum im fals
 | **Genre** | `cc_files.genre` |
 | **Jahr** | `cc_files.year` |
 | **Land** (seit 2026-11-08) | `cc_files.country` - freier Text, beim Import aus dem Tag `Country`; das Feld schlägt die schon verwendeten Länder vor. Grundlage von Analytics → [Music by Country](./ANALYTICS.md); Smart Blocks können danach filtern (Kriterium *Land*). Library-Spalte *Land* (standardmäßig ausgeblendet, durchsuchbar). |
-| **BPM** | `cc_files.bpm` |
+| **BPM** | `cc_files.bpm` - seit 2026-11-15 einige Minuten nach dem Hochladen gemessen, sofern die Datei kein BPM-Tag mitbrachte; ein von Ihnen eingetragener Wert ersetzt die Messung dauerhaft. Siehe [Tempo und Tonart](#tempo-und-tonart-seit-2026-11-15). |
+| **Tonart** (seit 2026-11-15) | `cc_files.musical_key` - eine der 24 Tonarten wählen (*8A · Am* = a-Moll), einige Minuten nach dem Hochladen gemessen; eine von Ihnen gewählte Tonart ersetzt die Messung dauerhaft, leer löscht sie. |
 | **Energie** / **Helligkeit** (seit 2026-11-14) | `cc_files.energy` / `brightness` - 1 (ruhig / dunkel) bis 10 (sehr energiegeladen / hell), einige Minuten nach dem Hochladen gemessen; ein eingetragener Wert ersetzt die Messung dauerhaft, leer löscht ihn. Siehe [Energie und Helligkeit](#energie-und-helligkeit-seit-2026-11-14). |
 | **Track-Typ** | `cc_files.track_type` — von Smart-Block-Filtern verwendet |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — Anfang / Ende ohne Neu-Kodierung trimmen. Seit dem 30.09.2026 bleiben die Werte innerhalb der Datei: ein Cue Out hinter der Dateilänge wird auf die Länge gekappt, ein Cue In unter null wird null. Eine Änderung wird in die Zeilen der kommenden Sendungen kopiert, die den Track enthalten (bereits gestartete Zeilen bleiben unberührt), und diese Sendungen werden neu ausgelegt - kein Neu-Befüllen nötig. |
@@ -448,7 +505,7 @@ Bibliothek → **+ Neu** → **Smart Block**.
 |---|---|
 | **Name** | Sichtbar in der Bibliothek und im Kalender. |
 | **Typ** | **Statisch** — wählt einmalig zum Erstellungszeitpunkt; die Menge ändert sich nie. **Dynamisch** — wählt jedes Mal neu, wenn der Block eingeplant wird. |
-| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Seit 2026-11-08 auch *Land* (z. B. *Land ist Austria*; *ist* und *ist nicht* vergleichen genau, *ist nicht* und *enthält nicht* schließen Tracks ohne Land ein). Seit 2026-11-14 auch *Energie* und *Helligkeit* (1 bis 10, z. B. *Energie ist größer als 6*; noch nicht gemessene Tracks passen nie, *ist nicht* schließt sie ein). Details unter [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Kriterien** | Zeilen hinzufügen: *Künstler enthält "Bowie"*, *BPM ist im Bereich 100 bis 130*, *Genre ist Pop* usw. Zeilen werden UND-verknüpft; das **+** neben einer Zeile fügt eine Alternative für dasselbe Feld hinzu (ODER), z.B. *Genre ist Pop* **+** *Genre ist Rock*. Seit 2026-11-08 auch *Land* (z. B. *Land ist Austria*; *ist* und *ist nicht* vergleichen genau, *ist nicht* und *enthält nicht* schließen Tracks ohne Land ein). Seit 2026-11-14 auch *Energie* und *Helligkeit* (1 bis 10, z. B. *Energie ist größer als 6*; noch nicht gemessene Tracks passen nie, *ist nicht* schließt sie ein). Seit 2026-11-15 auch *Tonart* (eine der 24 Tonarten aus der Liste wählen, z. B. *Tonart ist 8A · Am*; *ist nicht* schließt Tracks ohne Tonart ein); das gemessene Tempo füllt *BPM*. Details unter [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Begrenzen auf** | Eines von: **Anzahl Tracks** (z.B. 10), **Dauer in Zeit** (z.B. 30:00), **Verbleibende Zeit in der Sendung** (lässt den Smart Block exakt bis zum Ende der Sendung füllen). |
 | **Sortieren** | Zufällig / neueste zuerst / nach Künstler / nach Spielzahl / etc. |
 
@@ -693,7 +750,7 @@ Tabelle erscheint:
 | **Bearbeiten** | Ein Track ausgewählt: sein Editor-Tab wie bisher. **Zwei oder mehr Tracks ausgewählt (seit 2026-10-08): ein Dialog für alle** - Interpret, Album, Genre, Jahr, Track-Typ, Sprache, Mood, Label, Komponist, Dirigent, Copyright, Land (seit 2026-11-08), Aktiv ab und Ablaufdatum (`none` löscht sie), Track deaktiviert (*Ja* / *Nein*; seit 2026-11-08, *Nein* leert auch erreichte Ablaufdaten und noch in der Zukunft liegende Aktivierungsdaten), Beschreibung. Leere Felder bleiben unverändert, ein ausgefülltes Feld wird in jeden ausgewählten Track geschrieben; Titel, Track-Nummer, BPM, Cue-Punkte und Cover bleiben je Track. Nur Datenbank, wie der Einzel-Editor (Tags in den Dateien werden beim Import gelesen und nie zurückgeschrieben). Tracks ohne Bearbeitungsrecht werden übersprungen und im Ergebnis gezählt. |
 | **Besitz übertragen** | Besitz neu zuweisen (nur Admins). Verwendet, wenn ein DJ ausscheidet und seine Dateien an das Stations-Konto übergehen sollen. |
 | **Cue Points** | Erkennt die Cue-Punkte der ausgewählten Tracks aus dem Audio (dieselbe Stille-Erkennung, die der Analyzer beim Import ausführt: leiser als −60 dB für mindestens 0,3 s am Anfang oder Ende) und speichert sie. Kommende Sendungen, die die Tracks enthalten, übernehmen die neuen Werte und werden neu ausgelegt. Tracks über 15 Minuten werden übersprungen - die Aktion ist für Jingles und andere kurze Elemente gedacht. Seit dem 30.09.2026. |
-| **Tags neu einlesen** *(seit 2026-10-21)* | Liest die Tags der ausgewählten Tracks neu aus den Dateien - für Dateien, die Sie nach dem Import in Windows bearbeitet haben.  RASTATIME liest eine Datei nie von sich aus erneut: Die Datenbank ist die Wahrheit für Bibliothek und Playout.  Der Knopf ersetzt Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache, Kommentar und (seit 2026-11-08) Land durch den Inhalt der Datei (ein in der Datei fehlender Tag leert die Spalte), setzt den Track-Typ, den ein **Media-Type**-Tag nennt (seit 2026-11-09; ein unbekannter oder fehlender Tag lässt den Typ), und zieht Prüfsumme und Größe nach; alles andere, was nur in RASTATIME gesetzt wird (Teaser, Cue-Punkte, Lautheit, Ablauf- und Aktivierungsdatum, Anfragen), bleibt.  Admins und Programm-Manager für jede Datei, andere für ihre eigenen.  Die Datei wird nur gelesen, ein laufender Titel ist also sicher - bearbeiten Sie eine Datei in Windows aber nur, solange sie nicht geplant ist, das Playout spielt direkt aus der Bibliothek. |
+| **Tags neu einlesen** *(seit 2026-10-21)* | Liest die Tags der ausgewählten Tracks neu aus den Dateien - für Dateien, die Sie nach dem Import in Windows bearbeitet haben.  RASTATIME liest eine Datei nie von sich aus erneut: Die Datenbank ist die Wahrheit für Bibliothek und Playout.  Der Knopf ersetzt Titel, Interpret, Album, Genre, Jahr, Tracknummer, Komponist, Copyright, Label, ISRC, BPM, Mood, Sprache, Kommentar und (seit 2026-11-08) Land durch den Inhalt der Datei (ein in der Datei fehlender Tag leert die Spalte; ein fehlender BPM-Tag ergibt seit 2026-11-15 das gemessene Tempo), setzt den Track-Typ, den ein **Media-Type**-Tag nennt (seit 2026-11-09; ein unbekannter oder fehlender Tag lässt den Typ), und zieht Prüfsumme und Größe nach; alles andere, was nur in RASTATIME gesetzt wird (Teaser, Cue-Punkte, Lautheit, Ablauf- und Aktivierungsdatum, Anfragen), bleibt.  Admins und Programm-Manager für jede Datei, andere für ihre eigenen.  Die Datei wird nur gelesen, ein laufender Titel ist also sicher - bearbeiten Sie eine Datei in Windows aber nur, solange sie nicht geplant ist, das Playout spielt direkt aus der Bibliothek. |
 
 ---
 

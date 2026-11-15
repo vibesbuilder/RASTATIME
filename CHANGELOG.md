@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tempo und Tonart je Track, Stufe 2 der Audio-Merkmale (2026-11-15, Operator-Go 2026-11-14)** -
+  dieselbe Aufgabe RASTATIME-AudioFeatures misst nach Energie/Helligkeit auch **Tempo** und
+  **Tonart**, an denselben 30 s.  librosa läuft in einer eigenen Python-Umgebung
+  (`.venv-features`, `infra/scripts/install-features-venv.ps1`, gepinnte
+  `backend/features/requirements.txt`, ~415 MB), die Produktivumgebung bleibt ohne
+  numpy/numba; der Worker `backend/features/tempo_key.py` spricht JSON-Zeilen, ~0,3 s je
+  Track, Bestand ~2 h.  Tempo = Beat-Tracker plus Geraden durch die Beat-Zeiten (der Tracker
+  allein rastet auf ~5 %), Oktave wie gemessen (Reggae meist im Doppeltempo,
+  Operator-Entscheidung); Tonart = bestes Krumhansl-Profil, als Camelot-Code.  Das Tempo füllt
+  `cc_files.bpm`, die Tonart die neue Spalte `cc_files.musical_key` (Migration 0086); ein von
+  Hand gesetzter Wert und ein BPM-Tag der Datei bleiben, BPM 0 gilt als leer.  Library-Spalte
+  *Key* („8A · Am“, ausgeblendet; die Spaltensuche findet `8A` oder `Am` genau), Edit Track mit
+  Tonart-Auswahl und Messwerten im Hilfe-Symbol, Smart-Block-Kriterium *Key* (ist / ist nicht,
+  Auswahl der 24 Tonarten).  Re-read Tags setzt bei fehlendem BPM-Tag das gemessene Tempo statt
+  eines leeren Felds.  Ohne die Umgebung oder vor Migration 0086 wird Tempo/Tonart
+  übersprungen.  Stichprobe 2026-11-14: 237 Tracks, 28/37 BPM-Tags innerhalb 3 % inkl. Oktave.
+  Manual LIBRARY x4, ARCHITECTURE 0.144 (§23.116), Komponenten-Liste.  Wirksam nach Migration
+  0086; Re-read-Fix nach API-Neustart, Übersetzungen nach Apache-Neustart.  `c6a32566`,
+  `8009fd39`.
+
 - **Energie und Helligkeit je Track, Stufe 1 (2026-11-14, Operator-Go)** - RASTATIME misst
   für jeden Track zwei Werte auf einer Skala 1-10, im Vergleich zur eigenen Bibliothek:
   **Energy** (ruhig .. sehr energiegeladen) und **Brightness** (dunkel .. hell, die lesbare

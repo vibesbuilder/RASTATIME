@@ -322,6 +322,61 @@ minutos para 25.000 pistas); `--dry-run` solo muestra lo que mediría.
 La tarea solo escribe en `logs\audio-features.log` cuando ha medido
 algo o una pista no se pudo medir.
 
+### Tempo y tonalidad (desde 2026-11-15)
+
+La misma tarea mide también el **tempo** y la **tonalidad** de cada
+pista, sobre los mismos 30 segundos que la energía y el brillo:
+
+| Valor | Dónde aparece | Qué significa |
+|---|---|---|
+| **BPM** | el campo y la columna BPM existentes | pulsaciones por minuto, redondeadas |
+| **Tonalidad** | Edit Track → **Tonalidad**, columna *Tonalidad* de la biblioteca | la tonalidad como código Camelot y nombre de acorde, p. ej. **8A · Am** (la menor) |
+
+- **El tempo tal como se cuenta el pulso:** la medición cuenta el pulso
+  más fuerte.  Así lo hacen la mayoría de los programas de DJ, pero no
+  siempre es como se anota un estilo: el reggae, por ejemplo, suele
+  salir al doble de tempo (alrededor de 120 a 160 en lugar de 60 a 80).
+  Los valores son coherentes en toda la biblioteca, así que un smart
+  block como *BPM está en el rango 120 a 130* encuentra lo que suena
+  parecido.
+- **Leer la tonalidad:** el número (1 a 12) es la posición en el
+  círculo de quintas, **A** es menor, **B** es mayor; 8A · Am es la
+  menor, 8B · C es do mayor.  Las tonalidades con el **mismo número** o
+  con **un número más o menos** (8A junto a 7A, 9A y 8B) suenan bien
+  juntas.  Ordenar la columna *Tonalidad* recorre por eso el círculo.
+  La tonalidad es una estimación; puede nombrar la relativa mayor en
+  lugar de la menor (o al revés), que de todos modos suenan
+  emparentadas.
+- **Su valor manda:** un BPM o una tonalidad que usted introduce en
+  Edit Track - y un BPM que vino de la etiqueta del archivo en la
+  importación - nunca se sustituye por la medición; los iconos de ayuda
+  junto a los campos muestran los valores medidos.  Vacío borra el valor.
+- **Biblioteca:** la columna *Tonalidad* está oculta por defecto
+  (selector de columnas).  Su búsqueda por columna acepta un código o un
+  nombre de acorde (`8A`, `Am`) y encuentra exactamente esa tonalidad.
+- **Smart blocks:** criterio *Tonalidad* con *es* / *no es* y una lista
+  de las 24 tonalidades ([Smart Blocks](#3-smart-blocks)); *BPM* ya
+  existía.
+- **Cuándo:** después de la energía y el brillo, en el tiempo que le
+  queda a la tarea (unos 0,3 s por pista); una subida nueva recibe sus
+  valores unos minutos después de la importación.  Solo en la base de
+  datos, los archivos no se modifican.
+
+Para administradores: el tempo y la tonalidad necesitan su propio
+entorno de Python (unos 420 MB, el entorno de producción no se toca).
+Instálelo una vez - y de nuevo cuando cambie
+`backend\features\requirements.txt` - sin detener ningún servicio:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\install-features-venv.ps1
+```
+
+Tras la actualización de base de datos 0086, la tarea lo toma por sí
+sola; sin el entorno, el tempo y la tonalidad simplemente se omiten.
+Una biblioteca entera tarda unas dos horas (`manage.py
+analyze_audio_features --tempo-key-only --limit 0 --max-seconds 0` la
+procesa de una vez; `--no-tempo-key` mide solo la energía y el brillo).
+
 ### Editar metadatos de pista
 
 Haga clic en una fila de pista → **Editar metadatos** en
@@ -335,7 +390,8 @@ el menú de acción de la fila.  Si se rechaza el guardado (por ejemplo, una fec
 | **Género** | `cc_files.genre` |
 | **Año** | `cc_files.year` |
 | **País** (desde 2026-11-08) | `cc_files.country` - texto libre, desde la etiqueta `Country` al importar; el campo sugiere los países ya usados. La base de Analytics → [Music by Country](./ANALYTICS.md); los smart blocks pueden filtrar por él (criterio *País*). Columna de la biblioteca *País* (oculta por defecto, se puede buscar). |
-| **BPM** | `cc_files.bpm` |
+| **BPM** | `cc_files.bpm` - desde 2026-11-15 medido unos minutos después de la subida, salvo que el archivo trajera una etiqueta BPM; un valor que usted introduce sustituye la medición para siempre. Vea [Tempo y tonalidad](#tempo-y-tonalidad-desde-2026-11-15). |
+| **Tonalidad** (desde 2026-11-15) | `cc_files.musical_key` - elija una de las 24 tonalidades (*8A · Am* = la menor), medida unos minutos después de la subida; una tonalidad que usted elige sustituye la medición para siempre, vacío la borra. |
 | **Energía** / **Brillo** (desde 2026-11-14) | `cc_files.energy` / `brightness` - 1 (tranquila / oscuro) a 10 (muy enérgica / brillante), medidos unos minutos después de la subida; un valor introducido sustituye la medición para siempre, vacío lo borra. Ver [Energía y brillo](#energía-y-brillo-desde-2026-11-14). |
 | **Tipo de pista** | `cc_files.track_type` — usado por filtros smart-block |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — recortar el inicio / fin sin re-encodificar. Desde el 30/09/2026 los valores se mantienen dentro del archivo: un cue out más allá de la duración se limita a la duración, un cue in negativo pasa a cero. Un cambio se copia en las filas de los programas futuros que programan la pista (las filas ya iniciadas no se tocan) y esos programas se recalculan - no hace falta volver a llenarlos. |
@@ -388,7 +444,7 @@ Biblioteca → **+ Nuevo** → **Smart Block**.
 |---|---|
 | **Nombre** | Visible en biblioteca y calendario. |
 | **Tipo** | **Estático** — elige una vez al crear; el conjunto nunca cambia. **Dinámico** — re-elige cada vez que el block se planifica. |
-| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm está en el rango de 100 a 130*, etc. Las filas se combinan con Y; el **+** junto a una fila añade una alternativa para el mismo campo (O), p. ej. *género es pop* **+** *género es rock*. Desde 2026-11-08 también *País* (p. ej. *país es Austria*; *es* y *no es* comparan exactamente, *no es* y *no contiene* incluyen las pistas sin país). Desde 2026-11-14 también *Energía* y *Brillo* (1 a 10, p. ej. *energía es mayor que 6*; las pistas aún no medidas nunca coinciden, *no es* las incluye). Detalles en [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Criterios** | Añadir filas: *artista contiene "Bowie"*, *bpm está en el rango de 100 a 130*, etc. Las filas se combinan con Y; el **+** junto a una fila añade una alternativa para el mismo campo (O), p. ej. *género es pop* **+** *género es rock*. Desde 2026-11-08 también *País* (p. ej. *país es Austria*; *es* y *no es* comparan exactamente, *no es* y *no contiene* incluyen las pistas sin país). Desde 2026-11-14 también *Energía* y *Brillo* (1 a 10, p. ej. *energía es mayor que 6*; las pistas aún no medidas nunca coinciden, *no es* las incluye). Desde 2026-11-15 también *Tonalidad* (elija una de las 24 tonalidades de la lista, p. ej. *tonalidad es 8A · Am*; *no es* incluye las pistas sin tonalidad); el tempo medido rellena *BPM*. Detalles en [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limitar a** | **Número de pistas** (ej. 10), **Duración en tiempo** (ej. 30:00), **Tiempo restante en el programa**. |
 | **Ordenar** | Aleatorio / más reciente primero / por artista / por número de reproducciones / etc. |
 
@@ -590,7 +646,7 @@ la tabla:
 | **Editar** | Una pista seleccionada: su pestaña de edición, como antes. **Dos o más pistas seleccionadas (desde 2026-10-08): un solo diálogo para todas** - creador, álbum, género, año, tipo de pista, idioma, mood, sello, compositor, director, copyright, país (desde 2026-11-08), activo desde y fecha de caducidad (`none` las borra), pista desactivada (*Sí* / *No*; desde 2026-11-08, *No* también vacía las fechas de caducidad alcanzadas y las fechas de activación aún por llegar), descripción. Los campos vacíos no cambian; un campo relleno se escribe en cada pista seleccionada; título, número de pista, BPM, puntos de cue y carátula siguen siendo por pista. Solo base de datos, como el editor individual (las etiquetas de los archivos se leen al importar y nunca se reescriben). Las pistas que no puede editar se omiten y se cuentan en el resultado. |
 | **Transferir propietario** | Reasignar propiedad (solo Admins). |
 | **Cue Points** | Detecta los puntos de cue de las pistas seleccionadas a partir del audio (la misma detección de silencio que el analizador ejecuta al importar: por debajo de −60 dB durante al menos 0,3 s al inicio o al final) y los guarda. Los programas futuros que programan esas pistas adoptan los nuevos valores y se recalculan. Las pistas de más de 15 minutos se omiten - la acción está pensada para jingles y otros elementos cortos. Desde el 30/09/2026. |
-| **Releer etiquetas** *(desde 2026-10-21)* | Vuelve a leer las etiquetas de las pistas seleccionadas desde los archivos en disco, para archivos editados en Windows después de la importación.  RASTATIME nunca relee un archivo por sí mismo: la base de datos es la verdad para la biblioteca y el playout.  El botón sustituye título, artista, álbum, género, año, número de pista, compositor, copyright, sello, ISRC, BPM, mood, idioma, comentario y (desde 2026-11-08) país por lo que contiene el archivo (una etiqueta ausente vacía la columna), fija el tipo de pista que nombra una etiqueta **Media Type** (desde 2026-11-09; una etiqueta desconocida o ausente deja el tipo) y actualiza la suma de comprobación y el tamaño; todo lo demás que se define solo en RASTATIME (teaser, puntos de cue, sonoridad, fechas de caducidad y de activación, peticiones) se mantiene.  Administradores y gestores de programación para cualquier archivo, los demás para los suyos.  El archivo solo se lee, así que una pista en antena está a salvo; pero edite un archivo en Windows solo mientras no esté programado, el playout reproduce directamente desde la biblioteca. |
+| **Releer etiquetas** *(desde 2026-10-21)* | Vuelve a leer las etiquetas de las pistas seleccionadas desde los archivos en disco, para archivos editados en Windows después de la importación.  RASTATIME nunca relee un archivo por sí mismo: la base de datos es la verdad para la biblioteca y el playout.  El botón sustituye título, artista, álbum, género, año, número de pista, compositor, copyright, sello, ISRC, BPM, mood, idioma, comentario y (desde 2026-11-08) país por lo que contiene el archivo (una etiqueta ausente vacía la columna; una etiqueta BPM ausente da desde 2026-11-15 el tempo medido), fija el tipo de pista que nombra una etiqueta **Media Type** (desde 2026-11-09; una etiqueta desconocida o ausente deja el tipo) y actualiza la suma de comprobación y el tamaño; todo lo demás que se define solo en RASTATIME (teaser, puntos de cue, sonoridad, fechas de caducidad y de activación, peticiones) se mantiene.  Administradores y gestores de programación para cualquier archivo, los demás para los suyos.  El archivo solo se lee, así que una pista en antena está a salvo; pero edite un archivo en Windows solo mientras no esté programado, el playout reproduce directamente desde la biblioteca. |
 
 ---
 

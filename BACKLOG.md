@@ -61,7 +61,7 @@ Geordneter Apache-Stopp Option B · Marke „libretime" → „rastatime" Stufe 
 Liquidsoap-Upgrade gegen das `Unix.select`-Leck · Icecast 2.4.4 → 2.5.0 ·
 Benutzergruppen-Audit · Stream-Metadaten „nicht weitergeben" · Legacy-PHPUnit ·
 Show-Logos als WebP (~1 h) ·
-Metadaten Energy/Tempo/Key/Timbre: Stufe 1 gebaut 2026-11-14, Stufe 2 Go · JavaScript-Build-Pipeline 🔴 Hold (2026-10-28) ·
+Metadaten Energy/Tempo/Key/Timbre: Stufe 1 in Betrieb, Stufe 2 gebaut 2026-11-15 (Migration 0086 offen) · JavaScript-Build-Pipeline 🔴 Hold (2026-10-28) ·
 Payware/Tier-System 🔴 Hold (bestätigt 2026-10-28).
 
 **Ideen, nur notiert:** Import/Export Stufe 2 · Backup: Recordings in den Medienspiegel · Podcast-Downloads umgehen den Analyzer · Line-In-Gain live nachregeln · Kanalwahl im
@@ -6951,7 +6951,7 @@ RASTATIME-Spalten bleiben, Bestaetigung im Dialog.  Kein automatischer Abgleich 
 stillschweigend ueberschreiben).  Abnahme 2026-10-21: Knopf im Browser bestaetigt (Operator), Live-Probe des
 Endpunkts mit zwei Dateien, deren Tags der DB entsprechen: 2 gelesen, 0 geaendert, Zeilen unveraendert.
 
-### 🟢 Metadaten Energy, Tempo, Key, Timbre - Stufe 1 (Energy + Helligkeit) GEBAUT 2026-11-14 (§23.115), Stufe 2 (Tempo + Key) GO danach (Operator 2026-11-14; DEFER 2026-10-21)
+### 🟢 Metadaten Energy, Tempo, Key, Timbre - Stufe 1 (Energy + Helligkeit) IN BETRIEB seit 2026-11-14 (§23.115), Stufe 2 (Tempo + Key) GEBAUT 2026-11-15 (§23.116), wartet auf Migration 0086 (DEFER 2026-10-21)
 
 Evaluierung: moeglich (Mood-Detector, MIT, librosa-basiert, ~2 s je Titel, 30 s aus der Mitte; Tempo per
 Beat-Tracking, Energy RMS, Key per Chroma, Brightness; Mood per Regeltabelle, nur DJ/Electronic-Kategorien,
@@ -7041,6 +7041,16 @@ Stichprobe), `requirements.txt` gepinnt, `infra/scripts/install-features-venv.ps
 (`musical_key`), Aufruf aus `analyze_audio_features` (Ergebnis unter `audio_features->'tk'`, Stufe-1-Schreiben
 erhält `tk`), Tempo in `bpm` mit Handwert-Regel, Library-Spalte Key, Edit Track (Key-Auswahl, gemessene Werte im
 Hilfe-Symbol), Kriterium Key (ist / ist nicht, nimmt „8A“ und „Am“), Doku x4.
+**Teil 2 GEBAUT 2026-11-15** (`8009fd39`, §23.116): wie geplant, dazu Spaltenfilter Key exakt (Code oder
+Akkordname), Blockimport nimmt Code/Akkordname, Re-read Tags setzt bei fehlendem BPM-Tag das gemessene Tempo
+(ein leeres Feld wäre sonst ein Handwert für immer).  Vorher Skala 2 für Energie/Helligkeit (`cb74e1cf`).
+Tests: 22 Audio-Features + Re-read, API 270; echter Worker über TempoKeyWorker 2,6 s bereit, ~0,3 s je Track;
+Legacy-Probe vor 0086 `C:/Temp/optd/tempo_key_probe.php` 18/18; Library-Seite ohne Konsolenfehler.
+Offen: Migration 0086 (Operator), API-Neustart (Re-read-Fix) + Apache-Neustart (Übersetzungen),
+Bestandslauf Tempo/Tonart (~2 h, die Aufgabe holt ihn in ~900er-Runden selbst nach oder einmal von Hand
+`--tempo-key-only --limit 0 --max-seconds 0`), Probe nach 0086, Stichproben-Hörtest (BPM-/Key-Spalte
+sortieren).  **Stufe 2b (Idee/Defer):** GetSongBPM als Schiedsrichter für Tempo und Tonart -
+Vorbedingungen: Konto + Backlink + Schlüssel durch den Operator.
 
 ## Test-Hygiene (2026-10-22)
 

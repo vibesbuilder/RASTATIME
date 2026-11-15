@@ -1,10 +1,16 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.143
-Date: 2026-11-14
+Draft version: 0.144
+Date: 2026-11-15
 
 > **Revision history**
+> - **0.144 (2026-11-15)** - **Tempo and key, stage 2 of the audio features** (§23.116):
+>   librosa in its own environment (`.venv-features`, `backend/features/tempo_key.py`, JSON
+>   lines over stdin / stdout) measures the stage-1 excerpt; tempo into `cc_files.bpm`, key as
+>   a Camelot code in `cc_files.musical_key` (migration 0086), result in
+>   `audio_features->'tk'`; hand and tag values stay; library column, Edit Track select, smart
+>   block criterion *Key*.
 > - **0.143 (2026-11-14)** - **Energy and brightness, stage 1** (§23.115): ffmpeg measures
 >   30 s per track at the on-air level, `cc_files.energy` / `brightness` 1..10 (migration
 >   0085), a Windows task fills new tracks; library columns, Edit Track, smart block
@@ -10598,3 +10604,93 @@ per-type column profiles, which are keyed by column name, and stay.
 Rollback: `Unregister-ScheduledTask -TaskName
 RASTATIME-AudioFeatures`; `git revert` (tag `live-2026-11-14f`); the
 columns may stay.
+
+### 23.116 Tempo and Key, Stage 2 of the Audio Features (2026-11-15)
+
+**Request.**  Stage 2 of the backlog item "Metadaten Energy, Tempo, Key,
+Timbre" (operator's go 2026-11-14 together with stage 1).  A 237-track
+sample (2026-11-14, the 37 tracks with a BPM tag + 200 at random) showed:
+librosa on the stage-1 excerpt decoded by ffmpeg takes 0.31 s per track
+(the October bench with `librosa.load` needed ~2 s); the beat tracker
+alone sits on a ~5 % grid (hop 512: 117.5 / 123.0 / 129.2 ...), a
+straight-line fit through the beat times removes it at no cost; 28 of
+the 37 tags agree within 3 % including the octave, only 11 in the same
+octave - the tags are almost all reggae written in half time, the
+tracker counts double time.  Key: plausible distribution (C / G / D / A /
+E major, A / E / D minor in front), unverifiable without references.
+Operator's decisions 2026-11-14: (1) a separate environment is fine,
+(2) the tempo octave stays as measured, (3) the key shows as "8A · Am".
+
+**Design.**
+- Environment: `.venv-features` next to the production `.venv`, created
+  from the same base interpreter by `infra/scripts/install-features-venv.ps1`
+  (pinned `backend/features/requirements.txt`: librosa 1.0.0, numpy,
+  scipy, numba, llvmlite, scikit-learn, soundfile, soxr; ~415 MB), which
+  also smoke-tests the worker.  The production environment and its
+  services never import numpy / numba.
+- Worker (`backend/features/tempo_key.py`, runs with `-I`): one process
+  per pass, JSON lines - a ready line after the numba warm-up
+  (`{"ready", "v", "librosa"}`), then one answer per job
+  `{"id", "path", "start"}`.  ffmpeg decodes 30 s from the stage-1
+  `start_s` at 22050 Hz mono (read-only, below normal priority);
+  `beat_track` on the onset envelope, tempo = 60 / slope of a line
+  through the beat times (grid tempo below 8 beats; 30..300 BPM or an
+  error); key = best of the 24 Krumhansl-Kessler profiles against the
+  mean CQT chroma, written as a Camelot code, with correlation, margin
+  and runner-up.  OMP / BLAS / numba threads 1.
+- Driver (`storage/audio_features.py`, production venv): `TempoKeyWorker`
+  starts the worker (BELOW_NORMAL, no window, stderr discarded), a reader
+  thread feeds a queue so the ready line (180 s) and every answer (120 s)
+  have timeouts; a wrong version, a dead or mute worker is a
+  `WorkerError` that ends the pass (logged once), a track's own error is
+  stored.  `run_tempo_key` takes tracks with a stage-1 result and no
+  current `tk` (newest first), starts the worker only when there is work.
+- Storage: the answer under `audio_features->'tk'` (`v`, `src`, `at`,
+  `tempo`, `bpm`, `key`, `tempo_grid`, `beats`, key correlation / margin /
+  runner-up, or `{v, at, error}`).  `bpm` and the new `musical_key`
+  (migration 0086: VARCHAR(3), CHECK `^(1[0-2]|[1-9])[AB]$`) follow it
+  with the stage-1 rule - a column that differs from the previous `tk`
+  value was set by hand (or, for BPM, came from the file's tag) and
+  stays; BPM 0 (the legacy importer's "unknown") counts as empty.  The
+  stage-1 write now keeps `tk` (`|| jsonb_build_object('tk', ...)`), so
+  re-measuring or rescaling energy does not orphan the tempo / key.
+  Re-read Tags gives the measured tempo when the file has no BPM tag
+  (otherwise the empty column would count as a hand value for good).
+- Runner: the same `manage.py analyze_audio_features` and task; after
+  energy / brightness, in the time left of `--max-seconds`.
+  `--tempo-key-only`, `--no-tempo-key`; `--ids`, `--retry-failed`,
+  `--dry-run` apply to both parts; one summary line per part.  Skipped
+  silently while the environment or migration 0086 is missing.
+- Legacy: `StoredFile::MUSICAL_KEYS` (Camelot code => chord name, wheel
+  order), `musicalKey()` (code, "8A · Am" or chord name incl. enharmonic
+  spellings => code), `musicalKeyLabel()`; library column *Key* (hidden,
+  text, rendered "8A · Am" from `MUSICAL_KEYS` injected by the layout
+  plugin; the column filter matches a code or chord name exactly, the
+  text sort walks the wheel 10..12, 1..9); Edit Track select of the 24
+  keys and a BPM help text, both naming the measured value; smart block
+  criterion `musical_key` as a select type (`ModifierType::MUSICAL_KEY`,
+  is / is not, options via `Block::teaserCriteriaOptions`, SQL
+  `Block::musicalKeyCriterionSql`, validated against the list, block
+  import accepts a code or chord name).  All raw SQL behind
+  `fileColumnReady`.
+
+**Verification.**  22 tests in `test_audio_features.py` (6 new: the
+document, the pass with hand / tag / zero BPM and a hand key, stage-1
+re-measure and rescale keep `tk`, failures and retry, a dead worker ends
+the pass, dry run, the real `TempoKeyWorker` against a fake script -
+ready, answers, exit, old version, timeout, missing interpreter - and
+the command with both parts) plus a Re-read Tags test; API suite 270.
+The real worker through `TempoKeyWorker`: ready in 2.6 s, ~0.3 s per
+track, same values as the sample.  Legacy probe before 0086
+(`C:/Temp/optd/tempo_key_probe.php`, 18/18); library page without
+console errors, column and select present.
+
+**Risk.**  Low.  Nothing on air reads tempo or key; smart blocks do.
+The worker is a separate process at below normal priority with one
+thread (~300 MB while a pass runs, ended after it).  A broken
+environment only skips tempo / key.  Adding the *Key* column makes
+DataTables 1.13 discard each user's saved order / sort / page length
+once (visibility stays, as in §23.115).  The tempo octave follows the
+beat tracker (reggae mostly at double time) - by decision, documented in
+the manual.  Rollback: `git revert` (tag `live-2026-11-15`), remove
+`.venv-features`; the column may stay.

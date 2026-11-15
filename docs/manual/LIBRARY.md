@@ -339,6 +339,57 @@ minutes for 25,000 tracks); `--dry-run` only shows what it would
 measure.  The task writes to `logs\audio-features.log` only when it
 measured something or a track could not be measured.
 
+### Tempo and key (since 2026-11-15)
+
+The same task also measures the **tempo** and the **musical key** of
+every track, on the same 30 seconds as energy and brightness:
+
+| Value | Where it shows | What it means |
+|---|---|---|
+| **BPM** | the existing BPM field and column | beats per minute, rounded |
+| **Key** | Edit Track → **Key**, library column *Key* | the key as a Camelot code and chord name, e.g. **8A · Am** (A minor) |
+
+- **Tempo as the beat is counted:** the measurement counts the
+  strongest pulse.  That is what most DJ programs do, but it is not
+  always how a style is written down: reggae, for example, usually
+  comes out at double time (around 120 to 160 instead of 60 to 80).
+  The values stay consistent across the library, so a smart block
+  such as *BPM is in the range 120 to 130* finds what sounds alike.
+- **Reading the key:** the number (1 to 12) is the position on the
+  circle of fifths, **A** is minor, **B** is major; 8A · Am is A minor,
+  8B · C is C major.  Keys with the **same number** or **one number up
+  or down** (8A next to 7A, 9A and 8B) sound well together.  Sorting
+  the *Key* column therefore walks round the circle.  The key is an
+  estimate; it can name the relative major instead of the minor (or the
+  other way round), which sound related anyway.
+- **Your value wins:** a BPM or key you enter in Edit Track - and a BPM
+  that came from the file's tag at import - is never replaced by the
+  measurement; the help icons next to the fields show the measured
+  values.  Empty clears the value.
+- **Library:** the column *Key* is hidden by default (columns picker).
+  Its column search takes a code or a chord name (`8A`, `Am`) and finds
+  exactly that key.
+- **Smart blocks:** criterion *Key* with *is* / *is not* and a list of
+  the 24 keys ([Smart Blocks](#3-smart-blocks)); *BPM* existed before.
+- **When:** after energy and brightness, in the time the task has left
+  (about 0.3 s per track); a new upload gets its values a few minutes
+  after the import.  Only in the database, the files are not changed.
+
+For administrators: tempo and key need their own Python environment
+(about 420 MB, the production environment stays untouched).  Install it
+once - and again when `backend\features\requirements.txt` changes - no
+service has to be stopped:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\RASTATIME\infra\scripts\install-features-venv.ps1
+```
+
+After the database update 0086 the task picks it up by itself; without
+the environment, tempo and key are simply skipped.  A whole library
+takes about two hours (`manage.py analyze_audio_features
+--tempo-key-only --limit 0 --max-seconds 0` runs it in one go;
+`--no-tempo-key` measures energy and brightness only).
+
 ### Editing track metadata
 
 Click a track row → **Edit Metadata** in the row's action menu.  If a save is refused (for example a date in the wrong format), the editor stays open and lists the reason above the fields (since 2026-11-08).
@@ -351,7 +402,8 @@ Click a track row → **Edit Metadata** in the row's action menu.  If a save is 
 | **Genre** | `cc_files.genre` |
 | **Year** | `cc_files.year` |
 | **Country** (since 2026-11-08) | `cc_files.country` - free text, from the `Country` tag on import; the field suggests the countries already in use. The base of Analytics → [Music by Country](./ANALYTICS.md); smart blocks can filter on it (criterion *Country*). Library column *Country* (hidden by default, searchable). |
-| **BPM** | `cc_files.bpm` |
+| **BPM** | `cc_files.bpm` - since 2026-11-15 measured a few minutes after the upload unless the file brought a BPM tag; a value you enter replaces the measurement for good. See [Tempo and key](#tempo-and-key-since-2026-11-15). |
+| **Key** (since 2026-11-15) | `cc_files.musical_key` - pick one of the 24 keys (*8A · Am* = A minor), measured a few minutes after the upload; a key you pick replaces the measurement for good, empty clears it. |
 | **Energy** / **Brightness** (since 2026-11-14) | `cc_files.energy` / `brightness` - 1 (calm / dark) to 10 (very energetic / bright), measured a few minutes after the upload; a value you enter replaces the measurement for good, empty clears it. See [Energy and brightness](#energy-and-brightness-since-2026-11-14). |
 | **Track type** | `cc_files.track_type` — used by smart-block filters |
 | **Cue In / Out** | `cc_files.cuein` / `cueout` — trim the start / end without re-encoding. Since 2026-09-30 the values are kept inside the file: a cue out past the file length is capped at the length, a cue in below zero becomes zero. A change is copied into the rows of the upcoming shows that schedule the track (rows that have already started are left alone), and those shows are laid out again - no refilling needed. |
@@ -417,7 +469,7 @@ Library → **+ New** → **Smart Block**.
 |---|---|
 | **Name** | Visible in the library and on the calendar. |
 | **Type** | **Static** — picks once at creation time; the set never changes. **Dynamic** — re-picks every time the block is scheduled. |
-| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm is in the range 100 to 130*, *genre is pop*, etc. Rows combine with AND; the **+** next to a row adds an alternative for the same field (OR), e.g. *genre is pop* **+** *genre is rock*. Since 2026-11-08 also *Country* (e.g. *country is Austria*; *is* and *is not* compare exactly, *is not* and *does not contain* include tracks without a country). Since 2026-11-14 also *Energy* and *Brightness* (1 to 10, e.g. *energy is greater than 6*; tracks that are not measured yet never match, *is not* includes them). Details under [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
+| **Criteria** | Add rows: *artist contains "Bowie"*, *bpm is in the range 100 to 130*, *genre is pop*, etc. Rows combine with AND; the **+** next to a row adds an alternative for the same field (OR), e.g. *genre is pop* **+** *genre is rock*. Since 2026-11-08 also *Country* (e.g. *country is Austria*; *is* and *is not* compare exactly, *is not* and *does not contain* include tracks without a country). Since 2026-11-14 also *Energy* and *Brightness* (1 to 10, e.g. *energy is greater than 6*; tracks that are not measured yet never match, *is not* includes them). Since 2026-11-15 also *Key* (pick one of the 24 keys from the list, e.g. *key is 8A · Am*; *is not* includes tracks without a key); the measured tempo fills *BPM*. Details under [Import / Export → blocks.json](./IMPORT_EXPORT.md#blocksjson). |
 | **Limit to** | One of: **Number of tracks** (e.g. 10), **Duration in time** (e.g. 30:00), **Time remaining in show** (let the smart block fill exactly to the show's end). |
 | **Sort** | Random / newest first / by artist / by play count / etc. |
 
@@ -642,7 +694,7 @@ toolbar that appears at the bottom of the table:
 | **Edit** | One track selected: its editor tab, as before. **Two or more tracks selected (since 2026-10-08): one dialog for all of them** - creator, album, genre, year, track type, language, mood, label, composer, conductor, copyright, country (since 2026-11-08), enabled from and expiry date (`none` clears them), track disabled (*Yes* / *No*; since 2026-11-08, *No* also clears expiry dates that have been reached and enable dates still ahead), description. Empty fields stay unchanged, a filled field is written to every selected track; title, track number, BPM, cue points and artwork stay per track. Database only, like the single editor (tags inside the files are read at import and never rewritten). Tracks you may not edit are skipped and counted in the result. |
 | **Move to Owner** | Reassign ownership (Admins only). Used when a DJ leaves and their files should pass to the station account. |
 | **Cue Points** | Detect the cue points of the selected tracks from their audio (the same silence detection the analyzer runs at import: quieter than −60 dB for at least 0.3 s at the head or the tail) and store them. Upcoming shows that schedule the tracks follow the new values and are laid out again. Tracks longer than 15 minutes are skipped - the action is meant for jingles and other short elements. Since 2026-09-30. |
-| **Re-read Tags** *(since 2026-10-21)* | Re-read the tags of the selected tracks from the files on disk - for files you edited in Windows after the import.  RASTATIME never re-reads a file on its own: the database is the truth for the library and the playout.  The button replaces title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, comment and (since 2026-11-08) country with what the file carries (a tag missing in the file clears the column), sets the track type a **Media Type** tag names (since 2026-11-09; an unknown or missing tag leaves the type) and refreshes the checksum and size; everything else set only in RASTATIME (teaser, cue points, loudness, expiry and enable date, requests) stays.  Admins and programme managers for every file, others for their own.  The file is only read, so a track on air is safe - but edit a file in Windows only while it is not scheduled, the playout plays straight from the library. |
+| **Re-read Tags** *(since 2026-10-21)* | Re-read the tags of the selected tracks from the files on disk - for files you edited in Windows after the import.  RASTATIME never re-reads a file on its own: the database is the truth for the library and the playout.  The button replaces title, artist, album, genre, year, track number, composer, copyright, label, ISRC, BPM, mood, language, comment and (since 2026-11-08) country with what the file carries (a tag missing in the file clears the column; a missing BPM tag gives the measured tempo since 2026-11-15), sets the track type a **Media Type** tag names (since 2026-11-09; an unknown or missing tag leaves the type) and refreshes the checksum and size; everything else set only in RASTATIME (teaser, cue points, loudness, expiry and enable date, requests) stays.  Admins and programme managers for every file, others for their own.  The file is only read, so a track on air is safe - but edit a file in Windows only while it is not scheduled, the playout plays straight from the library. |
 
 ---
 
