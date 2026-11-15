@@ -4933,6 +4933,13 @@ inkrementelle Befüllung wählt vor einem Traffic-Slot nur Titel, die die Frist 
 wenn zwei Slots weiter als die Frist auseinanderliegen.
 **Vorbedingungen zum Wiederaufgreifen:** (1) Operator will Traffic Alerts einsetzen (z. B. Partner
 liefert Meldungen), (2) dann Sieben-Punkte-Evaluierung inkl. Risiko, leichte Alternative zuerst.
+**Befund 2026-11-15 (für die Evaluierung):** Die inkrementelle Befüllung legt eine Position bis zu
+5 min vor ihrer Sendezeit fest (`_REQUEST_FILL_AHEAD_SECONDS` 300, Poll 120 s).  Eine Meldung, die in
+diesem Fenster eintrifft, geht an den übernächsten Slot: schlimmster Fall = Slot-Abstand + 5 min.
+Für 10 min Frist dürfen zwei Traffic-Slots also höchstens ~5 min auseinanderliegen (typisch ~7 min);
+Manual TRAFFIC_ALERTS §6 („nicht weiter als Ihre Frist auseinander“) ist zu optimistisch.  Manuell
+heute: Smart-Block-Kriterium *Length is less than* `00:04:00` (Format hh:mm:ss, volle Dateilänge) für
+die Positionen zwischen zwei Slots.  Bei der Evaluierung: kürzerer Vorlauf nur für Traffic-Slots prüfen.
 
 **Verworfen:** Weg B (Liquidsoap interrupting queue, AzuraCast-Stil) — Playout-
 Eingriff + Drift mit pypos zeitbasiertem Modell + nicht in History.  Nur falls
