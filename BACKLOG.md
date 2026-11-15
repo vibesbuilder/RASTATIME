@@ -4937,7 +4937,7 @@ liefert Meldungen), (2) dann Sieben-Punkte-Evaluierung inkl. Risiko, leichte Alt
 5 min vor ihrer Sendezeit fest (`_REQUEST_FILL_AHEAD_SECONDS` 300, Poll 120 s).  Eine Meldung, die in
 diesem Fenster eintrifft, geht an den übernächsten Slot: schlimmster Fall = Slot-Abstand + 5 min.
 Für 10 min Frist dürfen zwei Traffic-Slots also höchstens ~5 min auseinanderliegen (typisch ~7 min);
-Manual TRAFFIC_ALERTS §6 („nicht weiter als Ihre Frist auseinander“) ist zu optimistisch.  Manuell
+Manual TRAFFIC_ALERTS §4-§8 x4 korrigiert 2026-11-15 (vorher „nicht weiter als Ihre Frist auseinander“).  Manuell
 heute: Smart-Block-Kriterium *Length is less than* `00:04:00` (Format hh:mm:ss, volle Dateilänge) für
 die Positionen zwischen zwei Slots.  Bei der Evaluierung: kürzerer Vorlauf nur für Traffic-Slots prüfen.
 

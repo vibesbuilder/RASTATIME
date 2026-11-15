@@ -110,9 +110,10 @@ bulletin is waiting when the slot is reached, the slot airs nothing and
 the next item simply plays — so empty slots cost you nothing.
 
 **How densely to place them is how you meet the ten-minute deadline**
-(see §6). As a rule of thumb, a traffic slot every five to seven minutes
-of programme, with no very long track immediately before one, keeps any
-bulletin comfortably inside its SLA.
+(see §6). As a rule of thumb: at most about **five minutes of programme**
+between two traffic slots — all the items in between together, not just
+the one right before a slot.  Short items help: §6 shows a smart block
+that only picks short tracks.
 
 The show needs **Autoloading playlist** enabled (it is what makes the
 show fill itself). Nothing else on the show needs special settings.
@@ -135,9 +136,10 @@ a traffic slot it picks **one** bulletin, by these rules:
    request slot). The following programme item plays instead.
 
 So the normal day-to-day workflow is simply: **import the bulletin into
-the library** (into the folder/genre your block matches). Within a poll
-cycle it becomes a candidate, and it airs at the next traffic slot of the
-running show.
+the library** (into the folder/genre your block matches).  It airs at the
+next traffic slot that has **not been fixed yet**: the fill task fixes a
+slot up to **five minutes** before it airs, so a bulletin imported after
+that waits for the slot after it (§6).
 
 > **Under the hood.** Traffic alerts and song requests share one
 > incremental fill engine. The only difference is how a slot resolves:
@@ -158,12 +160,27 @@ track. RASTATIME does **not** skip the currently-playing track to rush a
 bulletin out (that automatic *deadline-skip* is a planned future option,
 held back until live operation shows it is actually needed).
 
+How long a bulletin can wait, at worst: a traffic slot is fixed up to
+five minutes before it airs (§5).  A bulletin that arrives just after
+that misses the slot and airs at the following one — so the worst case
+is **the distance between two traffic slots plus five minutes**.
+
+Example: slots at 10:00, 10:06 and 10:12.  The 10:06 slot is fixed at
+about 10:01; a bulletin imported at 10:01:01 airs at 10:12 — after
+almost eleven minutes.
+
 You hold the SLA with two habits:
 
-- **Place traffic slots densely** — no more than your deadline apart, so
-  the next slot is always near.
-- **Keep the track before a slot short.** A fifteen-minute mix right
-  before a traffic slot can by itself push the slot past ten minutes.
+- **Place traffic slots about five minutes apart.** All the items between
+  two slots together should not run longer than five minutes; then every
+  bulletin airs within ten.  Seven minutes usually works too, but is no
+  longer guaranteed.
+- **Keep the items between two slots short.** A fifteen-minute mix
+  between two slots breaks the deadline on its own.  Use a smart block for
+  these positions that only picks short tracks: a copy of your music block
+  with the criterion **Length** *is less than* `00:04:00` (format
+  hours:minutes:seconds, e.g. `00:03:30`; it compares the full file
+  length, so on air a track is at most that long).
 
 If your programming genuinely cannot guarantee a slot within the
 deadline (very long-form shows, say), tell your RASTATIME maintainer —
@@ -178,7 +195,7 @@ the active deadline-skip can then be built and enabled.
 2. **Once:** Settings → General → **Traffic-Alert Smart Block** → select
    it (§3).
 3. **Per show:** add that block at several points in the show's
-   autoloading playlist, ≤ your deadline apart (§4).
+   autoloading playlist, about five minutes of programme apart (§4, §6).
 4. **Each bulletin:** import the MP3 into the library so it matches the
    block — it airs at the next slot (§5).
 5. **To pause the feature:** Settings → set the block back to
@@ -211,10 +228,10 @@ The **oldest import** first, then the next at the following traffic slot.
 Each slot airs one bulletin, so give them enough slots to drain.
 
 ### "How fast will a bulletin air?"
-At the next traffic slot of the running show. With slots placed within
-your ten-minute deadline and no over-long track in front of one, that is
-inside the SLA. RASTATIME does not interrupt the current track to do it
-(§6).
+At the next traffic slot that is not fixed yet — at worst after the
+distance between two slots plus five minutes.  With slots about five
+minutes apart that is inside the ten minutes.  RASTATIME does not
+interrupt the current track to do it (§6).
 
 ### "Can I turn it off?"
 Yes — Settings → **Traffic-Alert Smart Block** → `(none — disabled)`. A

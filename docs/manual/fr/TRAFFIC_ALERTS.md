@@ -123,9 +123,11 @@ diffuse rien et l'élément suivant passe simplement — les créneaux vides ne
 vous coûtent donc rien.
 
 **La densité à laquelle vous les placez est la façon dont vous tenez
-l'échéance de dix minutes** (voir §6). En règle générale, un créneau
-trafic toutes les cinq à sept minutes de programme, sans titre très long
-juste avant, garde tout bulletin confortablement dans son SLA.
+l'échéance de dix minutes** (voir §6).  En règle générale : au plus
+environ **cinq minutes de programme** entre deux créneaux trafic — tous
+les éléments intermédiaires ensemble, pas seulement celui juste avant un
+créneau.  Des éléments courts aident : le §6 montre un smart block qui ne
+choisit que des titres courts.
 
 L'émission a besoin de l'**Autoloading Playlist** activée (c'est ce qui
 fait que l'émission se remplit elle-même). Aucun autre réglage particulier
@@ -153,8 +155,10 @@ choisit **un** bulletin, selon ces règles :
 
 Le flux de travail quotidien normal est donc simplement : **importez le
 bulletin dans la bibliothèque** (dans le dossier/genre auquel votre bloc
-correspond). En un cycle d'interrogation, il devient candidat et passe au
-prochain créneau trafic de l'émission en cours.
+correspond).  Il passe au prochain créneau trafic **pas encore fixé** : la
+tâche de remplissage fixe un créneau jusqu'à **cinq minutes** avant sa
+diffusion, un bulletin importé ensuite attend donc le créneau suivant
+(§6).
 
 > **Sous le capot.** Les infos-trafic et les demandes de titres partagent
 > un seul moteur de remplissage incrémental. La seule différence tient à la
@@ -178,13 +182,28 @@ titre en cours de lecture pour faire sortir un bulletin en urgence (ce
 jusqu'à ce que l'exploitation en direct montre qu'il est réellement
 nécessaire).
 
+Combien de temps un bulletin peut attendre, au pire : un créneau trafic
+est fixé jusqu'à cinq minutes avant sa diffusion (§5).  Un bulletin arrivé
+juste après manque ce créneau et passe au suivant — le pire cas est donc
+**l'écart entre deux créneaux trafic plus cinq minutes**.
+
+Exemple : créneaux à 10:00, 10:06 et 10:12.  Le créneau de 10:06 est fixé
+vers 10:01 ; un bulletin importé à 10:01:01 passe à 10:12 — après près de
+onze minutes.
+
 Vous tenez le SLA avec deux habitudes :
 
-- **Placez les créneaux trafic de façon dense** — pas plus espacés que
-  votre échéance, de sorte que le prochain créneau soit toujours proche.
-- **Gardez court le titre précédant un créneau.** Un mix de quinze minutes
-  juste avant un créneau trafic peut à lui seul faire dépasser dix minutes
-  au créneau.
+- **Espacez les créneaux trafic d'environ cinq minutes.** L'ensemble des
+  éléments entre deux créneaux ne devrait pas durer plus de cinq minutes ;
+  chaque bulletin passe alors en moins de dix.  Sept minutes fonctionnent
+  généralement aussi, mais ne sont plus garanties.
+- **Gardez courts les éléments entre deux créneaux.** Un mix de quinze
+  minutes entre deux créneaux fait à lui seul manquer l'échéance.  Pour
+  ces positions, utilisez un smart block qui ne choisit que des titres
+  courts : une copie de votre bloc musical avec le critère **Durée** *est
+  plus petit que* `00:04:00` (format heures:minutes:secondes, p. ex.
+  `00:03:30` ; la comparaison porte sur la durée complète du fichier, à
+  l'antenne un titre dure donc au plus autant).
 
 Si votre programmation ne peut vraiment pas garantir un créneau dans
 l'échéance (émissions au format très long, par exemple), prévenez votre
@@ -200,7 +219,7 @@ et activé.
 2. **Une fois :** Settings → General → **Bloc intelligent infos-trafic** →
    le sélectionner (§3).
 3. **Par émission :** ajouter ce bloc à plusieurs endroits de
-   l'Autoloading Playlist de l'émission, espacés de ≤ votre échéance (§4).
+   l'Autoloading Playlist de l'émission, espacés d'environ cinq minutes de programme (§4, §6).
 4. **Par bulletin :** importer le MP3 dans la bibliothèque de sorte qu'il
    corresponde au bloc — il passe au prochain créneau (§5).
 5. **Pour mettre la fonctionnalité en pause :** Settings → remettre le bloc
@@ -238,10 +257,10 @@ suivant. Chaque créneau diffuse un bulletin, donnez-leur donc assez de
 créneaux pour s'écouler.
 
 ### « En combien de temps un bulletin passe-t-il ? »
-Au prochain créneau trafic de l'émission en cours. Avec des créneaux placés
-dans votre échéance de dix minutes et sans titre trop long devant, c'est
-dans le SLA. RASTATIME n'interrompt pas le titre en cours pour le faire
-(§6).
+Au prochain créneau trafic pas encore fixé — au pire après l'écart entre
+deux créneaux plus cinq minutes.  Avec des créneaux espacés d'environ cinq
+minutes, c'est dans les dix minutes.  RASTATIME n'interrompt pas le titre
+en cours pour le faire (§6).
 
 ### « Puis-je la désactiver ? »
 Oui — Settings → **Bloc intelligent infos-trafic** → `(aucun —

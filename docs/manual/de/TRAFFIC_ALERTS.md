@@ -119,9 +119,10 @@ nichts und das nächste Element läuft einfach — leere Slots kosten Sie also
 nichts.
 
 **Wie dicht Sie sie platzieren, ist die Art, wie Sie die
-Zehn-Minuten-Frist halten** (siehe §6). Als Faustregel hält ein
-Traffic-Slot alle fünf bis sieben Programm-Minuten, ohne einen sehr langen
-Track unmittelbar davor, jede Meldung bequem innerhalb ihrer Frist.
+Zehn-Minuten-Frist halten** (siehe §6).  Als Faustregel: zwischen zwei
+Traffic-Slots höchstens etwa **fünf Programm-Minuten** — alle Elemente
+dazwischen zusammen, nicht nur das direkt vor einem Slot.  Kurze Elemente
+helfen: §6 zeigt einen Smart Block, der nur kurze Titel wählt.
 
 Die Sendung benötigt eine aktivierte **Autoloading Playlist** (sie ist es,
 die die Sendung sich selbst füllen lässt). Sonst sind an der Sendung keine
@@ -146,9 +147,11 @@ Regeln:
    bei einem Request-Slot). Stattdessen läuft das nächste Programm-Element.
 
 Der normale Arbeitsablauf ist also schlicht: **importieren Sie die Meldung
-in die Bibliothek** (in den Ordner/das Genre, das Ihr Block erfasst).
-Innerhalb eines Poll-Zyklus wird sie zum Kandidaten und läuft am nächsten
-Traffic-Slot der laufenden Sendung.
+in die Bibliothek** (in den Ordner/das Genre, das Ihr Block erfasst).  Sie
+läuft am nächsten Traffic-Slot, der **noch nicht festgelegt** ist: Der
+Fill-Task legt einen Slot bis zu **fünf Minuten** vor seiner Sendezeit
+fest, eine danach importierte Meldung wartet also auf den folgenden Slot
+(§6).
 
 > **Unter der Haube.** Verkehrsmeldungen und Song Requests teilen sich
 > eine inkrementelle Fill-Engine. Der einzige Unterschied ist, wie ein
@@ -171,13 +174,29 @@ hinauszudrängen (dieser automatische *Deadline-Skip* ist eine geplante
 spätere Option, zurückgestellt, bis der Live-Betrieb zeigt, dass er
 tatsächlich gebraucht wird).
 
+Wie lange eine Meldung schlimmstenfalls wartet: Ein Traffic-Slot wird bis
+zu fünf Minuten vor seiner Sendezeit festgelegt (§5).  Eine Meldung, die
+kurz danach eintrifft, verpasst diesen Slot und läuft am folgenden — der
+schlimmste Fall ist also **der Abstand zwischen zwei Traffic-Slots plus
+fünf Minuten**.
+
+Beispiel: Slots um 10:00, 10:06 und 10:12.  Der 10:06-Slot wird gegen
+10:01 festgelegt; eine um 10:01:01 importierte Meldung läuft um 10:12 —
+nach knapp elf Minuten.
+
 Sie halten die SLA mit zwei Gewohnheiten:
 
-- **Platzieren Sie Traffic-Slots dicht** — nicht weiter als Ihre Frist
-  auseinander, sodass der nächste Slot immer nah ist.
-- **Halten Sie den Track vor einem Slot kurz.** Ein fünfzehnminütiger Mix
-  direkt vor einem Traffic-Slot kann den Slot allein schon über zehn
-  Minuten hinausschieben.
+- **Platzieren Sie Traffic-Slots etwa fünf Minuten auseinander.** Alle
+  Elemente zwischen zwei Slots zusammen sollten nicht länger als fünf
+  Minuten laufen; dann läuft jede Meldung innerhalb von zehn.  Sieben
+  Minuten gehen meist auch, sind aber nicht mehr garantiert.
+- **Halten Sie die Elemente zwischen zwei Slots kurz.** Ein
+  fünfzehnminütiger Mix zwischen zwei Slots reißt die Frist allein.
+  Nehmen Sie für diese Positionen einen Smart Block, der nur kurze Titel
+  wählt: eine Kopie Ihres Musik-Blocks mit dem Kriterium **Länge** *ist
+  kleiner als* `00:04:00` (Format Stunden:Minuten:Sekunden, z. B.
+  `00:03:30`; verglichen wird die volle Dateilänge, auf Sendung ist ein
+  Titel also höchstens so lang).
 
 Kann Ihr Programm einen Slot innerhalb der Frist wirklich nicht garantieren
 (etwa bei sehr langformatigen Sendungen), sagen Sie Ihrem
@@ -193,7 +212,7 @@ und aktiviert werden.
 2. **Einmalig:** Einstellungen → Allgemein → **Verkehrsmeldungs-Smart-
    Block** → auswählen (§3).
 3. **Pro Sendung:** diesen Block an mehreren Stellen der Autoloading
-   Playlist der Sendung einfügen, ≤ Ihrer Frist auseinander (§4).
+   Playlist der Sendung einfügen, etwa fünf Programm-Minuten auseinander (§4, §6).
 4. **Pro Meldung:** die MP3 so in die Bibliothek importieren, dass sie zum
    Block passt — sie läuft am nächsten Slot (§5).
 5. **Feature pausieren:** Einstellungen → den Block zurück auf
@@ -230,9 +249,10 @@ Jeder Slot spielt eine Meldung, geben Sie ihnen also genug Slots zum
 Abfließen.
 
 ### „Wie schnell läuft eine Meldung?"
-Am nächsten Traffic-Slot der laufenden Sendung. Bei Slots innerhalb Ihrer
-Zehn-Minuten-Frist und ohne überlangen Track davor ist das innerhalb der
-SLA. RASTATIME unterbricht dafür nicht den laufenden Track (§6).
+Am nächsten Traffic-Slot, der noch nicht festgelegt ist — schlimmstenfalls
+nach dem Abstand zwischen zwei Slots plus fünf Minuten.  Bei Slots etwa
+fünf Minuten auseinander ist das innerhalb der zehn Minuten.  RASTATIME
+unterbricht dafür nicht den laufenden Track (§6).
 
 ### „Kann ich es abschalten?"
 Ja — Einstellungen → **Verkehrsmeldungs-Smart-Block** →

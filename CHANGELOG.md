@@ -193,6 +193,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Manual Traffic Alerts: Zehn-Minuten-Frist richtig erklärt (2026-11-15)** - die inkrementelle
+  Befüllung legt einen Traffic-Slot bis zu 5 min vor seiner Sendezeit fest; eine danach importierte
+  Meldung läuft erst am folgenden Slot.  Schlimmster Fall = Slot-Abstand + 5 min, für 10 min also
+  Slots etwa 5 min auseinander (bisher hieß es „nicht weiter als die Frist“, die Faustregel nannte
+  5-7 min).  Neu: Beispiel, Smart Block mit *Length is less than* `00:04:00` (hh:mm:ss) für die
+  Positionen zwischen zwei Slots; §4-§8 in EN/DE/FR/ES.  Nur Doku, Traffic Alerts sind in Produktion aus.
 - **My Podcast „Save" endete mit Fehler 500 (2026-11-14)** - seit der AngularJS-Ablösung (2026-06-01)
   schickt die Seite die Privatsphäre-Einstellung als Formular, der Server las nur JSON: die Podcast-Angaben
   wurden gespeichert, Privatsphäre und Feed-Adresse nicht (gesehen 14:45:49).  Jetzt beides; ohne Wert

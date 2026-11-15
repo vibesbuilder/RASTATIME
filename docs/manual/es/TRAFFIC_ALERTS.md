@@ -117,10 +117,11 @@ emite nada y el siguiente elemento simplemente suena — así que los
 espacios vacíos no le cuestan nada.
 
 **Lo densamente que los coloque es la forma de cumplir el plazo de diez
-minutos** (véase §6). Como regla general, un espacio de tráfico cada cinco
-a siete minutos de programación, sin ninguna pista muy larga
-inmediatamente antes de uno, mantiene cualquier boletín cómodamente dentro
-de su SLA.
+minutos** (véase §6).  Como regla general: como mucho unos **cinco minutos
+de programación** entre dos espacios de tráfico — todos los elementos
+intermedios juntos, no solo el que va justo antes de un espacio.  Los
+elementos cortos ayudan: el §6 muestra un smart block que solo elige
+pistas cortas.
 
 El programa necesita la **Autoloading Playlist** activada (es lo que hace
 que el programa se llene a sí mismo). Nada más en el programa necesita
@@ -148,8 +149,10 @@ la cabeza de reproducción. Cuando alcanza un espacio de tráfico elige
 
 Así que el flujo de trabajo normal del día a día es simplemente:
 **importe el boletín a la biblioteca** (a la carpeta/género con que su
-bloque coincide). Dentro de un ciclo de sondeo se convierte en candidato,
-y suena en el siguiente espacio de tráfico del programa en curso.
+bloque coincide).  Suena en el siguiente espacio de tráfico **aún no
+fijado**: la tarea de llenado fija un espacio hasta **cinco minutos**
+antes de que suene, así que un boletín importado después espera al
+espacio siguiente (§6).
 
 > **Cómo funciona por dentro.** Las alertas de tráfico y las Song Requests
 > comparten un mismo motor de llenado incremental. La única diferencia es
@@ -172,13 +175,29 @@ un boletín a toda prisa (ese *salto por plazo* automático es una opción
 futura prevista, retenida hasta que la operación en directo demuestre que
 realmente hace falta).
 
+Cuánto puede esperar un boletín, en el peor caso: un espacio de tráfico
+se fija hasta cinco minutos antes de sonar (§5).  Un boletín que llega
+justo después pierde ese espacio y suena en el siguiente — el peor caso
+es, por tanto, **la distancia entre dos espacios de tráfico más cinco
+minutos**.
+
+Ejemplo: espacios a las 10:00, 10:06 y 10:12.  El espacio de las 10:06 se
+fija hacia las 10:01; un boletín importado a las 10:01:01 suena a las
+10:12 — tras casi once minutos.
+
 Usted cumple la SLA con dos hábitos:
 
-- **Coloque los espacios de tráfico densamente** — no más separados que su
-  plazo, de modo que el siguiente espacio esté siempre cerca.
-- **Mantenga corta la pista anterior a un espacio.** Una mezcla de quince
-  minutos justo antes de un espacio de tráfico puede por sí sola empujar el
-  espacio más allá de los diez minutos.
+- **Coloque los espacios de tráfico a unos cinco minutos de distancia.**
+  Todos los elementos entre dos espacios juntos no deberían durar más de
+  cinco minutos; así cada boletín suena en menos de diez.  Siete minutos
+  suelen funcionar también, pero ya no está garantizado.
+- **Mantenga cortos los elementos entre dos espacios.** Una mezcla de
+  quince minutos entre dos espacios rompe el plazo por sí sola.  Para esas
+  posiciones use un smart block que solo elija pistas cortas: una copia de
+  su bloque de música con el criterio **Duración** *es menor que*
+  `00:04:00` (formato horas:minutos:segundos, p. ej. `00:03:30`; se
+  compara la duración completa del archivo, así que al aire una pista dura
+  como mucho eso).
 
 Si su programación realmente no puede garantizar un espacio dentro del
 plazo (programas de formato muy largo, por ejemplo), avise a su
@@ -194,7 +213,7 @@ puede entonces construirse y activarse.
 2. **Una vez:** Settings → General → **Bloque inteligente de alertas de
    tráfico** → selecciónelo (§3).
 3. **Por programa:** añada ese bloque en varios puntos de la Autoloading
-   Playlist del programa, ≤ su plazo de separación (§4).
+   Playlist del programa, a unos cinco minutos de programación de distancia (§4, §6).
 4. **Por boletín:** importe el MP3 a la biblioteca de modo que coincida con
    el bloque — suena en el siguiente espacio (§5).
 5. **Para pausar la función:** Settings → vuelva a poner el bloque en
@@ -231,10 +250,10 @@ tráfico que sigue. Cada espacio emite un boletín, así que deles suficientes
 espacios para drenarse.
 
 ### «¿Con qué rapidez sonará un boletín?»
-En el siguiente espacio de tráfico del programa en curso. Con los espacios
-colocados dentro de su plazo de diez minutos y sin una pista demasiado
-larga delante de uno, eso queda dentro de la SLA. RASTATIME no interrumpe
-la pista actual para hacerlo (§6).
+En el siguiente espacio de tráfico aún no fijado — en el peor caso tras
+la distancia entre dos espacios más cinco minutos.  Con espacios a unos
+cinco minutos de distancia, eso queda dentro de los diez minutos.
+RASTATIME no interrumpe la pista actual para hacerlo (§6).
 
 ### «¿Puedo desactivarlo?»
 Sí — Settings → **Bloque inteligente de alertas de tráfico** →
