@@ -656,8 +656,12 @@ class Application_Model_StoredFile
     public static function musicalKey($value)
     {
         $text = trim((string) $value);
-        if (preg_match('/^(1[0-2]|[1-9])\s*([AaBb])\b/u', $text, $m)) {
-            return $m[1] . strtoupper($m[2]);
+        // a code alone or followed by its own chord name ("8A", "8A · Am");
+        // anything else after the code makes the value invalid
+        if (preg_match('/^(1[0-2]|[1-9])\s*([AaBb])(?:\s*[·\-]?\s*(\S+))?$/u', $text, $m)) {
+            $code = $m[1] . strtoupper($m[2]);
+
+            return (($m[3] ?? '') === '' || self::musicalKey($m[3]) === $code) ? $code : null;
         }
         $name = ucfirst(str_replace(['♯', '♭'], ['#', 'b'], $text));
         $code = array_search($name, self::MUSICAL_KEYS, true);
