@@ -6970,7 +6970,7 @@ RASTATIME-Spalten bleiben, Bestaetigung im Dialog.  Kein automatischer Abgleich 
 stillschweigend ueberschreiben).  Abnahme 2026-10-21: Knopf im Browser bestaetigt (Operator), Live-Probe des
 Endpunkts mit zwei Dateien, deren Tags der DB entsprechen: 2 gelesen, 0 geaendert, Zeilen unveraendert.
 
-### 🟢 Metadaten Energy, Tempo, Key, Timbre - Stufe 1 (Energy + Helligkeit) IN BETRIEB seit 2026-11-14 (§23.115), Stufe 2 (Tempo + Key) GEBAUT 2026-11-15 (§23.116), wartet auf Migration 0086 (DEFER 2026-10-21)
+### ✅ Metadaten Energy, Tempo, Key, Timbre - Stufe 1 (Energy + Helligkeit) seit 2026-11-14 (§23.115), Stufe 2 (Tempo + Key) seit 2026-11-15 (§23.116/§23.117), Hörprobe bestanden 2026-11-16; Stufe 2b GetSongBPM DEFER
 
 Evaluierung: moeglich (Mood-Detector, MIT, librosa-basiert, ~2 s je Titel, 30 s aus der Mitte; Tempo per
 Beat-Tracking, Energy RMS, Key per Chroma, Brightness; Mood per Regeltabelle, nur DJ/Electronic-Kategorien,
@@ -7083,7 +7083,8 @@ misst sie nach dem Bestandslauf; Skala bleibt die der Musik, Jingles unter 10 s 
 Median 121,6 BPM, Mitte 106-136, 10-90 % 94-154.  32 abweichende BPM-Tags/Handwerte blieben stehen: 17 eine Oktave
 daneben, 6 innerhalb 3 %, 9 andere.  Jingles (angehakt 13:46): Aufgabenlauf 15:25 hat 334 von 462 gemessen (Energie/Helligkeit + Tempo/Tonart,
 0 Fehler); 128 sind kürzer als 10 s oder ohne Lautheitswert und bekommen keine Werte.
-Offen: Hörprobe (BPM/Key + Energy) durch den Operator.
+**Hörprobe bestanden 2026-11-16** (Operator: Library nach BPM, Key und Energy sortiert, Werte passen) -
+Stufe 1 + 2 abgeschlossen.  Offen bleibt nur Stufe 2b (GetSongBPM, DEFER, Vorbedingungen siehe oben).
 
 ## Test-Hygiene (2026-10-22)
 
