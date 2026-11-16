@@ -8499,7 +8499,7 @@ nicht wartet (~30-40 Zeilen, Probe, Risiko mittel: Stop-/Auslauf-Logik mit Vorge
 Vorbedingungen: Beobachtung Line-In-Start 2026-11-17 08:15 und -Ende 10:00 mit dem Dummy-Ausgang (§23.118) -
 verschwinden die Zombies am Sendungsende, wird das hier voraussichtlich No-Go; sonst Evaluierung neu.
 
-## 🟢 Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (Operator-Idee 2026-11-16) - GEBAUT 2026-11-16 (Go: 5 min fest + Anzeige „wartet bis …“, §23.119); aktiv nach PLAYOUT-Neustart (+ Liquidsoap sofort, ~10-15 s) und Apache-Neustart (Übersetzungen), Abnahme mit Schultest offen
+## 🟢 Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (Operator-Idee 2026-11-16) - GEBAUT 2026-11-16 (Go: 5 min fest + Anzeige „wartet bis …“, §23.119); LIVE seit 2026-11-16 13:17 (PLAYOUT-Neustart 13:16 durch den Operator, Liquidsoap mit neuem Skript; Apache 13:54), Abnahme mit Schultest offen
 
 Anlass: Test der DJ-Funktion aus einer Schule 2026-11-16 (Sendung um 10:03 bewusst getauscht).  Der Encoder versuchte
 es ab 10:00:52 alle ~2 s (157x „not-host“, nicht gezählt), Annahme 10:07:00 mit Sendungsbeginn, auf Sendung erst
