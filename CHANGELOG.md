@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (2026-11-16, Operator-Go
+  2026-11-16 nach dem DJ-Test aus einer Schule)** - ein Host der NÄCHSTEN Sendung (Stations-Login
+  oder eigenes Live-Login der Sendung) wird bis zu 5 min vorher angenommen (fest), bleibt vom Sender,
+  bis die Sendung beginnt, und ist dann auf die Sekunde auf Sendung, ohne die Pufferlücke am Anfang;
+  die laufende Sendung läuft unverändert.  Im Kopfbereich steht solange *wartet bis 10:07* statt
+  *Show Source*.  Das Tor setzt Liquidsoap erst beim tatsächlichen Verbinden (die Harbor-Anmeldung
+  läuft vor der Belegt-Prüfung des Mounts - ein abgewiesener Früher darf den laufenden DJ nie
+  vom Sender nehmen) und öffnet es zur Uhrzeit selbst; PLAYOUT bleibt bis dahin im Sendeplan-Zustand.
+  Legacy gewährt die frühe Anmeldung nur einem PLAYOUT, das `early=1` sendet.  Legacy-Probe 17/17,
+  Replik-Probe (früh, belegter Mount, Trennen beim Warten) bestanden.  Manual STREAMS + DASHBOARD
+  x4, ARCHITECTURE 0.147 (§23.119).
+
 ### Fixed
 
 - **„Back on air soon“ blitzte bei jeder Übergabe an einen Live-Eingang auf (2026-11-16, Befund

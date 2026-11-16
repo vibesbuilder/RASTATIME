@@ -265,10 +265,30 @@ con:
 > 2026-09-10): el motor pregunta a la emisión, la emisión
 > pregunta a la aplicación web, que aplica los ajustes de arriba.
 > Para el Show DJ cuenta el programa que está en antena ahora
-> mismo; un Show DJ no puede entrar antes de que empiece el
-> programa. Solo mientras la propia emisión no esté accesible el
+> mismo, o el siguiente si empieza dentro de 5 minutos (vea abajo).
+> Solo mientras la propia emisión no esté accesible el
 > motor recurre a la contraseña estática del harbor de
 > `rastatime.conf`. Vea ARCHITECTURE §23.27 (addendum 2026-09-10).
+
+#### Conectarse hasta 5 minutos antes del programa
+
+Desde el 2026-11-16 un Show DJ puede conectarse hasta **5 minutos
+antes** del inicio del programa (valor fijo).  El login del programa
+siguiente se acepta, el software de emisión muestra «conectado» y
+puede comprobarse, pero el DJ queda **fuera de antena** hasta que
+empieza el programa; el programa en antena sigue sin cambios.  Al
+inicio el DJ está en antena al segundo, sin el hueco de búfer habitual.
+
+- Mientras un DJ espera, el bloque **Status** de la cabecera muestra
+  *espera hasta 10:07* en lugar de *Show Source* (texto completo en la
+  información emergente); el interruptor queda apagado.
+- Si el DJ se desconecta mientras espera, nada cambia en antena.
+- El punto de montaje Show Source admite un solo cliente a la vez:
+  mientras el DJ del programa en antena está conectado, nadie puede
+  conectarse antes.  El DJ siguiente entra en cuanto el anterior se
+  desconecta.
+- Más de 5 minutos antes, los logins se rechazan como antes (no cuentan
+  para el freno contra fuerza bruta).  Vea ARCHITECTURE §23.119.
 
 ---
 

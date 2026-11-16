@@ -62,6 +62,16 @@
 					background:#2f2e2e;
 					color:#fff;
 					}
+				/* RASTATIME 2026-11-16 - early show DJ waiting off air:
+				   "waiting until 10:07" in the label (no room for a line) */
+				.status-info-block li div.source-label.waiting {
+					max-width:95px;
+					white-space:nowrap;
+					overflow:hidden;
+					text-overflow:ellipsis;
+					font-style:italic;
+					color:var(--rt-accent-light, #fff);
+					}
 			.status-info-block li .line-to-switch, .status-info-block li .line-to-switch.off {
 				margin:0;
 				width:12px;

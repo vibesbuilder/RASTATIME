@@ -75,7 +75,7 @@ moment fait la différence entre "le stream fonctionne" et
 | Source | Ce que ça signifie | Quand s'inquiéter |
 |---|---|---|
 | **Scheduler** | Playout joue ce que le calendrier dit. L'état normal. | Jamais. C'est l'objectif. |
-| **Show DJ** | Une source distante live a pris l'émission. | Si vous n'attendez pas qu'un Show DJ soit live — enquêter. |
+| **Show DJ** | Une source distante live a pris l'émission. | Si vous n'attendez pas qu'un Show DJ soit live — enquêter. Un DJ connecté jusqu'à 5 minutes avant l'émission suivante n'est pas encore à l'antenne : l'en-tête affiche *attend jusqu'à …* (voir Streams → Se connecter jusqu'à 5 minutes avant l'émission). |
 | **Master DJ** | Source live au niveau station a tout surchargé. | Master DJ ne devrait être à l'antenne que quand l'ingénieur a intentionnellement pris le relais. |
 | **Auto DJ** | Remplissage Auto-DJ est à l'antenne. | Si vous attendiez du contenu planifié par l'opérateur — ouvrez le Calendrier. |
 | **Fallback / Silence** | Rien n'est planifié, Auto DJ est désactivé. | Presque toujours un problème. Ouvrez le Calendrier. |

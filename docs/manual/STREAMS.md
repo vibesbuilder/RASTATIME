@@ -323,10 +323,29 @@ within ~1 second.
 > checked the moment the client connects (since 2026-09-10): the
 > engine asks the playout, the playout asks the web application,
 > which applies the settings above. For the Show DJ that means
-> the show on air right now, so a Show DJ cannot log in before
-> the show starts. Only while the playout itself is unreachable
+> the show on air right now, or the next show if it starts within
+> 5 minutes (see below). Only while the playout itself is unreachable
 > does the engine fall back to the static harbor password from
 > `rastatime.conf`. See ARCHITECTURE §23.27 (addendum 2026-09-10).
+
+#### Connecting up to 5 minutes before the show
+
+Since 2026-11-16 a Show DJ may connect up to **5 minutes before**
+the show starts (fixed).  The login of the next show is accepted,
+the broadcasting software shows "connected" and can be checked, but
+the DJ stays **off air** until the show starts; the show on air
+continues unchanged.  At the start the DJ is on air to the second,
+without the usual pre-buffer gap at the beginning.
+
+- While a DJ waits, the **Status** block in the header shows
+  *waiting until 10:07* instead of *Show Source* (full text in the
+  tooltip); the switch stays off.
+- If the DJ disconnects while waiting, nothing changes on air.
+- The Show Source mount takes one client at a time: while the DJ of
+  the show on air is connected, nobody can connect early.  The next
+  DJ gets in once the previous one disconnects.
+- Earlier than 5 minutes, logins are refused as before (they do not
+  count towards the brute-force brake).  See ARCHITECTURE §23.119.
 
 ---
 

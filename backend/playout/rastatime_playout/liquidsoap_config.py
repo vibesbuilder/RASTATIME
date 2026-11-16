@@ -1205,8 +1205,11 @@ def _render_harbor_inputs_block(
             f"{show_auth}"
             ")\n"
         )
+    # RASTATIME 2026-11-16 - early show login (5 min before the show): only
+    # with the PLAYOUT login check, which names the hold, and a show harbor
+    show_hold = bool(dj_auth_url and show_password)
     if dj_auth_url and parts:
-        parts.insert(0, _render_dj_auth_function(dj_auth_url))
+        parts.insert(0, _render_dj_auth_function(dj_auth_url, show_hold=show_hold))
     if not parts:
         return (
             "# (no DJ-source harbor enabled — stream.harbor.{main,show}_password\n"
@@ -1225,6 +1228,7 @@ def _render_harbor_inputs_block(
                 show_enabled=bool(show_password),
                 url=source_event_url,
                 timeout_seconds=source_event_timeout_seconds,
+                show_hold=show_hold,
             )
         )
     return "\n".join(parts)
@@ -1233,6 +1237,8 @@ def _render_harbor_inputs_block(
 def _render_dj_auth_function(
     url: str,
     timeout_seconds: float = DEFAULT_DJ_AUTH_TIMEOUT_SECONDS,
+    *,
+    show_hold: bool = False,
 ) -> str:
     """
     Render ``rastatime_dj_auth(kind, static_password)``: the harbor's
@@ -1241,49 +1247,96 @@ def _render_dj_auth_function(
     else rejects, and only an unreachable PLAYOUT falls back to the
     static harbor password (user ``source``).  The password never
     appears in a log line.
+
+    RASTATIME 2026-11-16 (``show_hold``): PLAYOUT answers ``ok <unix
+    time>`` for a show DJ who logs in up to 5 min before the show.  The
+    auth only remembers it (``show_dj_hold_pending``): Liquidsoap runs the
+    auth BEFORE it checks whether the mount is taken (harbor.ml), so the
+    gate ``show_dj_from`` is set in ``on_connect`` - a refused early
+    login must never hold a DJ who is on air.
     """
     timeout = _format_crossfade_duration(timeout_seconds)
     target = _escape_liq_string(url)
-    lines = [
-        "# RASTATIME 2026-09-10 - DJ logins are checked by PLAYOUT (Settings ->",
-        "# Streams -> Master Source; the show's Live Stream Input).  The static",
-        "# harbor password from rastatime.conf only counts while PLAYOUT is",
-        "# unreachable.  Passwords never reach the log.",
-        "def rastatime_dj_auth(kind, static_password) =",
-        "  fun (login) ->",
-        "    begin",
-        "      verdict =",
-        "        try",
-        "          string.trim(http.post(timeout=" + timeout + ",",
-        '            headers=[("Content-Type", "application/x-www-form-urlencoded")],',
-        '            data="source=#{kind}&user=#{url.encode(login.user)}"',
-        '              ^ "&password=#{url.encode(login.password)}"',
-        '              ^ "&address=#{url.encode(login.address)}",',
-        '            "' + target + '"))',
-        "        catch err do",
-        '          log(level=2, label="rastatime.dj_auth",',
-        '            "#{kind}: PLAYOUT request failed (#{err})")',
-        '          ""',
-        "        end",
-        "      # A refused connection does not raise: http.post returns an empty",
-        "      # body.  Decide on the body - PLAYOUT answers ok / denied / error.",
-        '      if verdict == "ok" then',
-        '        log(level=3, label="rastatime.dj_auth",',
-        "          \"#{kind}: accepted user '#{login.user}' from #{login.address}\")",
-        "        true",
-        '      elsif verdict == "denied" then',
-        '        log(level=3, label="rastatime.dj_auth",',
-        "          \"#{kind}: rejected user '#{login.user}' from #{login.address}\")",
-        "        false",
-        "      else",
-        '        ok = login.user == "source" and login.password == static_password',
-        '        log(level=3, label="rastatime.dj_auth",',
-        "          \"#{kind}: PLAYOUT unreachable or failing ('#{verdict}') - static check for '#{login.user}': #{ok}\")",
-        "        ok",
-        "      end",
-        "    end",
-        "end",
-    ]
+    hold_refs = (
+        [
+            "# RASTATIME 2026-11-16 - early show login: a host of the NEXT show may",
+            "# connect up to 5 min before it and waits off air until it starts.",
+            "# The auth keeps PLAYOUT's hold here; show_dj.on_connect moves it into",
+            "# the gate show_dj_from (Unix time, 0 = on air at once), on_disconnect",
+            "# clears it; the bus arm opens at that time on its own.",
+            "show_dj_hold_pending = ref(0.)",
+            'show_dj_from = interactive.float("show_dj_from", 0.)',
+        ]
+        if show_hold
+        else []
+    )
+    accept_hold = (
+        [
+            '        hold = if verdict == "ok" then 0. else',
+            "          float_of_string(default=0., string.trim(string.sub(verdict, start=3,",
+            "            length=string.length(verdict) - 3))) end",
+            '        if kind == "show" then show_dj_hold_pending.set(hold) end',
+            '        if hold > 0. then log(level=3, label="rastatime.dj_auth",',
+            "          \"#{kind}: user '#{login.user}' logged in early - off air until #{hold}\") end",
+        ]
+        if show_hold
+        else []
+    )
+    static_hold = (
+        ['        if ok and kind == "show" then show_dj_hold_pending.set(0.) end']
+        if show_hold
+        else []
+    )
+    lines = (
+        hold_refs
+        + [
+            "# RASTATIME 2026-09-10 - DJ logins are checked by PLAYOUT (Settings ->",
+            "# Streams -> Master Source; the show's Live Stream Input).  The static",
+            "# harbor password from rastatime.conf only counts while PLAYOUT is",
+            "# unreachable.  Passwords never reach the log.",
+            "def rastatime_dj_auth(kind, static_password) =",
+            "  fun (login) ->",
+            "    begin",
+            "      verdict =",
+            "        try",
+            "          string.trim(http.post(timeout=" + timeout + ",",
+            '            headers=[("Content-Type", "application/x-www-form-urlencoded")],',
+            '            data="source=#{kind}&user=#{url.encode(login.user)}"',
+            '              ^ "&password=#{url.encode(login.password)}"',
+            '              ^ "&address=#{url.encode(login.address)}",',
+            '            "' + target + '"))',
+            "        catch err do",
+            '          log(level=2, label="rastatime.dj_auth",',
+            '            "#{kind}: PLAYOUT request failed (#{err})")',
+            '          ""',
+            "        end",
+            "      # A refused connection does not raise: http.post returns an empty",
+            "      # body.  Decide on the body - PLAYOUT answers ok / denied / error",
+            "      # (2026-11-16: or 'ok <unix time>' for an early show login).",
+            '      if verdict == "ok" or string.contains(prefix="ok ", verdict) then',
+            '        log(level=3, label="rastatime.dj_auth",',
+            "          \"#{kind}: accepted user '#{login.user}' from #{login.address}\")",
+        ]
+        + accept_hold
+        + [
+            "        true",
+            '      elsif verdict == "denied" then',
+            '        log(level=3, label="rastatime.dj_auth",',
+            "          \"#{kind}: rejected user '#{login.user}' from #{login.address}\")",
+            "        false",
+            "      else",
+            '        ok = login.user == "source" and login.password == static_password',
+            '        log(level=3, label="rastatime.dj_auth",',
+            "          \"#{kind}: PLAYOUT unreachable or failing ('#{verdict}') - static check for '#{login.user}': #{ok}\")",
+        ]
+        + static_hold
+        + [
+            "        ok",
+            "      end",
+            "    end",
+            "end",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -1293,6 +1346,7 @@ def _render_harbor_source_events(
     show_enabled: bool,
     url: str,
     timeout_seconds: float = DEFAULT_SOURCE_EVENT_TIMEOUT_SECONDS,
+    show_hold: bool = False,
 ) -> str:
     """
     Render the harbor ``on_connect``/``on_disconnect`` callbacks that
@@ -1304,6 +1358,12 @@ def _render_harbor_source_events(
     listener (PLAYOUT restarting) must never stall the harbor
     connection handler.  Failures are logged, never raised - PLAYOUT's
     periodic telnet reconcile is the safety net.
+
+    RASTATIME 2026-11-16 (``show_hold``): the show DJ's ``on_connect``
+    moves the early-login hold the auth kept into the gate
+    ``show_dj_from`` and posts it as ``from=``; ``on_disconnect`` clears
+    the gate.  The hold is applied here, not in the auth, because a
+    refused connection (mount taken) still passed the auth.
     """
     timeout = _format_crossfade_duration(timeout_seconds)
     target = _escape_liq_string(url)
@@ -1313,11 +1373,11 @@ def _render_harbor_source_events(
         "# then verifies once over telnet instead of polling every 5 s (the",
         "# poll leaked ~150 MB/h on the Windows build).  The POST runs in a",
         "# detached task so a slow listener never stalls the harbor handler.",
-        "def rastatime_source_event(src, status) =",
+        "def rastatime_source_event(src, status, hold) =",
         "  thread.run(fun () ->",
         "    try",
         f'      ignore(http.post(timeout={timeout}, data="",',
-        f'        "{target}?source=#{{src}}&status=#{{status}}"))',
+        f'        "{target}?source=#{{src}}&status=#{{status}}&from=#{{hold}}"))',
         "    catch err do",
         '      log(level=3, label="rastatime.source_event",',
         '        "POST #{src}/#{status} failed: #{err}")',
@@ -1335,13 +1395,26 @@ def _render_harbor_source_events(
     ):
         if not enabled:
             continue
+        if name == "show" and show_hold:
+            lines += [
+                "show_dj.on_connect(synchronous=true, fun (_) -> begin",
+                "  show_dj_from.set(show_dj_hold_pending())",
+                "  show_dj_hold_pending.set(0.)",
+                '  rastatime_source_event("show", "on", show_dj_from())',
+                "end)",
+                "show_dj.on_disconnect(synchronous=true, fun () -> begin",
+                "  show_dj_from.set(0.)",
+                '  rastatime_source_event("show", "off", 0.)',
+                "end)",
+            ]
+            continue
         lines.append(
             f"{source_id}.on_connect(synchronous=true, "
-            f'fun (_) -> rastatime_source_event("{name}", "on"))'
+            f'fun (_) -> rastatime_source_event("{name}", "on", 0.))'
         )
         lines.append(
             f"{source_id}.on_disconnect(synchronous=true, "
-            f'fun () -> rastatime_source_event("{name}", "off"))'
+            f'fun () -> rastatime_source_event("{name}", "off", 0.))'
         )
     return "\n".join(lines) + "\n"
 
@@ -2435,6 +2508,7 @@ def _render_bus_source_block(
     transition_seconds: float = DEFAULT_CROSSFADE_DURATION,
     duck_fade_seconds: float = DEFAULT_INPUT_DUCK_FADE_SECONDS,
     dj_fade_seconds: float = DEFAULT_DJ_FADE_SECONDS,
+    show_hold: bool = False,
 ) -> str:
     """
     Render the ``bus = ...`` assignment that picks the active source.
@@ -2522,7 +2596,13 @@ def _render_bus_source_block(
         transitions.append("bus_arm_master")
         wrappers.append(_arm("bus_arm_master", "master_dj", dj_shape))
     if show_enabled:
-        arms.append("({source.is_ready(show_dj)}, show_dj)")
+        # RASTATIME 2026-11-16 - an early show login waits until show_dj_from
+        # (Unix time); Liquidsoap opens the arm at the show start on its own
+        arms.append(
+            "({source.is_ready(show_dj) and time() >= show_dj_from()}, show_dj)"
+            if show_hold
+            else "({source.is_ready(show_dj)}, show_dj)"
+        )
         transitions.append("bus_arm_show")
         wrappers.append(_arm("bus_arm_show", "show_dj", dj_shape))
     if webstream_enabled:
@@ -2764,6 +2844,8 @@ def render_rastatime_liq(
         transition_seconds=show_crossfade_duration,
         # RASTATIME 2026-09-28 - DJ hand-over follows Settings -> Streams
         dj_fade_seconds=dj_fade_seconds,
+        # RASTATIME 2026-11-16 - early show login gate (see the harbor block)
+        show_hold=bool(dj_auth_url and harbor_show_password),
     )
     hourly_block = _render_hourly_recording_block(
         enabled=hourly_recording_enabled,

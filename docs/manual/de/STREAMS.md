@@ -342,11 +342,30 @@ Sobald verbunden, erscheint das Audio innerhalb von
 > im Moment des Verbindens geprüft (seit 2026-09-10): Die Engine
 > fragt das Playout, das Playout fragt die Web-Anwendung, und die
 > wendet die obigen Einstellungen an. Für den Show DJ zählt die
-> gerade laufende Show; ein Show DJ kann sich also nicht vor dem
-> Showbeginn einwählen. Nur solange das Playout selbst nicht
+> gerade laufende Show oder die nächste, wenn sie innerhalb von
+> 5 Minuten beginnt (siehe unten). Nur solange das Playout selbst nicht
 > erreichbar ist, greift die Engine auf das statische Harbor-
 > Passwort aus `rastatime.conf` zurück. Siehe ARCHITECTURE §23.27
 > (Addendum 2026-09-10).
+
+#### Verbinden bis zu 5 Minuten vor der Sendung
+
+Seit 2026-11-16 darf sich ein Show DJ bis zu **5 Minuten vor**
+Sendungsbeginn verbinden (fest).  Das Login der nächsten Sendung wird
+angenommen, die Sende-Software zeigt „verbunden“ und lässt sich
+prüfen, der DJ bleibt aber **vom Sender**, bis die Sendung beginnt;
+die laufende Sendung läuft unverändert weiter.  Zum Beginn ist der DJ
+auf die Sekunde auf Sendung, ohne die übliche Pufferlücke am Anfang.
+
+- Solange ein DJ wartet, zeigt der Block **Status** im Kopfbereich
+  *wartet bis 10:07* statt *Show Source* (voller Text im Tooltip); der
+  Schalter bleibt aus.
+- Trennt der DJ während des Wartens, ändert sich auf Sendung nichts.
+- Der Show-Source-Mount nimmt nur einen Client auf einmal: Solange der
+  DJ der laufenden Sendung verbunden ist, kann sich niemand früh
+  verbinden.  Der nächste DJ kommt herein, sobald der vorige trennt.
+- Früher als 5 Minuten werden Logins wie bisher abgelehnt (sie zählen
+  nicht für die Brute-Force-Bremse).  Siehe ARCHITECTURE §23.119.
 
 ---
 

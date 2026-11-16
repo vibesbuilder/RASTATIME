@@ -150,6 +150,12 @@ class SourceSwitcher:
         # scheduler after a Liquidsoap restart; the telnet reconciler
         # waits on it instead of sleeping a fixed interval.
         self._reconcile_wake = threading.Event()
+        # RASTATIME 2026-11-16 - early show login: the show DJ is connected
+        # but waits off air until this Unix time (Liquidsoap's show_dj_from
+        # gate).  Until then the state stays SCHEDULED, so the playout runs
+        # the show on air untouched; a timer re-evaluates at the start.
+        self._show_hold_until = 0.0
+        self._hold_timer: Optional[threading.Timer] = None
 
     # ---------- public API -----------------------------------------------
 
@@ -159,11 +165,14 @@ class SourceSwitcher:
     def on_master_disconnect(self) -> None:
         self._update(master_connected=False)
 
-    def on_show_connect(self) -> None:
-        self._update(show_connected=True)
+    def on_show_connect(self, hold_until: Optional[float] = None) -> None:
+        """A show DJ is connected.  ``hold_until`` (Unix time) when it
+        waits off air until its show starts, 0 for on air at once, None
+        to keep what is known (the telnet reconciler without a value)."""
+        self._update(show_connected=True, show_hold_until=hold_until)
 
     def on_show_disconnect(self) -> None:
-        self._update(show_connected=False)
+        self._update(show_connected=False, show_hold_until=0.0)
 
     @property
     def current_state(self) -> SourceState:
@@ -176,6 +185,14 @@ class SourceSwitcher:
     def is_show_connected(self) -> bool:
         with self._lock:
             return self._show_connected
+
+    def show_hold_until(self) -> Optional[float]:
+        """Unix time until which the connected show DJ waits off air, or
+        None (nobody connected or already on air)."""
+        with self._lock:
+            if self._show_connected and self._show_hold_until > time.time():
+                return self._show_hold_until
+            return None
 
     def request_reconcile(self) -> None:
         """Ask the state reconciler to verify the DJ state soon
@@ -197,12 +214,16 @@ class SourceSwitcher:
         self,
         master_connected: Optional[bool] = None,
         show_connected: Optional[bool] = None,
+        show_hold_until: Optional[float] = None,
     ) -> None:
         with self._lock:
             if master_connected is not None:
                 self._master_connected = master_connected
             if show_connected is not None:
                 self._show_connected = show_connected
+            if show_hold_until is not None:
+                self._show_hold_until = max(0.0, float(show_hold_until))
+            self._arm_hold_timer_locked()
 
             new_state = self._compute_state()
             if new_state == self._current_state:
@@ -233,9 +254,26 @@ class SourceSwitcher:
     def _compute_state(self) -> SourceState:
         if self._master_connected:
             return SourceState.MASTER
-        if self._show_connected:
+        if self._show_connected and self._show_hold_until <= time.time():
             return SourceState.SHOW
         return SourceState.SCHEDULED
+
+    def _arm_hold_timer_locked(self) -> None:
+        """RASTATIME 2026-11-16 - while a connected show DJ waits, re-evaluate
+        the state at the show start (SCHEDULED -> SHOW); otherwise drop a
+        pending timer.  Called with the lock held."""
+        if self._hold_timer is not None:
+            self._hold_timer.cancel()
+            self._hold_timer = None
+        if not self._show_connected:
+            return
+        delay = self._show_hold_until - time.time()
+        if delay <= 0:
+            return
+        timer = threading.Timer(delay + 0.05, self._update)
+        timer.daemon = True
+        timer.start()
+        self._hold_timer = timer
 
 
 # ---------------------------------------------------------------------------
@@ -396,7 +434,19 @@ class _EventHandler(BaseHTTPRequestHandler):
                 sw.on_master_disconnect()
         else:  # show
             if connected:
-                sw.on_show_connect()
+                # RASTATIME 2026-11-16 - from=<unix time>: the DJ logged in
+                # early and waits off air until the show starts (the .liq
+                # posts the hold it applied on connect; 0 = on air at once)
+                try:
+                    hold = float((qs.get("from", ["0"])[0] or "0").strip())
+                except ValueError:
+                    hold = 0.0
+                sw.on_show_connect(hold if hold > time.time() else 0.0)
+                if hold > time.time():
+                    logger.info(
+                        "source-event: show DJ waits off air until %s (early login)",
+                        time.strftime("%H:%M:%S", time.localtime(hold)),
+                    )
             else:
                 sw.on_show_disconnect()
 
@@ -438,8 +488,13 @@ class _EventHandler(BaseHTTPRequestHandler):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.exception("dj-auth: check failed: %s", exc)
             verdict = "error"
-        code = {"ok": 200, "denied": 403}.get(verdict, 503)
-        self._send(code, verdict if verdict in ("ok", "denied") else "error")
+        # RASTATIME 2026-11-16 - "ok <unix time>": an early show login that
+        # waits off air until the show starts (the .liq parses the number)
+        if verdict == "ok" or verdict.startswith("ok "):
+            self._send(200, verdict)
+            return
+        code = {"denied": 403}.get(verdict, 503)
+        self._send(code, verdict if verdict == "denied" else "error")
 
     def _send_json(self, status: int, payload) -> None:
         body_bytes = json.dumps(payload).encode("utf-8")
@@ -525,10 +580,14 @@ class _EventHandler(BaseHTTPRequestHandler):
             self._send(500, "switcher not initialised")
             return
 
+        hold = sw.show_hold_until()
         state = {
             "master_connected": sw.is_master_connected(),
             "show_connected": sw.is_show_connected(),
             "current_state": sw.current_state.value,
+            # RASTATIME 2026-11-16 - early show login waiting off air (Unix
+            # time), null otherwise; the dashboard shows "waiting until"
+            "show_hold_until": int(hold) if hold is not None else None,
         }
         body_bytes = json.dumps(state).encode("utf-8")
         self.send_response(200)
@@ -786,6 +845,18 @@ def _reload_schedule_once(scheduler, preflight_runner: Optional[_CoalescingRunne
         preflight_runner.request()
 
 
+def _read_show_hold(client) -> float:
+    """RASTATIME 2026-11-16 - Liquidsoap's ``show_dj_from`` (the early-login
+    hold of the show DJ, Unix time) over telnet; 0.0 when absent, past or
+    unreadable."""
+    try:
+        resp = client.send_command("var.get show_dj_from").strip()
+        hold = float(resp.split()[-1]) if resp else 0.0
+    except Exception:  # pylint: disable=broad-exception-caught
+        return 0.0
+    return hold if hold > time.time() else 0.0
+
+
 def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
     """
     One verification round: ``master_dj.status`` + ``show_dj.status``
@@ -823,7 +894,11 @@ def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
             show_resp,
         )
         if actual_show:
-            switcher.on_show_connect()
+            # RASTATIME 2026-11-16 - a DJ that logged in early waits behind
+            # Liquidsoap's show_dj_from gate; take the hold over (PLAYOUT
+            # restarted while the DJ waits).  No such variable (older render)
+            # or no number: on air at once, as before.
+            switcher.on_show_connect(_read_show_hold(client))
         else:
             switcher.on_show_disconnect()
 

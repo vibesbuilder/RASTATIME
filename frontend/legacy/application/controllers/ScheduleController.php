@@ -381,6 +381,9 @@ class ScheduleController extends Zend_Controller_Action
         // might not be the correct place to implement this but for now let's just do it here
         $source_status['live_dj_source'] = $live_dj;
         $source_status['master_dj_source'] = $master_dj;
+        // RASTATIME 2026-11-16 - an early show DJ waiting off air
+        // ("waiting until 10:07", '' when nobody waits)
+        $source_status['live_dj_waiting'] = Application_Model_Preference::GetShowSourceWaitingLabel();
 
         $switch_status['live_dj_source'] = $live_dj_switch;
         $switch_status['master_dj_source'] = $master_dj_switch;

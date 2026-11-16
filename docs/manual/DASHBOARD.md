@@ -113,7 +113,7 @@ working but airing the wrong thing".
 | Source | What it means | When to be concerned |
 |---|---|---|
 | **Scheduler** | Playout is playing whatever the calendar says. The normal state. | Never. This is the goal. |
-| **Show DJ** | A live remote source has taken the show. The schedule is paused for this show. | If you do not expect a Show DJ to be live — investigate (could be a stale connection, could be a misconfigured host). |
+| **Show DJ** | A live remote source has taken the show. The schedule is paused for this show. | If you do not expect a Show DJ to be live — investigate (could be a stale connection, could be a misconfigured host). A DJ who connected up to 5 minutes before the next show is not on air yet: the header shows *waiting until …* (see Streams → Connecting up to 5 minutes before the show). |
 | **Master DJ** | Station-wide live source has overridden everything. | Master DJ should only be on air when the station engineer has intentionally taken over. If you see this and you are not the engineer — contact them. |
 | **Auto DJ** | Auto-DJ fill is on air (either an Auto-DJ-created show or the fill-pass for an incomplete show). | If you expected operator-scheduled content — open the Calendar to see why the slot is empty. |
 | **Fallback / Silence** | Nothing is scheduled, Auto DJ is off, and the fallback loop is playing (or the station is silent). | Almost always a problem. Open the Calendar to schedule something. |

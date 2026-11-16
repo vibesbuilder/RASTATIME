@@ -73,7 +73,7 @@ stream funciona pero está emitiendo lo equivocado".
 | Fuente | Lo que significa | Cuándo preocuparse |
 |---|---|---|
 | **Scheduler** | Playout reproduce lo que el calendario dice. El estado normal. | Nunca. Este es el objetivo. |
-| **Show DJ** | Una fuente en vivo remota ha tomado el programa. | Si no espera que un Show DJ esté en vivo — investigar. |
+| **Show DJ** | Una fuente en vivo remota ha tomado el programa. | Si no espera que un Show DJ esté en vivo — investigar. Un DJ conectado hasta 5 minutos antes del programa siguiente aún no está en antena: la cabecera muestra *espera hasta …* (vea Streams → Conectarse hasta 5 minutos antes del programa). |
 | **Master DJ** | Fuente en vivo a nivel emisora ha anulado todo. | Master DJ solo debería estar al aire cuando el ingeniero ha tomado intencionalmente el control. |
 | **Auto DJ** | Relleno Auto-DJ está al aire. | Si esperaba contenido planificado por el operador — abra el Calendario. |
 | **Fallback / Silencio** | Nada está planificado, Auto DJ está apagado. | Casi siempre un problema. Abra el Calendario. |

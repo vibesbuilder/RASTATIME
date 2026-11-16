@@ -289,11 +289,34 @@ configuré avec :
 > 2026-09-10) : le moteur interroge la diffusion, la diffusion
 > interroge l'application web, qui applique les réglages
 > ci-dessus. Pour le Show DJ, c'est l'émission à l'antenne en ce
-> moment qui compte ; un Show DJ ne peut donc pas se connecter
-> avant le début de l'émission. Ce n'est que lorsque la diffusion
+> moment qui compte, ou la suivante si elle commence dans les
+> 5 minutes (voir ci-dessous). Ce n'est que lorsque la diffusion
 > elle-même est injoignable que le moteur se rabat sur le mot de
 > passe harbor statique de `rastatime.conf`. Voir ARCHITECTURE
 > §23.27 (addendum 2026-09-10).
+
+#### Se connecter jusqu'à 5 minutes avant l'émission
+
+Depuis le 2026-11-16, un Show DJ peut se connecter jusqu'à
+**5 minutes avant** le début de l'émission (valeur fixe).  Le login de
+l'émission suivante est accepté, le logiciel de diffusion affiche
+« connecté » et peut être vérifié, mais le DJ reste **hors antenne**
+jusqu'au début de l'émission ; l'émission en cours continue sans
+changement.  Au début, le DJ passe à l'antenne à la seconde près, sans
+le trou de pré-tampon habituel.
+
+- Tant qu'un DJ attend, le bloc **Status** de l'en-tête affiche
+  *attend jusqu'à 10:07* au lieu de *Show Source* (texte complet dans
+  l'infobulle) ; l'interrupteur reste éteint.
+- Si le DJ se déconnecte pendant l'attente, rien ne change à
+  l'antenne.
+- Le point de montage Show Source n'accepte qu'un client à la fois :
+  tant que le DJ de l'émission en cours est connecté, personne ne peut
+  se connecter en avance.  Le DJ suivant entre dès que le précédent se
+  déconnecte.
+- Plus de 5 minutes avant, les logins sont refusés comme avant (ils ne
+  comptent pas pour le frein anti-force brute).  Voir ARCHITECTURE
+  §23.119.
 
 ---
 

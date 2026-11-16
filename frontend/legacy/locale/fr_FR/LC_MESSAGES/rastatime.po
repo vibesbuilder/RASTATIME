@@ -8969,3 +8969,8 @@ msgstr "Analyser les caractéristiques audio :"
 #: RASTATIME 2026-11-15 audio features per track type
 msgid "Tracks of this type get Energy, Brightness, BPM and Key measured a few minutes after the upload (Library). Ticked for Music only by default. Unticking stops new measurements; values measured before stay until an administrator removes them. A value entered by hand in Edit Track is never replaced."
 msgstr "Les pistes de ce type reçoivent Energy, Brightness, BPM et Key mesurés quelques minutes après le téléversement (Médiathèque). Coché par défaut pour Music seulement. Décoché, plus aucune nouvelle mesure ; les valeurs mesurées auparavant restent jusqu'à ce qu'un administrateur les supprime. Une valeur saisie à la main dans Modifier la piste n'est jamais remplacée."
+
+#: RASTATIME 2026-11-16 early show login (status: the show DJ waits off air)
+#, c-format
+msgid "waiting until %s"
+msgstr "attend jusqu'à %s"

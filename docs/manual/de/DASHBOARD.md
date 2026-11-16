@@ -120,7 +120,7 @@ Falsche".
 | Quelle | Was es bedeutet | Wann besorgt sein |
 |---|---|---|
 | **Scheduler** | Playout spielt, was der Kalender sagt. Der normale Zustand. | Nie. Das ist das Ziel. |
-| **Show DJ** | Eine Live-Remote-Quelle hat die Sendung übernommen. Der Sendeplan ist für diese Sendung pausiert. | Wenn Sie keinen Show DJ live erwarten — untersuchen Sie (könnte eine veraltete Verbindung sein, könnte ein falsch konfigurierter Host sein). |
+| **Show DJ** | Eine Live-Remote-Quelle hat die Sendung übernommen. Der Sendeplan ist für diese Sendung pausiert. | Wenn Sie keinen Show DJ live erwarten — untersuchen Sie (könnte eine veraltete Verbindung sein, könnte ein falsch konfigurierter Host sein). Ein DJ, der sich bis zu 5 Minuten vor der nächsten Sendung verbunden hat, ist noch nicht auf Sendung: Der Kopfbereich zeigt *wartet bis …* (siehe Streams → Verbinden bis zu 5 Minuten vor der Sendung). |
 | **Master DJ** | Stationsweite Live-Quelle hat alles übersteuert. | Master DJ sollte nur auf Sendung sein, wenn der Stations-Ingenieur absichtlich übernommen hat. Wenn Sie das sehen und Sie nicht der Ingenieur sind — kontaktieren Sie ihn. |
 | **Auto DJ** | Auto-DJ-Füllung ist auf Sendung (entweder eine Auto-DJ-erstellte Sendung oder der Fill-Pass für eine unvollständige Sendung). | Wenn Sie operator-geplanten Inhalt erwartet haben — öffnen Sie den Kalender, um zu sehen, warum der Slot leer ist. |
 | **Fallback / Stille** | Nichts ist geplant, Auto DJ ist aus, und die Fallback-Schleife spielt (oder die Station ist still). | Fast immer ein Problem. Öffnen Sie den Kalender, um etwas zu planen. |

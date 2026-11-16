@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.146
+Draft version: 0.147
 Date: 2026-11-16
 
 > **Revision history**
+> - **0.147 (2026-11-16)** - **Early show-DJ login** (§23.119): a host of the next show may
+>   connect up to 5 min early and waits off air behind a time gate (`show_dj_from`, set in
+>   `on_connect` because the harbor auth runs before the mount-taken check); the header shows
+>   "waiting until ...".
 > - **0.146 (2026-11-16)** - **Off Air text only after 5 s of silence, line-in connected at the
 >   gate** (§23.118): the scheduled fallback marks the silence off-air through a 5 s check
 >   (queue still empty, bus still on the scheduled arm); a silent `output.dummy` keeps the
@@ -10840,3 +10844,91 @@ could change stop behaviour in a path the probe did not cover - worst
 case a silent line-in slot, which the dead-air alert reports.
 Rollback: revert the commit (tag `live-2026-11-16`), PLAYOUT restart,
 Liquidsoap restart in a quiet moment.
+
+### 23.119 Early Show-DJ Login, 5 Minutes Before the Show (2026-11-16)
+
+**Request.**  Operator 2026-11-16 after a test of the DJ function from a
+school: the encoder tried from 10:00:52 every ~2 s (157 refusals
+"not-host", not counted), was accepted at the show start 10:07:00 and on
+air only at 10:07:05 (harbor pre-buffer 5 s).  Decision: a host of the
+NEXT show may connect up to 5 minutes early (fixed), stays off air until
+the show starts, and the header shows "waiting until ...".
+
+**Findings that shaped the design.**
+- Liquidsoap runs the harbor auth BEFORE it checks whether the mount is
+  taken (`harbor.ml handle_source_request`: auth, then `relay` ->
+  `Mount_taken`).  A hold set in the auth would let a refused early login
+  hold the DJ who is on air, so the gate is set in `on_connect`.
+- `input.harbor` is an active source: it keeps reading while no arm pulls
+  it (`output` per clock cycle), so a waiting DJ needs no extra output.
+- PLAYOUT treats a connected show DJ as on air (`_dj_on_air`: exact-time,
+  pre-warm and track-end holds are skipped; a removed row kicks the DJ).
+  A waiting DJ must not trigger that before the start.
+
+**Design.**
+- Legacy `ApiController::checkLiveStreamAuthAction`: the show rules moved
+  into `showLoginMatches()` (unchanged: hosts with station logins or the
+  custom live login; reason `bad-password` / `not-host`).  If the show on
+  air does not match and the caller sends `early=1`, the next episode
+  starting within `EARLY_SHOW_LOGIN_SECONDS` = 300
+  (`Application_Model_Show::getShowStartingWithin`, deleted episodes
+  excluded) is checked; a match answers 200 + `icecast-auth-user: 1` +
+  `X-Rastatime-Hold-Until: <unix start>`.  Refusal reason: a host name
+  with a wrong password counts (`bad-password`), otherwise `not-host` /
+  `no-show` as before.  `early=1` guards the rollout order: an older
+  PLAYOUT would put an early DJ on air at once.
+- PLAYOUT `dj_auth.py`: posts `early=1`; an accepted show login with a
+  hold answers `ok <unix time>` (a hold more than 600 s ahead refuses the
+  login; `hold_until_from`).  `SourceSwitcher`: `on_show_connect(hold)`
+  keeps the state SCHEDULED until the hold (timer re-evaluates at the
+  start -> SHOW), a disconnect while waiting fires no callback (no DJ-off
+  resume), `/source-event ...&from=` carries the hold, `/source-state`
+  reports `show_hold_until`, the telnet reconciler reads
+  `var.get show_dj_from` (PLAYOUT restarted while a DJ waits).
+- Liquidsoap render (only with the PLAYOUT login check and a show harbor):
+  `show_dj_hold_pending = ref(0.)`, `show_dj_from =
+  interactive.float(...)`.  The auth parses `ok <n>` into the pending
+  value (static fallback: 0); `show_dj.on_connect` moves it into
+  `show_dj_from` and posts it, `on_disconnect` resets it; the show arm is
+  `source.is_ready(show_dj) and time() >= show_dj_from()`, so Liquidsoap
+  opens it at the start on its own (no PLAYOUT timing at the boundary).
+  `rastatime_source_event` takes the hold as a third argument.
+- Dashboard: `Preference::GetPlayoutSourceState` reads `show_hold_until`;
+  `GetSourceSwitchStatus('live_dj')` stays off while waiting;
+  `getCurrentPlaylist` / the layout pass `live_dj_waiting` ("waiting until
+  10:07", user time zone); `dashboard.js` shows it in place of "Show
+  Source" (the 170-px status block has no room for a line), full text in
+  the tooltip, italic accent colour.  DE / FR / ES strings.
+
+**Verification.**  Playout suite 942 passed / 2 skipped (new
+`test_early_show_login.py`; harbor render tests incl. `liquidsoap --check`
+with both harbors).  Legacy probe `C:/Temp/optd/early_dj_auth_probe.php`
+(temporary user / show / episode in a rolled-back transaction): 17/17 -
+next episode found within 300 s, not outside, not when started or deleted;
+host / custom login rules; the whole action: early host login 200 + hold =
+episode start, wrong password 401 bad-password, no `early=1` -> no early
+login, stranger 401 not-host, 6 min ahead refused.  Replica probe
+`C:/Temp/optd/early_show_probe/` (the rendered auth, show harbor, events
+and gated arm in a temporary Liquidsoap, a fake PLAYOUT, ffmpeg as
+encoders): early DJ connected 12:59:02, programme on until the hold, on
+air 12:59:15 at the hold; a DJ on air, an early login accepted by the auth
+but refused with 403 (mount taken) -> gate stays 0, the DJ on air stays;
+an early DJ leaving while waiting -> gate 0, source event off.  Production
+render into a temp file: `--check` rc 0, diff exactly these changes,
+standby unchanged.  Browser: the label shows "wartet bis 13:07" in 100 px
+without overflow, the row height unchanged.
+
+**Rollout.**  The legacy part is live at once but inert until PLAYOUT
+sends `early=1`.  A PLAYOUT restart writes the new script and (changed
+script at the playout start) restarts Liquidsoap at once - about 10-15 s
+off air, so in a quiet moment.  Apache restart for the translations.
+Acceptance with a planned school test (connect 3-5 min early).
+
+**Risk.**  Medium (top-priority arm).  Failure modes and guards: DJ on air
+too early (gate not applied) - render tests + replica; DJ not on air at
+the start (gate never opens) - Liquidsoap opens it by time, dead-air alert
+as the net; DJ on air held by a refused early login - excluded by setting
+the gate in `on_connect`, replica S2.  Residual: two DJs connecting in the
+same instant could swap their pending holds (negligible).  Limitation: one
+client per mount, so nobody connects early while the DJ of the show on air
+is connected.  Rollback: revert (tag `live-2026-11-16b`), PLAYOUT restart.

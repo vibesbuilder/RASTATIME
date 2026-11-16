@@ -8499,7 +8499,7 @@ nicht wartet (~30-40 Zeilen, Probe, Risiko mittel: Stop-/Auslauf-Logik mit Vorge
 Vorbedingungen: Beobachtung Line-In-Start 2026-11-17 08:15 und -Ende 10:00 mit dem Dummy-Ausgang (§23.118) -
 verschwinden die Zombies am Sendungsende, wird das hier voraussichtlich No-Go; sonst Evaluierung neu.
 
-## 💡 Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (Operator-Idee 2026-11-16) - Evaluierung vorgelegt
+## 🟢 Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (Operator-Idee 2026-11-16) - GEBAUT 2026-11-16 (Go: 5 min fest + Anzeige „wartet bis …“, §23.119); aktiv nach PLAYOUT-Neustart (+ Liquidsoap sofort, ~10-15 s) und Apache-Neustart (Übersetzungen), Abnahme mit Schultest offen
 
 Anlass: Test der DJ-Funktion aus einer Schule 2026-11-16 (Sendung um 10:03 bewusst getauscht).  Der Encoder versuchte
 es ab 10:00:52 alle ~2 s (157x „not-host“, nicht gezählt), Annahme 10:07:00 mit Sendungsbeginn, auf Sendung erst
@@ -8512,4 +8512,12 @@ aktive Quelle und liest auch ungezogen weiter (`output` je Takt) - kein Dummy-Au
 jeden verbundenen Sendungs-DJ als „auf Sendung“ (`_dj_on_air`: Exakt-Zeit-, Vorwärm- und Titelende-Halte entfallen;
 Kick bei entfernter Zeile) - ein wartender DJ darf das erst ab Sendungsbeginn auslösen.  Grenze: solange der DJ der
 laufenden Sendung verbunden ist, kann sich niemand früh verbinden (ein Mount, eine Quelle).
+**Gebaut 2026-11-16:** Legacy `showLoginMatches` + `Show::getShowStartingWithin(300)` + Header
+`X-Rastatime-Hold-Until` (nur bei `early=1` von PLAYOUT); PLAYOUT `ok <unix>`, SourceSwitcher-Halt (SCHEDULED bis
+zum Beginn, Timer, kein Resume beim Trennen), `from=` im Source-Event, `show_hold_until` in `/source-state`,
+Reconciler `var.get show_dj_from`; Liquidsoap `show_dj_hold_pending` (Auth) -> `show_dj_from` (on_connect), Arm
+`time() >= show_dj_from()`; Kopfbereich „wartet bis 10:07“ statt „Show Source“.  Proben: Legacy 17/17
+(`C:/Temp/optd/early_dj_auth_probe.php`), Replik `C:/Temp/optd/early_show_probe/` (früh pünktlich, belegter Mount
+lässt den laufenden DJ, Trennen setzt zurück), Playout 942 grün.  Abnahme: geplanter Schultest 3-5 min vor einer
+Sendung (Encoder „verbunden“, Kopfbereich „wartet bis“, auf Sendung exakt zum Beginn).
 

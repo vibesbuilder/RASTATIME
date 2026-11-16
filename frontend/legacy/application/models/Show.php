@@ -1360,6 +1360,51 @@ SQL;
     }
 
     /**
+     * RASTATIME 2026-11-16 - the next episode that starts after $timeNow and
+     * at most $seconds later (early show-DJ login, ApiController
+     * checkLiveStreamAuthAction).  Deleted / moved episodes do not count.
+     *
+     * @return null|array ['show_id' => int, 'instance_id' => int,
+     *                    'starts' => 'Y-m-d H:i:s' (UTC), 'starts_epoch' => int]
+     */
+    public static function getShowStartingWithin(int $seconds, $timeNow = null)
+    {
+        if ($seconds <= 0) {
+            return null;
+        }
+        if ($timeNow === null) {
+            $timeNow = gmdate(DEFAULT_TIMESTAMP_FORMAT);
+        }
+        $nowUtc = new DateTime($timeNow, new DateTimeZone('UTC'));
+        $until = (clone $nowUtc)->modify('+' . $seconds . ' seconds');
+        $sql = <<<'SQL'
+SELECT si.show_id, si.id AS instance_id, si.starts
+FROM cc_show_instances si
+WHERE si.starts > :now::timestamp
+  AND si.starts <= :until::timestamp
+  AND si.modified_instance != TRUE
+ORDER BY si.starts, si.id
+LIMIT 1
+SQL;
+        $rows = Application_Common_Database::prepareAndExecute($sql, [
+            ':now' => $nowUtc->format(DEFAULT_TIMESTAMP_FORMAT),
+            ':until' => $until->format(DEFAULT_TIMESTAMP_FORMAT),
+        ]);
+        if (empty($rows)) {
+            return null;
+        }
+        $row = $rows[0];
+        $starts = new DateTime($row['starts'], new DateTimeZone('UTC'));
+
+        return [
+            'show_id' => (int) $row['show_id'],
+            'instance_id' => (int) $row['instance_id'],
+            'starts' => $starts->format(DEFAULT_TIMESTAMP_FORMAT),
+            'starts_epoch' => $starts->getTimestamp(),
+        ];
+    }
+
+    /**
      * Gets the current show, previous and next with an n-day window from
      * the given timeNow, so timeNow-2days and timeNow+$daysToRetrieve days.
      *

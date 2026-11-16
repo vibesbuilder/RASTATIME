@@ -394,6 +394,20 @@ function parseSourceStatus(obj) {
     live_div.addClass("ready");
   }
 
+  // RASTATIME 2026-11-16 - a show DJ who connected early waits off air
+  // until the show starts: "waiting until 10:07" instead of "Show Source"
+  var waiting = obj.live_dj_waiting || "";
+  var label = live_div.find(".source-label-text");
+  if (label.length) {
+    label.text(waiting !== "" ? waiting : label.data("label"));
+    live_div.toggleClass("waiting", waiting !== "");
+    if (waiting !== "") {
+      live_div.attr("title", label.data("label") + ": " + waiting);
+    } else {
+      live_div.removeAttr("title");
+    }
+  }
+
   if (obj.master_dj_source == false) {
     master_li.find(".line-to-switch").attr("class", "line-to-switch off");
     master_div.removeClass("ready");

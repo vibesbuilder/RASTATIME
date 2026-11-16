@@ -40,6 +40,30 @@ logger = logging.getLogger(__name__)
 
 CHECK_PATH = "/api/check-live-stream-auth/format/json"
 DJTYPE_BY_SOURCE = {"master": "master", "show": "dj"}
+# RASTATIME 2026-11-16 - the legacy grants an early show login at most 5 min
+# ahead; a hold further out than this is not trusted (answered as a plain ok
+# would put the DJ on air at once, so such a login is refused instead).
+EARLY_LOGIN_MAX_SECONDS = 600
+
+
+def hold_until_from(value: Optional[str], now: Optional[float] = None) -> Optional[int]:
+    """
+    RASTATIME 2026-11-16 - the ``X-Rastatime-Hold-Until`` header of an early
+    show login as Unix time, or None: missing, not a number, already passed.
+    A value more than EARLY_LOGIN_MAX_SECONDS ahead raises ValueError.
+    """
+    if value is None or not str(value).strip():
+        return None
+    try:
+        hold = int(float(str(value).strip()))
+    except ValueError:
+        return None
+    current = time.time() if now is None else now
+    if hold <= current:
+        return None
+    if hold - current > EARLY_LOGIN_MAX_SECONDS:
+        raise ValueError(f"hold {hold} is {hold - current:.0f} s ahead")
+    return hold
 
 
 class RejectThrottle:
@@ -229,7 +253,10 @@ class DjAuthenticator:
         try:
             resp = self._session.post(
                 self.check_url,
-                data={"djtype": djtype, "username": user, "password": password},
+                # early=1 (RASTATIME 2026-11-16): this PLAYOUT keeps an early
+                # show login off air until the show starts - only then does the
+                # legacy grant one (an older PLAYOUT would air it at once)
+                data={"djtype": djtype, "username": user, "password": password, "early": "1"},
                 timeout=self._timeout,
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -243,8 +270,23 @@ class DjAuthenticator:
             return "error"
         accepted = resp.status_code == 200 and resp.headers.get("icecast-auth-user") == "1"
         if accepted:
-            logger.info("dj-auth: %s accepted", who)
             self._throttle.accepted(address)
+            # RASTATIME 2026-11-16 - early show login: the legacy check names
+            # the start of the next show (Unix time) for a host who connects
+            # up to 5 min early; Liquidsoap keeps the DJ off air until then.
+            try:
+                hold = hold_until_from(resp.headers.get("x-rastatime-hold-until"))
+            except ValueError as exc:
+                logger.warning("dj-auth: %s refused - implausible early-login hold (%s)", who, exc)
+                return "denied"
+            if hold is not None and djtype == "dj":
+                logger.info(
+                    "dj-auth: %s accepted early - waits off air until %s (show start)",
+                    who,
+                    time.strftime("%H:%M:%S", time.localtime(hold)),
+                )
+                return f"ok {hold}"
+            logger.info("dj-auth: %s accepted", who)
             return "ok"
         if resp.status_code not in (200, 401):
             logger.warning(

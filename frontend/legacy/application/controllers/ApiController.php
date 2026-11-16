@@ -1332,64 +1332,42 @@ class ApiController extends Zend_Controller_Action
                 $this->view->msg = false;
             }
         } elseif ($djtype == 'dj') {
-            // check against show dj auth
+            // check against show dj auth: a host (or the custom login) of the
+            // show on air
             $showInfo = Application_Model_Show::getCurrentShow();
-
-            // there is current playing show
+            $currentReason = null;
             if (isset($showInfo[0]['id'])) {
-                $reason = 'not-host';
-                $current_show_id = $showInfo[0]['id'];
-                $CcShow = CcShowQuery::create()->findPK($current_show_id);
-
-                // get custom pass info from the show
-                $custom_user = $CcShow->getDbLiveStreamUser();
-                $custom_pass = $CcShow->getDbLiveStreamPass();
-
-                // get hosts ids
-                $show = new Application_Model_Show($current_show_id);
-                $hosts_ids = $show->getHostsIds();
-
-                // check against hosts auth
-                if ($CcShow->getDbLiveStreamUsingAirtimeAuth()) {
-                    foreach ($hosts_ids as $host) {
-                        $h = new Application_Model_User($host['subjs_id']);
-                        if (self::credentialEquals($h->getLogin(), $username)) {
-                            $reason = 'bad-password';   // the name is a host, the password decides
-                        }
-                        if (
-                            self::credentialEquals($h->getLogin(), $username)
-                            && $h->verifyPassword((string) $password)
-                        ) {
-                            $authorised = true;
-                            $this->view->msg = true;
-                            // Set Icecast's expected auth header right here —
-                            // the early `return` below skips the unified
-                            // post-processing block at the end of the
-                            // function, so we have to set it inline.
-                            $this->getResponse()->setHeader('icecast-auth-user', '1');
-                            $this->getResponse()->setHttpResponseCode(200);
-
-                            return;
-                        }
-                    }
-                }
-                // check against custom auth
-                if ($CcShow->getDbLiveStreamUsingCustomAuth()) {
-                    $reason = 'bad-password';   // custom credentials: name + password together
-                    if (self::credentialEquals($custom_user, $username) && self::credentialEquals($custom_pass, $password)) {
-                        $authorised = true;
-                        $this->view->msg = true;
-                    } else {
-                        $this->view->msg = false;
-                    }
-                } else {
-                    $this->view->msg = false;
-                }
-            } else {
-                // no show is currently playing
-                $reason = 'no-show';
-                $this->view->msg = false;
+                $authorised = self::showLoginMatches((int) $showInfo[0]['id'], $username, $password, $currentReason);
             }
+            // RASTATIME 2026-11-16 - early show login: a host of the NEXT show may
+            // connect up to EARLY_SHOW_LOGIN_SECONDS before it starts.  The
+            // playout gets the start as X-Rastatime-Hold-Until (Unix time) and
+            // keeps the DJ off air until then; the show on air wins (checked
+            // first).
+            $nextReason = null;
+            // only for a caller that keeps the DJ off air until the start
+            // (PLAYOUT sends early=1 since 2026-11-16; an older PLAYOUT would put
+            // an early DJ on air at once)
+            if (!$authorised && $request->getParam('early') === '1') {
+                $next = Application_Model_Show::getShowStartingWithin(self::EARLY_SHOW_LOGIN_SECONDS);
+                if ($next !== null && self::showLoginMatches((int) $next['show_id'], $username, $password, $nextReason)) {
+                    $authorised = true;
+                    $this->getResponse()->setHeader('X-Rastatime-Hold-Until', (string) $next['starts_epoch']);
+                }
+            }
+            // refusal reason: a host name with a wrong password counts, a name
+            // that hosts neither show does not; nothing on air and nothing
+            // starting soon is 'no-show'
+            if (!$authorised) {
+                if ($currentReason === 'bad-password' || $nextReason === 'bad-password') {
+                    $reason = 'bad-password';
+                } elseif ($currentReason !== null || $nextReason !== null) {
+                    $reason = 'not-host';
+                } else {
+                    $reason = 'no-show';
+                }
+            }
+            $this->view->msg = $authorised;
         }
 
         // Icecast 2.5 URL-auth contract: the response MUST contain the
@@ -1403,6 +1381,49 @@ class ApiController extends Zend_Controller_Action
             $this->getResponse()->setHttpResponseCode(401);
             $this->getResponse()->setHeader('X-Rastatime-Auth-Reason', $reason);
         }
+    }
+
+    /** RASTATIME 2026-11-16 - how long before its start a show's DJ may connect (fixed, operator decision). */
+    public const EARLY_SHOW_LOGIN_SECONDS = 300;
+
+    /**
+     * RASTATIME 2026-11-16 - does this login belong to show $showId?  A host
+     * of the show (when it uses the station logins) or its custom live
+     * login.  $reason becomes 'bad-password' when the name matches and only
+     * the password decides, 'not-host' otherwise (unchanged rules, moved out
+     * of checkLiveStreamAuthAction so the next show can be checked too).
+     */
+    private static function showLoginMatches(int $showId, $username, $password, ?string &$reason): bool
+    {
+        $reason = 'not-host';
+        $CcShow = CcShowQuery::create()->findPK($showId);
+        if ($CcShow === null) {
+            return false;
+        }
+        if ($CcShow->getDbLiveStreamUsingAirtimeAuth()) {
+            $show = new Application_Model_Show($showId);
+            foreach ($show->getHostsIds() as $host) {
+                $h = new Application_Model_User($host['subjs_id']);
+                if (!self::credentialEquals($h->getLogin(), $username)) {
+                    continue;
+                }
+                $reason = 'bad-password';   // the name is a host, the password decides
+                if ($h->verifyPassword((string) $password)) {
+                    return true;
+                }
+            }
+        }
+        if ($CcShow->getDbLiveStreamUsingCustomAuth()) {
+            $reason = 'bad-password';   // custom credentials: name + password together
+            if (
+                self::credentialEquals($CcShow->getDbLiveStreamUser(), $username)
+                && self::credentialEquals($CcShow->getDbLiveStreamPass(), $password)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

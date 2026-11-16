@@ -26,6 +26,8 @@
         <?php echo $this->partial('partialviews/header.phtml', array(
             "live_dj_switch" => $sss['live_dj'],
             "live_dj_connection" => $scs['live_dj'],
+            // RASTATIME 2026-11-16 - early show DJ waiting off air
+            "live_dj_waiting" => Application_Model_Preference::GetShowSourceWaitingLabel(),
             "master_dj_switch" => $sss['master_dj'],
             "master_dj_connection" => $scs['master_dj'],
             "scheduled_play_switch" => $sss['scheduled_play'],

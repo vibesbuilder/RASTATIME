@@ -1775,7 +1775,7 @@ class Application_Model_Preference
             return $cache;
         }
 
-        $default = ['master_connected' => false, 'show_connected' => false];
+        $default = ['master_connected' => false, 'show_connected' => false, 'show_hold_until' => null];
 
         $ctx = stream_context_create([
             'http' => [
@@ -1800,12 +1800,46 @@ class Application_Model_Preference
 
             return $cache;
         }
+        // RASTATIME 2026-11-16 - show_hold_until: a show DJ who connected
+        // early (up to 5 min before the show) and waits off air until then
+        // (Unix time, null = not waiting).
+        $hold = $data['show_hold_until'] ?? null;
         $cache = [
             'master_connected' => (bool) ($data['master_connected'] ?? false),
             'show_connected'   => (bool) ($data['show_connected'] ?? false),
+            'show_hold_until'  => is_numeric($hold) ? (int) $hold : null,
         ];
 
         return $cache;
+    }
+
+    /**
+     * RASTATIME 2026-11-16 - Unix time until which the connected show DJ
+     * waits off air (early login before the show), or null.
+     */
+    public static function GetShowSourceWaitingUntil()
+    {
+        $state = self::GetPlayoutSourceState();
+        $hold = $state['show_hold_until'] ?? null;
+
+        return ($state['show_connected'] && $hold !== null && $hold > time()) ? $hold : null;
+    }
+
+    /**
+     * RASTATIME 2026-11-16 - the status line under "Show Source" while an
+     * early show DJ waits: "waiting until 10:07" in the user's time zone,
+     * '' otherwise.
+     */
+    public static function GetShowSourceWaitingLabel()
+    {
+        $hold = self::GetShowSourceWaitingUntil();
+        if ($hold === null) {
+            return '';
+        }
+        $at = new DateTime('@' . $hold);
+        $at->setTimezone(new DateTimeZone(self::GetTimezone()));
+
+        return sprintf(_('waiting until %s'), $at->format('H:i'));
     }
 
     public static function GetSourceStatus($sourcename)
@@ -1865,7 +1899,9 @@ class Application_Model_Preference
         if ($sourcename == 'live_dj') {
             $state = self::GetPlayoutSourceState();
 
-            return $state['show_connected'] ? 'on' : 'off';
+            // RASTATIME 2026-11-16 - an early show DJ is connected but not on
+            // air yet: the switch stays off until the show starts
+            return ($state['show_connected'] && self::GetShowSourceWaitingUntil() === null) ? 'on' : 'off';
         }
 
         $value = self::getValue($sourcename . '_switch');

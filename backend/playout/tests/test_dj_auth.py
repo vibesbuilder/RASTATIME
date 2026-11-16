@@ -38,6 +38,7 @@ def test_accepted_master_login_posts_to_the_legacy_endpoint():
         "djtype": "master",
         "username": "chef",
         "password": "secret",
+        "early": "1",  # 2026-11-16: this PLAYOUT holds early show logins
     }
 
 
