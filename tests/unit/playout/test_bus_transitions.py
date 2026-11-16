@@ -9,6 +9,9 @@ Teil A; reshaped 2026-09-27).  The rendered .liq must
     source at full level at once (50 ms ramp), the outgoing one fading
     out under it over the Default SHOW Crossfade Duration (0 -> 50 ms
     cut); DJ arms stay instant,
+  * put the NEW source first in every add() (2026-11-09: add() forwards
+    the first source's metadata only, so the incoming arm's title must
+    lead - ARCHITECTURE 23.102),
   * bound transition_length by the fade length.
 """
 
@@ -57,8 +60,12 @@ def test_positive_duration_fades_the_old_source_under_the_new_one():
 
 def test_zero_duration_is_a_click_free_cut():
     block = _bus(transition_seconds=0.0)
-    assert "fade.out(duration=0.05, old)," in block
-    assert "fade.in(duration=0.05, new)" in block
+    # 2026-11-09: new source first (its metadata leads), old fades out in 50 ms
+    assert (
+        "def bus_transition(old, new) =\n"
+        "  add(normalize=false, [fade.in(duration=0.05, new),\n"
+        "                        fade.out(duration=0.05, old)])"
+    ) in block
     assert "fade.in(duration=1" not in block
 
 
@@ -103,7 +110,8 @@ def test_dj_arms_use_the_switch_transition_fade():
     homogeneous transition list - live outage 2026-09-04 19:26)."""
     block = _bus(transition_seconds=1.0, dj_fade_seconds=2.5)
     assert "def bus_dj(old, new) =" in block
-    assert "fade.out(duration=2.5, old),\n                        fade.in(duration=0.05, new)" in block
+    # 2026-11-09: the incoming source first, the programme fades out under it
+    assert "[fade.in(duration=0.05, new),\n                        fade.out(duration=2.5, old)])" in block
     assert "def bus_arm_master(old, new) =  # master_dj\n  s = bus_dj(old, new)" in block
     assert "def bus_arm_show(old, new) =  # show_dj\n  s = bus_dj(old, new)" in block
     assert "= new end" not in block
@@ -122,4 +130,8 @@ def test_programme_arms_fade_a_leaving_dj_with_the_dj_fade():
 
 def test_dj_fade_zero_is_a_click_free_cut():
     block = _bus(transition_seconds=1.0, dj_fade_seconds=0.0)
-    assert "def bus_dj(old, new) =\n  add(normalize=false, [fade.out(duration=0.05, old)," in block
+    assert (
+        "def bus_dj(old, new) =\n"
+        "  add(normalize=false, [fade.in(duration=0.05, new),\n"
+        "                        fade.out(duration=0.05, old)])"
+    ) in block

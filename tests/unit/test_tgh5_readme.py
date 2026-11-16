@@ -5,17 +5,21 @@ Verify that the root README.md exists and contains the required sections,
 key factual claims, and no references to Linux-only tooling as the primary
 runtime. Also checks that a config example file exists.
 
-Test inventory (10 tests):
+Test inventory (9 tests):
   1.  README.md exists at the repository root.
   2.  README.md mentions RASTATIME as the project name.
   3.  README.md mentions LibreTime as the upstream fork source.
   4.  README.md mentions Windows 11 as the target platform.
   5.  README.md mentions Liquidsoap as the production playout engine.
-  6.  README.md mentions WASAPI (Windows audio backend).
-  7.  README.md mentions NSSM (Windows service management).
-  8.  README.md contains an installation / quick-start section.
-  9.  README.md references the AGPL-3.0 license.
-  10. config/rastatime.conf.example exists for safe version-control inclusion.
+  6.  README.md mentions NSSM (Windows service management).
+  7.  README.md contains an installation / quick-start section.
+  8.  README.md references the AGPL-3.0 license.
+  9.  config/rastatime.conf.example exists for safe version-control inclusion.
+
+RASTATIME 2026-11-16 - the WASAPI test is gone: the README was rewritten on
+2026-11-05 (eadec826) to describe production, which names no audio API (the
+local output is PortAudio, chosen by device name; in production the MME
+endpoint), so "WASAPI as the audio backend" was no longer true.
 """
 
 from __future__ import annotations
@@ -57,13 +61,6 @@ def test_readme_mentions_liquidsoap():
     text = _text().lower()
     assert "liquidsoap" in text, (
         "README.md does not mention Liquidsoap as the playout engine"
-    )
-
-
-def test_readme_mentions_wasapi():
-    """README.md must mention WASAPI as the Windows audio backend."""
-    assert "WASAPI" in _text(), (
-        "README.md does not mention WASAPI"
     )
 
 
