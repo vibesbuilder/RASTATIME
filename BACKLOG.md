@@ -8434,8 +8434,8 @@ Dateien des Typs Recordings).
 ## 🟢 Line-In-Sendungsstart: 3 s Rückfallstille und „Back on air soon“ im Stream-Titel (Befund 2026-11-16) - GEBAUT 2026-11-16 (Go A 5 s fest + B mit Probe, §23.118); LIVE seit 2026-11-16 11:52, A abgenommen 12:01 (BBC), B offen bis zum nächsten Line-In-Start
 
 Gefunden bei der Logo-Analyse (Stream-Kette) im Titelverlauf des öffentlichen AzuraCast-Relays: um 08:15
-(Start Monday Morning Show, Line-In) steht dort ein eigener Eintrag „ - Back on air soon“ (leerer Interpret).
-Liquidsoap-Log: 08:14:56 letzter Titel der Vorsendung zu Ende (`rt_cross` You Are The Heat), 08:14:59
+(Start einer Line-In-Sendung) steht dort ein eigener Eintrag „ - Back on air soon“ (leerer Interpret).
+Liquidsoap-Log: 08:14:56 letzter Titel der Vorsendung zu Ende (`rt_cross`), 08:14:59
 `Switch to silence_fallback`, 08:15:02 öffnet ffmpeg `http://127.0.0.1:8000/linein-capture` (MP3 48 kHz),
 danach `Switch to stereo.3` / `amplify.1` -> etwa 3 s Rückfallstille an der Sendungsgrenze, in denen das
 Off-Air-Paket den Off-Air-Text als ICY-Titel hinausschickt; Hörer-Displays und AzuraCast zeigen ihn kurz.
@@ -8539,3 +8539,29 @@ Operator 2026-11-16: ja - People Involved und CBA-Archiv (Legacy + Worker) zähl
 Show-Typ (§23.120 Nachtrag); vor 0088 bleibt beim Archiv die alte Regel.  Worker-Neustart nötig.
 Genre-Vorschläge 2026-11-16 in `C:/Temp/optd/genre_worklist_2026-11-16.csv` (116 Sendungen, 9 offen) - wartet auf
 Durchsicht des Operators, dann Sammel-Eintrag.
+
+## 🟡 Echte Genres je Sendung (Vorschläge 2026-11-16) - Defer (Operator 2026-11-16: liegen lassen)
+
+Nach der Übertragung der Show-Typen (§23.120) hat keine Sendung mehr ein Genre.  Vorschläge für die 116 Sendungen mit
+Episoden seit 1.11. liegen in `C:/Temp/optd/genre_worklist_2026-11-16.csv` (Vorschlag, Sicherheit 69 hoch / 29 mittel /
+9 niedrig / 9 offen, Begründung, vorbefüllte Spalte „Genre (bestätigt)“, show_ids; Wiederholungen wie ihr Original;
+Begriffe Pop, Rock, Indie, Elektronik, R&B, Weltmusik, Jazz, Klassik, Country, Reggae, Folk, Swing, Lounge, K-Pop, Mix,
+Musikmagazin, Magazin, Talk, Nachrichten, Kultur, Literatur, Gesellschaft, Politik, Umwelt, Wissen & Bildung,
+Jugend / Schulradio, Sport, Spiritualität).  Generator im Scratchpad der Sitzung (genre_suggest.py).
+Vorbedingungen: Durchsicht des Operators (offene und unsichere zuerst), dann Sammel-Eintrag in cc_show.genre je show_ids
+mit Sicherung.
+
+## 💡 Sendungs-DJ am Sendungsende automatisch trennen (Beobachtung 2026-11-16)
+
+Liquidsoap prüft die Anmeldung nur beim Verbinden; ein Sendungs-DJ bleibt verbunden und auf Sendung, bis er selbst trennt
+(Kick nur über die Oberfläche oder wenn die Episode gelöscht wird, `kick_dj_source`).  Der Sendungs-DJ-Arm steht im Bus
+über Webstream, Line-In und Sendeplan - streamt eine Schule über das Sendungsende hinaus, überdeckt sie z. B. BBC News.
+Idee: am Ende der Episode, deren Host verbunden ist, den Show-Harbor trennen (mit kurzer Nachlaufzeit) bzw. das Tor
+`show_dj_from` schließen.  Vorbedingung: Operator-Wunsch, Evaluierung mit Risiko-Punkt.
+
+**Abnahme frühe DJ-Anmeldung + Line-In, geplant 2026-11-17:** 08:15 Line-In-Start (Live-Sendung bis 09:45; Decoder-Zeit
+= Vorwärmzeit, kein `Switch to silence_fallback` am Start), 09:45 Line-In-Ende (Zombie-Meldung ja/nein) und Schul-DJ
+(Schulsendung 09:45-10:00): im Log `accepted early - waits off air until`, `source-event: show DJ waits off air`,
+Liquidsoap `Switch to show_dj` genau 09:45:00.  Vorbedingung: die Sendung hatte am 2026-11-16 KEINEN Host und kein eigenes
+Live-Login - ohne Host-Eintrag wird der Schul-Encoder die ganze Sendung über abgewiesen.
+
