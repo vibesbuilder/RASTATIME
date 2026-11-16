@@ -8486,3 +8486,30 @@ og:image.  Bitrate des AzuraCast-Mounts am 2026-11-16 vom Operator auf 320 kbit/
 Offen (Operator): Einträge bei radio-browser, airable und Audials auf die öffentliche Hörer-Adresse + Logo bringen; vor dem
 Stilllegen des alten LibreTime den Anbieter bitten, die alten Adressen (:8443/main, :8000/main) eine Zeit lang auf den
 neuen Stream umzuleiten, sonst verstummen Geräte mit alten Einträgen.
+
+## 🟡 Line-In: Zombie nach verworfenem Vorwärmen / am Sendungsende (Analyse 2026-11-16) - Defer (Operator 2026-11-16)
+
+`input.http` stoppt zweistufig (Liquidsoap 2.4.6 `ffmpeg_io.ml`): `disconnect` schließt die Verbindung und setzt
+„stopping“, erst ein weiterer Lauf der internen Connect-Aufgabe (Duppy) setzt „stopped“.  Ein Zombie hat also keine
+Verbindung mehr, pollt nicht und belegt nur ein kleines Objekt bis zum nächsten Liquidsoap-Neustart.  Produktion:
+jedes Line-In-Ende hinterlässt einen (15.11. 00:00/17:00/19:00, 16.11. 10:00), Speicherkurve normal (17-18 MB/h).
+Verworfenes Vorwärmen: seit 2026-11-10 kein einziges Mal (`Undoing pre-warm` 0).  Sichtbar nur, wenn innerhalb der
+5 s Auslaufzeit ein neuer Line-In startet (er wartet).  Möglicher Bau: eigener Auslauf-Platz, damit ein neuer Start
+nicht wartet (~30-40 Zeilen, Probe, Risiko mittel: Stop-/Auslauf-Logik mit Vorgeschichte 2026-11-01 / 2026-11-12).
+Vorbedingungen: Beobachtung Line-In-Start 2026-11-17 08:15 und -Ende 10:00 mit dem Dummy-Ausgang (§23.118) -
+verschwinden die Zombies am Sendungsende, wird das hier voraussichtlich No-Go; sonst Evaluierung neu.
+
+## 💡 Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (Operator-Idee 2026-11-16) - Evaluierung vorgelegt
+
+Anlass: Test der DJ-Funktion aus einer Schule 2026-11-16 (Sendung um 10:03 bewusst getauscht).  Der Encoder versuchte
+es ab 10:00:52 alle ~2 s (157x „not-host“, nicht gezählt), Annahme 10:07:00 mit Sendungsbeginn, auf Sendung erst
+10:07:05 (Harbor-Puffer 5 s), Abbruch 10:07:28 (5 s keine Daten, Seite der Schule).  Idee: Hosts der NÄCHSTEN Sendung
+dürfen sich bis 5 min vorher verbinden, bleiben bis zum Beginn vom Sender und sind dann pünktlich (Puffer schon voll).
+Befunde für die Bauart: (1) Liquidsoap ruft die Harbor-Anmeldung VOR der Belegt-Prüfung des Mounts auf
+(`harbor.ml handle_source_request`: Auth, dann `relay` -> `Mount_taken`) - eine Wartezeit darf deshalb erst im
+`on_connect` greifen, sonst nähme ein abgewiesener Früher den laufenden DJ vom Sender.  (2) `input.harbor` ist eine
+aktive Quelle und liest auch ungezogen weiter (`output` je Takt) - kein Dummy-Ausgang nötig.  (3) PLAYOUT behandelt
+jeden verbundenen Sendungs-DJ als „auf Sendung“ (`_dj_on_air`: Exakt-Zeit-, Vorwärm- und Titelende-Halte entfallen;
+Kick bei entfernter Zeile) - ein wartender DJ darf das erst ab Sendungsbeginn auslösen.  Grenze: solange der DJ der
+laufenden Sendung verbunden ist, kann sich niemand früh verbinden (ein Mount, eine Quelle).
+
