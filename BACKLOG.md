@@ -8456,6 +8456,14 @@ Liquidsoap öffnet den Decoder aber erst 1-2 s NACH dem Tor (08:15:00,085 -> 08:
 sieben Starts): das frische `input.http` im `source.dynamic` wird offenbar erst gezogen, wenn der Switch das Tor
 öffnet - der Webstream hat dafür die `buffer()`-Brücke mit eigener Uhr, der Line-In nicht.  Dazu kam um 08:15 ~1 s
 Unterfüllung der Vorsendung (Lücken < 5 s füllt der Puffer-Track bewusst nicht).
+**Gebaut 2026-11-16 (`c0a899d1`, §23.118):** A `offair_after()` (5 s, Queue leer + Bus auf scheduled, Titel
+bricht ab), B `output.dummy(id="linein_http_warm")` auf dem Line-In-Arm.  Replik-Proben bestanden
+(`C:/Temp/optd/offair_delay_probe/`, `C:/Temp/optd/linein_warm_probe/`).  Abnahme nach PLAYOUT-Neustart + nächstem
+Liquidsoap-Neustart: nächste Line-In-Starts (Decoder-Zeit = Vorwärmzeit, kein `Switch to silence_fallback` am Start)
+und BBC-Stunden (kein „Back on air soon“ im Live Text).  Mitbeobachten: heute endet JEDER Line-In mit
+„did not stop within 5 s (status stopping)“ (15.11. 00:00/17:00/19:00, 16.11. 10:00; harmlos, kein 404-Pollen) - die
+Replik zeigt das nicht; prüfen, ob es mit dem Dummy-Ausgang verschwindet.  Randfall laut Probe: ein verworfener
+Vorwärm-Eingang (nie auf Sendung) hinterlässt denselben „stopping“-Zombie, ein Start in diesen 5 s wartet.
 
 ## 💡 Senderverzeichnisse nach dem Wechsel auf RASTATIME: Logo fehlt auf manchen Geräten (Analyse 2026-11-16) - Operator-Aufgabe, kein Code
 
