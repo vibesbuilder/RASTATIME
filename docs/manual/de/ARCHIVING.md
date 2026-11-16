@@ -257,7 +257,7 @@ Nie automatisch archiviert werden:
 * Episoden, die **vor** dem Anhaken endeten - nichts wird nachgeholt;
   ältere Episoden archivieren Sie von Hand;
 * Wiederholungen (Rebroadcasts) und Sendungen, deren **Show-Typ** als
-  Wiederholung zählt (Settings → Track-/Show-Typen; bis 2026-11-16 die als
+  Wiederholung zählt (Settings → Show-Typen; bis 2026-11-16 die als
   *Wiederholung einer anderen Sendung* angelegten);
 * Episoden mit **Diese Episode nicht automatisch archivieren** (§4);
 * Episoden, die schon archiviert oder verknüpft sind oder die jemand von

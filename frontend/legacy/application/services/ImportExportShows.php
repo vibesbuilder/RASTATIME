@@ -56,7 +56,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
         return [
             'name' => 'show name (required)',
             'url, genre, category, description' => 'free text (category: since 2026-11-10, evaluated in Analytics -> Programme Minutes)',
-            'show_type' => 'label or code of a show type (Settings -> Track/Show Types, since 2026-11-16); empty = none, unknown = error',
+            'show_type' => 'label or code of a show type (Settings -> Show Types, since 2026-11-16); empty = none, unknown = error',
             'start_date, start_time' => 'first broadcast: YYYY-MM-DD and HH:MM (station timezone unless "timezone" is set)',
             'end_date, end_time' => 'end of that broadcast; end_date may be empty (same day, or next day when end_time <= start_time)',
             'timezone' => 'IANA name, e.g. Europe/Berlin; empty = station default',

@@ -26,7 +26,8 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 | **Utilisateurs** | Créer, modifier et supprimer des utilisateurs, définir leur type. | Admin | [Utilisateurs et rôles](./USERS_AND_ROLES.md) §3 |
 | **Flux** | Flux de sortie (débit, point de montage, codec), entrées pour les connexions en direct, identifiant Master. | Admin | [Flux](./STREAMS.md) |
 | **Machine locale** | Carte son, dossier et format d'import, dossier et format d'enregistrement, emplacement de la bibliothèque. | Admin | [Machine locale](./LOCAL_MACHINE.md) |
-| **Types de piste/d'émission** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux et leur analyse des points de repère à l'import ; en dessous les types d'émission (depuis le 2026-11-16, voir ci-dessous). | Admin | [Bibliothèque](./LIBRARY.md) |
+| **Types de piste** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux et leur analyse des points de repère à l'import. | Admin | [Bibliothèque](./LIBRARY.md) |
+| **Types d'émission** | Les types d'émission pour Modifier l'émission → What → **Type d'émission** et les rapports (depuis le 2026-11-16, voir ci-dessous). | Admin | Ce chapitre §1 |
 | **Auto DJ** | Remplissage des trous et complément des émissions incomplètes. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Show Templates** | Aperçu des modèles d'émission enregistrés : renommer, supprimer. | Program Manager, Admin | [Modèles d'émission](./SHOW_TEMPLATES.md) |
 | **Archivage** | Producteurs des émissions - une personne ou une équipe chacune (nom, compte facultatif ; un par émission, choisi sous Archivage) ; pour les Admins, en dessous, les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi, délai de l'archivage automatique. Jusqu'au 2026-11-03, deux entrées, *Équipe de rédaction* et *Comptes CBA*. | Program Manager (producteurs), Admin | [Archivage](./ARCHIVING.md) |
@@ -37,8 +38,8 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 
 ### Types d'émission (depuis le 2026-11-16)
 
-La page **Types de piste/d'émission** (*Types de piste* jusqu'au
-2026-11-16) liste les types d'émission sous les types de piste.  Une
+La page **Types d'émission** (sous Types de piste) liste les types
+d'émission.  Une
 émission en reçoit un sous Modifier l'émission → What → **Type
 d'émission** (voir [Calendrier](./CALENDAR.md)).
 

@@ -8,10 +8,9 @@
 	top: 20px;
 }
 
-/* RASTATIME 2026-11-16 - show types below the track types (Track/Show Types) */
+/* RASTATIME 2026-11-16 - Settings -> Show Types */
 .showtype-management {
 	min-width: 910px;
-	margin-top: 16px;
 }
 .showtype-management h2 {
 	font-size: 1.7em;

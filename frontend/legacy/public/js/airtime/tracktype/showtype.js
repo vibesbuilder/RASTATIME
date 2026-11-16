@@ -1,8 +1,7 @@
-// RASTATIME 2026-11-16 - Settings -> Track/Show Types: the show type list
+// RASTATIME 2026-11-16 - Settings -> Show Types: the show type list
 // (ARCHITECTURE 23.120).  The panel is server-rendered
 // (tracktype/showtypes.phtml); every save / delete answers the re-rendered
-// panel, which replaces #showtype_panel.  Delegated handlers, because a
-// track type save replaces the whole #content.
+// panel, which replaces #showtype_panel (delegated handlers).
 
 function rtShowtypeTips() {
   $("#showtype_panel")

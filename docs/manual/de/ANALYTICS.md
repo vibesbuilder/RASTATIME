@@ -180,7 +180,7 @@ Episoden markierter Sendungen, die im Jahr gesendet wurden - beendet,
 nicht gelöscht, keine alte Rebroadcast-Episode - mit ihrer **geplanten**
 Dauer, je Sendung und Monat auf Minuten gerundet.  Sendungen, deren
 **Show-Typ** *Zählt als Wiederholung* hat (Settings →
-[Track-/Show-Typen](./SETTINGS.md), seit 2026-11-16; vorher die als
+[Show-Typen](./SETTINGS.md), seit 2026-11-16; vorher die als
 [Wiederholung einer anderen Sendung](./CALENDAR.md) angelegten),
 stehen in einer eigenen Spalte (Erstausstrahlungen gegenüber
 Wiederholungen), weil die meisten Behörden sie getrennt abfragen.
@@ -233,7 +233,7 @@ Musik kommt, die in einem Jahr auf Sendung ging - die Musikquote des
 Senders.  Je ein Jahr (Senderzeit; das laufende Jahr bis heute).
 
 Gezählt werden die Ausstrahlungen in der Playout History (§ 1) von
-Tracks, deren Track-Typ den Code `music` hat (Settings → Track/Show Types);
+Tracks, deren Track-Typ den Code `music` hat (Settings → Track Types);
 Tracks eines anderen Typs oder ohne Typ zählen nicht.  Jede
 Ausstrahlung zählt mit dem Land ihres Tracks, wie es heute eingetragen
 ist (Edit Track → **Land**, beim Import aus dem Tag `Country` gelesen -

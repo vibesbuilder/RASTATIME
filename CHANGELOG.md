@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Show-Typ je Sendung, Liste unter Settings → Track/Show Types (2026-11-16, Operator-Go 2026-11-16)** -
+- **Show-Typ je Sendung, Liste unter Settings → Show Types (2026-11-16, Operator-Go 2026-11-16)** -
   neues Dropdown **Show Type** in Sendung bearbeiten → What (neben Genre); die Typen pflegt man unter
-  dem umbenannten Menüpunkt *Track/Show Types* unterhalb der Track Types (Code, Bezeichnung, Haken
-  *Counts as repeat*, Reihenfolge, Anzahl Sendungen).  Migration 0088 (`cc_show_types`,
+  dem eigenen Menüpunkt *Show Types* direkt unter Track Types (Code, Bezeichnung, Haken *Counts as
+  repeat*, Reihenfolge, Anzahl Sendungen; zuerst als Bereich auf der Track-Types-Seite, auf Wunsch des
+  Operators noch am selben Tag getrennt).  Migration 0088 (`cc_show_types`,
   `cc_show.show_type_id`) bringt Music, Live, Recording, Repeat (zählt als Wiederholung), News und
   Partner show mit.  Import/Export-Spalte `show_type`, Sendungsvorlagen übernehmen den Typ.
   `manage.py transfer_genre_to_show_type` überträgt bisher im Genre-Feld geführte Typen (Probelauf,

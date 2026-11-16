@@ -24,7 +24,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
     </form>
 
     <p class="rt-participants-note">
-        <?php echo _("Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows whose show type counts as a repeat (Settings → Track/Show Types) are listed in the repeats column."); ?>
+        <?php echo _("Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows whose show type counts as a repeat (Settings → Show Types) are listed in the repeats column."); ?>
     </p>
     <?php if (!$this->columnReady): ?>
         <p class="rt-participants-warn"><?php echo _("The column for \"Own production\" is missing - run the database migration 0077 first. Until then every show counts as \"other\"."); ?></p>

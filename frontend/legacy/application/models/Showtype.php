@@ -3,7 +3,7 @@
 /**
  * RASTATIME 2026-11-16 - show types (ARCHITECTURE 23.120).
  *
- * A show has one type out of a list kept under Settings -> Track/Show Types
+ * A show has one type out of a list kept under Settings -> Show Types
  * (cc_show_types, migration 0088).  Analytics -> Programme Minutes counts a
  * show as a repeat when its type is marked "counts as repeat".  Raw SQL like
  * the other late columns: the readers check the table first and read

@@ -186,7 +186,7 @@ les épisodes des émissions cochées diffusés dans l'année - terminés, non
 supprimés, sans ancienne rediffusion - avec leur durée **planifiée**,
 arrondie en minutes par émission et par mois.  Les émissions dont le
 **type d'émission** est marqué *Compte comme rediffusion* (Paramètres →
-[Types de piste/d'émission](./SETTINGS.md), depuis le 2026-11-16 ;
+[Types d'émission](./SETTINGS.md), depuis le 2026-11-16 ;
 avant, celles configurées comme [Rediffusion d'une autre
 émission](./CALENDAR.md)) ont leur propre colonne (premières diffusions /
 rediffusions), car la plupart des autorités les déclarent séparément.  Les émissions sans la case
@@ -241,7 +241,7 @@ Une année à la fois (heure de la station ; l'année en cours jusqu'à
 aujourd'hui).
 
 Sont comptées les diffusions de la Playout History (§ 1) des pistes
-dont le type a le code `music` (Settings → Track/Show Types) ; les pistes
+dont le type a le code `music` (Settings → Track Types) ; les pistes
 d'un autre type ou sans type ne comptent pas.  Chaque diffusion compte
 avec le pays de sa piste tel qu'il est aujourd'hui (Edit Track →
 **Pays**, lu dans le tag `Country` à l'import - voir

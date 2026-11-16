@@ -574,7 +574,7 @@ final class LocaleController extends Zend_Controller_Action
             'No matching track types found' => _('No matching track types found'),
             'Enabled' => _('Enabled'),
             'Disabled' => _('Disabled'),
-            // RASTATIME 2026-11-16 - show types (Settings -> Track/Show Types, showtype.js)
+            // RASTATIME 2026-11-16 - show types (Settings -> Show Types, showtype.js)
             'Delete this show type? The shows using it keep no show type.' => _('Delete this show type? The shows using it keep no show type.'),
             'Delete this show type?' => _('Delete this show type?'),
             'Cancel upload' => _('Cancel upload'),

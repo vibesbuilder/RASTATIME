@@ -30,10 +30,6 @@ class TracktypeController extends Zend_Controller_Action
         }
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/tracktypes.css'));
-        // RASTATIME 2026-11-16 - show types on the same page (Track/Show Types)
-        $this->view->headScript()->appendFile(Assets::url('js/airtime/tracktype/showtype.js'), 'text/javascript');
-        $this->view->showTypesReady = Application_Model_Showtype::ready();
-        $this->view->showTypes = Application_Model_Showtype::all();
 
         $form = new Application_Form_AddTracktype();
 
@@ -119,6 +115,20 @@ class TracktypeController extends Zend_Controller_Action
         // every other call rendered get-tracktype-data.phtml, which echoed
         // the array and died with "Array to string conversion" (HTTP 500).
         $this->_helper->json->sendJson(['entries' => Application_Model_Tracktype::GetTracktypeData($id)]);
+    }
+
+    /**
+     * RASTATIME 2026-11-16 - Settings -> Show Types: the show type list on a
+     * page of its own (operator; it sat below the track types first).
+     */
+    public function showTypesAction()
+    {
+        SessionHelper::reopenSessionForWriting();
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
+        $this->view->headLink()->appendStylesheet(Assets::url('css/tracktypes.css'));
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/tracktype/showtype.js'), 'text/javascript');
+        $this->view->showTypesReady = Application_Model_Showtype::ready();
+        $this->view->showTypes = Application_Model_Showtype::all();
     }
 
     /**

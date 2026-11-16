@@ -8525,8 +8525,8 @@ Sendung (Encoder „verbunden“, Kopfbereich „wartet bis“, auf Sendung exak
 
 Anlass: Programme Minutes zählte Wiederholungen über „Repeat of another show“ (Inhaltskopie).  Im Genre-Feld
 standen bisher Sendungstypen (Musik 116, Music 61, News 54, Aufzeichnung 53, Live 25, Wiederholung 25,
-Partnershow 22; 497 leer).  Entscheidungen 2026-11-16: Liste auf der Track-Types-Seite, Menüpunkt
-„Track/Show Types“; Startliste Musik, Live, Aufzeichnung, Wiederholung (zählt als Wiederholung), News,
+Partnershow 22; 497 leer).  Entscheidungen 2026-11-16: Liste zuerst auf der Track-Types-Seite („Track/Show Types“),
+am Nachmittag auf Wunsch getrennt: eigener Menüpunkt „Show Types“ unter Track Types; Startliste Musik, Live, Aufzeichnung, Wiederholung (zählt als Wiederholung), News,
 Partnershow; Music+Musik -> Musik; Wiederholung nur über den Haken; Genre nach der Übernahme leeren.
 Gebaut: Migration 0088, `Application_Model_Showtype`, Settings-Bereich, Dropdown im Sendungsformular, Bericht
 (Wiederholung über Typ, Gruppierung Show type), Import/Export `show_type`, `manage.py transfer_genre_to_show_type`.

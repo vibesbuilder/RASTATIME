@@ -261,7 +261,7 @@ Jamais archivés automatiquement :
 * les épisodes terminés **avant** que la case soit cochée - rien n'est
   rattrapé ; archivez les épisodes plus anciens à la main ;
 * les rediffusions et les émissions dont le **type d'émission** compte comme
-  rediffusion (Paramètres → Types de piste/d'émission ; jusqu'au 2026-11-16
+  rediffusion (Paramètres → Types d'émission ; jusqu'au 2026-11-16
   les émissions créées comme *Rediffusion d'une autre émission*) ;
 * les épisodes avec **Ne pas archiver cet épisode automatiquement**
   (§4) ;

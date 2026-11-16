@@ -11031,3 +11031,11 @@ auto archive, not own productions) - no change in archive or people
 counts today.  Probe `C:/Temp/optd/archive_repeat_probe.php` 6/6, worker
 test, live read of the candidate query (0 candidates).  "Repeat of" stays
 the content copy (RepeatFillService, Auto DJ) only.
+
+**Addendum 2026-11-16 (operator): Show Types is a menu item of its own.**
+The panel moved from the Track Types page (briefly "Track/Show Types") to
+Settings -> **Show Types** directly below Track Types
+(`TracktypeController::showTypesAction`, view `tracktype/show-types.phtml`
+rendering the same `showtypes.phtml`; ACL resource `tracktype`); the menu
+item Track Types has its old name again (DE translation corrected to
+"Track-Typen").

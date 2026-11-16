@@ -185,11 +185,19 @@ $pages[] = [
             'resource' => 'preference',
         ],
         [
-            // RASTATIME 2026-11-16 - the show types live on the same page
-            'label' => 'Track/Show Types',
+            'label' => 'Track Types',
             'module' => 'default',
             'controller' => 'tracktype',
             'action' => 'add-tracktype',
+            'resource' => 'tracktype',
+        ],
+        [
+            // RASTATIME 2026-11-16 - the show types (cc_show_types, migration
+            // 0088): their own page below Track Types (operator)
+            'label' => 'Show Types',
+            'module' => 'default',
+            'controller' => 'tracktype',
+            'action' => 'show-types',
             'resource' => 'tracktype',
         ],
         [

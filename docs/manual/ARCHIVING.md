@@ -241,7 +241,7 @@ Never archived automatically:
 * episodes that ended **before** the box was ticked - nothing is caught
   up; archive older episodes by hand;
 * rebroadcasts and shows whose **Show Type** counts as a repeat (Settings →
-  Track/Show Types; until 2026-11-16 shows set up as *Repeat of another show*);
+  Show Types; until 2026-11-16 shows set up as *Repeat of another show*);
 * episodes with **Do not archive this episode automatically** (§4);
 * episodes that are archived or linked already, or that someone started
   by hand - the automatic run leaves those alone;

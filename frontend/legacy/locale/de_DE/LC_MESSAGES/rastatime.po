@@ -729,7 +729,7 @@ msgstr "Benutzer"
 
 #: application/configs/navigation.php:92
 msgid "Track Types"
-msgstr "Track-Typ"
+msgstr "Track-Typen"
 
 #: application/configs/navigation.php:99
 msgid "Streams"
@@ -8716,3 +8716,16 @@ msgstr "Nicht automatisch archiviert: Rebroadcasts und Sendungen, deren Show-Typ
 
 msgid "People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Extras → People Involved in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and shows whose show type counts as a repeat (Settings → Track/Show Types) count nothing because their people were counted with the original."
 msgstr "Teilnehmende an den Eigenproduktionen des Senders, für die Jahresstatistik: die Moderierenden einer Sendung zählen einmal pro Jahr (Sendung ändern → What → \"Eigenproduktion\" → \"Moderierende\"), die Gäste jeder Episode werden dazugezählt (Extras → Teilnehmende im Kalender → \"Gäste\"). Es zählen nur Sendungen mit \"Eigenproduktion\"; gezählt werden gesendete Episoden, alte Wiederholungen (Rebroadcast) bleiben außen vor, und Sendungen, deren Show-Typ als Wiederholung zählt (Settings → Track-/Show-Typen), zählen nichts, weil ihre Personen schon beim Original gezählt sind."
+
+#: RASTATIME 2026-11-16 Show Types as a page of its own
+msgid "Show Types"
+msgstr "Show-Typen"
+
+msgid "Chosen from the list under Settings → Show Types. Analytics → Programme Minutes adds up the minutes per show type and counts a show as a repeat when its type is marked \"Counts as repeat\"."
+msgstr "Auswahl aus der Liste unter Settings → Show-Typen. Analytics → Programme Minutes summiert die Minuten je Show-Typ und zählt eine Sendung als Wiederholung, wenn ihr Typ „Zählt als Wiederholung“ hat."
+
+msgid "Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows whose show type counts as a repeat (Settings → Show Types) are listed in the repeats column."
+msgstr "Minuten der Eigenproduktionen des Senders, für die Meldung an die Behörden. \"Eigenproduktion\" in der Sendung ankreuzen (Edit Show → What); gezählt werden die im Jahr gesendeten Episoden mit ihrer geplanten Dauer. Sendungen, deren Show-Typ als Wiederholung zählt (Settings → Show-Typen), stehen in der Spalte Wiederholungen."
+
+msgid "People involved in the station's own productions, for the yearly statistics: the hosts of a show count once per year (Edit Show → What → \"Own production\" → \"Hosts involved\"), the guests of every episode add up (Extras → People Involved in the calendar → \"Guests involved\"). Only shows with \"Own production\" count; counted are episodes that aired, legacy rebroadcasts are left out, and shows whose show type counts as a repeat (Settings → Show Types) count nothing because their people were counted with the original."
+msgstr "Teilnehmende an den Eigenproduktionen des Senders, für die Jahresstatistik: die Moderierenden einer Sendung zählen einmal pro Jahr (Sendung ändern → What → \"Eigenproduktion\" → \"Moderierende\"), die Gäste jeder Episode werden dazugezählt (Extras → Teilnehmende im Kalender → \"Gäste\"). Es zählen nur Sendungen mit \"Eigenproduktion\"; gezählt werden gesendete Episoden, alte Wiederholungen (Rebroadcast) bleiben außen vor, und Sendungen, deren Show-Typ als Wiederholung zählt (Settings → Show-Typen), zählen nichts, weil ihre Personen schon beim Original gezählt sind."

@@ -12,7 +12,7 @@
  * their scheduled duration; repeats are kept in a column of their own
  * because authorities usually report first broadcasts and repeats
  * separately.  RASTATIME 2026-11-16 (operator): a repeat is a show whose
- * show type is marked "counts as repeat" (Settings -> Track/Show Types,
+ * show type is marked "counts as repeat" (Settings -> Show Types,
  * cc_show_types, migration 0088) - no longer a show set up as "Repeat of
  * another show", which only copies content.  Before 0088 nothing counts
  * as a repeat.

@@ -26,7 +26,8 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 | **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
 | **Streams** | Ausgabe-Streams (Bitrate, Mount, Codec), Eingänge für Live-Einwahlen, Master-Login. | Admin | [Streams](./STREAMS.md) |
 | **Lokale Maschine** | Soundkarte, Import-Ordner und -Format, Aufnahme-Ordner und -Format, Speicherort der Bibliothek. | Admin | [Lokale Maschine](./LOCAL_MACHINE.md) |
-| **Track-/Show-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import; darunter die Show-Typen (seit 2026-11-16, siehe unten). | Admin | [Bibliothek](./LIBRARY.md) |
+| **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import. | Admin | [Bibliothek](./LIBRARY.md) |
+| **Show-Typen** | Die Show-Typen für Sendung bearbeiten → What → **Show-Typ** und die Auswertungen (seit 2026-11-16, siehe unten). | Admin | Dieses Kapitel §1 |
 | **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Show Templates** | Übersicht der gespeicherten Show-Vorlagen: umbenennen, löschen. | Program Manager, Admin | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
 | **Archivierung** | Produzenten der Sendungen - je eine Person oder ein Team (Name, optional Login; einer je Sendung, unter Archivierung gewählt); für Admins darunter die cba.media-Benutzer, unter denen die Sendungen archiviert werden (Benutzername, Anwendungspasswort), Verbindungstest, Upload-Grenze, Wartezeit des automatischen Archivierens. Bis 2026-11-03 zwei Einträge, *Redaktionsteam* und *CBA-Konten*. | Program Manager (Produzenten), Admin | [Archivierung](./ARCHIVING.md) |
@@ -37,8 +38,8 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 
 ### Show-Typen (seit 2026-11-16)
 
-Die Seite **Track-/Show-Typen** (bis 2026-11-16 *Track-Typen*) führt
-unter den Track-Typen die Show-Typen.  Eine Sendung bekommt einen davon
+Die Seite **Show-Typen** (unter Track-Typen) führt die Show-Typen.
+Eine Sendung bekommt einen davon
 unter Sendung bearbeiten → What → **Show-Typ** (siehe
 [Kalender](./CALENDAR.md)).
 

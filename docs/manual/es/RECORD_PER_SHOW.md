@@ -222,7 +222,7 @@ en cuanto se cierra su archivo de grabación:
 - El tipo de pista **Recordings** lleva el fundido del cambio de
   programa (1 s por defecto) en lugar del fundido de 3 s entre pistas,
   para que una repetición construida con fragmentos de grabación conserve
-  la duración del original.  Ajustable en Ajustes → Track/Show Types.
+  la duración del original.  Ajustable en Ajustes → Track Types.
 
 Cómo funciona: el playout informa del archivo cerrado a la aplicación
 web, que comprueba que la ruta está dentro de la carpeta Show

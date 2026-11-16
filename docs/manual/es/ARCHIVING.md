@@ -255,7 +255,7 @@ Nunca se archivan automáticamente:
 * los episodios que terminaron **antes** de marcar la casilla - no se
   recupera nada; archive a mano los episodios anteriores;
 * las retransmisiones y los programas cuyo **tipo de programa** cuenta como
-  repetición (Ajustes → Tipos de pista/programa; hasta el 2026-11-16 los
+  repetición (Ajustes → Tipos de programa; hasta el 2026-11-16 los
   creados como *Repetición de otro programa*);
 * los episodios con **No archivar este episodio automáticamente** (§4);
 * los episodios ya archivados o vinculados, o cuya subida alguien inició
