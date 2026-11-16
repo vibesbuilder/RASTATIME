@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-16
+
 ### Added
 
 - **Show-Typ je Sendung, Liste unter Settings → Show Types (2026-11-16, Operator-Go 2026-11-16)** -
@@ -11329,7 +11331,8 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.3.0...v1.4.0
