@@ -8521,7 +8521,7 @@ Reconciler `var.get show_dj_from`; Liquidsoap `show_dj_hold_pending` (Auth) -> `
 lässt den laufenden DJ, Trennen setzt zurück), Playout 942 grün.  Abnahme: geplanter Schultest 3-5 min vor einer
 Sendung (Encoder „verbunden“, Kopfbereich „wartet bis“, auf Sendung exakt zum Beginn).
 
-## 🟢 Show-Typ je Sendung, Programme Minutes zählt Wiederholungen über den Typ (Operator-Wunsch 2026-11-16) - GEBAUT 2026-11-16 (§23.120)
+## 🟢 Show-Typ je Sendung, Programme Minutes zählt Wiederholungen über den Typ (Operator-Wunsch 2026-11-16) - LIVE 2026-11-16 (§23.120, `a4b92aa3`)
 
 Anlass: Programme Minutes zählte Wiederholungen über „Repeat of another show“ (Inhaltskopie).  Im Genre-Feld
 standen bisher Sendungstypen (Musik 116, Music 61, News 54, Aufzeichnung 53, Live 25, Wiederholung 25,
@@ -8530,8 +8530,10 @@ Partnershow 22; 497 leer).  Entscheidungen 2026-11-16: Liste auf der Track-Types
 Partnershow; Music+Musik -> Musik; Wiederholung nur über den Haken; Genre nach der Übernahme leeren.
 Gebaut: Migration 0088, `Application_Model_Showtype`, Settings-Bereich, Dropdown im Sendungsformular, Bericht
 (Wiederholung über Typ, Gruppierung Show type), Import/Export `show_type`, `manage.py transfer_genre_to_show_type`.
-Vergleich 2026 alt/neu identisch.  Offen (Operator): Migration 0088, Apache-Neustart; danach ich: Probelauf,
-Bezeichnungen umbenennen, Übertragung mit Sicherung + `--clear-genre`.  Nächster Schritt: echte Genres je
+Vergleich 2026 alt/neu identisch.  Live 2026-11-16: Migration 0088 + Apache-Neustart 13:54 (Operator); Typen
+umbenannt, 358 Sendungen übertragen, Genre geleert (Sicherung `C:/Temp/optd/show_genre_backup_2026-11-16.json`,
+Tag `live-2026-11-16d`); Programme Minutes 2026 danach 7.407 / 1.766 Minuten (unverändert).  Arbeitsliste für die
+echten Genres: 121 Sendungsnamen (236 Datensätze) mit Episoden seit 1.11., `C:/Temp/optd/genre_worklist_2026-11-16.csv`.  Nächster Schritt: echte Genres je
 Sendung vorschlagen (Operator prüft, dann Sammel-Eintrag).
 Offene Frage an den Operator: sollen auch People Involved (Wiederholungen zählen keine Personen) und das
 CBA-Archiv (Wiederholungen werden nicht hochgeladen) den Show-Typ statt „Repeat of“ verwenden?

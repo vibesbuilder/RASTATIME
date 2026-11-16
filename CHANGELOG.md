@@ -18,7 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `manage.py transfer_genre_to_show_type` überträgt bisher im Genre-Feld geführte Typen (Probelauf,
   Sicherung, `--clear-genre`).  Neue PHP-Klasse: bei Updates `composer dump-autoload`.  Legacy-Probe
   28/28, API 276.  Manual SETTINGS / CALENDAR / ANALYTICS / IMPORT_EXPORT x4, ARCHITECTURE 0.148
-  (§23.120).
+  (§23.120).  `a4b92aa3`.  Migration 0088 live 2026-11-16 (Operator), Typen umbenannt (Musik, Live,
+  Aufzeichnung, Wiederholung, News, Partnershow), 358 Sendungen aus dem Genre-Feld übertragen und das
+  Genre geleert (Sicherung `C:/Temp/optd/show_genre_backup_2026-11-16.json`); Programme Minutes 2026
+  danach unverändert 7.407 / 1.766 Minuten.
 
 - **Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (2026-11-16, Operator-Go
   2026-11-16 nach dem DJ-Test aus einer Schule)** - ein Host der NÄCHSTEN Sendung (Stations-Login
