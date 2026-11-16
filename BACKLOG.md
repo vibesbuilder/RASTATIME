@@ -8431,7 +8431,7 @@ Aufwand C+D ~1,5-2 Tage, ~10 Dateien, Manual x4; Risiko niedrig bis
 mittel (neuer öffentlicher Endpunkt: nur signierte, befristete Links auf
 Dateien des Typs Recordings).
 
-## 🟢 Line-In-Sendungsstart: 3 s Rückfallstille und „Back on air soon“ im Stream-Titel (Befund 2026-11-16) - GEBAUT 2026-11-16 (Go A 5 s fest + B mit Probe, §23.118); aktiv nach PLAYOUT-Neustart ab dem nächsten Liquidsoap-Neustart, Abnahme offen
+## 🟢 Line-In-Sendungsstart: 3 s Rückfallstille und „Back on air soon“ im Stream-Titel (Befund 2026-11-16) - GEBAUT 2026-11-16 (Go A 5 s fest + B mit Probe, §23.118); LIVE seit 2026-11-16 11:52, A abgenommen 12:01 (BBC), B offen bis zum nächsten Line-In-Start
 
 Gefunden bei der Logo-Analyse (Stream-Kette) im Titelverlauf des öffentlichen AzuraCast-Relays: um 08:15
 (Start Monday Morning Show, Line-In) steht dort ein eigener Eintrag „ - Back on air soon“ (leerer Interpret).
@@ -8464,6 +8464,12 @@ und BBC-Stunden (kein „Back on air soon“ im Live Text).  Mitbeobachten: heut
 „did not stop within 5 s (status stopping)“ (15.11. 00:00/17:00/19:00, 16.11. 10:00; harmlos, kein 404-Pollen) - die
 Replik zeigt das nicht; prüfen, ob es mit dem Dummy-Ausgang verschwindet.  Randfall laut Probe: ein verworfener
 Vorwärm-Eingang (nie auf Sendung) hinterlässt denselben „stopping“-Zombie, ein Start in diesen 5 s wartet.
+**Live 2026-11-16 11:52:** der PLAYOUT-Neustart (Operator) hat Liquidsoap wegen des geänderten Skripts SOFORT
+mitgestartet („Planned Liquidsoap restart (quiet moment: rastatime.liq changed at the playout start)“, nssm exit 1
+abgefangen) - ~12 s Unterbrechung 11:52:13-11:52:26 statt ~1 s (meine Ansage „lädt erst nachts“ war falsch).
+**A abgenommen 12:01 (BBC):** Tor 12:01:05,988, `Switch to amplify` vor dem Fall der Queue in `silence_fallback`
+(12:01:06, unter dem Webstream, Marke unterdrückt); Live Text blieb beim Label „Sendername - BBC News (Live)“, kein
+„Back on air soon“, öffentlicher Titelverlauf ebenfalls ohne (nur 11:52:28 beim Neustart selbst, gewollt).
 
 ## 💡 Senderverzeichnisse nach dem Wechsel auf RASTATIME: Logo fehlt auf manchen Geräten (Analyse 2026-11-16) - Operator-Aufgabe, kein Code
 
