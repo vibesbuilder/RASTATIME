@@ -8810,3 +8810,95 @@ msgstr "Las pistas de este tipo reciben Energy, Brightness, BPM y Key medidos un
 #, c-format
 msgid "waiting until %s"
 msgstr "espera hasta %s"
+
+#: RASTATIME 2026-11-16 show types (Settings -> Track/Show Types, show form, Programme Minutes)
+msgid "Track/Show Types"
+msgstr "Tipos de pista/programa"
+
+msgid "Manage Show Types"
+msgstr "Gestionar tipos de programa"
+
+msgid "New Show Type"
+msgstr "Nuevo tipo de programa"
+
+msgid "Code"
+msgstr "Código"
+
+msgid "Counts as repeat"
+msgstr "Cuenta como repetición"
+
+msgid "Counts as repeat:"
+msgstr "Cuenta como repetición:"
+
+msgid "Order"
+msgstr "Orden"
+
+msgid "Order:"
+msgstr "Orden:"
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "(none)"
+msgstr "(ninguno)"
+
+msgid "No show types yet."
+msgstr "Todavía no hay tipos de programa."
+
+msgid "Show Type:"
+msgstr "Tipo de programa:"
+
+msgid "Show type"
+msgstr "Tipo de programa"
+
+msgid "No show type"
+msgstr "Sin tipo de programa"
+
+msgid "By show type, genre and category"
+msgstr "Por tipo de programa, género y categoría"
+
+msgid "POST only."
+msgstr "Solo POST."
+
+msgid "Delete this show type?"
+msgstr "¿Eliminar este tipo de programa?"
+
+msgid "Delete this show type? The shows using it keep no show type."
+msgstr "¿Eliminar este tipo de programa? Los programas que lo usan quedan sin tipo."
+
+msgid "The show types are not available yet (database migration 0088 pending)."
+msgstr "Los tipos de programa aún no están disponibles (migración de base de datos 0088 pendiente)."
+
+msgid "The show types are available once database migration 0088 has run."
+msgstr "Los tipos de programa están disponibles en cuanto se ejecute la migración de base de datos 0088."
+
+msgid "Code: 1 to 16 lower-case letters, digits, \"-\" or \"_\"."
+msgstr "Código: de 1 a 16 letras minúsculas, cifras, \"-\" o \"_\"."
+
+msgid "Label: 1 to 64 characters."
+msgstr "Etiqueta: de 1 a 64 caracteres."
+
+msgid "Order: a whole number."
+msgstr "Orden: un número entero."
+
+msgid "Code: another show type uses it already."
+msgstr "Código: otro tipo de programa ya lo usa."
+
+#, c-format
+msgid "unknown show type \"%s\""
+msgstr "tipo de programa desconocido \"%s\""
+
+msgid "The type of a show, chosen under Edit Show next to Genre. Analytics → Programme Minutes counts a show as a repeat when its type is marked \"Counts as repeat\", and adds up the minutes per show type."
+msgstr "El tipo de un programa, elegido en Editar programa junto al género. Analytics → Programme Minutes cuenta un programa como repetición cuando su tipo está marcado «Cuenta como repetición» y suma los minutos por tipo de programa."
+
+msgid "Shows of this type count as repeats in Analytics → Programme Minutes (own productions: first broadcast or repeat). The \"Repeat of another show\" setting of a show only copies content and does not count."
+msgstr "Los programas de este tipo cuentan como repeticiones en Analytics → Programme Minutes (producciones propias: primera emisión o repetición). El ajuste «Repetición de otro programa» solo copia contenido y no cuenta."
+
+msgid "Chosen from the list under Settings → Track/Show Types. Analytics → Programme Minutes adds up the minutes per show type and counts a show as a repeat when its type is marked \"Counts as repeat\"."
+msgstr "Se elige de la lista en Settings → Tipos de pista/programa. Analytics → Programme Minutes suma los minutos por tipo de programa y cuenta un programa como repetición cuando su tipo está marcado «Cuenta como repetición»."
+
+msgid "The show types are missing - run the database migration 0088 first. Until then no show counts as a repeat."
+msgstr "Faltan los tipos de programa - ejecute primero la migración de base de datos 0088. Hasta entonces ningún programa cuenta como repetición."
+
+msgid "Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows whose show type counts as a repeat (Settings → Track/Show Types) are listed in the repeats column."
+msgstr "Minutos de las producciones propias de la emisora, para los informes a las autoridades. Marque \"Producción propia\" en el programa (Edit Show → What); se cuentan los episodios emitidos en el año con su duración prevista. Los programas cuyo tipo cuenta como repetición (Settings → Tipos de pista/programa) aparecen en la columna de repeticiones."

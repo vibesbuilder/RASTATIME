@@ -161,15 +161,18 @@ to it explains it in short; one-off or recurring, templates and
 Import/Export carry it as `own_production`).  The page counts the episodes of flagged shows that
 aired in the year - ended, not deleted, no legacy rebroadcast - with
 their **scheduled** duration, rounded to minutes per show and month.
-Shows set up as [Repeat of another show](./CALENDAR.md) are kept in a
-column of their own (first broadcasts vs. repeats), because most
-authorities report them separately.  Shows without the flag appear
+Shows whose **Show Type** is marked *Counts as repeat* (Settings →
+[Track/Show Types](./SETTINGS.md), since 2026-11-16; before, shows set
+up as [Repeat of another show](./CALENDAR.md)) are kept in a column of
+their own (first broadcasts vs. repeats), because most authorities
+report them separately.  Shows without the flag appear
 greyed with their minutes under "other shows (not counted)" so you can
 see what is left out.  A table per month and **Download CSV (minutes)**
 (per show with genre and category, totals, per month) complete the section.
 
-**By genre and category** (since 2026-11-10): below the months, the
-same minutes grouped by the shows' **Genre**, **Category** or **Genre
+**By show type, genre and category** (since 2026-11-10; show type
+since 2026-11-16, the default): below the months, the same minutes
+grouped by the shows' **Show type**, **Genre**, **Category** or **Genre
 and category** (choose under *Group by*), with the columns episodes of
 own productions, minutes of own productions as first broadcasts and as
 repeats, minutes of other shows and the total.  Values are grouped
@@ -205,7 +208,7 @@ air in a year comes from - the station's music quota.  One year at a
 time (station time; the current year up to today).
 
 Counted are the plays in the [Playout History](#1-playout-history) of
-tracks whose track type has the code `music` (Settings → Track Types);
+tracks whose track type has the code `music` (Settings → Track/Show Types);
 tracks of any other type or without a type do not count.  Each play
 counts with the country of its track as it is today (Edit Track →
 **Country**, read from the `Country` tag on import - see

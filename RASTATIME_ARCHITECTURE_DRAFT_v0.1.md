@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.147
+Draft version: 0.148
 Date: 2026-11-16
 
 > **Revision history**
+> - **0.148 (2026-11-16)** - **Show types** (§23.120): `cc_show_types` (migration 0088) kept under
+>   Settings -> Track/Show Types, a Show Type select in Edit Show, Programme Minutes counts repeats
+>   by the type's flag (no longer by "Repeat of") and groups per type; genre -> type transfer command.
 > - **0.147 (2026-11-16)** - **Early show-DJ login** (§23.119): a host of the next show may
 >   connect up to 5 min early and waits off air behind a time gate (`show_dj_from`, set in
 >   `on_connect` because the harbor auth runs before the mount-taken check); the header shows
@@ -10932,3 +10935,80 @@ the gate in `on_connect`, replica S2.  Residual: two DJs connecting in the
 same instant could swap their pending holds (negligible).  Limitation: one
 client per mount, so nobody connects early while the DJ of the show on air
 is connected.  Rollback: revert (tag `live-2026-11-16b`), PLAYOUT restart.
+
+### 23.120 Show Types (2026-11-16)
+
+**Request.**  Operator 2026-11-16: Analytics -> Programme Minutes counted a
+show as a repeat when it was set up as "Repeat of another show"
+(`cc_show.repeat_of_show_id`, §23.65), so counting depended on the content
+copy feature.  Wanted: a show type per show (dropdown), the list kept in
+the settings, repeats counted by the type only; the values the station
+had typed into the genre field (Musik / Music, Live, Aufzeichnung,
+Wiederholung, News, Partnershow - 356 of 853 shows) moved into the type,
+the genre emptied for real genres.  Decisions: the list on the Track Types
+page, renamed "Track/Show Types"; start list Musik, Live, Aufzeichnung,
+Wiederholung (counts as repeat), News, Partnershow; Music and Musik ->
+Musik; genre emptied after the transfer.
+
+**Design.**
+- Migration 0088: `cc_show_types` (id, code unique 16, type_name 64,
+  counts_as_repeat, sort_order), seeded with generic English defaults
+  (Music, Live, Recording, Repeat - counts as repeat -, News, Partner
+  show; a station renames them); `cc_show.show_type_id` -> cc_show_types
+  ON DELETE SET NULL, indexed.
+- `Application_Model_Showtype` (raw SQL; `ready()` checks the table, the
+  show column is read through `to_jsonb`, so code and migration may come
+  in any order): list with usage counts, save with validation (code
+  lower-cased, unique, `[a-z0-9_-]{1,16}`; label 1-64; order integer),
+  delete, `forShow` / `setForShow`, `idByLabel` (label or code). A new
+  class: the legacy autoload is a Composer classmap, so
+  `composer dump-autoload` is part of the rollout.
+- Settings -> Track/Show Types (menu renamed, DE "Track-/Show-Typen"):
+  below the track types a server-rendered panel
+  (`tracktype/showtypes.phtml`, `showtype.js`, delegated handlers because a
+  track type save replaces `#content`), actions
+  `TracktypeController::save-showtype` / `remove-showtype` (ACL resource
+  `tracktype`, CSRF by the global jQuery header).
+- Edit Show -> What: select **Show Type** (with help icon) after Genre,
+  shown once the table exists; populated by `ShowFormService`, stored by
+  `ShowService` (only when the field was sent), kept in show templates;
+  Import / Export column `show_type` (label or code; unknown = row error,
+  like an unknown timezone).
+- Programme Minutes: `is_repeat = show_types.counts_as_repeat` (before 0088
+  nothing is a repeat; the page says so); new grouping **Show type** (the
+  default once the types exist), a show type column in the show list and
+  in both CSVs.  "Repeat of another show" stays the content copy and still
+  drives People Involved (repeats count no people) and archiving (repeats
+  are not uploaded) - unchanged here.
+- `manage.py transfer_genre_to_show_type` (core app): `--map GENRE=TYPE`
+  (label or code; without a map the genre must equal a type's label or
+  code), `--clear-genre`, `--overwrite`, `--dry-run`, `--backup PATH`
+  (JSON of id, name, genre, type before the change); one transaction.
+
+**Verification.**  API suite 276 (4 new command tests: dry run, label /
+code match, map + clear + backup + typed shows + overwrite, bad maps);
+migration baseline (leaf 0088, 112 nodes, 87 legacy).  Legacy probe
+`C:/Temp/optd/showtype_probe.php` 28/28: the migration SQL inside a
+rolled-back transaction (lock held 0.9 s) - seeded order, validation,
+update, show type stored / read / unknown id, panel count, form select
+with help icon, settings panel, report row / repeat flag / grouping /
+untick, delete leaves no type; rolled back.  Before 0088 (live): report
+without repeats and with the hint, no form field, the panel hint.  2026
+own productions, old rule (Repeat of) vs. new rule (genre "Wiederholung",
+the future type): identical - 7,407 min first broadcasts, 1,766 min
+repeats, 0 shows classified differently.  Browser: menu "Track/Show
+Types", track type list intact, show type panel; Programme Minutes page
+with the new heading, column and hint.
+
+**Rollout.**  Migration 0088 (operator), Apache restart (translations);
+`composer dump-autoload` already run on the studio PC.  Then the
+transfer: dry run, rename the four seeded labels to the station's terms,
+`--map Musik=music --map Music=music --map Live=live --map
+Aufzeichnung=recording --map Wiederholung=repeat --map News=news --map
+Partnershow=partner --clear-genre --backup ...`.
+
+**Risk.**  Low to medium, nothing on air reads it.  Failure modes: show
+save broken (probe, field only sent when present), report figures shift
+(identical for 2026), a wrong transfer (dry run, JSON backup, one
+transaction).  Rollback: revert (tag `live-2026-11-16c`); the table and
+the column may stay; the backup restores genre values.

@@ -180,16 +180,20 @@ o recurrente; las plantillas y el Import/Export lo llevan como
 `own_production`).  La página cuenta los
 episodios de los programas marcados emitidos en el año - terminados, no
 borrados, sin retransmisión antigua - con su duración **programada**,
-redondeada a minutos por programa y mes.  Los programas configurados
-como [Repetición de otro programa](./CALENDAR.md) tienen su propia
-columna (primeras emisiones frente a repeticiones), porque la mayoría de
-las autoridades los declaran por separado.  Los programas sin la casilla
+redondeada a minutos por programa y mes.  Los programas cuyo
+**tipo de programa** está marcado *Cuenta como repetición* (Ajustes →
+[Tipos de pista/programa](./SETTINGS.md), desde el 2026-11-16; antes,
+los configurados como [Repetición de otro programa](./CALENDAR.md))
+tienen su propia columna (primeras emisiones frente a repeticiones),
+porque la mayoría de las autoridades los declaran por separado.  Los programas sin la casilla
 aparecen en gris con sus minutos bajo «otros programas (no contados)»
 para ver qué queda fuera.  Una tabla por mes y **Download CSV (minutes)**
 (por programa con género y categoría, totales, por mes) completan la
 sección.
 
-**Por género y categoría** (desde el 2026-11-10): debajo de los meses,
+**Por tipo de programa, género y categoría** (desde el 2026-11-10; tipo
+de programa desde el 2026-11-16, por defecto; *Group by* ofrece también
+**Show type**): debajo de los meses,
 los mismos minutos agrupados por **Género**, **Categoría** o **Género y
 categoría** de los programas (a elegir en *Agrupar por*), con las
 columnas episodios de producciones propias, minutos de producciones
@@ -232,7 +236,7 @@ emisora.  Un año cada vez (hora de la emisora; el año en curso hasta
 hoy).
 
 Se cuentan las emisiones de la Playout History (§ 1) de las pistas cuyo
-tipo tiene el código `music` (Settings → Track Types); las pistas de
+tipo tiene el código `music` (Settings → Track/Show Types); las pistas de
 otro tipo o sin tipo no cuentan.  Cada emisión cuenta con el país de su
 pista tal como está hoy (Edit Track → **País**, leído de la etiqueta
 `Country` al importar; véase [Biblioteca](./LIBRARY.md)), así que

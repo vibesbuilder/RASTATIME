@@ -240,7 +240,7 @@ recording file is closed:
 - The track type **Recordings** carries the show hand-over crossfade
   (1 s by default) instead of the 3 s track crossfade, so a repeat built
   from recording slices keeps the length of the original.  Adjustable
-  under Settings → Track Types.
+  under Settings → Track/Show Types.
 
 How it works: the playout reports the closed file to the web
 application, which checks that the path lies inside the configured

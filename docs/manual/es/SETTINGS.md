@@ -26,7 +26,7 @@ Navegación izquierda → **Ajustes** abre el submenú:
 | **Usuarios** | Crear, editar y eliminar usuarios y definir su tipo. | Admin | [Usuarios y roles](./USERS_AND_ROLES.md) §3 |
 | **Streams** | Streams de salida (bitrate, punto de montaje, códec), entradas para conexiones en directo, credencial Master. | Admin | [Streams](./STREAMS.md) |
 | **Máquina local** | Tarjeta de sonido, carpeta y formato de importación, carpeta y formato de grabación, ubicación de la biblioteca. | Admin | [Máquina local](./LOCAL_MACHINE.md) |
-| **Tipos de pista** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream y su análisis de puntos de cue al importar. | Admin | [Biblioteca](./LIBRARY.md) |
+| **Tipos de pista/programa** | Tipos de pista con sus ajustes previos de crossfade, crossover y metadatos del stream y su análisis de puntos de cue al importar; debajo los tipos de programa (desde el 2026-11-16, vea abajo). | Admin | [Biblioteca](./LIBRARY.md) |
 | **Auto DJ** | Relleno de huecos y completado de programas incompletos. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Show Templates** | Resumen de las plantillas de programa guardadas: renombrar, eliminar. | Program Manager, Admin | [Plantillas de programa](./SHOW_TEMPLATES.md) |
 | **Archivo** | Productores de los programas: una persona o un equipo cada uno (nombre, cuenta opcional; uno por programa, elegido en Archivo); para los Admins, debajo, los usuarios de cba.media con los que se archivan los programas (usuario, contraseña de aplicación), prueba de conexión, límite de subida, tiempo de espera del archivo automático. Hasta el 2026-11-03, dos entradas, *Equipo de redacción* y *Cuentas de CBA*. | Program Manager (productores), Admin | [Archivo](./ARCHIVING.md) |
@@ -34,6 +34,28 @@ Navegación izquierda → **Ajustes** abre el submenú:
 | **Importar / Exportar** | Usuarios, programas, listas, bloques inteligentes, webstreams y suscripciones a podcasts como archivos CSV/JSON, con vista previa al importar. | Admin | [Importar / Exportar](./IMPORT_EXPORT.md) |
 | **Backup** | Copias de seguridad de la base de datos y la configuración, el espejo de medios, copias automáticas, restauración. | Admin | [Backup](./BACKUP.md) |
 | **Estado** | Estado de los servicios, espacio en disco, reinicios de servicios, direcciones permitidas y bloqueadas. | Admin | Este capítulo §3 |
+
+### Tipos de programa (desde el 2026-11-16)
+
+La página **Tipos de pista/programa** (*Tipos de pista* hasta el
+2026-11-16) lista los tipos de programa debajo de los tipos de pista.
+Un programa recibe uno en Editar programa → What → **Tipo de programa**
+(vea [Calendario](./CALENDAR.md)).
+
+| Campo | Notas |
+|---|---|
+| **Código** | Nombre interno corto: letras minúsculas, cifras, `-` y `_`, único. |
+| **Etiqueta** | El nombre en el formulario del programa y en los informes. |
+| **Cuenta como repetición** | Los programas de este tipo cuentan como repeticiones en Analytics → [Programme Minutes](./ANALYTICS.md) §5. |
+| **Orden** | Posición en la lista y en el formulario del programa. |
+| **Programas** | Cuántos programas usan el tipo. |
+
+Una instalación nueva trae Music, Live, Recording, Repeat (cuenta como
+repetición), News y Partner show; cámbielos de nombre, añada o borre
+según necesite.  Un tipo borrado deja sus programas sin tipo.  Las
+emisoras que hasta ahora anotaban el tipo de programa en el campo
+género pueden pasarlo con `manage.py transfer_genre_to_show_type`
+(primero en simulación, vea ARCHITECTURE §23.120).
 
 Las fuentes Line-In se gestionan en **Panel → Line Inputs** (vea
 [Line-In](./LINE_IN.md)); los idiomas de la interfaz se tratan en

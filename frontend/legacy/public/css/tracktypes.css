@@ -7,3 +7,40 @@
 .dataTables_processing {
 	top: 20px;
 }
+
+/* RASTATIME 2026-11-16 - show types below the track types (Track/Show Types) */
+.showtype-management {
+	min-width: 910px;
+	margin-top: 16px;
+}
+.showtype-management h2 {
+	font-size: 1.7em;
+	padding-bottom: 12px;
+}
+.showtype-management .button-holder {
+	margin-bottom: 8px;
+}
+#showtypes_table {
+	width: 100%;
+	border: 0;
+}
+#showtypes_table td {
+	vertical-align: middle;
+}
+#showtypes_table td.showtype-actions {
+	text-align: right;
+	white-space: nowrap;
+}
+#showtypes_table td.showtype-actions a {
+	margin-left: 6px;
+}
+.showtype-form {
+	margin-top: 12px;
+	max-width: 520px;
+}
+.showtype-form .showtype-buttons {
+	margin-top: 8px;
+}
+.showtype-form .showtype-errors div {
+	margin-bottom: 4px;
+}

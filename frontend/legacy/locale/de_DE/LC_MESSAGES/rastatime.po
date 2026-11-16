@@ -8617,3 +8617,95 @@ msgstr "Titel dieses Typs bekommen Energy, Brightness, BPM und Key einige Minute
 #, c-format
 msgid "waiting until %s"
 msgstr "wartet bis %s"
+
+#: RASTATIME 2026-11-16 show types (Settings -> Track/Show Types, show form, Programme Minutes)
+msgid "Track/Show Types"
+msgstr "Track-/Show-Typen"
+
+msgid "Manage Show Types"
+msgstr "Show-Typen verwalten"
+
+msgid "New Show Type"
+msgstr "Neuer Show-Typ"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Counts as repeat"
+msgstr "Zählt als Wiederholung"
+
+msgid "Counts as repeat:"
+msgstr "Zählt als Wiederholung:"
+
+msgid "Order"
+msgstr "Reihenfolge"
+
+msgid "Order:"
+msgstr "Reihenfolge:"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "(none)"
+msgstr "(keiner)"
+
+msgid "No show types yet."
+msgstr "Noch keine Show-Typen."
+
+msgid "Show Type:"
+msgstr "Show-Typ:"
+
+msgid "Show type"
+msgstr "Show-Typ"
+
+msgid "No show type"
+msgstr "Kein Show-Typ"
+
+msgid "By show type, genre and category"
+msgstr "Nach Show-Typ, Genre und Kategorie"
+
+msgid "POST only."
+msgstr "Nur POST."
+
+msgid "Delete this show type?"
+msgstr "Diesen Show-Typ löschen?"
+
+msgid "Delete this show type? The shows using it keep no show type."
+msgstr "Diesen Show-Typ löschen? Die Sendungen mit diesem Typ haben danach keinen Show-Typ."
+
+msgid "The show types are not available yet (database migration 0088 pending)."
+msgstr "Die Show-Typen sind noch nicht verfügbar (Datenbank-Migration 0088 steht aus)."
+
+msgid "The show types are available once database migration 0088 has run."
+msgstr "Die Show-Typen stehen bereit, sobald die Datenbank-Migration 0088 gelaufen ist."
+
+msgid "Code: 1 to 16 lower-case letters, digits, \"-\" or \"_\"."
+msgstr "Code: 1 bis 16 Kleinbuchstaben, Ziffern, \"-\" oder \"_\"."
+
+msgid "Label: 1 to 64 characters."
+msgstr "Bezeichnung: 1 bis 64 Zeichen."
+
+msgid "Order: a whole number."
+msgstr "Reihenfolge: eine ganze Zahl."
+
+msgid "Code: another show type uses it already."
+msgstr "Code: Ein anderer Show-Typ verwendet ihn bereits."
+
+#, c-format
+msgid "unknown show type \"%s\""
+msgstr "unbekannter Show-Typ \"%s\""
+
+msgid "The type of a show, chosen under Edit Show next to Genre. Analytics → Programme Minutes counts a show as a repeat when its type is marked \"Counts as repeat\", and adds up the minutes per show type."
+msgstr "Der Typ einer Sendung, gewählt unter Sendung bearbeiten neben Genre. Analytics → Programme Minutes zählt eine Sendung als Wiederholung, wenn ihr Typ „Zählt als Wiederholung“ hat, und summiert die Minuten je Show-Typ."
+
+msgid "Shows of this type count as repeats in Analytics → Programme Minutes (own productions: first broadcast or repeat). The \"Repeat of another show\" setting of a show only copies content and does not count."
+msgstr "Sendungen dieses Typs zählen in Analytics → Programme Minutes als Wiederholung (Eigenproduktionen: Erstausstrahlung oder Wiederholung). Die Einstellung „Wiederholung einer anderen Sendung“ kopiert nur Inhalte und zählt nicht."
+
+msgid "Chosen from the list under Settings → Track/Show Types. Analytics → Programme Minutes adds up the minutes per show type and counts a show as a repeat when its type is marked \"Counts as repeat\"."
+msgstr "Auswahl aus der Liste unter Settings → Track-/Show-Typen. Analytics → Programme Minutes summiert die Minuten je Show-Typ und zählt eine Sendung als Wiederholung, wenn ihr Typ „Zählt als Wiederholung“ hat."
+
+msgid "The show types are missing - run the database migration 0088 first. Until then no show counts as a repeat."
+msgstr "Die Show-Typen fehlen - zuerst die Datenbank-Migration 0088 ausführen. Bis dahin zählt keine Sendung als Wiederholung."
+
+msgid "Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows whose show type counts as a repeat (Settings → Track/Show Types) are listed in the repeats column."
+msgstr "Minuten der Eigenproduktionen des Senders, für die Meldung an die Behörden. \"Eigenproduktion\" in der Sendung ankreuzen (Edit Show → What); gezählt werden die im Jahr gesendeten Episoden mit ihrer geplanten Dauer. Sendungen, deren Show-Typ als Wiederholung zählt (Settings → Track-/Show-Typen), stehen in der Spalte Wiederholungen."

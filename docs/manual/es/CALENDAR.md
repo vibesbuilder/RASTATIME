@@ -104,6 +104,7 @@ El formulario se divide en secciones plegables. **Qué** y
 | **Entrada Live Stream** | Permitir a presentadores remotos tomar el programa vía Show DJ. |
 | **Grabación** | Marcar para grabar la salida al aire del programa. Vea [Grabación por programa](./RECORD_PER_SHOW.md). |
 | **Género** / **Categoría** | Texto libre; ambos ofrecen como sugerencias los valores que ya usan otros programas (una grafía distinta forma igualmente su propio grupo, así que elija una sugerencia cuando alguna encaje).  La categoría existe desde el 2026-11-10 (aparece en cuanto se ha ejecutado la migración de base de datos 0082).  Analytics → [Minutos de programa](./ANALYTICS.md) evalúa los minutos por género, por categoría y por género y categoría. |
+| **Tipo de programa** | Uno de los tipos de programa en Ajustes → [Tipos de pista/programa](./SETTINGS.md) (desde el 2026-11-16; aparece en cuanto se ejecuta la migración de base de datos 0088).  Analytics → [Programme Minutes](./ANALYTICS.md) suma los minutos por tipo de programa y cuenta el programa como repetición cuando su tipo está marcado *Cuenta como repetición*. |
 | **Own production** (producción propia) | Marcar en las producciones propias de la emisora: los minutos emitidos del programa cuentan en Analytics → [Minutos de programa](./ANALYTICS.md), sus personas en Analytics → Participantes (desde 2026-11-03).  Está en la sección **Qué** (*What* en la interfaz); el icono de ayuda junto a la casilla la explica en breve. |
 | **Hosts involved** (presentadores) | Aparece debajo de **Own production** en cuanto se marca (desde 2026-11-04; *Number of involved people* hasta el 2026-11-07): cuántos presentadores participan en cada episodio, 0-999. Cuenta una vez al año en Analytics → [Participantes](./ANALYTICS.md), sin importar cuántos episodios se emitieron; los invitados de un solo episodio se introducen en Extras → Participantes (**Guests involved**) y se suman. Quitar la casilla conserva el número; solo deja de contar. |
 | **Autoloading Playlist** | Adjuntar una playlist para rellenar cada episodio automáticamente. |
@@ -231,6 +232,10 @@ sub-campos aparecen:
 ---
 
 ### Repetición de otro programa (desde 2026-10-18)
+
+> **Desde el 2026-11-16 ya no cuenta.**  Este ajuste solo copia contenido.
+> Que un programa cuente como repetición en Analytics → Programme Minutes
+> depende de su **tipo de programa** (*Cuenta como repetición*).
 
 Muchos programas se emiten una vez y se repiten una vez, otro día o
 en otra semana.  Abra el formulario **Edit Show** de la repetición,

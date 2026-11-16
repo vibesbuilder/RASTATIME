@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Show-Typ je Sendung, Liste unter Settings → Track/Show Types (2026-11-16, Operator-Go 2026-11-16)** -
+  neues Dropdown **Show Type** in Sendung bearbeiten → What (neben Genre); die Typen pflegt man unter
+  dem umbenannten Menüpunkt *Track/Show Types* unterhalb der Track Types (Code, Bezeichnung, Haken
+  *Counts as repeat*, Reihenfolge, Anzahl Sendungen).  Migration 0088 (`cc_show_types`,
+  `cc_show.show_type_id`) bringt Music, Live, Recording, Repeat (zählt als Wiederholung), News und
+  Partner show mit.  Import/Export-Spalte `show_type`, Sendungsvorlagen übernehmen den Typ.
+  `manage.py transfer_genre_to_show_type` überträgt bisher im Genre-Feld geführte Typen (Probelauf,
+  Sicherung, `--clear-genre`).  Neue PHP-Klasse: bei Updates `composer dump-autoload`.  Legacy-Probe
+  28/28, API 276.  Manual SETTINGS / CALENDAR / ANALYTICS / IMPORT_EXPORT x4, ARCHITECTURE 0.148
+  (§23.120).
+
 - **Sendungs-DJ darf sich 5 Minuten vor Sendungsbeginn verbinden (2026-11-16, Operator-Go
   2026-11-16 nach dem DJ-Test aus einer Schule)** - ein Host der NÄCHSTEN Sendung (Stations-Login
   oder eigenes Live-Login der Sendung) wird bis zu 5 min vorher angenommen (fest), bleibt vom Sender,
@@ -22,6 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   x4, ARCHITECTURE 0.147 (§23.119).  `5059835f`.  Legacy-Teil sofort live, aber erst mit dem neuen
   PLAYOUT wirksam (`early=1`); PLAYOUT-Neustart startet Liquidsoap mit (~10-15 s), Apache-Neustart
   für die Übersetzungen.
+
+### Changed
+
+- **Programme Minutes zählt Wiederholungen über den Show-Typ (2026-11-16, Operator-Wunsch)** - eine
+  Sendung zählt als Wiederholung, wenn ihr Show-Typ *Counts as repeat* hat, nicht mehr über „Repeat
+  of another show“ (das kopiert nur noch Inhalte; People Involved und Archivierung bleiben dabei).
+  Neue Gruppierung *Show type* (voreingestellt), Spalte Show type in Liste und CSV.  Vor Migration
+  0088 zählt nichts als Wiederholung (Hinweis auf der Seite).  2026 sind alte und neue Zählung
+  gleich (7.407 / 1.766 Minuten).
 
 ### Fixed
 

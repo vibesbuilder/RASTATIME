@@ -24,7 +24,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
     </form>
 
     <p class="rt-participants-note">
-        <?php echo _("Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows set up as \"Repeat of another show\" are listed in the repeats column."); ?>
+        <?php echo _("Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows whose show type counts as a repeat (Settings → Track/Show Types) are listed in the repeats column."); ?>
     </p>
     <?php if (!$this->columnReady): ?>
         <p class="rt-participants-warn"><?php echo _("The column for \"Own production\" is missing - run the database migration 0077 first. Until then every show counts as \"other\"."); ?></p>
@@ -63,13 +63,17 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
     </table>
 
     <?php
-    // RASTATIME 2026-11-10 - minutes per genre / category / genre x category
+    // RASTATIME 2026-11-10 - minutes per genre / category / genre x category;
+    // 2026-11-16 per show type
     $group = $this->group;
     $grows = $m['groups'][$group] ?? [];
-    $noneLabel = ['genre' => _("No genre"), 'category' => _("No category")];
+    $noneLabel = ['show_type' => _("No show type"), 'genre' => _("No genre"), 'category' => _("No category")];
     $gsum = array_fill_keys(['episodes_own', 'minutes_first', 'minutes_repeat', 'minutes_other', 'minutes_total'], 0);
     ?>
-    <h3 id="rt_yearly_groups" class="rt-yearly-groups-head"><?php echo _("By genre and category"); ?></h3>
+    <h3 id="rt_yearly_groups" class="rt-yearly-groups-head"><?php echo _("By show type, genre and category"); ?></h3>
+    <?php if (!$this->showTypesReady): ?>
+        <p class="rt-participants-warn"><?php echo _("The show types are missing - run the database migration 0088 first. Until then no show counts as a repeat."); ?></p>
+    <?php endif; ?>
     <?php if (!$this->categoryReady): ?>
         <p class="rt-participants-warn"><?php echo _("The column for the category is missing - run the database migration 0082 first. Until then every show is without a category."); ?></p>
     <?php endif; ?>
@@ -77,6 +81,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
         <input type="hidden" name="year" value="<?php echo (int) $this->year; ?>" />
         <label for="rt_yearly_group"><?php echo _("Group by"); ?></label>
         <select name="group" id="rt_yearly_group" class="input_select" onchange="this.form.submit()">
+            <?php if ($this->showTypesReady): ?><option value="show_type"<?php echo $group === 'show_type' ? ' selected' : ''; ?>><?php echo _("Show type"); ?></option><?php endif; ?>
             <option value="genre"<?php echo $group === 'genre' ? ' selected' : ''; ?>><?php echo _("Genre"); ?></option>
             <option value="category"<?php echo $group === 'category' ? ' selected' : ''; ?>><?php echo _("Category"); ?></option>
             <option value="both"<?php echo $group === 'both' ? ' selected' : ''; ?>><?php echo _("Genre and category"); ?></option>
@@ -87,8 +92,9 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
         <table class="datatable rt-participants-table rt-yearly-groups">
             <thead>
                 <tr>
-                    <?php if ($group !== 'category'): ?><th><?php echo _("Genre"); ?></th><?php endif; ?>
-                    <?php if ($group !== 'genre'): ?><th><?php echo _("Category"); ?></th><?php endif; ?>
+                    <?php if ($group === 'show_type'): ?><th><?php echo _("Show type"); ?></th><?php endif; ?>
+                    <?php if ($group === 'genre' || $group === 'both'): ?><th><?php echo _("Genre"); ?></th><?php endif; ?>
+                    <?php if ($group === 'category' || $group === 'both'): ?><th><?php echo _("Category"); ?></th><?php endif; ?>
                     <th class="num"><?php echo _("Episodes, own productions"); ?></th>
                     <th class="num"><?php echo _("Minutes, first broadcasts"); ?></th>
                     <th class="num"><?php echo _("Minutes, repeats"); ?></th>
@@ -99,7 +105,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
             <tbody>
                 <?php $i = 0; foreach ($grows as $g): foreach ($gsum as $k => $v) { $gsum[$k] = $v + $g[$k]; } ?>
                     <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
-                        <?php foreach (['genre', 'category'] as $d): if ($g[$d] === null) { continue; } ?>
+                        <?php foreach (['show_type', 'genre', 'category'] as $d): if ($g[$d] === null) { continue; } ?>
                             <td><?php echo $g[$d] === '' ? '<em>' . $h($noneLabel[$d]) . '</em>' : $h($g[$d]); ?></td>
                         <?php endforeach; ?>
                         <td class="num"><?php echo $g['episodes_own'] ?: ''; ?></td>
@@ -130,6 +136,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
             <thead>
                 <tr>
                     <th><?php echo _("Show name"); ?></th>
+                    <th><?php echo _("Show type"); ?></th>
                     <th><?php echo _("Genre"); ?></th>
                     <th><?php echo _("Category"); ?></th>
                     <th><?php echo _("Own production"); ?></th>
@@ -141,6 +148,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
                 <?php $i = 0; foreach ($m['rows'] as $row): ?>
                     <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?><?php echo $row['own_production'] ? '' : ' rt-yearly-other'; ?>">
                         <td><?php echo $h($row['name']); ?><?php if ($row['is_repeat']): ?> <span class="rt-participants-tag"><?php echo _("Repeat"); ?></span><?php endif; ?></td>
+                        <td><?php echo $h($row['show_type']); ?></td>
                         <td><?php echo $h($row['genre']); ?></td>
                         <td><?php echo $h($row['category']); ?></td>
                         <td><?php echo $row['own_production'] ? _("yes") : '&ndash;'; ?></td>

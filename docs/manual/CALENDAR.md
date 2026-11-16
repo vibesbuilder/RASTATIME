@@ -137,6 +137,7 @@ The form is divided into collapsible sections. **What** and
 | **Live Stream Input** | Allow remote hosts to take the show via Show DJ (per-show username + password). |
 | **Record** | Tick to record the show's on-air output to a file. See [Record-per-Show](./RECORD_PER_SHOW.md). |
 | **Genre** / **Category** | Free text; both offer the values already used by other shows as suggestions (a different spelling still makes its own group, so pick a suggestion where one fits).  The category exists since 2026-11-10 (it appears once the database migration 0082 ran).  Analytics → [Programme Minutes](./ANALYTICS.md) evaluates the minutes per genre, per category and per genre and category. |
+| **Show Type** | One of the show types under Settings → [Track/Show Types](./SETTINGS.md) (since 2026-11-16; appears once the database migration 0088 ran).  Analytics → [Programme Minutes](./ANALYTICS.md) adds up the minutes per show type and counts the show as a repeat when its type is marked *Counts as repeat*. |
 | **Own production** | Tick for the station's own productions: the show's aired minutes count in Analytics → [Programme Minutes](./ANALYTICS.md), its people in Analytics → People Involved (since 2026-11-03).  Sits in the section **What**; the help icon next to it explains it in short. |
 | **Hosts involved** | Appears below **Own production** once it is ticked (since 2026-11-04; called *Number of involved people* until 2026-11-07): how many hosts take part in every episode, 0-999. Counts once per year in Analytics → [People Involved](./ANALYTICS.md), however many episodes aired; the guests of a single episode are entered under Extras → People Involved (**Guests involved**) and added on top. Removing the tick keeps the number, it just stops counting. |
 | **Autoloading Playlist** | Attach a playlist to fill every episode automatically. See [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). |
@@ -287,6 +288,10 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 ---
 
 ### Repeat of another show (since 2026-10-18)
+
+> **Not a counter since 2026-11-16.**  This setting only copies content.
+> Whether a show counts as a repeat in Analytics → Programme Minutes
+> depends on its **Show Type** (*Counts as repeat*).
 
 Many shows air once and are repeated once, on a different weekday
 or in a different week.  Open the repeat's **Edit Show** form,

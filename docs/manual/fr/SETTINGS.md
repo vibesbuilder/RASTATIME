@@ -26,7 +26,7 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 | **Utilisateurs** | Créer, modifier et supprimer des utilisateurs, définir leur type. | Admin | [Utilisateurs et rôles](./USERS_AND_ROLES.md) §3 |
 | **Flux** | Flux de sortie (débit, point de montage, codec), entrées pour les connexions en direct, identifiant Master. | Admin | [Flux](./STREAMS.md) |
 | **Machine locale** | Carte son, dossier et format d'import, dossier et format d'enregistrement, emplacement de la bibliothèque. | Admin | [Machine locale](./LOCAL_MACHINE.md) |
-| **Types de piste** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux et leur analyse des points de repère à l'import. | Admin | [Bibliothèque](./LIBRARY.md) |
+| **Types de piste/d'émission** | Types de piste avec leurs préréglages de fondu, crossover et métadonnées du flux et leur analyse des points de repère à l'import ; en dessous les types d'émission (depuis le 2026-11-16, voir ci-dessous). | Admin | [Bibliothèque](./LIBRARY.md) |
 | **Auto DJ** | Remplissage des trous et complément des émissions incomplètes. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Show Templates** | Aperçu des modèles d'émission enregistrés : renommer, supprimer. | Program Manager, Admin | [Modèles d'émission](./SHOW_TEMPLATES.md) |
 | **Archivage** | Producteurs des émissions - une personne ou une équipe chacune (nom, compte facultatif ; un par émission, choisi sous Archivage) ; pour les Admins, en dessous, les utilisateurs cba.media sous lesquels les émissions sont archivées (nom d'utilisateur, mot de passe d'application), test de connexion, limite d'envoi, délai de l'archivage automatique. Jusqu'au 2026-11-03, deux entrées, *Équipe de rédaction* et *Comptes CBA*. | Program Manager (producteurs), Admin | [Archivage](./ARCHIVING.md) |
@@ -34,6 +34,29 @@ Navigation de gauche → **Paramètres** ouvre le sous-menu :
 | **Import / Export** | Utilisateurs, émissions, playlists, smart blocks, webstreams et abonnements podcast en fichiers CSV/JSON, avec aperçu à l'import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Sauvegardes de la base de données et de la configuration, le miroir média, sauvegardes automatiques, restauration. | Admin | [Backup](./BACKUP.md) |
 | **Statut** | État des services, espace disque, redémarrages de services, adresses autorisées et bloquées. | Admin | Ce chapitre §3 |
+
+### Types d'émission (depuis le 2026-11-16)
+
+La page **Types de piste/d'émission** (*Types de piste* jusqu'au
+2026-11-16) liste les types d'émission sous les types de piste.  Une
+émission en reçoit un sous Modifier l'émission → What → **Type
+d'émission** (voir [Calendrier](./CALENDAR.md)).
+
+| Champ | Remarques |
+|---|---|
+| **Code** | Nom interne court : lettres minuscules, chiffres, `-` et `_`, unique. |
+| **Libellé** | Le nom dans le formulaire de l'émission et dans les rapports. |
+| **Compte comme rediffusion** | Les émissions de ce type comptent comme rediffusions dans Analytics → [Programme Minutes](./ANALYTICS.md) §5. |
+| **Ordre** | Position dans la liste et dans le formulaire de l'émission. |
+| **Émissions** | Combien d'émissions utilisent le type. |
+
+Une nouvelle installation apporte Music, Live, Recording, Repeat (compte
+comme rediffusion), News et Partner show ; renommez-les, ajoutez-en ou
+supprimez-les selon vos besoins.  Un type supprimé laisse ses émissions
+sans type.  Les stations qui notaient jusqu'ici le type d'émission dans
+le champ genre peuvent le transférer avec
+`manage.py transfer_genre_to_show_type` (d'abord à blanc, voir
+ARCHITECTURE §23.120).
 
 Les sources Line-In se gèrent sous **Tableau de bord → Line Inputs**
 (voir [Line-In](./LINE_IN.md)) ; les langues d'interface sont traitées

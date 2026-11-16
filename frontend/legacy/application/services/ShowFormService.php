@@ -168,6 +168,8 @@ class Application_Service_ShowFormService
                 'add_show_genre' => $this->ccShow->getDbGenre(),
                 // RASTATIME 2026-11-10 - category (raw SQL, migration 0082)
                 'add_show_category' => Application_Service_YearlyReportService::category($this->ccShow->getDbId()),
+                // RASTATIME 2026-11-16 - show type (raw SQL, migration 0088)
+                'add_show_type' => (string) (Application_Model_Showtype::forShow($this->ccShow->getDbId()) ?? ''),
                 'add_show_description' => $this->ccShow->getDbDescription(),
                 'add_show_instance_description' => $ccShowInstance->getDbDescription(),
                 // RASTATIME 2026-11-03 - yearly report

@@ -91,7 +91,7 @@ of the show.
 | Auto DJ | – | – | ✓ | ✓ |
 | Show Templates page | – | – | ✓ | ✓ |
 | Station default language (first-run dialog) | – | – | ✓ | ✓ |
-| General, Users, Track Types, Streams, Local Machine, Import / Export, Backup, Status | – | – | – | ✓ |
+| General, Users, Track/Show Types, Streams, Local Machine, Import / Export, Backup, Status | – | – | – | ✓ |
 
 What the roles see differently:
 

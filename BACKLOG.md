@@ -8521,3 +8521,17 @@ Reconciler `var.get show_dj_from`; Liquidsoap `show_dj_hold_pending` (Auth) -> `
 lässt den laufenden DJ, Trennen setzt zurück), Playout 942 grün.  Abnahme: geplanter Schultest 3-5 min vor einer
 Sendung (Encoder „verbunden“, Kopfbereich „wartet bis“, auf Sendung exakt zum Beginn).
 
+## 🟢 Show-Typ je Sendung, Programme Minutes zählt Wiederholungen über den Typ (Operator-Wunsch 2026-11-16) - GEBAUT 2026-11-16 (§23.120)
+
+Anlass: Programme Minutes zählte Wiederholungen über „Repeat of another show“ (Inhaltskopie).  Im Genre-Feld
+standen bisher Sendungstypen (Musik 116, Music 61, News 54, Aufzeichnung 53, Live 25, Wiederholung 25,
+Partnershow 22; 497 leer).  Entscheidungen 2026-11-16: Liste auf der Track-Types-Seite, Menüpunkt
+„Track/Show Types“; Startliste Musik, Live, Aufzeichnung, Wiederholung (zählt als Wiederholung), News,
+Partnershow; Music+Musik -> Musik; Wiederholung nur über den Haken; Genre nach der Übernahme leeren.
+Gebaut: Migration 0088, `Application_Model_Showtype`, Settings-Bereich, Dropdown im Sendungsformular, Bericht
+(Wiederholung über Typ, Gruppierung Show type), Import/Export `show_type`, `manage.py transfer_genre_to_show_type`.
+Vergleich 2026 alt/neu identisch.  Offen (Operator): Migration 0088, Apache-Neustart; danach ich: Probelauf,
+Bezeichnungen umbenennen, Übertragung mit Sicherung + `--clear-genre`.  Nächster Schritt: echte Genres je
+Sendung vorschlagen (Operator prüft, dann Sammel-Eintrag).
+Offene Frage an den Operator: sollen auch People Involved (Wiederholungen zählen keine Personen) und das
+CBA-Archiv (Wiederholungen werden nicht hochgeladen) den Show-Typ statt „Repeat of“ verwenden?

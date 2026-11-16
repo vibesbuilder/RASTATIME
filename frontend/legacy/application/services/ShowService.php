@@ -1858,6 +1858,11 @@ SQL;
             Application_Service_YearlyReportService::setCategory($ccShow->getDbId(), (string) $showData['add_show_category']);
         }
 
+        // RASTATIME 2026-11-16 - show type (raw SQL, migration 0088); same rule
+        if (array_key_exists('add_show_type', $showData)) {
+            Application_Model_Showtype::setForShow($ccShow->getDbId(), (string) $showData['add_show_type']);
+        }
+
         // RASTATIME 2026-10-18 - "Repeat of show" (raw SQL, migration 0071)
         Application_Service_RepeatFillService::setRepeatOf(
             $ccShow->getDbId(),

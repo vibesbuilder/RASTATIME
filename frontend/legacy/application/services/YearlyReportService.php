@@ -9,9 +9,13 @@
  * "Own production" is a checkbox of the show (cc_show.own_production,
  * migration 0077).  Counted are the instances that aired in the year
  * (station time; ended by now, not deleted, no legacy rebroadcast) with
- * their scheduled duration; shows set up as "Repeat of another show"
- * (cc_show.repeat_of_show_id) are kept in a column of their own because
- * authorities usually report first broadcasts and repeats separately.
+ * their scheduled duration; repeats are kept in a column of their own
+ * because authorities usually report first broadcasts and repeats
+ * separately.  RASTATIME 2026-11-16 (operator): a repeat is a show whose
+ * show type is marked "counts as repeat" (Settings -> Track/Show Types,
+ * cc_show_types, migration 0088) - no longer a show set up as "Repeat of
+ * another show", which only copies content.  Before 0088 nothing counts
+ * as a repeat.
  *
  * The column is read through to_jsonb(cc_show) ->> 'own_production', which
  * is NULL until migration 0077 ran, so every reader works before and after
@@ -173,6 +177,15 @@ class Application_Service_YearlyReportService
         $from = (new DateTime(sprintf('%04d-01-01 00:00:00', $year), $tz))->setTimezone($utc)->format('Y-m-d H:i:s');
         $to = (new DateTime(sprintf('%04d-01-01 00:00:00', $year + 1), $tz))->setTimezone($utc)->format('Y-m-d H:i:s');
 
+        // RASTATIME 2026-11-16 - repeat = the show type's flag; the type's label
+        // is a grouping of its own (before migration 0088: no repeats, no type)
+        $typed = Application_Model_Showtype::ready();
+        $typeCols = $typed
+            ? 'COALESCE(st.counts_as_repeat, FALSE) AS is_repeat, st.type_name AS show_type'
+            : 'FALSE AS is_repeat, NULL::text AS show_type';
+        $typeJoin = $typed
+            ? " LEFT JOIN cc_show_types st ON st.id = (to_jsonb(s) ->> 'show_type_id')::int"
+            : '';
         $inst = "WITH inst AS (
                     SELECT si.id, si.show_id,
                            EXTRACT(EPOCH FROM (si.ends - si.starts)) AS secs,
@@ -185,18 +198,18 @@ class Application_Service_YearlyReportService
                  ), shows AS (
                     SELECT s.id, s.name,
                            COALESCE((to_jsonb(s) ->> 'own_production')::boolean, FALSE) AS own_production,
-                           (s.repeat_of_show_id IS NOT NULL) AS is_repeat,
+                           {$typeCols},
                            NULLIF(btrim(COALESCE(s.genre, '')), '') AS genre,
                            NULLIF(btrim(COALESCE(to_jsonb(s) ->> 'category', '')), '') AS category
-                      FROM cc_show s
+                      FROM cc_show s{$typeJoin}
                  )";
         $params = [':tz' => $tzName, ':from' => $from, ':to' => $to];
 
         $rows = Application_Common_Database::prepareAndExecute(
-            $inst . " SELECT sh.id, sh.name, sh.own_production, sh.is_repeat, sh.genre, sh.category,
+            $inst . " SELECT sh.id, sh.name, sh.own_production, sh.is_repeat, sh.show_type, sh.genre, sh.category,
                              count(i.id) AS episodes, ROUND(SUM(i.secs) / 60.0) AS minutes
                         FROM inst i JOIN shows sh ON sh.id = i.show_id
-                       GROUP BY sh.id, sh.name, sh.own_production, sh.is_repeat, sh.genre, sh.category
+                       GROUP BY sh.id, sh.name, sh.own_production, sh.is_repeat, sh.show_type, sh.genre, sh.category
                        ORDER BY sh.own_production DESC, lower(sh.name), sh.id",
             $params,
             'all'
@@ -223,6 +236,7 @@ class Application_Service_YearlyReportService
                 'id' => (int) $r['id'], 'name' => (string) $r['name'], 'own_production' => $own, 'is_repeat' => $rep,
                 'episodes' => (int) $r['episodes'], 'minutes' => (int) $r['minutes'],
                 'genre' => (string) ($r['genre'] ?? ''), 'category' => (string) ($r['category'] ?? ''),
+                'show_type' => (string) ($r['show_type'] ?? ''),
             ];
             $out['rows'][] = $row;
             if ($own) {
@@ -247,9 +261,10 @@ class Application_Service_YearlyReportService
             ];
         }
 
-        // RASTATIME 2026-11-10 - per genre, per category, per genre x category
+        // RASTATIME 2026-11-10 - per genre, per category, per genre x category;
+        // 2026-11-16 per show type
         $out['groups'] = [];
-        foreach (['genre' => ['genre'], 'category' => ['category'], 'both' => ['genre', 'category']] as $key => $dims) {
+        foreach (['show_type' => ['show_type'], 'genre' => ['genre'], 'category' => ['category'], 'both' => ['genre', 'category']] as $key => $dims) {
             $out['groups'][$key] = self::groupRows($inst, $params, $dims);
         }
 
@@ -264,7 +279,7 @@ class Application_Service_YearlyReportService
      * a value lands in a group with an empty label.  Minutes are rounded per
      * group from the summed seconds.
      *
-     * @param string[] $dims 'genre' and / or 'category'
+     * @param string[] $dims 'genre' and / or 'category', or 'show_type'
      */
     private static function groupRows(string $inst, array $params, array $dims): array
     {
@@ -292,6 +307,7 @@ class Application_Service_YearlyReportService
             $row = [
                 'genre' => in_array('genre', $dims, true) ? (string) $r['genre'] : null,
                 'category' => in_array('category', $dims, true) ? (string) $r['category'] : null,
+                'show_type' => in_array('show_type', $dims, true) ? (string) $r['show_type'] : null,
                 'episodes_own' => (int) $r['episodes_own'],
                 'episodes_other' => (int) $r['episodes_other'],
                 'minutes_first' => (int) $r['minutes_first'],

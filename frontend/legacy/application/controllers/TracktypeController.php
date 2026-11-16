@@ -30,6 +30,10 @@ class TracktypeController extends Zend_Controller_Action
         }
 
         $this->view->headLink()->appendStylesheet(Assets::url('css/tracktypes.css'));
+        // RASTATIME 2026-11-16 - show types on the same page (Track/Show Types)
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/tracktype/showtype.js'), 'text/javascript');
+        $this->view->showTypesReady = Application_Model_Showtype::ready();
+        $this->view->showTypes = Application_Model_Showtype::all();
 
         $form = new Application_Form_AddTracktype();
 
@@ -115,6 +119,50 @@ class TracktypeController extends Zend_Controller_Action
         // every other call rendered get-tracktype-data.phtml, which echoed
         // the array and died with "Array to string conversion" (HTTP 500).
         $this->_helper->json->sendJson(['entries' => Application_Model_Tracktype::GetTracktypeData($id)]);
+    }
+
+    /**
+     * RASTATIME 2026-11-16 - create / update a show type (POST id, code,
+     * type_name, counts_as_repeat, sort_order).  Answers the errors or the
+     * re-rendered show type panel.
+     */
+    public function saveShowtypeAction()
+    {
+        $r = $this->getRequest();
+        if (!$r->isPost()) {
+            $this->_helper->json->sendJson(['ok' => false, 'errors' => [_('POST only.')]]);
+
+            return;
+        }
+        $errors = Application_Model_Showtype::save(
+            $r->getPost('id', ''),
+            $r->getPost('code', ''),
+            $r->getPost('type_name', ''),
+            (string) $r->getPost('counts_as_repeat', '0') === '1',
+            $r->getPost('sort_order', '0')
+        );
+        $this->_helper->json->sendJson(['ok' => !$errors, 'errors' => $errors, 'html' => $errors ? '' : $this->renderShowtypes()]);
+    }
+
+    /** RASTATIME 2026-11-16 - delete a show type (POST id); its shows keep no type. */
+    public function removeShowtypeAction()
+    {
+        $r = $this->getRequest();
+        if (!$r->isPost()) {
+            $this->_helper->json->sendJson(['ok' => false]);
+
+            return;
+        }
+        Application_Model_Showtype::delete($r->getPost('id'));
+        $this->_helper->json->sendJson(['ok' => true, 'html' => $this->renderShowtypes()]);
+    }
+
+    private function renderShowtypes(): string
+    {
+        $this->view->showTypesReady = Application_Model_Showtype::ready();
+        $this->view->showTypes = Application_Model_Showtype::all();
+
+        return $this->view->render('tracktype/showtypes.phtml');
     }
 
     public function removeTracktypeAction()

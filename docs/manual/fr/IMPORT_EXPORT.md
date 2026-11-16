@@ -123,6 +123,7 @@ des mots de passe après l'import.
 | `content`, `content_repeat` | le nom d'une playlist utilisée comme **playlist de chargement automatique** de l'émission, et si elle se répète jusqu'à remplir l'émission — voir [Playlists de chargement automatique](./AUTOLOADING_PLAYLISTS.md). Une playlist peut contenir des pistes, des smart blocks, des webstreams et des entrées line-in : chaque épisode de l'émission est ainsi rempli automatiquement. |
 | `repeat_of` | nom d'une émission existante dont le dernier contenu diffusé remplit cette émission peu avant son début (**Rediffusion de l'émission**, depuis le 2026-10-18) ; vide = aucune. Un nom inconnu est signalé en note et l'émission est importée sans lui. |
 | `own_production` | yes/no - production propre de la station ; les minutes diffusées comptent dans Analytics → Minutes de programme, ses participants dans Analytics → Participants (depuis le 2026-11-03). |
+| `show_type` | libellé ou code d'un type d'émission (Paramètres → Types de piste/d'émission, depuis le 2026-11-16) ; vide = aucun ; une valeur inconnue est signalée comme erreur de la ligne. |
 | `intro_playlist`, `outro_playlist` | noms de playlists ; vide = valeurs par défaut de la station |
 | `rastatime_auth`, `custom_auth`, `custom_username` | authentification DJ live comme dans la boîte de dialogue |
 | `djs` | identifiants des DJ, séparés par des virgules ; seuls les utilisateurs de type DJ peuvent être affectés |

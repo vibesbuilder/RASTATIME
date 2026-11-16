@@ -178,8 +178,10 @@ oder wiederholend, Vorlagen und Import/Export tragen es als
 `own_production`).  Die Seite zählt die
 Episoden markierter Sendungen, die im Jahr gesendet wurden - beendet,
 nicht gelöscht, keine alte Rebroadcast-Episode - mit ihrer **geplanten**
-Dauer, je Sendung und Monat auf Minuten gerundet.  Sendungen, die als
-[Wiederholung einer anderen Sendung](./CALENDAR.md) angelegt sind,
+Dauer, je Sendung und Monat auf Minuten gerundet.  Sendungen, deren
+**Show-Typ** *Zählt als Wiederholung* hat (Settings →
+[Track-/Show-Typen](./SETTINGS.md), seit 2026-11-16; vorher die als
+[Wiederholung einer anderen Sendung](./CALENDAR.md) angelegten),
 stehen in einer eigenen Spalte (Erstausstrahlungen gegenüber
 Wiederholungen), weil die meisten Behörden sie getrennt abfragen.
 Sendungen ohne Häkchen erscheinen ausgegraut mit ihren Minuten unter
@@ -187,7 +189,8 @@ Sendungen ohne Häkchen erscheinen ausgegraut mit ihren Minuten unter
 Eine Monatstabelle und **Download CSV (minutes)** (je Sendung mit Genre
 und Kategorie, Summen, je Monat) runden den Abschnitt ab.
 
-**Nach Genre und Kategorie** (seit 2026-11-10): unter den Monaten
+**Nach Show-Typ, Genre und Kategorie** (seit 2026-11-10; Show-Typ seit
+2026-11-16, voreingestellt; *Group by* bietet zusätzlich **Show type**): unter den Monaten
 dieselben Minuten, gruppiert nach **Genre**, **Kategorie** oder **Genre
 und Kategorie** der Sendungen (Auswahl unter *Gruppieren nach*), mit den
 Spalten Episoden der Eigenproduktionen, Minuten der Eigenproduktionen
@@ -229,7 +232,7 @@ Musik kommt, die in einem Jahr auf Sendung ging - die Musikquote des
 Senders.  Je ein Jahr (Senderzeit; das laufende Jahr bis heute).
 
 Gezählt werden die Ausstrahlungen in der Playout History (§ 1) von
-Tracks, deren Track-Typ den Code `music` hat (Settings → Track Types);
+Tracks, deren Track-Typ den Code `music` hat (Settings → Track/Show Types);
 Tracks eines anderen Typs oder ohne Typ zählen nicht.  Jede
 Ausstrahlung zählt mit dem Land ihres Tracks, wie es heute eingetragen
 ist (Edit Track → **Land**, beim Import aus dem Tag `Country` gelesen -

@@ -27,8 +27,11 @@ class YearlyreportController extends Zend_Controller_Action
         $this->view->minutes = Application_Service_YearlyReportService::minutesReport($year);
         $this->view->columnReady = Application_Service_YearlyReportService::columnReady();
         $this->view->categoryReady = Application_Service_YearlyReportService::categoryReady();
-        $group = (string) $this->_getParam('group', 'genre');
-        $this->view->group = in_array($group, ['genre', 'category', 'both'], true) ? $group : 'genre';
+        // RASTATIME 2026-11-16 - per show type first (the default once the types exist)
+        $this->view->showTypesReady = Application_Model_Showtype::ready();
+        $default = $this->view->showTypesReady ? 'show_type' : 'genre';
+        $group = (string) $this->_getParam('group', $default);
+        $this->view->group = in_array($group, ['show_type', 'genre', 'category', 'both'], true) ? $group : $default;
         $this->view->isCurrentYear = $year === (int) (new DateTime('now', $tz))->format('Y');
         $this->view->today = (new DateTime('now', $tz))->format('Y-m-d');
         $this->view->monthNames = [];
@@ -114,7 +117,8 @@ class YearlyreportController extends Zend_Controller_Action
 
     /**
      * RASTATIME 2026-11-10 - programme minutes of one year per genre, per
-     * category or per genre x category (?group=genre|category|both) as CSV.
+     * category or per genre x category (?group=genre|category|both) as CSV;
+     * 2026-11-16 per show type (?group=show_type).
      */
     public function groupsCsvAction()
     {
@@ -122,14 +126,17 @@ class YearlyreportController extends Zend_Controller_Action
         $this->_helper->viewRenderer->setNoRender(true);
         $year = $this->year();
         $group = (string) $this->_getParam('group', 'genre');
-        $group = in_array($group, ['genre', 'category', 'both'], true) ? $group : 'genre';
+        $group = in_array($group, ['show_type', 'genre', 'category', 'both'], true) ? $group : 'genre';
         $report = Application_Service_YearlyReportService::minutesReport($year);
-        $none = ['genre' => _('No genre'), 'category' => _('No category')];
+        $none = ['show_type' => _('No show type'), 'genre' => _('No genre'), 'category' => _('No category')];
         $head = [];
-        if ($group !== 'category') {
+        if ($group === 'show_type') {
+            $head[] = _('Show type');
+        }
+        if ($group === 'genre' || $group === 'both') {
             $head[] = _('Genre');
         }
-        if ($group !== 'genre') {
+        if ($group === 'category' || $group === 'both') {
             $head[] = _('Category');
         }
         $out = fopen('php://temp', 'w+');
@@ -140,7 +147,7 @@ class YearlyreportController extends Zend_Controller_Action
         $sum = array_fill_keys(['episodes_own', 'minutes_first', 'minutes_repeat', 'minutes_own', 'episodes_other', 'minutes_other', 'minutes_total'], 0);
         foreach ($report['groups'][$group] as $r) {
             $lead = [];
-            foreach (['genre', 'category'] as $d) {
+            foreach (['show_type', 'genre', 'category'] as $d) {
                 if ($r[$d] !== null) {
                     $lead[] = $r[$d] === '' ? $none[$d] : $r[$d];
                 }
@@ -155,7 +162,7 @@ class YearlyreportController extends Zend_Controller_Action
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
-        $names = ['genre' => 'genre', 'category' => 'category', 'both' => 'genre-category'];
+        $names = ['show_type' => 'show-type', 'genre' => 'genre', 'category' => 'category', 'both' => 'genre-category'];
         $this->getResponse()
             ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
             ->setHeader('Content-Disposition', 'attachment; filename="programme-minutes-by-' . $names[$group] . '-' . $year . '.csv"')
@@ -171,10 +178,10 @@ class YearlyreportController extends Zend_Controller_Action
         $report = Application_Service_YearlyReportService::minutesReport($year);
         $out = fopen('php://temp', 'w+');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, [_('Show name'), _('Own production'), _('Repeat'), _('Episodes aired'), _('Minutes'), _('Genre'), _('Category')], ',', '"', '');
+        fputcsv($out, [_('Show name'), _('Own production'), _('Repeat'), _('Episodes aired'), _('Minutes'), _('Genre'), _('Category'), _('Show type')], ',', '"', '');
         foreach ($report['rows'] as $r) {
             fputcsv($out, [$r['name'], $r['own_production'] ? _('yes') : _('no'), $r['is_repeat'] ? _('yes') : '',
-                $r['episodes'], $r['minutes'], $r['genre'], $r['category']], ',', '"', '');
+                $r['episodes'], $r['minutes'], $r['genre'], $r['category'], $r['show_type']], ',', '"', '');
         }
         $t = $report['totals'];
         fputcsv($out, [_('Total own productions, first broadcasts'), '', '', $t['episodes_own'], $t['minutes_first']], ',', '"', '');

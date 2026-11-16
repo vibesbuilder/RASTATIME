@@ -8974,3 +8974,95 @@ msgstr "Les pistes de ce type reçoivent Energy, Brightness, BPM et Key mesurés
 #, c-format
 msgid "waiting until %s"
 msgstr "attend jusqu'à %s"
+
+#: RASTATIME 2026-11-16 show types (Settings -> Track/Show Types, show form, Programme Minutes)
+msgid "Track/Show Types"
+msgstr "Types de piste/d'émission"
+
+msgid "Manage Show Types"
+msgstr "Gérer les types d'émission"
+
+msgid "New Show Type"
+msgstr "Nouveau type d'émission"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Counts as repeat"
+msgstr "Compte comme rediffusion"
+
+msgid "Counts as repeat:"
+msgstr "Compte comme rediffusion :"
+
+msgid "Order"
+msgstr "Ordre"
+
+msgid "Order:"
+msgstr "Ordre :"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "(none)"
+msgstr "(aucun)"
+
+msgid "No show types yet."
+msgstr "Pas encore de types d'émission."
+
+msgid "Show Type:"
+msgstr "Type d'émission :"
+
+msgid "Show type"
+msgstr "Type d'émission"
+
+msgid "No show type"
+msgstr "Aucun type d'émission"
+
+msgid "By show type, genre and category"
+msgstr "Par type d'émission, genre et catégorie"
+
+msgid "POST only."
+msgstr "POST uniquement."
+
+msgid "Delete this show type?"
+msgstr "Supprimer ce type d'émission ?"
+
+msgid "Delete this show type? The shows using it keep no show type."
+msgstr "Supprimer ce type d'émission ? Les émissions qui l'utilisent n'auront plus de type."
+
+msgid "The show types are not available yet (database migration 0088 pending)."
+msgstr "Les types d'émission ne sont pas encore disponibles (migration de base de données 0088 en attente)."
+
+msgid "The show types are available once database migration 0088 has run."
+msgstr "Les types d'émission sont disponibles dès que la migration de base de données 0088 a été exécutée."
+
+msgid "Code: 1 to 16 lower-case letters, digits, \"-\" or \"_\"."
+msgstr "Code : 1 à 16 lettres minuscules, chiffres, \"-\" ou \"_\"."
+
+msgid "Label: 1 to 64 characters."
+msgstr "Libellé : 1 à 64 caractères."
+
+msgid "Order: a whole number."
+msgstr "Ordre : un nombre entier."
+
+msgid "Code: another show type uses it already."
+msgstr "Code : un autre type d'émission l'utilise déjà."
+
+#, c-format
+msgid "unknown show type \"%s\""
+msgstr "type d'émission inconnu \"%s\""
+
+msgid "The type of a show, chosen under Edit Show next to Genre. Analytics → Programme Minutes counts a show as a repeat when its type is marked \"Counts as repeat\", and adds up the minutes per show type."
+msgstr "Le type d'une émission, choisi sous Modifier l'émission à côté du genre. Analytics → Programme Minutes compte une émission comme rediffusion lorsque son type est marqué « Compte comme rediffusion » et additionne les minutes par type d'émission."
+
+msgid "Shows of this type count as repeats in Analytics → Programme Minutes (own productions: first broadcast or repeat). The \"Repeat of another show\" setting of a show only copies content and does not count."
+msgstr "Les émissions de ce type comptent comme rediffusions dans Analytics → Programme Minutes (productions propres : première diffusion ou rediffusion). Le réglage « Rediffusion d'une autre émission » ne fait que copier le contenu et ne compte pas."
+
+msgid "Chosen from the list under Settings → Track/Show Types. Analytics → Programme Minutes adds up the minutes per show type and counts a show as a repeat when its type is marked \"Counts as repeat\"."
+msgstr "Choisi dans la liste sous Settings → Types de piste/d'émission. Analytics → Programme Minutes additionne les minutes par type d'émission et compte une émission comme rediffusion lorsque son type est marqué « Compte comme rediffusion »."
+
+msgid "The show types are missing - run the database migration 0088 first. Until then no show counts as a repeat."
+msgstr "Les types d'émission manquent - exécutez d'abord la migration de base de données 0088. D'ici là, aucune émission ne compte comme rediffusion."
+
+msgid "Minutes of the station's own productions, for the reporting to the authorities. Tick \"Own production\" in the show (Edit Show → What); counted are the episodes that aired in the year with their scheduled duration. Shows whose show type counts as a repeat (Settings → Track/Show Types) are listed in the repeats column."
+msgstr "Minutes des productions propres de la station, pour les déclarations aux autorités. Cochez \"Production propre\" dans l'émission (Edit Show → What) ; sont comptés les épisodes diffusés dans l'année avec leur durée prévue. Les émissions dont le type compte comme rediffusion (Settings → Types de piste/d'émission) figurent dans la colonne des rediffusions."

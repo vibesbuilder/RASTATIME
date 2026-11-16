@@ -52,6 +52,21 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
             'autocomplete' => 'off',
         ]);
 
+        // RASTATIME 2026-11-16 - show type (operator): one of the types under
+        // Settings -> Track/Show Types (cc_show_types, migration 0088).
+        // Analytics -> Programme Minutes counts a show as a repeat when its
+        // type is marked "counts as repeat" and adds up minutes per type.
+        // The field shows once the table exists.
+        if (Application_Model_Showtype::ready()) {
+            $this->addElement('select', 'add_show_type', [
+                'label' => _('Show Type:'),
+                'required' => false,
+                'multiOptions' => ['' => _('(none)')] + Application_Model_Showtype::options(),
+                'description' => _('Chosen from the list under Settings → Track/Show Types. Analytics → Programme Minutes adds up the minutes per show type and counts a show as a repeat when its type is marked "Counts as repeat".'),
+                'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-show-type']]],
+            ]);
+        }
+
         // RASTATIME 2026-11-10 - category (operator): free text with
         // suggestions, evaluated in Analytics -> Programme Minutes per genre,
         // per category and per genre x category (cc_show.category, raw SQL,

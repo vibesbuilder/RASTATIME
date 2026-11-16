@@ -26,7 +26,7 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 | **Benutzer** | Benutzer anlegen, bearbeiten und löschen, Benutzertyp festlegen. | Admin | [Benutzer und Rollen](./USERS_AND_ROLES.md) §3 |
 | **Streams** | Ausgabe-Streams (Bitrate, Mount, Codec), Eingänge für Live-Einwahlen, Master-Login. | Admin | [Streams](./STREAMS.md) |
 | **Lokale Maschine** | Soundkarte, Import-Ordner und -Format, Aufnahme-Ordner und -Format, Speicherort der Bibliothek. | Admin | [Lokale Maschine](./LOCAL_MACHINE.md) |
-| **Track-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import. | Admin | [Bibliothek](./LIBRARY.md) |
+| **Track-/Show-Typen** | Track-Typen mit ihren Vorgaben für Crossfade, Crossover und Stream-Metadaten sowie ihrer Cue-Punkt-Analyse beim Import; darunter die Show-Typen (seit 2026-11-16, siehe unten). | Admin | [Bibliothek](./LIBRARY.md) |
 | **Auto DJ** | Lückenfüller und Auffüllen unvollständiger Sendungen. | Program Manager, Admin | [Auto DJ](./AUTO_DJ.md) |
 | **Show Templates** | Übersicht der gespeicherten Show-Vorlagen: umbenennen, löschen. | Program Manager, Admin | [Sendungs-Vorlagen](./SHOW_TEMPLATES.md) |
 | **Archivierung** | Produzenten der Sendungen - je eine Person oder ein Team (Name, optional Login; einer je Sendung, unter Archivierung gewählt); für Admins darunter die cba.media-Benutzer, unter denen die Sendungen archiviert werden (Benutzername, Anwendungspasswort), Verbindungstest, Upload-Grenze, Wartezeit des automatischen Archivierens. Bis 2026-11-03 zwei Einträge, *Redaktionsteam* und *CBA-Konten*. | Program Manager (Produzenten), Admin | [Archivierung](./ARCHIVING.md) |
@@ -34,6 +34,28 @@ Linke Navigation → **Einstellungen** öffnet das Untermenü:
 | **Import / Export** | Benutzer, Sendungen, Playlisten, Smart Blocks, Webstreams und Podcast-Abos als CSV/JSON-Dateien, mit Vorschau beim Import. | Admin | [Import / Export](./IMPORT_EXPORT.md) |
 | **Backup** | Sicherungen von Datenbank und Konfiguration, der Medienspiegel, automatische Backups, Wiederherstellung. | Admin | [Backup](./BACKUP.md) |
 | **Status** | Zustand der Dienste, Speicherplatz, Dienst-Neustarts, erlaubte und gesperrte Adressen. | Admin | Dieses Kapitel §3 |
+
+### Show-Typen (seit 2026-11-16)
+
+Die Seite **Track-/Show-Typen** (bis 2026-11-16 *Track-Typen*) führt
+unter den Track-Typen die Show-Typen.  Eine Sendung bekommt einen davon
+unter Sendung bearbeiten → What → **Show-Typ** (siehe
+[Kalender](./CALENDAR.md)).
+
+| Feld | Hinweise |
+|---|---|
+| **Code** | Kurzer interner Name: Kleinbuchstaben, Ziffern, `-` und `_`, eindeutig. |
+| **Bezeichnung** | Der Name im Sendungsformular und in den Auswertungen. |
+| **Zählt als Wiederholung** | Sendungen dieses Typs zählen in Analytics → [Programme Minutes](./ANALYTICS.md) §5 als Wiederholung. |
+| **Reihenfolge** | Position in der Liste und im Sendungsformular. |
+| **Sendungen** | Wie viele Sendungen den Typ verwenden. |
+
+Eine neue Installation bringt Music, Live, Recording, Repeat (zählt als
+Wiederholung), News und Partner show mit; benennen Sie sie um, ergänzen
+oder löschen Sie sie nach Bedarf.  Ein gelöschter Typ lässt seine
+Sendungen ohne Typ zurück.  Wer den Sendungstyp bisher im Genre-Feld
+geführt hat, kann ihn mit `manage.py transfer_genre_to_show_type`
+übertragen (zuerst als Probelauf, siehe ARCHITECTURE §23.120).
 
 Line-In-Quellen werden unter **Dashboard → Line Inputs** verwaltet (siehe
 [Line-In](./LINE_IN.md)); die Oberflächensprachen behandelt

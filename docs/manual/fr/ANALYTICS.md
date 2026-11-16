@@ -184,16 +184,20 @@ récurrente, les modèles et l'Import/Export la portent comme
 `own_production`).  La page compte
 les épisodes des émissions cochées diffusés dans l'année - terminés, non
 supprimés, sans ancienne rediffusion - avec leur durée **planifiée**,
-arrondie en minutes par émission et par mois.  Les émissions configurées
-comme [Rediffusion d'une autre émission](./CALENDAR.md) ont leur propre
-colonne (premières diffusions / rediffusions), car la plupart des
-autorités les déclarent séparément.  Les émissions sans la case
+arrondie en minutes par émission et par mois.  Les émissions dont le
+**type d'émission** est marqué *Compte comme rediffusion* (Paramètres →
+[Types de piste/d'émission](./SETTINGS.md), depuis le 2026-11-16 ;
+avant, celles configurées comme [Rediffusion d'une autre
+émission](./CALENDAR.md)) ont leur propre colonne (premières diffusions /
+rediffusions), car la plupart des autorités les déclarent séparément.  Les émissions sans la case
 apparaissent grisées avec leurs minutes sous « autres émissions (non
 comptées) », pour voir ce qui manque.  Un tableau par mois et
 **Download CSV (minutes)** (par émission avec genre et catégorie,
 totaux, par mois) complètent la section.
 
-**Par genre et catégorie** (depuis le 2026-11-10) : sous les mois, les
+**Par type d'émission, genre et catégorie** (depuis le 2026-11-10 ; type
+d'émission depuis le 2026-11-16, par défaut ; *Group by* propose aussi
+**Show type**) : sous les mois, les
 mêmes minutes regroupées par **Genre**, **Catégorie** ou **Genre et
 catégorie** des émissions (au choix sous *Grouper par*), avec les
 colonnes épisodes des productions propres, minutes des productions
@@ -236,7 +240,7 @@ Une année à la fois (heure de la station ; l'année en cours jusqu'à
 aujourd'hui).
 
 Sont comptées les diffusions de la Playout History (§ 1) des pistes
-dont le type a le code `music` (Settings → Track Types) ; les pistes
+dont le type a le code `music` (Settings → Track/Show Types) ; les pistes
 d'un autre type ou sans type ne comptent pas.  Chaque diffusion compte
 avec le pays de sa piste tel qu'il est aujourd'hui (Edit Track →
 **Pays**, lu dans le tag `Country` à l'import - voir

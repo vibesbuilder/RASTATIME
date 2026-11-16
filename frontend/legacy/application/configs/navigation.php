@@ -185,7 +185,8 @@ $pages[] = [
             'resource' => 'preference',
         ],
         [
-            'label' => 'Track Types',
+            // RASTATIME 2026-11-16 - the show types live on the same page
+            'label' => 'Track/Show Types',
             'module' => 'default',
             'controller' => 'tracktype',
             'action' => 'add-tracktype',
