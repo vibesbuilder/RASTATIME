@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **„Back on air soon“ blitzte bei jeder Übergabe an einen Live-Eingang auf (2026-11-16, Befund
+  2026-11-16, Operator-Go 2026-11-16)** - der Off-Air-Text ging sofort hinaus, sobald die
+  Warteschlange auch nur Millisekunden in die Stille fiel: stündlich zwischen „Intro BBC News“ und
+  dem BBC-Webstream (~140 ms) und bei jedem Line-In-Start, im Stream-Titel und im Live Text, sichtbar
+  auch in öffentlichen Titellisten.  Jetzt erst nach **5 s** echter Stille (fest) und nur, wenn kein
+  Live-Eingang übernommen hat; ein Titel dazwischen bricht die Prüfung ab.  Manual STREAMS x4,
+  ARCHITECTURE 0.146 (§23.118).  Wirksam nach PLAYOUT-Neustart ab dem nächsten Liquidsoap-Neustart.
+- **Line-In begann 1-2 s zu spät (2026-11-16, Befund 2026-11-16, Operator-Go 2026-11-16)** - das
+  Vorwärmen 15 s vor dem Slot verband den Liquidsoap-Eingang nicht: der seit 2026-10-21 frische
+  Eingang je Slot startet erst, wenn ihn etwas liest, und bei geschlossenem Tor las ihn nichts; er
+  verband sich erst nach dem Öffnen (alle sieben Starts 13.-16.11.).  Ein stiller Ausgang liest den
+  vorbereiteten Eingang jetzt ab `linein_http.start`, ohne Puffer und ohne zusätzliche Latenz;
+  Replik-Probe: verbunden 8 s vor dem Tor, Umschalten in derselben Sekunde.  Manual LINE_IN x4,
+  ARCHITECTURE 0.146 (§23.118).  Wirksam nach PLAYOUT-Neustart ab dem nächsten Liquidsoap-Neustart.
+
 ## [1.6.0] - 2026-11-15
 
 ### Added

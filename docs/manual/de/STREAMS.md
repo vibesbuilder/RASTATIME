@@ -92,6 +92,10 @@ kommt aus Einstellungen → General.
 
 - **Off Air Metadata** ersetzt den letzten Titel, sobald nichts auf
   Sendung ist (vor dem 2026-09-13 blieb der alte Titel stundenlang stehen).
+  Seit 2026-11-16 wartet es, bis **5 Sekunden** lang nichts auf Sendung
+  war: Eine kürzere Lücke, etwa der Moment, bevor ein Webstream oder ein
+  Line-In übernimmt, lässt den Titel stehen.  Dasselbe gilt für den
+  Live Text.
 - Änderungen an beiden Feldern wirken innerhalb eines Sendeplan-Refreshs
   (etwa zwei Minuten), ohne Neustart.
 - Das Label wird in die Titel-Metadaten des Streams geschrieben und gilt

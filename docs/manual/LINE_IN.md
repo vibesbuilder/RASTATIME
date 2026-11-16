@@ -322,6 +322,12 @@ when another Line-In is on air (one capture at a time) or when
 the row has no stored device name; such slots start the normal way
 (~2 s).
 
+Since 2026-11-16 the pre-warmed source is really connected when the
+gate opens.  From 2026-10-21 (a fresh source per slot) it only
+connected once the gate had opened, so a pre-warmed slot still
+started 1–2 s late, and the stream showed the Off Air Metadata text
+during that second (see Streams).
+
 When the slot's duration elapses, the engine sends a
 `LINEIN_END` event and the source switcher returns to the
 schedule.

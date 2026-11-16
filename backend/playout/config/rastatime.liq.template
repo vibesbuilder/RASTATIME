@@ -326,9 +326,36 @@ silence_fallback = blank(id="silence_fallback")
 def offair_mark() =
   silence_fallback.insert_metadata([("off_air", "true"), ("title", offair_text())])
 end
-def scheduled_keep(_, new) = new end
+# RASTATIME 2026-11-16 - the Off Air text only after 5 s of real silence.
+# A planned hand-over falls into silence for a few ms (webstream gate
+# opened at the end of an intro) or 1-2 s (line-in start, small fill
+# gaps); the immediate mark sent "back on air soon" to the ICY title and
+# the Live Text every time (hourly at the news, at every line-in start).
+# offair_after marks only if, 5 s later, the queue is still empty and the
+# bus is still on the scheduled arm; a newer fall into silence or a track
+# in between cancels the older check (offair_seq).  bus_on_scheduled is
+# kept by the bus arm transitions (rendered bus block) and starts true:
+# the first selection fires no transition and is always the scheduled
+# arm, every other arm needs a connected source.  The check matters: a
+# mark inserted while a live arm is on air would wait in the silence arm
+# and surface at the next short gap.
+offair_delay = 5.0
+offair_seq = ref(0)
+bus_on_scheduled = ref(true)
+def offair_after() =
+  offair_seq.set(offair_seq() + 1)
+  n = offair_seq()
+  thread.run(delay=offair_delay, fun () ->
+    if n == offair_seq() and bus_on_scheduled() and not source.is_ready(scheduled_q) then
+      offair_mark()
+    end)
+end
+def scheduled_keep(_, new) =
+  offair_seq.set(offair_seq() + 1)
+  new
+end
 def scheduled_offair(_, new) =
-  offair_mark()
+  offair_after()
   new
 end
 

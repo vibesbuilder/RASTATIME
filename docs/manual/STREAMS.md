@@ -89,6 +89,10 @@ name comes from Settings → General.
 
 - **Off Air Metadata** replaces the last track's title as soon as
   nothing is on air (before 2026-09-13 the old title stayed for hours).
+  Since 2026-11-16 it waits until nothing has been on air for
+  **5 seconds**: a shorter gap, such as the moment before a web stream
+  or a Line-In takes over, keeps the title.  The same applies to the
+  Live Text.
 - Changes to either field take effect within one schedule refresh
   (about two minutes), no restart needed.
 - The label is written into the stream's title metadata, so it applies

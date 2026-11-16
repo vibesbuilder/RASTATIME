@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.145
-Date: 2026-11-15
+Draft version: 0.146
+Date: 2026-11-16
 
 > **Revision history**
+> - **0.146 (2026-11-16)** - **Off Air text only after 5 s of silence, line-in connected at the
+>   gate** (§23.118): the scheduled fallback marks the silence off-air through a 5 s check
+>   (queue still empty, bus still on the scheduled arm); a silent `output.dummy` keeps the
+>   armed line-in input pulled while its gate is closed.
 > - **0.145 (2026-11-15)** - **Audio features per track type** (§23.117): a track type
 >   decides whether its tracks get energy / brightness and tempo / key
 >   (`cc_track_types.analyze_audio_features`, migration 0087, music only);
@@ -10757,3 +10761,82 @@ music keeps all of them.  Before 0087 the behaviour equals the default
 after it.  Rollback: `git revert 7bf1f8b2` (tag `live-2026-11-15c`); the
 cleared values can be re-measured (`--ids ...` after ticking the type)
 or restored from the JSON backup; the column may stay.
+
+### 23.118 Off Air Text after 5 s of Silence, Line-In Connected at the Gate (2026-11-16)
+
+**Finding.**  Found 2026-11-16 in the title history of the public relay
+while analysing missing station logos: " - Back on air soon" at 08:15
+(line-in show start), and on public title lists at nearly every news
+hour.  Two causes:
+- *Off Air text.*  The `scheduled` fallback marked the silence off-air
+  at once on every fall into `silence_fallback` (`scheduled_offair`);
+  only `bus_arm_scheduled` re-checked after 0.5 s (since 2026-11-02).
+  A planned hand-over falls into silence for a few ms or a second:
+  10:01 PLAYOUT opened the web stream gate exactly at the end of the
+  news intro ("0.93 s of audio left - the gate opens in 0.93 s", gate
+  10:01:05.986), the queue ran dry a few ms earlier, and ICY title and
+  Live Text read "Back on air soon" for ~140 ms.  2026-11-15/16: 17
+  falls into the silence arm, mostly at hh:01:05.
+- *Line-in start gap.*  PLAYOUT pre-warms a line-in 15 s ahead
+  (`linein_start_http`, feeder streaming at once), yet Liquidsoap
+  opened the decoder 1-2 s AFTER the gate opened (08:15:00.085 ->
+  08:15:02; the same at all seven line-in starts 2026-11-13..16).  The
+  fresh `input.http` inside `source.dynamic` (2026-10-21) only starts
+  when something pulls it; with the gate closed nothing did.  The web
+  stream has its `buffer()` bridge with its own clock for this, the
+  line-in had nothing.
+
+**Design.**
+- Template: `offair_after()` replaces the immediate mark.  It bumps a
+  sequence number and checks 5 s later (`offair_delay = 5.0`, fixed,
+  operator decision) that it is still the newest check, that the bus is
+  still on the scheduled arm (`bus_on_scheduled`) and that the queue is
+  still empty; only then `offair_mark()`.  `scheduled_keep` (a track
+  takes over) bumps the sequence and so cancels a pending check.
+  `bus_on_scheduled` starts true (the first selection fires no
+  transition and is always the scheduled arm); every live arm wrapper
+  sets it false, `bus_arm_scheduled` sets it true and calls
+  `offair_after()` when the queue is empty (the 0.5 s re-check is gone).
+  The bus check matters: a mark inserted while a live arm is on air
+  would wait in the unpulled silence arm and surface at the next short
+  gap.  The start-up mark stays immediate.  The Live Text follows (it is
+  built from the same metadata).
+- Line-in block: `output.dummy(id="linein_http_warm", fallible=true,
+  linein_http_raw)` pulls the armed input from `linein_http.start` on,
+  so the pre-warmed input is connected when the gate opens.  No buffer,
+  no added latency; with nothing armed (`source.fail()`) it idles.
+
+**Verification.**  Playout suite 927 passed / 2 skipped (render tests
+for the delayed mark, the flags in all arms, the warm output).  Production
+render with the live settings into a temp file
+(`C:/Temp/optd/prod_render_check.py`): `liquidsoap --check` rc 0 for both
+scripts, the diff against the live script is exactly these changes,
+standby unchanged.  Replica of the off-air logic
+(`C:/Temp/optd/offair_delay_probe/`, the rendered block copied): track
+ends, live arm 1 s later -> no mark; live arm leaves with an empty queue
+-> mark after 5.0 s; 2 s gap between two tracks -> no mark, after the
+last one 5 s.  Line-in replica (`C:/Temp/optd/linein_warm_probe/`, the
+production line-in block with a harbor test mount, own ports): without
+the output the pre-warmed input stays "stopped" and connects at the
+gate; with it "connected" 8 s before the gate and the switch in the same
+second.  Stop after air, two slots in a row, replacement of an on-air
+input and a show end with the feeder stopped first: no zombie.  Two edge
+cases: a pre-warmed input stopped before it was ever on air (pre-warm
+undone) does not reach "stopped" within the 5 s drain and stays a
+"stopping" zombie - the same harmless state every line-in end reaches
+today (2026-11-15 00:00, 17:00, 19:00, 2026-11-16 10:00); a start within
+that drain waits for it (up to 5 s).
+
+**Rollout.**  A PLAYOUT restart writes the new script; Liquidsoap loads
+it at its next restart (nightly / planned restart), no manual Liquidsoap
+start.  Acceptance: the next line-in starts (decoder open vs. gate in
+the Liquidsoap / PLAYOUT log, no `Switch to silence_fallback` at the
+start) and the news hours (no "Back on air soon" in the Live Text and in
+the public title history).
+
+**Risk.**  Low (off-air) / medium-low (line-in): a script error is caught
+by `--check` before; wrong off-air logic is cosmetic; the warm output
+could change stop behaviour in a path the probe did not cover - worst
+case a silent line-in slot, which the dead-air alert reports.
+Rollback: revert the commit (tag `live-2026-11-16`), PLAYOUT restart,
+Liquidsoap restart in a quiet moment.

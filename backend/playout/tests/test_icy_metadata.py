@@ -126,6 +126,20 @@ def test_full_render_has_icy_block_and_offair_fallback():
     assert 'interactive.string("offair_text", "Pause")' in out
     assert "def offair_mark() =" in out
     assert "transitions=[scheduled_keep, scheduled_offair]" in out
+    # 2026-11-16: a fall into silence marks only after 5 s of real silence on
+    # the scheduled arm; a track in between or a newer fall cancels the check
+    assert "offair_delay = 5.0\n" in out
+    assert "bus_on_scheduled = ref(true)\n" in out
+    assert (
+        "    if n == offair_seq() and bus_on_scheduled() and not source.is_ready(scheduled_q) then\n"
+        "      offair_mark()\n"
+    ) in out
+    assert "def scheduled_keep(_, new) =\n  offair_seq.set(offair_seq() + 1)\n  new\nend\n" in out
+    assert "def scheduled_offair(_, new) =\n  offair_after()\n  new\nend\n" in out
+    # defined before the bus block whose arms set it
+    assert out.index("bus_on_scheduled = ref(true)") < out.index(
+        "def bus_arm_scheduled(old, new) ="
+    )
     assert 'bus = metadata.map(id="icy_rewrite"' in out
     assert out.index("def icy_rewrite(m) =") < out.index('metadata.map(id="icy_rewrite"')
     assert (
@@ -151,12 +165,15 @@ def test_bus_block_wraps_every_arm():
     ):
         assert f"def {name}(old, new) =  # {source}" in out
     assert out.count('  s.insert_metadata([("show_name", bus_show())])') == 4
+    # 2026-11-16: every live arm leaves the scheduled arm, only the scheduled
+    # arm sets the flag again - the delayed Off Air check reads it
+    assert out.count("  bus_on_scheduled.set(false)\n") == 4
+    assert out.count("  bus_on_scheduled.set(true)\n") == 1
     assert "def bus_arm_scheduled(old, new) =" in out
-    assert "  if not source.is_ready(scheduled_q) then" in out
-    # 2026-11-02: the mark is re-checked 0.5 s later on the silence arm, so a
-    # push that follows the gate switch by a few ms keeps its own title
-    assert "    thread.run(delay=0.5, fun () ->" in out
-    assert "      if not source.is_ready(scheduled_q) then offair_mark() end)" in out
+    # 2026-11-02 / 2026-11-16: no immediate mark on the transition source; the
+    # silence arm is marked by offair_after, 5 s later and only if still silent
+    assert "  if not source.is_ready(scheduled_q) then offair_after() end\n" in out
+    assert "thread.run(delay=0.5" not in out
     assert 's.insert_metadata([("off_air", "true")' not in out
     assert (
         "transitions=[\n    bus_arm_master,\n    bus_arm_show,\n    bus_arm_webstream,\n    bus_arm_linein,\n    bus_arm_scheduled,\n  ]"

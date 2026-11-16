@@ -343,6 +343,12 @@ Sendung ist (ein Capture zur Zeit) oder die Zeile keinen
 gespeicherten Gerätenamen hat; solche Slots starten auf dem
 normalen Weg (~2 s).
 
+Seit 2026-11-16 ist die vorgewärmte Quelle beim Öffnen des Gates
+wirklich verbunden.  Ab 2026-10-21 (eine frische Quelle je Slot)
+verband sie sich erst, nachdem das Gate offen war; ein vorgewärmter
+Slot begann deshalb trotzdem 1–2 s zu spät, und der Stream zeigte
+in dieser Sekunde den Off-Air-Metadata-Text (siehe Streams).
+
 Wenn die Slot-Dauer abgelaufen ist, sendet die Engine ein
 `LINEIN_END`-Event, und der Source-Switcher kehrt zum
 Sendeplan zurück.

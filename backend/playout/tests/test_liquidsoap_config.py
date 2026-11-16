@@ -1164,6 +1164,13 @@ def test_full_render_default_includes_linein_input_block():
     assert 's = input.http(id="linein_http_in_#{n}", start=true, self_sync=false,' in active
     assert '    "http://127.0.0.1:8000/linein-capture")' in active
     assert "linein_http = stereo(linein_http_raw)" in active
+    # RASTATIME 2026-11-16 - a silent output pulls the armed input while the
+    # gate is closed, so the pre-warmed input is connected at the gate (it
+    # only connected 1-2 s after the gate opened); exactly one, after the arm
+    assert active.count('output.dummy(id="linein_http_warm", fallible=true, linein_http_raw)') == 1
+    assert active.index("linein_http = stereo(linein_http_raw)") < active.index(
+        'output.dummy(id="linein_http_warm"'
+    )
     assert (
         'server.register(namespace="linein_http", description="Open a fresh input for the /linein-capture mount",'
         in active
@@ -1207,6 +1214,7 @@ def test_full_render_linein_disabled_renders_stub_comment():
     assert 'namespace="linein"' not in active
     # Switch arm for linein MUST NOT appear
     assert "source.is_ready(linein)" not in active
+    assert "linein_http_warm" not in active
 
 
 def test_full_render_linein_custom_max_buffer():

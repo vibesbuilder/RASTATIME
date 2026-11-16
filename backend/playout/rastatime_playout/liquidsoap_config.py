@@ -1796,6 +1796,17 @@ def _render_linein_input_block(
         'linein_http_raw = source.dynamic(id="linein_http", self_sync=false,\n'
         "  track_sensitive=false, {linein_http_current()})\n"
         "linein_http = stereo(linein_http_raw)\n"
+        "# RASTATIME 2026-11-16 - keep the armed input pulled while its gate is\n"
+        "# closed.  The fresh input.http inside source.dynamic only starts when\n"
+        "# something pulls it, and with the gate closed nothing did: PLAYOUT's\n"
+        "# pre-warm at T-15 s left it 'stopped', it connected 1-2 s AFTER the\n"
+        "# gate opened and the show started into silence_fallback (all seven\n"
+        "# line-in starts 2026-11-13..16).  This silent output pulls it from\n"
+        "# linein_http.start on, so it is connected and current when the gate\n"
+        "# opens (replica probe 2026-11-16: 'connected' 8 s before the gate,\n"
+        "# switch in the same second; the webstream has its buffer() bridge\n"
+        "# for the same reason).  No buffer, no added latency.\n"
+        'output.dummy(id="linein_http_warm", fallible=true, linein_http_raw)\n'
         "\n"
         "def linein_http_arm(s, name) =\n"
         "  linein_http_current.set(s)\n"
@@ -2501,6 +2512,7 @@ def _render_bus_source_block(
             f"def {name}(old, new) =  # {source}\n"
             + pick
             + '  s.insert_metadata([("show_name", bus_show())])\n'
+            "  bus_on_scheduled.set(false)\n"
             "  s\n"
             "end\n"
         )
@@ -2530,17 +2542,16 @@ def _render_bus_source_block(
             if has_dj
             else f"  s = {faded}(old, new)\n"
         )
-        + "  # queue empty: the silence arm goes on air -> Off Air Metadata.\n"
-        "  # RASTATIME 2026-11-02: checked again 0.5 s later, on the silence\n"
-        "  # arm itself.  PLAYOUT closes the previous arm's gate a few ms before\n"
-        "  # it pushes the next track, so the queue is momentarily empty at this\n"
-        "  # transition; the immediate mark on the transition source overtook\n"
-        "  # the track's own title (studio 12:15: 'back on air soon' for a\n"
-        "  # whole track after a webstream).\n"
-        "  if not source.is_ready(scheduled_q) then\n"
-        "    thread.run(delay=0.5, fun () ->\n"
-        "      if not source.is_ready(scheduled_q) then offair_mark() end)\n"
-        "  end\n"
+        + "  bus_on_scheduled.set(true)\n"
+        "  # queue empty: the silence arm goes on air -> Off Air Metadata,\n"
+        "  # on the silence arm itself and only after 5 s of real silence\n"
+        "  # (offair_after in the template, RASTATIME 2026-11-16; 0.5 s since\n"
+        "  # 2026-11-02).  PLAYOUT closes the previous arm's gate a few ms\n"
+        "  # before it pushes the next track, so the queue is momentarily\n"
+        "  # empty at this transition; the immediate mark on the transition\n"
+        "  # source overtook the track's own title (studio 12:15: 'back on\n"
+        "  # air soon' for a whole track after a webstream).\n"
+        "  if not source.is_ready(scheduled_q) then offair_after() end\n"
         "  s\n"
         "end\n"
     )

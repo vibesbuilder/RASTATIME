@@ -65,6 +65,10 @@ stream ; le nom de la station vient de Paramètres → General.
 
 - **Off Air Metadata** remplace le titre de la dernière piste dès que rien
   n'est à l'antenne (avant le 2026-09-13 l'ancien titre restait des heures).
+  Depuis le 2026-11-16, il attend que rien n'ait été à l'antenne pendant
+  **5 secondes** : un trou plus court, comme l'instant avant qu'un flux web
+  ou un Line-In prenne le relais, laisse le titre en place.  Il en va de
+  même pour le Live Text.
 - Une modification de l'un des deux champs prend effet dans le prochain
   rafraîchissement de grille (environ deux minutes), sans redémarrage.
 - Le label est écrit dans les métadonnées de titre du flux : il s'applique

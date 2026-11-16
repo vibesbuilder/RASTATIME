@@ -56,6 +56,10 @@ nombre de la emisora viene de Configuración → General.
 
 - **Off Air Metadata** sustituye el título de la última pista en cuanto no
   hay nada en el aire (antes del 2026-09-13 el título viejo permanecía horas).
+  Desde el 2026-11-16 espera hasta que no haya habido nada en el aire
+  durante **5 segundos**: un hueco más corto, como el momento antes de que
+  un flujo web o un Line-In tome el relevo, deja el título.  Lo mismo vale
+  para el Live Text.
 - Un cambio en cualquiera de los dos campos surte efecto en el siguiente
   refresco de la parrilla (unos dos minutos), sin reinicio.
 - La etiqueta se escribe en los metadatos de título del flujo: aplica a

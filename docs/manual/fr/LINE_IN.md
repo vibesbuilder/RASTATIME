@@ -304,6 +304,13 @@ l'antenne (une capture à la fois) ou quand la ligne n'a pas de nom
 de périphérique enregistré ; ces créneaux démarrent normalement
 (~2 s).
 
+Depuis le 2026-11-16, la source préchauffée est réellement connectée
+quand la porte s'ouvre.  À partir du 2026-10-21 (une source neuve par
+créneau), elle ne se connectait qu'une fois la porte ouverte : un
+créneau préchauffé démarrait donc quand même avec 1 à 2 s de retard,
+et le flux affichait pendant cette seconde le texte Off Air Metadata
+(voir Streams).
+
 Quand la durée du créneau s'écoule, le moteur envoie un
 événement `LINEIN_END` et le source switcher retourne au
 planning.

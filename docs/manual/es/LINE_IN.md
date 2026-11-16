@@ -290,6 +290,12 @@ descartarla. No se precalienta cuando otro Line-In está en antena
 dispositivo guardado; esos slots arrancan por la vía normal
 (~2 s).
 
+Desde el 2026-11-16 la fuente precalentada está realmente conectada
+cuando se abre la puerta.  A partir del 2026-10-21 (una fuente nueva
+por slot) solo se conectaba una vez abierta la puerta, así que un slot
+precalentado empezaba igualmente 1–2 s tarde, y el flujo mostraba
+durante ese segundo el texto Off Air Metadata (vea Streams).
+
 Cuando la duración del slot transcurre, el motor envía un
 evento `LINEIN_END` y el source switcher regresa al
 planning.

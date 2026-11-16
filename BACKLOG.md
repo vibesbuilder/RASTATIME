@@ -8431,7 +8431,7 @@ Aufwand C+D ~1,5-2 Tage, ~10 Dateien, Manual x4; Risiko niedrig bis
 mittel (neuer öffentlicher Endpunkt: nur signierte, befristete Links auf
 Dateien des Typs Recordings).
 
-## 🟡 Line-In-Sendungsstart: 3 s Rückfallstille und „Back on air soon“ im Stream-Titel (Befund 2026-11-16) - Defer (Operator 2026-11-16: später ansehen)
+## 🟢 Line-In-Sendungsstart: 3 s Rückfallstille und „Back on air soon“ im Stream-Titel (Befund 2026-11-16) - GEBAUT 2026-11-16 (Go A 5 s fest + B mit Probe, §23.118); aktiv nach PLAYOUT-Neustart ab dem nächsten Liquidsoap-Neustart, Abnahme offen
 
 Gefunden bei der Logo-Analyse (Stream-Kette) im Titelverlauf des öffentlichen AzuraCast-Relays: um 08:15
 (Start Monday Morning Show, Line-In) steht dort ein eigener Eintrag „ - Back on air soon“ (leerer Interpret).
