@@ -8446,6 +8446,16 @@ lassen).  Nicht nur beim Line-In: 15./16.11. 17x `Switch to silence_fallback`, m
 „Intro BBC News“ -> ~1 s bis der BBC-Webstream übernimmt (16.11. 10:01:05 -> 10:01:06); öffentliche
 Titellisten (onlineradiobox.com) zeigen „Back On Air soon“ entsprechend oft.  Vorbedingungen: Operator-Zeitfenster; Messung über mehrere Line-In-Starts (Liquidsoap-Log +
 `C:/Temp/optd/icy_watch.py` über den Übergang); Evaluierung mit Risiko-Punkt vor jedem Code.
+**Analyse 2026-11-16 (Evaluierung vorgelegt, Go ausstehend):** zwei Ursachen.  (1) Off-Air-Text: der
+`scheduled`-Fallback setzt die Off-Air-Marke SOFORT bei jedem Fall in `silence_fallback` (`scheduled_offair`);
+nur `bus_arm_scheduled` prüft seit 2026-11-02 0,5 s später nach.  BBC 10:01: PLAYOUT öffnet das Webstream-Tor
+genau am Intro-Ende („0.93 s of audio left - the gate opens in 0.93 s“, Tor 10:01:05,986), die Queue lief ein paar
+ms vorher leer -> Marke, ICY-Titel und Live Text „Back on air soon“ für ~140 ms (Live Text 10:01:05,978 -> 10:01:06,118).
+(2) Line-In-Startlücke: PLAYOUT wärmt 15 s vorher vor (08:14:45 `linein_start_http`, Feeder streamt 08:14:45,8),
+Liquidsoap öffnet den Decoder aber erst 1-2 s NACH dem Tor (08:15:00,085 -> 08:15:02; ebenso 13.-16.11. bei allen
+sieben Starts): das frische `input.http` im `source.dynamic` wird offenbar erst gezogen, wenn der Switch das Tor
+öffnet - der Webstream hat dafür die `buffer()`-Brücke mit eigener Uhr, der Line-In nicht.  Dazu kam um 08:15 ~1 s
+Unterfüllung der Vorsendung (Lücken < 5 s füllt der Puffer-Track bewusst nicht).
 
 ## 💡 Senderverzeichnisse nach dem Wechsel auf RASTATIME: Logo fehlt auf manchen Geräten (Analyse 2026-11-16) - Operator-Aufgabe, kein Code
 
