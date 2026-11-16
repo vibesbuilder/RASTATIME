@@ -8430,3 +8430,35 @@ Vorbedingungen / offene Entscheidungen:
 Aufwand C+D ~1,5-2 Tage, ~10 Dateien, Manual x4; Risiko niedrig bis
 mittel (neuer öffentlicher Endpunkt: nur signierte, befristete Links auf
 Dateien des Typs Recordings).
+
+## 🟡 Line-In-Sendungsstart: 3 s Rückfallstille und „Back on air soon“ im Stream-Titel (Befund 2026-11-16) - Defer (Operator 2026-11-16: später ansehen)
+
+Gefunden bei der Logo-Analyse (Stream-Kette) im Titelverlauf des öffentlichen AzuraCast-Relays: um 08:15
+(Start Monday Morning Show, Line-In) steht dort ein eigener Eintrag „ - Back on air soon“ (leerer Interpret).
+Liquidsoap-Log: 08:14:56 letzter Titel der Vorsendung zu Ende (`rt_cross` You Are The Heat), 08:14:59
+`Switch to silence_fallback`, 08:15:02 öffnet ffmpeg `http://127.0.0.1:8000/linein-capture` (MP3 48 kHz),
+danach `Switch to stereo.3` / `amplify.1` -> etwa 3 s Rückfallstille an der Sendungsgrenze, in denen das
+Off-Air-Paket den Off-Air-Text als ICY-Titel hinausschickt; Hörer-Displays und AzuraCast zeigen ihn kurz.
+Zu klären: (1) woher die 3 s kommen (Öffnen des Line-In-Eingangs erst an der Grenze vs. Vorlauf wie beim
+Webstream-Queue-Ahead; Abgleich mit der Startlücken-Messung 2026-09-04), (2) ob eine geplante, kurze Lücke
+an einer Sendungsgrenze überhaupt den Off-Air-Text senden soll (z. B. erst nach N s oder den Titel stehen
+lassen).  Nicht nur beim Line-In: 15./16.11. 17x `Switch to silence_fallback`, meist hh:01:05 = Ende
+„Intro BBC News“ -> ~1 s bis der BBC-Webstream übernimmt (16.11. 10:01:05 -> 10:01:06); öffentliche
+Titellisten (onlineradiobox.com) zeigen „Back On Air soon“ entsprechend oft.  Vorbedingungen: Operator-Zeitfenster; Messung über mehrere Line-In-Starts (Liquidsoap-Log +
+`C:/Temp/optd/icy_watch.py` über den Übergang); Evaluierung mit Risiko-Punkt vor jedem Code.
+
+## 💡 Senderverzeichnisse nach dem Wechsel auf RASTATIME: Logo fehlt auf manchen Geräten (Analyse 2026-11-16) - Operator-Aufgabe, kein Code
+
+Berichte: Teufel-Radio, VW-Autoradio, TechniSat DigitRadio 371 IR zeigen das Senderlogo nicht mehr.  Befund: der
+Stream trägt kein Logo, weder früher (LibreTime) noch jetzt; Hörer-Adresse (eigene Subdomain -> AzuraCast
+des Anbieters), Kopfzeilen (aus dem AzuraCast-Profil) und Titelmuster sind unverändert.  Das Logo kommt aus den Verzeichnissen
+der Geräte.  Stand 2026-11-16: TuneIn -> öffentliche Hörer-Adresse, Logo da (Bitrate dort noch 256);
+radio.net -> öffentliche Hörer-Adresse, Logo da; radio-browser.info: zwei Einträge - die öffentliche Hörer-Adresse
+OHNE Logo (favicon leer, 192 kbit/s) und die alte LibreTime-Instanz (`:8443/main?.mp3`) MIT Logo.
+Teufel nutzt airable (früher Frontier Nuvola, dazu TuneIn), TechniSat vermutlich airable, VW seit Ende 2022 Audials
+statt radio.de; airable und Audials ohne öffentliche Suche.  Der alte LibreTime läuft weiter (eigener Sendeplan,
+6 Hörer / Spitze 35 auf :8000/main).  Website: `/favicon.ico` 404, nur kleines PNG-Symbol, kein apple-touch-icon /
+og:image.  Bitrate des AzuraCast-Mounts am 2026-11-16 vom Operator auf 320 kbit/s gesetzt.
+Offen (Operator): Einträge bei radio-browser, airable und Audials auf die öffentliche Hörer-Adresse + Logo bringen; vor dem
+Stilllegen des alten LibreTime den Anbieter bitten, die alten Adressen (:8443/main, :8000/main) eine Zeit lang auf den
+neuen Stream umzuleiten, sonst verstummen Geräte mit alten Einträgen.
