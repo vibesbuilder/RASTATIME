@@ -19,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   vom Sender nehmen) und öffnet es zur Uhrzeit selbst; PLAYOUT bleibt bis dahin im Sendeplan-Zustand.
   Legacy gewährt die frühe Anmeldung nur einem PLAYOUT, das `early=1` sendet.  Legacy-Probe 17/17,
   Replik-Probe (früh, belegter Mount, Trennen beim Warten) bestanden.  Manual STREAMS + DASHBOARD
-  x4, ARCHITECTURE 0.147 (§23.119).
+  x4, ARCHITECTURE 0.147 (§23.119).  `5059835f`.  Legacy-Teil sofort live, aber erst mit dem neuen
+  PLAYOUT wirksam (`early=1`); PLAYOUT-Neustart startet Liquidsoap mit (~10-15 s), Apache-Neustart
+  für die Übersetzungen.
 
 ### Fixed
 
