@@ -330,7 +330,8 @@ sous-champs apparaissent :
 
 > **Plus un compteur depuis le 2026-11-16.**  Ce réglage ne fait que copier le contenu.
 > Qu'une émission compte comme rediffusion dans Analytics → Programme
-> Minutes dépend de son **type d'émission** (*Compte comme rediffusion*).
+> Minutes dépend de son **type d'émission** (*Compte comme rediffusion*) - de
+> même pour People Involved et l'archivage CBA automatique.
 
 Beaucoup d'émissions passent une fois et sont rediffusées une fois,
 un autre jour ou une autre semaine.  Ouvrez le formulaire **Edit

@@ -184,6 +184,26 @@ class Application_Model_Showtype
         );
     }
 
+    /**
+     * RASTATIME 2026-11-16 - SQL boolean: is the show $alias (a cc_show row
+     * alias) a repeat by its show type ("counts as repeat")?  Used by People
+     * Involved and the CBA archiving (operator: repeats by the type, not by
+     * "Repeat of another show").  Before migration 0088 there are no types:
+     * $fallbackRepeatOf = true keeps the old rule then (so an update never
+     * archives repeats by mistake), false means "no repeats".
+     */
+    public static function repeatSql(string $alias, bool $fallbackRepeatOf = true): string
+    {
+        if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $alias)) {
+            throw new InvalidArgumentException('bad table alias');
+        }
+        if (self::ready()) {
+            return "COALESCE((SELECT rt_st.counts_as_repeat FROM cc_show_types rt_st WHERE rt_st.id = {$alias}.show_type_id), FALSE)";
+        }
+
+        return $fallbackRepeatOf ? "({$alias}.repeat_of_show_id IS NOT NULL)" : 'FALSE';
+    }
+
     /** The id of the type whose label or code is $value (case-insensitive), or null. */
     public static function idByLabel($value): ?int
     {

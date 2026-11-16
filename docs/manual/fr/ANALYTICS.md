@@ -225,8 +225,9 @@ an**, + les **Guests involved** (invités) de chaque épisode diffusé
 calendrier), comptés **par épisode**.  Seules
 les émissions avec **Own production** comptent - une émission sans la
 case garde son nombre mais est laissée de côté jusqu'à ce qu'elle soit
-de nouveau cochée ; les émissions de rediffusion (*Repeat of*)
-apparaissent dans la liste mais ne comptent rien.  **Only shows without a value** et **Download CSV** aident pour
+de nouveau cochée ; les émissions dont le type compte comme
+rediffusion (depuis le 2026-11-16 ; avant *Repeat of*) apparaissent dans
+la liste mais ne comptent rien.  **Only shows without a value** et **Download CSV** aident pour
 la déclaration annuelle.  Les détails se trouvent dans
 [Archivage](./ARCHIVING.md) § 6.
 

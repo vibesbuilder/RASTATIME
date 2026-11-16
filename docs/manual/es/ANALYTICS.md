@@ -220,8 +220,9 @@ production**; el campo aparece en cuanto se marca la casilla), contados
 episodio emitido (Extras → People Involved, «Participantes», en el
 calendario), contados **por episodio**.  Solo cuentan los programas con
 **Own production**: un programa sin la casilla conserva su número, pero
-queda fuera hasta que se vuelva a marcar; los programas de repetición
-(*Repeat of*) aparecen en la lista, pero no cuentan nada.
+queda fuera hasta que se vuelva a marcar; los programas cuyo tipo cuenta
+como repetición (desde el 2026-11-16; antes *Repeat of*) aparecen en la
+lista, pero no cuentan nada.
 **Only shows without a value** (solo programas sin valor) y **Download
 CSV** (descargar CSV) ayudan con el informe anual.  Los detalles están
 en [Archivo](./ARCHIVING.md) § 6.

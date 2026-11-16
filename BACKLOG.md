@@ -8535,5 +8535,7 @@ umbenannt, 358 Sendungen übertragen, Genre geleert (Sicherung `C:/Temp/optd/sho
 Tag `live-2026-11-16d`); Programme Minutes 2026 danach 7.407 / 1.766 Minuten (unverändert).  Arbeitsliste für die
 echten Genres: 121 Sendungsnamen (236 Datensätze) mit Episoden seit 1.11., `C:/Temp/optd/genre_worklist_2026-11-16.csv`.  Nächster Schritt: echte Genres je
 Sendung vorschlagen (Operator prüft, dann Sammel-Eintrag).
-Offene Frage an den Operator: sollen auch People Involved (Wiederholungen zählen keine Personen) und das
-CBA-Archiv (Wiederholungen werden nicht hochgeladen) den Show-Typ statt „Repeat of“ verwenden?
+Operator 2026-11-16: ja - People Involved und CBA-Archiv (Legacy + Worker) zählen Wiederholungen jetzt auch über den
+Show-Typ (§23.120 Nachtrag); vor 0088 bleibt beim Archiv die alte Regel.  Worker-Neustart nötig.
+Genre-Vorschläge 2026-11-16 in `C:/Temp/optd/genre_worklist_2026-11-16.csv` (116 Sendungen, 9 offen) - wartet auf
+Durchsicht des Operators, dann Sammel-Eintrag.

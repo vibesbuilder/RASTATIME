@@ -90,6 +90,32 @@ def decide(problems: list[str], due_at: datetime, now: datetime) -> str:
     return "wait"
 
 
+_SHOW_TYPES_READY: Optional[bool] = None
+
+
+def repeat_filter() -> str:
+    """
+    RASTATIME 2026-11-16 - the SQL condition that leaves repeats out: a show
+    whose show type counts as a repeat (cc_show_types, migration 0088;
+    operator: repeats by the type, not by "Repeat of another show").
+    Before the migration the old rule (``repeat_of_show_id``) stays, so an
+    update never archives repeats by mistake.  Same rule as the legacy's
+    ``Application_Model_Showtype::repeatSql``.
+    """
+    global _SHOW_TYPES_READY  # noqa: PLW0603
+    if _SHOW_TYPES_READY is None:
+        rows = archive_jobs._rows(
+            "SELECT 1 AS ok FROM information_schema.tables WHERE table_name = 'cc_show_types'", []
+        )
+        _SHOW_TYPES_READY = bool(rows)
+    if _SHOW_TYPES_READY:
+        return (
+            "   AND NOT COALESCE((SELECT st.counts_as_repeat FROM cc_show_types st"
+            " WHERE st.id = s.show_type_id), FALSE)"
+        )
+    return "   AND s.repeat_of_show_id IS NULL"
+
+
 def candidates(delay_min: int) -> list[dict[str, Any]]:
     """Ended episodes of shows with the switch on that have no job and no post yet."""
     return archive_jobs._rows(
@@ -106,8 +132,8 @@ def candidates(delay_min: int) -> list[dict[str, Any]]:
         "   AND si.ends <= (now() AT TIME ZONE 'UTC') - make_interval(mins => %s)"
         "   AND NOT si.modified_instance"
         "   AND COALESCE(si.rebroadcast, 0) = 0"
-        "   AND s.repeat_of_show_id IS NULL"
-        "   AND NOT COALESCE(e.no_archive, FALSE)"
+        + repeat_filter()
+        + "   AND NOT COALESCE(e.no_archive, FALSE)"
         "   AND e.cba_post_id IS NULL"
         "   AND NOT EXISTS (SELECT 1 FROM cc_cba_upload j WHERE j.instance_id = si.id)"
         " ORDER BY si.ends, si.id"

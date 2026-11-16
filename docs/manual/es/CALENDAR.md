@@ -235,7 +235,8 @@ sub-campos aparecen:
 
 > **Desde el 2026-11-16 ya no cuenta.**  Este ajuste solo copia contenido.
 > Que un programa cuente como repetición en Analytics → Programme Minutes
-> depende de su **tipo de programa** (*Cuenta como repetición*).
+> depende de su **tipo de programa** (*Cuenta como repetición*) - igual para
+> People Involved y el archivado CBA automático.
 
 Muchos programas se emiten una vez y se repiten una vez, otro día o
 en otra semana.  Abra el formulario **Edit Show** de la repetición,

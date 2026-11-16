@@ -260,8 +260,9 @@ Jamais archivés automatiquement :
 
 * les épisodes terminés **avant** que la case soit cochée - rien n'est
   rattrapé ; archivez les épisodes plus anciens à la main ;
-* les rediffusions et les émissions créées comme *Rediffusion d'une
-  autre émission* ;
+* les rediffusions et les émissions dont le **type d'émission** compte comme
+  rediffusion (Paramètres → Types de piste/d'émission ; jusqu'au 2026-11-16
+  les émissions créées comme *Rediffusion d'une autre émission*) ;
 * les épisodes avec **Ne pas archiver cet épisode automatiquement**
   (§4) ;
 * les épisodes déjà archivés ou liés, ou dont quelqu'un a lancé l'envoi
@@ -320,8 +321,9 @@ Participants : 2 + 4 = 6.
 
 Comptent les épisodes **diffusés** dans l'année (terminés, non
 supprimés).  Les rediffusions de l'ancien type LibreTime sont exclues.
-Les émissions configurées comme [répétition d'une autre
-émission](./CALENDAR.md) apparaissent avec la mention **Rediffusion** et
+Les émissions dont le **type d'émission** compte comme rediffusion (depuis
+le 2026-11-16 ; avant, celles configurées comme [répétition d'une autre
+émission](./CALENDAR.md)) apparaissent avec la mention **Rediffusion** et
 ne comptent rien : leurs personnes sont déjà comptées avec l'original.
 Elles n'apparaissent jamais sous *Émissions sans valeur*.
 

@@ -417,9 +417,11 @@ class Application_Service_ArchivingService
      */
     public static function episode(int $instanceId): ?array
     {
+        // RASTATIME 2026-11-16 - a repeat by its show type (operator), see
+        // Application_Model_Showtype::repeatSql
         $rows = self::query(
             'SELECT si.id, si.show_id, si.starts, si.ends, si.description, si.file_id, si.rebroadcast,
-                    s.name AS show_name, s.repeat_of_show_id
+                    s.name AS show_name, ' . Application_Model_Showtype::repeatSql('s') . ' AS is_repeat_show
                FROM cc_show_instances si JOIN cc_show s ON s.id = si.show_id
               WHERE si.id = ?',
             [$instanceId]
@@ -471,7 +473,7 @@ class Application_Service_ArchivingService
             'job' => self::latestJob($instanceId),
             // archiving stage 3
             'ends_utc' => $i['ends'],
-            'repeat_show' => $i['repeat_of_show_id'] !== null,
+            'repeat_show' => in_array($i['is_repeat_show'], [true, 't', '1', 1, 'true'], true),
         ];
     }
 
@@ -1188,7 +1190,7 @@ class Application_Service_ArchivingService
                 AND si.starts < (now() AT TIME ZONE 'UTC') + INTERVAL '" . max(1, $days) . " days'
                 AND NOT si.modified_instance
                 AND COALESCE(si.rebroadcast, 0) = 0
-                AND s.repeat_of_show_id IS NULL
+                AND NOT " . Application_Model_Showtype::repeatSql('s') . "
                 AND e.cba_post_id IS NULL
                 AND NOT EXISTS (SELECT 1 FROM cc_cba_upload j WHERE j.instance_id = si.id)
               ORDER BY si.ends, si.id
@@ -1354,9 +1356,10 @@ class Application_Service_ArchivingService
      * once per show and year, however many episodes aired, and the episode
      * value (cc_episode.participants, "Guests involved") adds up per
      * episode on top of it - it no longer replaces the show value.  People
-     * involved = hosts + guests.  "Repeat of" shows (§23.65) rebroadcast
-     * the same people: listed with their tag, counted with nothing and
-     * never "without a value".
+     * involved = hosts + guests.  Repeats rebroadcast the same people:
+     * listed with their tag, counted with nothing and never "without a
+     * value".  Since 2026-11-16 (operator) a repeat is a show whose show
+     * type counts as a repeat, no longer a "Repeat of" show (§23.65).
      */
     public static function participantsReport(int $year): array
     {
@@ -1385,7 +1388,7 @@ class Application_Service_ArchivingService
              )
              SELECT s.id, s.name, count(i.id) AS episodes, max(i.hosts) AS hosts,
                     COALESCE(sum(i.guests), 0) AS guests, count(i.guests) AS episodes_with_guests,
-                    (s.repeat_of_show_id IS NOT NULL) AS is_repeat,
+                    " . Application_Model_Showtype::repeatSql('s') . " AS is_repeat,
                     {$team} AS team
                FROM inst i JOIN cc_show s ON s.id = i.show_id
               {$ownOnly}

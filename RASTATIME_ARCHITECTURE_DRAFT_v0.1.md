@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.148
+Draft version: 0.149
 Date: 2026-11-16
 
 > **Revision history**
+> - **0.149 (2026-11-16)** - People Involved and the CBA archiving (legacy and worker) count repeats by
+>   the show type as well (§23.120 addendum); before migration 0088 the old "Repeat of" rule stays.
 > - **0.148 (2026-11-16)** - **Show types** (§23.120): `cc_show_types` (migration 0088) kept under
 >   Settings -> Track/Show Types, a Show Type select in Edit Show, Programme Minutes counts repeats
 >   by the type's flag (no longer by "Repeat of") and groups per type; genre -> type transfer command.
@@ -10977,9 +10979,8 @@ Musik; genre emptied after the transfer.
 - Programme Minutes: `is_repeat = show_types.counts_as_repeat` (before 0088
   nothing is a repeat; the page says so); new grouping **Show type** (the
   default once the types exist), a show type column in the show list and
-  in both CSVs.  "Repeat of another show" stays the content copy and still
-  drives People Involved (repeats count no people) and archiving (repeats
-  are not uploaded) - unchanged here.
+  in both CSVs.  "Repeat of another show" stays the content copy (People
+  Involved and archiving: see the addendum below).
 - `manage.py transfer_genre_to_show_type` (core app): `--map GENRE=TYPE`
   (label or code; without a map the genre must equal a type's label or
   code), `--clear-genre`, `--overwrite`, `--dry-run`, `--backup PATH`
@@ -11012,3 +11013,21 @@ save broken (probe, field only sent when present), report figures shift
 (identical for 2026), a wrong transfer (dry run, JSON backup, one
 transaction).  Rollback: revert (tag `live-2026-11-16c`); the table and
 the column may stay; the backup restores genre values.
+
+**Addendum 2026-11-16 (operator): People Involved and the CBA archiving
+follow the show type too.**  `Application_Model_Showtype::repeatSql($alias)`
+is the one rule (a show whose type counts as a repeat); before migration
+0088 it falls back to `repeat_of_show_id`, so an update never archives
+repeats by mistake (Programme Minutes keeps "no repeats" before 0088, as
+documented).  Used by `ArchivingService::episode()` (`repeat_show` ->
+state *never*), `plannedEpisodes()` (the archive status page) and
+`participantsReport()`; the worker's own candidate query
+(`backend/rastatime_worker/archive_auto.py`, `repeat_filter()`, cached
+table check) uses the same condition - the worker reads it after its next
+restart.  Effect checked before: the shows where old and new rule differ
+are six old test shows with "Repeat of" and no type (no future episodes,
+no auto archive) and three "Wiederholung" shows without "Repeat of" (no
+auto archive, not own productions) - no change in archive or people
+counts today.  Probe `C:/Temp/optd/archive_repeat_probe.php` 6/6, worker
+test, live read of the candidate query (0 candidates).  "Repeat of" stays
+the content copy (RepeatFillService, Auto DJ) only.

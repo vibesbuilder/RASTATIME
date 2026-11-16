@@ -254,8 +254,9 @@ Nunca se archivan automáticamente:
 
 * los episodios que terminaron **antes** de marcar la casilla - no se
   recupera nada; archive a mano los episodios anteriores;
-* las retransmisiones y los programas creados como *Repetición de otro
-  programa*;
+* las retransmisiones y los programas cuyo **tipo de programa** cuenta como
+  repetición (Ajustes → Tipos de pista/programa; hasta el 2026-11-16 los
+  creados como *Repetición de otro programa*);
 * los episodios con **No archivar este episodio automáticamente** (§4);
 * los episodios ya archivados o vinculados, o cuya subida alguien inició
   a mano - el archivo automático no los toca;
@@ -311,8 +312,9 @@ tres episodios tuvieron invitados (1, 2 y 1).  Participantes: 2 + 4 = 6.
 
 Cuentan los episodios **emitidos** en el año (terminados, no
 eliminados).  Las retransmisiones del antiguo tipo LibreTime quedan
-fuera.  Los programas configurados como [repetición de otro
-programa](./CALENDAR.md) aparecen con la marca **Repetición** y no
+fuera.  Los programas cuyo **tipo de programa** cuenta como repetición (desde el
+2026-11-16; antes, los configurados como [repetición de otro
+programa](./CALENDAR.md)) aparecen con la marca **Repetición** y no
 cuentan nada: sus personas ya se contaron con el original.  Nunca
 aparecen en *Programas sin valor*.
 

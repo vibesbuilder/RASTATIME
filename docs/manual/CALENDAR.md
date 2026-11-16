@@ -291,7 +291,8 @@ In the **When** section, tick **Repeats**. Three sub-fields appear:
 
 > **Not a counter since 2026-11-16.**  This setting only copies content.
 > Whether a show counts as a repeat in Analytics → Programme Minutes
-> depends on its **Show Type** (*Counts as repeat*).
+> depends on its **Show Type** (*Counts as repeat*) - the same for People
+> Involved and the automatic CBA archiving.
 
 Many shows air once and are repeated once, on a different weekday
 or in a different week.  Open the repeat's **Edit Show** form,

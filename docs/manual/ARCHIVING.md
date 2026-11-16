@@ -240,7 +240,8 @@ Never archived automatically:
 
 * episodes that ended **before** the box was ticked - nothing is caught
   up; archive older episodes by hand;
-* rebroadcasts and shows set up as *Repeat of another show*;
+* rebroadcasts and shows whose **Show Type** counts as a repeat (Settings →
+  Track/Show Types; until 2026-11-16 shows set up as *Repeat of another show*);
 * episodes with **Do not archive this episode automatically** (§4);
 * episodes that are archived or linked already, or that someone started
   by hand - the automatic run leaves those alone;
@@ -290,7 +291,8 @@ guests (1, 2 and 1).  People involved: 2 + 4 = 6.
 
 Counted are the episodes that **aired** in the year (ended, not
 deleted).  Rebroadcasts of the old LibreTime kind are left out.  Shows
-set up as [Repeat of another show](./CALENDAR.md) are listed with the
+whose **Show Type** counts as a repeat (since 2026-11-16; before, shows set
+up as [Repeat of another show](./CALENDAR.md)) are listed with the
 tag **Repeat** and count nothing: their people were already counted
 with the original.  They never appear under *Shows without a value*.
 

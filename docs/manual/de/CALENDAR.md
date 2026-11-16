@@ -324,7 +324,8 @@ Drei Unterfelder erscheinen:
 
 > **Seit 2026-11-16 kein Zähler mehr.**  Diese Einstellung kopiert nur Inhalte.
 > Ob eine Sendung in Analytics → Programme Minutes als Wiederholung zählt,
-> entscheidet ihr **Show-Typ** (*Zählt als Wiederholung*).
+> entscheidet ihr **Show-Typ** (*Zählt als Wiederholung*) - ebenso für People
+> Involved und die automatische CBA-Archivierung.
 
 Viele Sendungen laufen einmal und werden einmal wiederholt, an einem
 anderen Wochentag oder in einer anderen Woche.  Öffnen Sie das

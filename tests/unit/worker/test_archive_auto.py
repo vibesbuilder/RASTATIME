@@ -79,3 +79,27 @@ def test_delay_is_clamped(monkeypatch):
     for stored, expected in [("30", 30), (None, 30), ("abc", 30), ("-5", 0), ("99999", 1440)]:
         monkeypatch.setattr(archive_auto.archive_jobs, "_pref", lambda key, v=stored: v)
         assert archive_auto.auto_delay_min() == expected
+
+
+def test_repeats_are_left_out_by_the_show_type(monkeypatch):
+    """RASTATIME 2026-11-16 - repeats by the show type's flag; the old
+    "Repeat of" rule only while cc_show_types is missing (migration 0088)."""
+    queries = []
+
+    def rows(sql, params):
+        queries.append(sql)
+        return [{"ok": 1}] if ready else []
+
+    monkeypatch.setattr(archive_auto.archive_jobs, "_rows", rows)
+    for ready, expected, absent in [
+        (True, "cc_show_types st WHERE st.id = s.show_type_id", "repeat_of_show_id"),
+        (False, "s.repeat_of_show_id IS NULL", "cc_show_types st"),
+    ]:
+        monkeypatch.setattr(archive_auto, "_SHOW_TYPES_READY", None)
+        cond = archive_auto.repeat_filter()
+        assert expected in cond and absent not in cond
+        assert archive_auto.repeat_filter() == cond  # cached: no second lookup
+    assert sum("information_schema" in q for q in queries) == 2
+    monkeypatch.setattr(archive_auto, "_SHOW_TYPES_READY", True)
+    archive_auto.candidates(30)
+    assert "counts_as_repeat" in queries[-1] and "repeat_of_show_id" not in queries[-1]

@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **People Involved und CBA-Archiv erkennen Wiederholungen über den Show-Typ (2026-11-16,
+  Operator-Wunsch)** - wie Programme Minutes: eine Sendung, deren Show-Typ *Counts as repeat* hat,
+  zählt in People Involved keine Personen und wird nicht automatisch zu CBA hochgeladen (Legacy und
+  Archiv-Worker); „Repeat of another show“ kopiert nur noch Inhalte.  Vor Migration 0088 gilt beim
+  Archiv weiter die alte Regel, damit ein Update nie Wiederholungen veröffentlicht.  Heute ohne
+  Auswirkung (abweichende Sendungen: alte Testsendungen ohne Auto-Archiv).  Probe 6/6, Worker-Test;
+  der Worker liest die Regel nach seinem nächsten Neustart.  Manual ARCHIVING / ANALYTICS / CALENDAR
+  x4, ARCHITECTURE 0.149 (§23.120 Nachtrag).
+
 - **Programme Minutes zählt Wiederholungen über den Show-Typ (2026-11-16, Operator-Wunsch)** - eine
   Sendung zählt als Wiederholung, wenn ihr Show-Typ *Counts as repeat* hat, nicht mehr über „Repeat
   of another show“ (das kopiert nur noch Inhalte; People Involved und Archivierung bleiben dabei).

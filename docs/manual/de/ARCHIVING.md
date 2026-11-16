@@ -256,8 +256,9 @@ Nie automatisch archiviert werden:
 
 * Episoden, die **vor** dem Anhaken endeten - nichts wird nachgeholt;
   ältere Episoden archivieren Sie von Hand;
-* Wiederholungen und Sendungen, die als *Wiederholung einer anderen
-  Sendung* angelegt sind;
+* Wiederholungen (Rebroadcasts) und Sendungen, deren **Show-Typ** als
+  Wiederholung zählt (Settings → Track-/Show-Typen; bis 2026-11-16 die als
+  *Wiederholung einer anderen Sendung* angelegten);
 * Episoden mit **Diese Episode nicht automatisch archivieren** (§4);
 * Episoden, die schon archiviert oder verknüpft sind oder die jemand von
   Hand gestartet hat - die lässt der automatische Lauf in Ruhe;
@@ -312,8 +313,9 @@ Episoden hatten Gäste (1, 2 und 1).  Teilnehmende: 2 + 4 = 6.
 
 Gezählt werden die Episoden, die im Jahr **gesendet** wurden (beendet,
 nicht gelöscht).  Rebroadcasts der alten LibreTime-Art bleiben außen
-vor.  Sendungen, die als [Wiederholung einer anderen Sendung](./CALENDAR.md)
-angelegt sind, stehen mit dem Merkmal **Wiederholung** in der Liste und
+vor.  Sendungen, deren **Show-Typ** als Wiederholung zählt (seit 2026-11-16;
+vorher die als [Wiederholung einer anderen Sendung](./CALENDAR.md)
+angelegten), stehen mit dem Merkmal **Wiederholung** in der Liste und
 zählen nichts: ihre Menschen sind schon beim Original gezählt.  Sie
 erscheinen nie unter *Sendungen ohne Wert*.
 

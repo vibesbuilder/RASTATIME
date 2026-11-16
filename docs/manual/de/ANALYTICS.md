@@ -217,8 +217,9 @@ das Feld erscheint, sobald das Kästchen angekreuzt ist), gezählt
 Episode (Extras → People Involved bzw. Teilnehmende im Kalender), gezählt
 **je Episode**.  Nur Sendungen mit **Own production** zählen - eine
 Sendung ohne Häkchen behält ihre Zahl, bleibt aber außen vor, bis sie
-wieder angekreuzt ist; Wiederholungssendungen (*Repeat of*) stehen in
-der Liste, zählen aber nichts.  **Only shows without a
+wieder angekreuzt ist; Sendungen, deren Show-Typ als Wiederholung zählt
+(seit 2026-11-16; vorher *Repeat of*), stehen in der Liste, zählen aber
+nichts.  **Only shows without a
 value** (Nur Sendungen ohne Wert) und **Download CSV** (CSV
 herunterladen) helfen bei der Jahresmeldung.  Die Einzelheiten stehen in
 [Archivierung](./ARCHIVING.md) § 6.

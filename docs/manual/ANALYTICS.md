@@ -194,8 +194,9 @@ below **Own production**; the field appears once the box is ticked),
 counted **once per year**, + the **Guests involved** of every aired
 episode (Extras → People Involved in the calendar), counted **per episode**.
 Only shows with **Own production** count - a show without the tick
-keeps its number but is left out until it is ticked again; repeat shows
-(*Repeat of*) are listed but count nothing.  **Only shows without a
+keeps its number but is left out until it is ticked again; shows whose
+show type counts as a repeat (since 2026-11-16; before *Repeat of*) are
+listed but count nothing.  **Only shows without a
 value** and **Download CSV** help with the yearly reporting.  The
 details are in [Archiving](./ARCHIVING.md) § 6.
 
