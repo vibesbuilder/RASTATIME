@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live-info).  Jetzt zählt sie erst, wenn der DJ *auf Sendung* ist (verbunden und nicht mehr
   wartend), dieselbe Regel wie beim Show-Schalter.  Ton, Stream-Titel und Live Text waren nicht
   betroffen.  Legacy-Probe 21/21, ARCHITECTURE 0.150 (§23.119 Nachtrag), Manual STREAMS x4.
+  `79449952`, live 2026-11-17 08:55 (Legacy-PHP, ohne Neustart; Tag `live-2026-11-17`).
 
 ## [1.7.0] - 2026-11-16
 
