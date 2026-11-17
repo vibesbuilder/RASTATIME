@@ -1768,12 +1768,31 @@ class Application_Model_Preference
      * any path after the direct-to-:8770 mount_add/remove refactor, so
      * reading them would yield stale data that's worse than "off".
      */
+    /**
+     * RASTATIME 2026-11-17 - per-request cache of GetPlayoutSourceState();
+     * setPlayoutSourceState() fills it for CLI probes (no playout needed).
+     */
+    private static $playoutSourceState = null;
+
+    /**
+     * RASTATIME 2026-11-17 - for CLI probes and tests: use this source state
+     * instead of asking the playout (null = ask again on the next call).
+     */
+    public static function setPlayoutSourceState(?array $state)
+    {
+        self::$playoutSourceState = $state === null ? null : $state + [
+            'master_connected' => false,
+            'show_connected' => false,
+            'show_hold_until' => null,
+        ];
+    }
+
     public static function GetPlayoutSourceState()
     {
-        static $cache = null;
-        if ($cache !== null) {
-            return $cache;
+        if (self::$playoutSourceState !== null) {
+            return self::$playoutSourceState;
         }
+        $cache = &self::$playoutSourceState;
 
         $default = ['master_connected' => false, 'show_connected' => false, 'show_hold_until' => null];
 

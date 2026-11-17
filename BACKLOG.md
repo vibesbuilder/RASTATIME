@@ -8563,5 +8563,9 @@ Idee: am Ende der Episode, deren Host verbunden ist, den Show-Harbor trennen (mi
 = Vorwärmzeit, kein `Switch to silence_fallback` am Start), 09:45 Line-In-Ende (Zombie-Meldung ja/nein) und Schul-DJ
 (Schulsendung 09:45-10:00): im Log `accepted early - waits off air until`, `source-event: show DJ waits off air`,
 Liquidsoap `Switch to show_dj` genau 09:45:00.  Vorbedingung: die Sendung hatte am 2026-11-16 KEINEN Host und kein eigenes
-Live-Login - ohne Host-Eintrag wird der Schul-Encoder die ganze Sendung über abgewiesen.
+Live-Login - ohne Host-Eintrag wird der Schul-Encoder die ganze Sendung über abgewiesen.  Host eingetragen 2026-11-16 (Operator).
+Erster Test des frühen Logins 2026-11-16 17:10 (Testkonto, 5 min vor einer Musiksendung): Warten und „wartet bis“ OK,
+aber die ON-AIR-Lampe flackerte - der wartende DJ ersetzte im Legacy den laufenden Titel durch „‹Sendung› - Live stream“.
+Behoben 2026-11-17 (`_getSource()` zählt die Show-Quelle erst auf Sendung, §23.119 Nachtrag).  Zusätzlich beim Schul-DJ
+ab 09:40 prüfen: Lampe leuchtet durchgehend, Kopf und Now-Playing-Widget zeigen bis 09:45 den Line-In-Titel.
 

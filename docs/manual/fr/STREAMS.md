@@ -307,7 +307,9 @@ le trou de pré-tampon habituel.
 
 - Tant qu'un DJ attend, le bloc **Status** de l'en-tête affiche
   *attend jusqu'à 10:07* au lieu de *Show Source* (texte complet dans
-  l'infobulle) ; l'interrupteur reste éteint.
+  l'infobulle) ; l'interrupteur reste éteint.  Le voyant ON AIR, le
+  titre en cours dans l'en-tête et le widget now-playing restent sur
+  l'émission à l'antenne jusqu'au début de l'émission du DJ.
 - Si le DJ se déconnecte pendant l'attente, rien ne change à
   l'antenne.
 - Le point de montage Show Source n'accepte qu'un client à la fois :

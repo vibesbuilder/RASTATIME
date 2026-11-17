@@ -281,7 +281,9 @@ inicio el DJ está en antena al segundo, sin el hueco de búfer habitual.
 
 - Mientras un DJ espera, el bloque **Status** de la cabecera muestra
   *espera hasta 10:07* en lugar de *Show Source* (texto completo en la
-  información emergente); el interruptor queda apagado.
+  información emergente); el interruptor queda apagado.  La luz ON AIR,
+  el título actual de la cabecera y el widget now-playing siguen con el
+  programa en antena hasta que empieza el programa del DJ.
 - Si el DJ se desconecta mientras espera, nada cambia en antena.
 - El punto de montaje Show Source admite un solo cliente a la vez:
   mientras el DJ del programa en antena está conectado, nadie puede

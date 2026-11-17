@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Früh verbundener Sendungs-DJ ließ die ON-AIR-Lampe flackern (2026-11-17, Operator-Go
+  2026-11-17)** - beim ersten Test des frühen Logins (5 Minuten vor der Sendung) stand „wartet bis“
+  richtig im Kopf, aber die ON-AIR-Lampe ging während der Wartezeit aus und bei jedem Titelwechsel
+  kurz wieder an.  Ursache: die Quellen-Priorität des Legacy (`Schedule::_getSource()`) zählte die
+  Show-Quelle schon, sobald der DJ *verbunden* war, und ersetzte den laufenden Titel durch den
+  Platzhalter „‹Sendung› - Live stream“ (auch im Kopf-Titel, im Now-Playing-Widget und in
+  live-info).  Jetzt zählt sie erst, wenn der DJ *auf Sendung* ist (verbunden und nicht mehr
+  wartend), dieselbe Regel wie beim Show-Schalter.  Ton, Stream-Titel und Live Text waren nicht
+  betroffen.  Legacy-Probe 21/21, ARCHITECTURE 0.150 (§23.119 Nachtrag), Manual STREAMS x4.
+
 ## [1.7.0] - 2026-11-16
 
 ### Added

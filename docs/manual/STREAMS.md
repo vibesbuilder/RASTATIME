@@ -339,7 +339,9 @@ without the usual pre-buffer gap at the beginning.
 
 - While a DJ waits, the **Status** block in the header shows
   *waiting until 10:07* instead of *Show Source* (full text in the
-  tooltip); the switch stays off.
+  tooltip); the switch stays off.  The ON AIR light, the current
+  title in the header and the now-playing widget stay with the show
+  on air until the DJ's show starts.
 - If the DJ disconnects while waiting, nothing changes on air.
 - The Show Source mount takes one client at a time: while the DJ of
   the show on air is connected, nobody can connect early.  The next

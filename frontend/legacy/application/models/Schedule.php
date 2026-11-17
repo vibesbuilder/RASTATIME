@@ -406,7 +406,14 @@ SQL;
      */
     private static function _getSource()
     {
-        $live_dj = Application_Model_Preference::GetSourceStatus('live_dj');
+        // RASTATIME 2026-11-17 - the show source counts once it is ON AIR, not
+        // once it is connected: a show DJ who logged in early waits off air
+        // until the show starts, and until then the scheduled item stays the
+        // current one (header title, On Air light, now-playing widget,
+        // live-info).  GetSourceSwitchStatus('live_dj') is "connected and not
+        // waiting"; before, the waiting DJ replaced the playing track with a
+        // "<show> - Live stream" placeholder.
+        $live_dj = Application_Model_Preference::GetSourceSwitchStatus('live_dj') == 'on';
         $master_dj = Application_Model_Preference::GetSourceStatus('master_dj');
 
         return $master_dj ? self::MASTER_SOURCE_NAME

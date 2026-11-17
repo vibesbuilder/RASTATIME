@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.149
-Date: 2026-11-16
+Draft version: 0.150
+Date: 2026-11-17
 
 > **Revision history**
+> - **0.150 (2026-11-17)** - Fix to the early show-DJ login (§23.119 addendum): the legacy
+>   source priority counts the show source once it is on air, not once it is connected, so a DJ
+>   waiting off air no longer replaces the playing item (On Air light, header, widgets).
 > - **0.149 (2026-11-16)** - People Involved and the CBA archiving (legacy and worker) count repeats by
 >   the show type as well (§23.120 addendum); before migration 0088 the old "Repeat of" rule stays.
 > - **0.148 (2026-11-16)** - **Show types** (§23.120): `cc_show_types` (migration 0088) kept under
@@ -10937,6 +10940,30 @@ the gate in `on_connect`, replica S2.  Residual: two DJs connecting in the
 same instant could swap their pending holds (negligible).  Limitation: one
 client per mount, so nobody connects early while the DJ of the show on air
 is connected.  Rollback: revert (tag `live-2026-11-16b`), PLAYOUT restart.
+
+**Addendum 2026-11-17 - the waiting DJ replaced the playing item.**  The
+first test (an early login 5 min before a show) showed "waiting until" as
+planned, but the header's ON AIR light went off and on during the wait.
+Cause: `Application_Model_Schedule::_getSource()` (Master > Show >
+Scheduled for the play-order lookups) asked `GetSourceStatus('live_dj')`,
+i.e. *connected*.  While the DJ waited it reported the show source, and
+`getPreviousCurrentNextMedia()` replaced the playing item with the
+`<show> - Live stream` placeholder (`media_item_played` false); the
+switch was correctly off, so the dashboard light had no source and went
+dark after its 4 s grace - and lit for a few seconds at each track change,
+when the browser advanced to the next track locally until the next poll.
+The same placeholder reached the header title, the now-playing widget and
+live-info / live-info-v2.  Fix: `_getSource()` uses
+`GetSourceSwitchStatus('live_dj') == 'on'` (connected and not waiting),
+the rule the switch already followed; master unchanged.  From the hold on
+everything shows the live stream as before.  `Preference` keeps its
+per-request source-state cache in a static property with
+`setPlayoutSourceState()` for CLI probes.  Probe
+`C:/Temp/optd/source_state_probe/source_probe.php` 21/21 (nobody, waiting,
+on air, hold passed, master with and without a waiting DJ, dashboard
+data, live-info, real playout).  Legacy PHP, live without a restart;
+risk low (display and read APIs only, not the audio).  Rollback: revert
+(tag `live-2026-11-17`).
 
 ### 23.120 Show Types (2026-11-16)
 

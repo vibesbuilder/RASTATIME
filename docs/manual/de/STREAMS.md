@@ -359,7 +359,9 @@ auf die Sekunde auf Sendung, ohne die übliche Pufferlücke am Anfang.
 
 - Solange ein DJ wartet, zeigt der Block **Status** im Kopfbereich
   *wartet bis 10:07* statt *Show Source* (voller Text im Tooltip); der
-  Schalter bleibt aus.
+  Schalter bleibt aus.  Die ON-AIR-Lampe, der aktuelle Titel im
+  Kopfbereich und das Now-Playing-Widget bleiben bei der laufenden
+  Sendung, bis die Sendung des DJs beginnt.
 - Trennt der DJ während des Wartens, ändert sich auf Sendung nichts.
 - Der Show-Source-Mount nimmt nur einen Client auf einmal: Solange der
   DJ der laufenden Sendung verbunden ist, kann sich niemand früh
