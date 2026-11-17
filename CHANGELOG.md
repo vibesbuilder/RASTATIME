@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-11-17
+
 ### Fixed
 
 - **Früh verbundener Sendungs-DJ ließ die ON-AIR-Lampe flackern (2026-11-17, Operator-Go
@@ -11344,7 +11346,8 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.1...HEAD
+[1.7.1]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.4.0...v1.5.0
