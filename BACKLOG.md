@@ -8595,27 +8595,23 @@ Fenster (eine CPU ausgelastet).
 
 ## Show Source läuft über das Sendungsende - Beginn der Folgesendung fehlt (Befund 2026-11-17 10:00)
 
-### 💡 Show Source am Sendungsende von RASTATIME aus beenden - IDEA (Befund 2026-11-17)
-Eine DJ-Sendung über die Show Source (09:45-10:00) lief sauber; am Ende
-blieb die Quelle 6,2 s über die Sendungsgrenze auf Sendung.  Ablauf laut
-Log und 24/7-Mitschnitt: 10:00:00 der Stundenjingle ist fällig, wird aber
-zurückgehalten („show source active, scheduled audio held back"); der DJ
-hört etwa um 10:00:01 auf zu senden; die Harbor-Quelle spielt ihren
-5-s-Puffer aus und meldet nach 5 s Timeout das Ende (10:00:06); der
-Jingle setzt bei seiner Sekunde 6 von 10 ein (Zeitansage weg, 2,6 s
-Rest), 1,5 s Stille, die Kette danach 1,1-1,2 s spät.
-Ursache im Produkt: der Sendeplan erzeugt für Live-Sendungen zwar die
-Ereignisse `switch_off` / `kick_out` am Sendungsende
-(`generate_live_events`), der PlayoutScheduler behandelt ActionEvents
-aber nicht (sie zählen unter „other") - niemand beendet die Show Source,
-sie bleibt, bis der DJ trennt.
-Mögliche Schritte (keiner beauftragt):
-- Am Sendungsende die Show Source ausblenden (DJ Hand-over Fade) und
-  trennen, sodass die Folgesendung mit ihrem ersten Element pünktlich
-  beginnt; die Master Source bleibt unberührt (bewusste Übersteuerung).
-- Optional je Sendung oder global: erlaubter Überhang in Sekunden.
-- Hinweis für die Sendungsmachenden bis dahin: wegen 5 s Puffer + 5 s
-  Timeout müsste der DJ etwa 10 s vor der Grenze trennen; dann läuft bis
-  zur Grenze der darunter geplante Inhalt.
-Vorbedingungen: Go des Operators; Probe an einer Testsendung mit einem
-Test-DJ, nicht an einer echten Sendung.
+### ✅ Show Source am Sendungsende von RASTATIME aus beenden - GEBAUT 2026-11-18 (Go 2026-11-18, §23.121)
+Befund 2026-11-17 10:00: eine DJ-Sendung über die Show Source lief
+sauber, blieb aber 6,2 s über die Sendungsgrenze auf Sendung (5 s
+Harbor-Puffer + 5 s Timeout); der Stundenjingle der Folgesendung stieg
+bei Sekunde 6 von 10 ein.  Ursache: `switch_off` / `kick_out` wurden
+erzeugt, aber nie behandelt.
+Gebaut: die Anmeldeprüfung nennt das Sendungsende (Kette über direkt
+folgende Sendungen mit demselben Login), Liquidsoap schließt den
+Show-Arm zu diesem Zeitpunkt, PLAYOUT wechselt 0,5 s vorher ohne Resume
+auf den Sendeplan und trennt 1,5 s danach; ein verschobenes Ende wandert
+mit; Master Source unberührt.  Nachbildung: Schließen 0,02-0,08 s nach
+dem Ende.  Dabei behoben: Gates wurden beim Trennen zurückgesetzt und
+ließen den gepufferten Rest auf Sendung.
+Offen:
+- PLAYOUT-Neustart durch den Operator in einem ruhigen Moment (das
+  Sendeskript ändert sich, Liquidsoap startet mit neu, ~12 s).
+- Abnahme mit einer Testsendung und einem Test-DJ, der über das Ende
+  hinaus verbunden bleibt: Folgesendung beginnt pünktlich, DJ blendet
+  aus, Sendesoftware wird getrennt.
+- 💡 Idee: erlaubter Überhang in Sekunden (global oder je Sendung).

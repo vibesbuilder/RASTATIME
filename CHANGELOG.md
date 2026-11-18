@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Die Show Source endet mit der Sendung (2026-11-18, Operator-Go)** - Am 2026-11-17 blieb
+  ein Show-DJ 6,2 s über das Sendungsende auf Sendung (5 s Puffer + 5 s Timeout), der
+  Stundenjingle der Folgesendung stieg bei Sekunde 6 von 10 ein.  Jetzt nennt die
+  Anmeldeprüfung das Ende der Sendung (`X-Rastatime-On-Air-Until`; läuft in eine direkt
+  folgende Sendung hinein, die dasselbe Login akzeptiert), Liquidsoap schließt den
+  Show-Arm sekundengenau zu diesem Zeitpunkt (`show_dj_until`), PLAYOUT wechselt 0,5 s
+  vorher ohne Resume auf den Sendeplan und trennt den Client 1,5 s nach dem Ende.  Die
+  Folgesendung beginnt pünktlich mit ihrem ersten Element, der DJ blendet darunter aus.
+  Ein im Kalender verschobenes Ende wandert mit (`follow_show_end`).  Die Master Source
+  bleibt unberührt.  Nebenbei behoben: die Harbor-Gates werden beim Trennen nicht mehr
+  zurückgesetzt - sonst ging der gepufferte Rest noch einmal auf Sendung, bei einem
+  wartenden Früh-Login sogar zum ersten Mal.  Probelauf an einer Liquidsoap-Nachbildung:
+  Schließen 0,02-0,08 s nach dem Ende.  Manual STREAMS x4, ARCHITECTURE 0.151 (§23.121).
+  Wirksam nach PLAYOUT-Neustart (das Sendeskript ändert sich, Liquidsoap startet mit neu);
+  Abnahme mit einer Testsendung offen.
+
 ## [1.7.1] - 2026-11-17
 
 ### Fixed

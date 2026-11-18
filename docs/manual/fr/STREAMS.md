@@ -320,6 +320,36 @@ le trou de pré-tampon habituel.
   comptent pas pour le frein anti-force brute).  Voir ARCHITECTURE
   §23.119.
 
+#### La Show Source se termine avec l'émission
+
+Depuis le 2026-11-18, un DJ d'émission est retiré de l'antenne **à la
+fin de l'émission**, à la seconde près, même si le logiciel de
+diffusion continue d'émettre.  L'émission suivante commence à l'heure
+avec son premier élément ; le DJ s'efface dessous pendant le *Switch
+Transition Fade* et est déconnecté environ 1,5 seconde plus tard.
+Auparavant, un DJ resté connecté empêchait le début de l'émission
+suivante de passer à l'antenne.
+
+- La fin suit le calendrier : si vous déplacez la fin d'une émission
+  en direct en cours, la fin du DJ suit à la prochaine actualisation
+  de la grille (environ deux minutes ; aussitôt après une modification
+  dans le calendrier).
+- Si l'émission qui commence au même instant accepte le **même login**
+  (le même animateur ou le même login personnalisé), le DJ reste à
+  l'antenne dans celle-ci et se termine avec elle.
+- Le logiciel du DJ peut se reconnecter après la déconnexion ; le login
+  est alors refusé parce que l'émission est terminée (il ne compte pas
+  pour le frein anti-force brute), sauf si la prochaine émission du DJ
+  commence dans les 5 minutes.
+- La **Master Source** n'est jamais terminée ainsi - elle est la
+  priorité voulue.
+- À cause du tampon du harbor, les auditeurs entendent le DJ avec
+  environ 5 secondes de retard : ce qui est à l'antenne à la fin de
+  l'émission a été envoyé 5 secondes plus tôt.  Un DJ devrait prévoir
+  son dernier mot en conséquence.
+
+Voir ARCHITECTURE §23.121.
+
 ---
 
 ## 4. Surveiller la santé des streams

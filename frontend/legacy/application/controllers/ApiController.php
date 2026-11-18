@@ -1336,8 +1336,14 @@ class ApiController extends Zend_Controller_Action
             // show on air
             $showInfo = Application_Model_Show::getCurrentShow();
             $currentReason = null;
+            // RASTATIME 2026-11-18 - the episode this login goes on air for
+            // (its end ends the show source, see liveChainEnd)
+            $onAirInstance = null;
             if (isset($showInfo[0]['id'])) {
                 $authorised = self::showLoginMatches((int) $showInfo[0]['id'], $username, $password, $currentReason);
+                if ($authorised) {
+                    $onAirInstance = (int) $showInfo[0]['instance_id'];
+                }
             }
             // RASTATIME 2026-11-16 - early show login: a host of the NEXT show may
             // connect up to EARLY_SHOW_LOGIN_SECONDS before it starts.  The
@@ -1352,7 +1358,18 @@ class ApiController extends Zend_Controller_Action
                 $next = Application_Model_Show::getShowStartingWithin(self::EARLY_SHOW_LOGIN_SECONDS);
                 if ($next !== null && self::showLoginMatches((int) $next['show_id'], $username, $password, $nextReason)) {
                     $authorised = true;
+                    $onAirInstance = (int) $next['instance_id'];
                     $this->getResponse()->setHeader('X-Rastatime-Hold-Until', (string) $next['starts_epoch']);
+                }
+            }
+            // RASTATIME 2026-11-18 - the show source ends with the show: the
+            // playout gets the end as X-Rastatime-On-Air-Until (Unix time)
+            // and the episode it belongs to (to follow a moved end).
+            if ($authorised && $onAirInstance !== null) {
+                $chain = self::liveChainEnd($onAirInstance, $username, $password);
+                if ($chain !== null) {
+                    $this->getResponse()->setHeader('X-Rastatime-On-Air-Until', (string) $chain['until']);
+                    $this->getResponse()->setHeader('X-Rastatime-On-Air-Instance', (string) $chain['instance_id']);
                 }
             }
             // refusal reason: a host name with a wrong password counts, a name
@@ -1381,6 +1398,38 @@ class ApiController extends Zend_Controller_Action
             $this->getResponse()->setHttpResponseCode(401);
             $this->getResponse()->setHeader('X-Rastatime-Auth-Reason', $reason);
         }
+    }
+
+    /**
+     * RASTATIME 2026-11-18 - until when a show DJ who logs in for episode
+     * $instanceId may stay on air: the end of that episode, or - when the
+     * episode that starts in the same instant accepts the very same login -
+     * the end of that one, and so on (a show split into several calendar
+     * entries, the same host over two shows).  At most 12 episodes.
+     *
+     * @param mixed $username
+     * @param mixed $password
+     *
+     * @return null|array ['until' => int Unix time, 'instance_id' => int the last episode of the chain]
+     */
+    private static function liveChainEnd(int $instanceId, $username, $password): ?array
+    {
+        $last = $instanceId;
+        $until = null;
+        for ($i = 0; $i < 12; ++$i) {
+            $info = Application_Model_Show::getInstanceEndAndFollower($last);
+            if ($info === null) {
+                break;
+            }
+            $until = $info['ends_epoch'];
+            $ignored = null;
+            if ($info['next'] === null || !self::showLoginMatches($info['next']['show_id'], $username, $password, $ignored)) {
+                break;
+            }
+            $last = $info['next']['instance_id'];
+        }
+
+        return $until === null ? null : ['until' => $until, 'instance_id' => $last];
     }
 
     /** RASTATIME 2026-11-16 - how long before its start a show's DJ may connect (fixed, operator decision). */

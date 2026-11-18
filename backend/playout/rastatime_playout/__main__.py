@@ -1620,7 +1620,12 @@ def main() -> None:
     )
     from rastatime_playout.stream_status import StreamStatusReporter  # noqa: PLC0415
 
-    switcher = SourceSwitcher(switch_callback=scheduler.switch_audio_source)
+    # RASTATIME 2026-11-18 - show_end_callback: the show of the connected
+    # DJ is over, disconnect the client (the bus arm closed at the end)
+    switcher = SourceSwitcher(
+        switch_callback=scheduler.switch_audio_source,
+        show_end_callback=lambda: scheduler.kick_dj_source("show"),
+    )
     scheduler.set_source_switcher(switcher)
     switcher_server = start_listener(
         switcher,

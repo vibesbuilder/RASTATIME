@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.150
+Draft version: 0.151
 Date: 2026-11-17
 
 > **Revision history**
+> - **0.151 (2026-11-18)** - **The show source ends with the show** (§23.121): the legacy
+>   login check names the end of the show (chain), Liquidsoap closes the show arm at that
+>   time (`show_dj_until`), PLAYOUT leaves SHOW half a second earlier without a resume and
+>   disconnects the client 1.5 s later.  The harbor gates are no longer reset on disconnect.
 > - **0.150 (2026-11-17)** - Fix to the early show-DJ login (§23.119 addendum): the legacy
 >   source priority counts the show source once it is on air, not once it is connected, so a DJ
 >   waiting off air no longer replaces the playing item (On Air light, header, widgets).
@@ -11066,3 +11070,87 @@ Settings -> **Show Types** directly below Track Types
 rendering the same `showtypes.phtml`; ACL resource `tracktype`); the menu
 item Track Types has its old name again (DE translation corrected to
 "Track-Typen").
+
+### 23.121 The Show Source Ends with the Show (2026-11-18)
+
+**Finding.**  2026-11-17: a school streamed 09:45-10:00 over the Show
+Source and stopped sending about one second after the hour.  The harbor
+played out its 5-s buffer and needed its 5-s timeout to notice
+(10:00:06.2).  Until then the hour jingle was held back behind the DJ;
+PLAYOUT then resumed it at second 6 of 10.  The next show lost its
+opening.  Root cause: the schedule builder emits `switch_off` /
+`kick_out` ActionEvents at the end of a live show, but the scheduler
+never handled ActionEvents (they count under "other") - nothing ended a
+Show Source at the boundary.  Operator Go 2026-11-18.
+
+**Design.**  Mirror image of the early login (§23.119): there a Unix
+time opens the show arm, here one closes it.
+
+- *Legacy* (`ApiController::checkLiveStreamAuthAction`): an accepted
+  show login answers `X-Rastatime-On-Air-Until` (Unix time) and
+  `X-Rastatime-On-Air-Instance`.  `liveChainEnd()`: the end of the
+  episode the login goes on air for (the running one, or the upcoming
+  one of an early login); when the episode that starts in the very same
+  instant accepts the same user and password (`showLoginMatches`), the
+  end of that one, and so on (at most 12).
+- *PLAYOUT `dj_auth`*: answers `ok <hold> <until> <instance>`
+  (`on_air_until_from` trusts an end up to 48 h away; otherwise no end).
+  The listener keeps the episode (`SourceSwitcher.note_show_grant`) and
+  hands Liquidsoap `ok <hold> <until>`.
+- *Liquidsoap*: the auth parses both numbers into
+  `show_dj_hold_pending` / `show_dj_until_pending`; `on_connect` moves
+  them into `show_dj_from` / `show_dj_until` and posts `from=` and
+  `until=`.  Show arm: `source.is_ready(show_dj) and time() >=
+  show_dj_from() and (show_dj_until() <= 0. or time() < show_dj_until())`.
+  The hand-back uses `bus_dj` as before: the programme starts at once,
+  the DJ fades out under it.
+- *`SourceSwitcher`*: `_show_until`; SHOW only while `now < until -
+  SHOW_END_LEAD_SECONDS` (0.5 s).  The lead makes PLAYOUT treat the first
+  row of the next show - whose start timer fires at the boundary - as
+  ordinary scheduled content instead of holding it back behind the DJ.
+  That transition carries `last_transition_reason = "show-end"`;
+  `PlayoutScheduler.switch_audio_source` then does NOT resume (a resume
+  would push the last half second of the row under the live show).
+  `SHOW_END_KICK_AFTER_SECONDS` (1.5 s) after the end
+  `show_end_callback` runs `kick_dj_source("show")`.  A DJ found
+  connected after the end (PLAYOUT restarted across it) is disconnected
+  at once.
+- *Moved end*: every schedule refresh calls
+  `PlayoutScheduler.follow_show_end()` while a show DJ with a known
+  episode is connected - one `get_show_instance`, and on a change
+  `engine.show_dj_until_set()` (`var.set show_dj_until`) plus
+  `switcher.set_show_until()`.
+- The Master Source has no end.  A login accepted by the static harbor
+  password (PLAYOUT unreachable) has none either.
+
+**Gates are not reset on disconnect (fix found by the replica probe).**
+`on_disconnect` used to clear `show_dj_from` (and, in the first draft,
+`show_dj_until`).  The harbor stays ready while its buffer drains, so
+the reset reopened the arm for the buffered seconds: a DJ cut at the
+show end came back on air after the disconnect, and - since §23.119 - a
+DJ who left while waiting went on air for the first time.  Both values
+now stay until the next `on_connect` sets them anew.
+
+**Verification.**  Playout suite 967 passed (25 new in
+`test_show_source_end.py`: headers, answers, switcher timeline with real
+timers, grant binding, moved end, listener, reconciler, no resume,
+`follow_show_end`, engine).  Legacy probe
+`C:/Temp/optd/show_end_auth_probe.php` 16/16 in a rolled-back
+transaction (chain over two shows of one host, a gap, a deleted
+follower, the whole action), the early-login probe still 17/17.
+Liquidsoap 2.4.6 type-checks the render.  Replica
+`C:/Temp/optd/show_end_probe/run_show_end_probe.py` (own ports, fake
+PLAYOUT, ffmpeg DJ, arm changes logged per frame): the arm closes 0.02
+to 0.08 s after `until` for `ok 0 <until>`, `ok <hold> <until>` and an
+end moved over telnet; `show_dj.stop` ends the encoder; after the kick
+the arm stays closed; `ok` without an end behaves as before; a waiting
+DJ who leaves never goes on air.  NOT covered end to end: the real
+PLAYOUT scheduler at a real boundary (the first row of the next show
+starting behind a still-connected DJ) - acceptance with a test show.
+
+**Risk.**  Medium: the change sits in the on-air path of live shows.
+Nothing changes for file shows, webstreams, Line-In and the Master
+Source; a show DJ who disconnects on their own goes the old way.  Worst
+case of a fault: a DJ is cut at a wrong moment or not at all (the old
+behaviour).  Rollback: `git revert` (tag `live-2026-11-18`) and a
+PLAYOUT restart (the script changes back, Liquidsoap restarts with it).

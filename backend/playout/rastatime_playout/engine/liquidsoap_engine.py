@@ -1215,6 +1215,16 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
 
     _HARBOR_IDS = {"master": "master_dj", "show": "show_dj"}
 
+    def show_dj_until_set(self, until: float) -> None:
+        """
+        RASTATIME 2026-11-18 - move the end of the connected show DJ's show
+        (``var.set show_dj_until``, Unix time; 0 = no end).  The bus arm of
+        the show harbor closes at that time on its own.  Telnet errors are
+        raised to the caller, which then leaves its own timers alone.
+        """
+        self._telnet.var_set("show_dj_until", f"{max(0.0, float(until)):.1f}")
+        logger.info("Liquidsoap show_dj_until: %.0f", max(0.0, float(until)))
+
     def dj_kick(self, source: str) -> None:
         """
         Disconnect the DJ client on the Master or Show harbor

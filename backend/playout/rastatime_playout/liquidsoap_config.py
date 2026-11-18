@@ -1254,6 +1254,12 @@ def _render_dj_auth_function(
     auth BEFORE it checks whether the mount is taken (harbor.ml), so the
     gate ``show_dj_from`` is set in ``on_connect`` - a refused early
     login must never hold a DJ who is on air.
+
+    RASTATIME 2026-11-18: the verdict may carry a second number, ``ok
+    <hold> <until>`` - the Unix time at which the show (chain) of this
+    login ends.  It travels the same way (``show_dj_until_pending`` ->
+    ``show_dj_until`` in ``on_connect``) and closes the bus arm at the
+    show end; 0 = no end (as before).
     """
     timeout = _format_crossfade_duration(timeout_seconds)
     target = _escape_liq_string(url)
@@ -1262,20 +1268,33 @@ def _render_dj_auth_function(
             "# RASTATIME 2026-11-16 - early show login: a host of the NEXT show may",
             "# connect up to 5 min before it and waits off air until it starts.",
             "# The auth keeps PLAYOUT's hold here; show_dj.on_connect moves it into",
-            "# the gate show_dj_from (Unix time, 0 = on air at once), on_disconnect",
-            "# clears it; the bus arm opens at that time on its own.",
+            "# the gate show_dj_from (Unix time, 0 = on air at once); the bus arm",
+            "# opens at that time on its own.  The value stays until the next connect.",
             "show_dj_hold_pending = ref(0.)",
             'show_dj_from = interactive.float("show_dj_from", 0.)',
+            "# RASTATIME 2026-11-18 - the show source ends with the show: the Unix",
+            "# time at which the show (chain) of the connected DJ ends, 0 = no end.",
+            "# Same path as the hold; the bus arm closes at that time on its own and",
+            "# PLAYOUT disconnects the client right after (and moves the value over",
+            "# telnet when the show's end is moved).",
+            "show_dj_until_pending = ref(0.)",
+            'show_dj_until = interactive.float("show_dj_until", 0.)',
         ]
         if show_hold
         else []
     )
     accept_hold = (
         [
-            '        hold = if verdict == "ok" then 0. else',
-            "          float_of_string(default=0., string.trim(string.sub(verdict, start=3,",
+            "        # 'ok', 'ok <hold>' or 'ok <hold> <until>' (Unix times)",
+            '        numbers = if verdict == "ok" then [] else',
+            '          string.split(separator=" ", string.trim(string.sub(verdict, start=3,',
             "            length=string.length(verdict) - 3))) end",
-            '        if kind == "show" then show_dj_hold_pending.set(hold) end',
+            '        hold = float_of_string(default=0., list.nth(default="0", numbers, 0))',
+            '        until = float_of_string(default=0., list.nth(default="0", numbers, 1))',
+            '        if kind == "show" then',
+            "          show_dj_hold_pending.set(hold)",
+            "          show_dj_until_pending.set(until)",
+            "        end",
             '        if hold > 0. then log(level=3, label="rastatime.dj_auth",',
             "          \"#{kind}: user '#{login.user}' logged in early - off air until #{hold}\") end",
         ]
@@ -1283,7 +1302,12 @@ def _render_dj_auth_function(
         else []
     )
     static_hold = (
-        ['        if ok and kind == "show" then show_dj_hold_pending.set(0.) end']
+        [
+            '        if ok and kind == "show" then',
+            "          show_dj_hold_pending.set(0.)",
+            "          show_dj_until_pending.set(0.)",
+            "        end",
+        ]
         if show_hold
         else []
     )
@@ -1361,9 +1385,14 @@ def _render_harbor_source_events(
 
     RASTATIME 2026-11-16 (``show_hold``): the show DJ's ``on_connect``
     moves the early-login hold the auth kept into the gate
-    ``show_dj_from`` and posts it as ``from=``; ``on_disconnect`` clears
-    the gate.  The hold is applied here, not in the auth, because a
-    refused connection (mount taken) still passed the auth.
+    ``show_dj_from`` and posts it as ``from=``.  The hold is applied here,
+    not in the auth, because a refused connection (mount taken) still
+    passed the auth.  ``on_disconnect`` leaves the gates alone (since
+    2026-11-18): the harbor stays ready while its buffer drains, and a
+    reset there put the buffered seconds on air.
+
+    RASTATIME 2026-11-18: the same for the end of the show
+    (``show_dj_until``), posted as ``until=``.
     """
     timeout = _format_crossfade_duration(timeout_seconds)
     target = _escape_liq_string(url)
@@ -1373,11 +1402,11 @@ def _render_harbor_source_events(
         "# then verifies once over telnet instead of polling every 5 s (the",
         "# poll leaked ~150 MB/h on the Windows build).  The POST runs in a",
         "# detached task so a slow listener never stalls the harbor handler.",
-        "def rastatime_source_event(src, status, hold) =",
+        "def rastatime_source_event(src, status, hold, until) =",
         "  thread.run(fun () ->",
         "    try",
         f'      ignore(http.post(timeout={timeout}, data="",',
-        f'        "{target}?source=#{{src}}&status=#{{status}}&from=#{{hold}}"))',
+        f'        "{target}?source=#{{src}}&status=#{{status}}&from=#{{hold}}&until=#{{until}}"))',
         "    catch err do",
         '      log(level=3, label="rastatime.source_event",',
         '        "POST #{src}/#{status} failed: #{err}")',
@@ -1399,22 +1428,28 @@ def _render_harbor_source_events(
             lines += [
                 "show_dj.on_connect(synchronous=true, fun (_) -> begin",
                 "  show_dj_from.set(show_dj_hold_pending())",
+                "  show_dj_until.set(show_dj_until_pending())",
                 "  show_dj_hold_pending.set(0.)",
-                '  rastatime_source_event("show", "on", show_dj_from())',
+                "  show_dj_until_pending.set(0.)",
+                '  rastatime_source_event("show", "on", show_dj_from(), show_dj_until())',
                 "end)",
-                "show_dj.on_disconnect(synchronous=true, fun () -> begin",
-                "  show_dj_from.set(0.)",
-                '  rastatime_source_event("show", "off", 0.)',
-                "end)",
+                # RASTATIME 2026-11-18 - the gates are NOT reset here: the
+                # harbor stays ready while its buffer drains, so a reset
+                # reopened the arm for the buffered seconds - a DJ cut at the
+                # show end came back on air after the disconnect, a DJ who
+                # left while waiting went on air for the first time (replica
+                # probe).  The next on_connect sets both values anew.
+                "show_dj.on_disconnect(synchronous=true, fun () ->",
+                '  rastatime_source_event("show", "off", 0., 0.))',
             ]
             continue
         lines.append(
             f"{source_id}.on_connect(synchronous=true, "
-            f'fun (_) -> rastatime_source_event("{name}", "on", 0.))'
+            f'fun (_) -> rastatime_source_event("{name}", "on", 0., 0.))'
         )
         lines.append(
             f"{source_id}.on_disconnect(synchronous=true, "
-            f'fun () -> rastatime_source_event("{name}", "off", 0.))'
+            f'fun () -> rastatime_source_event("{name}", "off", 0., 0.))'
         )
     return "\n".join(lines) + "\n"
 
@@ -2597,9 +2632,13 @@ def _render_bus_source_block(
         wrappers.append(_arm("bus_arm_master", "master_dj", dj_shape))
     if show_enabled:
         # RASTATIME 2026-11-16 - an early show login waits until show_dj_from
-        # (Unix time); Liquidsoap opens the arm at the show start on its own
+        # (Unix time); Liquidsoap opens the arm at the show start on its own.
+        # RASTATIME 2026-11-18 - and closes it at show_dj_until (the end of the
+        # DJ's show, 0 = no end): the next show starts on time, the DJ fades
+        # out under it (bus_dj) and PLAYOUT disconnects the client.
         arms.append(
-            "({source.is_ready(show_dj) and time() >= show_dj_from()}, show_dj)"
+            "({source.is_ready(show_dj) and time() >= show_dj_from()"
+            " and (show_dj_until() <= 0. or time() < show_dj_until())}, show_dj)"
             if show_hold
             else "({source.is_ready(show_dj)}, show_dj)"
         )

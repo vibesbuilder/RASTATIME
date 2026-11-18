@@ -604,7 +604,7 @@ def test_full_render_both_harbor_passwords():
     # Order in the switch: master first (priority), show second,
     # scheduled fallback last.
     bus_idx = out.index("bus = switch(")
-    bus_block = out[bus_idx : bus_idx + 500]
+    bus_block = out[bus_idx : bus_idx + 800]  # the show arm's gate grew 2026-11-18
     master_pos = bus_block.index("master_dj")
     show_pos = bus_block.index("show_dj")
     scheduled_pos = bus_block.index("scheduled)")

@@ -66,6 +66,40 @@ def hold_until_from(value: Optional[str], now: Optional[float] = None) -> Option
     return hold
 
 
+# RASTATIME 2026-11-18 - the show source ends with the show: the legacy
+# check names the end of the show (chain) the login goes on air for.  An end
+# further out than this is not trusted and simply not applied (the DJ then
+# stays until they disconnect, as before).
+ON_AIR_MAX_SECONDS = 48 * 3600
+
+
+def on_air_until_from(value: Optional[str], now: Optional[float] = None) -> Optional[int]:
+    """
+    The ``X-Rastatime-On-Air-Until`` header (Unix time until which the show
+    DJ may stay on air), or None: missing, not a number, already passed or
+    implausibly far away.
+    """
+    if value is None or not str(value).strip():
+        return None
+    try:
+        until = int(float(str(value).strip()))
+    except ValueError:
+        return None
+    current = time.time() if now is None else now
+    if until <= current or until - current > ON_AIR_MAX_SECONDS:
+        return None
+    return until
+
+
+def instance_from(value: Optional[str]) -> int:
+    """The ``X-Rastatime-On-Air-Instance`` header as a positive int, else 0."""
+    try:
+        number = int(str(value or "").strip())
+    except ValueError:
+        return 0
+    return number if number > 0 else 0
+
+
 class RejectThrottle:
     """Per-address brake for the DJ harbor (RASTATIME 2026-10-06, brute-force
     protection): after ``limit`` rejections inside ``window`` seconds the
@@ -279,15 +313,29 @@ class DjAuthenticator:
             except ValueError as exc:
                 logger.warning("dj-auth: %s refused - implausible early-login hold (%s)", who, exc)
                 return "denied"
+            # RASTATIME 2026-11-18 - the show source ends with the show: the
+            # end (Unix time) and the episode it belongs to travel as
+            # "ok <hold> <until> <instance>"; the listener keeps the episode
+            # and hands Liquidsoap "ok <hold> <until>".
+            until = None
+            instance = 0
+            if djtype == "dj":
+                until = on_air_until_from(resp.headers.get("x-rastatime-on-air-until"))
+                instance = instance_from(resp.headers.get("x-rastatime-on-air-instance"))
+            tail = ""
+            if until is not None:
+                ends = time.strftime("%H:%M:%S", time.localtime(until))
+                tail = f" - on air until {ends} (show end)"
             if hold is not None and djtype == "dj":
                 logger.info(
-                    "dj-auth: %s accepted early - waits off air until %s (show start)",
+                    "dj-auth: %s accepted early - waits off air until %s (show start)%s",
                     who,
                     time.strftime("%H:%M:%S", time.localtime(hold)),
+                    tail,
                 )
-                return f"ok {hold}"
-            logger.info("dj-auth: %s accepted", who)
-            return "ok"
+                return f"ok {hold}" if until is None else f"ok {hold} {until} {instance}"
+            logger.info("dj-auth: %s accepted%s", who, tail)
+            return "ok" if until is None else f"ok 0 {until} {instance}"
         if resp.status_code not in (200, 401):
             logger.warning(
                 "dj-auth: unexpected HTTP %s from %s - %s falls back to the static harbor password",

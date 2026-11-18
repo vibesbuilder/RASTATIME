@@ -292,6 +292,35 @@ inicio el DJ está en antena al segundo, sin el hueco de búfer habitual.
 - Más de 5 minutos antes, los logins se rechazan como antes (no cuentan
   para el freno contra fuerza bruta).  Vea ARCHITECTURE §23.119.
 
+#### La Show Source termina con el programa
+
+Desde 2026-11-18 un DJ de programa sale del aire **al final del
+programa**, al segundo, aunque el software de emisión siga enviando.
+El programa siguiente empieza puntual con su primer elemento; el DJ se
+desvanece por debajo durante el *Switch Transition Fade* y se le
+desconecta unos 1,5 segundos después.  Antes, un DJ que seguía
+conectado dejaba fuera del aire el inicio del programa siguiente.
+
+- El final sigue al calendario: si mueve el final de un programa en
+  directo en curso, el final del DJ se mueve con él en la siguiente
+  actualización de la parrilla (unos dos minutos; enseguida tras un
+  cambio en el calendario).
+- Si el programa que empieza en el mismo instante acepta el **mismo
+  login** (el mismo presentador o el mismo login personalizado), el DJ
+  sigue en el aire dentro de él y termina con ese programa.
+- El software del DJ puede volver a conectarse tras la desconexión; el
+  login se rechaza entonces porque el programa ha terminado (no cuenta
+  para el freno de fuerza bruta), salvo que el próximo programa del DJ
+  empiece en menos de 5 minutos.
+- La **Master Source** nunca se termina así: es la prioridad
+  deliberada.
+- Por el búfer del harbor, los oyentes oyen al DJ con unos 5 segundos
+  de retraso: lo que está en el aire al final del programa se envió 5
+  segundos antes.  Un DJ debería planear su última palabra en
+  consecuencia.
+
+Véase ARCHITECTURE §23.121.
+
 ---
 
 ## 4. Monitorear la salud de streams

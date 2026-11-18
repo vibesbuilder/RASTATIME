@@ -112,6 +112,19 @@ def reconcile_interval_from_env(
     return value
 
 
+# RASTATIME 2026-11-18 - the show source ends with the show.  Liquidsoap
+# closes the bus arm at the end by itself (show_dj_until); PLAYOUT leaves the
+# SHOW state this long BEFORE the end, so the first row of the next show -
+# whose start timer fires at the boundary - is handled as ordinary scheduled
+# content instead of being held back behind the DJ ...
+SHOW_END_LEAD_SECONDS = 0.5
+# ... and disconnects the client this long AFTER the end (the DJ fades out
+# under the next show over the hand-over fade first).
+SHOW_END_KICK_AFTER_SECONDS = 1.5
+#: last_transition_reason of a SHOW -> SCHEDULED change caused by the show end
+REASON_SHOW_END = "show-end"
+
+
 class SourceState(str, Enum):
     """Active audio source.  Priority: MASTER > SHOW > SCHEDULED."""
 
@@ -140,7 +153,11 @@ class SourceSwitcher:
     callback always sees the latest computed state, never stale data.
     """
 
-    def __init__(self, switch_callback: Callable[["SourceState"], None]):
+    def __init__(
+        self,
+        switch_callback: Callable[["SourceState"], None],
+        show_end_callback: Optional[Callable[[], None]] = None,
+    ):
         self._lock = threading.Lock()
         self._master_connected = False
         self._show_connected = False
@@ -156,6 +173,20 @@ class SourceSwitcher:
         # the show on air untouched; a timer re-evaluates at the start.
         self._show_hold_until = 0.0
         self._hold_timer: Optional[threading.Timer] = None
+        # RASTATIME 2026-11-18 - the show source ends with the show: Unix time
+        # at which the show (chain) of the connected DJ ends (Liquidsoap's
+        # show_dj_until gate), 0 = no end.  SHOW_END_LEAD_SECONDS before it
+        # the state goes back to SCHEDULED although the DJ is still connected
+        # (last_transition_reason tells the scheduler not to resume the row
+        # under the live show); SHOW_END_KICK_AFTER_SECONDS after it
+        # show_end_callback disconnects the client.
+        self._show_until = 0.0
+        self._show_until_instance = 0
+        self._pending_grant: Optional[tuple[float, int]] = None
+        self._until_timer: Optional[threading.Timer] = None
+        self._kick_timer: Optional[threading.Timer] = None
+        self._show_end_callback = show_end_callback
+        self.last_transition_reason = ""
 
     # ---------- public API -----------------------------------------------
 
@@ -165,14 +196,43 @@ class SourceSwitcher:
     def on_master_disconnect(self) -> None:
         self._update(master_connected=False)
 
-    def on_show_connect(self, hold_until: Optional[float] = None) -> None:
+    def on_show_connect(
+        self, hold_until: Optional[float] = None, until: Optional[float] = None
+    ) -> None:
         """A show DJ is connected.  ``hold_until`` (Unix time) when it
         waits off air until its show starts, 0 for on air at once, None
-        to keep what is known (the telnet reconciler without a value)."""
-        self._update(show_connected=True, show_hold_until=hold_until)
+        to keep what is known (the telnet reconciler without a value).
+        ``until`` (Unix time): the end of the DJ's show, 0 = no end, None
+        to keep what is known."""
+        self._update(show_connected=True, show_hold_until=hold_until, show_until=until)
 
     def on_show_disconnect(self) -> None:
-        self._update(show_connected=False, show_hold_until=0.0)
+        self._update(show_connected=False, show_hold_until=0.0, show_until=0.0)
+
+    def note_show_grant(self, until: float, instance: int) -> None:
+        """The login check accepted a show DJ whose show ends at ``until``
+        and belongs to episode ``instance`` (0 = unknown).  Kept until the
+        connect that carries the same end arrives - a login that Liquidsoap
+        then refuses (mount taken) never becomes the connected DJ's."""
+        with self._lock:
+            self._pending_grant = (float(until), int(instance))
+
+    def set_show_until(self, until: float) -> None:
+        """The end of the connected DJ's show moved (schedule refresh)."""
+        if self.is_show_connected():
+            self._update(show_until=until, keep_instance=True)
+
+    def show_until(self) -> Optional[float]:
+        """Unix time at which the connected show DJ's show ends, or None."""
+        with self._lock:
+            if self._show_connected and self._show_until > 0:
+                return self._show_until
+            return None
+
+    def show_until_instance(self) -> int:
+        """The episode the end belongs to (0 = unknown / nobody connected)."""
+        with self._lock:
+            return self._show_until_instance if self._show_connected else 0
 
     @property
     def current_state(self) -> SourceState:
@@ -215,6 +275,8 @@ class SourceSwitcher:
         master_connected: Optional[bool] = None,
         show_connected: Optional[bool] = None,
         show_hold_until: Optional[float] = None,
+        show_until: Optional[float] = None,
+        keep_instance: bool = False,
     ) -> None:
         with self._lock:
             if master_connected is not None:
@@ -223,7 +285,19 @@ class SourceSwitcher:
                 self._show_connected = show_connected
             if show_hold_until is not None:
                 self._show_hold_until = max(0.0, float(show_hold_until))
+            if show_until is not None:
+                self._show_until = max(0.0, float(show_until))
+                if not keep_instance:
+                    grant, self._pending_grant = self._pending_grant, None
+                    self._show_until_instance = (
+                        grant[1]
+                        if grant is not None
+                        and self._show_until > 0
+                        and abs(grant[0] - self._show_until) < 1.0
+                        else 0
+                    )
             self._arm_hold_timer_locked()
+            self._arm_until_timers_locked()
 
             new_state = self._compute_state()
             if new_state == self._current_state:
@@ -237,6 +311,22 @@ class SourceSwitcher:
 
             old_state = self._current_state
             self._current_state = new_state
+            # RASTATIME 2026-11-18 - SHOW -> SCHEDULED with the DJ still
+            # connected: the show ended (the scheduler does not resume then)
+            self.last_transition_reason = (
+                REASON_SHOW_END
+                if old_state == SourceState.SHOW
+                and new_state == SourceState.SCHEDULED
+                and self._show_connected
+                and self._show_ended_locked()
+                else ""
+            )
+            if self.last_transition_reason == REASON_SHOW_END:
+                logger.info(
+                    "SourceSwitcher: the show of the connected DJ ends at %s - "
+                    "back to scheduled content, the DJ is disconnected right after.",
+                    time.strftime("%H:%M:%S", time.localtime(self._show_until)),
+                )
 
         # Log + callback OUTSIDE the lock.
         logger.info(
@@ -254,9 +344,56 @@ class SourceSwitcher:
     def _compute_state(self) -> SourceState:
         if self._master_connected:
             return SourceState.MASTER
-        if self._show_connected and self._show_hold_until <= time.time():
+        if (
+            self._show_connected
+            and self._show_hold_until <= time.time()
+            and not self._show_ended_locked()
+        ):
             return SourceState.SHOW
         return SourceState.SCHEDULED
+
+    def _show_ended_locked(self) -> bool:
+        """The connected DJ's show is over (or ends within the lead)."""
+        return self._show_until > 0 and time.time() >= self._show_until - SHOW_END_LEAD_SECONDS
+
+    def _arm_until_timers_locked(self) -> None:
+        """RASTATIME 2026-11-18 - re-evaluate the state shortly before the
+        end of the connected DJ's show (SHOW -> SCHEDULED) and disconnect
+        the client shortly after it.  Called with the lock held."""
+        for timer in (self._until_timer, self._kick_timer):
+            if timer is not None:
+                timer.cancel()
+        self._until_timer = self._kick_timer = None
+        if not self._show_connected or self._show_until <= 0:
+            return
+        now = time.time()
+        lead = self._show_until - SHOW_END_LEAD_SECONDS - now
+        if lead > 0:
+            self._until_timer = threading.Timer(lead + 0.02, self._update)
+            self._until_timer.daemon = True
+            self._until_timer.start()
+        kick = max(0.05, self._show_until + SHOW_END_KICK_AFTER_SECONDS - now)
+        self._kick_timer = threading.Timer(kick, self._fire_show_end)
+        self._kick_timer.daemon = True
+        self._kick_timer.start()
+
+    def _fire_show_end(self) -> None:
+        """The show is over and the DJ is still connected: disconnect."""
+        with self._lock:
+            due = self._show_connected and self._show_until > 0 and time.time() >= self._show_until
+            ended_at = self._show_until
+        if not due:
+            return
+        logger.info(
+            "SourceSwitcher: show ended at %s and the DJ is still connected - disconnecting.",
+            time.strftime("%H:%M:%S", time.localtime(ended_at)),
+        )
+        if self._show_end_callback is None:
+            return
+        try:
+            self._show_end_callback()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.exception("SourceSwitcher: show_end_callback failed: %s", exc)
 
     def _arm_hold_timer_locked(self) -> None:
         """RASTATIME 2026-11-16 - while a connected show DJ waits, re-evaluate
@@ -441,11 +578,25 @@ class _EventHandler(BaseHTTPRequestHandler):
                     hold = float((qs.get("from", ["0"])[0] or "0").strip())
                 except ValueError:
                     hold = 0.0
-                sw.on_show_connect(hold if hold > time.time() else 0.0)
+                # RASTATIME 2026-11-18 - until=<unix time>: the end of the
+                # DJ's show (the .liq closes the bus arm then; 0 = no end)
+                try:
+                    until = float((qs.get("until", ["0"])[0] or "0").strip())
+                except ValueError:
+                    until = 0.0
+                sw.on_show_connect(
+                    hold if hold > time.time() else 0.0,
+                    until=until if until > time.time() else 0.0,
+                )
                 if hold > time.time():
                     logger.info(
                         "source-event: show DJ waits off air until %s (early login)",
                         time.strftime("%H:%M:%S", time.localtime(hold)),
+                    )
+                if until > time.time():
+                    logger.info(
+                        "source-event: show DJ is on air until %s (show end)",
+                        time.strftime("%H:%M:%S", time.localtime(until)),
                     )
             else:
                 sw.on_show_disconnect()
@@ -490,6 +641,18 @@ class _EventHandler(BaseHTTPRequestHandler):
             verdict = "error"
         # RASTATIME 2026-11-16 - "ok <unix time>": an early show login that
         # waits off air until the show starts (the .liq parses the number)
+        # RASTATIME 2026-11-18 - "ok <hold> <until> <instance>": the show
+        # source ends at <until>; the episode stays here (for a moved end),
+        # Liquidsoap gets "ok <hold> <until>"
+        if verdict.startswith("ok "):
+            parts = verdict.split()
+            if len(parts) >= 4:
+                try:
+                    if source == "show" and _EventHandler.switcher is not None:
+                        _EventHandler.switcher.note_show_grant(float(parts[2]), int(parts[3]))
+                except ValueError:
+                    pass
+                verdict = " ".join(parts[:3])
         if verdict == "ok" or verdict.startswith("ok "):
             self._send(200, verdict)
             return
@@ -581,6 +744,7 @@ class _EventHandler(BaseHTTPRequestHandler):
             return
 
         hold = sw.show_hold_until()
+        until = sw.show_until()
         state = {
             "master_connected": sw.is_master_connected(),
             "show_connected": sw.is_show_connected(),
@@ -588,6 +752,9 @@ class _EventHandler(BaseHTTPRequestHandler):
             # RASTATIME 2026-11-16 - early show login waiting off air (Unix
             # time), null otherwise; the dashboard shows "waiting until"
             "show_hold_until": int(hold) if hold is not None else None,
+            # RASTATIME 2026-11-18 - end of the connected DJ's show (Unix
+            # time), null when it has none
+            "show_until": int(until) if until is not None else None,
         }
         body_bytes = json.dumps(state).encode("utf-8")
         self.send_response(200)
@@ -857,6 +1024,19 @@ def _read_show_hold(client) -> float:
     return hold if hold > time.time() else 0.0
 
 
+def _read_show_until(client) -> float:
+    """RASTATIME 2026-11-18 - Liquidsoap's ``show_dj_until`` (end of the
+    connected DJ's show, Unix time) over telnet; 0.0 when absent, zero or
+    unreadable.  A time that has passed is kept: the DJ is then
+    disconnected at once."""
+    try:
+        resp = client.send_command("var.get show_dj_until").strip()
+        until = float(resp.split()[-1]) if resp else 0.0
+    except Exception:  # pylint: disable=broad-exception-caught
+        return 0.0
+    return until if until > 0 else 0.0
+
+
 def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
     """
     One verification round: ``master_dj.status`` + ``show_dj.status``
@@ -898,7 +1078,7 @@ def _reconcile_liquidsoap_once(client, switcher: SourceSwitcher) -> None:
             # Liquidsoap's show_dj_from gate; take the hold over (PLAYOUT
             # restarted while the DJ waits).  No such variable (older render)
             # or no number: on air at once, as before.
-            switcher.on_show_connect(_read_show_hold(client))
+            switcher.on_show_connect(_read_show_hold(client), until=_read_show_until(client))
         else:
             switcher.on_show_disconnect()
 

@@ -369,6 +369,34 @@ auf die Sekunde auf Sendung, ohne die übliche Pufferlücke am Anfang.
 - Früher als 5 Minuten werden Logins wie bisher abgelehnt (sie zählen
   nicht für die Brute-Force-Bremse).  Siehe ARCHITECTURE §23.119.
 
+#### Die Show Source endet mit der Sendung
+
+Seit 2026-11-18 wird ein Show-DJ **am Ende der Sendung** sekundengenau
+vom Sender genommen, auch wenn die Sendesoftware weiter sendet.  Die
+nächste Sendung beginnt pünktlich mit ihrem ersten Element; der DJ
+blendet darunter über den *Switch Transition Fade* aus und wird etwa
+1,5 Sekunden später getrennt.  Zuvor hielt ein DJ, der verbunden blieb,
+den Anfang der nächsten Sendung vom Sender fern.
+
+- Das Ende folgt dem Kalender: Verschieben Sie das Ende einer laufenden
+  Live-Sendung, wandert das Ende des DJs mit der nächsten
+  Sendeplan-Aktualisierung mit (etwa zwei Minuten; nach einer Änderung
+  im Kalender sofort).
+- Akzeptiert die Sendung, die im selben Moment beginnt, **dasselbe
+  Login** (derselbe Host oder dasselbe eigene Login), bleibt der DJ
+  in sie hinein auf Sendung und endet mit dieser Sendung.
+- Die Software des DJs verbindet sich nach dem Trennen eventuell
+  erneut; das Login wird dann abgewiesen, weil die Sendung vorbei ist
+  (es zählt nicht für die Brute-Force-Bremse), außer die nächste
+  Sendung des DJs beginnt innerhalb von 5 Minuten.
+- Die **Master Source** wird so nie beendet - sie ist die bewusste
+  Übersteuerung.
+- Wegen des Harbor-Puffers hören die Hörer den DJ etwa 5 Sekunden
+  verzögert: Was am Sendungsende auf Sendung ist, wurde 5 Sekunden
+  früher gesendet.  Ein DJ sollte das letzte Wort entsprechend planen.
+
+Siehe ARCHITECTURE §23.121.
+
 ---
 
 ## 4. Stream-Gesundheit überwachen

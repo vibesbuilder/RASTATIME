@@ -27,6 +27,7 @@ QUEUE_BEHAVIOR.md §3.1, §4.1 (show start HARD mode), §4.2 (show end),
 §6.1 (cue_in/cue_out not yet enforced — stop timer uses schedule end_at).
 """
 
+import calendar
 import logging
 import threading
 import time
@@ -58,10 +59,11 @@ from .player.events import (
     LineinEvent,
     ShowRecordEvent,
     WebStreamEvent,
+    event_isoparse,
 )
 from .player.schedule import get_schedule
 from .recording_path import build_output_path
-from .source_switcher import SourceState
+from .source_switcher import REASON_SHOW_END, SourceState
 from .tunein import TuneInPusher
 
 logger = logging.getLogger(__name__)
@@ -547,6 +549,8 @@ class PlayoutScheduler:
         t_icy = time.monotonic()
         # RASTATIME 2026-09-16 - the library root is a setting; follow it.
         self._refresh_storage_root()
+        # RASTATIME 2026-11-18 - a moved end of the connected DJ's show
+        self.follow_show_end()
         t_root = time.monotonic()
 
         with self._lock:
@@ -4483,7 +4487,19 @@ class PlayoutScheduler:
         logger.info("PlayoutScheduler: switching audio source to %s", state.value)
 
         with self._lock:
-            if state == SourceState.SCHEDULED:
+            if state == SourceState.SCHEDULED and (
+                getattr(self._switcher, "last_transition_reason", "") == REASON_SHOW_END
+            ):
+                # RASTATIME 2026-11-18 - the show of the connected DJ ends in
+                # this very moment: Liquidsoap closes the show arm at the end
+                # and the next show's first row starts on its own timer.  A
+                # resume would push the last fraction of the row under the
+                # live show in front of it.
+                logger.info(
+                    "PlayoutScheduler: the show source ends with its show - "
+                    "nothing resumed, the next show starts on its own timers.",
+                )
+            elif state == SourceState.SCHEDULED:
                 self._resume_scheduled_locked()
                 logger.info(
                     "PlayoutScheduler: scheduled resume after "
@@ -4497,6 +4513,44 @@ class PlayoutScheduler:
                     "no engine.play() needed.",
                     state.value,
                 )
+
+    def follow_show_end(self) -> None:
+        """
+        RASTATIME 2026-11-18 - the end of the connected show DJ's show may
+        have been moved in the calendar while the DJ is on air: read the
+        episode again (one request, only while a show DJ with a known
+        episode is connected) and move Liquidsoap's gate and the switcher's
+        timers.  Never raises; an unreadable episode keeps the known end.
+        """
+        switcher = self._switcher
+        if switcher is None or not hasattr(switcher, "show_until_instance"):
+            return
+        instance = switcher.show_until_instance()
+        known = switcher.show_until()
+        if not instance or known is None:
+            return
+        try:
+            data = self._api_client.get_show_instance(instance).json()
+            ends = event_isoparse(data["ends_at"])
+            new_until = float(calendar.timegm(ends.timetuple()))
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.info("show end of episode %s not readable (%s) - keeping it.", instance, exc)
+            return
+        if abs(new_until - known) < 1.0:
+            return
+        logger.info(
+            "The show of the connected DJ (episode %s) now ends at %s instead of %s - "
+            "moving the end of the show source.",
+            instance,
+            time.strftime("%H:%M:%S", time.localtime(new_until)),
+            time.strftime("%H:%M:%S", time.localtime(known)),
+        )
+        try:
+            self._engine.show_dj_until_set(new_until)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("show end not moved in Liquidsoap (%s) - keeping the old end.", exc)
+            return
+        switcher.set_show_until(new_until)
 
     def set_audio_output(self, device_id: Optional[str]) -> None:
         """

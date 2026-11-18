@@ -349,6 +349,33 @@ without the usual pre-buffer gap at the beginning.
 - Earlier than 5 minutes, logins are refused as before (they do not
   count towards the brute-force brake).  See ARCHITECTURE §23.119.
 
+#### The Show Source ends with the show
+
+Since 2026-11-18 a Show DJ is taken off air **at the end of the
+show**, to the second, even when the broadcasting software keeps
+sending.  The next show starts on time with its first element; the DJ
+fades out under it over the *Switch Transition Fade* and is
+disconnected about 1.5 seconds later.  Before, a DJ who stayed
+connected kept the next show's opening off air.
+
+- The end follows the calendar: if you move the end of a running live
+  show, the DJ's end moves with it within the next schedule refresh
+  (about two minutes; at once after a change in the calendar).
+- When the show that starts in the same instant accepts the **same
+  login** (the same host, or the same custom login), the DJ stays on
+  air into it and ends with that show.
+- The DJ's software may reconnect after the disconnect; the login is
+  then refused because the show is over (it does not count towards
+  the brute-force brake), unless the DJ's next show starts within 5
+  minutes.
+- The **Master Source** is never ended this way - it is the deliberate
+  override.
+- Because of the harbor buffer the listeners hear the DJ about 5
+  seconds behind: what is on air at the end of the show was sent 5
+  seconds earlier.  A DJ should plan the last word accordingly.
+
+See ARCHITECTURE §23.121.
+
 ---
 
 ## 4. Monitoring stream health

@@ -1360,6 +1360,36 @@ SQL;
     }
 
     /**
+     * RASTATIME 2026-11-18 - the episode that starts exactly when episode
+     * $instanceId ends (the show DJ's time on air may run on into it,
+     * ApiController::liveChainEnd), and the end of $instanceId itself.
+     * Deleted / moved episodes do not count.
+     *
+     * @return null|array ['ends_epoch' => int, 'next' => null|['show_id' => int, 'instance_id' => int]]
+     */
+    public static function getInstanceEndAndFollower(int $instanceId)
+    {
+        $rows = Application_Common_Database::prepareAndExecute(
+            'SELECT si.ends, nx.id AS next_id, nx.show_id AS next_show '
+            . 'FROM cc_show_instances si '
+            . 'LEFT JOIN cc_show_instances nx ON nx.starts = si.ends AND nx.modified_instance != TRUE AND nx.id <> si.id '
+            . 'WHERE si.id = :id AND si.modified_instance != TRUE ORDER BY nx.id LIMIT 1',
+            [':id' => $instanceId]
+        );
+        if (empty($rows)) {
+            return null;
+        }
+        $ends = new DateTime($rows[0]['ends'], new DateTimeZone('UTC'));
+
+        return [
+            'ends_epoch' => $ends->getTimestamp(),
+            'next' => $rows[0]['next_id'] === null
+                ? null
+                : ['show_id' => (int) $rows[0]['next_show'], 'instance_id' => (int) $rows[0]['next_id']],
+        ];
+    }
+
+    /**
      * RASTATIME 2026-11-16 - the next episode that starts after $timeNow and
      * at most $seconds later (early show-DJ login, ApiController
      * checkLiveStreamAuthAction).  Deleted / moved episodes do not count.
