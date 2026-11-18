@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wartenden Früh-Login sogar zum ersten Mal.  Probelauf an einer Liquidsoap-Nachbildung:
   Schließen 0,02-0,08 s nach dem Ende.  Manual STREAMS x4, ARCHITECTURE 0.151 (§23.121).
   Wirksam nach PLAYOUT-Neustart (das Sendeskript ändert sich, Liquidsoap startet mit neu);
-  Abnahme mit einer Testsendung offen.
+  Abnahme mit einer Testsendung offen.  `cc155cfb`.
 
 ## [1.7.1] - 2026-11-17
 
