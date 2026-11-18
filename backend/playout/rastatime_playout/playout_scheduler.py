@@ -31,6 +31,7 @@ import calendar
 import logging
 import threading
 import time
+import wave
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -42,7 +43,7 @@ from rastatime_api_client.v2 import ApiClient
 from . import liquidsoap_health
 from .config import CACHE_DIR
 from .engine.ffmpeg_linein_capture import FfmpegLineinCapture
-from .engine.interface import PlayoutEngine, PlayoutState
+from .engine.interface import PAUSED_CUT_SHAPE, PlayoutEngine, PlayoutState
 from .liquidsoap_config import (
     DEFAULT_CROSSFADE_DURATION,
     crossfade_buffer_seconds,
@@ -167,6 +168,24 @@ EXACT_TIME_HOLD_MAX_SECONDS = 1.5
 # stays on its rows.  Below this much the push is left alone (timers fire
 # on the whole second before the row time).
 BOUNDARY_RESTART_CATCHUP_MIN_SECONDS = 0.5
+
+# RASTATIME 2026-11-18 - the show source ends with its show.  The row of the
+# next show that starts within this many seconds of the show end is put on
+# the paused queue half a second before the end and starts in the frame the
+# show arm closes; without such a row a silent filler takes its place.
+SHOW_END_FIRST_ROW_WINDOW_SECONDS = 0.5
+# Length of the filler.  It must still be the queue's CURRENT request when
+# the next file row replaces it: a request that has ended leaves its last
+# seconds in the cross operator, and a track pushed afterwards waits behind
+# them (replica queue_probe.py R6 / R8: a 0.5-s and a 3.2-s filler delayed
+# the next track by up to 3 s).  Under a live arm the filler is paused after
+# at most the bus transition (1.5 s) plus the read-ahead (3 s); with nothing
+# on air it plays out as silence and the Off Air text follows that much later.
+PAUSED_FILLER_SECONDS = 10.0
+# The first file start after a filler skips it only while the queue reports
+# more than this much left - below, the request is about to end by itself
+# and a skip could hit the track just pushed.
+PAUSED_LEFTOVER_SKIP_SECONDS = 1.0
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -369,6 +388,19 @@ class PlayoutScheduler:
         # behind a shorter queued row (see _on_file_queue_ahead); queued as
         # soon as that row starts, so cross has its partner in time.
         self._deferred_queue_ahead: Optional[tuple[str, FileEvent]] = None
+        # RASTATIME 2026-11-18 - the show source ended with its show and no
+        # file row started at that instant: the paused queue was replaced by
+        # a silent filler, which is still in the queue when a live arm took
+        # the air at once (or a file row starts within its seconds).  The
+        # next file start replaces it (_start_over_paused_leftover) instead
+        # of waiting behind it.  _paused_leftover_until: when the filler is
+        # over if it went on air at once (time.monotonic) - the fallback
+        # when the engine cannot be asked.
+        self._paused_leftover = False
+        self._paused_leftover_until = 0.0
+        # held while the paused queue is being replaced at a show end; a row
+        # start that fires in the same moment waits for it
+        self._show_end_handover = threading.Lock()
         # RASTATIME 2026-10-03 - rows whose _on_file_start is executing right
         # now (key -> event): a refresh in the same second must not catch
         # them up a second time (12:17:55 incident: a jingle aired twice).
@@ -1232,6 +1264,8 @@ class PlayoutScheduler:
             # the station was silent until the next row.
             self._queued_ahead = None
             self._queued_ahead_prev = None
+            # 2026-11-18: and so is a filler that replaced a paused queue
+            self._paused_leftover = False
             self._current_started_at = None
             self._current_clip_seconds = None
         # RASTATIME 2026-11-02 - the engine's own "on air" mirror must go
@@ -2888,6 +2922,10 @@ class PlayoutScheduler:
         instead of at its top (2026-09-28).
         """
         seek = max(0.0, float(seek or 0.0))
+        # RASTATIME 2026-11-18 - the paused queue is being replaced at a show
+        # end right now (a few telnet commands): start when that is done
+        with self._show_end_handover:
+            pass
         logger.info(
             "PLAY  %s  |  %r  |  show: %s%s",
             key,
@@ -3136,6 +3174,15 @@ class PlayoutScheduler:
             if not self._wait_for_exact_time(key, event.start_exact, "PLAY"):
                 return
 
+        # RASTATIME 2026-11-18 - the first file start after a show source
+        # ended without a file row: the filler that replaced the paused
+        # queue is replaced by this track.
+        if self._paused_leftover:
+            self._paused_leftover = False
+            if not isinstance(prev_event, FileEvent):
+                self._start_over_paused_leftover(key, event, str(local), seek, prev_event)
+                return
+
         # RASTATIME 2026-05-25 — Seamless-Bus-Mix Phase 1.  Let the
         # engine flush the previous track's last frames before the hard
         # stop (the Liquidsoap engine returns at once: its queue is
@@ -3160,18 +3207,19 @@ class PlayoutScheduler:
         # it): a skip there is a no-op at best and could hit the pushed
         # track; the tail plays out and this track follows at once.
         skip = prev_remaining > self._skip_threshold(prev_event, event)
+        transition = self._cross_mode(
+            prev_event,
+            event,
+            skip=skip,
+            cut=prev_remaining if skip and self._strict_boundary(prev_event, event) else 0.0,
+        )
         self._engine.play(
             str(local),
             cue_in=(event.cue_in or 0.0) + seek,
             cue_out=event.cue_out,
             gain_db=event.replay_gain,
             metadata=self._track_metadata(event),
-            transition=self._cross_mode(
-                prev_event,
-                event,
-                skip=skip,
-                cut=prev_remaining if skip and self._strict_boundary(prev_event, event) else 0.0,
-            ),
+            transition=transition,
             skip_current=skip,
         )
         # 2026-09-29: this push starts a new chain unless the track waits
@@ -3184,6 +3232,54 @@ class PlayoutScheduler:
         # dashboard polls to switch the "On Air" indicator red.
         # Run in a daemon thread so a slow/hung HTTP call cannot delay
         # the next track start.
+        self._notify_media_started(event.row_id)
+
+    def _start_over_paused_leftover(
+        self,
+        key: str,
+        event: FileEvent,
+        local: str,
+        seek: float,
+        prev_event: object,
+    ) -> None:
+        """
+        RASTATIME 2026-11-18 - first file start after a show source ended
+        without a file row (see _hand_over_at_show_end_locked): the silent
+        filler is still in the queue - paused under the live item that took
+        the air, or playing out as silence.  This track replaces it the
+        same way the filler replaced the DJ's leftovers: pending requests
+        dropped, cutting shape, push, skip - BEFORE the live predecessor's
+        gate closes, so the track starts in the frame the scheduled arm
+        comes back (replica queue_probe.py R12 / R13).  No skip when the
+        filler is over (R14): the queue is idle and a skip would hit this
+        track.
+        """
+        left = self._engine.playing_remaining_seconds()
+        if not isinstance(left, (int, float)) or isinstance(left, bool):
+            # the engine could not be asked: as if the filler went on air
+            # at the show end
+            left = self._paused_leftover_until - time.monotonic()
+        skip = left > PAUSED_LEFTOVER_SKIP_SECONDS
+        logger.info(
+            "PLAY  %s: first file start after the show source ended - the queue has "
+            "%.1f s of the filler left, %s.",
+            key,
+            max(0.0, left),
+            "replaced with a skip" if skip else "nothing to skip",
+        )
+        ok = self._engine.replace_paused(
+            local,
+            cue_in=(event.cue_in or 0.0) + seek,
+            cue_out=event.cue_out,
+            gain_db=event.replay_gain,
+            metadata=self._track_metadata(event),
+            queued_ahead=True,
+            skip=skip,
+        )
+        if ok:
+            self._engine.adopt_queued(local)
+        self._close_predecessor_source(prev_event, key)
+        self._note_file_chain_lag(event, seek)
         self._notify_media_started(event.row_id)
 
     def _on_webstream_start(self, key: str, event: WebStreamEvent) -> None:
@@ -4494,11 +4590,20 @@ class PlayoutScheduler:
                 # this very moment: Liquidsoap closes the show arm at the end
                 # and the next show's first row starts on its own timer.  A
                 # resume would push the last fraction of the row under the
-                # live show in front of it.
+                # live show in front of it.  What the DJ left paused in the
+                # queue is replaced now, while the show arm still holds the air.
                 logger.info(
                     "PlayoutScheduler: the show source ends with its show - "
                     "nothing resumed, the next show starts on its own timers.",
                 )
+                try:
+                    with self._show_end_handover:
+                        self._hand_over_at_show_end_locked()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logger.exception(
+                        "PlayoutScheduler: replacing the paused queue at the show end failed "
+                        "- the next show starts on its own timers.",
+                    )
             elif state == SourceState.SCHEDULED:
                 self._resume_scheduled_locked()
                 logger.info(
@@ -4513,6 +4618,167 @@ class PlayoutScheduler:
                     "no engine.play() needed.",
                     state.value,
                 )
+
+    def _hand_over_at_show_end_locked(self) -> None:
+        """
+        RASTATIME 2026-11-18 - half a second before the end of the connected
+        DJ's show: replace what the DJ left paused in the queue.
+
+        The bus does not pull the scheduled arm under a DJ, so the track that
+        was on air when the DJ took over is still in the queue where it
+        stopped, and the cross operator holds the seconds it had read ahead.
+        At the first acceptance (2026-11-18 10:00) that track came back the
+        moment the show arm closed and the next show's jingle, teaser and
+        intro were queued behind it: 66 s of the previous show's music in
+        place of the opening.
+
+        The next show's first file row (start within
+        SHOW_END_FIRST_ROW_WINDOW_SECONDS of the show end) goes on the paused
+        queue now, with the cutting shape and a skip: it starts in the very
+        frame Liquidsoap closes the show arm, and its own start timer adopts
+        it like any track queued ahead.  Without such a row (the next show
+        starts with a webstream, a line-in, another DJ or nothing) a silent
+        filler takes its place, so nothing of the old track is heard; the
+        next file start then replaces the filler (_paused_leftover,
+        _start_over_paused_leftover).  Replica: C:/Temp/optd/show_end_probe/
+        queue_probe.py (R4/R5 file row, R12-R14 filler).
+
+        Called with ``self._lock`` held, from the switcher's thread.
+        """
+        switcher = self._switcher
+        until = switcher.show_until() if hasattr(switcher, "show_until") else None
+        if not until:
+            return
+        boundary = datetime.utcfromtimestamp(float(until))
+        current = self._current_event
+        if (
+            time.time() >= float(until) - 0.05
+            and isinstance(current, FileEvent)
+            and (current.start_exact or current.start)
+            >= boundary - timedelta(seconds=SHOW_END_FIRST_ROW_WINDOW_SECONDS)
+        ):
+            # this call was held up (the scheduler lock) past the end and the
+            # next show's first row has started meanwhile - pushed without a
+            # skip behind the paused request: put it on air like a resume
+            # (offset, cutting shape, skip)
+            logger.info(
+                "Show end: the hand-over runs %.2f s after the end and %s has started - "
+                "resuming it over the paused queue.",
+                time.time() - float(until),
+                self._playing_key,
+            )
+            self._resume_scheduled_locked()
+            return
+        if self._current_event is not None:
+            # a row of the show that just ends; its STOP normally ran a second
+            # ago (under the DJ it only clears the bookkeeping)
+            logger.info(
+                "Show end: %s was still the current row - cleared, it ends with its show.",
+                self._playing_key,
+            )
+            self._playing_key = None
+            self._current_event = None
+            self._current_audio_path = None
+        self._queued_ahead = None
+        self._queued_ahead_prev = None
+        self._queued_ahead_hold = 0.0
+        self._deferred_queue_ahead = None
+
+        first: Optional[tuple[str, FileEvent]] = None
+        for key, event in list(self._armed_events.items()):
+            if not isinstance(event, FileEvent):
+                continue
+            start = event.start_exact or event.start
+            if start is None:
+                continue
+            if abs((start - boundary).total_seconds()) > SHOW_END_FIRST_ROW_WINDOW_SECONDS:
+                continue
+            start_timer, _ = self._timers.get(key, (None, None))
+            if start_timer is None or not start_timer.is_alive():
+                continue
+            if first is None or start < (first[1].start_exact or first[1].start):
+                first = (key, event)
+
+        if first is not None:
+            key, event = first
+            local = self._ensure_file_cached(event)
+            if local is not None and self._engine.replace_paused(
+                str(local),
+                cue_in=event.cue_in or 0.0,
+                cue_out=event.cue_out,
+                gain_db=event.replay_gain,
+                metadata=self._track_metadata(event),
+                queued_ahead=True,
+            ):
+                self._queued_ahead = (key, event)
+                self._paused_leftover = False
+                # the track starts when the show arm closes: on the boundary
+                start = event.start_exact or event.start
+                self._file_chain_lag = max(-1.0, min((boundary - start).total_seconds(), 10.0))
+                logger.info(
+                    "Show end: %s | %r is on the queue - it starts when the show source "
+                    "closes at %s.",
+                    key,
+                    event.track_title or event.id,
+                    time.strftime("%H:%M:%S", time.localtime(float(until))),
+                )
+                return
+            logger.warning(
+                "Show end: %s could not be queued for the show end - a silent filler "
+                "replaces the paused queue, the row starts on its own timer.",
+                key,
+            )
+
+        filler = self._paused_filler()
+        if filler is None:
+            return
+        show_name = ""
+        for event in list(self._armed_events.values()):
+            start = getattr(event, "start_exact", None) or getattr(event, "start", None)
+            if start is not None and abs((start - boundary).total_seconds()) <= 1.0:
+                show_name = getattr(event, "show_name", "") or ""
+                break
+        if not self._engine.replace_paused(
+            str(filler),
+            # like a jingle: no title of its own on the stream
+            metadata={"icy_hide": "true", "show_name": show_name},
+            queued_ahead=False,
+        ):
+            return
+        self._paused_leftover = True
+        self._paused_leftover_until = (
+            time.monotonic() + max(0.0, float(until) - time.time()) + PAUSED_FILLER_SECONDS
+        )
+        logger.info(
+            "Show end: no file row starts at %s - a silent filler (%.0f s) replaced the "
+            "paused queue.",
+            time.strftime("%H:%M:%S", time.localtime(float(until))),
+            PAUSED_FILLER_SECONDS,
+        )
+
+    def _paused_filler(self) -> Optional[Path]:
+        """
+        RASTATIME 2026-11-18 - PAUSED_FILLER_SECONDS of silence as a WAV,
+        written once into the cache directory (see
+        _hand_over_at_show_end_locked).
+        """
+        seconds = PAUSED_FILLER_SECONDS
+        path = self._cache_dir / f"rt-silence-{int(round(seconds))}s.wav"
+        frames = int(44100 * seconds)
+        try:
+            if path.exists() and path.stat().st_size >= frames * 4:
+                return path
+            tmp = path.with_name(path.name + ".part")
+            with wave.open(str(tmp), "wb") as out:
+                out.setnchannels(2)
+                out.setsampwidth(2)
+                out.setframerate(44100)
+                out.writeframes(bytes(frames * 4))
+            tmp.replace(path)
+        except OSError as exc:
+            logger.warning("Show end: the silent filler %s could not be written: %s", path, exc)
+            return None
+        return path
 
     def follow_show_end(self) -> None:
         """
@@ -4762,11 +5028,17 @@ class PlayoutScheduler:
                 "artist": self._current_event.artist_name or "",
                 "show_name": self._current_event.show_name or "",
             }
+        # RASTATIME 2026-11-18 - the request that was on air when the DJ took
+        # over is still paused in the queue, with the 3 s the cross operator
+        # had read ahead: cut it (the old tail limited to 50 ms) instead of
+        # mixing it with the resumed track in whatever shape was set last
+        self._paused_leftover = False
         self._engine.play(
             self._current_audio_path,
             cue_in=cue_in,
             gain_db=self._current_gain_db,
             metadata=resume_metadata,
+            transition=PAUSED_CUT_SHAPE,
         )
 
     # ------------------------------------------------------------------

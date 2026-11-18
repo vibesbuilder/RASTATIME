@@ -389,6 +389,13 @@ den Anfang der nächsten Sendung vom Sender fern.
   erneut; das Login wird dann abgewiesen, weil die Sendung vorbei ist
   (es zählt nicht für die Brute-Force-Bremse), außer die nächste
   Sendung des DJs beginnt innerhalb von 5 Minuten.
+- Vom Programm, das **vor** dem DJ lief, kommt nichts zurück: Der
+  Titel, der beim Einstieg des DJs auf Sendung war, wird am
+  Sendungsende verworfen.  Beginnt die nächste Sendung mit einer Datei
+  (Stundenjingle, Teaser, Intro), startet diese Datei genau in dem
+  Moment, in dem der DJ vom Sender genommen wird.  Beginnt sie mit
+  einem Webstream, einem Line-Eingang oder einem weiteren DJ, herrscht
+  Stille, bis diese Quelle auf Sendung ist.
 - Die **Master Source** wird so nie beendet - sie ist die bewusste
   Übersteuerung.
 - Wegen des Harbor-Puffers hören die Hörer den DJ etwa 5 Sekunden

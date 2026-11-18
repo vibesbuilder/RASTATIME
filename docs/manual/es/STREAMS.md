@@ -312,6 +312,13 @@ conectado dejaba fuera del aire el inicio del programa siguiente.
   login se rechaza entonces porque el programa ha terminado (no cuenta
   para el freno de fuerza bruta), salvo que el próximo programa del DJ
   empiece en menos de 5 minutos.
+- Nada del programa que sonaba **antes** del DJ vuelve: la pista que
+  estaba en el aire cuando el DJ tomó el control se descarta al final
+  del programa.  Si el programa siguiente empieza con un archivo
+  (jingle de la hora, teaser, intro), ese archivo arranca en el mismo
+  instante en que el DJ sale del aire.  Si empieza con un webstream,
+  una entrada de línea u otro DJ, hay silencio hasta que esa fuente
+  esté en el aire.
 - La **Master Source** nunca se termina así: es la prioridad
   deliberada.
 - Por el búfer del harbor, los oyentes oyen al DJ con unos 5 segundos

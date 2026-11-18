@@ -341,6 +341,13 @@ suivante de passer à l'antenne.
   est alors refusé parce que l'émission est terminée (il ne compte pas
   pour le frein anti-force brute), sauf si la prochaine émission du DJ
   commence dans les 5 minutes.
+- Rien du programme diffusé **avant** le DJ ne revient : le titre qui
+  était à l'antenne quand le DJ a pris la main est abandonné à la fin
+  de l'émission.  Si l'émission suivante commence par un fichier
+  (jingle de l'heure, teaser, intro), ce fichier démarre à l'instant
+  même où le DJ quitte l'antenne.  Si elle commence par un webstream,
+  une entrée ligne ou un autre DJ, il y a du silence jusqu'à ce que
+  cette source soit à l'antenne.
 - La **Master Source** n'est jamais terminée ainsi - elle est la
   priorité voulue.
 - À cause du tampon du harbor, les auditeurs entendent le DJ avec

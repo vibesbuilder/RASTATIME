@@ -10,6 +10,13 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional
 
+# RASTATIME 2026-11-18 - shape of the queue transition that replaces what a
+# live source left paused in the queue (see PlayoutEngine.replace_paused):
+# "show_skip" with both sides flagged no-fade = the new track at full level
+# at once, the old tail limited to 50 ms (rendered rt_transition: s_cut =
+# 0.05 s).  Harmless when there is no old tail.
+PAUSED_CUT_SHAPE = "show_skip/both"
+
 
 class PlayoutState(str, Enum):
     STOPPED = "stopped"
@@ -117,6 +124,29 @@ class PlayoutEngine(ABC):
 
     def flush_queued(self) -> None:
         """RASTATIME 2026-09-27 - drop items queued ahead that will not play."""
+
+    def replace_paused(
+        self,
+        uri: str,
+        *,
+        cue_in: float = 0.0,
+        cue_out: Optional[float] = None,
+        gain_db: Optional[float] = None,
+        metadata: Optional[dict[str, str]] = None,
+        queued_ahead: bool = True,
+        skip: bool = True,
+    ) -> bool:
+        """
+        RASTATIME 2026-11-18 - a live source holds the air and hands it
+        back in a moment: replace whatever sits paused in the engine's
+        queue by ``uri``, which starts with a hard cut the instant the
+        scheduled content is on air again.  ``queued_ahead``: the scheduler
+        adopts ``uri`` with :meth:`adopt_queued` at its start.  ``skip``
+        False when the queue is known to be idle and possibly on air (a
+        skip would hit ``uri`` itself).  Returns False when the engine
+        cannot do it.
+        """
+        return False
 
     def playing_remaining_seconds(self) -> Optional[float]:
         """

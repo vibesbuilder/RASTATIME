@@ -1,10 +1,15 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.151
-Date: 2026-11-17
+Draft version: 0.152
+Date: 2026-11-18
 
 > **Revision history**
+> - **0.152 (2026-11-18)** - The paused queue at a show source end (§23.121 addendum): the
+>   first acceptance failed - the track that was on air when the DJ took over came back at
+>   the show end.  PLAYOUT now replaces the paused queue half a second before the end
+>   (`replace_paused`): by the next show's first file row, which starts in the frame the
+>   show arm closes, or by a silent filler; the DJ-off resume cuts the paused rest too.
 > - **0.151 (2026-11-18)** - **The show source ends with the show** (§23.121): the legacy
 >   login check names the end of the show (chain), Liquidsoap closes the show arm at that
 >   time (`show_dj_until`), PLAYOUT leaves SHOW half a second earlier without a resume and
@@ -11154,3 +11159,116 @@ Source; a show DJ who disconnects on their own goes the old way.  Worst
 case of a fault: a DJ is cut at a wrong moment or not at all (the old
 behaviour).  Rollback: `git revert` (tag `live-2026-11-18`) and a
 PLAYOUT restart (the script changes back, Liquidsoap restarts with it).
+
+#### Addendum 2026-11-18 - the paused queue (first acceptance failed)
+
+**Finding.**  Acceptance 10:00 with a test DJ who connected at 09:58:37,
+one second after a track had started, and stayed connected.  The show
+part worked to the second: switcher SHOW -> SCHEDULED at 09:59:59.5
+without a resume, the hour jingle pushed at 10:00:00.2, the client
+disconnected at 10:00:01.5, the reconnect refused.  On air, however,
+the previous show's track played from 10:00:00 to 10:01:06 in place of
+jingle, teaser and intro.
+
+**Cause.**  The bus is a `switch(track_sensitive=false)`: an arm that is
+not selected is not pulled.  Under a DJ the request queue therefore
+stands still - the track that was on air at the takeover stays the
+queue's current request at the position it had, and `cross` keeps the
+3 s it had read ahead.  The moment the show arm closes, the scheduled
+arm is pulled again and that track simply continues; the next show's
+first row has no file predecessor in the scheduler's books (its STOP ran
+under the DJ and only cleared the bookkeeping), so it is pushed
+*without* a skip - behind the old track.  The old way back (the DJ
+disconnects, `_resume_scheduled_locked` pushes the row with an offset
+and skips) replaced the paused request as a side effect; §23.121 took
+the resume away at the show end and with it the skip.
+
+**What the replica showed** (`C:/Temp/optd/show_end_probe/queue_probe.py`:
+the real `request.queue_sync`, track gain, `cross` + `rt_transition` and
+fallback block of the rendered script, a 220-Hz "DJ" behind a switch
+with the real `bus_dj` transitions, the bus written to a WAV and read
+back per 50 ms):
+
+- R0 reproduces the failure.
+- A skip sent while the queue is paused is taken when the arm is pulled
+  again, but the 3 s in `cross` still go on air (R1-R3) - `cross` hands
+  them to the transition function as the old track, or plays them out
+  when no next track is there.
+- Push first, with a shape that cuts the old side, then skip (R4/R5):
+  the new track starts in the same 50-ms window in which the arm
+  returns, the old tail is limited to 50 ms; without a paused request
+  the skip is a no-op and the pushed track plays.
+- A filler shorter than the cross buffer does not work: `cross` takes
+  its "track shorter than the crossfade" path and plays the old tail in
+  full (R6); a 3.2-s filler ends in the queue 0.2 s after its start and
+  a track pushed later waits behind what `cross` still holds (R8).  A
+  10-s filler is still the current request when the next file row comes
+  (R12 gap, R13 a live arm on air after 1 s) and has drained when it
+  ran out (R14).
+
+**Design.**
+
+- `PlayoutEngine.replace_paused(uri, ..., queued_ahead, skip)`
+  (`LiquidsoapPlayoutEngine`): cancel a pending deferred stop,
+  `scheduled.flush`, the shape `PAUSED_CUT_SHAPE = "show_skip/both"`
+  (new side at full level at once, old tail `max_duration` 0.05 s),
+  push, `scheduled.skip`.  The engine's mirror goes to STOPPED / nothing
+  current; with `queued_ahead` the request id is kept for
+  `adopt_queued`.
+- `PlayoutScheduler._hand_over_at_show_end_locked()` runs in the
+  show-end branch of `switch_audio_source` - half a second before the
+  end, while the show arm still holds the air.  It clears a row that is
+  still current and the queue-ahead bookkeeping, then:
+  - **a file row starts at the end** (start within
+    `SHOW_END_FIRST_ROW_WINDOW_SECONDS` = 0.5 s, start timer alive):
+    `replace_paused(row)`, `_queued_ahead = (key, row)`, chain lag =
+    boundary - row start.  The row starts in the frame Liquidsoap closes
+    the show arm - exact to the frame instead of timer + telnet - and
+    its own start timer takes the existing adopt path (no push, no skip).
+  - **no file row** (webstream, line-in, another DJ, a gap):
+    `replace_paused(filler, queued_ahead=False)` with
+    `PAUSED_FILLER_SECONDS` = 10 s of silence (a WAV written once into
+    the cache directory, labelled `icy_hide` like a jingle) and
+    `_paused_leftover = True`.
+- `_start_over_paused_leftover()`: the first file start with no file
+  predecessor after a filler replaces it the same way - asks
+  `scheduled.remaining`, skips only when more than
+  `PAUSED_LEFTOVER_SKIP_SECONDS` (1 s) is left (an idle queue would lose
+  the track just pushed; when the engine cannot be asked the clock
+  decides), adopts, and only then closes the live predecessor's gate,
+  so the track starts in the frame the scheduled arm comes back.
+- `_on_file_start_impl` waits for a hand-over in progress
+  (`_show_end_handover`, a few telnet commands).
+- The DJ-off resume of a file row passes `PAUSED_CUT_SHAPE`: the paused
+  rest used to be mixed with the resumed track in whatever shape was set
+  last.
+- A fresh Liquidsoap instance clears `_paused_leftover`.
+- A hand-over that was held up past the end (scheduler lock) finds the
+  next show's first row already started - pushed behind the paused
+  request - and resumes it over the paused queue (offset, cut, skip).
+
+**Verification.**  Playout suite 985 passed (18 new: the telnet order of
+`replace_paused`, its bookkeeping and failure paths; first file row
+queued and adopted; filler for no row / a row 2 s later / a dead timer /
+a live item, the WAV itself; fallback to the filler; never raises; the
+five skip decisions of the leftover start and its order
+replace-adopt-close; the cut on resume; a hand-over held up past the
+end resumes the row that has started).  `engine_probe.py` drives the
+same replica with the real engine class and the real filler: E1 file
+row at the end, E2 filler + live arm + first file row, E3 filler run
+out, E4 resume - in each the next track starts in the window in which
+the arm returns and the old track is audible for at most one 50-ms
+window.  The rendered script is unchanged.
+
+**Known limits.**  (1) A file row that starts between 0.5 s and 10 s
+after a show end without a file row at the end replaces the filler at
+its own start - fine - but one that starts in the filler's last 3 s
+waits for it to run out.  (2) A DJ who disconnects on their own while
+nothing is to be resumed (the row ended under the DJ, or a live item is
+current) still leaves the paused track in the queue; it comes back when
+the scheduled arm is pulled.  Same remedy, not built - BACKLOG.
+
+**Risk.**  As above; additionally a fault in the hand-over is caught and
+logged, the next show then starts on its own timers as in the first
+build.  Rollback: `git revert` (tag `live-2026-11-18b`) and a PLAYOUT
+restart.

@@ -368,6 +368,12 @@ connected kept the next show's opening off air.
   then refused because the show is over (it does not count towards
   the brute-force brake), unless the DJ's next show starts within 5
   minutes.
+- Nothing of the programme that ran **before** the DJ comes back: the
+  track that was on air when the DJ took over is discarded at the end
+  of the show.  If the next show starts with a file (hour jingle,
+  teaser, intro), that file starts in the very moment the DJ is taken
+  off air.  If it starts with a webstream, a line input or another DJ,
+  there is silence until that source is on air.
 - The **Master Source** is never ended this way - it is the deliberate
   override.
 - Because of the harbor buffer the listeners hear the DJ about 5

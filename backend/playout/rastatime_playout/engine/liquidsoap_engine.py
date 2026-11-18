@@ -73,7 +73,7 @@ from ..liquidsoap_config import (
     DEFAULT_WEBSTREAM_BRIDGE_MAX_SECONDS,
     DEFAULT_WEBSTREAM_BRIDGE_SECONDS,
 )
-from .interface import PlayoutEngine, PlayoutState
+from .interface import PAUSED_CUT_SHAPE, PlayoutEngine, PlayoutState
 from .liquidsoap_telnet import LiquidsoapTelnetClient
 
 logger = logging.getLogger(__name__)
@@ -418,6 +418,97 @@ class LiquidsoapPlayoutEngine(PlayoutEngine):
             logger.warning("Liquidsoap queue flush failed: %s", exc)
         self._queued_uri = None
         self._queued_request_id = None
+
+    def replace_paused(
+        self,
+        uri: str,
+        *,
+        cue_in: float = 0.0,
+        cue_out: Optional[float] = None,
+        gain_db: Optional[float] = None,
+        metadata: Optional[dict[str, str]] = None,
+        queued_ahead: bool = True,
+        skip: bool = True,
+    ) -> bool:
+        """
+        RASTATIME 2026-11-18 - the scheduled arm is NOT on air (a DJ holds
+        the bus) and comes back in a moment: replace whatever sits paused
+        in the queue by ``uri``.
+
+        The bus does not pull an arm it has not selected, so the request
+        that was playing when the DJ took over stays in the queue exactly
+        where it was - and the cross operator keeps the 3 s it had read
+        ahead.  Both come back the instant the arm is pulled again
+        (acceptance 2026-11-18 10:00: the previous show's track aired for
+        66 s in place of the next show's opening, whose rows were pushed
+        behind it).  A skip alone does not help: it only ends the request,
+        the 3 s in the cross operator still go on air (replica
+        ``queue_probe.py`` R1-R3).
+
+        So: drop the pending requests, set the cutting shape
+        (:data:`PAUSED_CUT_SHAPE` - the old tail is faded within 50 ms
+        under the new track), push ``uri``, skip.  The skip is taken when
+        the arm is pulled: the paused request ends, cross finds ``uri``
+        ready and runs the cut - ``uri`` starts in the very frame the arm
+        comes back (replica R4-R5; without a paused request the skip is a
+        no-op).  ``queued_ahead``: the scheduler adopts ``uri`` at its row
+        start (:meth:`adopt_queued`); False for a filler nobody adopts.
+        ``skip`` False: the queue has nothing left to end and may be on
+        air - a skip sent after the push would hit ``uri`` itself; the
+        cutting shape alone removes what the cross operator still holds.
+        Returns True when ``uri`` is on the queue.
+        """
+        with self._stop_lock:
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
+            self._stop_requested = False
+        wrapped = self._build_annotate_uri(
+            uri,
+            cue_in=cue_in,
+            cue_out=cue_out,
+            gain_db=gain_db,
+            metadata=metadata,
+        )
+        pushed = False
+        rid = None
+        try:
+            self._telnet.request_queue_flush()
+            self._set_cross_mode(PAUSED_CUT_SHAPE)
+            response = self._telnet.request_queue_push(wrapped)
+            if response.startswith("ERROR"):
+                logger.error(
+                    "Liquidsoap rejected the push for %s: %s",
+                    self._redact(uri),
+                    response.strip(),
+                )
+            else:
+                pushed = True
+                rid = self._extract_request_id(response)
+            # also after a rejected push: without it the paused request
+            # comes back in full
+            if skip:
+                self._telnet.request_queue_skip()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error("Liquidsoap replace of the paused queue failed: %s", exc)
+        # nothing of this engine's is on air any more; the pushed request
+        # waits for the arm (and, queued ahead, for its adoption)
+        self._state = PlayoutState.STOPPED
+        self._current_uri = None
+        self._current_request_id = None
+        self._queued_uri = uri if (pushed and queued_ahead) else None
+        self._queued_request_id = rid if (pushed and queued_ahead) else None
+        logger.info(
+            "Liquidsoap paused queue replaced: uri=%s cue_in=%.2fs cue_out=%s shape=%s "
+            "skip=%s rid=%s",
+            self._redact(uri),
+            cue_in,
+            f"{cue_out:.2f}s" if cue_out is not None else "natural",
+            PAUSED_CUT_SHAPE,
+            "yes" if skip else "no",
+            rid if pushed else "- (push failed)",
+        )
+        return pushed
 
     def playing_remaining_seconds(self) -> Optional[float]:
         """

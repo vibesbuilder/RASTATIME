@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Show-Source-Ende: der pausierte Titel kam zurück (2026-11-18, erste Abnahme 10:00 nicht
+  bestanden)** - Das Abschalten und Trennen des DJs war sekundengenau (Wechsel 09:59:59,5,
+  Trennen 10:00:01,5, erneutes Login abgewiesen), aber statt Stundenjingle, Teaser und
+  Intro der Folgesendung lief 66 s lang der Musiktitel der Sendung davor.  Ursache: Der
+  Bus zieht den Sendeplan-Arm nicht, solange ein DJ auf Sendung ist - der Titel, der beim
+  Einstieg des DJs lief, blieb an seiner Stelle in der Warteschlange stehen (dazu 3 s
+  Vorlauf in der Crossfade-Stufe) und lief weiter, sobald der Show-Arm schloss; die
+  Elemente der Folgesendung wurden ohne Skip dahinter eingereiht.  Der frühere Weg (DJ
+  trennt, Resume mit Skip) hat das verdeckt.  Jetzt ersetzt PLAYOUT eine halbe Sekunde vor
+  dem Sendungsende die pausierte Warteschlange (`replace_paused`: Wartende verwerfen,
+  Schnittform `show_skip/both`, Push, Skip): durch die erste Datei der Folgesendung, die
+  dann in genau dem Frame startet, in dem Liquidsoap den Show-Arm schließt, und von ihrem
+  eigenen Start-Timer wie ein vorab eingereihter Titel übernommen wird; ohne Datei am
+  Sendungsende (Webstream, Line-In, weiterer DJ, Lücke) durch 10 s Stille, die der nächste
+  Dateistart auf dieselbe Weise ersetzt.  Vom alten Titel bleiben höchstens 50 ms unter
+  dem ausblendenden DJ.  Das Resume nach einem DJ, der selbst trennt, schneidet den
+  pausierten Rest jetzt ebenfalls, statt ihn in der zuletzt gesetzten Form mit dem
+  fortgesetzten Titel zu mischen.  Nachbildung mit der echten Queue-/Crossfade-Kette
+  (`queue_probe.py`, `engine_probe.py`): Fehler reproduziert; Skip allein lässt 3 s des
+  alten Titels auf Sendung; mit dem Fix startet die Folgedatei im selben 50-ms-Fenster wie
+  das Schließen des Arms - mit Datei, mit Live-Quelle direkt danach, nach abgelaufenem
+  Platzhalter und beim Resume.  Playout-Suite 985 bestanden (18 neu).  Manual STREAMS x4,
+  ARCHITECTURE 0.152 (§23.121 Nachtrag).  Wirksam nach PLAYOUT-Neustart (das Sendeskript
+  bleibt gleich, Liquidsoap läuft durch); zweite Abnahme offen.
+
 - **Die Show Source endet mit der Sendung (2026-11-18, Operator-Go)** - Am 2026-11-17 blieb
   ein Show-DJ 6,2 s über das Sendungsende auf Sendung (5 s Puffer + 5 s Timeout), der
   Stundenjingle der Folgesendung stieg bei Sekunde 6 von 10 ein.  Jetzt nennt die

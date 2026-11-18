@@ -8631,10 +8631,53 @@ auf den Sendeplan und trennt 1,5 s danach; ein verschobenes Ende wandert
 mit; Master Source unberührt.  Nachbildung: Schließen 0,02-0,08 s nach
 dem Ende.  Dabei behoben: Gates wurden beim Trennen zurückgesetzt und
 ließen den gepufferten Rest auf Sendung.
+Erste Abnahme 2026-11-18 10:00 NICHT bestanden: Abschalten und Trennen
+des DJs waren sekundengenau, aber statt der ersten Elemente der
+Folgesendung lief 66 s lang der Musiktitel weiter, der beim Einstieg des
+DJs auf Sendung war.  Ursache: unter einem DJ steht die Warteschlange
+(der Bus zieht den Sendeplan-Arm nicht), der Titel blieb samt 3 s
+Crossfade-Vorlauf stehen und lief beim Schließen des Show-Arms weiter;
+die Folgeelemente wurden ohne Skip dahinter eingereiht.
+Nachgebessert 2026-11-18 (§23.121 Nachtrag): eine halbe Sekunde vor dem
+Ende ersetzt PLAYOUT die pausierte Warteschlange - durch die erste Datei
+der Folgesendung (startet im Frame, in dem der Show-Arm schließt) oder,
+ohne Datei am Sendungsende, durch 10 s Stille, die der nächste
+Dateistart ersetzt.  Das Resume nach selbst trennendem DJ schneidet den
+pausierten Rest ebenfalls.  Nachbildung mit echter Queue-/Crossfade-
+Kette und echtem Engine-Code: alle Fälle sauber (alter Titel höchstens
+50 ms).
 Offen:
-- PLAYOUT-Neustart durch den Operator in einem ruhigen Moment (das
-  Sendeskript ändert sich, Liquidsoap startet mit neu, ~12 s).
-- Abnahme mit einer Testsendung und einem Test-DJ, der über das Ende
-  hinaus verbunden bleibt: Folgesendung beginnt pünktlich, DJ blendet
-  aus, Sendesoftware wird getrennt.
+- PLAYOUT-Neustart durch den Operator (das Sendeskript bleibt gleich,
+  Liquidsoap läuft durch).
+- Zweite Abnahme: Test-DJ steigt mitten in einem Titel ein und bleibt
+  über das Ende hinaus verbunden - die Folgesendung beginnt pünktlich
+  mit ihrem ersten Element, vom Titel davor ist nichts zu hören.
 - 💡 Idee: erlaubter Überhang in Sekunden (global oder je Sendung).
+
+### 💡 DJ trennt selbst und es gibt nichts fortzusetzen - der pausierte Titel kommt zurück (Befund 2026-11-18)
+Beim Nachbessern des Show-Source-Endes gefunden, nicht gebaut: Trennt
+ein DJ (Show oder Master) von sich aus, während nichts fortzusetzen ist
+(die Zeile, in der er einstieg, ist unter ihm zu Ende gegangen, oder ein
+Webstream / Line-In ist die laufende Zeile), bleibt der Titel vom
+Einstieg in der Warteschlange stehen.  Sobald der Sendeplan-Arm wieder
+gezogen wird, läuft er weiter - hörbar in einer Lücke bzw. nach dem
+Live-Element, und der nächste Dateistart reiht sich ohne Skip dahinter
+ein.  Bisher nicht aufgefallen (selten: der DJ muss mitten in einem
+Titel einsteigen und in einer Lücke oder unter einem Live-Element
+gehen).
+Abhilfe mit dem vorhandenen Baustein: in `_resume_scheduled_locked` in
+den Zweigen ohne Datei denselben stillen Platzhalter einsetzen wie am
+Sendungsende (`replace_paused` + `_paused_leftover`).  Aufwand klein
+(ca. 20 Zeilen + Tests), Risiko: der Weg läuft bei jedem DJ-Ende.
+Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden.
+
+### 💡 Sendeplan läuft unter dem DJ weiter (Idee 2026-11-18)
+Grundsätzlichere Variante: die Sendeplan-Kette auch unter einem DJ
+ziehen (stummer zweiter Abnehmer in Liquidsoap), sodass Titel,
+Vorab-Einreihen und Übergänge unhörbar im Takt der Zeilen
+weiterlaufen.  Dann gäbe es nichts Pausiertes mehr, die Rückgabe an den
+Sendeplan wäre an jeder Stelle nahtlos und das Resume mit Versatz
+entfiele.  Großer Eingriff: alle Stellen, die heute unter einem DJ die
+Engine in Ruhe lassen (Starts, Stops, Vorab-Einreihen, Wartezeiten),
+ein zweiter Ausgang im Sendeskript, Liquidsoap-Neustart.  Erst nach
+einer Sechs-Punkte-Evaluierung.
