@@ -11260,6 +11260,18 @@ out, E4 resume - in each the next track starts in the window in which
 the arm returns and the old track is audible for at most one 50-ms
 window.  The rendered script is unchanged.
 
+**Second acceptance 2026-11-18 12:00 (live).**  The test DJ joined
+mid-track at 11:55:21 and stayed connected.  11:59:59.5 SHOW ->
+SCHEDULED, 11:59:59.8 `paused queue replaced` with the hour jingle,
+12:00:00 Liquidsoap: `rt_cross show_skip/both: <paused track> -> <hour
+jingle> (tail 2.98 s)`, the row's start timer adopted it (`takes over
+from '-'`), kick at 12:00:01.5, the reconnect refused.  In the 24/7
+recording the jingle's envelope starts at 12:00:00.1 (0.25-s windows
+against the file: spread 1.9 dB from second 2 on; the first second
+carries the DJ fading out under it); teaser and intro on their rows.
+The same test showed the resume cut live: the DJ's connection stalled
+at 11:57 and the resume ran `show_skip/both` into the row's position.
+
 **Known limits.**  (1) A file row that starts between 0.5 s and 10 s
 after a show end without a file row at the end replaces the filler at
 its own start - fine - but one that starts in the filler's last 3 s

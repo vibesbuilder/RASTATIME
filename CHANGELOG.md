@@ -32,7 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   das Schließen des Arms - mit Datei, mit Live-Quelle direkt danach, nach abgelaufenem
   Platzhalter und beim Resume.  Playout-Suite 985 bestanden (18 neu).  Manual STREAMS x4,
   ARCHITECTURE 0.152 (§23.121 Nachtrag).  Wirksam nach PLAYOUT-Neustart (das Sendeskript
-  bleibt gleich, Liquidsoap läuft durch); zweite Abnahme offen.  `97c658a2`.
+  bleibt gleich, Liquidsoap läuft durch).  `97c658a2`.  Zweite Abnahme 2026-11-18 12:00
+  gemessen bestanden: DJ mitten im Titel eingestiegen und verbunden geblieben, Ersetzen
+  11:59:59,8, der Stundenjingle liegt ab 12:00:00,1 im 24/7-Mitschnitt (Hüllkurve deckt
+  sich mit der Datei), Trennen 12:00:01,5, die Folgeelemente auf ihren Zeilen.
 
 - **Die Show Source endet mit der Sendung (2026-11-18, Operator-Go)** - Am 2026-11-17 blieb
   ein Show-DJ 6,2 s über das Sendungsende auf Sendung (5 s Puffer + 5 s Timeout), der

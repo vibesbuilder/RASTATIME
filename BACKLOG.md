@@ -8646,12 +8646,16 @@ Dateistart ersetzt.  Das Resume nach selbst trennendem DJ schneidet den
 pausierten Rest ebenfalls.  Nachbildung mit echter Queue-/Crossfade-
 Kette und echtem Engine-Code: alle Fälle sauber (alter Titel höchstens
 50 ms).
+PLAYOUT-Neustart 2026-11-18 11:06 (Liquidsoap lief durch).
+Zweite Abnahme 2026-11-18 12:00 gemessen bestanden: Test-DJ mitten im
+Titel eingestiegen und über das Ende verbunden geblieben; Ersetzen
+11:59:59,8, erstes Element der Folgesendung ab 12:00:00,1 im
+24/7-Mitschnitt (Hüllkurve deckt sich mit der Datei), DJ blendet
+darunter aus, Trennen 12:00:01,5, erneutes Login abgewiesen, die
+Folgeelemente auf ihren Zeilen.  Höreindruck des Operators steht aus.
+Noch nicht live gesehen: der Platzhalter-Weg (Sendungsende ohne Datei
+am Beginn der Folgesendung) - nur in der Nachbildung geprüft.
 Offen:
-- PLAYOUT-Neustart durch den Operator (das Sendeskript bleibt gleich,
-  Liquidsoap läuft durch).
-- Zweite Abnahme: Test-DJ steigt mitten in einem Titel ein und bleibt
-  über das Ende hinaus verbunden - die Folgesendung beginnt pünktlich
-  mit ihrem ersten Element, vom Titel davor ist nichts zu hören.
 - 💡 Idee: erlaubter Überhang in Sekunden (global oder je Sendung).
 
 ### 💡 DJ trennt selbst und es gibt nichts fortzusetzen - der pausierte Titel kommt zurück (Befund 2026-11-18)
@@ -8681,3 +8685,9 @@ entfiele.  Großer Eingriff: alle Stellen, die heute unter einem DJ die
 Engine in Ruhe lassen (Starts, Stops, Vorab-Einreihen, Wartezeiten),
 ein zweiter Ausgang im Sendeskript, Liquidsoap-Neustart.  Erst nach
 einer Sechs-Punkte-Evaluierung.
+Dazu passender Befund 2026-11-18 11:57 (Testsendung): die Verbindung
+des DJs stockte; der Harbor-Puffer (5 s) lief leer, bevor der Timeout
+(5 s) die Trennung meldete.  In den rund 2,5 s dazwischen lief der
+pausierte Titel an seiner alten Stelle (vom Einstieg des DJs), erst
+dann sprang das Resume an die richtige Stelle der Zeile.  Mit einem
+unter dem DJ weiterlaufenden Sendeplan gäbe es diesen Sprung nicht.
