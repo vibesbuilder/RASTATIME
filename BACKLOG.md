@@ -8569,3 +8569,26 @@ aber die ON-AIR-Lampe flackerte - der wartende DJ ersetzte im Legacy den laufend
 Behoben 2026-11-17 (`_getSource()` zählt die Show-Quelle erst auf Sendung, §23.119 Nachtrag).  Zusätzlich beim Schul-DJ
 ab 09:40 prüfen: Lampe leuchtet durchgehend, Kopf und Now-Playing-Widget zeigen bis 09:45 den Line-In-Titel.
 
+
+## Titel endet vor seinem Cue-Out - 41 s Stille (Befund 2026-11-18 00:58)
+
+### 💡 Beschädigte Dateien erkennen und früh endende Titel auffangen - IDEA (Befund 2026-11-18)
+Eine Musikdatei (M4A, importiert 2026-10-09, zum ersten Mal geplant) hat
+laut Container 218,5 s, dekodierbar sind aber nur 165,7 s - ab dort ist
+jeder AAC-Frame ungültig.  Liquidsoap meldete „End of track reached at
+165.72 before cue-out point at 218.50", die Queue war leer, 40,8 s
+digitale Stille bis zum planmäßigen Start des nächsten Titels
+(Dead-Air-Alarm nach 30 s).  Der Import bemerkt so etwas nicht: Länge
+und Cue-Punkte kommen aus dem Container, die Abspielprobe prüft nur, ob
+die Datei startet.  Die übrigen Zeilen „before cue-out point" im Log
+liegen bei 0,02-0,05 s (Rundung).
+Mögliche Schritte (keiner beauftragt):
+- Bestand prüfen: jede Datei einmal ganz dekodieren und dekodierbare
+  gegen angegebene Länge vergleichen (25.050 Dateien, ~1.870 h Audio,
+  etwa 2 h Rechenzeit; die 651 M4A in ~3 min) - lesend, als Bericht.
+- Import: dieselbe Prüfung im Analyzer; zu kurze Dateien abweisen oder
+  Länge und Cue-Out auf das Dekodierbare setzen.
+- Playout: endet ein Titel deutlich vor seinem Cue-Out, den nächsten
+  Titel sofort starten statt bis zu seiner Zeile zu warten.
+Vorbedingungen: Go des Operators je Schritt; der Scan in einem ruhigen
+Fenster (eine CPU ausgelastet).
