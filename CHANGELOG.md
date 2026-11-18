@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gemessen bestanden: DJ mitten im Titel eingestiegen und verbunden geblieben, Ersetzen
   11:59:59,8, der Stundenjingle liegt ab 12:00:00,1 im 24/7-Mitschnitt (Hüllkurve deckt
   sich mit der Datei), Trennen 12:00:01,5, die Folgeelemente auf ihren Zeilen.
+  Höreindruck des Operators: gut - abgenommen.
 
 - **Die Show Source endet mit der Sendung (2026-11-18, Operator-Go)** - Am 2026-11-17 blieb
   ein Show-DJ 6,2 s über das Sendungsende auf Sendung (5 s Puffer + 5 s Timeout), der

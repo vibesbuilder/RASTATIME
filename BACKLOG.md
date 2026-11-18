@@ -8652,7 +8652,8 @@ Titel eingestiegen und über das Ende verbunden geblieben; Ersetzen
 11:59:59,8, erstes Element der Folgesendung ab 12:00:00,1 im
 24/7-Mitschnitt (Hüllkurve deckt sich mit der Datei), DJ blendet
 darunter aus, Trennen 12:00:01,5, erneutes Login abgewiesen, die
-Folgeelemente auf ihren Zeilen.  Höreindruck des Operators steht aus.
+Folgeelemente auf ihren Zeilen.  Höreindruck des Operators 2026-11-18:
+gut - abgenommen.
 Noch nicht live gesehen: der Platzhalter-Weg (Sendungsende ohne Datei
 am Beginn der Folgesendung) - nur in der Nachbildung geprüft.
 Offen:
@@ -8673,9 +8674,12 @@ Abhilfe mit dem vorhandenen Baustein: in `_resume_scheduled_locked` in
 den Zweigen ohne Datei denselben stillen Platzhalter einsetzen wie am
 Sendungsende (`replace_paused` + `_paused_leftover`).  Aufwand klein
 (ca. 20 Zeilen + Tests), Risiko: der Weg läuft bei jedem DJ-Ende.
-Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden.
+Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden (erfüllt
+2026-11-18).  Entfällt, wenn "Sendeplan läuft unter dem DJ weiter"
+(Stufe 1) gebaut wird - dann steht kein Titel mehr in der
+Warteschlange.
 
-### 💡 Sendeplan läuft unter dem DJ weiter (Idee 2026-11-18)
+### 💡 Sendeplan läuft unter dem DJ weiter (Idee 2026-11-18, evaluiert 2026-11-18 - wartet auf Entscheidung)
 Grundsätzlichere Variante: die Sendeplan-Kette auch unter einem DJ
 ziehen (stummer zweiter Abnehmer in Liquidsoap), sodass Titel,
 Vorab-Einreihen und Übergänge unhörbar im Takt der Zeilen
@@ -8691,3 +8695,41 @@ des DJs stockte; der Harbor-Puffer (5 s) lief leer, bevor der Timeout
 pausierte Titel an seiner alten Stelle (vom Einstieg des DJs), erst
 dann sprang das Resume an die richtige Stelle der Zeile.  Mit einem
 unter dem DJ weiterlaufenden Sendeplan gäbe es diesen Sprung nicht.
+
+Evaluierung 2026-11-18 (sieben Punkte, Kurzfassung):
+- Machbarkeit: ja, in der Nachbildung gemessen (echte Queue-/
+  Crossfade-Kette, zweiter stummer Abnehmer nur solange ein DJ-Arm den
+  Bus hält): die Restzeit läuft unter dem DJ in Echtzeit weiter, ein
+  vorab eingereihter Titel wechselt unhörbar, beim Ende des DJs liegt
+  der laufende Titel sofort an der richtigen Stelle an, der Bus
+  wiederholt dessen Titelangabe; ein Stocken des DJs zeigt sofort das
+  richtige Programm; leere Warteschlange = Stille, der nächste Titel
+  startet sofort.  Derselbe Baustein hält seit 2026-11-16 den Line-In
+  warm.
+- Eingriff: Sendeskript (stummer Abnehmer, gemeinsame Bedingung mit den
+  DJ-Armen), Scheduler (Datei-Zeilen unter einem DJ nicht mehr
+  zurückhalten: Start, Vorab-Einreihen, Wartezeiten, Stop; Resume und
+  Sendungsende-Übergabe prüfen nur noch und greifen als Rückfall).
+- Stufen: 1 = nur Dateien (Webstream / Line-In bleiben unter einem DJ
+  wie heute: Start beim Ende des DJs); 2 = Line-In unter dem DJ offen
+  halten (ist schon vorgewärmt); 3 = Webstream unter dem DJ verbunden
+  halten (eigener stummer Abnehmer, Wächter, Latenz) - 2 und 3 je
+  eigene Entscheidung.
+- Aufwand Stufe 1: ca. 150-250 Zeilen Code, 15-20 Tests, Nachbildung
+  mit echtem Engine-Code, Manual x4, ARCHITECTURE; 1,5-2 Tage.
+- Sinn: Rückgabe an das Programm an jeder Stelle sofort und an der
+  richtigen Position (DJ geht früher, Verbindung stockt, Master
+  Source); die Fehlerklasse "pausierter Rest" entfällt (zwei Befunde
+  in zwei Tagen).
+- Risiko: mittel - der Weg läuft bei jeder Live-Sendung; einmaliger
+  Liquidsoap-Neustart (ca. 12 s) beim Einschalten; Fehlerbild im
+  schlimmsten Fall wie am 2026-11-18 10:00 (falscher / verspäteter
+  Titel nach dem DJ), der DJ selbst ist nicht betroffen; Rückfall per
+  Schalter + PLAYOUT-Neustart.
+- Empfehlung: Go für Stufe 1 mit Schalter (zuerst aus gebaut, dann in
+  einem ruhigen Fenster eingeschaltet und mit einer Testsendung
+  abgenommen); Stufe 2 und 3 Defer.
+Vorbedingungen: Go des Operators, Entscheidung Schalter (Umgebungs-
+variable für die Probezeit oder dauerhafte Einstellung), ruhiges
+Fenster für das Einschalten, Testsendung mit Test-DJ.
+Werkzeug: `C:/Temp/optd/show_end_probe/under_dj_probe.py`.
