@@ -8592,3 +8592,30 @@ Mögliche Schritte (keiner beauftragt):
   Titel sofort starten statt bis zu seiner Zeile zu warten.
 Vorbedingungen: Go des Operators je Schritt; der Scan in einem ruhigen
 Fenster (eine CPU ausgelastet).
+
+## Show Source läuft über das Sendungsende - Beginn der Folgesendung fehlt (Befund 2026-11-17 10:00)
+
+### 💡 Show Source am Sendungsende von RASTATIME aus beenden - IDEA (Befund 2026-11-17)
+Eine DJ-Sendung über die Show Source (09:45-10:00) lief sauber; am Ende
+blieb die Quelle 6,2 s über die Sendungsgrenze auf Sendung.  Ablauf laut
+Log und 24/7-Mitschnitt: 10:00:00 der Stundenjingle ist fällig, wird aber
+zurückgehalten („show source active, scheduled audio held back"); der DJ
+hört etwa um 10:00:01 auf zu senden; die Harbor-Quelle spielt ihren
+5-s-Puffer aus und meldet nach 5 s Timeout das Ende (10:00:06); der
+Jingle setzt bei seiner Sekunde 6 von 10 ein (Zeitansage weg, 2,6 s
+Rest), 1,5 s Stille, die Kette danach 1,1-1,2 s spät.
+Ursache im Produkt: der Sendeplan erzeugt für Live-Sendungen zwar die
+Ereignisse `switch_off` / `kick_out` am Sendungsende
+(`generate_live_events`), der PlayoutScheduler behandelt ActionEvents
+aber nicht (sie zählen unter „other") - niemand beendet die Show Source,
+sie bleibt, bis der DJ trennt.
+Mögliche Schritte (keiner beauftragt):
+- Am Sendungsende die Show Source ausblenden (DJ Hand-over Fade) und
+  trennen, sodass die Folgesendung mit ihrem ersten Element pünktlich
+  beginnt; die Master Source bleibt unberührt (bewusste Übersteuerung).
+- Optional je Sendung oder global: erlaubter Überhang in Sekunden.
+- Hinweis für die Sendungsmachenden bis dahin: wegen 5 s Puffer + 5 s
+  Timeout müsste der DJ etwa 10 s vor der Grenze trennen; dann läuft bis
+  zur Grenze der darunter geplante Inhalt.
+Vorbedingungen: Go des Operators; Probe an einer Testsendung mit einem
+Test-DJ, nicht an einer echten Sendung.
