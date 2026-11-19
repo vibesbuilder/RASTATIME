@@ -34,8 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   von 0,1 s an der laufenden Stelle); das gerenderte Skript mit Schalter von Liquidsoap
   2.4.6 geprüft (`--check`).  42 neue Tests, Suite 1027 bestanden.  Manual STREAMS ×4,
   ARCHITECTURE 0.153 (§23.122).  Eingeschaltet 2026-11-19 11:58 (PLAYOUT-Neustart,
-  Liquidsoap einmal neu gestartet); die Abnahme mit einer Testsendung steht aus.
-  `e99ac420`.
+  Liquidsoap einmal neu gestartet).  Abnahme 2026-11-19 14:15, Teil Sendungsende
+  bestanden: ein Test-DJ blieb über das Ende der Testsendung verbunden, die Kette lief
+  unter ihm weiter (Folgetitel vorab eingereiht, laufender Titel endete unhörbar an seinem
+  Zeilenende), die Prüfung meldete `in step`, nichts wurde ersetzt, das erste Element der
+  Folgesendung liegt im 24/7-Mitschnitt bei T+0,1..0,2 s ohne Pegelloch.  Offen: Rückgabe
+  mitten in der Sendung (DJ trennt nach einem Titelwechsel).  `e99ac420`.
 
 ### Fixed
 

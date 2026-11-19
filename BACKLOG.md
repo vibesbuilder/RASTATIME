@@ -8679,7 +8679,7 @@ Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden (erfüllt
 (Stufe 1) gebaut wird - dann steht kein Titel mehr in der
 Warteschlange.
 
-### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); eingeschaltet 2026-11-19 11:58, Abnahme offen
+### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); eingeschaltet 2026-11-19 11:58; Abnahme: Sendungsende bestanden 2026-11-19 14:15, DJ trennt mitten in der Sendung offen
 Grundsätzlichere Variante: die Sendeplan-Kette auch unter einem DJ
 ziehen (stummer zweiter Abnehmer in Liquidsoap), sodass Titel,
 Vorab-Einreihen und Übergänge unhörbar im Takt der Zeilen
@@ -8759,11 +8759,49 @@ Offen:
   (2) Sendungsende mit verbundenem DJ - Log `the schedule kept running
   under the DJ - nothing paused`, erstes Element der Folgesendung
   pünktlich; (3) 24/7-Mitschnitt an beiden Stellen.
+  - **(2) bestanden 2026-11-19 14:15** (Testsendung bis 14:15, Test-DJ
+    ab 14:12:35 angenommen, auf Sendung ab 14:12:41, 28 s nach dem
+    Start eines Titels): unter dem DJ lief die Kette weiter - der
+    Folgetitel wurde 14:14:52 vorab eingereiht, der laufende Titel
+    endete 14:14:57 in der unhörbaren Kette an seinem Zeilenende
+    (pausiert hätte er noch rund 138 s gehabt); 14:14:59,5 Rückgabe,
+    Prüfung `in step` (Warteschlange 0,0 s gegen erwartete 0,0 s), Log
+    `Show end: the schedule kept running under the DJ - nothing
+    paused`; erstes Element der Folgesendung im Mitschnitt bei
+    T+0,1..0,2 s (Formfehler 2,0 dB), kein Pegelloch; Trennung des DJs
+    14:15:01,5; sein erneuter Login 14:15:03 korrekt abgewiesen.
+    Gegenprobe: 14:13:30 und 14:14:30 passt der Mitschnitt an keiner
+    Stelle zur Zeile des Titels - auf Sendung war der DJ.
+  - **(1) offen**: der DJ blieb bis zum Sendungsende verbunden, eine
+    Rückgabe mitten in der Sendung (`Resume scheduled: ... kept running
+    under the DJ`) gab es nicht; ebenso offen ein Titelwechsel unter
+    dem DJ, nach dem der DJ noch länger auf Sendung bleibt.  Dafür
+    reicht jede Sendung mit Datei-Zeilen (auch Master Source), ein
+    Sendungsende braucht es nicht.
+  - Beobachtung dazu: der Metadaten-Wächter (`rt_meta`, §23.102) setzt
+    die Titelangabe in die Sendeplan-Kette ein, nicht auf den Bus -
+    unter einem DJ erreicht sie den Stream nicht.  Bei einem
+    Titelwechsel unter dem DJ ist je eine Zeile `no packet on the bus
+    ... re-inserted` zu erwarten (der Bus sieht die Kette nicht); das
+    ist dann kein Verlust.  14:15:01 kam so die Titelangabe des ersten
+    Elements eine Sekunde nach dem Sendungsende.
 - Nach bestandener Probezeit: Schalter entfernen (immer an), die
   Rückfallwege behalten oder gesondert entscheiden.
 - 🟡 Stufe 2 (Line-In unter dem DJ offen halten) und Stufe 3 (Webstream
   unter dem DJ verbunden halten): Defer, je eigene Evaluierung.
   Vorbedingung: Stufe 1 abgenommen.
+
+### 💡 24/7-Mitschnitt: Stundendatei beginnt nach einem Neustart kurz vor der vollen Stunde verspätet (Befund 2026-11-19)
+Am 2026-11-19 startete Liquidsoap um 11:58:46 neu.  Die Stundendatei
+`12-00` beginnt erst um 12:00:49; die ersten 49 s der Stunde liegen in
+`11-00.2`, und die Cue-Marken der Stunde 12 (sie zählen ab der vollen
+Stunde) sind gegen die Datei um 49 s versetzt.  Ursache: der
+Stunden-Ausgang hat `reopen_delay={120.}` - nach dem Öffnen einer Datei
+wird 120 s lang nicht gewechselt.  Betrifft nur Neustarts in den letzten
+zwei Minuten einer Stunde; es fehlt kein Ton.  Mögliche Abhilfe (erst
+evaluieren): die Sperre kürzer als die Restzeit bis zur vollen Stunde
+halten, oder der Cue-Sidecar führt den tatsächlichen Dateibeginn.
+Vorbedingung: Go.
 
 ### 💡 Geplanter Liquidsoap-Neustart an der Titelgrenze kennt keinen DJ (Befund 2026-11-19, aus dem Code gelesen)
 Beim Bau von "Sendeplan läuft unter dem DJ weiter" gesehen, nicht
