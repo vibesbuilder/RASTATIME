@@ -38,8 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bestanden: ein Test-DJ blieb über das Ende der Testsendung verbunden, die Kette lief
   unter ihm weiter (Folgetitel vorab eingereiht, laufender Titel endete unhörbar an seinem
   Zeilenende), die Prüfung meldete `in step`, nichts wurde ersetzt, das erste Element der
-  Folgesendung liegt im 24/7-Mitschnitt bei T+0,1..0,2 s ohne Pegelloch.  Offen: Rückgabe
-  mitten in der Sendung (DJ trennt nach einem Titelwechsel).  `e99ac420`.
+  Folgesendung liegt im 24/7-Mitschnitt bei T+0,1..0,2 s ohne Pegelloch.  Teil Rückgabe
+  mitten in der Sendung bestanden 2026-11-19 14:38: Titelwechsel unter dem DJ in der
+  unhörbaren Kette, beim Ende des DJs `in step` (125,4 s gegen 125,2 s), nichts
+  nachgeschoben, der unter dem DJ gestartete Titel liegt im Mitschnitt an seiner laufenden
+  Stelle (100,7 s gegen 100,8 s), kein Pegelloch.  Stufe 1 damit abgenommen; die Probezeit
+  mit Schalter läuft weiter.  `e99ac420`.
 
 ### Fixed
 

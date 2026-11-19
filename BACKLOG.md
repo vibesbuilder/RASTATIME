@@ -8679,7 +8679,7 @@ Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden (erfüllt
 (Stufe 1) gebaut wird - dann steht kein Titel mehr in der
 Warteschlange.
 
-### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); eingeschaltet 2026-11-19 11:58; Abnahme: Sendungsende bestanden 2026-11-19 14:15, DJ trennt mitten in der Sendung offen
+### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); eingeschaltet 2026-11-19 11:58; ABGENOMMEN 2026-11-19 (Sendungsende 14:15, Rückgabe mitten in der Sendung 14:38); Probezeit läuft, Schalter entfernen offen
 Grundsätzlichere Variante: die Sendeplan-Kette auch unter einem DJ
 ziehen (stummer zweiter Abnehmer in Liquidsoap), sodass Titel,
 Vorab-Einreihen und Übergänge unhörbar im Takt der Zeilen
@@ -8772,18 +8772,37 @@ Offen:
     14:15:01,5; sein erneuter Login 14:15:03 korrekt abgewiesen.
     Gegenprobe: 14:13:30 und 14:14:30 passt der Mitschnitt an keiner
     Stelle zur Zeile des Titels - auf Sendung war der DJ.
-  - **(1) offen**: der DJ blieb bis zum Sendungsende verbunden, eine
-    Rückgabe mitten in der Sendung (`Resume scheduled: ... kept running
-    under the DJ`) gab es nicht; ebenso offen ein Titelwechsel unter
-    dem DJ, nach dem der DJ noch länger auf Sendung bleibt.  Dafür
-    reicht jede Sendung mit Datei-Zeilen (auch Master Source), ein
-    Sendungsende braucht es nicht.
+  - **(1) bestanden 2026-11-19 14:38** (zweite Verbindung in einer
+    laufenden Sendung mit Datei-Zeilen): Login 14:36:17 angenommen,
+    auf Sendung ab 14:36:22, gut sechs Minuten nach dem Start eines
+    Titels; unter dem DJ Folgetitel 14:36:49 vorab eingereiht,
+    Titelwechsel 14:36:58 in der unhörbaren Kette (track-Form, 3 s);
+    der DJ hörte nach gut zwei Minuten auf zu senden - Liquidsoap
+    schaltete 14:38:35 zurück (Harbor-Puffer leer), die Trennung
+    meldete der Timeout 14:38:37,3.  Prüfung `in step` (Warteschlange
+    125,4 s gegen erwartete 125,2 s), Log `Resume scheduled: ... kept
+    running under the DJ - on air at its position, nothing pushed`.
+    Mitschnitt: Programm ab 14:38:35 ohne Pegelloch; die 20 s ab
+    14:38:38,8 liegen bei Dateiposition 100,7 s des unter dem DJ
+    gestarteten Titels, hörbarer Start des Titels 14:36:58,0 ergibt
+    100,8 s (Formfehler 2,2 dB; gleichförmige Musik, zweitbeste Stelle
+    2,5 dB - für sich allein nicht eindeutig, zusammen mit der
+    Restzeit der Engine schon).
+  - Damit ist auch der Befund vom 2026-11-18 11:57 (stockende
+    DJ-Verbindung) im Betrieb gesehen: in den rund 2 s zwischen leerem
+    Puffer und gemeldeter Trennung lief das richtige Programm an der
+    laufenden Stelle, nicht mehr der pausierte Rest.
+  - Nicht aus dem Log belegbar: die Titelangabe im Stream im Moment
+    der Rückgabe (der Bus wiederholt sie laut Nachbildung; der nächste
+    Titelwechsel setzt sie in jedem Fall).
+  - Nicht geprüft: Master Source im Betrieb (nur in der Nachbildung),
+    der Rückfallweg `NOT in step`.
   - Beobachtung dazu: der Metadaten-Wächter (`rt_meta`, §23.102) setzt
     die Titelangabe in die Sendeplan-Kette ein, nicht auf den Bus -
     unter einem DJ erreicht sie den Stream nicht.  Bei einem
     Titelwechsel unter dem DJ ist je eine Zeile `no packet on the bus
     ... re-inserted` zu erwarten (der Bus sieht die Kette nicht); das
-    ist dann kein Verlust.  14:15:01 kam so die Titelangabe des ersten
+    ist dann kein Verlust (so gesehen 14:36:59).  14:15:01 kam so die Titelangabe des ersten
     Elements eine Sekunde nach dem Sendungsende.
 - Nach bestandener Probezeit: Schalter entfernen (immer an), die
   Rückfallwege behalten oder gesondert entscheiden.

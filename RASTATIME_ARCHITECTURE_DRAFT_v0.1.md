@@ -11408,9 +11408,24 @@ push; under the DJ nothing of the hidden chain reaches the bus.
   without the switch, the in-step decision at DJ off and at the show
   end including the fallbacks.  Suite: 1027 passed.
 
-**Not covered yet.**  The real scheduler at a real show with the switch
-on - the acceptance with a test show (a DJ who leaves mid-track, a DJ
-across a track change, the show end) after the switch is set.
+**Acceptance 2026-11-19 (live, switch on).**
+- Show end 14:15 with the test DJ connected: the successor was queued
+  ahead and the running track ended in the unheard chain at its row end;
+  the check reported in step, nothing was replaced; the next show's
+  first element is in the 24/7 recording at T+0.1..0.2 s, no level gap.
+- Hand-back in the middle of a show 14:38: a track change happened
+  under the DJ (track shape, 3 s); the DJ stopped sending, Liquidsoap
+  went back to the programme when the harbor buffer ran empty (2 s
+  before the timeout reported the disconnect); in step (queue 125.4 s
+  against 125.2 s expected), nothing pushed; the track that started
+  under the DJ is in the recording at its running position (100.7 s
+  against 100.8 s), no level gap.
+- As expected, the metadata guard (§23.102) logs `no packet on the bus
+  ... re-inserted` for a track change under a DJ: it inserts into the
+  scheduled chain, which the bus does not carry at that moment - no
+  title of the hidden chain reaches the stream.
+- Not exercised live: the master source, the fallback when the chain is
+  not in step, the title replay on the stream at the hand-back.
 
 **Known limits.**  (1) Live rows under a DJ behave as before (stage 2/3).
 (2) A webstream or line-in row that ENDS under a DJ still leaves its
