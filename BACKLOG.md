@@ -8679,7 +8679,7 @@ Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden (erfüllt
 (Stufe 1) gebaut wird - dann steht kein Titel mehr in der
 Warteschlange.
 
-### 💡 Sendeplan läuft unter dem DJ weiter (Idee 2026-11-18, evaluiert 2026-11-18 - wartet auf Entscheidung)
+### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); Schalter noch aus, Einschalten + Abnahme offen
 Grundsätzlichere Variante: die Sendeplan-Kette auch unter einem DJ
 ziehen (stummer zweiter Abnehmer in Liquidsoap), sodass Titel,
 Vorab-Einreihen und Übergänge unhörbar im Takt der Zeilen
@@ -8733,3 +8733,52 @@ Vorbedingungen: Go des Operators, Entscheidung Schalter (Umgebungs-
 variable für die Probezeit oder dauerhafte Einstellung), ruhiges
 Fenster für das Einschalten, Testsendung mit Test-DJ.
 Werkzeug: `C:/Temp/optd/show_end_probe/under_dj_probe.py`.
+
+Gebaut 2026-11-19 (Go für Stufe 1 mit Umgebungsvariable nur für die
+Probezeit): `RASTATIME_SCHEDULE_UNDER_DJ=1` in der Umgebung von
+RASTATIME-PLAYOUT; stummer Abnehmer im Sendeskript mit den Bedingungen
+der DJ-Arme; Datei-Zeilen laufen unter einem DJ wie ohne DJ; Resume und
+Sendungsende-Übergabe prüfen die Restzeit der Warteschlange gegen die
+Zeile (1,5 s Toleranz) und greifen nur noch als Rückfall.  Ohne
+Schalter Sendeskript byte-gleich, Verhalten unverändert.  Nachbildung
+mit echtem Harbor-Eingang und gerendertem Bus-Block
+(`under_dj_real_probe.py`): Show-DJ über das Sendungsende, früher
+Login, Master-DJ - alle sauber.  42 Tests.
+Offen:
+- Einschalten durch den Operator in einem ruhigen Fenster: Variable an
+  den vorhandenen Block von `nssm get RASTATIME-PLAYOUT
+  AppEnvironmentExtra` anhängen (`nssm set` ersetzt den ganzen Block),
+  PLAYOUT neu starten - Liquidsoap startet einmal mit (ca. 12 s).
+- Abnahme mit Testsendung und Test-DJ: (1) DJ steigt mitten im Titel
+  ein und trennt nach über einer Titellänge - das Programm liegt sofort
+  an der richtigen Stelle an, Log `kept running under the DJ`;
+  (2) Sendungsende mit verbundenem DJ - Log `the schedule kept running
+  under the DJ - nothing paused`, erstes Element der Folgesendung
+  pünktlich; (3) 24/7-Mitschnitt an beiden Stellen.
+- Nach bestandener Probezeit: Schalter entfernen (immer an), die
+  Rückfallwege behalten oder gesondert entscheiden.
+- 🟡 Stufe 2 (Line-In unter dem DJ offen halten) und Stufe 3 (Webstream
+  unter dem DJ verbunden halten): Defer, je eigene Evaluierung.
+  Vorbedingung: Stufe 1 abgenommen.
+
+### 💡 Geplanter Liquidsoap-Neustart an der Titelgrenze kennt keinen DJ (Befund 2026-11-19, aus dem Code gelesen)
+Beim Bau von "Sendeplan läuft unter dem DJ weiter" gesehen, nicht
+gebaut, nicht live beobachtet: wartet ein geplanter Neustart auf eine
+Datei-zu-Datei-Grenze (`_boundary_restart_pending`, 24/7-Programm oder
+geänderte Einstellungen), prüft `_on_file_start_impl` das vor der
+DJ-Abfrage.  Startet eine Datei-Zeile, während ein DJ auf Sendung ist,
+würde Liquidsoap neu starten und den DJ trennen.  Gilt mit und ohne
+Schalter.  Abhilfe: den Grenz-Neustart aufschieben, solange ein DJ auf
+Sendung ist (eine Bedingung + Test).  Vorbedingung: Go.
+
+### 💡 Live-Zeile endet unter einem DJ - ihre Quelle bleibt offen (Befund 2026-11-19, aus dem Code gelesen)
+Ebenfalls nur gelesen, nicht live beobachtet: endet eine Webstream-
+oder Line-In-Zeile, während ein DJ auf Sendung ist, räumt `_on_stop`
+nur die Buchführung auf; Quelle und Gate bleiben, wie sie sind, bis der
+nächste Start sie schließt.  Folgt eine Lücke und geht der DJ, könnte
+der Live-Arm (rangiert über dem Sendeplan) wieder auf Sendung gehen,
+obwohl seine Zeile vorbei ist.  Mit dem Schalter schließt eine folgende
+Datei-Zeile die Quelle auch unter dem DJ; der Fall "Lücke danach"
+bleibt.  Vor einer Änderung zuerst in Logs prüfen, ob der Fall je
+vorkam (Webstream bis zur vollen Stunde, Live-Sendung ab der vollen
+Stunde).  Gehört zu Stufe 2/3.

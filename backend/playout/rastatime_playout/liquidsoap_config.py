@@ -2534,6 +2534,21 @@ def _render_crossfade_block(
     )
 
 
+#: RASTATIME 2026-11-19 - trial switch (environment of RASTATIME-PLAYOUT):
+#: the scheduled chain keeps running under a DJ.  A silent second consumer
+#: in the rendered script pulls it while a DJ arm holds the bus, and the
+#: scheduler no longer holds file rows back (PlayoutScheduler,
+#: ``schedule_under_dj``).  "1" / "true" / "on" / "yes" = on; unset = the
+#: behaviour before (the queue stands still under a DJ).  The switch goes
+#: away once the trial is accepted.
+SCHEDULE_UNDER_DJ_ENV = "RASTATIME_SCHEDULE_UNDER_DJ"
+
+
+def schedule_under_dj_enabled() -> bool:
+    """The trial switch ``RASTATIME_SCHEDULE_UNDER_DJ`` (see above)."""
+    return os.environ.get(SCHEDULE_UNDER_DJ_ENV, "").strip().lower() in ("1", "true", "on", "yes")
+
+
 def _render_bus_source_block(
     *,
     main_enabled: bool,
@@ -2544,6 +2559,7 @@ def _render_bus_source_block(
     duck_fade_seconds: float = DEFAULT_INPUT_DUCK_FADE_SECONDS,
     dj_fade_seconds: float = DEFAULT_DJ_FADE_SECONDS,
     show_hold: bool = False,
+    schedule_under_dj: bool = False,
 ) -> str:
     """
     Render the ``bus = ...`` assignment that picks the active source.
@@ -2626,8 +2642,12 @@ def _render_bus_source_block(
             "end\n"
         )
 
+    # RASTATIME 2026-11-19 - the conditions of the DJ arms, for the silent
+    # consumer of the scheduled chain (schedule_under_dj, see below)
+    dj_conditions: list[str] = []
     if main_enabled:
         arms.append("({source.is_ready(master_dj)}, master_dj)")
+        dj_conditions.append("source.is_ready(master_dj)")
         transitions.append("bus_arm_master")
         wrappers.append(_arm("bus_arm_master", "master_dj", dj_shape))
     if show_enabled:
@@ -2636,12 +2656,14 @@ def _render_bus_source_block(
         # RASTATIME 2026-11-18 - and closes it at show_dj_until (the end of the
         # DJ's show, 0 = no end): the next show starts on time, the DJ fades
         # out under it (bus_dj) and PLAYOUT disconnects the client.
-        arms.append(
-            "({source.is_ready(show_dj) and time() >= show_dj_from()"
-            " and (show_dj_until() <= 0. or time() < show_dj_until())}, show_dj)"
+        show_condition = (
+            "source.is_ready(show_dj) and time() >= show_dj_from()"
+            " and (show_dj_until() <= 0. or time() < show_dj_until())"
             if show_hold
-            else "({source.is_ready(show_dj)}, show_dj)"
+            else "source.is_ready(show_dj)"
         )
+        arms.append("({" + show_condition + "}, show_dj)")
+        dj_conditions.append(show_condition)
         transitions.append("bus_arm_show")
         wrappers.append(_arm("bus_arm_show", "show_dj", dj_shape))
     if webstream_enabled:
@@ -2717,6 +2739,36 @@ def _render_bus_source_block(
         f"                        fade.out(duration={_format_crossfade_duration(dj_len)}, old)])\n"
         "end\n"
     )
+    # RASTATIME 2026-11-19 - the schedule keeps running under a DJ (trial
+    # switch RASTATIME_SCHEDULE_UNDER_DJ).  A switch does not pull an arm it
+    # has not selected, so under a DJ the request queue stood still: the
+    # track from the take-over stayed paused, with the seconds the cross
+    # operator had read ahead, and came back when the DJ left (acceptance
+    # 2026-11-18 10:00: 66 s of the previous show's music in place of the
+    # next show's opening; 11:57: 2.5 s of the paused track while a DJ's
+    # connection stalled).  The silent consumer below pulls the scheduled
+    # chain exactly while a DJ arm holds the bus - the same conditions as
+    # the arms - so tracks, queue-ahead and crossfades run on unheard in
+    # step with the rows and the hand-back finds the programme where it
+    # belongs; the bus replays the running track's metadata (switch
+    # default).  A source with two consumers in one clock produces every
+    # frame once.  Replica: C:/Temp/optd/show_end_probe/under_dj_probe.py.
+    under_dj = ""
+    if schedule_under_dj and dj_conditions:
+        under_dj = (
+            "\n"
+            "# RASTATIME 2026-11-19 - the schedule keeps running under a DJ: a\n"
+            "# silent consumer pulls the scheduled chain while a DJ arm holds the\n"
+            "# bus (same conditions as the arms above), so the hand-back finds\n"
+            "# the programme at its position (trial switch\n"
+            "# RASTATIME_SCHEDULE_UNDER_DJ).\n"
+            "def bus_dj_on_air() =\n"
+            "  " + " or ".join(f"({c})" for c in dj_conditions) + "\n"
+            "end\n"
+            'scheduled_under_dj = switch(id="scheduled_under_dj_gate", track_sensitive=false,\n'
+            "  [(bus_dj_on_air, scheduled)])\n"
+            'output.dummy(id="scheduled_under_dj", fallible=true, scheduled_under_dj)\n'
+        )
     shape = (
         f"new at once, old fades out over {_format_crossfade_duration(fade_len)} s; "
         f"DJ hand-over {_format_crossfade_duration(dj_len)} s"
@@ -2743,7 +2795,7 @@ def _render_bus_source_block(
         f"  transition_length={_format_crossfade_duration(max(fade_len, dj_len) + 0.5)},\n"
         "  transitions=[\n" + "".join(f"    {t},\n" for t in transitions) + "  ],\n"
         "  [\n" + "".join(f"    {arm},\n" for arm in arms) + "  ]\n"
-        ")\n"
+        ")\n" + under_dj
     )
 
 
@@ -2798,6 +2850,7 @@ def render_rastatime_liq(
     live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
     loudness_limiter_ceiling: Optional[float] = None,
     stereotool: Optional[StereoToolSettings] = None,
+    schedule_under_dj: bool = False,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -2885,6 +2938,8 @@ def render_rastatime_liq(
         dj_fade_seconds=dj_fade_seconds,
         # RASTATIME 2026-11-16 - early show login gate (see the harbor block)
         show_hold=bool(dj_auth_url and harbor_show_password),
+        # RASTATIME 2026-11-19 - trial: the schedule keeps running under a DJ
+        schedule_under_dj=schedule_under_dj,
     )
     hourly_block = _render_hourly_recording_block(
         enabled=hourly_recording_enabled,
@@ -2989,6 +3044,7 @@ def write_rastatime_liq(
     live_text_url: Optional[str] = DEFAULT_LIVE_TEXT_URL,
     loudness_limiter_ceiling: Optional[float] = None,
     stereotool: Optional[StereoToolSettings] = None,
+    schedule_under_dj: bool = False,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -3056,6 +3112,7 @@ def write_rastatime_liq(
         live_text_url=live_text_url,
         loudness_limiter_ceiling=loudness_limiter_ceiling,
         stereotool=stereotool,
+        schedule_under_dj=schedule_under_dj,
         template_path=template_path,
     )
 

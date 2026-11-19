@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Sendeplan läuft unter dem DJ weiter - Stufe 1, Probeschalter (2026-11-19, Go des
+  Operators)** - Bisher stand die Sendeplan-Kette, solange ein DJ auf Sendung war: der Bus
+  zieht einen nicht gewählten Arm nicht, der Titel vom Einstieg blieb pausiert in der
+  Warteschlange, und PLAYOUT musste beim Ende des DJs mit Versatz neu einsteigen (Befunde
+  2026-11-18 10:00 und 11:57).  Mit `RASTATIME_SCHEDULE_UNDER_DJ=1` (Umgebung des Dienstes
+  RASTATIME-PLAYOUT, Standard aus) rendert PLAYOUT einen zweiten, stummen Abnehmer ins
+  Sendeskript, der die Kette genau so lange zieht, wie ein DJ-Arm den Bus hält (dieselben
+  Bedingungen wie die Arme, inklusive früher Login und Sendungsende), und hält Datei-Zeilen
+  unter einem DJ nicht mehr zurück: Start, Vorab-Einreihen, sekundengenaues Warten und Stop
+  laufen wie ohne DJ, nur unhörbar.  Beim Ende des DJs (er trennt, die Verbindung stockt,
+  die Sendung endet, Master Source geht) liegt das Programm sofort an der richtigen Stelle
+  an; der Bus wiederholt die Titelangabe des laufenden Stücks.  Resume und die
+  Sendungsende-Übergabe vom 2026-11-18 bleiben als Rückfall: bei jeder Rückgabe fragt
+  PLAYOUT die Restzeit der Warteschlange ab und vergleicht sie mit der Zeile (Toleranz
+  1,5 s); passt sie nicht, greifen die bisherigen Wege.  Webstream- und Line-In-Zeilen
+  starten unter einem DJ weiterhin erst beim Ende des DJs (Stufe 2/3 zurückgestellt); eine
+  Datei-Zeile vor ihnen wird in der unhörbaren Kette beendet, eine Datei-Zeile nach ihnen
+  schließt deren Quelle wie jeder andere Dateistart.  Ohne Schalter ist das Sendeskript
+  byte-gleich (gegen das laufende Skript geprüft) und das Verhalten unverändert.
+  Nachbildungen: `under_dj_probe.py` (Kern) und `under_dj_real_probe.py` (echter
+  Harbor-Eingang, echte Queue-/Crossfade-Kette, gerenderter Bus-Block: Show-DJ über das
+  Sendungsende, früher Login, Master-DJ - Restzeit läuft in Echtzeit, Rückgabe innerhalb
+  von 0,1 s an der laufenden Stelle); das gerenderte Skript mit Schalter von Liquidsoap
+  2.4.6 geprüft (`--check`).  42 neue Tests, Suite 1027 bestanden.  Manual STREAMS ×4,
+  ARCHITECTURE 0.153 (§23.122).  Noch nicht eingeschaltet - Einschalten in einem ruhigen
+  Fenster (einmaliger Liquidsoap-Neustart) und Abnahme mit einer Testsendung stehen aus.
+
 ### Fixed
 
 - **Show-Source-Ende: der pausierte Titel kam zurück (2026-11-18, erste Abnahme 10:00 nicht

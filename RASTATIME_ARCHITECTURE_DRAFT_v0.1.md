@@ -1,10 +1,17 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.152
-Date: 2026-11-18
+Draft version: 0.153
+Date: 2026-11-19
 
 > **Revision history**
+> - **0.153 (2026-11-19)** - The schedule keeps running under a DJ, stage 1 behind the trial
+>   switch `RASTATIME_SCHEDULE_UNDER_DJ` (§23.122): a silent second consumer in the rendered
+>   script pulls the scheduled chain while a DJ arm holds the bus; PLAYOUT no longer holds
+>   file rows back under a DJ and only checks at a hand-back that the queue is in step with
+>   the rows (the paused-queue paths of 0.152 stay as the fallback).  Webstream and line-in
+>   rows under a DJ are unchanged.  Minor: new behaviour, off by default, script unchanged
+>   without the switch.
 > - **0.152 (2026-11-18)** - The paused queue at a show source end (§23.121 addendum): the
 >   first acceptance failed - the track that was on air when the DJ took over came back at
 >   the show end.  PLAYOUT now replaces the paused queue half a second before the end
@@ -11284,3 +11291,140 @@ the scheduled arm is pulled.  Same remedy, not built - BACKLOG.
 logged, the next show then starts on its own timers as in the first
 build.  Rollback: `git revert` (tag `live-2026-11-18b`) and a PLAYOUT
 restart.
+
+### 23.122 The Schedule Keeps Running under a DJ - Stage 1 (2026-11-19)
+
+**Finding.**  The bus is `switch(track_sensitive=false, ...)`, and a
+switch does not pull an arm it has not selected.  Under a DJ the request
+queue therefore stood still: the track that was on air at the take-over
+stayed paused where it was, the cross operator kept the 3 s it had read
+ahead, and PLAYOUT only book-kept the file rows.  Every hand-back had to
+repair that state: a resume with an offset when the DJ left
+(`_resume_scheduled_locked`), a replacement of the paused queue when the
+show source ended with its show (§23.121 addendum).  Two findings in two
+days came out of it - the track from the take-over on air for 66 s
+(2026-11-18 10:00) and 2.5 s of it while a DJ's connection stalled
+(11:57: the harbor buffer ran dry before the timeout reported the
+disconnect) - and a third one is in the backlog (a DJ who leaves while
+nothing is to be resumed).
+
+**Idea.**  Keep the scheduled chain running under the DJ, unheard, in
+step with the rows.  Then nothing is ever paused, and the hand-back is
+the bus switch alone: the programme is on air at its position in the
+frame the DJ arm closes.
+
+**Decision (operator Go 2026-11-19).**  Stage 1: file rows only, behind
+an environment switch for the trial; the switch goes away once the
+behaviour is accepted.  Stage 2 (keep a pre-warmed line-in open under a
+DJ) and stage 3 (keep a webstream connected under a DJ - needs its own
+silent consumer and touches the watchdog and the latency) are deferred.
+
+**Switch.**  `RASTATIME_SCHEDULE_UNDER_DJ` in the environment of
+RASTATIME-PLAYOUT (`liquidsoap_config.schedule_under_dj_enabled()`;
+"1" / "true" / "on" / "yes").  `__main__` hands it to the renderer and
+to the scheduler, so script and scheduler always change together; the
+changed script makes the PLAYOUT restart restart Liquidsoap once.
+Without the switch the rendered bus block is byte-identical to the one
+before (checked against the running script).
+
+**Liquidsoap.**  `_render_bus_source_block(..., schedule_under_dj=True)`
+appends, behind the bus switch:
+
+```
+def bus_dj_on_air() =
+  (source.is_ready(master_dj)) or (source.is_ready(show_dj) and time() >= show_dj_from() and (show_dj_until() <= 0. or time() < show_dj_until()))
+end
+scheduled_under_dj = switch(id="scheduled_under_dj_gate", track_sensitive=false,
+  [(bus_dj_on_air, scheduled)])
+output.dummy(id="scheduled_under_dj", fallible=true, scheduled_under_dj)
+```
+
+The conditions are the ones of the DJ arms that exist, built from the
+same strings, so the consumer pulls exactly while a DJ arm is selected:
+not during an early show login that still waits (the bus itself pulls
+the programme then), and not after the show's end.  A source with two
+consumers in one clock produces each frame once, so the 1-s fade of the
+outgoing programme at the take-over and the consumer do not double the
+speed.  The same construction has kept the line-in warm since
+2026-11-16 (§23.118).  The bus switch replays the metadata of the
+running track when it comes back to the scheduled arm
+(`replay_metadata`, default), so the stream title follows without a
+push; under the DJ nothing of the hidden chain reaches the bus.
+
+**PLAYOUT** (`PlayoutScheduler(schedule_under_dj=...)`).
+
+- `_dj_pauses_files()` = a DJ is on air and the switch is off.  It
+  replaces the plain DJ check where file rows are concerned: the
+  short-circuit in `_on_file_start_impl`, `_on_file_queue_ahead`,
+  `_wait_for_exact_time`, `_let_file_run_out`, the engine part of
+  `_on_stop` for a file row, and `_close_predecessor_source`.  With the
+  switch a file row under a DJ runs through the very code of a row
+  without a DJ.
+- Webstream and line-in rows are still held back under a DJ and start
+  at the DJ-off resume.  New with the switch: a file row in front of
+  them is ended in the unheard chain when they are due
+  (`_end_file_under_dj`: queue-ahead book-keeping cleared,
+  `engine.stop()`), and a file row behind them closes their source like
+  any file start - a live arm outranks the scheduled arm and would
+  otherwise take the air at the hand-back.
+- `_file_chain_in_step(what)` - asked at every hand-back, not assumed.
+  `scheduled.remaining` is the audio left in the queue's current
+  request; the queue runs the cross read-ahead (3 s) in front of the
+  air and reports 0 once the request is in the cross tail or cross has
+  pulled the successor.  With a file row on air the value must fit the
+  row's audio end (`_file_audio_end`: rows + chain lag) minus the
+  read-ahead within `UNDER_DJ_STEP_TOLERANCE_SECONDS` (1.5 s); without
+  one the queue must be idle.  A queue that stood still is off by the
+  DJ's time on air.
+- DJ off (`_resume_scheduled_locked`, file row): in step - nothing is
+  pushed.  Not in step - a warning, then the resume of 0.152 (offset,
+  cutting shape).
+- Show end (`_hand_over_at_show_end_locked`): in step - nothing is
+  replaced; the last row of the ending show and the first row of the
+  next one hand over like at any show boundary (queued ahead, cut or
+  held by the boundary rules).  Not in step - a warning, then the
+  replacement of 0.152 (first file row or the silent filler).
+
+**Verification.**
+- `under_dj_probe.py` (evaluation): the real queue / cross block with a
+  switched "DJ" - the remaining time runs on in real time under the DJ,
+  a track queued ahead crosses unheard, the hand-back has the running
+  track on air at once and replays its title, a 2.5-s stall shows the
+  programme at once, an empty queue stays silent and the next push
+  starts at once.
+- `under_dj_real_probe.py` (the code under test): the real harbor block
+  with a DJ fed by ffmpeg, the real queue / cross block and the bus
+  block from the renderer.  V1 show DJ over the show end while staying
+  connected: A -> B crossed under the DJ, at the end B is on air within
+  0.1 s at its running position, the DJ fades out under it.  V2 early
+  show login: the programme stays on air while the DJ waits, the
+  remaining time is continuous through wait, DJ and hand-back.  V3
+  master DJ: the same.
+- The live script with the block spliced in passes `liquidsoap --check`
+  (2.4.6); the block without the switch is byte-identical to the live
+  script's.
+- `tests/test_schedule_under_dj.py`: 42 tests - switch parsing, the
+  rendered block per arm combination, each scheduler path with and
+  without the switch, the in-step decision at DJ off and at the show
+  end including the fallbacks.  Suite: 1027 passed.
+
+**Not covered yet.**  The real scheduler at a real show with the switch
+on - the acceptance with a test show (a DJ who leaves mid-track, a DJ
+across a track change, the show end) after the switch is set.
+
+**Known limits.**  (1) Live rows under a DJ behave as before (stage 2/3).
+(2) A webstream or line-in row that ENDS under a DJ still leaves its
+source to the next start, as before - finding in the backlog.  (3) A
+planned Liquidsoap restart that waits for a file-to-file boundary
+(§23.27) is not aware of a DJ, with or without the switch - finding in
+the backlog.
+
+**Risk.**  Medium.  The path runs at every live show.  Worst case: the
+programme after a DJ is wrong or late, as on 2026-11-18 10:00 - the
+in-step check exists to turn that into the proven fallback.  The DJ's
+own audio is not touched: the DJ arms and the bus are unchanged, the
+consumer only reads the scheduled chain.  Switching on costs one
+Liquidsoap restart (about 12 s).  Rollback: remove the variable and
+restart PLAYOUT (the script goes back to the byte-identical one,
+Liquidsoap restarts once more); code rollback `git revert`, tag
+`live-2026-11-19`.

@@ -404,6 +404,37 @@ den Anfang der nächsten Sendung vom Sender fern.
 
 Siehe ARCHITECTURE §23.121.
 
+#### Das Programm unter einem DJ (Probebetrieb seit 2026-11-19)
+
+Solange ein DJ auf Sendung ist, ist das geplante Programm nicht zu
+hören.  Standardmäßig **steht es dabei auch still**: Dateien werden nur
+verbucht, und wenn der DJ geht, steigt RASTATIME in den laufenden Titel
+an der Stelle ein, die der Sendeplan erreicht hat.
+
+Mit der Maschinen-Einstellung `RASTATIME_SCHEDULE_UNDER_DJ=1` (Umgebung
+des Dienstes RASTATIME-PLAYOUT; ein Schalter für den Probebetrieb, der
+entfällt, sobald das Verhalten abgenommen ist) **läuft das Programm
+unter dem DJ unhörbar weiter**: Titel starten, überblenden und enden
+auf ihren Zeilen genau wie ohne DJ.  In dem Moment, in dem der DJ nicht
+mehr auf Sendung ist - er trennt, die Verbindung stockt, die Sendung
+endet -, hören die Hörer das Programm dort, wo der Sendeplan steht,
+ohne Wiedereinstieg.
+
+- Das gilt für **Dateien**.  Ein Webstream oder ein Line-Eingang, der
+  fällig wird, während ein DJ auf Sendung ist, startet weiterhin erst,
+  wenn der DJ geht.
+- Stream-Titel, Live Text und Aufnahmen sind nicht betroffen: Unter
+  einem DJ folgen sie dem DJ; kehrt das Programm zurück, wird der Titel
+  des laufenden Stücks erneut gesendet.
+- Das Ein- oder Ausschalten braucht einen Neustart von
+  RASTATIME-PLAYOUT, der die Audio-Engine einmal neu startet (etwa 12
+  Sekunden ohne Ton) - wählen Sie einen ruhigen Moment.
+- Bei jeder Rückgabe prüft RASTATIME, ob das Programm wirklich dort
+  steht, wo der Sendeplan es erwartet; wenn nicht, greift der oben
+  beschriebene Wiedereinstieg.
+
+Siehe ARCHITECTURE §23.122.
+
 ---
 
 ## 4. Stream-Gesundheit überwachen

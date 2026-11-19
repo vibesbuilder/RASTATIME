@@ -328,6 +328,37 @@ conectado dejaba fuera del aire el inicio del programa siguiente.
 
 Véase ARCHITECTURE §23.121.
 
+#### El programa bajo un DJ (en prueba desde el 2026-11-19)
+
+Mientras un DJ está en el aire, el programa planificado no se oye.  De
+forma predeterminada además **está parado**: los archivos solo se
+anotan, y cuando el DJ se va, RASTATIME retoma la pista en curso en la
+posición que ha alcanzado la parrilla.
+
+Con el ajuste de máquina `RASTATIME_SCHEDULE_UNDER_DJ=1` (entorno del
+servicio RASTATIME-PLAYOUT; un interruptor de prueba que desaparecerá
+cuando el comportamiento esté aceptado), el programa **sigue corriendo
+sin oírse** bajo el DJ: las pistas empiezan, se funden y terminan en
+sus filas exactamente como sin DJ.  En el momento en que el DJ deja de
+estar en el aire - se desconecta, la conexión se atasca, el programa
+termina -, los oyentes oyen el programa donde está la parrilla, sin
+reentrada.
+
+- Esto vale para los **archivos**.  Un webstream o una entrada de línea
+  que toquen mientras un DJ está en el aire siguen empezando cuando el
+  DJ se va.
+- El título del stream, el Live Text y las grabaciones no se ven
+  afectados: bajo un DJ siguen al DJ; cuando vuelve el programa, se
+  envía de nuevo el título de la pista en curso.
+- Activarlo o desactivarlo requiere reiniciar RASTATIME-PLAYOUT, que
+  reinicia una vez el motor de audio (unos 12 segundos sin sonido) -
+  elija un momento tranquilo.
+- En cada devolución RASTATIME comprueba que el programa está realmente
+  donde la parrilla lo espera; si no, se aplica la reentrada descrita
+  arriba.
+
+Véase ARCHITECTURE §23.122.
+
 ---
 
 ## 4. Monitorear la salud de streams

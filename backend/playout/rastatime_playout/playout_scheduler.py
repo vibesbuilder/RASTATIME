@@ -186,6 +186,13 @@ PAUSED_FILLER_SECONDS = 10.0
 # more than this much left - below, the request is about to end by itself
 # and a skip could hit the track just pushed.
 PAUSED_LEFTOVER_SKIP_SECONDS = 1.0
+# RASTATIME 2026-11-19 - schedule under a DJ (trial switch
+# RASTATIME_SCHEDULE_UNDER_DJ): at a hand-back the queue's remaining audio
+# must fit the rows within this many seconds, otherwise the chain did not
+# run under the DJ and the paused-queue paths take over.  The file chain
+# runs up to about a second off the rows (FILE_CHAIN_LAG, timers on whole
+# seconds); a queue that stood still is off by the DJ's time on air.
+UNDER_DJ_STEP_TOLERANCE_SECONDS = 1.5
 
 # RASTATIME 2026-09-07 - the webstream watchdog lives inside Liquidsoap
 # (frame counter on the bus, rendered by liquidsoap_config).  The
@@ -230,9 +237,16 @@ class PlayoutScheduler:
         tunein: Optional[TuneInPusher] = None,
         live_text: Optional[LiveTextWriter] = None,
         linein_icecast_credentials: Optional[tuple[str, str]] = None,
+        schedule_under_dj: bool = False,
     ) -> None:
         self._engine = engine
         self._api_client = api_client
+        # RASTATIME 2026-11-19 - trial switch RASTATIME_SCHEDULE_UNDER_DJ: the
+        # rendered script keeps the scheduled chain running while a DJ is on
+        # air, so file rows are no longer held back under a DJ (see
+        # _dj_pauses_files, _file_chain_in_step).  Webstream and line-in rows
+        # still start when the DJ leaves.
+        self._schedule_under_dj = bool(schedule_under_dj)
         # RASTATIME 2026-11-05 - a telnet reconnect runs the restart
         # detector within a second (the process-table poll alone noticed
         # the 10:30 manual restart 84 s later).  Rate-limited: Liquidsoap
@@ -536,6 +550,11 @@ class PlayoutScheduler:
                 )
 
         logger.info("PlayoutScheduler initialised (cache_dir=%s)", self._cache_dir)
+        if self._schedule_under_dj:
+            logger.info(
+                "PlayoutScheduler: the schedule keeps running under a DJ "
+                "(RASTATIME_SCHEDULE_UNDER_DJ) - file rows are not held back."
+            )
 
     # ------------------------------------------------------------------
     # Public API
@@ -2138,6 +2157,88 @@ class PlayoutScheduler:
     def _dj_on_air(self) -> bool:
         return bool(self._switcher and self._switcher.current_state != SourceState.SCHEDULED)
 
+    def _dj_pauses_files(self) -> bool:
+        """
+        A DJ is on air AND the file chain stands still under it (the bus does
+        not pull the scheduled arm): file rows are only book-kept and the
+        hand-back re-enters the programme.  False with the trial switch
+        RASTATIME_SCHEDULE_UNDER_DJ - the rendered script keeps the chain
+        running under a DJ, so file rows start, queue ahead, cross and stop
+        exactly as without a DJ, just unheard (2026-11-19).
+        """
+        return self._dj_on_air() and not self._schedule_under_dj
+
+    def _file_chain_in_step(self, what: str) -> bool:
+        """
+        RASTATIME 2026-11-19 - schedule under a DJ: is the request queue
+        where the rows say?  Asked of the engine at every hand-back instead
+        of trusted, so a consumer that did not pull (an older script still
+        running, a Liquidsoap that was restarted by hand) ends in the
+        paused-queue paths of 2026-11-18 and not in a stale track on air.
+
+        ``scheduled.remaining`` is the audio left in the queue's current
+        request; the queue is the cross operator's read-ahead in front of
+        the air, and it reports 0 once the request is in the cross tail or
+        cross has pulled the successor.  A file row on air: the value fits
+        the row's audio end (rows + chain lag) within
+        UNDER_DJ_STEP_TOLERANCE_SECONDS.  No file row on air: the queue is
+        idle.  False without the switch.
+        """
+        if not self._schedule_under_dj:
+            return False
+        measured = self._engine.playing_remaining_seconds()
+        if isinstance(measured, bool) or not isinstance(measured, (int, float)):
+            measured = None
+        now = datetime.utcnow()
+        current = self._current_event
+        tol = UNDER_DJ_STEP_TOLERANCE_SECONDS
+        if isinstance(current, FileEvent) and self._file_audio_end(current) > now:
+            on_air_left = (self._file_audio_end(current) - now).total_seconds()
+            expected = max(0.0, on_air_left - self._cross_buffer_seconds)
+            got = 0.0 if measured is None else float(measured)
+            in_step = abs(got - expected) <= tol
+            logger.info(
+                "Schedule under the DJ (%s): %r has %.1f s on air left, the queue should "
+                "report %.1f s and reports %s - %s.",
+                what,
+                current.track_title or current.id,
+                on_air_left,
+                expected,
+                "nothing" if measured is None else f"{got:.1f} s",
+                "in step" if in_step else "NOT in step",
+            )
+            return in_step
+        in_step = measured is None or float(measured) <= tol
+        logger.info(
+            "Schedule under the DJ (%s): no file row on air, the queue reports %s - %s.",
+            what,
+            "nothing" if measured is None else f"{float(measured):.1f} s",
+            "idle as expected" if in_step else "NOT idle",
+        )
+        return in_step
+
+    def _end_file_under_dj(self, key: str, prev_event: object) -> None:
+        """
+        RASTATIME 2026-11-19 - schedule under a DJ: a live item (webstream,
+        line-in) starts while a DJ is on air.  The item itself is held back
+        as before, but the file row before it kept running in the unheard
+        chain - end it like the normal start does (pending requests dropped,
+        deferred skip), so nothing of it is left paused when the live item
+        or the DJ hands back.
+        """
+        if not self._schedule_under_dj or not isinstance(prev_event, FileEvent):
+            return
+        logger.info(
+            "%s: held back under the DJ - ending the file row %r in the unheard chain.",
+            key,
+            prev_event.track_title or prev_event.id,
+        )
+        self._queued_ahead = None
+        self._queued_ahead_prev = None
+        self._queued_ahead_hold = 0.0
+        self._deferred_queue_ahead = None
+        self._engine.stop()
+
     def _wait_for_exact_time(self, key: str, when: Optional[datetime], what: str) -> bool:
         """
         RASTATIME 2026-10-01 - timers fire on the whole second before the
@@ -2145,7 +2246,7 @@ class PlayoutScheduler:
         - more means the timer was late or the row is odd, act now).  False
         when another item took the spotlight during the wait.
         """
-        if when is None or self._dj_on_air():
+        if when is None or self._dj_pauses_files():
             return True
         delay = (when - datetime.utcnow()).total_seconds()
         if delay <= 0.02 or delay > EXACT_TIME_HOLD_MAX_SECONDS:
@@ -2213,7 +2314,7 @@ class PlayoutScheduler:
         whole second before its row end: wait for the audio to be over, so
         neither the deferred skip nor the bookkeeping reset comes early.
         """
-        if not isinstance(event, FileEvent) or self._dj_on_air():
+        if not isinstance(event, FileEvent) or self._dj_pauses_files():
             return
         left = (self._file_audio_end(event) - datetime.utcnow()).total_seconds()
         if left <= 0.05 or left > FILE_TAIL_HOLD_MAX_SECONDS:
@@ -2304,8 +2405,11 @@ class PlayoutScheduler:
         transition has its own same-device shortcut / bounce logic in
         _on_linein_start.
         """
-        if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+        if self._dj_pauses_files():
             return  # a DJ is on air; sources stay as they are
+        # (2026-11-19, schedule under a DJ: a file row that starts under the
+        # DJ closes its live predecessor like any other file start - the
+        # live arm would outrank the file when the DJ hands back)
         if isinstance(prev_event, LineinEvent):
             logger.info(
                 "PLAY %s takes over from line-in %r - releasing it.",
@@ -2379,7 +2483,7 @@ class PlayoutScheduler:
         prev = self._current_event
         if not isinstance(prev, FileEvent) or self._playing_key is None:
             return
-        if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+        if self._dj_pauses_files():
             return
         if self._engine.get_state() != PlayoutState.PLAYING:
             return
@@ -3008,7 +3112,9 @@ class PlayoutScheduler:
         # engine — the DJ stream stays on air.  We've already recorded
         # the current event so the scheduled track can be picked up
         # when the DJ disconnects.
-        if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+        # RASTATIME 2026-11-19 - with the schedule running under a DJ the
+        # track starts in the unheard chain like any other (no short-circuit).
+        if self._dj_pauses_files():
             logger.info(
                 "Track %s queued — %s source active, scheduled audio held back",
                 key,
@@ -3337,6 +3443,7 @@ class PlayoutScheduler:
                 key,
                 self._switcher.current_state.value,
             )
+            self._end_file_under_dj(key, prev_event)  # 2026-11-19
             return
 
         # RASTATIME 2026-09-29 - after a file track the gate opens when
@@ -3630,6 +3737,7 @@ class PlayoutScheduler:
                 key,
                 self._switcher.current_state.value,
             )
+            self._end_file_under_dj(key, prev_event)  # 2026-11-19
             return
         # RASTATIME 2026-09-03 - EVERY scheduled line-in now runs
         # through the sounddevice/MME feeder, plain stereo included
@@ -4352,8 +4460,10 @@ class PlayoutScheduler:
 
         # If a DJ source is currently dominant, leave the engine alone —
         # the DJ audio stays on air.  Only the scheduled-event bookkeeping
-        # above still happens.
-        if self._switcher and self._switcher.current_state != SourceState.SCHEDULED:
+        # above still happens.  RASTATIME 2026-11-19 - with the schedule
+        # running under a DJ a FILE row ends in the unheard chain like any
+        # other; live items are left as before.
+        if self._dj_on_air() and (self._dj_pauses_files() or was_linein or was_webstream):
             return
 
         # RASTATIME 2026-05-29 — Phase F: linein-specific teardown.
@@ -4649,6 +4759,21 @@ class PlayoutScheduler:
         until = switcher.show_until() if hasattr(switcher, "show_until") else None
         if not until:
             return
+        # RASTATIME 2026-11-19 - schedule under a DJ: the chain kept running,
+        # nothing is paused; the last row of the ending show and the first
+        # row of the next one hand over like at any show boundary (queued
+        # ahead, cut or held by the boundary rules) - checked, not assumed.
+        if self._file_chain_in_step("show end"):
+            logger.info(
+                "Show end: the schedule kept running under the DJ - nothing paused, "
+                "the next show starts on its own timers.",
+            )
+            return
+        if self._schedule_under_dj:
+            logger.warning(
+                "Show end: the scheduled chain did not keep step under the DJ - "
+                "replacing the queue as if it were paused.",
+            )
         boundary = datetime.utcfromtimestamp(float(until))
         current = self._current_event
         if (
@@ -5004,6 +5129,25 @@ class PlayoutScheduler:
 
                 self._engine.linein_start(_stable_id_to_dshow_audio(resume_device_id))
             return
+
+        # RASTATIME 2026-11-19 - schedule under a DJ: the track kept running
+        # in the unheard chain and is on air at its position the moment the
+        # DJ arm closes; the bus replays its metadata.  Nothing to push - if
+        # the queue really is where the row says.
+        if self._file_chain_in_step("DJ off"):
+            logger.info(
+                "Resume scheduled: %r kept running under the DJ - on air at its "
+                "position, nothing pushed.",
+                self._current_event.track_title,
+            )
+            self._paused_leftover = False
+            return
+        if self._schedule_under_dj:
+            logger.warning(
+                "Resume scheduled: the scheduled chain did not keep step under the "
+                "DJ - re-entering %r with an offset.",
+                self._current_event.track_title,
+            )
 
         # FileEvent — seek into the track to catch up.
         elapsed = (now - self._current_event.start).total_seconds()

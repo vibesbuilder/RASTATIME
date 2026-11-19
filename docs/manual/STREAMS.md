@@ -382,6 +382,35 @@ connected kept the next show's opening off air.
 
 See ARCHITECTURE §23.121.
 
+#### The programme under a DJ (trial since 2026-11-19)
+
+While a DJ is on air the scheduled programme is not heard.  By default
+it also **stands still**: file tracks are only book-kept, and when the
+DJ leaves, RASTATIME re-enters the running track at the position the
+schedule has reached.
+
+With the machine setting `RASTATIME_SCHEDULE_UNDER_DJ=1` (environment
+of the service RASTATIME-PLAYOUT; a trial switch that will go away once
+the behaviour is accepted) the programme **keeps running unheard**
+under the DJ: tracks start, cross-fade and end on their rows exactly as
+without a DJ.  The moment the DJ is off air - the DJ disconnects, the
+connection stalls, the show ends - the listeners hear the programme
+where the schedule is, without a re-entry.
+
+- This applies to **files**.  A webstream or a line input that is due
+  while a DJ is on air still starts when the DJ leaves.
+- Stream title, Live Text and recordings are unaffected: under a DJ
+  they follow the DJ; when the programme returns, the title of the
+  running track is sent again.
+- Switching it on or off takes a restart of RASTATIME-PLAYOUT, which
+  restarts the audio engine once (about 12 seconds without audio) -
+  choose a quiet moment.
+- At every hand-back RASTATIME checks that the programme really is
+  where the schedule says; if it is not, it falls back to the re-entry
+  described above.
+
+See ARCHITECTURE §23.122.
+
 ---
 
 ## 4. Monitoring stream health

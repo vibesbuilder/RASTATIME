@@ -798,6 +798,15 @@ def _render_rastatime_liq(stream_outputs: list[dict]) -> bool:
 LOCAL_OUTPUT_ADAPTIVE_ENV = "RASTATIME_LIQUIDSOAP_LOCAL_OUTPUT_ADAPTIVE"
 
 
+def _schedule_under_dj_enabled() -> bool:
+    """RASTATIME 2026-11-19 - trial switch RASTATIME_SCHEDULE_UNDER_DJ."""
+    from rastatime_playout.liquidsoap_config import (  # noqa: PLC0415
+        schedule_under_dj_enabled,
+    )
+
+    return schedule_under_dj_enabled()
+
+
 def _local_output_adaptive_enabled() -> bool:
     """
     RASTATIME 2026-09-14: the monitor bridge compensates the drift between
@@ -886,6 +895,7 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
         icecast_mounts_without_fallback,
         read_hourly_recording_config_from_db,
         read_show_recording_config_from_db,
+        schedule_under_dj_enabled,
         write_rastatime_liq,
         write_standby_liq,
     )
@@ -1086,6 +1096,14 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
         icy.station_name,
     )
 
+    # RASTATIME 2026-11-19 - trial switch: the schedule keeps running under a DJ
+    under_dj = schedule_under_dj_enabled()
+    if under_dj:
+        logger.info(
+            "Schedule under a DJ: on (RASTATIME_SCHEDULE_UNDER_DJ) - a silent consumer "
+            "keeps the scheduled chain running while a DJ is on air."
+        )
+
     try:
         changed = write_rastatime_liq(
             config_path,
@@ -1134,6 +1152,7 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
             loudness_limiter_ceiling=loudness_ceiling,
             # RASTATIME 2026-10-02 - output processing (Stereo Tool), optional
             stereotool=stereotool,
+            schedule_under_dj=under_dj,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(
@@ -1497,6 +1516,9 @@ def main() -> None:
         linein_icecast_credentials=(
             _local_icecast_source_credentials(_read_stream_outputs()) if django_ok else None
         ),
+        # RASTATIME 2026-11-19 - trial switch: file rows are not held back
+        # under a DJ (the rendered script keeps the chain running)
+        schedule_under_dj=_schedule_under_dj_enabled(),
     )
     logger.info(
         "Webstream watchdog: inside Liquidsoap (frame counter, rendered into rastatime.liq)."

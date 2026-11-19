@@ -357,6 +357,37 @@ suivante de passer à l'antenne.
 
 Voir ARCHITECTURE §23.121.
 
+#### Le programme sous un DJ (à l'essai depuis le 2026-11-19)
+
+Tant qu'un DJ est à l'antenne, le programme planifié n'est pas
+entendu.  Par défaut il est aussi **à l'arrêt** : les fichiers sont
+seulement enregistrés dans le suivi, et quand le DJ part, RASTATIME
+reprend le titre en cours à la position atteinte par la grille.
+
+Avec le réglage machine `RASTATIME_SCHEDULE_UNDER_DJ=1` (environnement
+du service RASTATIME-PLAYOUT ; un interrupteur d'essai qui disparaîtra
+une fois le comportement validé), le programme **continue de tourner
+sans être entendu** sous le DJ : les titres démarrent, s'enchaînent en
+fondu et se terminent sur leurs lignes exactement comme sans DJ.  Dès
+que le DJ n'est plus à l'antenne - il se déconnecte, la connexion se
+fige, l'émission se termine -, les auditeurs entendent le programme là
+où en est la grille, sans reprise.
+
+- Cela vaut pour les **fichiers**.  Un flux web ou une entrée ligne
+  prévus pendant qu'un DJ est à l'antenne démarrent toujours au départ
+  du DJ.
+- Le titre du flux, le Live Text et les enregistrements ne sont pas
+  concernés : sous un DJ ils suivent le DJ ; au retour du programme, le
+  titre du morceau en cours est renvoyé.
+- L'activation ou la désactivation demande un redémarrage de
+  RASTATIME-PLAYOUT, qui redémarre une fois le moteur audio (environ 12
+  secondes sans son) - choisissez un moment calme.
+- À chaque retour au programme, RASTATIME vérifie que le programme est
+  bien là où la grille l'attend ; sinon, la reprise décrite ci-dessus
+  s'applique.
+
+Voir ARCHITECTURE §23.122.
+
 ---
 
 ## 4. Surveiller la santé des streams
