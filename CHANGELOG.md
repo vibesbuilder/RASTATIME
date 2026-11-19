@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   2.4.6 geprüft (`--check`).  42 neue Tests, Suite 1027 bestanden.  Manual STREAMS ×4,
   ARCHITECTURE 0.153 (§23.122).  Noch nicht eingeschaltet - Einschalten in einem ruhigen
   Fenster (einmaliger Liquidsoap-Neustart) und Abnahme mit einer Testsendung stehen aus.
+  `e99ac420`.
 
 ### Fixed
 
