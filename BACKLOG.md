@@ -8679,7 +8679,7 @@ Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden (erfüllt
 (Stufe 1) gebaut wird - dann steht kein Titel mehr in der
 Warteschlange.
 
-### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); Schalter noch aus, Einschalten + Abnahme offen
+### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); eingeschaltet 2026-11-19 11:58, Abnahme offen
 Grundsätzlichere Variante: die Sendeplan-Kette auch unter einem DJ
 ziehen (stummer zweiter Abnehmer in Liquidsoap), sodass Titel,
 Vorab-Einreihen und Übergänge unhörbar im Takt der Zeilen
@@ -8744,8 +8744,12 @@ Schalter Sendeskript byte-gleich, Verhalten unverändert.  Nachbildung
 mit echtem Harbor-Eingang und gerendertem Bus-Block
 (`under_dj_real_probe.py`): Show-DJ über das Sendungsende, früher
 Login, Master-DJ - alle sauber.  42 Tests.
+Eingeschaltet 2026-11-19 11:58:42 (PLAYOUT-Neustart durch den Operator):
+Sendeskript mit dem stummen Abnehmer gerendert, Liquidsoap 11:58:46 neu
+gestartet (Einstieg in die laufende Zeile nach 4,1 s), Stundenwechsel
+12:00 und Webstream 12:01 normal.
 Offen:
-- Einschalten durch den Operator in einem ruhigen Fenster: Variable an
+- (erledigt) Einschalten durch den Operator in einem ruhigen Fenster: Variable an
   den vorhandenen Block von `nssm get RASTATIME-PLAYOUT
   AppEnvironmentExtra` anhängen (`nssm set` ersetzt den ganzen Block),
   PLAYOUT neu starten - Liquidsoap startet einmal mit (ca. 12 s).
