@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ungeprüft durchgelassen), dekodiert wird nur der Ton.  Stichprobe vor dem Bau: 400
   Bibliotheksdateien, keine mehr als 0,5 s kürzer als angegeben.  Der Bestand wird nicht
   nachgeprüft (eigener BACKLOG-Punkt).  Wirksam nach einem Neustart von RASTATIME-ANALYZER;
-  Manual LIBRARY ×4, ARCHITECTURE 0.154 (§23.123).
+  Manual LIBRARY ×4, ARCHITECTURE 0.154 (§23.123).  `94c6b503`.
 
 - **Sendeplan läuft unter dem DJ weiter - Stufe 1, Probeschalter (2026-11-19, Go des
   Operators)** - Bisher stand die Sendeplan-Kette, solange ein DJ auf Sendung war: der Bus
