@@ -80,6 +80,24 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 💡 Kalender als PDF exportieren (Monat / Woche / Tag) - Optionen 2026-11-21, wartet auf Entscheidung
+
+Wunsch des Operators 2026-11-21: ein Knopf über dem Kalender-Raster links von Day/Week/Month,
+der die aktuelle Ansicht als PDF ausgibt.  Variante 1 wie Kalender bzw. Widget Multi-View
+Schedule, Variante 2 der Tag als Liste wie die Widgets Weekly Schedule / On Air Today.
+Befund: Kalender ist FullCalendar 6 (Knopf als eigener Toolbar-Knopf machbar); pdfmake 0.1.70
+samt Schriften liegt schon im Projekt (Playout History, direkter Download, Vektortext); 24-35
+Sendungen pro Tag (week-info der nächsten 14 Tage) - ein Monatsraster mit allen Sendungen ist
+auf A4 nicht lesbar, der Bildschirm kürzt dort selbst.
+**Technik-Optionen:** (A) Druckansicht des Browsers mit eigenem hellen Print-CSS (1:1, aber
+PDF über den Druckdialog, Raster-Höhe und dunkles Theme per CSS); (B) pdfmake im Browser
+(direkter Download, Layout aus den Kalenderdaten selbst gebaut); (C) Bildschirmfoto als PDF
+(neue Bibliotheken, Rasterbild) - nein; (D) serverseitig (Edge headless, dompdf, reportlab) -
+neuer Prozess oder neue Abhängigkeit auf der Sendemaschine - nein.
+**Vorschlag:** B in zwei Stufen - Stufe 1 Listen (Tag, Woche je Tag, Monat je Tag, ~1 Tag),
+Stufe 2 Raster für Woche und Tag wie Multi-View (+1,5-2 Tage), Monatsraster nur gekürzt.
+Vorbedingungen: Go je Stufe; offen: Spalten der Liste, Papierformat (A4 quer?).
+
 ### 🟡 Pegel der DJ-Eingänge (Master Source / Show Source) - Evaluierung 2026-11-18, wartet auf Go
 
 Befund 2026-11-18 (Operator: eingewählte DJs etwa -10 dB, Sendeplan etwa -20 dB): Die R128-Anpassung
