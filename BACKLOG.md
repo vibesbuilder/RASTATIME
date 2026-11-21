@@ -80,6 +80,28 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 💡 Firewall-Wächter sperrt nach „Unblock" und nach erfolgreichem Login erneut - IDEA (Befund 2026-11-21 Mittag)
+
+Ein DJ (Show Source) wurde viermal nach 1-3 Minuten getrennt.  Ablauf: sein Encoder schickte
+um 12:10 und 12:48 ein falsches Passwort und wiederholte sofort - je fünf Ablehnungen in rund
+2 s, also sofort die Login-Bremse in PLAYOUT (5 in 10 min, 15 min).  Der Firewall-Wächter
+(`infra/scripts/rt-firewall-watch.ps1`, alle 5 min, Rückblick 60 min, ab 5 × „DJ bad password"
+eine Windows-Firewall-Regel für 24 h) machte daraus um 12:12 eine Sperre.  Nach jedem „Unblock"
+unter System Status (räumt alle Ebenen) verband sich der DJ mit dem richtigen Passwort - und
+der nächste Wächterlauf zählte dieselben alten Fehlversuche (noch im 60-min-Fenster, x10)
+erneut und sperrte wieder; die laufende Verbindung riss 5-6 s danach ab (Liquidsoap „Timed out
+after waiting for 5 s": 12:52:08 → 12:52:13, 12:57:06 → 12:57:12, 13:02:06 → 13:02:12).  Erst
+der Eintrag in die Allowlist (13:06) beendete die Schleife (13:07:06 „skipped").
+**Lücken:** der Wächter kennt weder das „Unblock" des Operators noch einen erfolgreichen Login
+nach den Fehlversuchen; 24 h Firewall für fünf Fehlversuche in 2 s (ein Tippfehler mit
+schnellem Encoder-Retry) ist härter als die PLAYOUT-Bremse.
+**Mögliche Schritte (keiner beauftragt):** (a) „Unblock" merkt sich einen Zeitpunkt, der Wächter
+zählt nur Fehlversuche danach; (b) der Wächter zählt für eine Adresse nur Fehlversuche nach
+ihrem letzten erfolgreichen DJ-Login; (c) DJ-Fehlpasswörter ganz der PLAYOUT-Bremse überlassen
+oder milder (höhere Schwelle, kürzere Sperre); (d) PLAYOUT zählt einen Retry-Burst desselben
+Encoders als einen Fehlversuch.
+Vorbedingung: Evaluierung und Go des Operators.
+
 ### ✅ Kalender als PDF exportieren (Monat / Woche / Tag) - GEBAUT 2026-11-21 (Go B in zwei Stufen, Zeit + Sendung, A4 quer, kein Monatsraster; §23.124)
 
 Wunsch des Operators 2026-11-21: ein Knopf über dem Kalender-Raster links von Day/Week/Month,
