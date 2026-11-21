@@ -45,7 +45,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Stelle (100,7 s gegen 100,8 s), kein Pegelloch.  Stufe 1 damit abgenommen; die Probezeit
   mit Schalter läuft weiter.  `e99ac420`.
 
+### Changed
+
+- **Eigenes Symbol für „Duplicate Playlist" / „Duplicate Smartblock" (2026-11-21, Wunsch des
+  Operators)** - Der Befehl im Kontextmenü der Bibliothek zeigte den Stift von „Edit...".
+  Jetzt zeigt er zwei überlappende Blätter mit einem Plus (neues SVG im Stil der übrigen
+  RASTATIME-Menüsymbole).  Das vorhandene Kopier-Symbol kam nicht in Frage, weil es schon
+  „Add to Playlist" kennzeichnet.  `a2bc9f6f`.
+
 ### Fixed
+
+- **Datums-Popup: die Monats-Überschrift war schmaler als der Monatskalender (2026-11-21,
+  Meldung des Operators, New/Edit Show)** - Die allgemeinen Tabellenregeln (`thead tr th`
+  16 px, `tr td` 12 px) greifen auch im jQuery-UI-Datepicker, darum war die Monatstabelle
+  (~208 px) breiter als das Popup mit seinen festen 17em (187 px) und ragte rechts über die
+  Überschrift hinaus.  Das Popup passt sich jetzt der Tabelle an (`width: auto`, mindestens
+  17em); Überschrift und Kalender sind gleich breit (207,9 px, gemessen im Sendungsdialog
+  und unter Now Playing).  Gilt für alle Datums-Popups.  `34d7d4af`.
 
 - **Show-Source-Ende: der pausierte Titel kam zurück (2026-11-18, erste Abnahme 10:00 nicht
   bestanden)** - Das Abschalten und Trennen des DJs war sekundengenau (Wechsel 09:59:59,5,
