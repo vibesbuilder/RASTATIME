@@ -590,8 +590,7 @@ final class LocaleController extends Zend_Controller_Action
             'Try it now' => _('Try it now'),
             // RASTATIME 2026-11-14 - My Podcast list column
             'Published until' => _('Published until'),
-            // RASTATIME 2026-11-21 - calendar "PDF" button (schedule-fc6.js, calendar-pdf.js)
-            'PDF' => _('PDF'),
+            // RASTATIME 2026-11-21 - calendar export button (schedule-fc6.js, calendar-pdf.js)
             'Export the current view as PDF' => _('Export the current view as PDF'),
             'List' => _('List'),
             'Calendar' => _('Calendar'),

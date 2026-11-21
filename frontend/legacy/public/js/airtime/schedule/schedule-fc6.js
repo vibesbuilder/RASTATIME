@@ -301,12 +301,14 @@ function buildScheduleFc6(data) {
     views: {
       timeGridWeek: { titleFormat: fc6WeekTitle },
     },
-    // RASTATIME 2026-11-21 - "PDF" left of Day / Week / Month: the click
-    // opens the List / Calendar menu of calendar-pdf.js (a delegated
-    // $.contextMenu on .fc-rtPdf-button), so the button's own handler is empty.
+    // RASTATIME 2026-11-21 - export button left of Day / Week / Month: the
+    // click opens the List / Calendar menu of calendar-pdf.js (a delegated
+    // $.contextMenu on .fc-rtPdf-button), so the button's own handler is
+    // empty.  No text: it shows an export icon (schedule-fc6.css, operator
+    // 2026-11-21); the hint is its tooltip and accessible name.
     customButtons: {
       rtPdf: {
-        text: $.i18n._("PDF"),
+        text: "",
         hint: $.i18n._("Export the current view as PDF"),
         click: function () {},
       },

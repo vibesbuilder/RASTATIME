@@ -64,7 +64,8 @@ et non la portion qui tombe sur ce jour.
 
 ### Exporter la vue en PDF (depuis le 21/11/2026)
 
-Le bouton **PDF** à gauche de *Day / Week / Month* exporte la période
+Le bouton d'export à gauche de *Day / Week / Month* (une page avec une
+flèche, info-bulle *Export the current view as PDF*) exporte la période
 affichée (A4 paysage) et propose deux mises en page :
 
 | Mise en page | Vue jour | Vue semaine | Vue mois |

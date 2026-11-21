@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Kalender-Ansicht als PDF (2026-11-21, Go des Operators: pdfmake im Browser, zwei Stufen,
-  Zeit + Sendung, A4 quer, kein Monatsraster)** - Neue Schaltfläche **PDF** im Kalender links
+  Zeit + Sendung, A4 quer, kein Monatsraster)** - Neue Export-Schaltfläche (Symbol Blatt mit Pfeil;
+  noch am selben Tag statt der Beschriftung „PDF", Wunsch des Operators) im Kalender links
   von Day / Week / Month mit zwei Layouts: **List** (jede Ansicht; eine Seite pro Tag, Zeit von
   - bis und Sendung mit der Farbe der Sendung) und **Calendar** (Tag und Woche; Zeitraster wie
   im Kalender und im Multi-View-Widget - die Woche mit sieben Tagen auf einer Seite, der Tag in

@@ -103,6 +103,21 @@
   border-color: #2a2a2a;
 }
 
+/* RASTATIME 2026-11-21 - the PDF export button (calendar-pdf.js) shows an
+   export icon instead of the text "PDF" (operator).  A mask in the button's
+   text colour, on a pseudo element - the button rules above set the
+   `background` shorthand, which would drop a background image. */
+#schedule_calendar .fc-rtPdf-button::before {
+  content: "";
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  vertical-align: -3px;
+  background-color: currentColor;
+  -webkit-mask: url(images/icon_export.svg) center / contain no-repeat;
+  mask: url(images/icon_export.svg) center / contain no-repeat;
+}
+
 /* ---- day-of-week header row (the "Mon 6/1" grey bar) ---- */
 #schedule_calendar .fc-col-header-cell {
   background: linear-gradient(#606060, #4e4e4e);

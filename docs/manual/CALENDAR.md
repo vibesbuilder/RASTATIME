@@ -59,7 +59,8 @@ time (e.g. *23:08 - 0:08*), not the part that falls on that day.
 
 ### Exporting the view as PDF (since 2026-11-21)
 
-The **PDF** button left of *Day / Week / Month* exports the period
+The export button left of *Day / Week / Month* (a page with an arrow,
+tooltip *Export the current view as PDF*) exports the period
 you are looking at (A4 landscape) and offers two layouts:
 
 | Layout | Day view | Week view | Month view |

@@ -65,7 +65,8 @@ des jeweiligen Tages.
 
 ### Ansicht als PDF exportieren (seit 21.11.2026)
 
-Die Schaltfläche **PDF** links von *Day / Week / Month* exportiert den
+Die Export-Schaltfläche links von *Day / Week / Month* (ein Blatt mit
+einem Pfeil, Tooltip *Export the current view as PDF*) exportiert den
 angezeigten Zeitraum (A4 quer) und bietet zwei Layouts:
 
 | Layout | Tagesansicht | Wochenansicht | Monatsansicht |

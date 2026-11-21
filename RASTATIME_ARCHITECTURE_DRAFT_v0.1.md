@@ -5,7 +5,7 @@ Draft version: 0.155
 Date: 2026-11-21
 
 > **Revision history**
-> - **0.155 (2026-11-21)** - The calendar view as PDF (§23.124): a "PDF" button in the FC6
+> - **0.155 (2026-11-21)** - The calendar view as PDF (§23.124): an export button in the FC6
 >   toolbar exports the current view as a list (every view) or a time grid (day / week),
 >   A4 landscape, built in the browser with the vendored pdfmake, loaded on first use.
 > - **0.154 (2026-11-21)** - The import refuses damaged or cut-short files (§23.123): the
@@ -11536,7 +11536,11 @@ broadcast machine.  Decision (operator Go 2026-11-21): B in two stages,
 columns time + show, A4 landscape, no month grid.
 
 **Build.**
-- `schedule-fc6.js`: an FC6 custom button `rtPdf` ("PDF", hint "Export
+- `schedule-fc6.js`: an FC6 custom button `rtPdf` (no text - an export
+  icon, `images/icon_export.svg`, as a CSS mask in the button colour on
+  `::before`, since the button rules set the `background` shorthand; the
+  first build said "PDF", changed the same day at the operator's request;
+  hint "Export
   the current view as PDF") in the right toolbar chunk before the view
   buttons.  Its own click handler is empty: `calendar-pdf.js` registers a
   delegated `$.contextMenu` (trigger left, the calendar menu's class) on
@@ -11566,7 +11570,7 @@ columns time + show, A4 landscape, no month grid.
   controller hands their `Assets::url()` (cache-busted) to the page as
   `rtPdfLibs`.  A failed load shows "The PDF could not be created." and the
   next click tries again.
-- New strings (PDF, the hint, List, Calendar, the error) in the JS
+- New strings (the hint, List, Calendar, the error) in the JS
   translation table and the three .po / .mo catalogues; they show
   translated after the next Apache restart (gettext caches the .mo per
   process).

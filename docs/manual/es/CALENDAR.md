@@ -36,7 +36,9 @@ porción que cae en ese día.
 
 ### Exportar la vista como PDF (desde el 21/11/2026)
 
-El botón **PDF** a la izquierda de *Day / Week / Month* exporta el
+El botón de exportar a la izquierda de *Day / Week / Month* (una hoja
+con una flecha, información sobre herramientas *Export the current view
+as PDF*) exporta el
 período que se muestra (A4 apaisado) y ofrece dos diseños:
 
 | Diseño | Vista de día | Vista de semana | Vista de mes |
