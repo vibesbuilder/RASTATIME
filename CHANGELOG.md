@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (um ein Datum, Wochenbeginn aus Settings → General) oder beliebigem Zeitraum (höchstens 92
   Tage); die Liste holt die Sendungen dafür aus dem Kalender-Feed, auch außerhalb der Ansicht.
   Die neuen Texte sind nach dem nächsten Apache-Neustart übersetzt.  Manual CALENDAR ×4, ARCHITECTURE 0.155
-  (§23.124).  `c0ce35e8`, Symbol `bf77f8b7`.
+  (§23.124).  `c0ce35e8`, Symbol `bf77f8b7`, Dialog `3e245db7`.
 
 - **Import weist beschädigte und abgeschnittene Dateien ab (2026-11-21, Go des Operators:
   ablehnen)** - Zwei Dead-Air-Alarme kamen von Bibliotheksdateien, die lange vor ihrem
