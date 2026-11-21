@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   erst beim ersten Export geladen.  Live geprüft: Wochen- und Tagesraster, Tagesliste,
   Monatsliste (30 Seiten), Menü im Monat nur mit List, keine Konsolenfehler.  Die neuen Texte
   sind nach dem nächsten Apache-Neustart übersetzt.  Manual CALENDAR ×4, ARCHITECTURE 0.155
-  (§23.124).
+  (§23.124).  `c0ce35e8`.
 
 - **Import weist beschädigte und abgeschnittene Dateien ab (2026-11-21, Go des Operators:
   ablehnen)** - Zwei Dead-Air-Alarme kamen von Bibliotheksdateien, die lange vor ihrem
