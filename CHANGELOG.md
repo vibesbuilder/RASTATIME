@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Import weist beschädigte und abgeschnittene Dateien ab (2026-11-21, Go des Operators:
+  ablehnen)** - Zwei Dead-Air-Alarme kamen von Bibliotheksdateien, die lange vor ihrem
+  angegebenen Ende aufhören (2026-11-18 eine M4A, 41 s Stille; 2026-11-21 eine abgeschnittene
+  MP3, 198 s Stille).  Die Abspielprobe des Analyzers dekodierte zwar jede Datei ganz, wertete
+  aber nur den Exit-Code aus - Dekoder-Meldungen sind eine Warnung, eine an einer Frame-Grenze
+  abgeschnittene Datei meldet gar nichts.  Jetzt liefert derselbe Dekodier-Lauf die dekodierte
+  Länge (`-progress`); fehlen mehr als 2 s und mehr als 1 % der angegebenen Länge, scheitert
+  der Import mit dem Grund „The file could not be played: it decodes only 87.9 of its 293.4 s
+  (damaged or cut short)" in der Failed-Liste der Upload-Seite, das Original bleibt in
+  `organize/`.  Der Timeout der Probe wächst mit der Länge (vorher fest 120 s, danach
+  ungeprüft durchgelassen), dekodiert wird nur der Ton.  Stichprobe vor dem Bau: 400
+  Bibliotheksdateien, keine mehr als 0,5 s kürzer als angegeben.  Der Bestand wird nicht
+  nachgeprüft (eigener BACKLOG-Punkt).  Wirksam nach einem Neustart von RASTATIME-ANALYZER;
+  Manual LIBRARY ×4, ARCHITECTURE 0.154 (§23.123).
+
 - **Sendeplan läuft unter dem DJ weiter - Stufe 1, Probeschalter (2026-11-19, Go des
   Operators)** - Bisher stand die Sendeplan-Kette, solange ein DJ auf Sendung war: der Bus
   zieht einen nicht gewählten Arm nicht, der Titel vom Einstieg blieb pausiert in der

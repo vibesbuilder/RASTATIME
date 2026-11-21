@@ -814,6 +814,18 @@ Vérifiez le badge de statut de téléversement :
 > WAV avec un bloc de tags ID3 devant son en-tête RIFF est dégagé et
 > importé.
 
+> **Les fichiers endommagés ou tronqués sont refusés (depuis le
+> 21/11/2026).**  L'analyzer décode entièrement chaque fichier avant de le
+> classer.  Si le son s'arrête plus de 2 secondes et plus de 1 % avant la
+> durée que le fichier annonce (par exemple un téléchargement
+> interrompu), l'import échoue avec la raison *« The file could not be
+> played: it decodes only 87.9 of its 293.4 s (damaged or cut short) »*.
+> Sinon, un tel fichier passerait à l'antenne, s'arrêterait trop tôt et
+> laisserait un silence jusqu'au début prévu de l'élément suivant.
+> Remplacez-le par une copie complète.  Les petits défauts tout à la fin
+> d'un fichier (le cas d'avertissement ci-dessus) restent acceptés.  Les
+> fichiers déjà présents dans la bibliothèque ne sont pas revérifiés.
+
 ### "J'ai téléversé un fichier WAV et la bibliothèque affiche un MP3."
 
 C'est voulu : les fichiers sans perte sont convertis en MP3 320 kbit/s

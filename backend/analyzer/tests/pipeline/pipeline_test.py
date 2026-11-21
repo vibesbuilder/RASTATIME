@@ -339,3 +339,32 @@ def test_tag_type_can_switch_the_loudness_analysis_back_on(
     )
     assert metadata["track_type_code"] == "music"
     assert calls == ["replaygain", "loudness"]
+
+
+@requires_ffmpeg
+def test_truncated_file_is_refused_with_its_reason(tmp_path: Path, dest_dir: Path):
+    # RASTATIME 2026-11-21 - a file that decodes well short of its declared
+    # length is a failed import; the reason reaches the Upload page and the
+    # file stays where it was (nothing filed in the library).
+    from rastatime_analyzer.pipeline.analyze_playability import TruncatedFileError
+
+    from ._synth import sine
+
+    src_dir = tmp_path / "organize"
+    src_dir.mkdir()
+    full = sine(tmp_path / "full.mp3", "-c:a", "libmp3lame", "-b:a", "128k", seconds=30)
+    src = src_dir / "Cut.mp3"
+    data = full.read_bytes()
+    src.write_bytes(data[: len(data) * 4 // 10])
+    queue = Queue()
+
+    with pytest.raises(TruncatedFileError):
+        Pipeline.run_analysis(queue, str(src), str(dest_dir), "Cut.mp3", PipelineOptions())
+
+    record = queue.get_nowait()
+    assert record["import_status"] == 2
+    assert record["comments"].startswith("The file could not be played: it decodes only")
+    assert "of its 30.0 s (damaged or cut short)" in record["comments"]
+    assert queue.empty()
+    assert [p.name for p in src_dir.iterdir()] == ["Cut.mp3"]
+    assert not any(dest_dir.rglob("*.mp3"))

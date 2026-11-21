@@ -799,6 +799,18 @@ Prüfen Sie den Upload-Status-Badge:
 > Beschädigung wird automatisch repariert: eine WAV-Datei mit einem
 > ID3-Tag-Block vor ihrem RIFF-Kopf wird freigeschnitten und importiert.
 
+> **Beschädigte oder abgeschnittene Dateien werden abgewiesen (seit
+> 21.11.2026).**  Der Analyzer dekodiert jede Datei vollständig, bevor er
+> sie ablegt.  Endet der Ton mehr als 2 Sekunden und mehr als 1 % vor der
+> Länge, die die Datei angibt (zum Beispiel ein abgebrochener Download),
+> scheitert der Import mit dem Grund *„The file could not be played: it
+> decodes only 87.9 of its 293.4 s (damaged or cut short)"*.  Eine solche
+> Datei würde sonst auf Sendung gehen, zu früh enden und bis zum
+> planmäßigen Start des nächsten Elements Stille hinterlassen.  Ersetzen
+> Sie sie durch eine vollständige Kopie.  Kleine Fehler ganz am Ende einer
+> Datei (der Warnungsfall oben) werden weiterhin angenommen.  Dateien, die
+> schon in der Bibliothek sind, werden nicht erneut geprüft.
+
 ### "Ich habe eine WAV-Datei hochgeladen, und die Bibliothek zeigt eine MP3."
 
 Das ist gewollt: Verlustfreie Dateien werden beim Import in MP3 mit

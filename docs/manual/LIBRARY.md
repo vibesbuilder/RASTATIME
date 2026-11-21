@@ -739,6 +739,17 @@ Check the upload status badge:
 > damage is repaired automatically: a WAV file with an ID3 tag block in
 > front of its RIFF header is cut free and imported.
 
+> **Damaged or cut-short files are refused (since 2026-11-21).**  The
+> analyzer decodes every file completely before it files it.  When the
+> audio ends more than 2 seconds and more than 1 % before the length the
+> file declares (a download that stopped half-way, for example), the
+> import fails with the reason *"The file could not be played: it decodes
+> only 87.9 of its 293.4 s (damaged or cut short)"*.  Such a file would
+> otherwise go on air, stop early and leave silence until the next item
+> starts at its scheduled time.  Replace it with a complete copy.  Small
+> problems at the very end of a file (the warning case above) are still
+> accepted.  Files already in the library are not checked again.
+
 ### "I uploaded a WAV file and the library shows an MP3."
 
 That is intended: lossless files are converted to MP3 320 kbps on

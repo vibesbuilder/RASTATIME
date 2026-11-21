@@ -8621,7 +8621,8 @@ Mögliche Schritte (keiner beauftragt):
   etwa 2 h Rechenzeit; die 651 M4A in ~3 min) - lesend, als Bericht.
 - Import: dieselbe Prüfung im Analyzer; zu kurze Dateien abweisen oder
   Länge und Cue-Out auf das Dekodierbare setzen.
-  **Evaluierung 2026-11-21 - Empfehlung Go, wartet auf Entscheidung:**
+  ✅ **GEBAUT 2026-11-21 (Go: ablehnen, §23.123; wirksam nach Analyzer-Neustart).**
+  **Evaluierung 2026-11-21:**
   die Abspielprobe liefert die dekodierte Länge ohne zweiten Durchlauf
   (`-progress`); fehlen mehr als 2 s und mehr als 1 % der angegebenen
   Länge, wird der Import abgelehnt (Grund in der Failed-Liste, Original

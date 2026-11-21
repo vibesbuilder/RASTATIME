@@ -687,6 +687,18 @@ Verifique la insignia de estado de subida:
 > automáticamente: un archivo WAV con un bloque de etiquetas ID3 delante de
 > su cabecera RIFF se recorta y se importa.
 
+> **Los archivos dañados o cortados se rechazan (desde el 21/11/2026).**
+> El analyzer decodifica cada archivo por completo antes de archivarlo.  Si
+> el audio termina más de 2 segundos y más de un 1 % antes de la duración
+> que declara el archivo (por ejemplo, una descarga interrumpida), la
+> importación falla con el motivo *«The file could not be played: it
+> decodes only 87.9 of its 293.4 s (damaged or cut short)»*.  De lo
+> contrario, un archivo así saldría al aire, terminaría antes de tiempo y
+> dejaría silencio hasta que el siguiente elemento empiece a su hora.
+> Sustitúyalo por una copia completa.  Los pequeños fallos justo al final
+> de un archivo (el caso de aviso de arriba) se siguen aceptando.  Los
+> archivos que ya están en la biblioteca no se vuelven a comprobar.
+
 ### "Subí un archivo WAV y la biblioteca muestra un MP3."
 
 Es lo previsto: los archivos sin pérdida se convierten a MP3 de

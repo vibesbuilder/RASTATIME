@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.153
-Date: 2026-11-19
+Draft version: 0.154
+Date: 2026-11-21
 
 > **Revision history**
+> - **0.154 (2026-11-21)** - The import refuses damaged or cut-short files (§23.123): the
+>   analyzer's playability step compares the decoded length (same decode run, `-progress`)
+>   with the declared length and fails the import when more than 2 s and more than 1 % are
+>   missing; its timeout grows with the length.  Analyzer only, no schema change.
 > - **0.153 (2026-11-19)** - The schedule keeps running under a DJ, stage 1 behind the trial
 >   switch `RASTATIME_SCHEDULE_UNDER_DJ` (§23.122): a silent second consumer in the rendered
 >   script pulls the scheduled chain while a DJ arm holds the bus; PLAYOUT no longer holds
@@ -11443,3 +11447,70 @@ Liquidsoap restart (about 12 s).  Rollback: remove the variable and
 restart PLAYOUT (the script goes back to the byte-identical one,
 Liquidsoap restarts once more); code rollback `git revert`, tag
 `live-2026-11-19`.
+
+### 23.123 The Import Refuses Damaged or Cut-Short Files (2026-11-21)
+
+**Trigger.**  Two dead-air alarms from library files that stop decoding
+long before their declared end: 2026-11-18 00:58 a damaged M4A (218.5 s
+declared, every AAC frame after 165.7 s invalid, 41 s of silence) and
+2026-11-21 00:08 a truncated MP3 (293.4 s in its header, 2.2 MB instead
+of ~7 MB, decodable 87.9 s, 198 s of silence).  The playout trusts the
+length the analyzer stored (cue-out = declared length), so when the
+audio ends early the queue is empty until the next row is queued ahead
+of its own start time.  Liquidsoap logs it as `End of track reached at
+X before cue-out point at Y`.
+
+**Finding.**  Both files passed the import.  `analyze_playability`
+(§ADR-002 follow-up, 2026-05-14) already decoded every file completely
+(`ffmpeg -v error -i <file> -f null -`) but judged only the exit code:
+decoder messages are a soft warning (they are common and harmless at
+the very end of many MP3s - 37 of a sample of 400 library files print
+them and decode fully), and a file cut at a frame boundary prints
+nothing at all.  The decoded length was never compared with the
+declared one (`length_seconds`, ffprobe, set by `analyze_duration`).
+
+**Decision (operator Go 2026-11-21, variant "refuse").**  The same
+decode run now reports its progress (`-progress pipe:1`, highest
+`out_time_us`).  When the audio ends more than `TRUNCATION_TOLERANCE_S`
+(2 s) AND more than `TRUNCATION_TOLERANCE_RATIO` (1 %) of the declared
+length early, the step raises `TruncatedFileError`, a subclass of
+`UnplayableFileError`.  The pipeline's existing failure path (§23.75)
+does the rest: the import fails with the reason *"The file could not be
+played: it decodes only 87.9 of its 293.4 s (damaged or cut short)"* on
+the Upload page's Failed rows, the original stays in `organize/`
+(Download / Clear), nothing is filed.  Variant b (import with the
+decodable length and Disabled) was not chosen: a song that stops in the
+middle is of no use on air.
+
+**Details.**
+- The decode runs on the audio only (`-vn`): an embedded cover is not
+  played either, and a damaged cover picture no longer adds decoder
+  messages.  Below-normal priority like the other import tools.
+- The timeout was a fixed 120 s, after which the file went through
+  unchecked; it is now `max(120 s, 0.5 × declared length)`.
+- Fail-open as before: no ffmpeg, a timeout, no declared length or no
+  progress output -> no comparison (logged), the import goes on.
+- A file that decodes LONGER than declared is fine (an estimated length
+  of a VBR MP3 without a header is often a little short: up to 0.66 s
+  in the sample).
+- Sample before the decision: 400 random library files (394 MP3, 6
+  M4A), none decoded more than 0.5 s short of its declared length; both
+  known damaged files would have been refused.
+
+**Not covered.**  Files already in the library (25,335) are not checked
+again - a one-off library scan with the same functions is a separate
+backlog item, as is the playout starting the next row at once when a
+track ends well before its cue-out.
+
+**Tests.**  `analyze_playability_test.py` with synthetic files: a full
+and a 40 %-cut MP3, a 60 %-cut M4A, a 0.5 % shortfall (accepted),
+garbage after the audio (accepted), a VBR MP3 without a Xing header
+(accepted), the tolerance table including both real cases, the
+progress parser; `pipeline_test.py` checks the failure record (reason
+text, status 2) and that nothing is filed.
+
+**Risk.**  Low.  Analyzer only; the broadcast path is not touched and
+the change takes effect with a restart of RASTATIME-ANALYZER (no air
+gap).  Failure mode: a good file refused - it stays in `organize/`, the
+Failed row names the lengths.  Rollback: `git revert` and an analyzer
+restart; tag `live-2026-11-21b`.
