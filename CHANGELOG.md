@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   langsame Dateien landen in einem CSV-Bericht (`logs/damaged-files-DATUM.csv`); geändert wird
   nichts, die Entscheidung je Datei bleibt beim Operator.  Etwa 50 min für 25.336 Dateien auf
   einem Kern mit niedriger Priorität, `--resume` nach einer Unterbrechung.  Manual LIBRARY ×4,
-  ARCHITECTURE 0.158 (§23.127).
+  ARCHITECTURE 0.158 (§23.127).  `086f972e`.
 
 - **Kalender-Ansicht als PDF (2026-11-21, Go des Operators: pdfmake im Browser, zwei Stufen,
   Zeit + Sendung, A4 quer, kein Monatsraster)** - Neue Export-Schaltfläche (Symbol Blatt mit Pfeil;
