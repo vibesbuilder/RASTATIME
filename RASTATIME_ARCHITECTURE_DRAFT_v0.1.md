@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.156
+Draft version: 0.157
 Date: 2026-11-21
 
 > **Revision history**
+> - **0.157 (2026-11-21)** - A live row that ends under a DJ releases its source (§23.126):
+>   `_on_stop` no longer leaves a webstream / line-in open while a DJ is on air.
 > - **0.156 (2026-11-21)** - The firewall watcher honours an Unblock and a successful DJ login
 >   (§23.125): every Unblock writes its time into `config/unblocked.txt`, the watcher ignores
 >   that address's lines up to it, and a DJ's wrong passwords count only after the address's
@@ -11693,3 +11695,38 @@ Unblock; failures after it count from zero; (b) gives a client with a
 valid DJ login no more than the playout's brake already does.  Rollback:
 `git revert` (the watcher picks it up on its next run); tag
 `live-2026-11-21f`.
+
+### 23.126 A Live Row That Ends under a DJ Releases Its Source (2026-11-21)
+
+**Finding (read in the code 2026-11-19, backlog).**  When a webstream or
+line-in row ended while a DJ was on air, `_on_stop` cleared only the
+bookkeeping and returned: gate and source stayed as they were until the
+next start closed them.  If the DJ then left into a gap (no row, or a
+row the switch does not pull), the live arm - ranked above the schedule
+in the bus - would have gone back on air although its row was over; the
+input also kept pulling the stream.  With the trial switch a following
+FILE row already closed the predecessor source (§23.122); the gap case
+stayed.  The playout logs since 2026-11-10 hold no such case (the only
+live row stopped with a DJ "on" - 2026-11-17 09:45 - ended while the
+early DJ was still waiting off air and was released normally).
+
+**Change (operator Go 2026-11-21, separate from stages 2/3).**  The DJ
+branch returns early only for a FILE row whose chain stands still under
+the DJ (`_dj_pauses_files()`); a webstream / line-in row runs on into the
+normal release - `_release_webstream` / `_release_linein`: gate closed at
+once, source (and line-in capture) stopped after the drain.  Inaudible:
+the DJ arm ranks above.  Unchanged: the back-to-back hand-overs (same
+stream / same device starting within the window keep the source), the
+generation guards (a newer source started in the meantime is spared), a
+live row DUE under a DJ (still held back, starts when the DJ leaves),
+file rows with and without the switch.
+
+**Tests.**  `test_schedule_under_dj.py`: webstream and line-in release
+under SHOW and MASTER, with and without the switch; the drained stop
+spares a newer stream; a same-stream follow-up keeps the source; file
+rows unchanged.  Playout suite 1036 passed.
+
+**Risk.**  Low: the release path is the one every live row end takes;
+new is only "also under a DJ".  Active after a PLAYOUT restart (the
+rendered script is unchanged - no Liquidsoap restart).  Rollback:
+`git revert` and a PLAYOUT restart; tag `live-2026-11-21g`.

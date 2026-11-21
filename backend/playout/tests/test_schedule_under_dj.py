@@ -30,7 +30,7 @@ from rastatime_playout import liquidsoap_config as lc
 from rastatime_playout import playout_scheduler as ps
 from rastatime_playout.engine.interface import PAUSED_CUT_SHAPE, PlayoutState
 from rastatime_playout.engine.liquidsoap_engine import LiquidsoapPlayoutEngine
-from rastatime_playout.player.events import EventKind, FileEvent, WebStreamEvent
+from rastatime_playout.player.events import EventKind, FileEvent, LineinEvent, WebStreamEvent
 from rastatime_playout.source_switcher import REASON_SHOW_END, SourceState
 
 # ---- the switch -----------------------------------------------------------
@@ -276,14 +276,94 @@ def test_a_file_row_ends_in_the_unheard_chain_only_with_the_switch(make, under_d
     assert engine.stop.called is under_dj
 
 
-def test_a_live_row_that_ends_under_a_dj_is_left_as_before(make):
-    sched, engine = make()
+def _linein(start, row_id, *, seconds=300):
+    return LineinEvent(
+        type=EventKind.LINEIN_START,
+        start=start,
+        end=start + timedelta(seconds=seconds),
+        row_id=row_id,
+        id=row_id,
+        show_name="studio",
+        device_id="dev-1",
+        device_name="Studio",
+        name="studio",
+        channel_mapping=[0, 1],
+    )
+
+
+def _wait_for(predicate, timeout=2.0):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        time.sleep(0.01)
+    return predicate()
+
+
+# RASTATIME 2026-11-21 - a live row that ENDS under a DJ releases its source
+# (before it stayed open, and a DJ leaving into a gap would have brought the
+# ended webstream / line-in back on air).  With and without the switch.
+@pytest.mark.parametrize("under_dj", [True, False])
+@pytest.mark.parametrize("state", [SourceState.SHOW, SourceState.MASTER])
+def test_a_webstream_row_that_ends_under_a_dj_releases_its_source(make, under_dj, state):
+    sched, engine = make(under_dj=under_dj, state=state)
+    sched._drain_seconds = 0.01
     _on_air(sched, _webstream(datetime.utcnow() - timedelta(seconds=400), 3))
     sched._on_stop("cur")
+    assert sched._current_event is None and sched._playing_key is None
+    engine.webstream_gate.assert_called_once_with(False)
+    assert _wait_for(lambda: engine.webstream_stop.called)
+    engine.stop.assert_not_called()  # the request queue is not touched
+
+
+@pytest.mark.parametrize("under_dj", [True, False])
+def test_a_linein_row_that_ends_under_a_dj_releases_its_source(make, under_dj):
+    sched, engine = make(under_dj=under_dj)
+    sched._drain_seconds = 0.01
+    capture = MagicMock()
+    sched._linein_capture = capture
+    _on_air(sched, _linein(datetime.utcnow() - timedelta(seconds=400), 4))
+    sched._on_stop("cur")
     assert sched._current_event is None
+    engine.linein_gate.assert_called_once_with(False)
+    assert _wait_for(lambda: engine.linein_stop.called)
+    capture.stop.assert_called_once()
+    engine.stop.assert_not_called()
+
+
+def test_a_webstream_released_under_a_dj_spares_a_newer_one(make):
+    # the drained stop belongs to the released stream only: a stream started
+    # in the meantime (the DJ left at once) keeps running
+    sched, engine = make()
+    sched._drain_seconds = 0.2
+    _on_air(sched, _webstream(datetime.utcnow() - timedelta(seconds=400), 3))
+    sched._on_stop("cur")
+    sched._webstream_generation += 1  # what a new start does
+    time.sleep(0.4)
+    engine.webstream_stop.assert_not_called()
+
+
+def test_a_webstream_row_with_a_same_stream_follow_up_keeps_its_source_under_a_dj(make):
+    sched, engine = make()
+    now = datetime.utcnow()
+    _on_air(sched, _webstream(now - timedelta(seconds=400), 3))
+    sched._armed_events["next"] = _webstream(now, 5)
+    timer = MagicMock()
+    timer.is_alive.return_value = True
+    sched._timers["next"] = (timer, None)
+    sched._on_stop("cur")
     engine.webstream_gate.assert_not_called()
     engine.webstream_stop.assert_not_called()
-    engine.stop.assert_not_called()
+
+
+@pytest.mark.parametrize("under_dj", [True, False])
+def test_a_file_row_under_a_dj_still_ends_as_before(make, under_dj):
+    sched, engine = make(under_dj=under_dj)
+    _on_air(sched, _file(datetime.utcnow() - timedelta(seconds=200), 1))
+    sched._on_stop("cur")
+    engine.webstream_gate.assert_not_called()
+    engine.linein_gate.assert_not_called()
+    assert engine.stop.called is under_dj
 
 
 @pytest.mark.parametrize("under_dj", [True, False])

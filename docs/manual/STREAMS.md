@@ -399,6 +399,9 @@ where the schedule is, without a re-entry.
 
 - This applies to **files**.  A webstream or a line input that is due
   while a DJ is on air still starts when the DJ leaves.
+- A webstream or a line input whose row **ends** while a DJ is on air
+  is closed at the end of its row (since 2026-11-21, with and without
+  the switch) - when the DJ leaves into a gap, it does not come back.
 - Stream title, Live Text and recordings are unaffected: under a DJ
   they follow the DJ; when the programme returns, the title of the
   running track is sent again.

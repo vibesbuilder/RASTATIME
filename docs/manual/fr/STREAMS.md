@@ -376,6 +376,10 @@ où en est la grille, sans reprise.
 - Cela vaut pour les **fichiers**.  Un flux web ou une entrée ligne
   prévus pendant qu'un DJ est à l'antenne démarrent toujours au départ
   du DJ.
+- Un flux web ou une entrée ligne dont la ligne **se termine** pendant
+  qu'un DJ est à l'antenne est fermé à la fin de sa ligne (depuis le
+  21/11/2026, avec et sans l'interrupteur) - si le DJ part dans un
+  trou, il ne revient pas.
 - Le titre du flux, le Live Text et les enregistrements ne sont pas
   concernés : sous un DJ ils suivent le DJ ; au retour du programme, le
   titre du morceau en cours est renvoyé.

@@ -423,6 +423,10 @@ ohne Wiedereinstieg.
 - Das gilt für **Dateien**.  Ein Webstream oder ein Line-Eingang, der
   fällig wird, während ein DJ auf Sendung ist, startet weiterhin erst,
   wenn der DJ geht.
+- Ein Webstream oder ein Line-Eingang, dessen Zeile **endet**, während
+  ein DJ auf Sendung ist, wird am Ende seiner Zeile geschlossen (seit
+  21.11.2026, mit und ohne Schalter) - geht der DJ in eine Lücke,
+  kommt er nicht zurück.
 - Stream-Titel, Live Text und Aufnahmen sind nicht betroffen: Unter
   einem DJ folgen sie dem DJ; kehrt das Programm zurück, wird der Titel
   des laufenden Stücks erneut gesendet.

@@ -88,6 +88,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Webstream oder Line-In, deren Zeile unter einem DJ endet, geben ihre Quelle frei (2026-11-21,
+  Go des Operators)** - Bisher blieben Quelle und Gate offen, bis der nächste Start sie schloss;
+  ging der DJ danach in eine Lücke, wäre der beendete Webstream bzw. Line-In wieder auf Sendung
+  gekommen (sein Arm liegt über dem Sendeplan).  Jetzt läuft auch unter einem DJ die normale
+  Freigabe (Gate zu, Quelle nach dem Nachlauf stoppen) - unhörbar, der DJ liegt darüber.  In den
+  Logs seit 2026-11-10 kam der Fall nicht vor.  Wirksam nach einem PLAYOUT-Neustart (ohne
+  Liquidsoap-Neustart).  Manual STREAMS ×4, ARCHITECTURE 0.157 (§23.126).
+
 - **Firewall-Wächter sperrt nach „Unblock" und nach erfolgreichem DJ-Login nicht mehr erneut
   (2026-11-21, Befund Mittag, Go des Operators für a + b)** - Ein DJ wurde viermal nach 1-3
   Minuten getrennt: nach jedem Entsperren fand der nächste Wächterlauf (alle 5 min, Rückblick

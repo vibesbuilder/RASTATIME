@@ -4462,8 +4462,13 @@ class PlayoutScheduler:
         # the DJ audio stays on air.  Only the scheduled-event bookkeeping
         # above still happens.  RASTATIME 2026-11-19 - with the schedule
         # running under a DJ a FILE row ends in the unheard chain like any
-        # other; live items are left as before.
-        if self._dj_on_air() and (self._dj_pauses_files() or was_linein or was_webstream):
+        # other.  RASTATIME 2026-11-21 - a webstream / line-in row that ENDS
+        # under a DJ releases its source as without one (gate closed, source
+        # stopped after the drain - inaudible, the DJ arm ranks above).
+        # Before, source and gate stayed as they were until the next start
+        # closed them: a DJ leaving into a gap would have brought the ended
+        # live item back on air (its arm ranks above the schedule).
+        if self._dj_pauses_files() and not (was_linein or was_webstream):
             return
 
         # RASTATIME 2026-05-29 — Phase F: linein-specific teardown.

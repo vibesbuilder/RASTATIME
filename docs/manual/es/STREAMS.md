@@ -347,6 +347,10 @@ reentrada.
 - Esto vale para los **archivos**.  Un webstream o una entrada de línea
   que toquen mientras un DJ está en el aire siguen empezando cuando el
   DJ se va.
+- Un webstream o una entrada de línea cuya fila **termina** mientras un
+  DJ está en el aire se cierra al final de su fila (desde el
+  21/11/2026, con y sin el interruptor) - si el DJ se va dejando un
+  hueco, no vuelve.
 - El título del stream, el Live Text y las grabaciones no se ven
   afectados: bajo un DJ siguen al DJ; cuando vuelve el programa, se
   envía de nuevo el título de la pista en curso.
