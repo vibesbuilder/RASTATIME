@@ -64,23 +64,30 @@ et non la portion qui tombe sur ce jour.
 
 ### Exporter la vue en PDF (depuis le 21/11/2026)
 
-Le bouton d'export à gauche de *Day / Week / Month* (une page avec une
-flèche, info-bulle *Export the current view as PDF*) exporte la période
-affichée (A4 paysage) et propose deux mises en page :
+Le bouton d'export à gauche de *Jour / Semaine / Mois* (une page avec
+une flèche, info-bulle *Exporter la vue actuelle en PDF*) propose deux
+mises en page.  Chacune ouvre une petite boîte de dialogue, puis
+**Export** enregistre le PDF (A4) :
 
-| Mise en page | Vue jour | Vue semaine | Vue mois |
-|---|---|---|---|
-| **List** | le jour sous forme de liste : heure de début - fin et l'émission, avec la couleur de l'émission | une page par jour | une page par jour (environ 30 pages) |
-| **Calendar** | le jour en grille horaire sur quatre colonnes de six heures | la semaine en grille horaire, sept jours sur une page | - (non proposé) |
+| Mise en page | Dialogue | Contenu |
+|---|---|---|
+| **Liste** | *Orientation* (*Paysage* / *Portrait*) et *Période* : un **Jour** ou la **Semaine** autour d'une *Date*, ou une **Période libre** *Du* - *Au* (92 jours au maximum) | une page par jour : heure de début - fin et l'émission, avec la couleur de l'émission |
+| **Calendrier** (vues jour et semaine) | *Orientation* | le jour ou la semaine affiché(e) en grille horaire : la semaine avec sept jours sur une page, le jour en colonnes de six heures (paysage) ou de huit heures (portrait) |
 
-Le PDF contient les émissions que le calendrier affiche pour cette
-période, en heure de la station ; le nom du fichier indique la mise en
-page et les dates (p. ex. `calendar-list-2026-11-21.pdf`).  Dans la
-grille de la semaine, les émissions de moins de 20 minutes environ sont
-une ligne colorée sans texte, comme à l'écran ; la grille du jour a de
-la place pour une ligne de texte même pour un court flash
-d'informations.  Le PDF est créé dans votre navigateur - rien n'est
-envoyé au serveur.
+Les champs de date sont préremplis avec la période affichée ;
+**Export** sans changement donne donc la vue que vous regardez.  La
+semaine suit le premier jour de la semaine de la station (Settings →
+General).  La liste n'a pas besoin d'être affichée : elle lit les
+émissions de n'importe quelle période.  Le dialogue mémorise la
+dernière orientation dans ce navigateur.
+
+Les heures sont en heure de la station ; le nom du fichier indique la
+mise en page et les dates (p. ex. `calendar-list-2026-11-21.pdf`).  Dans
+la grille de la semaine, les émissions de moins de 20 minutes environ
+(paysage) ou 15 minutes (portrait) sont une ligne colorée sans texte,
+comme à l'écran ; la grille du jour a de la place pour une ligne de
+texte même pour un court flash d'informations.  Le PDF est créé dans
+votre navigateur - rien n'est envoyé au serveur.
 
 ### Ce que les couleurs signifient
 

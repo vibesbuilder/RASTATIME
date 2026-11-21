@@ -65,22 +65,28 @@ des jeweiligen Tages.
 
 ### Ansicht als PDF exportieren (seit 21.11.2026)
 
-Die Export-Schaltfläche links von *Day / Week / Month* (ein Blatt mit
-einem Pfeil, Tooltip *Export the current view as PDF*) exportiert den
-angezeigten Zeitraum (A4 quer) und bietet zwei Layouts:
+Die Export-Schaltfläche links von *Tag / Woche / Monat* (ein Blatt mit
+einem Pfeil, Tooltip *Aktuelle Ansicht als PDF exportieren*) bietet zwei
+Layouts.  Beide öffnen einen kleinen Dialog, danach speichert **Export**
+das PDF (A4):
 
-| Layout | Tagesansicht | Wochenansicht | Monatsansicht |
-|---|---|---|---|
-| **List** | der Tag als Liste: Zeit von - bis und die Sendung, mit der Farbe der Sendung | eine Seite pro Tag | eine Seite pro Tag (rund 30 Seiten) |
-| **Calendar** | der Tag als Zeitraster in vier Spalten zu sechs Stunden | die Woche als Zeitraster, sieben Tage auf einer Seite | - (nicht angeboten) |
+| Layout | Dialog | Inhalt |
+|---|---|---|
+| **Liste** | *Ausrichtung* (*Querformat* / *Hochformat*) und *Zeitraum*: ein **Tag** oder die **Woche** um ein *Datum*, oder ein **Beliebiger Zeitraum** *Von* - *Bis* (höchstens 92 Tage) | eine Seite pro Tag: Zeit von - bis und die Sendung, mit der Farbe der Sendung |
+| **Kalender** (Tages- und Wochenansicht) | *Ausrichtung* | der angezeigte Tag bzw. die angezeigte Woche als Zeitraster: die Woche mit sieben Tagen auf einer Seite, der Tag in Spalten zu sechs Stunden (quer) bzw. acht Stunden (hoch) |
 
-Das PDF enthält die Sendungen, die der Kalender für diesen Zeitraum
-zeigt, in Senderzeit; der Dateiname nennt Layout und Datum (z. B.
+Die Datumsfelder sind mit dem angezeigten Zeitraum vorbelegt; **Export**
+ohne Änderung liefert also die Ansicht, die Sie gerade sehen.  Die Woche
+folgt dem Wochenbeginn des Senders (Settings → General).  Die Liste muss
+nicht angezeigt sein: sie liest die Sendungen jedes Zeitraums.  Der
+Dialog merkt sich die zuletzt gewählte Ausrichtung in diesem Browser.
+
+Die Zeiten sind Senderzeit; der Dateiname nennt Layout und Datum (z. B.
 `calendar-list-2026-11-21.pdf`).  Im Wochenraster sind Sendungen unter
-etwa 20 Minuten eine farbige Linie ohne Text, wie am Bildschirm; das
-Tagesraster hat auch für einen kurzen Nachrichtenblock Platz für eine
-Textzeile.  Das PDF entsteht in Ihrem Browser - es wird nichts an den
-Server geschickt.
+etwa 20 Minuten (quer) bzw. 15 Minuten (hoch) eine farbige Linie ohne
+Text, wie am Bildschirm; das Tagesraster hat auch für einen kurzen
+Nachrichtenblock Platz für eine Textzeile.  Das PDF entsteht in Ihrem
+Browser - es wird nichts an den Server geschickt.
 
 ### Was die Farben bedeuten
 

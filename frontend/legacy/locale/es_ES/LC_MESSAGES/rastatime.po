@@ -8934,3 +8934,47 @@ msgstr "Lista"
 #: RASTATIME 2026-11-21 calendar PDF export
 msgid "The PDF could not be created."
 msgstr "No se pudo crear el PDF."
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Orientation"
+msgstr "Orientación"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Landscape"
+msgstr "Horizontal"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Portrait"
+msgstr "Vertical"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Period"
+msgstr "Período"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Custom period"
+msgstr "Período libre"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Date"
+msgstr "Fecha"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "From"
+msgstr "Desde"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "To"
+msgstr "Hasta"
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Choose a valid date."
+msgstr "Elija una fecha válida."
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "Choose a valid period."
+msgstr "Elija un período válido."
+
+#: RASTATIME 2026-11-21 calendar PDF export dialog
+msgid "The period may be at most 92 days."
+msgstr "El período puede durar como máximo 92 días."

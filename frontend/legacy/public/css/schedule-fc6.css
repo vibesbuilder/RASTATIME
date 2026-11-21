@@ -118,6 +118,45 @@
   mask: url(images/icon_export.svg) center / contain no-repeat;
 }
 
+/* RASTATIME 2026-11-21 - the export dialog (orientation; for the list also
+   day / week / period), in the dark calendar dialog frame. */
+.rt-pdf-dialog {
+  color: #cccccc;
+  font-size: 12px;
+  padding: 6px 2px 0;
+}
+.rt-pdf-dialog .rt-pdf-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.rt-pdf-dialog .rt-pdf-label {
+  flex: 0 0 82px;
+  color: #ffffff;
+  font-weight: bold;
+}
+.rt-pdf-dialog .rt-pdf-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #cccccc;
+  cursor: pointer;
+}
+.rt-pdf-dialog .rt-pdf-option input {
+  margin: 0;
+}
+.rt-pdf-dialog input.input_text {
+  width: 110px;
+  margin: 0;
+}
+.rt-pdf-dialog .rt-pdf-error {
+  min-height: 1.2em;
+  color: #ff7b7b;
+}
+
 /* ---- day-of-week header row (the "Mon 6/1" grey bar) ---- */
 #schedule_calendar .fc-col-header-cell {
   background: linear-gradient(#606060, #4e4e4e);

@@ -19,8 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Textzeile bekommen).  Das PDF entsteht im Browser aus den Sendungen, die der Kalender für den
   Zeitraum geladen hat; pdfmake (schon für den PDF-Export der Playout History im Projekt) wird
   erst beim ersten Export geladen.  Live geprüft: Wochen- und Tagesraster, Tagesliste,
-  Monatsliste (30 Seiten), Menü im Monat nur mit List, keine Konsolenfehler.  Die neuen Texte
-  sind nach dem nächsten Apache-Neustart übersetzt.  Manual CALENDAR ×4, ARCHITECTURE 0.155
+  Monatsliste (30 Seiten), Menü im Monat nur mit List, keine Konsolenfehler.  Noch am selben Tag
+  (Wunsch des Operators) ein Dialog vor dem Export: beide Layouts mit Querformat / Hochformat
+  (das Tagesraster hoch in drei Spalten zu acht Stunden), die Liste zusätzlich mit Tag, Woche
+  (um ein Datum, Wochenbeginn aus Settings → General) oder beliebigem Zeitraum (höchstens 92
+  Tage); die Liste holt die Sendungen dafür aus dem Kalender-Feed, auch außerhalb der Ansicht.
+  Die neuen Texte sind nach dem nächsten Apache-Neustart übersetzt.  Manual CALENDAR ×4, ARCHITECTURE 0.155
   (§23.124).  `c0ce35e8`, Symbol `bf77f8b7`.
 
 - **Import weist beschädigte und abgeschnittene Dateien ab (2026-11-21, Go des Operators:

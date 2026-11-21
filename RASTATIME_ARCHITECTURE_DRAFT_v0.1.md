@@ -11587,3 +11587,35 @@ calendar loads nothing more until the first export.  pdfmake 0.1.70 is
 old (2020); its known issue concerns server-side use, not the browser -
 an update to 0.2.x is a COMPONENTS matter for both exports together.
 Rollback: `git revert`; tag `live-2026-11-21c`.
+
+**Addendum 2026-11-21 (afternoon) - export dialog.**  Operator request:
+the list with orientation and a period (a day, a week, any period), the
+grid with orientation.  The menu item now opens a jQuery UI dialog in
+the dark calendar frame (`schedule-tracks-dialog`, backdrop via
+`markScheduleDialogOverlay`):
+- *Orientation* landscape / portrait for both; the last choice per
+  layout is kept in `localStorage` (`rtCalendarPdf.<kind>.orientation`,
+  try/catch - a private window simply starts with landscape).
+- List only: *Day* / *Week* (both from one *Date* field; the week starts
+  on `calendarPref.weekStart`, Settings → General) or *Custom period*
+  *From* / *To* (jQuery UI datepickers, `yy-mm-dd`), at most 92 days;
+  invalid or reversed dates and longer periods are refused in the
+  dialog.  Defaults follow the view: day view → Day, week view → Week,
+  month view → Custom period with the month; the date fields start with
+  the view's date / range.
+- The list no longer reads the loaded events: it asks the calendar's
+  own feed `Schedule/event-feed` for the chosen period (same parameters
+  as FC6's event source, `makeTimeStamp` of the station wall clock), so
+  any period works.  Measured: three days of the following week, 92
+  rows, 237 ms; the counts matched `week-info`.
+- Grid in portrait: the week keeps seven 24-hour columns (≈ 31 pt per
+  hour instead of ≈ 21, so 15-minute shows get a line); the day uses
+  three columns of eight hours (portrait) instead of four of six.
+- Strings: Export, Orientation, Landscape, Portrait, Period, Custom
+  period, Date, From, To and three error texts (de/fr/es; none of the
+  short msgids was used elsewhere in the legacy code).
+Verified live: dialog (list, custom period), the three refusals with the
+dialog left open, datepicker above the dialog (z-index 1003 / 1002),
+portrait list of a period outside the view (3 pages), portrait week
+grid and portrait day grid (3 × 8 h) in the PDF viewer; the operator's
+week view restored afterwards.  Tag `live-2026-11-21e`.

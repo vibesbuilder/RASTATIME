@@ -36,23 +36,29 @@ porción que cae en ese día.
 
 ### Exportar la vista como PDF (desde el 21/11/2026)
 
-El botón de exportar a la izquierda de *Day / Week / Month* (una hoja
-con una flecha, información sobre herramientas *Export the current view
-as PDF*) exporta el
-período que se muestra (A4 apaisado) y ofrece dos diseños:
+El botón de exportar a la izquierda de *Día / Semana / Mes* (una hoja
+con una flecha, información sobre herramientas *Exportar la vista
+actual como PDF*) ofrece dos diseños.  Cada uno abre un pequeño
+diálogo y luego **Exportar** guarda el PDF (A4):
 
-| Diseño | Vista de día | Vista de semana | Vista de mes |
-|---|---|---|---|
-| **List** | el día como lista: hora de inicio - fin y el programa, con el color del programa | una página por día | una página por día (unas 30 páginas) |
-| **Calendar** | el día como cuadrícula horaria en cuatro columnas de seis horas | la semana como cuadrícula horaria, siete días en una página | - (no se ofrece) |
+| Diseño | Diálogo | Contenido |
+|---|---|---|
+| **Lista** | *Orientación* (*Horizontal* / *Vertical*) y *Período*: un **Día** o la **Semana** alrededor de una *Fecha*, o un **Período libre** *Desde* - *Hasta* (como máximo 92 días) | una página por día: hora de inicio - fin y el programa, con el color del programa |
+| **Calendario** (vistas de día y de semana) | *Orientación* | el día o la semana en pantalla como cuadrícula horaria: la semana con siete días en una página, el día en columnas de seis horas (horizontal) u ocho horas (vertical) |
 
-El PDF contiene los programas que el calendario muestra para ese
-período, en la hora de la emisora; el nombre del archivo indica el
+Los campos de fecha empiezan con el período en pantalla, así que
+**Exportar** sin cambios da la vista que está mirando.  La semana sigue
+el inicio de semana de la emisora (Settings → General).  La lista no
+necesita estar en pantalla: lee los programas de cualquier período.  El
+diálogo recuerda la última orientación en este navegador.
+
+Las horas son la hora de la emisora; el nombre del archivo indica el
 diseño y las fechas (p. ej. `calendar-list-2026-11-21.pdf`).  En la
-cuadrícula de la semana, los programas de menos de unos 20 minutos son
-una línea de color sin texto, como en pantalla; la cuadrícula del día
-tiene sitio para una línea de texto incluso para un boletín de noticias
-corto.  El PDF se crea en su navegador - no se envía nada al servidor.
+cuadrícula de la semana, los programas de menos de unos 20 minutos
+(horizontal) o 15 minutos (vertical) son una línea de color sin texto,
+como en pantalla; la cuadrícula del día tiene sitio para una línea de
+texto incluso para un boletín de noticias corto.  El PDF se crea en su
+navegador - no se envía nada al servidor.
 
 ### Qué significan los colores
 

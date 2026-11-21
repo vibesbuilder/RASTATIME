@@ -60,21 +60,26 @@ time (e.g. *23:08 - 0:08*), not the part that falls on that day.
 ### Exporting the view as PDF (since 2026-11-21)
 
 The export button left of *Day / Week / Month* (a page with an arrow,
-tooltip *Export the current view as PDF*) exports the period
-you are looking at (A4 landscape) and offers two layouts:
+tooltip *Export the current view as PDF*) offers two layouts.  Each
+opens a small dialog, then **Export** saves the PDF (A4):
 
-| Layout | Day view | Week view | Month view |
-|---|---|---|---|
-| **List** | the day as a list: time from - to and the show, with the show's colour | one page per day | one page per day (about 30 pages) |
-| **Calendar** | the day as a time grid in four columns of six hours | the week as a time grid, seven days on one page | - (not offered) |
+| Layout | Dialog | Content |
+|---|---|---|
+| **List** | *Orientation* (*Landscape* / *Portrait*) and *Period*: a **Day** or the **Week** around a *Date*, or a **Custom period** *From* - *To* (at most 92 days) | one page per day: time from - to and the show, with the show's colour |
+| **Calendar** (day and week view) | *Orientation* | the day or week on screen as a time grid: the week with seven days on one page, the day in columns of six hours (landscape) or eight hours (portrait) |
 
-The PDF contains the shows the calendar shows for that period, in
-station time; the file name says the layout and the dates (e.g.
-`calendar-list-2026-11-21.pdf`).  In the week grid, shows shorter
-than about 20 minutes are a coloured line without text, as on
-screen; the day grid has room for a line of text even for a short
-news slot.  The PDF is made in your browser - nothing is sent to the
-server.
+The date fields start with the period on screen, so **Export** right
+away gives the view you are looking at; the week follows the station's
+week start (Settings → General).  The list need not be on screen: it
+reads the shows of any period.  The dialog remembers the last
+orientation in this browser.
+
+Times are station time; the file name says the layout and the dates
+(e.g. `calendar-list-2026-11-21.pdf`).  In the week grid, shows shorter
+than about 20 minutes (landscape) or 15 minutes (portrait) are a
+coloured line without text, as on screen; the day grid has room for a
+line of text even for a short news slot.  The PDF is made in your
+browser - nothing is sent to the server.
 
 ### What the colours mean
 
