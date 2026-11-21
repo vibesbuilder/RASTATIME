@@ -8637,6 +8637,7 @@ ab 09:40 prüfen: Lampe leuchtet durchgehend, Kopf und Now-Playing-Widget zeigen
 ## Titel endet vor seinem Cue-Out - 41 s Stille (Befund 2026-11-18 00:58)
 
 ### 💡 Beschädigte Dateien erkennen und früh endende Titel auffangen - IDEA (Befund 2026-11-18, zweiter Fall 2026-11-21)
+**Bestands-Scan - Evaluierung 2026-11-21 (Operator will ihn angehen), Empfehlung Go:** ein lesendes Werkzeug prüft jede Datei der Bibliothek (25.336 Dateien, 1.962 h; 24.683 MP3, 646 M4A, 7 andere) mit derselben Längenprüfung wie der Import (dekodierte gegen gespeicherte Länge, Toleranz 2 s und 1 %) und schreibt einen Bericht (CSV mit Id, Titel, Pfad, Längen, Fehler) - nichts wird geändert; die Entscheidung je Datei (Disabled, ersetzen, löschen) bleibt beim Operator.  Laufzeit nach der Stichprobe (400 Dateien in 113 s) etwa 2 h, ein Kern, niedrige Priorität, unterbrechbar und fortsetzbar; in einem ruhigen Fenster.  Aufwand ~½ Tag.
 **Zweiter Fall 2026-11-21 00:08:33-00:11:51 (198 s Stille, Dead-Air-Alarm 00:09:03):** eine MP3
 (192 kbit/s, Länge laut Header 293,4 s) ist abgeschnitten - 2,2 MB statt der nötigen ~7 MB,
 dekodierbar 87,9 s, danach „Header missing".  Die übrigen sechs Titel desselben Albums dekodieren
@@ -8898,6 +8899,7 @@ Schalter.  Abhilfe: den Grenz-Neustart aufschieben, solange ein DJ auf
 Sendung ist (eine Bedingung + Test).  Vorbedingung: Go.
 
 ### 💡 Live-Zeile endet unter einem DJ - ihre Quelle bleibt offen (Befund 2026-11-19, aus dem Code gelesen)
+**Evaluierung 2026-11-21 (Operator will es angehen, getrennt von Stufe 2/3), Empfehlung Go:** in `_on_stop` gibt eine Webstream- oder Line-In-Zeile unter einem DJ ihre Quelle frei wie ohne DJ (Gate zu, Quelle nach dem Nachlauf stoppen) - unhörbar, der DJ-Arm liegt darüber; eine Bedingung + Tests, nur PLAYOUT (Skript unverändert, kein Liquidsoap-Neustart).  In den Logs seit 2026-11-10 kam der Fall nicht vor (einzige Fundstelle 2026-11-17 09:45 war ein noch wartender früher DJ, korrekt freigegeben).
 Ebenfalls nur gelesen, nicht live beobachtet: endet eine Webstream-
 oder Line-In-Zeile, während ein DJ auf Sendung ist, räumt `_on_stop`
 nur die Buchführung auf; Quelle und Gate bleiben, wie sie sind, bis der
