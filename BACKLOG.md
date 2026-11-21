@@ -8609,8 +8609,11 @@ jeder AAC-Frame ungültig.  Liquidsoap meldete „End of track reached at
 165.72 before cue-out point at 218.50", die Queue war leer, 40,8 s
 digitale Stille bis zum planmäßigen Start des nächsten Titels
 (Dead-Air-Alarm nach 30 s).  Der Import bemerkt so etwas nicht: Länge
-und Cue-Punkte kommen aus dem Container, die Abspielprobe prüft nur, ob
-die Datei startet.  Die übrigen Zeilen „before cue-out point" im Log
+und Cue-Punkte kommen aus dem Container (ffprobe); die Abspielprobe
+(`analyze_playability`) dekodiert zwar die ganze Datei, wertet aber nur
+den Exit-Code aus - Dekoderfehler wie „Header missing" gelten als
+Warnung, die dekodierte Länge wird nicht verglichen (Korrektur
+2026-11-21: vorher stand hier „prüft nur, ob die Datei startet").  Die übrigen Zeilen „before cue-out point" im Log
 liegen bei 0,02-0,05 s (Rundung).
 Mögliche Schritte (keiner beauftragt):
 - Bestand prüfen: jede Datei einmal ganz dekodieren und dekodierbare
@@ -8618,6 +8621,19 @@ Mögliche Schritte (keiner beauftragt):
   etwa 2 h Rechenzeit; die 651 M4A in ~3 min) - lesend, als Bericht.
 - Import: dieselbe Prüfung im Analyzer; zu kurze Dateien abweisen oder
   Länge und Cue-Out auf das Dekodierbare setzen.
+  **Evaluierung 2026-11-21 - Empfehlung Go, wartet auf Entscheidung:**
+  die Abspielprobe liefert die dekodierte Länge ohne zweiten Durchlauf
+  (`-progress`); fehlen mehr als 2 s und mehr als 1 % der angegebenen
+  Länge, wird der Import abgelehnt (Grund in der Failed-Liste, Original
+  bleibt) - Variante b: importieren mit gekürzter Länge/Cue-Out und
+  Disabled.  Timeout (heute fest 120 s, danach ungeprüft durchgelassen)
+  an die Länge koppeln.  Nur Analyzer, etwa 6-8 Dateien, keine
+  Migration, ~1 Tag.  Stichprobe 400 Bibliotheksdateien: keine mehr als
+  0,5 s kürzer als angegeben (147 mit geschätzter Länge weichen nur nach
+  oben ab, bis 0,66 s); 37 erzeugen Dekoder-Meldungen und dekodieren
+  trotzdem vollständig - der Exit-Code allein trennt harmlos und kaputt
+  nicht, der Längenvergleich schon.  Beide bekannten Fälle wären beim
+  Import abgewiesen worden.
 - Playout: endet ein Titel deutlich vor seinem Cue-Out, den nächsten
   Titel sofort starten statt bis zu seiner Zeile zu warten.
 Vorbedingungen: Go des Operators je Schritt; der Scan in einem ruhigen
