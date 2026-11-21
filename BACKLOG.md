@@ -100,6 +100,7 @@ zählt nur Fehlversuche danach; (b) der Wächter zählt für eine Adresse nur Fe
 ihrem letzten erfolgreichen DJ-Login; (c) DJ-Fehlpasswörter ganz der PLAYOUT-Bremse überlassen
 oder milder (höhere Schwelle, kürzere Sperre); (d) PLAYOUT zählt einen Retry-Burst desselben
 Encoders als einen Fehlversuch.
+**Evaluierung (a) + (b) 2026-11-21 - Empfehlung Go für beide, wartet auf Entscheidung:** (a) „Unblock" (Oberfläche und `rt-blocks.ps1`) schreibt je Adresse den Zeitpunkt in `<config dir>/unblocked.txt`, der Wächter ignoriert in allen drei Zählern (4xx, Scanner, DJ-Passwort) die Zeilen bis dahin - eine Datei statt der legacy.log-Zeile, damit das Skript nicht am Log-Wortlaut hängt; (b) der Wächter liest auch die „accepted"-Zeilen der DJ-Logins und zählt Fehlpasswörter einer Adresse nur nach ihrem letzten Erfolg (wie die PLAYOUT-Bremse, die beim Erfolg schon zurücksetzt).  Etwa 8-10 Dateien, ~150-200 Zeilen, keine Migration, kein Neustart (Wächter greift beim nächsten 5-min-Lauf, PHP sofort); Probe: Replay des 2026-11-21 mit -DryRun und injizierbarer Uhr.  Mit (a) oder (b) wären 12:52/12:57/13:02 nicht gesperrt worden; die erste Sperre um 12:12 bleibt (dafür wäre (d) nötig).
 Vorbedingung: Evaluierung und Go des Operators.
 
 ### ✅ Kalender als PDF exportieren (Monat / Woche / Tag) - GEBAUT 2026-11-21 (Go B in zwei Stufen, Zeit + Sendung, A4 quer, kein Monatsraster; §23.124)
