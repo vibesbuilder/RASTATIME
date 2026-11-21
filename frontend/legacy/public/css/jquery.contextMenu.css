@@ -128,6 +128,8 @@
 .context-menu-item.icon-extras { background-image: url(images/icon_extras_cm.svg); background-size: 16px 16px; }
 /* RASTATIME 2026-11-10 - calendar "Extras → People Involved" (guests of the episode) */
 .context-menu-item.icon-people { background-image: url(images/icon_people_cm.svg); background-size: 16px 16px; }
+/* RASTATIME 2026-11-21 - library "Duplicate Playlist / Smartblock" (was the Edit pencil; the copy icon is "Add to Playlist") */
+.context-menu-item.icon-duplicate { background-image: url(images/icon_duplicate_cm.svg); background-size: 16px 16px; }
 
 /* vertically align inside labels */
 .context-menu-input > label > * { vertical-align: top; }

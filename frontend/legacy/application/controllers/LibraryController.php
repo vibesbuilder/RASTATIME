@@ -144,10 +144,11 @@ class LibraryController extends Zend_Controller_Action
         } elseif ($type === 'playlist' || $type === 'block') {
             if ($type === 'playlist') {
                 $obj = new Application_Model_Playlist($id);
-                $menu['duplicate'] = ['name' => _('Duplicate Playlist'), 'icon' => 'edit', 'url' => $baseUrl . 'library/duplicate'];
+                // RASTATIME 2026-11-21 - own icon (two sheets with a plus) instead of the Edit pencil
+                $menu['duplicate'] = ['name' => _('Duplicate Playlist'), 'icon' => 'duplicate', 'url' => $baseUrl . 'library/duplicate'];
             } elseif ($type === 'block') {
                 $obj = new Application_Model_Block($id);
-                $menu['duplicate'] = ['name' => _('Duplicate Smartblock'), 'icon' => 'edit', 'url' => $baseUrl . 'library/duplicate-block'];
+                $menu['duplicate'] = ['name' => _('Duplicate Smartblock'), 'icon' => 'duplicate', 'url' => $baseUrl . 'library/duplicate-block'];
                 if (!$obj->isStatic()) {
                     unset($menu['play']);
                 }
