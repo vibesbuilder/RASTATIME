@@ -63,6 +63,24 @@ Wochenansicht in zwei Teilen, einer an jedem Tag. Beide Teile
 zeigen die ganze Sendezeit (z. B. *23:08 - 0:08*), nicht den Anteil
 des jeweiligen Tages.
 
+### Ansicht als PDF exportieren (seit 21.11.2026)
+
+Die Schaltfläche **PDF** links von *Day / Week / Month* exportiert den
+angezeigten Zeitraum (A4 quer) und bietet zwei Layouts:
+
+| Layout | Tagesansicht | Wochenansicht | Monatsansicht |
+|---|---|---|---|
+| **List** | der Tag als Liste: Zeit von - bis und die Sendung, mit der Farbe der Sendung | eine Seite pro Tag | eine Seite pro Tag (rund 30 Seiten) |
+| **Calendar** | der Tag als Zeitraster in vier Spalten zu sechs Stunden | die Woche als Zeitraster, sieben Tage auf einer Seite | - (nicht angeboten) |
+
+Das PDF enthält die Sendungen, die der Kalender für diesen Zeitraum
+zeigt, in Senderzeit; der Dateiname nennt Layout und Datum (z. B.
+`calendar-list-2026-11-21.pdf`).  Im Wochenraster sind Sendungen unter
+etwa 20 Minuten eine farbige Linie ohne Text, wie am Bildschirm; das
+Tagesraster hat auch für einen kurzen Nachrichtenblock Platz für eine
+Textzeile.  Das PDF entsteht in Ihrem Browser - es wird nichts an den
+Server geschickt.
+
 ### Was die Farben bedeuten
 
 Jede Sendung hat ihre eigene Hintergrundfarbe und Textfarbe

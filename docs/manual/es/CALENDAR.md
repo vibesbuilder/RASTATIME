@@ -34,6 +34,24 @@ vistas de día y de semana, una en cada día. Ambas partes muestran
 el horario completo del programa (p. ej. *23:08 - 0:08*), no la
 porción que cae en ese día.
 
+### Exportar la vista como PDF (desde el 21/11/2026)
+
+El botón **PDF** a la izquierda de *Day / Week / Month* exporta el
+período que se muestra (A4 apaisado) y ofrece dos diseños:
+
+| Diseño | Vista de día | Vista de semana | Vista de mes |
+|---|---|---|---|
+| **List** | el día como lista: hora de inicio - fin y el programa, con el color del programa | una página por día | una página por día (unas 30 páginas) |
+| **Calendar** | el día como cuadrícula horaria en cuatro columnas de seis horas | la semana como cuadrícula horaria, siete días en una página | - (no se ofrece) |
+
+El PDF contiene los programas que el calendario muestra para ese
+período, en la hora de la emisora; el nombre del archivo indica el
+diseño y las fechas (p. ej. `calendar-list-2026-11-21.pdf`).  En la
+cuadrícula de la semana, los programas de menos de unos 20 minutos son
+una línea de color sin texto, como en pantalla; la cuadrícula del día
+tiene sitio para una línea de texto incluso para un boletín de noticias
+corto.  El PDF se crea en su navegador - no se envía nada al servidor.
+
 ### Qué significan los colores
 
 Cada programa lleva su propio color de fondo y color de

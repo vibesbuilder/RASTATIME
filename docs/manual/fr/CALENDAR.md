@@ -62,6 +62,25 @@ vues jour et semaine, une sur chaque jour. Les deux parties
 affichent l'horaire complet de l'émission (p. ex. *23:08 - 0:08*),
 et non la portion qui tombe sur ce jour.
 
+### Exporter la vue en PDF (depuis le 21/11/2026)
+
+Le bouton **PDF** à gauche de *Day / Week / Month* exporte la période
+affichée (A4 paysage) et propose deux mises en page :
+
+| Mise en page | Vue jour | Vue semaine | Vue mois |
+|---|---|---|---|
+| **List** | le jour sous forme de liste : heure de début - fin et l'émission, avec la couleur de l'émission | une page par jour | une page par jour (environ 30 pages) |
+| **Calendar** | le jour en grille horaire sur quatre colonnes de six heures | la semaine en grille horaire, sept jours sur une page | - (non proposé) |
+
+Le PDF contient les émissions que le calendrier affiche pour cette
+période, en heure de la station ; le nom du fichier indique la mise en
+page et les dates (p. ex. `calendar-list-2026-11-21.pdf`).  Dans la
+grille de la semaine, les émissions de moins de 20 minutes environ sont
+une ligne colorée sans texte, comme à l'écran ; la grille du jour a de
+la place pour une ligne de texte même pour un court flash
+d'informations.  Le PDF est créé dans votre navigateur - rien n'est
+envoyé au serveur.
+
 ### Ce que les couleurs signifient
 
 Chaque émission porte sa propre couleur de fond et couleur

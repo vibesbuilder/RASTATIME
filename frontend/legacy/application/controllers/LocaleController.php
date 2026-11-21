@@ -590,6 +590,12 @@ final class LocaleController extends Zend_Controller_Action
             'Try it now' => _('Try it now'),
             // RASTATIME 2026-11-14 - My Podcast list column
             'Published until' => _('Published until'),
+            // RASTATIME 2026-11-21 - calendar "PDF" button (schedule-fc6.js, calendar-pdf.js)
+            'PDF' => _('PDF'),
+            'Export the current view as PDF' => _('Export the current view as PDF'),
+            'List' => _('List'),
+            'Calendar' => _('Calendar'),
+            'The PDF could not be created.' => _('The PDF could not be created.'),
             '<p>If this option is unchecked, the smartblock will schedule as many tracks as can be played out <strong>in their entirety</strong> within the specified duration. This will usually result in audio playback that is slightly less than the specified duration.</p><p>If this option is checked, the smartblock will also schedule one final track which will overflow the specified duration. This final track may be cut off mid-way if the show into which the smartblock is added finishes.</p>' => _('<p>If this option is unchecked, the smartblock will schedule as many tracks as can be played out <strong>in their entirety</strong> within the specified duration. This will usually result in audio playback that is slightly less than the specified duration.</p><p>If this option is checked, the smartblock will also schedule one final track which will overflow the specified duration. This final track may be cut off mid-way if the show into which the smartblock is added finishes.</p>'),
             'Playlist preview' => _('Playlist preview'),
             'Smart Block' => _('Smart Block'),

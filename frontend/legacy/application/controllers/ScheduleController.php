@@ -84,6 +84,15 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/index.global.min.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/libs/fullcalendar/locales-all.global.min.js'), 'text/javascript');
         $this->view->headScript()->offsetSetFile(110, Assets::url('js/airtime/schedule/schedule-fc6.js'), 'text/javascript');
+        // RASTATIME 2026-11-21 - "PDF" button (List / Calendar export of the
+        // current view).  pdfmake and its fonts (~2 MB) are loaded by
+        // calendar-pdf.js on the first export only, so the page gets their URLs.
+        $pdfJson = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+        $this->view->headScript()->appendScript(
+            'var rtPdfLibs = ' . json_encode([Assets::url('js/libs/pdfmake.min.js'), Assets::url('js/libs/vfs_fonts.min.js')], $pdfJson) . ";\n" .
+                'var rtStationName = ' . json_encode((string) Application_Model_Preference::GetStationName(), $pdfJson) . ';'
+        );
+        $this->view->headScript()->appendFile(Assets::url('js/airtime/schedule/calendar-pdf.js'), 'text/javascript');
         $this->view->headScript()->appendFile(Assets::url('js/colorpicker/js/colorpicker.js'), 'text/javascript');
 
         // This block needs to be added before the add-show.js script

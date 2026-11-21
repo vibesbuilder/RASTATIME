@@ -1,10 +1,13 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.154
+Draft version: 0.155
 Date: 2026-11-21
 
 > **Revision history**
+> - **0.155 (2026-11-21)** - The calendar view as PDF (§23.124): a "PDF" button in the FC6
+>   toolbar exports the current view as a list (every view) or a time grid (day / week),
+>   A4 landscape, built in the browser with the vendored pdfmake, loaded on first use.
 > - **0.154 (2026-11-21)** - The import refuses damaged or cut-short files (§23.123): the
 >   analyzer's playability step compares the decoded length (same decode run, `-progress`)
 >   with the declared length and fails the import when more than 2 s and more than 1 % are
@@ -11514,3 +11517,69 @@ the change takes effect with a restart of RASTATIME-ANALYZER (no air
 gap).  Failure mode: a good file refused - it stays in `organize/`, the
 Failed row names the lengths.  Rollback: `git revert` and an analyzer
 restart; tag `live-2026-11-21b`.
+
+### 23.124 The Calendar View as PDF (2026-11-21)
+
+**Request.**  Operator 2026-11-21: export the current calendar view (day,
+week, month) as a PDF from a button above the grid, left of Day / Week /
+Month - variant 1 like the calendar / the Multi-View widget, variant 2 the
+day as a list like the Weekly Schedule / On Air Today widgets.
+
+**Options weighed.**  (A) the browser's print dialog with a print style
+sheet - looks like the screen, but no export button (the PDF comes from
+"Save as PDF"), and the scrolling time grid and the dark theme need print
+CSS; (B) pdfmake in the browser - a direct download with real text, the
+layout built from the calendar's data; (C) a screenshot made into a PDF -
+new libraries, a raster image; (D) a PDF made on the server (Edge
+headless, dompdf, reportlab) - a new process or dependency on the
+broadcast machine.  Decision (operator Go 2026-11-21): B in two stages,
+columns time + show, A4 landscape, no month grid.
+
+**Build.**
+- `schedule-fc6.js`: an FC6 custom button `rtPdf` ("PDF", hint "Export
+  the current view as PDF") in the right toolbar chunk before the view
+  buttons.  Its own click handler is empty: `calendar-pdf.js` registers a
+  delegated `$.contextMenu` (trigger left, the calendar menu's class) on
+  `.fc-rtPdf-button`, so the menu survives FC6 rebuilding the toolbar.
+  Items: *List* and *Calendar*; the month view offers *List* only.
+- `calendar-pdf.js` reads the events the calendar has loaded
+  (`getEvents()`) within the view's current range (`currentStart` /
+  `currentEnd`, not the padding days), leaves out a delete still counting
+  down (§23.76), and builds the document definition:
+  - *List*: one page per day, rows "08:00 - 09:00 | show" with a colour
+    strip in the show's background colour; a show that runs into the
+    first day is listed first, a show across midnight on its start day.
+  - *Calendar*: one page with absolutely positioned canvas rectangles and
+    texts.  Week: seven columns of 24 h (≈ 20.8 pt per hour).  Day: four
+    columns of six hours each, so a 7-minute news slot still gets a line
+    (152 of 395 shows in the next two weeks are shorter than 10 min).
+    Positions use wall-clock minutes (a clock-change day still maps
+    0..1440); a block that continues from the previous column or day
+    carries the show's own times, as the calendar chips do since
+    2026-10-27.  Text colour: the show's, else black / white by the
+    background's luminance; labels are shortened by an estimated width.
+- Header: station name (`rtStationName`, from the controller) and the
+  FC6 view title; footer: creation time (station time) and page x / y.
+  File name `calendar-<list|grid>-<first>[_<last>].pdf`.
+- pdfmake 0.1.70 and its Roboto fonts (vendored for the Playout History
+  export, ~2.2 MB) are loaded by script tags on the first export only; the
+  controller hands their `Assets::url()` (cache-busted) to the page as
+  `rtPdfLibs`.  A failed load shows "The PDF could not be created." and the
+  next click tries again.
+- New strings (PDF, the hint, List, Calendar, the error) in the JS
+  translation table and the three .po / .mo catalogues; they show
+  translated after the next Apache restart (gettext caches the .mo per
+  process).
+
+**Verified live (2026-11-21).**  Button and menu in the week view; week
+grid (one page, 39 KB), day grid (four columns, 19 KB) and day list (24
+rows, 17 KB) rendered in the browser's PDF viewer without a download;
+month view: menu with *List* only, `exportPdf('grid')` falls back to the
+list, `calendar-list-2026-11-01_2026-11-30.pdf`, 30 day pages, 134 KB; no
+console errors.
+
+**Risk.**  Low: browser only, no server or broadcast path involved, the
+calendar loads nothing more until the first export.  pdfmake 0.1.70 is
+old (2020); its known issue concerns server-side use, not the browser -
+an update to 0.2.x is a COMPONENTS matter for both exports together.
+Rollback: `git revert`; tag `live-2026-11-21c`.

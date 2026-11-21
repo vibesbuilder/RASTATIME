@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Kalender-Ansicht als PDF (2026-11-21, Go des Operators: pdfmake im Browser, zwei Stufen,
+  Zeit + Sendung, A4 quer, kein Monatsraster)** - Neue Schaltfläche **PDF** im Kalender links
+  von Day / Week / Month mit zwei Layouts: **List** (jede Ansicht; eine Seite pro Tag, Zeit von
+  - bis und Sendung mit der Farbe der Sendung) und **Calendar** (Tag und Woche; Zeitraster wie
+  im Kalender und im Multi-View-Widget - die Woche mit sieben Tagen auf einer Seite, der Tag in
+  vier Spalten zu sechs Stunden, damit auch die vielen kurzen Sendungen unter 10 Minuten eine
+  Textzeile bekommen).  Das PDF entsteht im Browser aus den Sendungen, die der Kalender für den
+  Zeitraum geladen hat; pdfmake (schon für den PDF-Export der Playout History im Projekt) wird
+  erst beim ersten Export geladen.  Live geprüft: Wochen- und Tagesraster, Tagesliste,
+  Monatsliste (30 Seiten), Menü im Monat nur mit List, keine Konsolenfehler.  Die neuen Texte
+  sind nach dem nächsten Apache-Neustart übersetzt.  Manual CALENDAR ×4, ARCHITECTURE 0.155
+  (§23.124).
+
 - **Import weist beschädigte und abgeschnittene Dateien ab (2026-11-21, Go des Operators:
   ablehnen)** - Zwei Dead-Air-Alarme kamen von Bibliotheksdateien, die lange vor ihrem
   angegebenen Ende aufhören (2026-11-18 eine M4A, 41 s Stille; 2026-11-21 eine abgeschnittene

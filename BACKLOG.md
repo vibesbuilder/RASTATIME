@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 💡 Kalender als PDF exportieren (Monat / Woche / Tag) - Optionen 2026-11-21, wartet auf Entscheidung
+### ✅ Kalender als PDF exportieren (Monat / Woche / Tag) - GEBAUT 2026-11-21 (Go B in zwei Stufen, Zeit + Sendung, A4 quer, kein Monatsraster; §23.124)
 
 Wunsch des Operators 2026-11-21: ein Knopf über dem Kalender-Raster links von Day/Week/Month,
 der die aktuelle Ansicht als PDF ausgibt.  Variante 1 wie Kalender bzw. Widget Multi-View

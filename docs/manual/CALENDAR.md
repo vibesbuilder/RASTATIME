@@ -57,6 +57,24 @@ A show that runs past midnight appears in two pieces in the day
 and week views, one on each day. Both pieces show the show's full
 time (e.g. *23:08 - 0:08*), not the part that falls on that day.
 
+### Exporting the view as PDF (since 2026-11-21)
+
+The **PDF** button left of *Day / Week / Month* exports the period
+you are looking at (A4 landscape) and offers two layouts:
+
+| Layout | Day view | Week view | Month view |
+|---|---|---|---|
+| **List** | the day as a list: time from - to and the show, with the show's colour | one page per day | one page per day (about 30 pages) |
+| **Calendar** | the day as a time grid in four columns of six hours | the week as a time grid, seven days on one page | - (not offered) |
+
+The PDF contains the shows the calendar shows for that period, in
+station time; the file name says the layout and the dates (e.g.
+`calendar-list-2026-11-21.pdf`).  In the week grid, shows shorter
+than about 20 minutes are a coloured line without text, as on
+screen; the day grid has room for a line of text even for a short
+news slot.  The PDF is made in your browser - nothing is sent to the
+server.
+
 ### What the colours mean
 
 Each show carries its own background colour and text colour

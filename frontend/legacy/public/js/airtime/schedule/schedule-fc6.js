@@ -301,10 +301,20 @@ function buildScheduleFc6(data) {
     views: {
       timeGridWeek: { titleFormat: fc6WeekTitle },
     },
+    // RASTATIME 2026-11-21 - "PDF" left of Day / Week / Month: the click
+    // opens the List / Calendar menu of calendar-pdf.js (a delegated
+    // $.contextMenu on .fc-rtPdf-button), so the button's own handler is empty.
+    customButtons: {
+      rtPdf: {
+        text: $.i18n._("PDF"),
+        hint: $.i18n._("Export the current view as PDF"),
+        click: function () {},
+      },
+    },
     headerToolbar: {
       left: "prev,next today",
       center: "title",
-      right: "timeGridDay,timeGridWeek,dayGridMonth",
+      right: "rtPdf timeGridDay,timeGridWeek,dayGridMonth",
     },
     buttonText: {
       today: $.i18n._("Today"),
