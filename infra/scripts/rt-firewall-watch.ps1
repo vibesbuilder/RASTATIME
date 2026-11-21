@@ -22,6 +22,11 @@
       * asked for 3 or more typical scanner paths (/.git, /.env, /wp-, ...), or
       * had 5 or more DJ logins rejected for a WRONG PASSWORD
         (too-early logins - "no-show" / "not-host" - never count).
+    Not counted (2026-11-21, after a DJ was cut off four times because every
+    run found the same old lines again): lines of an address up to its last
+    Unblock (System Status or rt-blocks.ps1 write config\unblocked.txt), and
+    a DJ's wrong passwords before its last ACCEPTED login from that address.
+    When only that kept an address below its limit, the run logs "spared".
     Rules are named "RASTATIME-Block <ip>" with "until=<time>; reason=..."
     in the description; expired rules are removed on every run.  Private
     (LAN) and loopback addresses are never blocked.  Everything is logged
@@ -40,12 +45,19 @@ param(
     [int] $ScannerLimit = 3,
     [int] $BadPasswordLimit = 5,
     [string] $AllowListPath = 'C:\RASTATIME\config\allowlist.txt',   # 2026-10-08: written by System Status -> Allowed addresses
+    [string] $UnblockedPath = 'C:\RASTATIME\config\unblocked.txt',   # 2026-11-21: written by every Unblock (System Status, rt-blocks.ps1)
+    # 2026-11-21 - for tests (replay a past run with -DryRun); the defaults
+    # are the production run
+    [datetime] $Now = [datetime]::MinValue,
+    [string] $PlayoutLog = 'C:\RASTATIME\logs\playout-stdout.log',
+    [string[]] $HttpLogs = @(),   # empty: the Apache logs found as below
+    [string] $LogFile = 'C:\RASTATIME\logs\firewall-watch.log',
     [switch] $DryRun
 )
 $ErrorActionPreference = 'Continue'
-$log = 'C:\RASTATIME\logs\firewall-watch.log'
+$log = $LogFile
 $prefix = 'RASTATIME-Block '
-$now = Get-Date
+$now = if ($Now -eq [datetime]::MinValue) { Get-Date } else { $Now }
 $since = $now.AddMinutes(-$WindowMinutes)
 $scannerPattern = '(/\.git|/\.env|/\.htpasswd|/\.aws|/wp-(admin|login|includes|content)|phpmyadmin|/cgi-bin/|/vendor/phpunit|/\.well-known/(?!acme-challenge)|/actuator|/solr/|/HNAP1|/boaform|/shell\?)'
 
@@ -59,6 +71,25 @@ function Write-Log([string] $msg) {
 $allowEntries = @()
 if (Test-Path $AllowListPath) {
     $allowEntries = @(Get-Content $AllowListPath -ErrorAction SilentlyContinue | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('#') })
+}
+
+# RASTATIME 2026-11-21 - an Unblock is not undone by the next run.  Before,
+# the operator removed a rule and the next run (at most 5 min later) found
+# the same old lines still inside the window and blocked again (a DJ was cut
+# off four times on 2026-11-21).  Every Unblock (System Status, rt-blocks.ps1)
+# writes "<address> <ISO time>" into unblocked.txt; lines of that address up
+# to that time no longer count, for every reason.
+$forgiven = @{}
+if (Test-Path $UnblockedPath) {
+    foreach ($line in @(Get-Content $UnblockedPath -ErrorAction SilentlyContinue)) {
+        $parts = @($line.Trim() -split '\s+', 2)
+        if ($parts.Count -ne 2 -or $parts[0].StartsWith('#')) { continue }
+        try { $t = [datetime]::Parse($parts[1]) } catch { continue }
+        if (-not $forgiven.ContainsKey($parts[0]) -or $t -gt $forgiven[$parts[0]]) { $forgiven[$parts[0]] = $t }
+    }
+}
+function Test-Forgiven([string] $ip, [datetime] $ts) {
+    return ($forgiven.ContainsKey($ip) -and $ts -le $forgiven[$ip])
 }
 function ConvertTo-IPv4Number([string] $dotted) {
     $b = ([IPAddress] $dotted).GetAddressBytes()
@@ -109,6 +140,10 @@ foreach ($r in (Get-NetFirewallRule -DisplayName "$prefix*" -ErrorAction Silentl
 # ---- 2. HTTP logs (Apache "common" / "combined") ----------------------------
 $errors = @{}
 $scanner = @{}
+# 2026-11-21 - the same counts without the forgiven lines' exclusion, only
+# to log an address that an Unblock / a successful DJ login saved ("spared")
+$errorsRaw = @{}
+$scannerRaw = @{}
 $months = @{ Jan=1; Feb=2; Mar=3; Apr=4; May=5; Jun=6; Jul=7; Aug=8; Sep=9; Oct=10; Nov=11; Dec=12 }
 # RASTATIME 2026-10-09 - the HTTPS access log is written in daily slices
 # (rotatelogs, https-access-YYYYMMDD.log): read the slices touched inside the
@@ -117,29 +152,48 @@ $months = @{ Jan=1; Feb=2; Mar=3; Apr=4; May=5; Jun=6; Jul=7; Aug=8; Sep=9; Oct=
 # 2026-10-14: the port-80 host writes http-access-YYYYMMDD.log slices as well.
 $httpsSlices = @(Get-ChildItem 'C:\RASTATIME\logs\https-access-*.log', 'C:\RASTATIME\logs\http-access-*.log' -ErrorAction SilentlyContinue |
     Where-Object { $_.LastWriteTime -gt $since.AddDays(-1) } | Sort-Object LastWriteTime | Select-Object -ExpandProperty FullName)
-foreach ($file in @('C:\Tools\Apache24\logs\access_log', 'C:\RASTATIME\logs\https-access.log') + $httpsSlices) {
+$httpFiles = if ($HttpLogs.Count) { $HttpLogs } else { @('C:\Tools\Apache24\logs\access_log', 'C:\RASTATIME\logs\https-access.log') + $httpsSlices }
+foreach ($file in $httpFiles) {
     foreach ($line in (Read-Tail $file)) {
         if ($line -notmatch '^(\S+) \S+ \S+ \[(\d{2})/(\w{3})/(\d{4}):(\d{2}):(\d{2}):(\d{2}) [^\]]+\] "(?:\S+) (\S+)[^"]*" (\d{3})') { continue }
         $ip = $Matches[1]
         try { $ts = Get-Date -Year $Matches[4] -Month $months[$Matches[3]] -Day $Matches[2] -Hour $Matches[5] -Minute $Matches[6] -Second $Matches[7] } catch { continue }
-        if ($ts -lt $since) { continue }
+        if ($ts -lt $since -or $ts -gt $now) { continue }
         if (Test-PrivateAddress $ip) { continue }
         $path = $Matches[8]
         $status = [int]$Matches[9]
         # 401 = the app's own "not signed in" answer to a stale tab's polls, never a scanner (2026-10-07)
-        if ($status -ge 400 -and $status -lt 500 -and $status -ne 401) { $errors[$ip] = 1 + [int]$errors[$ip] }
-        if ($path -match $scannerPattern) { $scanner[$ip] = 1 + [int]$scanner[$ip] }
+        $isError = $status -ge 400 -and $status -lt 500 -and $status -ne 401
+        $isScanner = $path -match $scannerPattern
+        if ($isError) { $errorsRaw[$ip] = 1 + [int]$errorsRaw[$ip] }
+        if ($isScanner) { $scannerRaw[$ip] = 1 + [int]$scannerRaw[$ip] }
+        if (Test-Forgiven $ip $ts) { continue }
+        if ($isError) { $errors[$ip] = 1 + [int]$errors[$ip] }
+        if ($isScanner) { $scanner[$ip] = 1 + [int]$scanner[$ip] }
     }
 }
 
 # ---- 3. playout: DJ logins rejected for a wrong password --------------------
+# RASTATIME 2026-11-21 - a successful DJ login from an address starts its
+# count afresh, as the playout's own brake does: a DJ who mistyped and then
+# got in is no password guesser (the log is in time order, so the count is
+# simply reset at every "accepted" line).
 $badpw = @{}
-foreach ($line in (Read-Tail 'C:\RASTATIME\logs\playout-stdout.log' 5000)) {
-    if ($line -notmatch '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d+ .*dj-auth: .* from (\S+) rejected \(bad password\)') { continue }
+$badpwRaw = @{}
+$lastAccepted = @{}
+foreach ($line in (Read-Tail $PlayoutLog 5000)) {
+    if ($line -notmatch '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d+ .*dj-auth: .* from (\S+) (accepted|rejected \(bad password\))') { continue }
     try { $ts = [datetime]::ParseExact($Matches[1], 'yyyy-MM-dd HH:mm:ss', $null) } catch { continue }
-    if ($ts -lt $since) { continue }
+    if ($ts -lt $since -or $ts -gt $now) { continue }
     $ip = $Matches[2]
     if (Test-PrivateAddress $ip) { continue }
+    if ($Matches[3] -eq 'accepted') {
+        $badpw[$ip] = 0
+        $lastAccepted[$ip] = $ts
+        continue
+    }
+    $badpwRaw[$ip] = 1 + [int]$badpwRaw[$ip]
+    if (Test-Forgiven $ip $ts) { continue }
     $badpw[$ip] = 1 + [int]$badpw[$ip]
 }
 
@@ -148,6 +202,20 @@ $candidates = @{}
 foreach ($ip in $errors.Keys)  { if ($errors[$ip]  -ge $ErrorLimit)       { $candidates[$ip] = "4xx x$($errors[$ip]) in $WindowMinutes min" } }
 foreach ($ip in $scanner.Keys) { if ($scanner[$ip] -ge $ScannerLimit)     { $candidates[$ip] = "scanner paths x$($scanner[$ip])" } }
 foreach ($ip in $badpw.Keys)   { if ($badpw[$ip]   -ge $BadPasswordLimit) { $candidates[$ip] = "DJ bad password x$($badpw[$ip])" } }
+
+# 2026-11-21 - say so when only an Unblock / a successful DJ login kept an
+# address below its limit (once per run while the old lines are in the window)
+$spared = @{}
+foreach ($ip in $errorsRaw.Keys)  { if ($errorsRaw[$ip]  -ge $ErrorLimit       -and -not $candidates.ContainsKey($ip)) { $spared[$ip] = "4xx x$($errorsRaw[$ip])" } }
+foreach ($ip in $scannerRaw.Keys) { if ($scannerRaw[$ip] -ge $ScannerLimit     -and -not $candidates.ContainsKey($ip)) { $spared[$ip] = "scanner paths x$($scannerRaw[$ip])" } }
+foreach ($ip in $badpwRaw.Keys)   { if ($badpwRaw[$ip]   -ge $BadPasswordLimit -and -not $candidates.ContainsKey($ip)) { $spared[$ip] = "DJ bad password x$($badpwRaw[$ip])" } }
+foreach ($ip in $spared.Keys) {
+    if ($active.ContainsKey($ip) -or (Test-AllowedAddress $ip)) { continue }
+    $why = @()
+    if ($forgiven.ContainsKey($ip)) { $why += "unblocked by the operator at $($forgiven[$ip].ToString('yyyy-MM-dd HH:mm:ss'))" }
+    if ($lastAccepted.ContainsKey($ip)) { $why += "DJ login accepted at $($lastAccepted[$ip].ToString('yyyy-MM-dd HH:mm:ss'))" }
+    Write-Log "spared $ip ($($spared[$ip]) in the window, not counted: $($why -join '; '))"
+}
 
 $blocked = 0
 foreach ($ip in $candidates.Keys) {

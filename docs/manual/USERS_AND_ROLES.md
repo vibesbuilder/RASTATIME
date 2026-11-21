@@ -263,6 +263,17 @@ counts: it is what a browser tab with an expired session gets for its
 background polls, and since 2026-10-07 such a tab stops polling on the
 first one.
 
+**An Unblock stays unblocked (since 2026-11-21).**  The watcher looks
+back 60 minutes.  Before, it found the old failures again on its next
+run and blocked the address once more - a DJ who had got in with the
+right password was cut off a few minutes later, and again after every
+Unblock.  Now **Unblock** (and `rt-blocks.ps1 -Unblock`) tells the
+watcher the time, and failures of that address up to then no longer
+count; a DJ's wrong passwords also stop counting once that address has
+logged in successfully.  New failures after that count again from zero.
+The watcher's log (`logs\firewall-watch.log`) says *spared* when only
+this kept an address below its limit.
+
 **Allowed addresses (since 2026-10-08).**  Next to **Unblock** every
 blocked address has **Allow**: it is unblocked on every layer and put on
 the *Allowed addresses* list below, where you can also add an address or

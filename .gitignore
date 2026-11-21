@@ -8,6 +8,7 @@
 config/rastatime.conf
 # RASTATIME 2026-10-08 - allow list mirror written by the web UI (System Status)
 config/allowlist.txt
+config/unblocked.txt
 
 # -----------------------------------------------------------------------------
 # Python

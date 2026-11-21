@@ -275,6 +275,19 @@ angemeldet“ (401) zählt nie: Sie bekommt ein Browser-Tab mit
 abgelaufener Sitzung für seine Hintergrundabfragen, und seit 07.10.2026
 hört ein solcher Tab beim ersten Mal auf abzufragen.
 
+**Entsperrt bleibt entsperrt (seit 21.11.2026).**  Der Wächter schaut
+60 Minuten zurück.  Bisher fand er bei seinem nächsten Lauf die alten
+Fehlversuche wieder und sperrte die Adresse erneut - ein DJ, der mit dem
+richtigen Passwort drin war, wurde wenige Minuten später getrennt, und
+nach jedem Unblock wieder.  Jetzt teilt **Unblock** (und
+`rt-blocks.ps1 -Unblock`) dem Wächter den Zeitpunkt mit, und
+Fehlversuche dieser Adresse bis dahin zählen nicht mehr; die falschen
+Passwörter eines DJs zählen außerdem nicht mehr, sobald sich diese
+Adresse erfolgreich angemeldet hat.  Neue Fehlversuche danach zählen
+wieder ab null.  Das Protokoll des Wächters (`logs\firewall-watch.log`)
+schreibt *spared*, wenn nur das eine Adresse unter ihrer Grenze gehalten
+hat.
+
 **Erlaubte Adressen (seit 08.10.2026).**  Neben **Unblock** hat jede
 gesperrte Adresse **Allow**: Sie wird auf jeder Ebene entsperrt und in
 die Liste *Allowed addresses* darunter aufgenommen, in der Sie auch von

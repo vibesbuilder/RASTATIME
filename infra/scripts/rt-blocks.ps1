@@ -9,6 +9,8 @@
       web       cc_login_attempts (per address) / cc_subjs (per user name)
       harbor    the playout's DJ dial-in brake (127.0.0.1:8770/dj-auth/blocks)
       firewall  Windows Firewall rules "RASTATIME-Block <ip>" (watcher)
+    -Unblock also writes the time into config\unblocked.txt (2026-11-21), so
+    the watcher's next run does not block the address again on old lines.
 
     Thresholds mirror constants.php (RASTATIME_LOGIN_*): address 10 failures
     / 15 min -> 15 min, user 20 / 60 min -> 5 min.
@@ -20,7 +22,8 @@
 #>
 [CmdletBinding()]
 param(
-    [string] $Unblock = ''
+    [string] $Unblock = '',
+    [string] $UnblockedPath = 'C:\RASTATIME\config\unblocked.txt'   # 2026-11-21: read by rt-firewall-watch.ps1
 )
 $ErrorActionPreference = 'Stop'
 $conf = 'C:\RASTATIME\config\rastatime.conf'
@@ -106,6 +109,24 @@ if ($Unblock -ne '') {
         } catch { Write-Host "harbor: playout not reachable ($($_.Exception.Message))" }
         $rule = Get-NetFirewallRule -DisplayName "RASTATIME-Block $key" -ErrorAction SilentlyContinue
         if ($rule) { $rule | Remove-NetFirewallRule; Write-Host "firewall: rule removed" } else { Write-Host "firewall: no rule" }
+        # RASTATIME 2026-11-21 - tell the firewall watcher (same file and format
+        # as System Status): lines of this address up to now no longer count,
+        # so its next run does not block the address again on the old lines.
+        # Lines older than two days are dropped.
+        try {
+            $keepLines = @()
+            if (Test-Path $UnblockedPath) {
+                foreach ($line in @(Get-Content $UnblockedPath)) {
+                    $parts = @($line.Trim() -split '\s+', 2)
+                    if ($parts.Count -ne 2 -or $parts[0] -eq $key) { continue }
+                    try { $at = [datetime]::Parse($parts[1]) } catch { continue }
+                    if (((Get-Date) - $at).TotalHours -le 48) { $keepLines += "$($parts[0]) $($parts[1])" }
+                }
+            }
+            $keepLines += "$key $((Get-Date).ToString('yyyy-MM-ddTHH:mm:sszzz'))"
+            Set-Content -Path $UnblockedPath -Value $keepLines -Encoding ascii
+            Write-Host "watcher: told (lines up to now no longer count)"
+        } catch { Write-Host "watcher: NOT told ($($_.Exception.Message))" }
     } else {
         throw "not an address and not user:<login>: $key"
     }

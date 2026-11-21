@@ -1,10 +1,14 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.155
+Draft version: 0.156
 Date: 2026-11-21
 
 > **Revision history**
+> - **0.156 (2026-11-21)** - The firewall watcher honours an Unblock and a successful DJ login
+>   (§23.125): every Unblock writes its time into `config/unblocked.txt`, the watcher ignores
+>   that address's lines up to it, and a DJ's wrong passwords count only after the address's
+>   last accepted login; "spared" lines in its log.  Test parameters (-Now, log paths).
 > - **0.155 (2026-11-21)** - The calendar view as PDF (§23.124): an export button in the FC6
 >   toolbar exports the current view as a list (every view) or a time grid (day / week),
 >   A4 landscape, built in the browser with the vendored pdfmake, loaded on first use.
@@ -11619,3 +11623,73 @@ dialog left open, datepicker above the dialog (z-index 1003 / 1002),
 portrait list of a period outside the view (3 pages), portrait week
 grid and portrait day grid (3 × 8 h) in the PDF viewer; the operator's
 week view restored afterwards.  Tag `live-2026-11-21e`.
+
+### 23.125 The Firewall Watcher Honours an Unblock and a Successful DJ Login (2026-11-21)
+
+**Finding (2026-11-21 midday).**  A DJ on the show source was cut off
+four times after one to three minutes.  His encoder sent a wrong
+password at 12:10 and 12:48 and retried at once - five rejections in
+about 2 s each time, so the playout's brake (5 in 10 min, 15 min) fired
+at once.  The firewall watcher (`infra/scripts/rt-firewall-watch.ps1`,
+every 5 min, looks back 60 min, 5 x "DJ bad password" -> a Windows
+Firewall rule for 24 h) turned that into a rule at 12:12.  After every
+Unblock in System Status (which clears all layers, including the rule)
+the DJ connected with the right password - and the next watcher run
+counted the same old lines (still inside its window, x10) and blocked
+again; the running stream stopped 5-6 s later (Liquidsoap "Timed out
+after waiting for 5 s": 12:52:08 -> 12:52:13, 12:57:06 -> 12:57:12,
+13:02:06 -> 13:02:12).  Only an allow-list entry ended the loop.  The
+watcher knew neither the operator's Unblock nor a successful login
+after the failures.
+
+**Decision (evaluation 2026-11-21, operator Go for (a) and (b)).**
+- (a) Every Unblock - System Status (`Application_Model_BlockedAddresses::
+  unblock()` -> `recordUnblock()`) and `rt-blocks.ps1 -Unblock` - writes
+  `<address> <ISO time with offset>` into `<config dir>/unblocked.txt`
+  (one line per address, the newest wins, lines older than two days are
+  dropped on every write, a failed write never fails the Unblock; the
+  legacy log line says "watcher told / NOT told").  The watcher reads the
+  file and skips that address's lines up to that time in all three
+  counters (4xx, scanner paths, DJ wrong passwords).  A file rather than
+  the existing legacy.log line, so the script does not depend on a log's
+  wording and the PowerShell tool has the same path.
+- (b) The watcher also reads the "accepted" DJ login lines of the
+  playout log and starts an address's wrong-password count afresh at each
+  one (the log is in time order) - the playout's own brake already forgets
+  an address's rejections on a successful login.
+- When only (a) / (b) kept an address below its limit, the run logs
+  `spared <ip> (<reason> in the window, not counted: unblocked by the
+  operator at ...; DJ login accepted at ...)`.
+- For tests the watcher got parameters with production defaults: `-Now`
+  (replay a past run), `-PlayoutLog`, `-HttpLogs`, `-LogFile`, plus an
+  upper time bound (`ts > now` is skipped) so a replay does not count
+  lines after its clock.  `config/unblocked.txt` is git-ignored like the
+  allow list.
+
+**Verification.**  Replay of the real logs of 2026-11-21 with `-DryRun`
+at the watcher's run times 12:12:06 / 12:52:08 / 12:57:06 / 13:02:06:
+the old behaviour (no accepted lines, no unblocks) reproduces the real
+blocks exactly (x5, x10, x10, x10); with (a)+(b), (a) alone or (b) alone
+only 12:12 blocks and the other three runs log "spared".  Synthetic
+counter-checks: five wrong passwords AFTER a successful login still
+block; scanner paths after an Unblock still block, those before it are
+spared; without the file the old behaviour holds.  PHP probe
+`recordUnblock` 12/12 (format, pruning, newest per address, IPv6,
+refusal of non-addresses, unwritable path, PowerShell reads it back).
+The production runs continue normally (`run:` lines, no errors).
+
+**Not covered.**  The first block (12:12) still happens: five failures
+in 2 s from one wrong password with a fast-retrying encoder.  Counting a
+retry burst as one failure was idea (d), not part of this change.
+`rt-blocks.ps1 -Unblock` was parse-checked, not run (needs elevation and
+the database).
+
+**Risk.**  Low.  The broadcast path is untouched; the watcher reads the
+new code on its next run, the PHP is live on the next request.  Failure
+mode: a watcher bug stops blocking (fail-open) or blocks wrongly - the
+replay above and the production log after the change.  Security: only
+the operator (signed in, CSRF) or a local administrator can write an
+Unblock; failures after it count from zero; (b) gives a client with a
+valid DJ login no more than the playout's brake already does.  Rollback:
+`git revert` (the watcher picks it up on its next run); tag
+`live-2026-11-21f`.

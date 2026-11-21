@@ -285,6 +285,19 @@ que reçoit un onglet dont la session a expiré pour ses requêtes en
 arrière-plan, et depuis le 07/10/2026 un tel onglet arrête ses requêtes
 dès la première.
 
+**Un déblocage reste un déblocage (depuis le 21/11/2026).**  Le
+surveillant regarde 60 minutes en arrière.  Auparavant, il retrouvait
+les anciens échecs à son passage suivant et bloquait de nouveau
+l'adresse - un DJ connecté avec le bon mot de passe était coupé quelques
+minutes plus tard, et de nouveau après chaque Unblock.  Désormais
+**Unblock** (et `rt-blocks.ps1 -Unblock`) communique l'heure au
+surveillant, et les échecs de cette adresse jusqu'à ce moment ne
+comptent plus ; les mauvais mots de passe d'un DJ ne comptent plus non
+plus dès que cette adresse s'est connectée avec succès.  Les nouveaux
+échecs ensuite comptent de nouveau à partir de zéro.  Le journal du
+surveillant (`logs\firewall-watch.log`) indique *spared* quand seule
+cette règle a maintenu une adresse sous sa limite.
+
 **Adresses autorisées (depuis le 08/10/2026).**  À côté de **Unblock**,
 chaque adresse bloquée a **Allow** : elle est débloquée à tous les
 niveaux et ajoutée à la liste *Allowed addresses* en dessous, où vous

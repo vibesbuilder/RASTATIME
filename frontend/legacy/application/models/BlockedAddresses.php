@@ -21,6 +21,9 @@ class Application_Model_BlockedAddresses
     const PLAYOUT_BLOCKS_URL = 'http://127.0.0.1:8770/dj-auth/blocks';
     const PLAYOUT_UNBLOCK_URL = 'http://127.0.0.1:8770/dj-auth/unblock';
     const FIREWALL_PREFIX = 'RASTATIME-Block ';
+    // RASTATIME 2026-11-21 - Unblock times for the firewall watcher
+    const UNBLOCKED_FILE = 'unblocked.txt';
+    const UNBLOCKED_KEEP_SECONDS = 172800;
 
     /**
      * @return array rows: layer (web|web-user|harbor|firewall), key,
@@ -72,11 +75,61 @@ class Application_Model_BlockedAddresses
         $result['web'] = true;
         $result['harbor'] = self::harborUnblock($key);
         $result['firewall'] = self::firewallUnblock($key);
+        $result['recorded'] = self::recordUnblock($key);
         Logging::info("blocked-addresses: operator unblocked {$key} (harbor "
             . ($result['harbor'] ? 'cleared' : 'nothing') . ', firewall '
-            . ($result['firewall'] ? 'rule removed' : 'no rule') . ')');
+            . ($result['firewall'] ? 'rule removed' : 'no rule') . ', watcher '
+            . ($result['recorded'] ? 'told' : 'NOT told') . ')');
 
         return $result;
+    }
+
+    /** @return string path of unblocked.txt next to rastatime.conf (and allowlist.txt) */
+    public static function unblockedPath()
+    {
+        return rtrim(dirname(RASTATIME_CONFIG_FILEPATH), '/\\') . DIRECTORY_SEPARATOR . self::UNBLOCKED_FILE;
+    }
+
+    /**
+     * RASTATIME 2026-11-21 - tell the firewall watcher about an Unblock.  The
+     * watcher counts the lines of the last hour; without this it found the
+     * same old lines again on its next run (at most 5 min later) and blocked
+     * the address once more - a DJ was cut off four times on 2026-11-21.
+     * One line per address, "<address> <ISO time>"; the watcher ignores that
+     * address's lines up to that time.  Lines older than two days (far beyond
+     * the watcher's window) are dropped on every write.  A failed write never
+     * fails the Unblock itself.
+     *
+     * @return bool true when the line is written
+     */
+    public static function recordUnblock($address, $path = null, $now = null)
+    {
+        if (!self::looksLikeAddress($address)) {
+            return false;
+        }
+        $path = $path ?? self::unblockedPath();
+        $now = $now ?? time();
+        try {
+            $keep = [];
+            $old = is_file($path) ? @file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
+            foreach ($old ?: [] as $line) {
+                $parts = preg_split('/\s+/', trim($line), 2);
+                if (count($parts) !== 2 || $parts[0] === $address) {
+                    continue;
+                }
+                $at = strtotime($parts[1]);
+                if ($at !== false && $now - $at <= self::UNBLOCKED_KEEP_SECONDS) {
+                    $keep[] = $parts[0] . ' ' . $parts[1];
+                }
+            }
+            $keep[] = $address . ' ' . date('c', $now);
+
+            return @file_put_contents($path, implode("\n", $keep) . "\n", LOCK_EX) !== false;
+        } catch (Throwable $e) {
+            Logging::warn('blocked-addresses: cannot record the unblock for the watcher: ' . $e->getMessage());
+
+            return false;
+        }
     }
 
     public static function looksLikeAddress($value)

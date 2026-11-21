@@ -276,6 +276,18 @@ Una respuesta «sin sesión» (401) nunca cuenta: es lo que recibe una
 pestaña con la sesión caducada en sus consultas de fondo, y desde el
 07/10/2026 una pestaña así deja de consultar a la primera.
 
+**Un desbloqueo se mantiene (desde el 21/11/2026).**  El vigilante mira
+60 minutos atrás.  Antes, en su siguiente pasada volvía a encontrar los
+fallos antiguos y bloqueaba la dirección otra vez: un DJ que había
+entrado con la contraseña correcta quedaba desconectado pocos minutos
+después, y de nuevo tras cada Unblock.  Ahora **Unblock** (y
+`rt-blocks.ps1 -Unblock`) comunica la hora al vigilante, y los fallos de
+esa dirección hasta ese momento dejan de contar; las contraseñas
+erróneas de un DJ tampoco cuentan una vez que esa dirección ha iniciado
+sesión con éxito.  Los fallos nuevos posteriores vuelven a contar desde
+cero.  El registro del vigilante (`logs\firewall-watch.log`) indica
+*spared* cuando solo esto mantuvo una dirección por debajo de su límite.
+
 **Direcciones permitidas (desde el 08/10/2026).**  Junto a **Unblock**,
 cada dirección bloqueada tiene **Allow**: se desbloquea en todos los
 niveles y se añade a la lista *Allowed addresses* de debajo, donde

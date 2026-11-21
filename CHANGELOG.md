@@ -88,6 +88,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Firewall-Wächter sperrt nach „Unblock" und nach erfolgreichem DJ-Login nicht mehr erneut
+  (2026-11-21, Befund Mittag, Go des Operators für a + b)** - Ein DJ wurde viermal nach 1-3
+  Minuten getrennt: nach jedem Entsperren fand der nächste Wächterlauf (alle 5 min, Rückblick
+  60 min) dieselben alten Fehlpasswörter wieder und legte die 24-h-Firewall-Regel neu an, die
+  laufende Verbindung riss 5 s später ab.  Jetzt schreibt jedes Unblock (System Status und
+  `rt-blocks.ps1 -Unblock`) den Zeitpunkt nach `config/unblocked.txt`, und der Wächter zählt
+  die Zeilen dieser Adresse bis dahin nicht mehr (alle drei Gründe); falsche DJ-Passwörter
+  zählen nur noch nach dem letzten erfolgreichen DJ-Login derselben Adresse.  Das Wächter-Log
+  schreibt dann „spared".  Nachgespielt mit den echten Protokollen: altes Verhalten sperrt wie
+  am Mittag, neues nur noch die erste Sperre; Gegenproben (neue Fehlversuche, Scanner nach
+  Unblock) sperren weiter; PHP-Probe 12/12.  Manual USERS_AND_ROLES ×4, ARCHITECTURE 0.156
+  (§23.125).
+
 - **Datums-Popup: die Monats-Überschrift war schmaler als der Monatskalender (2026-11-21,
   Meldung des Operators, New/Edit Show)** - Die allgemeinen Tabellenregeln (`thead tr th`
   16 px, `tr td` 12 px) greifen auch im jQuery-UI-Datepicker, darum war die Monatstabelle

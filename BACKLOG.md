@@ -80,7 +80,7 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 💡 Firewall-Wächter sperrt nach „Unblock" und nach erfolgreichem Login erneut - IDEA (Befund 2026-11-21 Mittag)
+### ✅ Firewall-Wächter sperrt nach „Unblock" und nach erfolgreichem Login erneut - (a) + (b) GEBAUT 2026-11-21 (Go, §23.125); (c) und (d) offen (Befund 2026-11-21 Mittag)
 
 Ein DJ (Show Source) wurde viermal nach 1-3 Minuten getrennt.  Ablauf: sein Encoder schickte
 um 12:10 und 12:48 ein falsches Passwort und wiederholte sofort - je fünf Ablehnungen in rund
