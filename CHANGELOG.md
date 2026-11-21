@@ -94,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gekommen (sein Arm liegt über dem Sendeplan).  Jetzt läuft auch unter einem DJ die normale
   Freigabe (Gate zu, Quelle nach dem Nachlauf stoppen) - unhörbar, der DJ liegt darüber.  In den
   Logs seit 2026-11-10 kam der Fall nicht vor.  Wirksam nach einem PLAYOUT-Neustart (ohne
-  Liquidsoap-Neustart).  Manual STREAMS ×4, ARCHITECTURE 0.157 (§23.126).
+  Liquidsoap-Neustart).  Manual STREAMS ×4, ARCHITECTURE 0.157 (§23.126).  `3b1088b9`.
 
 - **Firewall-Wächter sperrt nach „Unblock" und nach erfolgreichem DJ-Login nicht mehr erneut
   (2026-11-21, Befund Mittag, Go des Operators für a + b)** - Ein DJ wurde viermal nach 1-3
