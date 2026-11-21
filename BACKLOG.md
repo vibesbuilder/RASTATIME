@@ -727,7 +727,7 @@ sein dürfen (Namen, Sendungen, Kontakt), Anschluss an die öffentlichen Lesepfa
 Schalter *Public RASTATIME API* (Abschnitt „Öffentliche API und Widgets").
 **Vorbedingungen:** Recherche + Evaluierung auf Operator-Wunsch.
 
-### 💡 RASTATIME über GitHub aktualisieren - IDEA (Operator 2026-11-07, noch nicht recherchiert)
+### 🟡 RASTATIME über GitHub aktualisieren - DEFER (Operator 2026-11-21) (= Stufe 2/3 des Update-Wegs; Idee 2026-11-07)
 
 Wunsch: RASTATIME direkt aus den GitHub-Releases aktualisieren können.  Ein Plan dafür steht
 schon im Abschnitt „Veröffentlichung auf GitHub, Releases, Update-Weg": Stufe 2 `rt-update.ps1`
@@ -1802,7 +1802,7 @@ Key-Instabilität eingeführt wurde (Row-IDs sind serial, werden nie
 wiederverwendet).  **Vorbedingung:** Operator-Go; PLAYOUT-Neustart nach
 dem Commit.
 
-### 🟡 Benutzergruppen-Audit: Wer darf was? (Operator 2026-09-17) - Ist-Matrix erhoben 2026-10-25
+### ✅ Benutzergruppen-Audit: Wer darf was? (Operator 2026-09-17) - ERLEDIGT 2026-10-25 (Pakete 1-5, Folgepunkte, PM/DJ-Abnahme) (Operator 2026-11-21)
 
 **Stand 2026-10-25 (Operator: angehen):** Ist-Matrix, geprüfte Befunde, Vorschlag Soll-Matrix und
 Maßnahmenpakete in `docs/operator/ROLE_AUDIT_2026-10.md`.  Sieben Sofort-Befunde S1-S7 (u. a.
@@ -7354,7 +7354,7 @@ Verlust in B/C: das einzige S-Merkmal, ein unlöschbares Besitzerkonto - optiona
 nachbilden.  **Empfehlung:** B (Go), Priorität niedrig - kein Live-Nutzen, aber weniger Sonderfälle und
 Legacy/API konsistent.
 
-## 🟢 Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - GO 2026-10-28, in Arbeit
+## ✅ Veröffentlichung auf GitHub, Releases, Update-Weg (Evaluierung 2026-10-25) - Veröffentlichung und Releases ERLEDIGT (Repo öffentlich seit 2026-11-11, Releases bis v1.7.1); Update-Weg (Stufe 2 und 3) 🟡 DEFER (Operator 2026-11-21)
 
 **Operator-Go 2026-10-28** mit diesen Entscheidungen: (1) Historie per `git filter-repo` (alle Commits bleiben, Audio +
 icecast.xml raus); (2) Repo zuerst **privat**, öffentlich erst ganz zum Schluss; (3) keine Org, Repo `vibesbuilder/RASTATIME`;
@@ -7574,11 +7574,11 @@ kein `v`-Tag, GitHub-Org „RASTATIME" aus den README-Badges existiert nicht (40
   Vorgehen, ≈ 1 Tag + Beobachtungswoche) vor dem ersten Push, damit fremde Entwickler keine halbe Umbenennung sehen.
 - 🟡 **Stufe 1 - Releases:** SemVer ab `v1.0.0`, Versionsnummer ins Produkt (Settings/About + `/api/version`),
   CHANGELOG-Abschnitt je Version (release.yml liest ihn), Tag pushen -> Release.  ~½ Tag.
-- 🟡 **Stufe 2 - Update-Skript `rt-update.ps1`:** UPGRADE.md automatisiert: Backup (Aufgabe RASTATIME-Backup),
+- 🟡 **Stufe 2 - Update-Skript `rt-update.ps1` - DEFER (Operator 2026-11-21):** UPGRADE.md automatisiert: Backup (Aufgabe RASTATIME-Backup),
   Dienste stoppen, `git fetch` + Checkout des Release-Tags (oder Release-Zip), `composer install`, `pip install -e`,
   Migrationen, Dienste in Reihenfolge starten, Smoke-Test (health, Mounts), Rollback auf den vorigen Tag + DB.
   Erhöhte Rechte nötig (Dienste).  ~1 Tag + Probe.
-- 🟡 **Stufe 3 - Knopf in der UI (Defer):** Settings → „Updates": Versionsprüfung gegen die GitHub-Releases-API
+- 🟡 **Stufe 3 - Knopf in der UI (Defer, bestätigt vom Operator 2026-11-21):** Settings → „Updates": Versionsprüfung gegen die GitHub-Releases-API
   (wie `scripts/update_check.py`), Changelog anzeigen, „Install" startet `rt-update.ps1` als geplante Aufgabe
   mit erhöhten Rechten (Apache/PHP läuft ohne Admin, der Updater stoppt Apache selbst), Wartungsseite + Fortschritt
   aus einer Statusdatei, Abschluss im ruhigen Moment (Standby übernimmt die Hörer wie beim geplanten Neustart).
@@ -8615,7 +8615,7 @@ Jugend / Schulradio, Sport, Spiritualität).  Generator im Scratchpad der Sitzun
 Vorbedingungen: Durchsicht des Operators (offene und unsichere zuerst), dann Sammel-Eintrag in cc_show.genre je show_ids
 mit Sicherung.
 
-## 💡 Sendungs-DJ am Sendungsende automatisch trennen (Beobachtung 2026-11-16)
+## ✅ Sendungs-DJ am Sendungsende automatisch trennen (Beobachtung 2026-11-16) - ERLEDIGT 2026-11-18 durch §23.121 (die Show Source endet mit der Sendung) (Operator 2026-11-21)
 
 Liquidsoap prüft die Anmeldung nur beim Verbinden; ein Sendungs-DJ bleibt verbunden und auf Sendung, bis er selbst trennt
 (Kick nur über die Oberfläche oder wenn die Episode gelöscht wird, `kick_dj_source`).  Der Sendungs-DJ-Arm steht im Bus
@@ -8724,7 +8724,7 @@ am Beginn der Folgesendung) - nur in der Nachbildung geprüft.
 Offen:
 - 💡 Idee: erlaubter Überhang in Sekunden (global oder je Sendung).
 
-### 💡 DJ trennt selbst und es gibt nichts fortzusetzen - der pausierte Titel kommt zurück (Befund 2026-11-18)
+### ✅ DJ trennt selbst und es gibt nichts fortzusetzen - der pausierte Titel kommt zurück (Befund 2026-11-18) - ERLEDIGT durch „Sendeplan läuft unter dem DJ weiter" Stufe 1 (§23.122; gilt, solange der Probeschalter an ist) (Operator 2026-11-21)
 Beim Nachbessern des Show-Source-Endes gefunden, nicht gebaut: Trennt
 ein DJ (Show oder Master) von sich aus, während nichts fortzusetzen ist
 (die Zeile, in der er einstieg, ist unter ihm zu Ende gegangen, oder ein
@@ -8744,7 +8744,7 @@ Vorbedingung: zweite Abnahme des Show-Source-Endes bestanden (erfüllt
 (Stufe 1) gebaut wird - dann steht kein Titel mehr in der
 Warteschlange.
 
-### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); eingeschaltet 2026-11-19 11:58; ABGENOMMEN 2026-11-19 (Sendungsende 14:15, Rückgabe mitten in der Sendung 14:38); Probezeit läuft, Schalter entfernen offen
+### 🟢 Sendeplan läuft unter dem DJ weiter - Stufe 1 GEBAUT 2026-11-19 (Go 2026-11-19, §23.122); eingeschaltet 2026-11-19 11:58; ABGENOMMEN 2026-11-19 (Sendungsende 14:15, Rückgabe mitten in der Sendung 14:38); Probezeit läuft, Schalter entfernen offen; Stufe 2 und 3 🟡 DEFER (Operator 2026-11-21)
 Grundsätzlichere Variante: die Sendeplan-Kette auch unter einem DJ
 ziehen (stummer zweiter Abnehmer in Liquidsoap), sodass Titel,
 Vorab-Einreihen und Übergänge unhörbar im Takt der Zeilen
@@ -8872,7 +8872,7 @@ Offen:
 - Nach bestandener Probezeit: Schalter entfernen (immer an), die
   Rückfallwege behalten oder gesondert entscheiden.
 - 🟡 Stufe 2 (Line-In unter dem DJ offen halten) und Stufe 3 (Webstream
-  unter dem DJ verbunden halten): Defer, je eigene Evaluierung.
+  unter dem DJ verbunden halten): Defer (bestätigt vom Operator 2026-11-21), je eigene Evaluierung.
   Vorbedingung: Stufe 1 abgenommen.
 
 ### 💡 24/7-Mitschnitt: Stundendatei beginnt nach einem Neustart kurz vor der vollen Stunde verspätet (Befund 2026-11-19)
