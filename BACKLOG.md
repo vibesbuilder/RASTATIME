@@ -8595,7 +8595,14 @@ ab 09:40 prüfen: Lampe leuchtet durchgehend, Kopf und Now-Playing-Widget zeigen
 
 ## Titel endet vor seinem Cue-Out - 41 s Stille (Befund 2026-11-18 00:58)
 
-### 💡 Beschädigte Dateien erkennen und früh endende Titel auffangen - IDEA (Befund 2026-11-18)
+### 💡 Beschädigte Dateien erkennen und früh endende Titel auffangen - IDEA (Befund 2026-11-18, zweiter Fall 2026-11-21)
+**Zweiter Fall 2026-11-21 00:08:33-00:11:51 (198 s Stille, Dead-Air-Alarm 00:09:03):** eine MP3
+(192 kbit/s, Länge laut Header 293,4 s) ist abgeschnitten - 2,2 MB statt der nötigen ~7 MB,
+dekodierbar 87,9 s, danach „Header missing".  Die übrigen sechs Titel desselben Albums dekodieren
+vollständig.  Die Stille war diesmal 198 s lang, weil der nächste Titel erst zu seiner Zeile
+(berechnet aus der Header-Länge) kam.  Damit betrifft es nicht nur M4A: der Bestands-Scan müsste
+alle Formate dekodieren; ein schneller Vorfilter für MP3 ist Dateigröße gegen Bitrate × Länge.
+
 Eine Musikdatei (M4A, importiert 2026-10-09, zum ersten Mal geplant) hat
 laut Container 218,5 s, dekodierbar sind aber nur 165,7 s - ab dort ist
 jeder AAC-Frame ungültig.  Liquidsoap meldete „End of track reached at
