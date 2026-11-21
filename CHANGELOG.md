@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schreibt dann „spared".  Nachgespielt mit den echten Protokollen: altes Verhalten sperrt wie
   am Mittag, neues nur noch die erste Sperre; Gegenproben (neue Fehlversuche, Scanner nach
   Unblock) sperren weiter; PHP-Probe 12/12.  Manual USERS_AND_ROLES ×4, ARCHITECTURE 0.156
-  (§23.125).
+  (§23.125).  `4e078ebe`.
 
 - **Datums-Popup: die Monats-Überschrift war schmaler als der Monatskalender (2026-11-21,
   Meldung des Operators, New/Edit Show)** - Die allgemeinen Tabellenregeln (`thead tr th`
