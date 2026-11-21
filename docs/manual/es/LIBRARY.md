@@ -699,6 +699,18 @@ Verifique la insignia de estado de subida:
 > de un archivo (el caso de aviso de arriba) se siguen aceptando.  Los
 > archivos que ya están en la biblioteca no se vuelven a comprobar.
 
+> **Comprobar los archivos que ya están en la biblioteca (desde el
+> 21/11/2026).**  La comprobación al importar no ve los archivos
+> importados antes.  En el equipo del estudio, `rastatime-api scan_damaged_files`
+> (PowerShell en `C:\RASTATIME`) decodifica una vez cada archivo de la
+> biblioteca con la misma regla y escribe un informe,
+> `logs\damaged-files-<fecha>.csv` (id, artista, título, ruta, duración
+> guardada, cue-out, duración decodificable).  No cambia nada: para cada
+> archivo del informe decida usted: marcar *Disabled*, sustituir el archivo
+> o borrar la pista.  Una pasada completa dura alrededor de una hora para
+> 25.000 archivos y ocupa un núcleo del procesador con baja prioridad;
+> `--resume` continúa una pasada interrumpida.
+
 ### "Subí un archivo WAV y la biblioteca muestra un MP3."
 
 Es lo previsto: los archivos sin pérdida se convierten a MP3 de

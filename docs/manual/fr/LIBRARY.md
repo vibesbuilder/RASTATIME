@@ -826,6 +826,18 @@ Vérifiez le badge de statut de téléversement :
 > d'un fichier (le cas d'avertissement ci-dessus) restent acceptés.  Les
 > fichiers déjà présents dans la bibliothèque ne sont pas revérifiés.
 
+> **Vérifier les fichiers déjà présents dans la bibliothèque (depuis le
+> 21/11/2026).**  Le contrôle à l'import ne voit pas les fichiers importés
+> avant lui.  Sur la machine du studio, `rastatime-api scan_damaged_files` (PowerShell
+> dans `C:\RASTATIME`) décode une fois chaque fichier de la bibliothèque
+> selon la même règle et écrit un rapport,
+> `logs\damaged-files-<date>.csv` (id, artiste, titre, chemin, durée
+> enregistrée, cue-out, durée décodable).  Il ne modifie rien - pour chaque
+> fichier du rapport, décidez vous-même : cocher *Disabled*, remplacer le
+> fichier ou supprimer la piste.  Un passage complet dure environ une heure
+> pour 25 000 fichiers et occupe un cœur de processeur en basse priorité ;
+> `--resume` reprend un passage interrompu.
+
 ### "J'ai téléversé un fichier WAV et la bibliothèque affiche un MP3."
 
 C'est voulu : les fichiers sans perte sont convertis en MP3 320 kbit/s

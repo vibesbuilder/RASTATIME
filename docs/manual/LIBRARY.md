@@ -750,6 +750,16 @@ Check the upload status badge:
 > problems at the very end of a file (the warning case above) are still
 > accepted.  Files already in the library are not checked again.
 
+> **Checking the files already in the library (since 2026-11-21).**  The
+> import check does not look at files imported before it.  On the studio
+> machine, `rastatime-api scan_damaged_files` (PowerShell in `C:\RASTATIME`) decodes
+> every library file once with the same rule and writes a report,
+> `logs\damaged-files-<date>.csv` (id, artist, title, path, stored length,
+> cue-out, decodable length).  It changes nothing - for each file in the
+> report decide yourself: tick *Disabled*, replace the file, or delete the
+> track.  A full run takes about an hour for 25,000 files and uses one
+> processor core at low priority; `--resume` continues an interrupted run.
+
 ### "I uploaded a WAV file and the library shows an MP3."
 
 That is intended: lossless files are converted to MP3 320 kbps on

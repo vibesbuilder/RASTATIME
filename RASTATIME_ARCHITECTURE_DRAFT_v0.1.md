@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.157
+Draft version: 0.158
 Date: 2026-11-21
 
 > **Revision history**
+> - **0.158 (2026-11-21)** - Library scan for damaged files (§23.127): management command
+>   `scan_damaged_files`, read-only report, same rule as the import check.
 > - **0.157 (2026-11-21)** - A live row that ends under a DJ releases its source (§23.126):
 >   `_on_stop` no longer leaves a webstream / line-in open while a DJ is on air.
 > - **0.156 (2026-11-21)** - The firewall watcher honours an Unblock and a successful DJ login
@@ -11730,3 +11732,44 @@ rows unchanged.  Playout suite 1036 passed.
 new is only "also under a DJ".  Active after a PLAYOUT restart (the
 rendered script is unchanged - no Liquidsoap restart).  Rollback:
 `git revert` and a PLAYOUT restart; tag `live-2026-11-21g`.
+
+### 23.127 Library Scan for Damaged or Cut-Short Files (2026-11-21)
+
+**Why.**  The import check (§23.123) only protects new imports; both
+dead-air files (2026-11-18, 2026-11-21) were already in the library, and
+about 18,000 library tracks had never been scheduled.  Operator Go
+2026-11-21, variant "report only".
+
+**Build.**  `rastatime-api scan_damaged_files` (API management command,
+`storage/management/commands/scan_damaged_files.py`):
+- reads `cc_files` (file exists, not hidden) in id order - read-only;
+- decodes each file once: `ffmpeg -v error -progress pipe:1 -i <file>
+  -vn -f null -`, below normal priority, timeout max(120 s, half the
+  length); the decoded length comes from `out_time_us`;
+- judges it against the end the playout uses - the cue-out, else the
+  stored length - with the import check's own functions
+  (`rastatime_analyzer.pipeline.analyze_playability.decoded_seconds` /
+  `is_truncated`: more than 2 s AND more than 1 % missing);
+- writes the problems only - `truncated`, `unplayable` (ffmpeg exit != 0),
+  `missing`, `timeout` - into a CSV (`;`, UTF-8 with BOM for Excel):
+  id, status, artist, title, path, length, cue-out, decoded, missing,
+  ffmpeg tail; default `<logs>/damaged-files-YYYY-MM-DD.csv` (the logs
+  folder next to the config folder);
+- `<report>.progress` holds the last checked id, `--resume` continues
+  after it; `--ids`, `--limit`, `--ffmpeg-dir`; a PostgreSQL advisory
+  lock keeps it to one run.
+A file cut after its cue-out is fine (the playout never reaches the
+missing part).  Nothing in the library changes; the operator decides
+per file (Disabled, replace, delete).
+
+**Measured.**  50 files in 6 s on the studio machine (SSD RAID, 10 cores,
+17 % load): the full library (25,336 files, 1,962 h) takes about 50 min
+on one core.
+
+**Tests.**  `test_scan_damaged_files.py` without a database: full / cut
+MP3, cut M4A, a cut file whose cue-out lies inside the audio, missing and
+undecodable files, the report (header, only problems, resume appends
+without a second header, progress id), the default report path.
+
+**Risk.**  Low: read-only; one core below normal priority; stoppable at
+any time (`--resume`).  No restart needed (a management command).

@@ -811,6 +811,18 @@ Prüfen Sie den Upload-Status-Badge:
 > Datei (der Warnungsfall oben) werden weiterhin angenommen.  Dateien, die
 > schon in der Bibliothek sind, werden nicht erneut geprüft.
 
+> **Dateien prüfen, die schon in der Bibliothek sind (seit 21.11.2026).**
+> Die Prüfung beim Import sieht keine Dateien, die vorher importiert
+> wurden.  Auf dem Studiorechner dekodiert `rastatime-api scan_damaged_files` (PowerShell
+> in `C:\RASTATIME`) jede Datei der Bibliothek einmal nach derselben Regel
+> und schreibt einen Bericht, `logs\damaged-files-<Datum>.csv` (Id,
+> Interpret, Titel, Pfad, gespeicherte Länge, Cue-Out, dekodierbare
+> Länge).  Er ändert nichts - entscheiden Sie für jede Datei im Bericht
+> selbst: *Disabled* anhaken, Datei ersetzen oder Titel löschen.  Ein
+> voller Lauf dauert für 25.000 Dateien etwa eine Stunde und belegt einen
+> Prozessorkern mit niedriger Priorität; `--resume` setzt einen
+> unterbrochenen Lauf fort.
+
 ### "Ich habe eine WAV-Datei hochgeladen, und die Bibliothek zeigt eine MP3."
 
 Das ist gewollt: Verlustfreie Dateien werden beim Import in MP3 mit

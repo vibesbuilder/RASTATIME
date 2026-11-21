@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bestands-Scan auf beschädigte und abgeschnittene Dateien (2026-11-21, Go des Operators: nur
+  Bericht)** - `rastatime-api scan_damaged_files` dekodiert jede Datei der Bibliothek einmal (wie
+  die Import-Prüfung seit heute) und vergleicht die dekodierbare Länge mit dem Ende, das das
+  Playout nutzt (Cue-Out, sonst Länge).  Abgeschnittene, nicht dekodierbare, fehlende und zu
+  langsame Dateien landen in einem CSV-Bericht (`logs/damaged-files-DATUM.csv`); geändert wird
+  nichts, die Entscheidung je Datei bleibt beim Operator.  Etwa 50 min für 25.336 Dateien auf
+  einem Kern mit niedriger Priorität, `--resume` nach einer Unterbrechung.  Manual LIBRARY ×4,
+  ARCHITECTURE 0.158 (§23.127).
+
 - **Kalender-Ansicht als PDF (2026-11-21, Go des Operators: pdfmake im Browser, zwei Stufen,
   Zeit + Sendung, A4 quer, kein Monatsraster)** - Neue Export-Schaltfläche (Symbol Blatt mit Pfeil;
   noch am selben Tag statt der Beschriftung „PDF", Wunsch des Operators) im Kalender links
