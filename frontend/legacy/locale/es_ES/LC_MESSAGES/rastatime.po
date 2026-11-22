@@ -8978,3 +8978,11 @@ msgstr "Elija un período válido."
 #: RASTATIME 2026-11-21 calendar PDF export dialog
 msgid "The period may be at most 92 days."
 msgstr "El período puede durar como máximo 92 días."
+
+#: RASTATIME 2026-11-21 Level live DJ inputs
+msgid "Level live DJ inputs:"
+msgstr "Nivelar las entradas de DJ en directo:"
+
+#: RASTATIME 2026-11-21 Level live DJ inputs
+msgid "Brings the Master Source and the Show Source to the loudness the library plays at (-23 LUFS), so a DJ whose software sends too loud or too quiet sounds like the rest of the programme. A slow automatic control: loud passages are lowered within a few seconds, quiet ones raised slowly; silence and a muted microphone are not raised. The playout applies a change at its next planned restart."
+msgstr "Lleva la Master Source y la Show Source a la sonoridad con la que suena la biblioteca (-23 LUFS), para que un DJ cuyo software envía demasiado alto o demasiado bajo suene como el resto de la programación. Un control automático lento: los pasajes fuertes se bajan en pocos segundos y los suaves se suben despacio; el silencio y un micrófono silenciado no se suben. El playout aplica un cambio en su próximo reinicio planificado."

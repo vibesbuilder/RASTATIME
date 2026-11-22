@@ -121,7 +121,7 @@ neuer Prozess oder neue Abhängigkeit auf der Sendemaschine - nein.
 Stufe 2 Raster für Woche und Tag wie Multi-View (+1,5-2 Tage), Monatsraster nur gekürzt.
 Vorbedingungen: Go je Stufe; offen: Spalten der Liste, Papierformat (A4 quer?).
 
-### 🟡 Pegel der DJ-Eingänge (Master Source / Show Source) - Evaluierung 2026-11-18, wartet auf Go
+### ✅ Pegel der DJ-Eingänge (Master Source / Show Source) - Variante 3 GEBAUT 2026-11-21/22 (Go: Schalter an, -23 LUFS fest; §23.129; Abnahme nach PLAYOUT-Neustart offen); Variante 2 bleibt Defer
 
 Befund 2026-11-18 (Operator: eingewählte DJs etwa -10 dB, Sendeplan etwa -20 dB): Die R128-Anpassung
 ist ein Gain pro Datei (Messung beim Import). Line-In und Webstreams haben ein eigenes Gain-Feld,

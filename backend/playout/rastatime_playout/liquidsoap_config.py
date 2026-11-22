@@ -2549,6 +2549,77 @@ def schedule_under_dj_enabled() -> bool:
     return os.environ.get(SCHEDULE_UNDER_DJ_ENV, "").strip().lower() in ("1", "true", "on", "yes")
 
 
+# RASTATIME 2026-11-21 - automatic level of the live DJ inputs (operator Go
+# 2026-11-21: switch on by default, target fixed at -23 LUFS).  Library files
+# reach the bus at -23 LUFS (EBU R128 gain per file) and Stereo Tool adds a
+# fixed +7 dB; a DJ arm had no gain at all - a school's encoder came in at
+# about -9 LUFS on the stream (2026-11-17), true peaks over 0 dBFS.  Values
+# from the offline probe 2026-11-21/22 (C:/Temp/optd/levelprobe, three runs):
+# a 2 s LUFS window (no riding on single beats), DOWN 0.7 s so a hot source
+# is caught within about two seconds, UP 10 s so speech pauses and quiet
+# passages are not pumped up (6 s overshot to -16 LUFS after a quiet speech
+# passage, 15 s left a quiet DJ at -25), no boost below -45 LUFS (silence, a
+# muted microphone; -40 froze a very quiet source at the gain of the loud
+# one before it), and limits that cover hot masters and quiet laptops.
+# Measured with run C: hot masters -9 LUFS -> -23.3 settled, a -30 LUFS DJ
+# -> -24.3, speech recording -24.1 (peak -18.1); the first ~2 s of a hot
+# source after a quiet one stay loud (the limiter and Stereo Tool catch the
+# peaks) - inherent to any automatic gain control.
+DJ_LEVEL_TARGET_LUFS = -23.0
+DJ_LEVEL_WINDOW_S = 2.0
+DJ_LEVEL_UP_S = 10.0
+DJ_LEVEL_DOWN_S = 0.7
+DJ_LEVEL_GAIN_MIN_DB = -24.0
+DJ_LEVEL_GAIN_MAX_DB = 12.0
+DJ_LEVEL_THRESHOLD_LUFS = -45.0
+
+
+def dj_level_from_prefs(value: object) -> bool:
+    """``cc_pref.dj_auto_level``: on unless explicitly off (missing = on)."""
+    return str(value if value is not None else "").strip().lower() not in (
+        "0",
+        "false",
+        "off",
+        "no",
+    )
+
+
+def _render_dj_level_block(*, main_enabled: bool, show_enabled: bool, enabled: bool) -> str:
+    """
+    The levelled DJ sources for the bus arms (``master_dj_lv`` /
+    ``show_dj_lv``): Liquidsoap's ``normalize`` in LUFS mode in front of the
+    switch, so the programme arms stay untouched.  ``dj_level.enabled`` is a
+    live switch (``var.set dj_level.enabled false`` takes it off without a
+    restart); its default is the setting at render time, a changed setting
+    reaches the script by the settings restart.  ``track_sensitive=false``:
+    a DJ's ICY title change is a new track and must not reset the gain.
+    """
+    lines = [
+        "# RASTATIME 2026-11-21 - automatic level of the live DJ inputs (Settings ->\n",
+        "# Streams, 'Level live DJ inputs'): the DJ arms are brought to the -23 LUFS\n",
+        "# the library plays at, before the switch; library, webstream and line-in\n",
+        "# are untouched.  Live switch: var.set dj_level.enabled = false\n",
+        f'dj_level_enabled = interactive.bool("dj_level.enabled", {"true" if enabled else "false"})\n',
+        "# normalize gives its id to two inner operators (the second becomes\n",
+        "# '<id>.1'); the unity amplify on top carries the id the bus\n",
+        '# transitions compare (source.id(old) == "master_dj_level").\n',
+        "def rt_dj_level(lid, s) =\n",
+        "  amplify(id=lid, 1.,\n",
+        f'    normalize(id="#{{lid}}_norm", lufs=true, window={DJ_LEVEL_WINDOW_S:.1f}, '
+        f"target={DJ_LEVEL_TARGET_LUFS:.1f},\n",
+        f"              up={DJ_LEVEL_UP_S:.1f}, down={DJ_LEVEL_DOWN_S:.1f}, "
+        f"gain_min={DJ_LEVEL_GAIN_MIN_DB:.1f}, gain_max={DJ_LEVEL_GAIN_MAX_DB:.1f},\n",
+        f"              threshold={DJ_LEVEL_THRESHOLD_LUFS:.1f}, track_sensitive=false, "
+        "enabled=dj_level_enabled, s))\n",
+        "end\n",
+    ]
+    if main_enabled:
+        lines.append('master_dj_lv = rt_dj_level("master_dj_level", master_dj)\n')
+    if show_enabled:
+        lines.append('show_dj_lv = rt_dj_level("show_dj_level", show_dj)\n')
+    return "".join(lines) + "\n"
+
+
 def _render_bus_source_block(
     *,
     main_enabled: bool,
@@ -2560,9 +2631,16 @@ def _render_bus_source_block(
     dj_fade_seconds: float = DEFAULT_DJ_FADE_SECONDS,
     show_hold: bool = False,
     schedule_under_dj: bool = False,
+    dj_level: Optional[bool] = None,
 ) -> str:
     """
     Render the ``bus = ...`` assignment that picks the active source.
+
+    RASTATIME 2026-11-21 - ``dj_level`` (Settings -> Streams, "Level live
+    DJ inputs"): True / False renders the automatic level on the DJ arms
+    (:func:`_render_dj_level_block`) with that default for the live switch
+    ``dj_level.enabled``; None (callers that do not know the setting)
+    renders the bus exactly as before.
 
     Switch-arm layout (in priority order):
       master_dj         (if main_enabled)
@@ -2614,8 +2692,17 @@ def _render_bus_source_block(
     # arms.  A programme arm that takes over FROM a DJ (hand-back) also
     # uses bus_dj - the wrapper looks at the outgoing source's id.
     dj_shape, faded = "bus_dj", "bus_transition"
-    from_dj = 'source.id(old) == "master_dj" or source.id(old) == "show_dj"'
     has_dj = bool(main_enabled or show_enabled)  # no DJ arms: plain shapes, no DJ ids in the script
+    # RASTATIME 2026-11-21 - with the DJ level the arms carry the levelled
+    # sources (their own ids); the raw harbors keep theirs for the callbacks,
+    # the telnet commands and the arm conditions.
+    leveled = dj_level is not None and has_dj
+    master_arm, show_arm = ("master_dj_lv", "show_dj_lv") if leveled else ("master_dj", "show_dj")
+    from_dj = (
+        'source.id(old) == "master_dj_level" or source.id(old) == "show_dj_level"'
+        if leveled
+        else 'source.id(old) == "master_dj" or source.id(old) == "show_dj"'
+    )
     transitions: list[str] = []
     # RASTATIME 2026-09-13 - every arm gets a thin wrapper around the
     # shared shape: live arms insert one metadata packet with the show on
@@ -2646,7 +2733,7 @@ def _render_bus_source_block(
     # consumer of the scheduled chain (schedule_under_dj, see below)
     dj_conditions: list[str] = []
     if main_enabled:
-        arms.append("({source.is_ready(master_dj)}, master_dj)")
+        arms.append("({source.is_ready(master_dj)}, " + master_arm + ")")
         dj_conditions.append("source.is_ready(master_dj)")
         transitions.append("bus_arm_master")
         wrappers.append(_arm("bus_arm_master", "master_dj", dj_shape))
@@ -2662,7 +2749,7 @@ def _render_bus_source_block(
             if show_hold
             else "source.is_ready(show_dj)"
         )
-        arms.append("({" + show_condition + "}, show_dj)")
+        arms.append("({" + show_condition + "}, " + show_arm + ")")
         dj_conditions.append(show_condition)
         transitions.append("bus_arm_show")
         wrappers.append(_arm("bus_arm_show", "show_dj", dj_shape))
@@ -2773,8 +2860,15 @@ def _render_bus_source_block(
         f"new at once, old fades out over {_format_crossfade_duration(fade_len)} s; "
         f"DJ hand-over {_format_crossfade_duration(dj_len)} s"
     )
+    level_block = (
+        _render_dj_level_block(
+            main_enabled=main_enabled, show_enabled=show_enabled, enabled=bool(dj_level)
+        )
+        if leveled
+        else ""
+    )
     return (
-        "# RASTATIME 2026-09-04 - gates: Pypo pre-connects a source with its\n"
+        level_block + "# RASTATIME 2026-09-04 - gates: Pypo pre-connects a source with its\n"
         "# gate closed (no early on-air) and flips it at the slot start /\n"
         "# end.  Default true = plain is_ready behaviour.  Telnet:\n"
         "#   var.set webstream_live = false   /   var.set linein_live = true\n"
@@ -2851,6 +2945,7 @@ def render_rastatime_liq(
     loudness_limiter_ceiling: Optional[float] = None,
     stereotool: Optional[StereoToolSettings] = None,
     schedule_under_dj: bool = False,
+    dj_auto_level: Optional[bool] = None,
     template_path: Optional[Path] = None,
 ) -> str:
     """
@@ -2940,6 +3035,8 @@ def render_rastatime_liq(
         show_hold=bool(dj_auth_url and harbor_show_password),
         # RASTATIME 2026-11-19 - trial: the schedule keeps running under a DJ
         schedule_under_dj=schedule_under_dj,
+        # RASTATIME 2026-11-21 - automatic level of the DJ inputs
+        dj_level=dj_auto_level,
     )
     hourly_block = _render_hourly_recording_block(
         enabled=hourly_recording_enabled,
@@ -3045,6 +3142,7 @@ def write_rastatime_liq(
     loudness_limiter_ceiling: Optional[float] = None,
     stereotool: Optional[StereoToolSettings] = None,
     schedule_under_dj: bool = False,
+    dj_auto_level: Optional[bool] = None,
     template_path: Optional[Path] = None,
 ) -> bool:
     """
@@ -3113,6 +3211,7 @@ def write_rastatime_liq(
         loudness_limiter_ceiling=loudness_limiter_ceiling,
         stereotool=stereotool,
         schedule_under_dj=schedule_under_dj,
+        dj_auto_level=dj_auto_level,
         template_path=template_path,
     )
 

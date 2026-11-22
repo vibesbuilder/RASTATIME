@@ -35,6 +35,13 @@ class Application_Form_LiveStreamingPreferences extends Zend_Form_SubForm
             ->setValue($defaultFade);
         $this->addElement($transition_fade);
 
+        // RASTATIME 2026-11-21 - automatic level of the live DJ inputs
+        $dj_auto_level = new Zend_Form_Element_Checkbox('dj_auto_level');
+        $dj_auto_level->setLabel(_('Level live DJ inputs:'))
+            ->setDescription(_('Brings the Master Source and the Show Source to the loudness the library plays at (-23 LUFS), so a DJ whose software sends too loud or too quiet sounds like the rest of the programme. A slow automatic control: loud passages are lowered within a few seconds, quiet ones raised slowly; silence and a muted microphone are not raised. The playout applies a change at its next planned restart.'))
+            ->setValue(Application_Model_Preference::GetDjAutoLevel() ? 1 : 0);
+        $this->addElement($dj_auto_level);
+
         // Master username
         $master_username = new Zend_Form_Element_Text('master_username');
         $master_username->setAttrib('autocomplete', 'off')

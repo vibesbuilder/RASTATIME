@@ -219,6 +219,25 @@ def _resolve_loudness_limiter() -> tuple[str, Optional[float]]:
     return mode, (ceiling if mode == "r128" else None)
 
 
+def _resolve_dj_auto_level() -> bool:
+    """
+    RASTATIME 2026-11-21 - Settings -> Streams "Level live DJ inputs"
+    (``cc_pref.dj_auto_level``): on unless it is explicitly off - a missing
+    key (new installation, or before the first Save) is on, as is an
+    unreadable database (the operator's default).
+    """
+    from rastatime_playout.liquidsoap_config import dj_level_from_prefs  # noqa: PLC0415
+
+    try:
+        from rastatime_api.core.models import Preference  # type: ignore[import-untyped]
+
+        value = Preference.site.filter(key="dj_auto_level").values_list("value", flat=True).first()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not read the DJ level setting from DB (on): %s", exc)
+        return True
+    return dj_level_from_prefs(value)
+
+
 def _resolve_stereotool():
     """
     RASTATIME 2026-10-02 - Settings -> Streams -> Output Processing: the
@@ -867,6 +886,7 @@ def _render_settings_fingerprint() -> Optional[str]:
             "streams": _read_stream_outputs(),
             "loudness": list(_resolve_loudness_limiter()),
             "stereotool": _stereotool_fingerprint(_resolve_stereotool()),
+            "dj_level": _resolve_dj_auto_level(),
         }
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.debug("render settings fingerprint unavailable: %s", exc)
@@ -1096,6 +1116,12 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
         icy.station_name,
     )
 
+    # RASTATIME 2026-11-21 - automatic level of the live DJ inputs
+    dj_auto_level = _resolve_dj_auto_level()
+    logger.info(
+        "Live DJ inputs: automatic level %s (target -23 LUFS; Settings -> Streams).",
+        "on" if dj_auto_level else "off",
+    )
     # RASTATIME 2026-11-19 - trial switch: the schedule keeps running under a DJ
     under_dj = schedule_under_dj_enabled()
     if under_dj:
@@ -1153,6 +1179,7 @@ def _render_rastatime_liq_outcome(stream_outputs: list[dict]) -> RenderOutcome:
             # RASTATIME 2026-10-02 - output processing (Stereo Tool), optional
             stereotool=stereotool,
             schedule_under_dj=under_dj,
+            dj_auto_level=dj_auto_level,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.critical(

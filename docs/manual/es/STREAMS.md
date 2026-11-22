@@ -238,6 +238,23 @@ guardar (reinicio planificado en un momento tranquilo o en un límite de
 pista). Antes del 2026-09-28 el campo no tenía efecto; ambos sentidos
 eran un cambio de 50 ms.
 
+**Level live DJ inputs** (Settings → Streams → DJ Hand-over, desde el
+21/11/2026, activado por defecto) lleva la Master Source y la Show
+Source a la sonoridad con la que suena la biblioteca (-23 LUFS).  Los
+archivos de la biblioteca se nivelan uno a uno al importarlos; el
+software de un DJ envía al nivel al que está ajustado - el codificador
+de una escuela llegaba unos 10 dB más alto que la programación, y el
+procesado de salida hace esa diferencia más audible en lugar de
+igualarla.  El control es lento a propósito: los pasajes fuertes se
+bajan en unos dos segundos y los suaves se suben en unos diez; el
+silencio y un micrófono silenciado no se suben, y la corrección queda
+entre -24 y +12 dB (una fuente más baja de unos -35 LUFS sigue más baja
+que la programación).  Cuando un DJ sale al aire, los primeros uno o dos
+segundos conservan su propio nivel; el limitador recoge los picos.  Los
+webstreams y las entradas de línea no se tocan: tienen su propia *Input
+Gain*.  La cadena de audio aplica un cambio en su próximo reinicio
+planificado.
+
 En la página Streams, la sección **Live Broadcasting** tiene tres
 bloques: **Relevo del DJ** (el fundido de arriba), **Master Source** y
 **Show Source** (los datos de conexión, vea *Conectarse como Fuente en

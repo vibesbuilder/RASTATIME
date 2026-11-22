@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.159
+Draft version: 0.160
 Date: 2026-11-22
 
 > **Revision history**
+> - **0.160 (2026-11-22)** - Automatic level of the live DJ inputs (§23.129): `normalize`
+>   (LUFS) on the Master / Show Source arms, Settings -> Streams "Level live DJ inputs".
 > - **0.159 (2026-11-22)** - Automated fillers fill one instance of a linked show; one task
 >   cycle at a time (§23.128): `Scheduler::setLinkedExpansion`, TaskManager advisory lock.
 > - **0.158 (2026-11-21)** - Library scan for damaged files (§23.127): management command
@@ -11826,3 +11828,77 @@ it is.
 `live-2026-11-21g` precedes it).  B2 changes nothing for unlinked shows;
 C at worst skips a cycle that would have run beside another one.
 Rollback: `git revert`.
+
+### 23.129 Automatic Level of the Live DJ Inputs (2026-11-21/22)
+
+**Finding (2026-11-18).**  The DJ arms had no gain stage: library files
+reach the bus at -23 LUFS (EBU R128 gain per file, stage 1 of 2026-09-29),
+webstreams and line-ins have their own Input Gain, Master / Show Source
+played at whatever the DJ's encoder sent.  Stereo Tool (preset "16 LUFS
+clean": fixed +7 dB, final limiter, no AGC) processes the DJ arms too but
+does not even them out.  24/7 recording 2026-11-17: a school DJ at
+-9.0 LUFS / +1.6 dBTP on the stream (every minute -8..-12 LUFS, peaks at
+or over 0 dBFS) against -16..-17.5 LUFS for line-in and schedule.
+Evaluation 2026-11-18: variant 3 (automatic level on the DJ arms) Go,
+variant 2 (fixed gain per show) deferred; operator Go 2026-11-21 with
+the switch on by default and the target fixed at -23 LUFS.
+
+**Build.**
+- `liquidsoap_config._render_dj_level_block` renders, in front of the bus
+  switch, `rt_dj_level(lid, s) = amplify(id=lid, 1., normalize(id=
+  "#{lid}_norm", lufs=true, window=2.0, target=-23.0, up=10.0, down=0.7,
+  gain_min=-24.0, gain_max=12.0, threshold=-45.0, track_sensitive=false,
+  enabled=dj_level_enabled, s))` for `master_dj` / `show_dj` (as
+  `master_dj_lv` / `show_dj_lv`).  The arms use the levelled sources; the
+  arm conditions, harbor callbacks and telnet commands keep the raw
+  harbors.  `normalize` hands its id to two inner operators (the second
+  becomes `<id>.1`), so a unity `amplify` carries the id the transitions
+  compare (`source.id(old) == "master_dj_level"` / `"show_dj_level"`).
+  `track_sensitive=false`: a DJ's ICY title change must not reset the
+  gain.
+- `dj_level_enabled = interactive.bool("dj_level.enabled", <setting>)` -
+  `var.set dj_level.enabled = false` takes the level off without a
+  restart; the default comes from the setting at render time.
+- Setting: cc_pref `dj_auto_level` (missing = on), Settings -> Streams ->
+  DJ Hand-over checkbox "Level live DJ inputs" (help icon, de/fr/es);
+  `__main__._resolve_dj_auto_level()` reads it, it is part of the render
+  settings fingerprint (a change re-renders and restarts Liquidsoap in a
+  quiet moment), `write_rastatime_liq(dj_auto_level=...)`.  Callers that
+  do not pass it (`dj_level=None`) render the bus byte-identical to
+  before.
+
+**Offline probe (C:/Temp/optd/levelprobe).**  A throw-away Liquidsoap
+with a harbor on port 18101, fed in real time with a 350 s test signal
+(hot masters -9.6 / -8.4, a show recording with speech -11.2, a quiet DJ
+-29.9, silence, hot -9.2, very quiet -44).  Three runs:
+
+| run | window / up / down / threshold | hot, settled | speech peak | quiet DJ | hot after quiet, first s | very quiet |
+|---|---|---|---|---|---|---|
+| A | 3 / 6 / 1.5 / -45 | -23.1 | -16.3 | -23.6 | -4.5 | -32.5 |
+| B | 2 / 15 / 0.7 / -40 | -23.3 | -19.6 | -25.1 | -6.4 | -57.4 |
+| C | 2 / 10 / 0.7 / -45 | -23.3 | -18.1 | -24.3 | -4.7 | -32.6 |
+
+C was chosen.  B's threshold -40 froze a source below it at the gain of
+the loud passage before (-57 LUFS).  Every run keeps the first ~2 s of a
+hot source after a quiet one loud - inherent to an automatic gain
+control; the bus limiter (-1 dBTP) and Stereo Tool's final limiter catch
+the peaks.  A DJ starts at 0 dB: the first ~2 s of a hot DJ are loud as
+well.  The probes ran on Liquidsoap 2.4.4 (`libs/audio.liq` identical to
+2.4.6); the production script with the new bus block passes `--check` on
+2.4.6 with the switch on and off (the same six warnings as before).
+
+**Tests.**  `test_dj_level.py` (17): bus unchanged without the setting,
+levelled arms, transition ids, parameters, only existing DJ arms, no DJ
+arm no level, the schedule-under-DJ consumer keeps the raw conditions,
+the setting parser.  Playout suite 1053 passed.
+
+**Acceptance (open).**  After the PLAYOUT restart (Liquidsoap restarts
+once, ~12 s): measure the next DJ show on the 24/7 recording - target
+about -16 LUFS on the stream (-23 + Stereo Tool's +7 dB), peaks at
+-1 dBTP.
+
+**Risk.**  Low to medium: only DJ shows are affected.  Wrong parameters
+would pump or raise noise; the live switch takes it off at once
+(`var.set dj_level.enabled = false`), the checkbox takes it off for good
+(planned restart).  Rollback: `git revert` + PLAYOUT restart; tag
+`live-2026-11-21g`.

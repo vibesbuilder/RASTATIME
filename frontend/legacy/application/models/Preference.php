@@ -358,6 +358,25 @@ class Application_Model_Preference
         return ($transition_fade == '') ? '1' : $transition_fade;
     }
 
+    /**
+     * RASTATIME 2026-11-21 - Settings -> Streams "Level live DJ inputs": the
+     * Master and Show Source are brought to the -23 LUFS the library plays at
+     * (rendered into rastatime.liq; the playout's settings fingerprint applies
+     * a change with a planned Liquidsoap restart).  On unless it was switched
+     * off - a missing key is on (operator decision 2026-11-21).
+     */
+    public static function GetDjAutoLevel(): bool
+    {
+        $value = strtolower(trim((string) self::getValue('dj_auto_level')));
+
+        return !in_array($value, ['0', 'false', 'off', 'no'], true);
+    }
+
+    public static function SetDjAutoLevel($on)
+    {
+        self::setValue('dj_auto_level', $on ? '1' : '0');
+    }
+
     public static function SetStreamLabelFormat($type)
     {
         self::setValue('stream_label_format', $type);

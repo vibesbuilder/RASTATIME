@@ -336,6 +336,7 @@ function setupHelpIcons() {
       "loudnessTruePeak",
       "loudnessMeasure",
       "stereotoolEnabled",
+      "dj_auto_level", // RASTATIME 2026-11-21 - Level live DJ inputs
     ],
   });
   $.rtDescriptionTooltips($(".stream-setting-global"), {

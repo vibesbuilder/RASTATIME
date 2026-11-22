@@ -314,6 +314,23 @@ Speichern (geplanter Neustart in einem ruhigen Moment oder an einer
 Titelgrenze). Vor dem 2026-09-28 hatte das Feld keine Wirkung; beide
 Richtungen waren ein 50-ms-Wechsel.
 
+**Level live DJ inputs** (Settings → Streams → DJ Hand-over, seit
+21.11.2026, standardmäßig an) bringt die Master Source und die Show
+Source auf die Lautheit, mit der die Bibliothek spielt (-23 LUFS).
+Bibliotheksdateien werden beim Import einzeln angeglichen; die Software
+eines DJs sendet mit dem Pegel, auf den sie eingestellt ist - der
+Encoder einer Schule kam etwa 10 dB lauter als das Programm an, und das
+Ausgangs-Processing macht so einen Unterschied eher hörbar, als dass es
+ihn ausgleicht.  Die Regelung ist absichtlich langsam: laute Passagen
+werden innerhalb von etwa zwei Sekunden abgesenkt, leise über etwa zehn
+angehoben; Stille und ein stummgeschaltetes Mikrofon werden nicht
+angehoben, und die Korrektur bleibt zwischen -24 und +12 dB (eine Quelle
+leiser als etwa -35 LUFS bleibt leiser als das Programm).  Geht ein DJ
+auf Sendung, haben die ersten ein, zwei Sekunden noch seinen eigenen
+Pegel; die Spitzen fängt der Limiter ab.  Webstreams und Line-Eingänge
+bleiben unberührt - sie haben ihren eigenen *Input Gain*.  Eine Änderung
+übernimmt die Audiokette bei ihrem nächsten geplanten Neustart.
+
 Auf der Streams-Seite hat der Abschnitt **Live Broadcasting** drei
 Blöcke: **DJ-Übergabe** (die Blende oben), **Master Source** und
 **Show Source** (die Verbindungsdaten, siehe *Verbindung als

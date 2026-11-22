@@ -262,6 +262,23 @@ secondes après l'enregistrement (redémarrage planifié à un moment calme
 ou à une limite de titre). Avant le 2026-09-28 le champ n'avait aucun
 effet ; les deux sens étaient une bascule de 50 ms.
 
+**Level live DJ inputs** (Settings → Streams → DJ Hand-over, depuis le
+21/11/2026, activé par défaut) amène la Master Source et la Show Source
+à la sonie de la bibliothèque (-23 LUFS).  Les fichiers de la
+bibliothèque sont nivelés un par un à l'import ; le logiciel d'un DJ
+envoie au niveau sur lequel il est réglé - l'encodeur d'une école
+arrivait environ 10 dB plus fort que le programme, et le traitement de
+sortie rend un tel écart plutôt audible qu'il ne le corrige.  Le réglage
+est volontairement lent : les passages forts sont abaissés en deux
+secondes environ, les passages faibles remontés en dix environ ; le
+silence et un micro coupé ne sont pas remontés, et la correction reste
+entre -24 et +12 dB (une source plus faible qu'environ -35 LUFS reste
+plus faible que le programme).  Quand un DJ passe à l'antenne, les une
+ou deux premières secondes gardent son propre niveau ; le limiteur
+retient les crêtes.  Les flux web et les entrées ligne ne sont pas
+touchés - ils ont leur propre *Input Gain*.  La chaîne audio applique un
+changement à son prochain redémarrage planifié.
+
 Sur la page Streams, la section **Live Broadcasting** comporte trois
 blocs : **Passage de relais DJ** (le fondu ci-dessus), **Master Source** et
 **Show Source** (les données de connexion, voir *Se connecter comme

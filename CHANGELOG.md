@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Automatischer Pegel für Live-DJ-Eingänge (2026-11-21/22, Go des Operators: Schalter an,
+  -23 LUFS fest)** - Master Source und Show Source hatten keine Pegelstufe; ein Schul-DJ kam am
+  2026-11-17 mit -9 LUFS und Spitzen über 0 dBFS auf den Stream, das Programm mit -16 bis -17,5.
+  Jetzt bringt eine langsame automatische Regelung (Liquidsoap `normalize` im LUFS-Modus vor dem
+  Umschalter) die DJ-Eingänge auf die -23 LUFS der Bibliothek: laute Passagen in etwa zwei
+  Sekunden herunter, leise über etwa zehn hinauf, Stille und stummes Mikrofon werden nicht
+  angehoben, Korrektur -24 bis +12 dB.  Schalter unter Settings → Streams → DJ Hand-over „Level
+  live DJ inputs" (Standard an), live abschaltbar per `var.set dj_level.enabled = false`.
+  Parameter aus drei Offline-Proben; Skript mit Liquidsoap 2.4.6 geprüft.  Wirksam nach einem
+  PLAYOUT-Neustart (Liquidsoap startet einmal mit, ~12 s).  Manual STREAMS ×4, ARCHITECTURE
+  0.160 (§23.129).
+
 - **Bestands-Scan auf beschädigte und abgeschnittene Dateien (2026-11-21, Go des Operators: nur
   Bericht)** - `rastatime-api scan_damaged_files` dekodiert jede Datei der Bibliothek einmal (wie
   die Import-Prüfung seit heute) und vergleicht die dekodierbare Länge mit dem Ende, das das

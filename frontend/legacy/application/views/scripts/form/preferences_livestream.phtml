@@ -16,6 +16,8 @@
                 <?php echo _("How the programme and a connecting or disconnecting DJ are blended.") ?>
             </p>
             <?php echo $this->element->getElement('transition_fade')->render() ?>
+            <?php /* RASTATIME 2026-11-21 - automatic level of the DJ inputs */ ?>
+            <?php echo $this->element->getElement('dj_auto_level')->render() ?>
         </fieldset>
 
         <fieldset class="padded stream-setting-global" style="margin-top: 15px">

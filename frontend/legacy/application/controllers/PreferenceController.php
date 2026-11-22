@@ -1451,6 +1451,11 @@ class PreferenceController extends Zend_Controller_Action
         Application_Model_Preference::SetLiveStreamMasterUsername($values['master_username']);
         Application_Model_Preference::SetLiveStreamMasterPassword($values['master_password']);
         Application_Model_Preference::SetDefaultTransitionFade($values['transition_fade']);
+        // RASTATIME 2026-11-21 - automatic level of the DJ inputs (checkbox posts "0"/"1")
+        if (array_key_exists('dj_auto_level', $values)) {
+            $level = (string) $values['dj_auto_level'];
+            Application_Model_Preference::SetDjAutoLevel($level === '1' || $level === 'true');
+        }
         // RASTATIME 2026-05-14 — auto_transition / auto_switch removed
         // from the Live Broadcasting form; see LiveStreamingPreferences
         // class for the architectural reason.

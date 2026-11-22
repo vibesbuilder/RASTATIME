@@ -295,6 +295,22 @@ value is applied by the audio chain a few seconds after saving (planned
 restart at a quiet moment or track boundary). Before 2026-09-28 the
 field had no effect; both directions were a 50 ms switch.
 
+**Level live DJ inputs** (Settings → Streams → DJ Hand-over, since
+2026-11-21, on by default) brings the Master Source and the Show Source
+to the loudness the library plays at (-23 LUFS).  Library files are
+levelled per file when they are imported; a DJ's software sends at
+whatever level it is set to - a school's encoder came in about 10 dB
+louder than the programme, and the output processing makes such a
+difference audible rather than evening it out.  The control is slow on
+purpose: loud passages are lowered within about two seconds, quiet ones
+raised over about ten; silence and a muted microphone are not raised,
+and the correction stays within -24 to +12 dB (a source quieter than
+about -35 LUFS stays quieter than the programme).  When a DJ goes on
+air the first one or two seconds still have the DJ's own level; the
+limiter catches the peaks.  Webstreams and line inputs are not touched
+- they have their own *Input Gain*.  A change is applied by the audio
+chain at its next planned restart.
+
 On the Streams page the **Live Broadcasting** section has three blocks:
 **DJ Hand-over** (the fade above), **Master Source** and **Show Source**
 (the connection data, see *Connecting as a Live Source* below).  Since
