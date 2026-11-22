@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-22
+
 ### Added
 
 - **Automatischer Pegel für Live-DJ-Eingänge (2026-11-21/22, Go des Operators: Schalter an,
@@ -142,7 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bleibt (Umpacken gescheitert), sonst hätte die Prüfung auf abgeschnittene Dateien sie
   abgelehnt.  Analyzer-Tests unter 9.0.1 und 9.1 je 454 bestanden; CI testet jetzt 9.0.2 (py3.11)
   und 9.1.0 (py3.13).  Wirksam nach einem Neustart von RASTATIME-ANALYZER.  ARCHITECTURE 0.161
-  (§23.130).
+  (§23.130).  `899e2d0b`.
 
 - **Webstream oder Line-In, deren Zeile unter einem DJ endet, geben ihre Quelle frei (2026-11-21,
   Go des Operators)** - Bisher blieben Quelle und Gate offen, bis der nächste Start sie schloss;
@@ -11557,7 +11559,8 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.1...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.5.0...v1.6.0
