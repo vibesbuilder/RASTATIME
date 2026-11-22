@@ -106,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`Scheduler::setLinkedExpansion`).  Der Task-Manager hält für die Dauer eines Zyklus eine
   PostgreSQL-Advisory-Sperre, ein zweiter Zyklus daneben wird übersprungen (vorher nur 30 s
   Abstand zwischen den Starts).  Derzeit hat keine verknüpfte Sendung aktive künftige Episoden -
-  vorbeugend.  Proben 8/8 und 5/5.  Manual AUTO_DJ ×4, ARCHITECTURE 0.159 (§23.128).
+  vorbeugend.  Proben 8/8 und 5/5.  Manual AUTO_DJ ×4, ARCHITECTURE 0.159 (§23.128).  `148105c1`.
 
 - **bulk_import: `--allowed-extensions` ersetzt die Standardliste (2026-11-21, Go des Operators)** -
   Die Option hängte die Angaben an die Standardliste an (`action="append"` mit der Liste als
