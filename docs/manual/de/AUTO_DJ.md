@@ -317,6 +317,11 @@ Grenzen und Hinweise:
 - **Verknüpfte Sendungen** bekommen keinen Puffer-Track: Eine
   Änderung an einer verknüpften Sendung landet in jeder ihrer
   Episoden.
+- In einer **verknüpften Sendung** füllt der Fill-Pass selbst nur
+  die anstehende Episode (seit 21.11.2026), ebenso der Aufbau des
+  Autoloadings und *Wiederholung von Sendung*.  Vorher landete die
+  Füllmusik in jeder künftigen Episode der Sendung und ließ keinen
+  Platz für ihren eigenen Inhalt.
 - Das Ausblenden greift, wenn die nächste Sendung mit einem Titel
   beginnt. Vor einem Webstream, einem Line-In oder Stille endet der
   Puffer-Track am Sendungsende ohne eigenes Ausblenden.

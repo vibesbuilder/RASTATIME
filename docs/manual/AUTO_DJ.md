@@ -293,6 +293,10 @@ Limits and notes:
   not covered.
 - **Linked shows** get no buffer track: a change to a linked show
   lands in every one of its episodes.
+- In a **linked show** the fill-pass itself fills only the episode
+  about to air (since 2026-11-21), as do the autoloading build and
+  *Repeat of show*.  Before, the filler landed in every future episode
+  of the show and left no room for its own content.
 - The fade applies when the next show starts with a track. Before a
   webstream, a line-in or silence the buffer track ends at the show
   end without a fade of its own.

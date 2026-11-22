@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.158
-Date: 2026-11-21
+Draft version: 0.159
+Date: 2026-11-22
 
 > **Revision history**
+> - **0.159 (2026-11-22)** - Automated fillers fill one instance of a linked show; one task
+>   cycle at a time (§23.128): `Scheduler::setLinkedExpansion`, TaskManager advisory lock.
 > - **0.158 (2026-11-21)** - Library scan for damaged files (§23.127): management command
 >   `scan_damaged_files`, read-only report, same rule as the import check.
 > - **0.157 (2026-11-21)** - A live row that ends under a DJ releases its source (§23.126):
@@ -11773,3 +11775,54 @@ without a second header, progress id), the default report path.
 
 **Risk.**  Low: read-only; one core below normal priority; stoppable at
 any time (`--resume`).  No restart needed (a management command).
+
+### 23.128 Automated Fillers Fill One Instance of a Linked Show; One Task Cycle at a Time (2026-11-21)
+
+**Finding (2026-11-07, backlog).**  `Scheduler::insertAfter` spreads an
+insert into a linked show to every future instance of the show - the
+linked-show feature for an operator's edit.  The Auto DJ fill pass used
+the same path: on 2026-11-06 it filled the empty linked 17:07 show and
+wrote two or three tracks into all 429 future instances (until
+2028-01-09); they were full, so the show's autoloading planned nothing
+there, and 982 files were flagged scheduled.  The same path is taken by
+the autoloading build and the repeat fill (`ShowInstance::addFilesAfter`)
+- harmless so far only because no linked show had an autoloading
+playlist with content.  Second mechanism: `TaskManager` spaced the
+starts of its cycles 30 s apart with a timestamp but held nothing while
+a cycle ran; a longer cycle let the next request start a second one
+(three cycles in the same second, 16:13:12 - behind the deadlock fixed
+in §23.95).  State 2026-11-21: the operator had unlinked that show and
+its instances are empty again; none of the 22 linked shows has an active
+future instance - the fix is preventive.
+
+**Change (operator Go 2026-11-21, options B2 + C; A - the clean-up - was
+no longer needed).**
+- B2: `Scheduler::setLinkedExpansion(bool)` (default on) and
+  `targetInstances()`: with expansion off an insert lands in the cursor's
+  instance only, also in a linked show.  Off for the automated fillers:
+  the Auto DJ fill pass (`addPlaylistToShow(..., $linkedExpansion =
+  false)`), `ShowInstance::addFilesAfter` (autoloading build, repeat
+  fill, buffer track).  Operator edits keep it on.
+- C: after the timestamp check `TaskManager::runTasks` takes
+  `pg_try_advisory_lock(hashtext('rastatime_task_manager_cycle'))` and
+  releases it in `finally`; a request that does not get it skips the
+  cycle.  The connection is not persistent, so a fatal error still frees
+  the lock at the end of the request; a failing lock query runs the
+  tasks as before (logged).
+
+**Verification.**  Read-only probe `C:/Temp/optd/linked_expansion_probe/
+probe.php` 8/8 (a show with 415 future instances: linked + expansion ->
+415, expansion off -> the one instance, the callers' flags);
+`cycle_lock_probe.php` 5/5 (a second session holding the lock makes the
+cycle skip; released, it may run; released at the end).  Production
+after the change: task cycles continue (17:17:41 -> 17:18:32), no lock
+held between cycles.
+
+**Note.**  The Auto DJ buffer track still skips linked shows (§23.107);
+with `addFilesAfter` no longer spreading, that guard could go - left as
+it is.
+
+**Risk.**  Low.  Legacy PHP, live with the next request (the tag
+`live-2026-11-21g` precedes it).  B2 changes nothing for unlinked shows;
+C at worst skips a cycle that would have run beside another one.
+Rollback: `git revert`.

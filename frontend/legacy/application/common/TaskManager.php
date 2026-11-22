@@ -113,10 +113,56 @@ final class TaskManager
 
             return;
         }
-        foreach ($this->_taskList as $task => $hasTaskRun) {
-            if (!$hasTaskRun) {
-                $this->runTask($task);
+        // RASTATIME 2026-11-21 - one task cycle at a time.  The timestamp above
+        // only spaces the starts 30 s apart: a cycle that runs longer (a long
+        // Auto DJ fill, an autoloading build) let the next request start a
+        // second one beside it (2026-11-06 16:13:12: three cycles in the same
+        // second, behind the fill-pass deadlock).  The advisory lock is held by
+        // this request's database session for the cycle; the connection is
+        // not persistent, so even a fatal error releases it at the end of the
+        // request.
+        if (!$this->_tryCycleLock()) {
+            Logging::debug('TaskManager: the previous task cycle is still running - skipped');
+
+            return;
+        }
+
+        try {
+            foreach ($this->_taskList as $task => $hasTaskRun) {
+                if (!$hasTaskRun) {
+                    $this->runTask($task);
+                }
             }
+        } finally {
+            $this->_releaseCycleLock();
+        }
+    }
+
+    public const CYCLE_LOCK_KEY = 'rastatime_task_manager_cycle';
+
+    /** @return bool true when this request may run the task cycle */
+    private function _tryCycleLock()
+    {
+        try {
+            $stmt = $this->_con->prepare('SELECT pg_try_advisory_lock(hashtext(:key))');
+            $stmt->execute([':key' => self::CYCLE_LOCK_KEY]);
+
+            return (bool) $stmt->fetchColumn();
+        } catch (Throwable $e) {
+            // never let the lock check stop the tasks for good: run as before
+            Logging::warn('TaskManager: cycle lock unavailable (' . $e->getMessage() . ') - running without it');
+
+            return true;
+        }
+    }
+
+    private function _releaseCycleLock()
+    {
+        try {
+            $stmt = $this->_con->prepare('SELECT pg_advisory_unlock(hashtext(:key))');
+            $stmt->execute([':key' => self::CYCLE_LOCK_KEY]);
+        } catch (Throwable $e) {
+            Logging::warn('TaskManager: cycle lock release failed: ' . $e->getMessage());
         }
     }
 

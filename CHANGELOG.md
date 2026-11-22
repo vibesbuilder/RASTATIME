@@ -97,6 +97,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Automatische Füller befüllen bei verknüpften Sendungen nur die eine Episode; ein Task-Zyklus
+  zur Zeit (2026-11-21, Go des Operators für B2 + C)** - Ein Einfügen in eine verknüpfte
+  Sendung landet in jeder künftigen Episode (für Änderungen des Operators gewollt).  Der
+  Auto-DJ-Fill-Pass nahm denselben Weg und schrieb am 2026-11-06 Musik in alle 429 künftigen
+  Episoden einer verknüpften Sendung; Autoloading und „Wiederholung von Sendung" hätten dasselbe
+  getan.  Jetzt füllen diese drei nur die Episode, an der sie arbeiten
+  (`Scheduler::setLinkedExpansion`).  Der Task-Manager hält für die Dauer eines Zyklus eine
+  PostgreSQL-Advisory-Sperre, ein zweiter Zyklus daneben wird übersprungen (vorher nur 30 s
+  Abstand zwischen den Starts).  Derzeit hat keine verknüpfte Sendung aktive künftige Episoden -
+  vorbeugend.  Proben 8/8 und 5/5.  Manual AUTO_DJ ×4, ARCHITECTURE 0.159 (§23.128).
+
 - **bulk_import: `--allowed-extensions` ersetzt die Standardliste (2026-11-21, Go des Operators)** -
   Die Option hängte die Angaben an die Standardliste an (`action="append"` mit der Liste als
   Vorgabe), eine Einschränkung wie „nur MP3" war unmöglich, und argparse schrieb dabei in die

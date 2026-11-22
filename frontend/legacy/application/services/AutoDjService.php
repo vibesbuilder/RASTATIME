@@ -195,7 +195,10 @@ class Application_Service_AutoDjService
                     // editing right now is left alone (next pass in a minute);
                     // before, both ran side by side and deadlocked on
                     // cc_files.is_scheduled (2026-11-06 16:09-16:13).
-                    $si->addPlaylistToShow((int) $playlistId, false, 0, true);
+                    // RASTATIME 2026-11-21 - linkedExpansion = false: this
+                    // instance only, also in a linked show (2026-11-06 the
+                    // pass filled all 429 future instances of one).
+                    $si->addPlaylistToShow((int) $playlistId, false, 0, true, false);
                 }
             } catch (Throwable $e) {
                 if ((int) $e->getCode() === Application_Model_Scheduler::ERR_INSTANCE_BUSY) {

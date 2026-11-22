@@ -608,7 +608,7 @@ View -> Console öffnen und die Zeile zum Zeitpunkt des Aussetzers notieren.  Ve
 sauber bleibt: foobar2000-Verhalten beim ICY-Titelwechsel / Netzwerkpuffer; falls der Proxy-Weg stockt:
 Apache mod_proxy (ProxyIOBufferSize/flushpackets) oder der WAN-Weg.
 
-### 🟡 Fill-Pass auf einer verknüpften Sendung befüllt alle künftigen Instanzen; Task-Manager-Lock läuft während langer Zyklen ab; 429 vorbefüllte Instanzen (Befund 2026-11-07, wartet auf Go)
+### ✅ Fill-Pass auf einer verknüpften Sendung befüllt alle künftigen Instanzen; Task-Manager-Lock läuft während langer Zyklen ab; 429 vorbefüllte Instanzen (Befund 2026-11-07) - B2 + C GEBAUT 2026-11-21 (Go, §23.128); A entfallen (Sendung vom Operator gelöst, keine vorbefüllten Episoden mehr)
 
 Hinter dem Deadlock vom 2026-11-06 (unten, ✅) steckt ein zweiter Befund: die 17:07-Sendung
 (show 1225, die 8-min-Hinweis-Sendung) ist **verknüpft**, ihre Autoloading-Playlist (id 10) ist

@@ -247,7 +247,13 @@ SQL;
      *              editor who holds this instance (the Auto DJ fill pass):
      *              the scheduler throws Scheduler::ERR_INSTANCE_BUSY instead.
      */
-    public function addPlaylistToShow($pl_id, $checkUserPerm = true, $reservedSecs = 0, $skipIfBusy = false)
+    /**
+     * @param bool $linkedExpansion RASTATIME 2026-11-21 - false: fill THIS
+     *                              instance only, also in a linked show (the
+     *                              Auto DJ fill pass); true: an insert into a
+     *                              linked show reaches every future instance
+     */
+    public function addPlaylistToShow($pl_id, $checkUserPerm = true, $reservedSecs = 0, $skipIfBusy = false, $linkedExpansion = true)
     {
         $ts = intval($this->_showInstance->getDbLastScheduled('U')) ?: 0;
         $id = $this->_showInstance->getDbId();
@@ -255,6 +261,7 @@ SQL;
         $scheduler = new Application_Model_Scheduler($checkUserPerm);
         $scheduler->setReservedSeconds($reservedSecs);
         $scheduler->setSkipBusyInstances($skipIfBusy);
+        $scheduler->setLinkedExpansion($linkedExpansion);
         $scheduler->scheduleAfter(
             [['id' => $lastid, 'instance' => $id, 'timestamp' => $ts]],
             [['id' => $pl_id, 'type' => 'playlist']]
@@ -294,6 +301,10 @@ SQL;
      * @param array $files
      * @param bool  $skipIfBusy RASTATIME 2026-11-13 - throw Scheduler::ERR_INSTANCE_BUSY
      *                          instead of waiting for an editor (Auto DJ buffer track)
+     *
+     * RASTATIME 2026-11-21 - the automated fillers use this (autoloading build,
+     * repeat fill, buffer track): the rows go into THIS instance only, also in
+     * a linked show (no spreading to every future instance).
      */
     public function addFilesAfter($afterRowId, array $files, $skipIfBusy = false)
     {
@@ -301,6 +312,7 @@ SQL;
         $ts = $fresh ? (intval($fresh->getDbLastScheduled('U')) ?: 0) : 0;
         $scheduler = new Application_Model_Scheduler(false);
         $scheduler->setSkipBusyInstances($skipIfBusy);
+        $scheduler->setLinkedExpansion(false);
         $scheduler->scheduleFilesAfter(
             [['id' => (int) $afterRowId, 'instance' => $this->_instanceId, 'timestamp' => $ts]],
             $files

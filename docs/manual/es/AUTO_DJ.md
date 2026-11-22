@@ -220,6 +220,11 @@ Límites y notas:
   emisión no queda cubierto.
 - Los **programas vinculados** no reciben pista de reserva: un cambio
   en un programa vinculado llega a cada uno de sus episodios.
+- En un **programa vinculado**, el fill-pass solo rellena el episodio
+  que va a salir (desde el 21/11/2026), igual que la construcción del
+  autoloading y la *repetición de programa*.  Antes, el relleno
+  llegaba a cada episodio futuro del programa y no dejaba sitio para
+  su propio contenido.
 - El desvanecimiento se aplica cuando el programa siguiente empieza
   con una pista. Antes de un webstream, una entrada de línea o
   silencio, la pista de reserva termina al final del programa sin

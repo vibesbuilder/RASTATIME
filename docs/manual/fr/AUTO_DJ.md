@@ -268,6 +268,11 @@ Limites et remarques :
 - Les **émissions liées** n'ont pas de piste tampon : une
   modification d'une émission liée s'applique à chacun de ses
   épisodes.
+- Dans une **émission liée**, le fill-pass lui-même ne remplit que
+  l'épisode à venir (depuis le 21/11/2026), tout comme la
+  construction de l'autoloading et la *rediffusion d'émission*.
+  Auparavant, le remplissage atterrissait dans chaque épisode futur
+  de l'émission et ne laissait pas de place à son propre contenu.
 - Le fondu s'applique quand l'émission suivante commence par une
   piste. Avant un webstream, une entrée ligne ou du silence, la piste
   tampon se termine à la fin de l'émission sans fondu propre.

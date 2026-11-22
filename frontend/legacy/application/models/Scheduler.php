@@ -38,6 +38,43 @@ final class Application_Model_Scheduler
     public const ERR_INSTANCE_BUSY = 55003;
     private $skipBusyInstances = false;
 
+    // RASTATIME 2026-11-21 - an insert into a linked show is spread to every
+    // future instance of the show (the linked-show feature: an operator edits
+    // one episode, all follow).  The automated fillers - the Auto DJ fill
+    // pass, the autoloading build, the repeat fill - work on ONE instance and
+    // switch that off: on 2026-11-06 the fill pass wrote Auto DJ music into
+    // all 429 future instances of a linked show, which then left no room for
+    // its autoloading.
+    private $linkedExpansion = true;
+
+    public function setLinkedExpansion($on)
+    {
+        $this->linkedExpansion = (bool) $on;
+    }
+
+    /**
+     * The instances an insert at a cursor in $instanceId lands in: every
+     * future instance of a linked show while linked expansion is on, else
+     * just that instance.
+     *
+     * @param array $ccShow   the cc_show row of the cursor's show
+     * @param int   $instanceId
+     * @param bool  $linked
+     */
+    private function targetInstances(array $ccShow, $instanceId, $linked)
+    {
+        if ($linked && $this->linkedExpansion) {
+            return CcShowInstancesQuery::create()
+                ->filterByDbShowId($ccShow['id'])
+                ->filterByDbStarts(gmdate(DEFAULT_TIMESTAMP_FORMAT), Criteria::GREATER_THAN)
+                ->find();
+        }
+
+        return CcShowInstancesQuery::create()
+            ->filterByDbId($instanceId)
+            ->find();
+    }
+
     public function __construct($checkUserPermissions = true)
     {
         $this->con = Propel::getConnection(CcSchedulePeer::DATABASE_NAME);
@@ -1255,18 +1292,10 @@ final class Application_Model_Scheduler
 
                 /* If the show where the cursor position is located is linked
                  * we need to insert the items for each linked instance belonging
-                 * to that show
+                 * to that show (RASTATIME 2026-11-21: unless an automated filler
+                 * switched that off - see targetInstances)
                  */
-                if ($linked) {
-                    $instances = CcShowInstancesQuery::create()
-                        ->filterByDbShowId($ccShow['id'])
-                        ->filterByDbStarts(gmdate(DEFAULT_TIMESTAMP_FORMAT), Criteria::GREATER_THAN)
-                        ->find();
-                } else {
-                    $instances = CcShowInstancesQuery::create()
-                        ->filterByDbId($schedule['instance'])
-                        ->find();
-                }
+                $instances = $this->targetInstances($ccShow, $schedule['instance'], (bool) $linked);
 
                 $excludePositions = [];
                 foreach ($instances as &$instance) {
