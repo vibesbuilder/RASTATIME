@@ -80,6 +80,20 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 ffmpeg 9.1: Analyzer anpassen, bevor ffmpeg im Studio aktualisiert wird - DEFER (Operator 2026-11-22)
+
+Befund 2026-11-22: der GitHub-Runner bekam per Chocolatey ffmpeg 9.1.0 (letzter grüner Lauf
+2026-11-17 mit 9.0.2, Studio 9.0.1).  Zwei Analyzer-Tests schlugen fehl:
+`test_wav_with_id3_chunk` (der Kommentar aus dem ID3-Chunk einer WAV-Datei fehlt - beim Import ginge
+der Kommentar verloren) und `test_raw_adts_with_id3_header_does_not_abort` (Länge einer rohen AAC
+mit ID3-Kopf 3,50 statt ~3 s).  Sofortmaßnahme (Go A): CI auf ffmpeg 9.0.2 festgeschrieben
+(`.github/workflows/python.yml`), COMPONENTS.md vermerkt „noch nicht auf 9.1".
+**Zu tun (B):** ffmpeg 9.1 in einem Testordner nachstellen (Download mit OK des Operators), die
+Tag-Zuordnung (WAV-Kommentar) und die Längenbestimmung im Analyzer an 9.1 anpassen, Tests für beide
+Versionen, dann den CI-Pin anheben.
+**Vorbedingung:** vor jedem ffmpeg-Update auf dem Studiorechner (nächste Komponentenrunde) oder
+wenn 9.0 aus der Pflege fällt.
+
 ### ✅ Firewall-Wächter sperrt nach „Unblock" und nach erfolgreichem Login erneut - (a) + (b) GEBAUT 2026-11-21 (Go, §23.125); (c) und (d) offen (Befund 2026-11-21 Mittag)
 
 Ein DJ (Show Source) wurde viermal nach 1-3 Minuten getrennt.  Ablauf: sein Encoder schickte
