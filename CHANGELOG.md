@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live DJ inputs" (Standard an), live abschaltbar per `var.set dj_level.enabled = false`.
   Parameter aus drei Offline-Proben; Skript mit Liquidsoap 2.4.6 geprüft.  Wirksam nach einem
   PLAYOUT-Neustart (Liquidsoap startet einmal mit, ~12 s).  Manual STREAMS ×4, ARCHITECTURE
-  0.160 (§23.129).
+  0.160 (§23.129).  `8baabb85`.
 
 - **Bestands-Scan auf beschädigte und abgeschnittene Dateien (2026-11-21, Go des Operators: nur
   Bericht)** - `rastatime-api scan_damaged_files` dekodiert jede Datei der Bibliothek einmal (wie
