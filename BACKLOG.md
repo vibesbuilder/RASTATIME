@@ -6583,7 +6583,7 @@ zeigen oder erhalten diese Atome nicht zuverlaessig (deshalb ist das Ziel fuer v
 Pruefen, bevor M4A-Dateien mit Expiry ausserhalb von RASTATIME bearbeitet werden: Rundreise mit Mp3tag (Feld
 sichtbar? nach dem Speichern noch da?); ggf. Hinweis im Manual LIBRARY.
 
-### 💡 bulk_import: --allowed-extensions kann die Standardliste nur erweitern (notiert 2026-10-14)
+### ✅ bulk_import: --allowed-extensions kann die Standardliste nur erweitern (notiert 2026-10-14) - ERLEDIGT 2026-11-21 (Go; ersetzt die Liste, + .mp4/.mp2/.mp1/.au)
 `--allowed-extensions` ist `action="append"` mit `default=DEFAULT_ALLOWED_EXTENSIONS`: eigene Angaben haengen an die
 Standardliste an, eine Einschraenkung (z.B. nur .mp3) ist nicht moeglich.  Ausserdem fehlen in der Standardliste
 .mp4/.mp2/.mp1/.au, die Upload, Import-Ordner und FTP seit 2026-10-14 annehmen.  Ansatz: default=None und erst nach

@@ -97,6 +97,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **bulk_import: `--allowed-extensions` ersetzt die Standardliste (2026-11-21, Go des Operators)** -
+  Die Option hängte die Angaben an die Standardliste an (`action="append"` mit der Liste als
+  Vorgabe), eine Einschränkung wie „nur MP3" war unmöglich, und argparse schrieb dabei in die
+  gemeinsame Modul-Liste selbst.  Jetzt ersetzt sie die Liste (wiederholbar oder mit Komma:
+  `--allowed-extensions mp3,flac`); ohne Option gilt die Standardliste, die jetzt auch .mp4,
+  .mp2, .mp1 und .au enthält wie Upload und Import-Ordner.  Manual LOCAL_MACHINE ×4.
+
 - **Webstream oder Line-In, deren Zeile unter einem DJ endet, geben ihre Quelle frei (2026-11-21,
   Go des Operators)** - Bisher blieben Quelle und Gate offen, bis der nächste Start sie schloss;
   ging der DJ danach in eine Lücke, wäre der beendete Webstream bzw. Line-In wieder auf Sendung

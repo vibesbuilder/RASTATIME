@@ -404,7 +404,10 @@ Lo que hace la importación con cada archivo:
 > la importación masiva comprueba el md5; la página de subida y la
 > carpeta de importación nunca lo hicieron.  Desde 2026-10-16,
 > `bulk_import --allow-duplicates` importa ese archivo de todos modos
-> (mismo audio, etiquetas distintas) en lugar de omitirlo.
+> (mismo audio, etiquetas distintas) en lugar de omitirlo.  Desde el
+> 21/11/2026, `--allowed-extensions` sustituye la lista de tipos de
+> archivo (`--allowed-extensions mp3,flac` solo importa MP3 y FLAC); sin
+> la opción se importa todo tipo que acepte la subida.
 
 ---
 

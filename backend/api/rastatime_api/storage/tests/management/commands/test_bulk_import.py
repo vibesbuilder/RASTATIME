@@ -14,6 +14,7 @@ from ....management.commands.bulk_import import (
     DEFAULT_ALLOWED_EXTENSIONS,
     Importer,
     allow_duplicates_from_preference,
+    parse_allowed_extensions,
 )
 
 FAKE_URL = "https://somehost.com"
@@ -199,3 +200,35 @@ def test_importer_missing_library(
         match="provided library MISSING does not exist",
     ):
         importer.import_dir(import_paths[0], "MISSING", [".mp3"])
+
+
+# RASTATIME 2026-11-21 - --allowed-extensions replaces the default list
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        (None, DEFAULT_ALLOWED_EXTENSIONS),
+        ([], DEFAULT_ALLOWED_EXTENSIONS),
+        (["mp3"], [".mp3"]),
+        ([".MP3"], [".mp3"]),
+        (["mp3,flac"], [".mp3", ".flac"]),
+        (["mp3", " wav , .ogg "], [".mp3", ".wav", ".ogg"]),
+        ([" , "], DEFAULT_ALLOWED_EXTENSIONS),
+    ],
+)
+def test_allowed_extensions_replace_the_default_list(values, expected):
+    assert parse_allowed_extensions(values) == list(expected)
+
+
+def test_the_option_no_longer_touches_the_default_list():
+    from ....management.commands.bulk_import import Command  # noqa: PLC0415
+
+    before = list(DEFAULT_ALLOWED_EXTENSIONS)
+    parser = Command().create_parser("rastatime-api", "bulk_import")
+    opts = parser.parse_args(["--path", ".", "--allowed-extensions", "mp3"])
+    assert parse_allowed_extensions(opts.allowed_extensions) == [".mp3"]
+    assert parser.parse_args(["--path", "."]).allowed_extensions is None
+    assert DEFAULT_ALLOWED_EXTENSIONS == before
+
+
+def test_the_default_list_has_what_upload_and_import_folder_accept():
+    assert {".mp1", ".mp2", ".mp4", ".au"} <= set(DEFAULT_ALLOWED_EXTENSIONS)

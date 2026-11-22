@@ -434,6 +434,9 @@ What the import does with each file:
 > import checks md5 at all; the upload page and the import folder never
 > did.  Since 2026-10-16 `bulk_import --allow-duplicates` imports such a
 > file anyway (same audio, different tags) instead of skipping it.
+> Since 2026-11-21 `--allowed-extensions` replaces the list of file
+> types (`--allowed-extensions mp3,flac` imports only MP3 and FLAC);
+> without it, every type the upload accepts is imported.
 
 ---
 

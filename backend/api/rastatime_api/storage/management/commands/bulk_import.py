@@ -33,15 +33,36 @@ def allow_duplicates_from_preference() -> bool:
 # .m4a by the analyzer, .oga is an Ogg container).
 DEFAULT_ALLOWED_EXTENSIONS = [
     ".aac",
+    ".au",  # RASTATIME 2026-11-21 - .au/.mp1/.mp2/.mp4 as upload and import folder accept them
     ".flac",
     ".m4a",
+    ".mp1",
+    ".mp2",
     ".mp3",
+    ".mp4",
     ".oga",
     ".ogg",
     ".opus",
     ".wav",
     ".wma",  # RASTATIME 2026-10-21 - transcoded to MP3 by the analyzer
 ]
+
+
+def parse_allowed_extensions(values: Optional[list]) -> list[str]:
+    """
+    RASTATIME 2026-11-21 - ``--allowed-extensions`` REPLACES the default list
+    (repeat it or separate with commas: ``--allowed-extensions mp3,flac``).
+    Before, the option appended to the default list (``action="append"`` with
+    the list as default), so it could not narrow the import - and argparse
+    appended into the shared module list itself.  No value: the default list.
+    """
+    out: list[str] = []
+    for value in values or []:
+        for part in str(value).split(","):
+            ext = part.strip().lower()
+            if ext:
+                out.append(ext if ext.startswith(".") else "." + ext)
+    return out or list(DEFAULT_ALLOWED_EXTENSIONS)
 
 
 class Command(BaseCommand):
@@ -59,9 +80,12 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--allowed-extensions",
-            help="Allowed file extensions.",
+            help=(
+                "Import only these file extensions (replaces the default list; repeat the "
+                "option or separate with commas, e.g. --allowed-extensions mp3,flac)."
+            ),
             action="append",
-            default=DEFAULT_ALLOWED_EXTENSIONS,
+            default=None,
         )
         parser.add_argument(
             "--delete-after-upload",
@@ -98,7 +122,7 @@ class Command(BaseCommand):
 
         path = options.get("path")
         library = options.get("library", None)
-        allowed_extensions = options.get("allowed_extensions")
+        allowed_extensions = parse_allowed_extensions(options.get("allowed_extensions"))
 
         importer = Importer(
             url,
