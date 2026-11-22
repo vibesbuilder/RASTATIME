@@ -80,7 +80,14 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
-### 🟡 ffmpeg 9.1: Analyzer anpassen, bevor ffmpeg im Studio aktualisiert wird - DEFER (Operator 2026-11-22)
+### ✅ ffmpeg 9.1: Analyzer anpassen, bevor ffmpeg im Studio aktualisiert wird - GEBAUT 2026-11-22 (Go B, §23.130)
+
+**Erledigt 2026-11-22:** Ursache (1) ffprobe 9.1 schreibt den Kommentar als `comment-<Sprache>`
+- beide Schreibweisen werden gelesen.  Ursache (2) war nicht ffprobe, sondern der AAC-Encoder von
+9.1 (kleinere erste Frames) - die ADTS-Länge war schon immer nur eine Bitraten-Schätzung, ein
+stiller Anfang machte aus 6 s rund 90 s.  Länge und Bitrate roher ADTS-Dateien kommen jetzt aus
+der Summe der Pakete (auch `probe_duration`).  Tests unter 9.0.1 und 9.1 grün; CI testet 9.0.2
+(py3.11) und 9.1.0 (py3.13).  Der Studiorechner kann bei der nächsten Komponentenrunde auf 9.1.
 
 Befund 2026-11-22: der GitHub-Runner bekam per Chocolatey ffmpeg 9.1.0 (letzter grüner Lauf
 2026-11-17 mit 9.0.2, Studio 9.0.1).  Zwei Analyzer-Tests schlugen fehl:

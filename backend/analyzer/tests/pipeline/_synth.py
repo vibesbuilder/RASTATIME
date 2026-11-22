@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from rastatime_analyzer.pipeline import _ffmpeg
@@ -82,11 +83,30 @@ def raw_adts(path: Path) -> Path:
     return sine(path, "-c:a", "aac", "-b:a", "128k", "-f", "adts")
 
 
-def raw_adts_with_id3(path: Path, frames) -> Path:
+def quiet_start_adts(path: Path) -> Path:
+    """
+    RASTATIME 2026-11-22 - raw ADTS: 3 s of silence, then 3 s of noise.  The
+    small first frames throw the bit rate estimate of ffprobe and mutagen far
+    off (about 90 s) with any encoder version.
+    """
+    ffmpeg(
+        *("-f", "lavfi"),
+        *("-i", f"anullsrc=r=44100:cl=stereo:d={SECONDS}"),
+        *("-f", "lavfi"),
+        *("-i", f"anoisesrc=d={SECONDS}:r=44100:a=0.5"),
+        *("-filter_complex", "[1]aformat=channel_layouts=stereo[n];[0][n]concat=n=2:v=0:a=1"),
+        *("-c:a", "aac", "-b:a", "128k", "-f", "adts"),
+        path,
+    )
+    return path
+
+
+def raw_adts_with_id3(path: Path, frames, adts: Optional[Path] = None) -> Path:
     """Raw ADTS stream behind an ID3v2 header (mutagen: can't sync to MPEG frame)."""
     from mutagen.id3 import ID3  # pylint: disable=import-outside-toplevel
 
-    adts = raw_adts(path.with_name("plain-for-id3.aac"))
+    if adts is None:
+        adts = raw_adts(path.with_name("plain-for-id3.aac"))
     id3 = ID3()
     for frame in frames:
         id3.add(frame)

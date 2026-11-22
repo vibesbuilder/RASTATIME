@@ -146,7 +146,7 @@ def is_lossless(p: AudioProbe) -> bool:
 
 
 def is_raw_adts(p: AudioProbe) -> bool:
-    return p.format_name == "aac"
+    return _ffmpeg.is_raw_adts_format(p.format_name)
 
 
 def is_wma(p: AudioProbe) -> bool:

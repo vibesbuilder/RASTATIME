@@ -127,6 +127,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--allowed-extensions mp3,flac`); ohne Option gilt die Standardliste, die jetzt auch .mp4,
   .mp2, .mp1 und .au enthält wie Upload und Import-Ordner.  Manual LOCAL_MACHINE ×4.  `dbef0ab7`.
 
+- **Analyzer bereit für ffmpeg 9.1; Länge roher AAC-Dateien gemessen statt geschätzt (2026-11-22,
+  Backlog „ffmpeg 9.1", Go B)** - Der GitHub-Runner bekam ffmpeg 9.1.0, zwei Analyzer-Tests
+  schlugen fehl (Sofortmaßnahme: CI auf 9.0.2 festgeschrieben, `34c224db`).  Zwei Ursachen:
+  (1) ffprobe 9.1 hängt die Sprache an den Kommentar-Schlüssel (`comment-eng` statt
+  `comment`), der Kommentar aus dem ID3-Chunk einer WAV-Datei wäre beim Import verloren gegangen.
+  Jetzt werden beide Schreibweisen gelesen; Kommentare mit Beschreibung (z. B. „iTunNORM") bleiben
+  wie bisher draußen.  (2) Rohes ADTS hat keine Längenangabe; ffprobe und mutagen schätzen die
+  Länge aus der Bitrate der ersten Frames.  Der AAC-Encoder von 9.1 beginnt mit kleineren Frames
+  (3-s-Ton als 3,5 s), und ein stiller Anfang wirft die Schätzung in jeder Version weit daneben
+  (3 s Stille + 3 s Rauschen als 90 s).  Jetzt kommen Länge und Bitrate aus der Summe der Pakete
+  (ein ffprobe-Lauf ohne Dekodieren, etwa 0,5 s für eine Stunde), auch in `probe_duration`.  Der
+  Import packt rohes ADTS ohnehin in M4A um; die Messung zählt dort, wo die ADTS-Datei selbst
+  bleibt (Umpacken gescheitert), sonst hätte die Prüfung auf abgeschnittene Dateien sie
+  abgelehnt.  Analyzer-Tests unter 9.0.1 und 9.1 je 454 bestanden; CI testet jetzt 9.0.2 (py3.11)
+  und 9.1.0 (py3.13).  Wirksam nach einem Neustart von RASTATIME-ANALYZER.  ARCHITECTURE 0.161
+  (§23.130).
+
 - **Webstream oder Line-In, deren Zeile unter einem DJ endet, geben ihre Quelle frei (2026-11-21,
   Go des Operators)** - Bisher blieben Quelle und Gate offen, bis der nächste Start sie schloss;
   ging der DJ danach in eine Lücke, wäre der beendete Webstream bzw. Line-In wieder auf Sendung

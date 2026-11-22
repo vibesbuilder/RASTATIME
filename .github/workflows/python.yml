@@ -103,11 +103,14 @@ jobs:
 
       - name: Install ffmpeg (the analyzer pipeline shells out to ffmpeg/ffprobe)
         if: matrix.package == 'analyzer'
-        # RASTATIME 2026-11-22 - pinned to the 9.0 line the studio runs: ffmpeg
-        # 9.1.0 (Chocolatey latest since 2026-11) no longer reports the comment
-        # of a WAV ID3 chunk and estimates raw ADTS with an ID3 header longer;
-        # raise the pin together with the analyzer (backlog "ffmpeg 9.1").
-        run: choco install ffmpeg --version 9.0.2 -y --no-progress
+        # RASTATIME 2026-11-22 - both ffmpeg lines, one per Python version, no
+        # extra job: 9.0 (the studio runs 9.0.1) with py3.11, 9.1 (the next
+        # update) with py3.13.  9.1 spells the ID3 comment key
+        # "comment-<language>" and its AAC encoder starts with smaller frames;
+        # the analyzer handles both since 2026-11-22.  Pinned, so a new
+        # Chocolatey release cannot turn CI red overnight - raise the pins
+        # together with docs/operator/COMPONENTS.md.
+        run: choco install ffmpeg --version ${{ matrix.python-version == '3.11' && '9.0.2' || '9.1.0' }} -y --no-progress
 
       - name: Install package with dev extras
         working-directory: backend/${{ matrix.package }}

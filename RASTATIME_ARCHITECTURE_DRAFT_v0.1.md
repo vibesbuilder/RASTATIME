@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.160
+Draft version: 0.161
 Date: 2026-11-22
 
 > **Revision history**
+> - **0.161 (2026-11-22)** - Analyzer ready for ffmpeg 9.1; raw ADTS measured from its packets
+>   (§23.130): ffprobe comment key `comment-<language>`, `probe_packet_totals`.
 > - **0.160 (2026-11-22)** - Automatic level of the live DJ inputs (§23.129): `normalize`
 >   (LUFS) on the Master / Show Source arms, Settings -> Streams "Level live DJ inputs".
 > - **0.159 (2026-11-22)** - Automated fillers fill one instance of a linked show; one task
@@ -11902,3 +11904,54 @@ would pump or raise noise; the live switch takes it off at once
 (`var.set dj_level.enabled = false`), the checkbox takes it off for good
 (planned restart).  Rollback: `git revert` + PLAYOUT restart; tag
 `live-2026-11-21g`.
+
+### 23.130 Analyzer Ready for ffmpeg 9.1; Raw ADTS Measured from Its Packets (2026-11-22)
+
+**Finding.**  The GitHub runner received ffmpeg 9.1.0 from Chocolatey and
+two analyzer tests failed; CI was pinned to 9.0.2 at once (`34c224db`).
+Reproduced with a 9.1 essentials build in a test folder, two causes:
+
+1. ffprobe 9.1 keeps the language of an ID3 COMM frame in the tag key:
+   `comment-eng` where 9.0 said `comment`.  A frame with a description
+   becomes `comment-<description>-<language>` (9.0: the description
+   alone, e.g. `iTunNORM`); a frame with the undefined language `XXX`
+   stays `comment`; several COMM frames are all listed (9.0 kept one).
+   mutagen reads the comment of an MP3 itself, but the ID3 chunk of a
+   WAV file is read by ffprobe only - its comment would have been lost.
+2. Not ffprobe: the AAC encoder of 9.1 starts with smaller frames, and
+   raw ADTS has no length header - ffprobe and mutagen both estimate the
+   duration from the bit rate of the first frames.  Both ffprobe versions
+   read the 9.1-encoded 3 s test tone as 3.50 s.  The estimate was never
+   sound: 3 s of silence before 3 s of noise read as 90 s (ffprobe) and
+   91 s (mutagen) with either encoder.
+
+**Comment key.**  `_probe_with_ffprobe` adds `comment` from the first key
+matching `comment-[a-z]{3}` (keys are lower-cased) when the plain key is
+missing.  Keys with a description stay out, as before.
+
+**Raw ADTS length.**  `_ffmpeg.probe_packet_totals` sums the packet
+durations and sizes of the first audio stream in one ffprobe pass that
+demuxes without decoding (`-show_entries stream=time_base:packet=duration,size
+-of csv`; about 0.5 s for an hour).  It returns None rather than guessing
+(a packet without duration, no time base, ffprobe failed).  Used by
+`analyze_metadata` (`_measure_raw_adts`: length and bit rate of a file with
+ffprobe format `aac`, replacing the mutagen or ffprobe estimate) and by
+`probe_duration` (which `analyze_duration` uses; it now asks ffprobe for
+`format_name,duration` as JSON).  `is_raw_adts_format` is shared with
+`convert_format.is_raw_adts`.  The import still repacks raw ADTS into M4A
+and reads the length from there; the measurement matters where the ADTS
+file itself is kept (a failed repack) - a far too long estimate would
+make `analyze_playability` (§23.123) reject it as cut short.
+
+**Tests.**  `ffprobe_compat_test.py` (no ffmpeg needed): the comment keys
+of both versions, the packet totals parser and its give-up cases.
+`analyze_metadata_formats_test.py`: a quiet-start ADTS with and without
+ID3 header (length 6 s, bit rate plausible) and `probe_duration` on it.
+Analyzer suite 454 passed on ffmpeg 9.0.1 and on 9.1.  CI installs 9.0.2
+for py3.11 and 9.1.0 for py3.13 (pinned; raise with
+`docs/operator/COMPONENTS.md`).
+
+**Risk.**  Low.  `probe_duration` runs for every import; the JSON form
+is covered by the fixture tests on both versions.  Effective after a
+restart of RASTATIME-ANALYZER; rollback `git revert` + restart, tag
+`live-2026-11-22`.

@@ -20,7 +20,7 @@ except ImportError:
 
 from rastatime_shared.files import compute_md5
 
-from ._ffmpeg import ffprobe_json
+from ._ffmpeg import ffprobe_json, is_raw_adts_format, probe_packet_totals
 from ._utils import positive_float, positive_int
 
 logger = logging.getLogger(__name__)
@@ -210,6 +210,14 @@ _FFPROBE_TAGS_MAPPING = [
 
 _FFPROBE_TIMEOUT_S = 60.0
 
+# RASTATIME 2026-11-22 - ffmpeg 9.1 keeps the language of an ID3 COMM frame
+# in the ffprobe key: "comment-eng" where 9.0 said "comment" (a WAV ID3
+# chunk is read by ffprobe only).  A frame with a description becomes
+# "comment-<description>-<language>" (9.0: the description alone, e.g.
+# "iTunNORM") and stays out, as before.  Several COMM frames: 9.0 kept one,
+# 9.1 keeps all - the first in ffprobe's order is taken.
+_LANGUAGE_COMMENT_KEY_RE = re.compile(r"^comment-[a-z]{3}$")
+
 # RASTATIME 2026-10-14 - cc_files columns the legacy app stores WITHOUT
 # cutting them to length (they are no fields of the track editor, whose
 # limits CcFiles::validateFileArray applies).  A longer value - TSSE strings
@@ -273,6 +281,10 @@ def _probe_with_ffprobe(
                 continue  # MP4/MKV stream language "undetermined"
             if key and value and key not in tags:
                 tags[key] = value
+    if not tags.get("comment"):
+        comment = next((v for k, v in tags.items() if _LANGUAGE_COMMENT_KEY_RE.match(k)), None)
+        if comment:
+            tags["comment"] = comment
     return fmt, audio, tags
 
 
@@ -351,6 +363,38 @@ def _fill_from_ffprobe(
         )
         if mime:
             metadata["mime"] = mime
+
+
+def _measure_raw_adts(filepath: Path, metadata: dict[str, Any], fmt: dict[str, Any]) -> None:
+    """
+    RASTATIME 2026-11-22 - length and bit rate of a raw ADTS file from its
+    packets: what mutagen and ffprobe report there is an estimate from the
+    first frames (see _ffmpeg.probe_packet_totals).  The import repacks such
+    a file into M4A and reads the length from there; this keeps it right
+    where the ADTS file itself is kept (a failed repack) - a far too long
+    estimate would make analyze_playability reject the file as cut short.
+    """
+    if not is_raw_adts_format(fmt.get("format_name")):
+        return
+    totals = probe_packet_totals(filepath)
+    if totals is None:
+        logger.warning(
+            "could not measure the raw ADTS length of %s; keeping the estimate", filepath
+        )
+        return
+    seconds, size = totals
+    estimate = positive_float(metadata.get("length_seconds"))
+    if estimate is not None and abs(estimate - seconds) > 1.0:
+        logger.info(
+            "raw ADTS %s: %.2f s measured from the packets (estimate %.2f s)",
+            filepath,
+            seconds,
+            estimate,
+        )
+    metadata["length_seconds"] = seconds
+    metadata["length"] = str(timedelta(seconds=seconds))
+    if size:
+        metadata["bit_rate"] = round(size * 8 / seconds)
 
 
 def _fill_custom_tags_from_ffprobe(
@@ -501,6 +545,7 @@ def analyze_metadata(filepath_: str, metadata: dict[str, Any]):
     probe = _probe_with_ffprobe(filepath)
     if probe is not None:
         _fill_from_ffprobe(filepath, metadata, probe)
+        _measure_raw_adts(filepath, metadata, probe[0])
         # a file WITH an ID3v2 tag was read above; ffprobe shows the same
         # TXXX frames, which would only repeat an invalid date's warning
         if txxx is None:

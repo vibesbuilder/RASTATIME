@@ -2,6 +2,7 @@ import json
 import os
 import re
 import subprocess
+from fractions import Fraction
 from math import inf
 from os import getenv
 from pathlib import Path
@@ -60,6 +61,77 @@ def ffprobe_json(filepath, timeout: float = 60.0) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError("ffprobe returned no JSON object")
     return data
+
+
+# RASTATIME 2026-11-22 - raw ADTS AAC (ffprobe format "aac") has no index and
+# no length header: ffprobe and mutagen estimate its duration from the bit
+# rate of the first frames.  A quiet intro throws that far off (3 s of
+# silence before 3 s of noise read as 90 s), and so does the AAC encoder of
+# ffmpeg 9.1, which starts with smaller frames (a 3 s tone read as 3.5 s).
+# The real length is the sum of the packet durations: one ffprobe pass that
+# demuxes the whole file without decoding (about 0.5 s for an hour).
+RAW_ADTS_FORMAT_NAME = "aac"
+_PACKET_TOTALS_TIMEOUT_S = 120.0
+
+
+def is_raw_adts_format(format_name: Any) -> bool:
+    """True for ffprobe's format name of a raw ADTS AAC stream."""
+    return str(format_name or "").strip().lower() == RAW_ADTS_FORMAT_NAME
+
+
+def probe_packet_totals(
+    filepath, timeout: float = _PACKET_TOTALS_TIMEOUT_S
+) -> Optional[tuple[float, int]]:
+    """
+    RASTATIME 2026-11-22 - (seconds, bytes) of the first audio stream, summed
+    over its packets.  None when ffprobe is missing or fails, the stream has
+    no time base or a packet has no duration - the caller keeps its estimate.
+    """
+    cmd = [
+        FFPROBE,
+        *("-v", "error"),
+        *("-select_streams", "a:0"),
+        # csv with section names: "packet,<duration>,<size>" per packet (the
+        # fields come in ffprobe's order, whatever the order asked for) and
+        # one "stream,<time_base>" line
+        *("-show_entries", "stream=time_base:packet=duration,size"),
+        *("-of", "csv"),
+        str(filepath),
+    ]
+    try:
+        completed = subprocess.run(
+            cmd,
+            check=False,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            timeout=timeout,
+            creationflags=low_priority_creationflags(),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+
+    ticks = size = packets = 0
+    time_base: Optional[Fraction] = None
+    for line in completed.stdout.decode("ascii", errors="replace").splitlines():
+        section, _, values = line.strip().partition(",")
+        if section == "packet":
+            duration, _, packet_size = values.partition(",")
+            if not (duration.isdigit() and packet_size.isdigit()):
+                return None  # "N/A" - nothing to sum
+            ticks += int(duration)
+            size += int(packet_size)
+            packets += 1
+        elif section == "stream":
+            try:
+                time_base = Fraction(values.strip())
+            except (ValueError, ZeroDivisionError):
+                return None
+    if not packets or time_base is None or time_base <= 0:
+        return None
+    seconds = float(ticks * time_base)
+    return (seconds, size) if seconds > 0 else None
 
 
 # OS-portable null device: 'nul' on Windows, '/dev/null' on Unix.
@@ -326,11 +398,20 @@ def compute_silences(filepath: Path) -> list[tuple[float, float]]:
 def probe_duration(filepath: Path) -> float:
     """
     Probe duration will probe the given audio file and return the duration.
+
+    RASTATIME 2026-11-22 - for raw ADTS the sum of the packet durations: the
+    format duration is a bit rate estimate there (see probe_packet_totals).
     """
     cmd = _ffprobe(
         *("-i", filepath),
-        *("-show_entries", "format=duration"),
+        *("-show_entries", "format=format_name,duration"),
         *("-v", "quiet"),
-        *("-of", "csv=p=0"),
+        *("-of", "json"),
     )
-    return float(cmd.stdout.strip("\n"))
+    fmt = (json.loads(cmd.stdout or "{}") or {}).get("format") or {}
+    if is_raw_adts_format(fmt.get("format_name")):
+        totals = probe_packet_totals(filepath)
+        if totals is not None:
+            return totals[0]
+    # a missing duration raises ValueError, as "N/A" did before
+    return float(fmt.get("duration", "N/A"))

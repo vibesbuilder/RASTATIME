@@ -7,9 +7,17 @@ DESCRIPTION, MP4 freeform, raw ADTS with an ID3v2 header, Opus).
 from pathlib import Path
 
 import pytest
+from rastatime_analyzer.pipeline._ffmpeg import probe_duration
 from rastatime_analyzer.pipeline.analyze_metadata import analyze_metadata
 
-from ._synth import SECONDS, raw_adts, raw_adts_with_id3, requires_ffmpeg, sine
+from ._synth import (
+    SECONDS,
+    quiet_start_adts,
+    raw_adts,
+    raw_adts_with_id3,
+    requires_ffmpeg,
+    sine,
+)
 
 pytestmark = requires_ffmpeg
 
@@ -187,6 +195,36 @@ def test_raw_adts_with_id3_header_does_not_abort(tmp_path: Path):
     assert found["channels"] == 2
     assert found["bit_rate"] > 0
     assert found["length_seconds"] == pytest.approx(SECONDS, abs=0.2)
+
+
+@pytest.mark.parametrize("with_id3", [False, True], ids=["mutagen", "ffprobe"])
+def test_raw_adts_length_is_measured_not_estimated(tmp_path: Path, with_id3: bool):
+    # RASTATIME 2026-11-22 - the quiet start makes mutagen (no ID3 header)
+    # and ffprobe (mutagen gives up on the ID3 header) estimate about 90 s
+    path = quiet_start_adts(tmp_path / "quiet.aac")
+    if with_id3:
+        from mutagen.id3 import TIT2
+
+        path = raw_adts_with_id3(
+            tmp_path / "quiet-id3.aac", [TIT2(encoding=3, text="Quiet")], adts=path
+        )
+
+    found = analyze_metadata(str(path), {})
+
+    assert found["length_seconds"] == pytest.approx(2 * SECONDS, abs=0.2)
+    # the packets' bytes over the measured length: 128k for the noise, far
+    # less for the silence - the estimate said about 2 kbit/s
+    assert 30_000 < found["bit_rate"] < 140_000
+    if with_id3:
+        assert found["track_title"] == "Quiet"
+
+
+def test_probe_duration_measures_raw_adts(tmp_path: Path):
+    # analyze_duration takes the length from probe_duration on a file the
+    # import could not repack - it must not bring the estimate back
+    path = quiet_start_adts(tmp_path / "quiet.aac")
+
+    assert probe_duration(path) == pytest.approx(2 * SECONDS, abs=0.2)
 
 
 def test_opus_gets_sample_rate_and_bit_rate(tmp_path: Path):
