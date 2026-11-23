@@ -1860,8 +1860,8 @@ live geprüft (jQuery-POST 200, `fetch` ohne Header 403 + `CSRF refused`).  **Pa
 **Paket 4 umgesetzt 2026-10-25 ~19:00:** `/main` + `/show` aus `config/icecast.xml` (+ `.example`),
 Auth-Skripte und `api/icecast-listener-allow` gelöscht; Icecast-Neustart 19:00:48 sauber (Quellen
 nach 3 s zurück, Streams 200, `/main` 404), Firewall-Regeln „RASTATIME Icecast“ + 2x „icecast“ vom
-Operator deaktiviert - **Paket 4 erledigt.**  Achtung Rückfall auf Icecast 2.4.4:
-`icecast.xml.2.4.4-backup` enthält die alten Mounts noch (`C:/Temp/optd/icecast_strip_input_mounts.py`).
+Operator deaktiviert - **Paket 4 erledigt.**  (Der Rückfall auf Icecast 2.4.4 mit den alten Mounts in
+`icecast.xml.2.4.4-backup` ist seit 2026-11-23 entfernt.)
 **Abnahme mit PM- und DJ-Konto: Operator 2026-10-25 durchgeführt.**  **Paket 5 erledigt 2026-10-25:** Handbuch `USERS_AND_ROLES` ×4 neu, Rollen-Aussagen in SETTINGS,
 LINE_IN, CALENDAR, LIBRARY, SHOW_TEMPLATES, ANALYTICS ×4 korrigiert.  Offen aus dem Audit (Phase 2
 CSRF erledigt 2026-10-27, PM/DJ-Abnahme 2026-10-25): Ideen siehe unten (Super-Admin-Hinweis im
@@ -4222,7 +4222,7 @@ Verzögerung je IP/Benutzer im `LoginController` (~60 Zeilen), (b) Apache `mod_s
 (Aufgabenplaner, 5-min-Takt).  Empfehlung: (a) zuerst, (c) als Ergänzung.  Dazu
 2FA/Allowlist für Admin-Konten erwägen.  Vorbedingung: Operator-Go, Testplan (14).
 
-### ✅ Icecast 2.4.4 → 2.5.x Upgrade (Future) - erledigt 2026-10-24 (2.5.0 live, Bewährung bis 2026-11-23, Rückfall 2.4.4 bleibt bis dahin)
+### ✅ Icecast 2.4.4 → 2.5.x Upgrade (Future) - erledigt 2026-10-24 (2.5.0 live, Bewährung bis 2026-11-23 bestanden, Rückfall 2.4.4 entfernt 2026-11-23)
 
 **Status:** Idea — bewusst NICHT in der Hardware-Migration 2026-08 gemacht
 (Operator-Entscheid: 2.4.4 wie alte Maschine, kein Versionssprung im Umzug).
@@ -6396,6 +6396,7 @@ C:/Tools/liquidsoap (2.4.4) als Rueckfall behalten.
 
 ### ✅ Icecast 2.4.4 -> 2.5.0 (Evaluation 2026-10-10: Defer; Operator-Go 2026-10-24, Testinstanz abgenommen, LIVE seit 2026-10-24 14:02)
 **Umgeschaltet 2026-10-24 14:02** (Standby zuvor gestoppt, da abhängig): sechs Mounts, Liquidsoap 14:02:06, Statistik ohne 401, öffentlicher Stream meldet 2.5.0, ICY-Titel ab 14:06 bestätigt.  Operator 2026-10-24: Bewährung 5 Tage (Prüfung 2026-10-29) und 30 Tage (2026-11-23); danach ggf. Rückfall (2.4.4-Ordner + icecast.xml.2.4.4-backup) entfernen.  Ungenutzte Installer-Kopie C:/Tools/Icecast/icecast.xml vom Operator gelöscht.
+**Rückfall entfernt 2026-11-23 (Go B des Operators):** 30-Tage-Bilanz sauber (Prozess seit 2026-11-02 ohne Neustart, kein EROR im Icecast-Log, keine Liquidsoap-Verbindungsfehler, keine Statistik-401).  `C:\Tools\Icecast` (2.4.4) sowie `config/icecast.xml.2.4.4-backup` und `config/icecast.xml.pre-pkg4-backup` in den Papierkorb (Tag `live-2026-11-23`); dann 2.5.0 von `C:\Tools\Icecast-2.5.0` nach `C:\Tools\Icecast` umbenannt (Standardpfad von INSTALL.md): Standby + Icecast gestoppt, Ordner umbenannt, NSSM Application/AppDirectory (Registry-Werte unter `Services\RASTATIME-ICECAST\Parameters`, `nssm dump/set` hängt in der Agenten-Shell ohne Konsole), `webroot`/`adminroot`/`mime-types` in `config/icecast.xml`, beide gestartet - 4,2 s, Stream 13:04:04-13:04:08 weg, Liquidsoap verband sich nach 3 s selbst, Standby-Mount und Hörer zurück.  Windows-Deinstallationseintrag `Xiph.org-Icecast` (gehört 2.5.0) auf den neuen Ordner gesetzt; das alte 2.4.4-`Uninstall.exe` bewusst nicht gestartet.  Offen beim Operator: die beiden deaktivierten Firewall-Regeln „icecast“ zeigen noch auf `C:\tools\icecast-2.5.0\bin\icecast.exe` (löschen oder anpassen).
 **Stand 2026-10-24:** 2.5.0 (win64, SHA-512 gegen xiph.org geprüft) nach `C:\Tools\Icecast-2.5.0` installiert (Operator).
 Testinstanz auf Port 8010 mit Kopie der Live-Konfiguration (`C:/Temp/optd/icecast25/icecast-test.xml`, Rückrufe auf
 127.0.0.1:9), Skript `C:/Temp/optd/icecast25/ice25_test.py`: Statusseite, status-json, admin/stats.xml (Struktur wie vom

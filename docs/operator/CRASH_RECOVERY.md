@@ -289,7 +289,7 @@ Install **all** prerequisites on the replacement hardware following
 - RabbitMQ 4.x + Erlang OTP (vhost `/rastatime`)
 - Liquidsoap 2.4.4 (`C:\Tools\liquidsoap`)
 - Apache 2.4 + PHP 8.5 (`C:\Tools\Apache24` / `C:\Tools\PHP`)
-- Icecast 2.4.4 (`C:\Tools\Icecast`), FFmpeg (`C:\ffmpeg\bin`), NSSM
+- Icecast 2.5.0 (`C:\Tools\Icecast`), FFmpeg (`C:\ffmpeg\bin`), NSSM
 
 (VLC is **not** required — Liquidsoap is the production engine.)
 

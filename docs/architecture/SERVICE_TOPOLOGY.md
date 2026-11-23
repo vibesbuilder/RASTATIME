@@ -182,7 +182,7 @@ requirements demand it.
 | Property | Value |
 |---|---|
 | NSSM service name | `RASTATIME-ICECAST` |
-| Executable | `C:\Tools\Icecast\bin\icecast.exe` (Icecast **2.4.4** — deliberate; the live `icecast.xml` uses 2.4 auth semantics) |
+| Executable | `C:\Tools\Icecast\bin\icecast.exe` (Icecast **2.5.0** since 2026-10-24; the live `icecast.xml` needs `<charset>UTF-8</charset>` on every output mount and absolute `<webroot>` / `<adminroot>` / `<mime-types>`) |
 | Arguments | `-c C:\rastatime\config\icecast.xml` |
 | Working directory | `C:\Tools\Icecast` |
 | Port | `8000` (HTTP streams + admin UI) — local use only since 2026-10-25: listeners reach the mounts through Apache (`https://…/stream/`), the inbound firewall rules for 8000 / icecast.exe are disabled (role audit package 4) |

@@ -267,9 +267,10 @@ Follow [`INSTALL.md`](INSTALL.md) §4 step-by-step to install:
   service can crash on start when the installer ran as a normal user.
 - Apache (Apache Lounge 2.4.x Win64 at `C:\Tools\Apache24`) + PHP 8.5
   NTS x64 at `C:\Tools\PHP`
-- Icecast **2.4.4** at `C:\Tools\Icecast` (deliberate — the live
-  `icecast.xml` relies on Icecast-2.4 auth semantics; 2.5 replaced them
-  with event-bindings and is a separate future upgrade, see BACKLOG)
+- Icecast **2.5.0** at `C:\Tools\Icecast` (since 2026-10-24; the live
+  `icecast.xml` needs `<charset>UTF-8</charset>` on every output mount and
+  absolute `<webroot>` / `<adminroot>` / `<mime-types>`, see
+  `COMPONENTS.md`)
 - NSSM (`C:\Tools\nssm\nssm.exe`)
 - All 7 RASTATIME NSSM services (ANALYZER, APACHE, API, ICECAST,
   LIQUIDSOAP, PLAYOUT, WORKER)

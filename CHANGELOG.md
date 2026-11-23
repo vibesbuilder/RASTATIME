@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Icecast-Rückfall 2.4.4 entfernt, 2.5.0 liegt jetzt unter `C:\Tools\Icecast` (2026-11-23, Go B
+  des Operators)** - Die 30-Tage-Bewährung von Icecast 2.5.0 war sauber (seit 2026-11-02 ohne
+  Neustart, keine Fehler im Icecast-Log, keine Verbindungsfehler von Liquidsoap).  Der alte
+  2.4.4-Ordner und die beiden alten Konfigurationssicherungen liegen im Papierkorb; 2.5.0 wurde
+  von `C:\Tools\Icecast-2.5.0` auf den Standardpfad der Installationsanleitung umbenannt (Dienst,
+  `icecast.xml`, Deinstallationseintrag).  Umschaltung 4,2 s, Stream 4 s unterbrochen, Liquidsoap
+  verband sich selbst neu.  Betriebsdoku (COMPONENTS, RESTART_ORDER, SERVICE_TOPOLOGY,
+  CRASH_RECOVERY, MIGRATION) beschrieb noch 2.4.4 und ist nachgezogen.
+
 ## [1.8.0] - 2026-11-22
 
 ### Added
