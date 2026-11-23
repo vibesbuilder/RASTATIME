@@ -278,6 +278,18 @@ die Datei.  Ein erreichtes Ablaufdatum oder ein noch in der Zukunft
 liegendes Aktivierungsdatum deaktiviert den Track sofort.  Das Land
 wird nur gefüllt, wenn der Track noch keines hat.
 
+**Bekannte Einschränkung: Daten in M4A-Dateien.**  In einer M4A-Datei
+stehen die beiden Daten, das Land und der Medientyp in
+*Freeform*-Feldern (`----:com.apple.iTunes:Expiry`, `Enable Date`,
+`COUNTRY`, `MEDIATYPE`).  RASTATIME schreibt sie dort hinein, wenn es
+eine rohe AAC-Datei umpackt, und liest sie beim Import zurück; andere
+Tag-Editoren und Player zeigen diese Felder aber nicht immer an oder
+behalten sie beim Speichern nicht.  Das betrifft nur eine M4A-Datei,
+die Sie außerhalb von RASTATIME bearbeiten und erneut importieren:
+Prüfen Sie nach einem solchen Import ihre Daten im Track-Editor.  Die
+Daten eines Tracks in der Bibliothek liegen in der Datenbank und sind
+davon nie betroffen - RASTATIME schreibt keine Dateien um.
+
 **Tags neu einlesen** übernimmt das Land ebenfalls aus der Datei (eine
 Datei ohne den Tag leert es), aber nie die beiden Daten: Ein in
 RASTATIME gesetztes Datum bleibt.  Vor dem 2026-11-08 importierte

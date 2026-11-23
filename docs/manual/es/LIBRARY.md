@@ -233,6 +233,18 @@ Una fecha de caducidad alcanzada o una fecha de activación aún por
 llegar desactiva la pista de inmediato.  El país solo se rellena si la
 pista aún no tiene ninguno.
 
+**Limitación conocida: fechas en archivos M4A.**  En un archivo M4A,
+las dos fechas, el país y el tipo de medio están en campos *freeform*
+(`----:com.apple.iTunes:Expiry`, `Enable Date`, `COUNTRY`, `MEDIATYPE`).
+RASTATIME los escribe ahí cuando reempaqueta un archivo AAC sin
+contenedor y los vuelve a leer al importar, pero otros editores de
+etiquetas y reproductores no siempre muestran estos campos ni los
+conservan al guardar.  Esto solo afecta a un archivo M4A que edite
+fuera de RASTATIME y vuelva a importar: compruebe sus fechas en el
+editor de pistas después de esa importación.  Las fechas de una pista
+de la biblioteca se guardan en la base de datos y nunca se ven
+afectadas: RASTATIME no reescribe los archivos.
+
 **Releer etiquetas** también toma el país del archivo (un archivo sin
 la etiqueta lo borra), pero nunca las dos fechas: una fecha fijada en
 RASTATIME se mantiene.  Las pistas importadas antes del 2026-11-08

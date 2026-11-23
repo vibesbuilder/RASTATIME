@@ -256,6 +256,17 @@ format is ignored; the analyzer log names the file.  An expiry date
 that has been reached or an enable date still ahead disables the track
 right away.  The country is only filled when the track has none yet.
 
+**Known limitation: dates in M4A files.**  In an M4A file the two
+dates, the country and the media type sit in *freeform* fields
+(`----:com.apple.iTunes:Expiry`, `Enable Date`, `COUNTRY`, `MEDIATYPE`).
+RASTATIME writes them there when it repacks a raw AAC file and reads
+them back on import, but other tag editors and players do not always
+show these fields or keep them when they save the file.  This only
+matters for an M4A file you edit outside RASTATIME and import again:
+check its dates in the track editor after such an import.  The dates of
+a track in the library live in the database and are never affected -
+RASTATIME does not rewrite files.
+
 **Re-read Tags** takes the country from the file too (a file without
 the tag clears it), but never the two dates: a date set in RASTATIME
 stays.  Tracks imported before 2026-11-08 get their country from their

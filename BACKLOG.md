@@ -12,6 +12,20 @@
 
 ---
 
+## ⏭️ Als Nächstes (Operator-Festlegung 2026-11-23)
+
+Vom Operator nach der Backlog-Durchsicht am 2026-11-23 als nächste Punkte genannt.  Jeder Punkt
+bekommt vor dem Bau die Evaluierung (sechs Punkte + Risiko) und ein Go.
+
+| # | Punkt | Stand |
+|---|-------|-------|
+| 1 | Geplanter Liquidsoap-Neustart an der Titelgrenze kennt keinen DJ | 💡 Befund 2026-11-19 (Eintrag unten); nächster Schritt Evaluierung |
+| 2 | Firewall-Wächter (d): Retry-Serie desselben Encoders zählt als ein Versuch, dazu (c): DJ-Fehlpasswörter der PLAYOUT-Bremse überlassen oder milder behandeln | offen seit 2026-11-21 (Eintrag „Firewall-Wächter sperrt nach Unblock …“); Evaluierung |
+| 3 | Off-Air-Text darf in Webstream-Slots gar nicht erscheinen - auch nicht 0-2 s | 💡 neu 2026-11-23 (Eintrag nach der ICY-Abnahme); Evaluierung |
+| 4 | Laufendes abschließen: Abnahme DJ-Eingangspegel (§23.129) Di 2026-11-24 09:45; Probezeit „Sendeplan läuft unter dem DJ“ (§23.122) auswerten Do 2026-11-26, danach Schalter fest | Termine stehen |
+
+---
+
 ## 📋 Arbeitsreihenfolge (Operator-Festlegung 2026-09-02)
 
 Verbindliche Abarbeitungsreihenfolge, vom Operator am 2026-09-02
@@ -575,7 +589,7 @@ Icecast `/admin/metadata`, Fenster -1 s bis Rest + 6 s, jedes Update nur einer �
 Der Wächter speiste 744-mal nach (~70 pro Tag, 727-mal `crossfade output: no`): die Abfolge-Formen verlieren ihr
 Paket live weiterhin im cross (Ursache weiter offen, in der Replik nicht nachstellbar); der Titel kommt dann etwa
 1-2 s nach dem hörbaren Start.  Off-Air-Text in Webstream-Slots steht nur noch 0-2 s zum Slot-Beginn, dann der
-Sendungsname (vorher der ganze Slot); sonst erscheint er nur bei echten Lücken (z. B. 2026-11-18 16:00-16:30, leerer
+Sendungsname (vorher der ganze Slot; Operator 2026-11-23: soll gar nicht erscheinen, eigener Eintrag unten); sonst erscheint er nur bei echten Lücken (z. B. 2026-11-18 16:00-16:30, leerer
 Slot mit Dead-Air-Alarm).  Rest: 4 Verluste, davon 3 immer direkt nach derselben kurzen StationID (3 von 3
 Ausstrahlungen; der Wächter speist den Folgetitel nach 1,97 s nach, er kommt trotzdem nicht bei Icecast an).
 💡 Bei Gelegenheit in der Replik nachstellen; kein Go, Auswirkung ein Titel ohne Anzeige etwa einmal in drei Tagen.
@@ -628,6 +642,28 @@ volle Kette inkl. Stereo Tool / icy_rewrite / blank.detect, Telnet 1239, C:/Temp
 im Webstream-Slot gewinnen (Befund 2).  (2) **Abfolge-Formen in der Replik NICHT reproduziert** (alle
 Pakete kommen an) - Mechanismus live-spezifisch, noch offen.  Ursache NICHT 4c7bcc39 (betrifft nur die
 Off-Air-Marke beim Wechsel auf den leeren Datei-Arm).
+
+### 💡 Off-Air-Text darf in Webstream-Slots gar nicht erscheinen - auch nicht 0-2 s (Operator 2026-11-23)
+
+**Status:** 💡 Operator-Vorgabe 2026-11-23, Punkt 3 der Liste „Als Nächstes“; keine Evaluierung, kein Go.
+**Vorbedingungen:** Evaluierung (sechs Punkte + Risiko) mit Replik-Probe; Liquidsoap-Neustart nur in
+einem ruhigen Sendefenster.
+
+**Befund (ICY-Abnahme 2026-11-23, Eintrag oben):** seit dem Metadaten-Wächter (§23.102) steht der
+Off-Air-Text in Webstream-Slots nur noch 0-2 s zum Slot-Beginn als Stream-Titel und Live Text, danach der
+Sendungsname; vorher stand er den ganzen Slot.  Der Operator will ihn dort gar nicht sehen - Hörer und
+Radioplayer-Feed sollen beim Einstieg in einen Webstream nie „off air“ lesen.
+
+**Bekannt aus der Replik 2026-11-09:** `bus_transition` = `add([fade.out(old), fade.in(new)])` reicht nur
+die Metadaten der ersten Quelle weiter; beim Wechsel vom leeren Datei-Arm auf den Webstream-Arm kann die
+Off-Air-Marke des auslaufenden Datei-Arms (`4c7bcc39`: 0,5 s nach der Bus-Arm-Transition, wenn
+`scheduled_q` nicht bereit ist) gewinnen, bis die Metadaten des Webstream-Arms nachkommen.  Zu klären,
+warum die Off-Air-Verzögerung von 5 s (§23.118) hier nicht greift.
+
+**Ansätze für die Evaluierung:** Off-Air-Marke nur setzen, wenn weder die Queue noch ein Live-Arm
+(Webstream, Line-In, DJ) bereit ist oder gerade öffnet; beim Arm-Wechsel die Metadaten des neuen Arms
+(Sendungsname) zuerst einspeisen.  Messung wie in der Abnahme: Icecast `/admin/metadata` und Live Text je
+Webstream-Slot-Beginn über mehrere Tage (`C:/Temp/optd/icy_acceptance.py` erweitern).
 
 ### ✅ Hörer-Aussetzer beim Sendungsstart 12:07 (foobar2000, Stream 1 über den Apache-Proxy) - ERLEDIGT 2026-11-14 (Operator; Befund 2026-11-07)
 
@@ -4476,7 +4512,21 @@ keine Migration nötig — nur ein Konstanten-Bump.
 
 ## 🛠️ Technical Debt / Refactor-Backlog
 
-### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31; Kern ✅ 2026-09-17, Rest = Build-Pipeline 🔴 Hold 2026-10-28)
+### 🟡 JavaScript-Stack-Modernisierung (Hybrid/Vanilla-First — Re-Eval 2026-05-31; Kern ✅ 2026-09-17; Rest: DataTables 2.0 🟡 Defer, Build-Pipeline ❌ VERWORFEN 2026-11-23)
+
+**Verworfen 2026-11-23 (Operator, Backlog-Durchsicht):** die Build-Pipeline.  Sie bräuchte Node auf dem Studio-PC (oder
+eingecheckte Bundles), und JavaScript-Änderungen wären nicht mehr nach F5 live.  Nicht erneut vorschlagen;
+ein Linter als reines Entwicklungswerkzeug bliebe die einzige Ausnahme (siehe Vorbedingungen unten).
+
+**DataTables 2.0 - Stand 2026-11-23 (🟡 Defer, Operator hat nachgefragt, keine Entscheidung):** im Einsatz
+1.13.11, die letzte Version der 1.x-Reihe; laut Hersteller ist 1.x seit dem Erscheinen von 2.0 (Februar 2024)
+abgekündigt, Fehlerbehebungen gibt es nur für die neueste Version.  16 Dateien nutzen DataTables, rund 450
+Stellen in der alten Schreibweise von 1.x (`fnDraw`, `aoColumns`, `sDom` …), dazu alte Plugins (FixedHeader,
+FixedColumns, Buttons).  Risiko heute gering (nur hinter dem Login).  **Empfehlung:** Defer mit Termin
+1. Quartal 2027 - zuerst einen Tag Inventur der Stellen (Schätzung festklopfen, bisher 1,5-3 Wochen), dann
+Tabelle für Tabelle mit Rückfallschalter wie bei jQuery 3, Library zuletzt.  **Vorbedingungen:** Evaluierung
++ Go; früher, wenn eine Sicherheitslücke in 1.13 bekannt wird oder jQuery 4 ansteht.
+
 
 **Operator 2026-10-28: Build-Pipeline 🔴 Hold** (nach genauerer Erklärung).  Ist-Stand: kein package.json, kein
 Node auf STUDIO, 58 App-Dateien / ~25.500 Zeilen unminifiziert einzeln über `headScript()` (~25 globale + 15-20
@@ -5066,7 +5116,10 @@ Traffic Alerts teilen sich EINE inkrementelle Fill-Engine
 (`_fillRequestShowByPositions`); der Unterschied ist nur die Slot-Auflösung
 (Request-Draw + Random-Fallback vs. `_appendTrafficAlert` FIFO ohne Fallback).
 
-### 7-Tage-Catchup Frontend
+### ❌ 7-Tage-Catchup Frontend - VERWORFEN 2026-11-23 (Operator)
+
+**Verworfen 2026-11-23 (Operator, Backlog-Durchsicht):** überschneidet sich mit der Archivierung (CBA) und dem Podcast-Feed aus
+Sendungsaufnahmen; ein eigener Nachhör-Player wird nicht gebaut.
 
 Web-Player der auf Record-per-Hour-Chunks zugreift. HTTP-Range-
 Streaming, einfacher Index, Sprung zu Show-Starts via
@@ -5079,13 +5132,19 @@ Podcast-Feed erzeugt. Erwähnt in `docs/operator/UPGRADE.md` Backlog
 und im Manual als "noch nicht implementiert". Komplementär zum
 Catchup.
 
-### Per-Weekday Autoplaylist
+### ❌ Per-Weekday Autoplaylist - VERWORFEN 2026-11-23 (Operator)
+
+**Verworfen 2026-11-23 (Operator, Backlog-Durchsicht):** abgedeckt durch die Autoloading-Playlist je Sendung und je Episode
+(§23.85): eine Sendung am Samstagabend und eine am Sonntagmorgen haben je ihre eigene Playlist.
 
 "Rock am Samstagabend, Jazz am Sonntagmorgen". Erwähnt in
 ARCHITECTURE §23.20 (Auto DJ) als Out-of-Scope. Aktuell ist
 `auto_dj_playlist_id` global.
 
-### Daypart-aware Auto DJ
+### ❌ Daypart-aware Auto DJ - VERWORFEN 2026-11-23 (Operator)
+
+**Verworfen 2026-11-23 (Operator, Backlog-Durchsicht):** geht in Idee 3 (Tageskurve) des folgenden Eintrags „Musikplanung nach
+Energy und Brightness“ auf; kein eigener Eintrag mehr.
 
 Verschiedene Auto-DJ-Playlists für verschiedene Tageszeiten.
 Workaround heute: einzelner Smart Block mit
@@ -5168,7 +5227,11 @@ zum opt-in für Operator die Auto-DJ-Recordings wollen.
 Aktuell nur via direktem DB-`pg_dump`. UI-basierter Export /
 Import (mit ID-Resolution für Playlists + Bilder).
 
-### Recurring "third Friday of month" Pattern
+### ❌ Recurring "third Friday of month" Pattern - VERWORFEN 2026-11-23 (Operator; gibt es bereits)
+
+**Verworfen 2026-11-23 (Operator, Backlog-Durchsicht):** der Eintrag war veraltet.  Der Kalender kann das schon: Repeat Type
+*monthly* + Repeat By *day of the week* (`REPEAT_MONTHLY_WEEKLY`, `ShowService::getMonthlyWeeklyRepeatInterval`;
+Manual CALENDAR) - Wochentag und Woche im Monat (erste bis fünfte) kommen vom Datum der ersten Episode.
 
 Aktuell nicht unterstützt. Workaround: vier monatliche
 einmalige Shows. Echte Implementation erfordert RRULE-style
@@ -5184,7 +5247,10 @@ Aktuell nur Icecast/Shoutcast. Workaround: externer
 `icecast-auth.php` existiert bereits. Aktivierung pro Mount
 in `config/icecast.xml`. Default-Install hat es aus.
 
-### SSO / OAuth für API
+### ❌ SSO / OAuth für API - VERWORFEN 2026-11-23 (Operator)
+
+**Verworfen 2026-11-23 (Operator, Backlog-Durchsicht):** doppelt zu „Anmeldung per LDAP / SSO“ (💡, bleibt stehen); die API
+läuft hinter Login bzw. Api-Key.
 
 Aktuell nur API-Keys + PHP-Session. Authn-Proxy vor Apache
 nötig. Erwähnt in `docs/operator/UPGRADE.md` Backlog.
@@ -5194,7 +5260,10 @@ nötig. Erwähnt in `docs/operator/UPGRADE.md` Backlog.
 UI ist LTR-designed. Bräuchte CSS-Rework zusätzlich zur
 Translation. Erwähnt in `docs/manual/*/I18N.md`.
 
-### Show-Builder mid-air editing
+### ❌ Show-Builder mid-air editing - VERWORFEN 2026-11-23 (Operator)
+
+**Verworfen 2026-11-23 (Operator, Backlog-Durchsicht):** die laufende Sendung umzusortieren ist im Live-Betrieb riskant, der Nutzen
+gering.
 
 Live-Show während sie läuft umsortieren, ohne Cut. Heute:
 Sortierung der bereits-gespielten + nächsten Tracks freezable.
@@ -6682,7 +6751,12 @@ Data-URI-32 im Dashboard, die JPGs in Library/Player/Widgets.  Idee: Data-URI-Ko
 (renderDataURI kann das), nur JPGs speichern -> etwa die Haelfte der Dateien und ~40 % des Platzes; Aufraeumlauf fuer den
 Bestand.  ~3 h.  Vorbedingung: Operator-Go, Backup des artwork-Ordners.
 
-### 💡 Expiry in M4A nur best effort (notiert 2026-10-14)
+### ✅ Expiry in M4A nur best effort (notiert 2026-10-14) - ALS BEKANNTE EINSCHRÄNKUNG DOKUMENTIERT 2026-11-23 (Operator)
+**Erledigt 2026-11-23:** kein Code; Manual LIBRARY ×4, Abschnitt „Dates and country from the tags“, Hinweis
+„Known limitation: dates in M4A files“ - Expiry, Enable Date, COUNTRY und MEDIATYPE stehen in M4A-Freeform-Feldern,
+die andere Programme nicht immer zeigen oder behalten; betrifft nur M4A-Dateien, die außerhalb bearbeitet und neu
+importiert werden (Daten danach im Track-Editor prüfen).  Die Daten in der Datenbank sind nie betroffen.
+Ursprünglicher Eintrag:
 Beim ADTS -> M4A-Umpacken schreibt convert_format Expiry, ISRC, LABEL und LANGUAGE als
 `----:com.apple.iTunes:<Name>`-Freeform-Atome; der Analyzer liest Expiry ueber ffprobe zurueck, andere Programme
 zeigen oder erhalten diese Atome nicht zuverlaessig (deshalb ist das Ziel fuer verlustfreie Dateien MP3, nicht M4A).

@@ -19,7 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mit.  Gespeichert in einem eigenen Einstellungsschlüssel - die Adressliste, `config/allowlist.txt`
   und alle Leser (Web-Login, DJ-Einwahl, Firewall-Wächter) bleiben unverändert.  Einträge von vor
   dem 23.11. haben kein Datum.  Manual USERS_AND_ROLES + SETTINGS ×4, TEST_PLAN A5.6, ARCHITECTURE
-  0.162 (§23.131).  Übersetzungen nach einem Apache-Neustart.
+  0.162 (§23.131).  Übersetzungen nach einem Apache-Neustart.  `8444305f`.
+
+### Changed
+
+- **Manual: bekannte Einschränkung „Daten in M4A-Dateien“ (2026-11-23, Operator)** - In M4A-Dateien
+  stehen Expiry, Enable Date, Country und Media Type in Freeform-Feldern, die andere Tag-Editoren und
+  Player nicht immer zeigen oder beim Speichern behalten.  Das betrifft nur M4A-Dateien, die außerhalb
+  von RASTATIME bearbeitet und neu importiert werden; die Daten in der Datenbank sind nie betroffen.
+  Manual LIBRARY ×4.
 
 ### Removed
 
