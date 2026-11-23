@@ -232,7 +232,7 @@ Settings → **Status**.  From top to bottom:
 | **Components** | PDO and PostgreSQL libraries, database and RabbitMQ configuration, and the Windows services RASTATIME-PLAYOUT, -WORKER, -API, -ANALYZER, -ICECAST and -APACHE with their state. A service shown as stopped is the signal to look at it (`Get-Service RASTATIME-*` in PowerShell, or the [`CRASH_RECOVERY`](../operator/CRASH_RECOVERY.md) runbook). |
 | **Disk Space** | Free and used space of the storage. |
 | **Service restarts** | One **Restart** button per service (Analyzer, API, Apache, Icecast, Playout, Worker), each with what the service does and when a restart helps, plus **Restart All Services** (the interface is unreachable for about 10 seconds). |
-| **Allowed addresses** | Addresses and networks that no login brake ever blocks. |
+| **Allowed addresses** | Addresses and networks that no login brake ever blocks, each with a comment and the date it was added. |
 | **Blocked addresses** | Every currently blocked address or user per layer (web login, DJ dial-in, firewall) with **Unblock** and **Allow**. |
 
 The two address lists are described in

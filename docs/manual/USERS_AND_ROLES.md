@@ -286,6 +286,20 @@ connection whose address changes with the provider.  The list is kept
 in the database and mirrored to `config\allowlist.txt` for the playout
 and the watcher.
 
+**Comment per allowed address (since 2026-11-23).**  Every entry has a
+**Comment** column and the date it was **Added**.  Note who the address
+belongs to and why it is allowed (*DJ X, home connection*), so that an
+entry nobody needs any more can be found and removed later - a stale
+entry switches the brakes off for whoever gets that address next.  Type
+the comment into the field next to **Add** when you add an address by
+hand; click a comment (or *Add a comment*) to change it later, **Enter**
+or **Save** stores it, **Escape** or **Cancel** drops the change, and an
+empty comment removes it.  **Allow** in the blocked list adds an address
+without a comment and never overwrites an existing one.  **Remove**
+deletes the comment together with the entry.  Comments stay in the
+database; `config\allowlist.txt` keeps only the addresses.  Entries from
+before 2026-11-23 have no date.
+
 > **If you are locked out yourself:** wait the minutes shown, or ask a
 > colleague on another address.  In an emergency the counters sit in the
 > tables `cc_login_attempts` (per address) and `cc_subjs.login_attempts`

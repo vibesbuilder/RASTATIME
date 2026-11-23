@@ -15,15 +15,62 @@
  * for the two readers outside PHP: the playout (dj_auth.AllowList) and
  * the watcher task (rt-firewall-watch.ps1).  The mirror is rewritten on
  * every change; readers reload it when its modification time changes.
+ *
+ * RASTATIME 2026-11-23 - each entry can carry a comment (whose address,
+ * why it is allowed) and the date it was added, so a stale entry can be
+ * found and removed later.  They live in a second cc_pref key
+ * (allowed_address_notes, JSON object entry -> {comment, added}); the list,
+ * the mirror file and its readers do not know about them.
  */
 class Application_Model_AllowedAddresses
 {
     const MIRROR_FILE = 'allowlist.txt';
 
+    /** longest comment kept, in characters */
+    const COMMENT_MAX = 200;
+
     /** @return string[] entries as stored, in insertion order */
     public static function all()
     {
         return Application_Model_Preference::GetAllowedAddresses();
+    }
+
+    /**
+     * The list with comment and date, in list order.
+     *
+     * @return array<int, array{entry: string, comment: string, added: string}>
+     */
+    public static function details()
+    {
+        $notes = Application_Model_Preference::GetAllowedAddressNotes();
+        $out = [];
+        foreach (self::all() as $entry) {
+            $note = $notes[$entry] ?? ['comment' => '', 'added' => ''];
+            $out[] = ['entry' => $entry, 'comment' => $note['comment'], 'added' => $note['added']];
+        }
+
+        return $out;
+    }
+
+    /** One line of plain text: no control characters, single spaces, at most COMMENT_MAX characters. */
+    public static function cleanComment($comment)
+    {
+        $comment = preg_replace('/[[:cntrl:]]+/u', ' ', (string) $comment);
+        $comment = trim(preg_replace('/\s+/u', ' ', (string) $comment));
+
+        return mb_substr($comment, 0, self::COMMENT_MAX, 'UTF-8');
+    }
+
+    /** today in the station's time zone, Y-m-d */
+    private static function today()
+    {
+        try {
+            $tz = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone() ?: 'UTC');
+        } catch (Exception $e) {
+            $tz = new DateTimeZone('UTC');
+        }
+
+        return (new DateTime('now', $tz))->format('Y-m-d');
     }
 
     /** @return string path of the mirror file next to rastatime.conf */
@@ -113,28 +160,73 @@ class Application_Model_AllowedAddresses
     }
 
     /**
-     * Adds an entry (idempotent) and rewrites the mirror.
+     * Adds an entry (idempotent) and rewrites the mirror.  A new entry gets
+     * today's date; a non-empty comment is stored (on an existing entry it
+     * replaces the old one, an empty comment keeps it - "Allow" in the
+     * blocked list never wipes a note).
      *
      * @return bool false when the entry is not an address or network
      */
-    public static function add($entry)
+    public static function add($entry, $comment = null)
     {
         if (!self::isValidEntry($entry)) {
             return false;
         }
         $entry = self::normalise($entry);
+        $comment = $comment === null ? '' : self::cleanComment($comment);
         $list = self::all();
-        if (!in_array($entry, $list, true)) {
+        $notes = Application_Model_Preference::GetAllowedAddressNotes();
+        $isNew = !in_array($entry, $list, true);
+        if ($isNew) {
             $list[] = $entry;
             Application_Model_Preference::SetAllowedAddresses($list);
             self::writeMirror($list);
             Logging::info("allowed-addresses: operator allowed {$entry}");
         }
+        if ($isNew || $comment !== '') {
+            $note = $notes[$entry] ?? ['comment' => '', 'added' => ''];
+            if ($isNew) {
+                $note['added'] = self::today();
+            }
+            if ($comment !== '') {
+                $note['comment'] = $comment;
+            }
+            $notes[$entry] = $note;
+            Application_Model_Preference::SetAllowedAddressNotes(self::pruneNotes($notes, $list));
+        }
 
         return true;
     }
 
-    /** Removes an entry and rewrites the mirror. */
+    /**
+     * Sets (or with '' clears) the comment of an entry on the list.
+     *
+     * @return bool false when the entry is not on the list
+     */
+    public static function setComment($entry, $comment)
+    {
+        $wanted = self::normalise($entry);
+        $list = self::all();
+        $entry = null;
+        foreach ($list as $e) {
+            if (self::normalise($e) === $wanted) {
+                $entry = $e;
+                break;
+            }
+        }
+        if ($entry === null) {
+            return false;
+        }
+        $notes = Application_Model_Preference::GetAllowedAddressNotes();
+        $note = $notes[$entry] ?? ['comment' => '', 'added' => ''];
+        $note['comment'] = self::cleanComment($comment);
+        $notes[$entry] = $note;
+        Application_Model_Preference::SetAllowedAddressNotes(self::pruneNotes($notes, $list));
+
+        return true;
+    }
+
+    /** Removes an entry (and its comment) and rewrites the mirror. */
     public static function remove($entry)
     {
         $entry = self::normalise($entry);
@@ -143,9 +235,25 @@ class Application_Model_AllowedAddresses
         }));
         Application_Model_Preference::SetAllowedAddresses($list);
         self::writeMirror($list);
+        $notes = Application_Model_Preference::GetAllowedAddressNotes();
+        unset($notes[$entry]);
+        Application_Model_Preference::SetAllowedAddressNotes(self::pruneNotes($notes, $list));
         Logging::info("allowed-addresses: operator removed {$entry}");
 
         return true;
+    }
+
+    /** Only notes of entries still on the list, without empty ones. */
+    private static function pruneNotes(array $notes, array $list)
+    {
+        $out = [];
+        foreach ($list as $entry) {
+            if (isset($notes[$entry]) && ($notes[$entry]['comment'] !== '' || $notes[$entry]['added'] !== '')) {
+                $out[$entry] = $notes[$entry];
+            }
+        }
+
+        return $out;
     }
 
     /** Writes the mirror file for the playout and the watcher. */

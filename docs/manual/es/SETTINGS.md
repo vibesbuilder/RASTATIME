@@ -240,7 +240,7 @@ Ajustes → **Estado**.  De arriba abajo:
 | **Componentes** | Bibliotecas PDO y PostgreSQL, configuración de la base de datos y de RabbitMQ, y los servicios de Windows RASTATIME-PLAYOUT, -WORKER, -API, -ANALYZER, -ICECAST y -APACHE con su estado. Un servicio mostrado como detenido es la señal para revisarlo (`Get-Service RASTATIME-*` en PowerShell, o el runbook [`CRASH_RECOVERY`](../../operator/CRASH_RECOVERY.md)). |
 | **Espacio en disco** | Espacio libre y usado del almacenamiento. |
 | **Reinicios de servicios** | Un botón **Restart** por servicio (Analyzer, API, Apache, Icecast, Playout, Worker), con lo que hace el servicio y cuándo ayuda un reinicio, más **Restart All Services** (la interfaz no está accesible unos 10 segundos). |
-| **Direcciones permitidas** | Direcciones y redes que ningún freno de inicio de sesión bloquea nunca. |
+| **Direcciones permitidas** | Direcciones y redes que ningún freno de inicio de sesión bloquea nunca, cada una con un comentario y la fecha en que se añadió. |
 | **Direcciones bloqueadas** | Cada dirección o usuario bloqueado ahora por nivel (inicio de sesión web, conexión de DJ, cortafuegos) con **Unblock** y **Allow**. |
 
 Las dos listas de direcciones se describen en

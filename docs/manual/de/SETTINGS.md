@@ -238,7 +238,7 @@ Einstellungen → **Status**.  Von oben nach unten:
 | **Komponenten** | PDO- und PostgreSQL-Bibliotheken, Datenbank- und RabbitMQ-Konfiguration und die Windows-Dienste RASTATIME-PLAYOUT, -WORKER, -API, -ANALYZER, -ICECAST und -APACHE mit ihrem Zustand. Ein als gestoppt angezeigter Dienst ist das Signal, nachzusehen (`Get-Service RASTATIME-*` in PowerShell oder das Runbook [`CRASH_RECOVERY`](../../operator/CRASH_RECOVERY.md)). |
 | **Speicherplatz** | Freier und belegter Platz des Speichers. |
 | **Dienst-Neustarts** | Je Dienst (Analyzer, API, Apache, Icecast, Playout, Worker) ein Knopf **Restart** mit Beschreibung, was der Dienst tut und wann ein Neustart hilft, dazu **Restart All Services** (die Oberfläche ist etwa 10 Sekunden nicht erreichbar). |
-| **Erlaubte Adressen** | Adressen und Netze, die keine Login-Bremse je sperrt. |
+| **Erlaubte Adressen** | Adressen und Netze, die keine Login-Bremse je sperrt, je mit Kommentar und Datum der Aufnahme. |
 | **Gesperrte Adressen** | Jede aktuell gesperrte Adresse oder jeder Benutzer je Ebene (Web-Login, DJ-Einwahl, Firewall) mit **Unblock** und **Allow**. |
 
 Die beiden Adresslisten beschreibt

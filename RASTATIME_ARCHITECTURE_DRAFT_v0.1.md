@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.161
-Date: 2026-11-22
+Draft version: 0.162
+Date: 2026-11-23
 
 > **Revision history**
+> - **0.162 (2026-11-23)** - Comment and date per allowed address (§23.131): second cc_pref
+>   key `allowed_address_notes`; list, mirror file and its readers unchanged.
 > - **0.161 (2026-11-22)** - Analyzer ready for ffmpeg 9.1; raw ADTS measured from its packets
 >   (§23.130): ffprobe comment key `comment-<language>`, `probe_packet_totals`.
 > - **0.160 (2026-11-22)** - Automatic level of the live DJ inputs (§23.129): `normalize`
@@ -11955,3 +11957,62 @@ for py3.11 and 9.1.0 for py3.13 (pinned; raise with
 is covered by the fixture tests on both versions.  Effective after a
 restart of RASTATIME-ANALYZER; rollback `git revert` + restart, tag
 `live-2026-11-22`.
+
+### 23.131 Comment and Date per Allowed Address (2026-11-23)
+
+**Context.**  The allow list (§23.53, addendum 2026-10-08) holds bare
+addresses.  After a few months nobody knows whose address an entry is
+or why it was allowed; a stale entry (an old home address of a DJ)
+switches every brake off for whoever gets that address next.  Operator
+request 2026-11-06, Go for option A on 2026-11-23.
+
+**Decision (option A).**  The comment lives apart from the list: a
+second cc_pref key `allowed_address_notes`, a JSON object
+entry -> `{comment, added}` (`Application_Model_Preference::
+GetAllowedAddressNotes` / `SetAllowedAddressNotes`).  `allowed_addresses`
+stays a JSON list of strings and `config/allowlist.txt` stays one entry
+per line, so the three readers (`LoginAttempts`, the playout's
+`dj_auth.AllowList`, `rt-firewall-watch.ps1`) and `rt-blocks.ps1` are
+untouched - a format change in the mirror could have made them misread
+the list and brake allowed addresses again (lockout 2026-11-06).
+Option B (list of objects) was rejected for that reason.
+
+**Model.**  `Application_Model_AllowedAddresses`:
+- `add($entry, $comment = null)`: a new entry gets today's date in the
+  station time zone; a non-empty comment is stored, on an existing entry
+  it replaces the old one; an empty or missing comment keeps it, so
+  **Allow** in the blocked list never wipes a note.
+- `setComment($entry, $comment)`: only for an entry on the list
+  (matched in normalised form); `''` clears the comment, the date stays.
+- `remove()` drops the note with the entry; every write prunes notes of
+  entries no longer listed and empty notes.
+- `cleanComment()`: one line, control characters removed, spaces
+  collapsed, at most 200 characters (multibyte-safe).
+- `details()`: the list in its order with comment and date.
+
+**Endpoints** (System Status, admin only, POST + CSRF as before):
+`allow-address` takes an optional `comment`; new
+`allowed-address-comment` (entry, comment; `not-listed` for an entry
+not on the list); `blocked-addresses`, `allow-address` and
+`disallow-address` return `allowed_details` next to the unchanged
+`allowed` list.
+
+**UI.**  The table *Allowed addresses* gets the columns Comment and
+Added and a comment field next to Add (Enter in either field adds).
+A click on a comment (or the grey "Add a comment") edits it in place:
+Enter / Save stores, Escape / Cancel drops.  While an editor is open the
+30-s refresh leaves the table alone, so typing is not thrown away.
+Comments are escaped on output.  The section tooltip names the purpose.
+Entries from before 2026-11-23 have no date.
+
+**Tests.**  Probe `C:/Temp/optd/allow_comment/allow_comment_probe.php`
+against the live database with TEST-NET-3 addresses, restoring both keys
+and the mirror: 17 checks (date, keep / replace / clear, unlisted entry
+refused, normalised match, remove drops the note, mirror without
+comments, Unicode).  JS behaviour checked against mocked responses
+(edit, refresh while typing, Enter, Escape, Cancel, add with comment,
+HTML escaping); view rendered from the CLI.  TEST_PLAN A5.6.
+
+**Risk.**  Low.  No migration; PHP and JS are live on the next request,
+the translations after an Apache restart.  Rollback `git revert`, tag
+`live-2026-11-23b`; the extra cc_pref key is ignored by the old code.

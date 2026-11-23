@@ -311,6 +311,23 @@ préférez un réseau pour une connexion domestique dont l'adresse change
 avec le fournisseur.  La liste est conservée dans la base de données et
 recopiée dans `config\allowlist.txt` pour le playout et la surveillance.
 
+**Commentaire par adresse autorisée (depuis le 23/11/2026).**  Chaque
+entrée a une colonne **Comment** et la date de son ajout (**Added**).
+Notez à qui appartient l'adresse et pourquoi elle est autorisée (*DJ X,
+connexion domestique*), afin de retrouver et de supprimer plus tard une
+entrée dont plus personne n'a besoin - une entrée obsolète désactive les
+freins pour quiconque reçoit ensuite cette adresse.  Saisissez le
+commentaire dans le champ à côté de **Add** lorsque vous ajoutez une
+adresse à la main ; un clic sur un commentaire (ou sur *Add a comment*)
+permet de le modifier plus tard, **Entrée** ou **Save** l'enregistre,
+**Échap** ou **Cancel** annule la modification, et un commentaire vide
+le supprime.  **Allow** dans la liste des adresses bloquées ajoute une
+adresse sans commentaire et n'écrase jamais un commentaire existant.
+**Remove** supprime le commentaire avec l'entrée.  Les commentaires
+restent dans la base de données ; `config\allowlist.txt` ne contient
+toujours que les adresses.  Les entrées antérieures au 23/11/2026 n'ont
+pas de date.
+
 > **Si vous êtes vous-même bloqué :** attendez les minutes affichées, ou
 > demandez à un collègue sur une autre adresse.  En cas d'urgence, les
 > compteurs se trouvent dans les tables `cc_login_attempts` (par

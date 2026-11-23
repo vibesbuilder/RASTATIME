@@ -1215,6 +1215,39 @@ class Application_Model_Preference
     }
 
     /**
+     * RASTATIME 2026-11-23 - comment and date per allowed address, kept
+     * apart from the list itself so the mirror file and its readers stay
+     * untouched; JSON object entry -> {comment, added}.
+     *
+     * @return array<string, array{comment: string, added: string}>
+     */
+    public static function GetAllowedAddressNotes()
+    {
+        $raw = (string) self::getValue('allowed_address_notes');
+        $map = $raw === '' ? [] : json_decode($raw, true);
+        if (!is_array($map)) {
+            return [];
+        }
+        $out = [];
+        foreach ($map as $entry => $note) {
+            if (!is_string($entry) || $entry === '' || !is_array($note)) {
+                continue;
+            }
+            $out[$entry] = [
+                'comment' => isset($note['comment']) ? (string) $note['comment'] : '',
+                'added' => isset($note['added']) ? (string) $note['added'] : '',
+            ];
+        }
+
+        return $out;
+    }
+
+    public static function SetAllowedAddressNotes(array $map)
+    {
+        self::setValue('allowed_address_notes', json_encode((object) $map, JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
      * RASTATIME 2026-10-07 - background image of the public landing page
      * (Settings -> General).  Unlike the logo it is a FILE: it lives in the
      * storage root under landing/ (so the nightly media mirror backs it up),

@@ -301,6 +301,22 @@ mit dem Anbieter wechselt, besser ein Netz.  Die Liste liegt in der
 Datenbank und wird für Playout und Wächter nach `config\allowlist.txt`
 gespiegelt.
 
+**Kommentar je erlaubter Adresse (seit 23.11.2026).**  Jeder Eintrag hat
+eine Spalte **Comment** und das Datum, an dem er hinzugefügt wurde
+(**Added**).  Notieren Sie, wem die Adresse gehört und warum sie erlaubt
+ist (*DJ X, Heimanschluss*), damit ein Eintrag, den niemand mehr
+braucht, später gefunden und entfernt werden kann - ein veralteter
+Eintrag schaltet die Bremsen für jeden ab, der diese Adresse als
+Nächstes bekommt.  Tragen Sie den Kommentar beim Hinzufügen von Hand in
+das Feld neben **Add** ein; ein Klick auf einen Kommentar (oder auf *Add
+a comment*) ändert ihn später, **Enter** oder **Save** speichert,
+**Escape** oder **Cancel** verwirft die Änderung, ein leerer Kommentar
+entfernt ihn.  **Allow** in der Sperrliste nimmt eine Adresse ohne
+Kommentar auf und überschreibt nie einen vorhandenen.  **Remove** löscht
+den Kommentar mit dem Eintrag.  Kommentare bleiben in der Datenbank;
+`config\allowlist.txt` enthält weiterhin nur die Adressen.  Einträge von
+vor dem 23.11.2026 haben kein Datum.
+
 > **Wenn Sie selbst ausgesperrt sind:** Warten Sie die angezeigten
 > Minuten, oder bitten Sie eine Kollegin oder einen Kollegen an einer
 > anderen Adresse.  Im Notfall stehen die Zähler in den Tabellen

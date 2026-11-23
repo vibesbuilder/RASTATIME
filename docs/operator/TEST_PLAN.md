@@ -77,6 +77,7 @@ only with a fresh backup (03:30 run) and outside show boundaries.
 | A5.1 | Web login brake | 11 wrong logins from one address (e.g. from the machine itself, then unblock) | 10 × "Wrong username or password", 11th: **429**, `Retry-After`, "Too many failed login attempts ..." |
 | A5.2 | Unblock | System Status → Blocked addresses → Unblock, or `rt-blocks.ps1 -Unblock <ip>` | entry gone on every layer |
 | A5.5 | Allow list | System Status → Blocked addresses → **Allow** on a blocked address; then 11 wrong logins and 5 wrong DJ passwords from it; `rt-firewall-watch.ps1 -DryRun` | unblocked everywhere and listed under Allowed addresses; never braked, throttled or a watcher candidate (`skipped … allowed address` in the log); **Remove** puts it back under the brakes |
+| A5.6 | Comment per allowed address | System Status → Allowed addresses: add `203.0.113.9` with a comment, click the comment, change it, Enter; Escape on a second edit; **Allow** on a blocked address that is already listed; **Remove** | comment and today's date shown, the change stays after F5, Escape keeps the old text, **Allow** keeps the comment, **Remove** drops entry and comment; `config/allowlist.txt` never contains a comment |
 | A5.3 | Firewall watcher | `rt-firewall-watch.ps1 -DryRun -WindowMinutes 1440` | lists the scanners of the day; real runs in `logs\firewall-watch.log` every 5 min |
 | A5.4 | Secrets | `rastatime.conf`, `icecast.xml`, Streams outputs, UI admins | no default values (classification script: all "custom"); passwords in `rastatime.conf` quoted |
 

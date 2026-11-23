@@ -219,23 +219,28 @@ $csrfToken = $csrfNs->authtoken ?? '';
 <table width="60%" cellpadding="0" cellspacing="0" border="0" class="statustable allowed-addresses-table" style="margin-top: 2em;">
     <thead>
         <tr class="ui-state-default strong">
-            <th colspan="2" style="text-align: left;">
+            <th colspan="4" style="text-align: left;">
                 <?php echo _("Allowed addresses"); ?>
                 <span class="help_icon" id="allowed-addresses-help"
-                      data-tip="<?php echo htmlspecialchars(_("An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."), ENT_QUOTES); ?>"></span>
+                      data-tip="<?php echo htmlspecialchars(_("An allowed address or network is never braked by the web login, never throttled by the DJ dial-in and never blocked by the firewall watcher. Addresses of the studio network are exempt anyway. Keep the list short: a home address usually changes with the provider, a network (CIDR) covers that."), ENT_QUOTES) . ' ' . htmlspecialchars(_("Note in the comment whose address it is and why it is allowed, so a stale entry can be found and removed later; click a comment to change it."), ENT_QUOTES); ?>"></span>
             </th>
         </tr>
         <tr class="ui-state-default strong">
             <td><?php echo _("Address or network"); ?></td>
+            <?php // RASTATIME 2026-11-23 - comment (whose address, why) and the date it was added ?>
+            <td><?php echo _("Comment"); ?></td>
+            <td><?php echo _("Added"); ?></td>
             <td><?php echo _("Action"); ?></td>
         </tr>
     </thead>
     <tbody id="allowed-addresses-body">
-        <tr><td colspan="2" class="description"><?php echo _("Loading…"); ?></td></tr>
+        <tr><td colspan="4" class="description"><?php echo _("Loading…"); ?></td></tr>
     </tbody>
     <tfoot>
         <tr>
             <td><input type="text" id="allowed-addresses-entry" placeholder="<?php echo _("Address or network (CIDR)"); ?>" style="width: 95%;" autocomplete="off"></td>
+            <td><input type="text" id="allowed-addresses-comment" placeholder="<?php echo _("Whose address, why"); ?>" maxlength="200" style="width: 95%;" autocomplete="off"></td>
+            <td></td>
             <td><button type="button" class="btn" id="allowed-addresses-add"><?php echo _("Add"); ?></button></td>
         </tr>
     </tfoot>
@@ -282,7 +287,12 @@ $csrfToken = $csrfNs->authtoken ?? '';
           data-allowed-done="<?php echo _("Allowed %s."); ?>"
           data-allowed-removed="<?php echo _("Removed %s from the allowed addresses."); ?>"
           data-allowed-invalid="<?php echo _("Not an address or network (e.g. 203.0.113.5 or 203.0.113.0/24)."); ?>"
-          data-allowed-failed="<?php echo _("Changing the allowed addresses failed."); ?>"></span>
+          data-allowed-failed="<?php echo _("Changing the allowed addresses failed."); ?>"
+          data-comment-add="<?php echo _("Add a comment"); ?>"
+          data-comment-saved="<?php echo _("Saved the comment for %s."); ?>"
+          data-comment-failed="<?php echo _("Saving the comment failed."); ?>"
+          data-save="<?php echo _("Save"); ?>"
+          data-cancel="<?php echo _("Cancel"); ?>"></span>
 </p>
 <div id="blocked-addresses-status" style="margin-top: 0.5em; max-width: 60em;"></div>
 

@@ -56,19 +56,75 @@
         });
     }
 
-    // RASTATIME 2026-10-08 - the allow list (address or CIDR network)
-    function renderAllowed(list) {
+    // RASTATIME 2026-10-08 - the allow list (address or CIDR network);
+    // RASTATIME 2026-11-23 - with comment (click to edit) and date added
+    function editingComment() {
+        return $("#allowed-addresses-body .allowed-comment-input").length > 0;
+    }
+
+    function renderAllowed(details) {
+        if (editingComment()) {
+            return; // the 30-s refresh must not throw away a comment being typed
+        }
         var body = $("#allowed-addresses-body");
         body.empty();
-        if (!list || !list.length) {
-            body.append('<tr><td colspan="2" class="description">' + esc(i18n("allowed-none")) + "</td></tr>");
+        if (!details || !details.length) {
+            body.append('<tr><td colspan="4" class="description">' + esc(i18n("allowed-none")) + "</td></tr>");
             return;
         }
-        $.each(list, function (_, entry) {
+        $.each(details, function (_, d) {
             var tr = $("<tr/>");
-            tr.append('<td class="description"><strong>' + esc(entry) + "</strong></td>");
-            tr.append('<td><button type="button" class="btn allowed-remove-btn" data-entry="' + esc(entry) + '">' + esc(i18n("remove")) + "</button></td>");
+            tr.append('<td class="description"><strong>' + esc(d.entry) + "</strong></td>");
+            var text = d.comment
+                ? '<span class="allowed-comment-text" style="cursor: pointer;">' + esc(d.comment) + "</span>"
+                : '<span class="allowed-comment-text" style="cursor: pointer; font-style: italic; opacity: 0.6;">' + esc(i18n("comment-add")) + "</span>";
+            var td = $('<td class="description allowed-comment-cell"/>').attr("data-entry", d.entry).attr("data-comment", d.comment || "").html(text);
+            tr.append(td);
+            tr.append('<td class="description" style="white-space: nowrap;">' + esc(d.added || "") + "</td>");
+            tr.append('<td><button type="button" class="btn allowed-remove-btn" data-entry="' + esc(d.entry) + '">' + esc(i18n("remove")) + "</button></td>");
             body.append(tr);
+        });
+    }
+
+    function detailsOf(data) {
+        if (data && data.allowed_details) {
+            return data.allowed_details;
+        }
+        return $.map(data && data.allowed ? data.allowed : [], function (entry) {
+            return { entry: entry, comment: "", added: "" };
+        });
+    }
+
+    function startEdit(cell) {
+        if (cell.find(".allowed-comment-input").length) {
+            return;
+        }
+        var input = $('<input type="text" class="allowed-comment-input" maxlength="200" autocomplete="off" style="width: 60%;">').val(cell.attr("data-comment") || "");
+        var save = $('<button type="button" class="btn allowed-comment-save"/>').text(i18n("save"));
+        var cancel = $('<button type="button" class="btn allowed-comment-cancel"/>').text(i18n("cancel"));
+        cell.empty().append(input, " ", save, " ", cancel);
+        input.trigger("focus");
+    }
+
+    function saveComment(cell) {
+        var entry = cell.attr("data-entry");
+        var comment = $.trim(cell.find(".allowed-comment-input").val() || "");
+        $.ajax({
+            url: baseUrl + "systemstatus/allowed-address-comment",
+            type: "POST",
+            dataType: "json",
+            data: { entry: entry, comment: comment, csrf_token: csrfToken() }
+        }).done(function (data) {
+            var ok = !!(data && data.ok);
+            showStatus(ok ? i18n("comment-saved").replace("%s", entry) : i18n("comment-failed"), ok);
+            cell.find(".allowed-comment-input").remove();
+            if (ok) {
+                renderAllowed(detailsOf(data));
+            } else {
+                load();
+            }
+        }).fail(function () {
+            showStatus(i18n("comment-failed"), false);
         });
     }
 
@@ -84,21 +140,26 @@
         $.ajax({ url: baseUrl + "systemstatus/blocked-addresses", type: "GET", dataType: "json", cache: false })
             .done(function (data) {
                 render(data && data.rows ? data.rows : []);
-                renderAllowed(data && data.allowed ? data.allowed : []);
+                renderAllowed(detailsOf(data));
             })
             .fail(function () { render([]); });
     }
 
-    function allow(entry) {
+    function allow(entry, comment) {
+        var payload = { entry: entry, csrf_token: csrfToken() };
+        if (comment) {
+            payload.comment = comment;
+        }
         $.ajax({
             url: baseUrl + "systemstatus/allow-address",
             type: "POST",
             dataType: "json",
-            data: { entry: entry, csrf_token: csrfToken() }
+            data: payload
         }).done(function (data) {
             if (data && data.ok) {
                 showStatus(i18n("allowed-done").replace("%s", data.entry || entry), true);
                 $("#allowed-addresses-entry").val("");
+                $("#allowed-addresses-comment").val("");
             } else {
                 showStatus(data && data.error === "bad-entry" ? i18n("allowed-invalid") : i18n("allowed-failed"), false);
             }
@@ -166,13 +227,34 @@
         $(document).on("click", "#allowed-addresses-add", function () {
             var entry = $.trim($("#allowed-addresses-entry").val() || "");
             if (entry) {
-                allow(entry);
+                allow(entry, $.trim($("#allowed-addresses-comment").val() || ""));
             }
         });
-        $(document).on("keydown", "#allowed-addresses-entry", function (e) {
+        $(document).on("keydown", "#allowed-addresses-entry, #allowed-addresses-comment", function (e) {
             if (e.key === "Enter") {
                 e.preventDefault();
                 $("#allowed-addresses-add").trigger("click");
+            }
+        });
+        // RASTATIME 2026-11-23 - edit a comment in place: Enter / Save stores, Escape / Cancel drops
+        $(document).on("click", ".allowed-comment-text", function () {
+            startEdit($(this).closest(".allowed-comment-cell"));
+        });
+        $(document).on("click", ".allowed-comment-save", function () {
+            saveComment($(this).closest(".allowed-comment-cell"));
+        });
+        $(document).on("click", ".allowed-comment-cancel", function () {
+            $(this).closest(".allowed-comment-cell").find(".allowed-comment-input").remove();
+            load();
+        });
+        $(document).on("keydown", ".allowed-comment-input", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                saveComment($(this).closest(".allowed-comment-cell"));
+            } else if (e.key === "Escape") {
+                e.preventDefault();
+                $(this).remove();
+                load();
             }
         });
         var allowedHelp = $("#allowed-addresses-help");

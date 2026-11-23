@@ -301,6 +301,22 @@ una conexión doméstica cuya dirección cambia con el proveedor.  La lista
 se guarda en la base de datos y se copia en `config\allowlist.txt` para
 el playout y el vigilante.
 
+**Comentario por dirección permitida (desde el 23/11/2026).**  Cada
+entrada tiene una columna **Comment** y la fecha en que se añadió
+(**Added**).  Anote de quién es la dirección y por qué está permitida
+(*DJ X, conexión doméstica*), para poder encontrar y eliminar más tarde
+una entrada que ya nadie necesita - una entrada obsoleta desactiva los
+frenos para quien reciba esa dirección después.  Escriba el comentario
+en el campo junto a **Add** cuando añada una dirección a mano; un clic
+en un comentario (o en *Add a comment*) permite cambiarlo más tarde,
+**Intro** o **Save** lo guarda, **Esc** o **Cancel** descarta el cambio,
+y un comentario vacío lo elimina.  **Allow** en la lista de bloqueadas
+añade una dirección sin comentario y nunca sobrescribe uno existente.
+**Remove** borra el comentario junto con la entrada.  Los comentarios
+se quedan en la base de datos; `config\allowlist.txt` sigue conteniendo
+solo las direcciones.  Las entradas anteriores al 23/11/2026 no tienen
+fecha.
+
 > **Si usted mismo queda bloqueado:** espere los minutos indicados, o
 > pida ayuda a un compañero desde otra dirección.  En caso de urgencia,
 > los contadores están en las tablas `cc_login_attempts` (por dirección)

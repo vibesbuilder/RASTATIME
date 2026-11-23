@@ -157,6 +157,8 @@ class SystemstatusController extends Zend_Controller_Action
             'rows' => Application_Model_BlockedAddresses::listAll(),
             // RASTATIME 2026-10-08 - the allow list for the second table
             'allowed' => Application_Model_AllowedAddresses::all(),
+            // RASTATIME 2026-11-23 - the same list with comment and date
+            'allowed_details' => Application_Model_AllowedAddresses::details(),
             'generated_at' => gmdate('c'),
         ]);
     }
@@ -165,7 +167,7 @@ class SystemstatusController extends Zend_Controller_Action
      * RASTATIME 2026-10-08 - POST systemstatus/allow-address (entry, csrf):
      * put an address or CIDR network on the allow list; a plain address is
      * unblocked on every layer at the same time ("Allow" in the blocked
-     * list).
+     * list).  RASTATIME 2026-11-23 - optional comment (whose address, why).
      */
     public function allowAddressAction()
     {
@@ -186,7 +188,8 @@ class SystemstatusController extends Zend_Controller_Action
             $this->_helper->json->sendJson(['ok' => false, 'error' => 'bad-entry']);
             return;
         }
-        Application_Model_AllowedAddresses::add($entry);
+        $comment = $this->_getParam('comment', null);
+        Application_Model_AllowedAddresses::add($entry, $comment === null ? null : (string) $comment);
         $unblocked = null;
         if (Application_Model_BlockedAddresses::looksLikeAddress($entry)) {
             $unblocked = Application_Model_BlockedAddresses::unblock($entry);
@@ -196,6 +199,7 @@ class SystemstatusController extends Zend_Controller_Action
             'entry' => Application_Model_AllowedAddresses::normalise($entry),
             'unblocked' => $unblocked,
             'allowed' => Application_Model_AllowedAddresses::all(),
+            'allowed_details' => Application_Model_AllowedAddresses::details(),
         ]);
     }
 
@@ -220,7 +224,42 @@ class SystemstatusController extends Zend_Controller_Action
             return;
         }
         Application_Model_AllowedAddresses::remove($entry);
-        $this->_helper->json->sendJson(['ok' => true, 'allowed' => Application_Model_AllowedAddresses::all()]);
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'allowed' => Application_Model_AllowedAddresses::all(),
+            'allowed_details' => Application_Model_AllowedAddresses::details(),
+        ]);
+    }
+
+    /**
+     * RASTATIME 2026-11-23 - POST systemstatus/allowed-address-comment
+     * (entry, comment, csrf): set or (empty) clear the comment of an entry
+     * on the allow list.  The list itself and its mirror stay untouched.
+     */
+    public function allowedAddressCommentAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->getResponse()->setHttpResponseCode(405);
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'method-not-allowed']);
+            return;
+        }
+        if (!SecurityHelper::verifyCSRFToken($this->_getParam('csrf_token'))) {
+            Logging::error(__FILE__ . ': Invalid CSRF token on allowedAddressCommentAction');
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'csrf']);
+            return;
+        }
+        $entry = trim((string) $this->_getParam('entry', ''));
+        if ($entry === '' || !Application_Model_AllowedAddresses::setComment($entry, (string) $this->_getParam('comment', ''))) {
+            $this->_helper->json->sendJson(['ok' => false, 'error' => 'not-listed']);
+            return;
+        }
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'allowed' => Application_Model_AllowedAddresses::all(),
+            'allowed_details' => Application_Model_AllowedAddresses::details(),
+        ]);
     }
 
     /**

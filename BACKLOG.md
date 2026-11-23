@@ -875,7 +875,14 @@ spielenden Titel per Catch-up übernehmen statt neu zu starten.  Fallstricke: We
 Line-In-Zeilen, vorgelegter Nachfolger in der Queue, Neustart-Schutz §23.89.
 **Vorbedingungen:** Evaluierung auf Operator-Wunsch.
 
-### 🟡 Kommentar je Allowed Address (neu 2026-11-06, Operator: kein Go, Defer)
+### ✅ Kommentar je Allowed Address - GEBAUT 2026-11-23 (Go Option A 2026-11-23, §23.131)
+
+**Erledigt 2026-11-23:** Option A gebaut - zweiter cc_pref-Schlüssel `allowed_address_notes`
+(Eintrag → {comment, added}), Spalten „Comment" + „Added", Kommentarfeld neben „Add", Bearbeiten
+per Klick (Enter/Save, Escape/Cancel), neuer Endpunkt `systemstatus/allowed-address-comment`;
+Liste, `config/allowlist.txt`, PLAYOUT, Wächter und `rt-blocks.ps1` unverändert.  Probe
+`C:/Temp/optd/allow_comment/allow_comment_probe.php` 17/17, JS gegen simulierte Antworten,
+TEST_PLAN A5.6.  Übersetzungen DE/FR/ES erst nach einem Apache-Neustart sichtbar.
 
 Wunsch: jede Zeile unter *System Status → Allowed addresses* bekommt einen Kommentar (wem
 die Adresse gehört, warum sie erlaubt ist).  Heute: cc_pref `allowed_addresses` = JSON-Liste

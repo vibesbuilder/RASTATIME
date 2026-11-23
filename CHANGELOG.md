@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Kommentar und Datum je erlaubter Adresse (2026-11-23, Go des Operators: Variante A)** - Die
+  Liste unter System Status → Allowed addresses enthielt nur nackte Adressen; nach ein paar Monaten
+  weiß niemand mehr, wem eine Adresse gehört, und ein veralteter Eintrag schaltet die Bremsen für
+  den nächsten Inhaber dieser Adresse ab.  Jetzt hat jeder Eintrag eine Spalte „Comment" und das
+  Datum der Aufnahme („Added").  Kommentar beim Hinzufügen im Feld neben „Add" eintragen oder
+  später per Klick ändern (Enter/Save speichert, Escape/Cancel verwirft, leer entfernt ihn);
+  „Allow" aus der Sperrliste überschreibt nie einen vorhandenen Kommentar, „Remove" löscht ihn
+  mit.  Gespeichert in einem eigenen Einstellungsschlüssel - die Adressliste, `config/allowlist.txt`
+  und alle Leser (Web-Login, DJ-Einwahl, Firewall-Wächter) bleiben unverändert.  Einträge von vor
+  dem 23.11. haben kein Datum.  Manual USERS_AND_ROLES + SETTINGS ×4, TEST_PLAN A5.6, ARCHITECTURE
+  0.162 (§23.131).  Übersetzungen nach einem Apache-Neustart.
+
 ### Removed
 
 - **Icecast-Rückfall 2.4.4 entfernt, 2.5.0 liegt jetzt unter `C:\Tools\Icecast` (2026-11-23, Go B

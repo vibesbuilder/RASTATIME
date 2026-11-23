@@ -9150,3 +9150,31 @@ msgstr "Niveler les entrées DJ en direct :"
 #: RASTATIME 2026-11-21 Level live DJ inputs
 msgid "Brings the Master Source and the Show Source to the loudness the library plays at (-23 LUFS), so a DJ whose software sends too loud or too quiet sounds like the rest of the programme. A slow automatic control: loud passages are lowered within a few seconds, quiet ones raised slowly; silence and a muted microphone are not raised. The playout applies a change at its next planned restart."
 msgstr "Amène la Master Source et la Show Source à la sonie de la bibliothèque (-23 LUFS), afin qu'un DJ dont le logiciel envoie trop fort ou trop faible sonne comme le reste du programme. Un réglage automatique lent : les passages forts sont abaissés en quelques secondes, les passages faibles remontés lentement ; le silence et un micro coupé ne sont pas remontés. Le playout applique un changement à son prochain redémarrage planifié."
+
+#: RASTATIME 2026-11-23 allowed address comment
+msgid "Note in the comment whose address it is and why it is allowed, so a stale entry can be found and removed later; click a comment to change it."
+msgstr "Notez dans le commentaire à qui appartient l'adresse et pourquoi elle est autorisée, afin de retrouver et de supprimer plus tard une entrée obsolète ; cliquez sur un commentaire pour le modifier."
+
+#: RASTATIME 2026-11-23 allowed address comment
+msgid "Comment"
+msgstr "Commentaire"
+
+#: RASTATIME 2026-11-23 allowed address comment
+msgid "Added"
+msgstr "Ajoutée"
+
+#: RASTATIME 2026-11-23 allowed address comment
+msgid "Whose address, why"
+msgstr "À qui, pourquoi"
+
+#: RASTATIME 2026-11-23 allowed address comment
+msgid "Add a comment"
+msgstr "Ajouter un commentaire"
+
+#: RASTATIME 2026-11-23 allowed address comment
+msgid "Saved the comment for %s."
+msgstr "Commentaire enregistré pour %s."
+
+#: RASTATIME 2026-11-23 allowed address comment
+msgid "Saving the comment failed."
+msgstr "L'enregistrement du commentaire a échoué."

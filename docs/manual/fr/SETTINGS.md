@@ -242,7 +242,7 @@ Paramètres → **Statut**.  De haut en bas :
 | **Composants** | Bibliothèques PDO et PostgreSQL, configuration de la base et de RabbitMQ, et les services Windows RASTATIME-PLAYOUT, -WORKER, -API, -ANALYZER, -ICECAST et -APACHE avec leur état. Un service affiché arrêté est le signal d'aller voir (`Get-Service RASTATIME-*` dans PowerShell, ou le runbook [`CRASH_RECOVERY`](../../operator/CRASH_RECOVERY.md)). |
 | **Espace disque** | Espace libre et utilisé du stockage. |
 | **Redémarrages de services** | Un bouton **Restart** par service (Analyzer, API, Apache, Icecast, Playout, Worker), avec ce que fait le service et quand un redémarrage aide, plus **Restart All Services** (l'interface est injoignable environ 10 secondes). |
-| **Adresses autorisées** | Adresses et réseaux qu'aucun frein de connexion ne bloque jamais. |
+| **Adresses autorisées** | Adresses et réseaux qu'aucun frein de connexion ne bloque jamais, chacun avec un commentaire et sa date d'ajout. |
 | **Adresses bloquées** | Chaque adresse ou utilisateur actuellement bloqué par niveau (connexion web, connexion DJ, pare-feu) avec **Unblock** et **Allow**. |
 
 Les deux listes d'adresses sont décrites dans
