@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   von `C:\Tools\Icecast-2.5.0` auf den Standardpfad der Installationsanleitung umbenannt (Dienst,
   `icecast.xml`, Deinstallationseintrag).  Umschaltung 4,2 s, Stream 4 s unterbrochen, Liquidsoap
   verband sich selbst neu.  Betriebsdoku (COMPONENTS, RESTART_ORDER, SERVICE_TOPOLOGY,
-  CRASH_RECOVERY, MIGRATION) beschrieb noch 2.4.4 und ist nachgezogen.
+  CRASH_RECOVERY, MIGRATION) beschrieb noch 2.4.4 und ist nachgezogen.  `afb545f5`.
 
 ## [1.8.0] - 2026-11-22
 
