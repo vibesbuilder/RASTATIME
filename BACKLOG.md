@@ -5063,6 +5063,63 @@ ARCHITECTURE §23.20 (Auto DJ) als Out-of-Scope. Aktuell ist
 Verschiedene Auto-DJ-Playlists für verschiedene Tageszeiten.
 Workaround heute: einzelner Smart Block mit
 Time-of-Day-Tags + wöchentlicher Filter-Anpassung.
+Seit 2026-11-23 weitergedacht als Idee 3 im folgenden Eintrag: eine
+Tageskurve aus Energy- und Brightness-Bereichen statt getrennter Playlists.
+
+### 💡 Musikplanung nach Energy und Brightness (Operator-Frage 2026-11-23) - drei Ideen, nicht evaluiert
+
+**Status:** 💡 notiert 2026-11-23 auf Operator-Wunsch; keine Evaluierung, kein Go.
+**Vorbedingungen:** je Idee die Evaluierung (sechs Punkte + Risiko) und ein
+Go; vorher ein bis zwei Wochen mit der Variante ohne Code hören (unten).
+
+**Anlass:** die Musik-Playlists sind heute nur nach Genre sortiert; der
+Operator will mit den Messwerten Energy und Brightness (§23.115) arbeiten.
+
+**Befund aus dem Bestand (2026-11-23, 24.508 gemessene Titel, nur gelesen):**
+- Genre sagt wenig über Energy: innerhalb der großen Genres streut Energy um
+  2,2 bis 3,0 Stufen (Mittelwerte Indie 4,3, Rock 5,1, Pop 5,1, World 5,9,
+  Electronic 6,7, RnB 7,9).
+- Energy und Brightness hängen zusammen (Korrelation 0,60).  Bänder 1-3 /
+  4-6 / 7-10: ruhig + dunkel 4.862 Titel, energisch + hell 6.236, dagegen
+  ruhig + hell 767 und energisch + dunkel 871.  Brightness taugt als
+  Klangfarbe innerhalb eines Energy-Bands, nicht als gleichwertige zweite
+  Achse.
+- Tempo ist unabhängig von Energy (Korrelation -0,06): BPM ist die zweite
+  Achse für Abwechslung.
+
+**Ohne Code heute möglich:** drei Energy-Bänder als Smart-Block-Kriterium
+(1-3 rund 7.400 Titel, 4-6 rund 7.400, 7-10 rund 9.700), Genre nur als
+Zusatzfilter; Tageskurve über Sendungen mit Autoloading-Playlist (der Auto DJ
+kennt nur eine Playlist); Welle in der Stunde als Playlist aus Smart Blocks
+mit Limit „1 items“ in wechselnden Energy-Bereichen und „Repeat until full“.
+Ungeprüft: das Verhalten dieser Wellen-Playlist am Sendungsende (letzter
+Titel, Restlücke) - vorher an einer Testsendung proben.
+
+**Idee 1 - Smart Block: Sortierung nach Energy.**  Neue Sortierungen
+aufsteigend, absteigend und „Welle“ neben Zufall, Alter und Abspielzeit
+(`SmartBlockCriteria::getSortOptions`, Auswertung in `Block.php`).  Zu
+klären: Form der Welle (Start, Hub, Länge) und das Zusammenspiel mit dem
+Limit „time remaining in show“.
+
+**Idee 2 - Flussregel bei der Auswahl.**  Der nächste Titel liegt höchstens N
+Energy-Stufen vom Vorgänger entfernt, nicht mehr als zwei ruhige Titel
+hintereinander; optional passende Tonart (Camelot ±1) oder BPM-Nähe
+(§23.116).  Zu klären: wo die Regel greift (der Smart Block liefert eine
+Menge nach Kriterien und Sortierung, eine Kette braucht den Vorgänger) und
+was geschieht, wenn kein Titel die Regel erfüllt (Regel lockern statt Stille).
+
+**Idee 3 - Tageskurve im Auto DJ.**  Je Stunde oder Tagesabschnitt ein
+Energy- und Brightness-Bereich, den der Auto DJ beim Füllen zusätzlich
+anlegt, statt getrennter Playlists je Tageszeit (löst „Daypart-aware Auto
+DJ“ oben mit den Messwerten ab).  Startwerte aus dem Gespräch: 00-06 Energy
+1-4 / Brightness 1-5, 06-09 4-7 / 5-10, 09-16 4-7, 16-19 6-9, 19-22 4-7 /
+1-6, 22-24 2-5 / 1-5.  Zu klären: Sendungen über eine Abschnittsgrenze,
+Titel ohne Messwert (Track Types ohne „Analyze audio features“),
+Zusammenspiel mit Fill-Pass und Buffer-Track (§23.107).
+
+**Reihenfolge (Vorschlag, nicht entschieden):** füllt der Auto DJ den
+Großteil der Sendezeit, zuerst Idee 3; Idee 1 ist der kleinste Schritt,
+Idee 2 der größte.
 
 ### Operator-Confirmation vor Auto-DJ-Show-Erstellung
 
