@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-23
+
 ### Added
 
 - **Kommentar und Datum je erlaubter Adresse (2026-11-23, Go des Operators: Variante A)** - Die
@@ -11592,7 +11594,8 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.6.0...v1.7.0
