@@ -558,7 +558,27 @@ Type"; `MEDIATYPE`/`MEDIA` in anderen Formaten), Abgleich gegen Code und Name, R
 einer getaggten Datei.  Nebenbei dokumentiert: *Analyze cue points* je Track-Typ (SETTINGS),
 die Track-Typen-Liste zeigt die Einstellung nicht.
 
-### ✅ ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung - GEBAUT 2026-11-09 (Go Stufe 1+2, §23.102; Abnahme offen: Statistik + `[rt_meta]`-Zeilen nach 24 h) (Befund 2026-11-07, seit etwa 2026-11-01)
+### ✅ ICY-Titel / Live Text fehlen beim ersten Titel einer Datei-Sendung nach einer Datei-Sendung - GEBAUT 2026-11-09 (Go Stufe 1+2, §23.102); ABGENOMMEN 2026-11-23 (10,7 Tage: 3.486 von 3.490 Übergängen mit Titel bei Icecast) (Befund 2026-11-07, seit etwa 2026-11-01)
+**Abnahme 2026-11-23** (2026-11-12 23:18 bis 2026-11-23 15:59; jede Queue-Übergabe `[rt_cross]` im Liquidsoap-Log gegen
+Icecast `/admin/metadata`, Fenster -1 s bis Rest + 6 s, jedes Update nur einer Übergabe zugeordnet; ausgenommen 28
+Übergaben unter einem DJ, wo der Sendeplan ungehört weiterläuft, und 190 Übergaben in die Stille; Skript
+`C:/Temp/optd/icy_acceptance.py`):
+
+| Übergangsform | vorher 03.-09.11. ok / verloren | jetzt ok / verloren |
+|---|---|---|
+| Überblendung, neuer Titel zuerst (`track/-`) | 1346 / 0 | 1780 / 0 |
+| Abfolge ohne Überlappung (Jingles, `sequence`) | 366 / 447 | 1380 / 4 |
+| Show-Formen | 85 / 56 | 256 / 0 |
+| erster Titel nach Stille, Webstream oder Line-In | 21 / 72 | 66 / 0 |
+| `track_skip` | 17 / 0 | 4 / 0 |
+
+Der Wächter speiste 744-mal nach (~70 pro Tag, 727-mal `crossfade output: no`): die Abfolge-Formen verlieren ihr
+Paket live weiterhin im cross (Ursache weiter offen, in der Replik nicht nachstellbar); der Titel kommt dann etwa
+1-2 s nach dem hörbaren Start.  Off-Air-Text in Webstream-Slots steht nur noch 0-2 s zum Slot-Beginn, dann der
+Sendungsname (vorher der ganze Slot); sonst erscheint er nur bei echten Lücken (z. B. 2026-11-18 16:00-16:30, leerer
+Slot mit Dead-Air-Alarm).  Rest: 4 Verluste, davon 3 immer direkt nach derselben kurzen StationID (3 von 3
+Ausstrahlungen; der Wächter speist den Folgetitel nach 1,97 s nach, er kommt trotzdem nicht bei Icecast an).
+💡 Bei Gelegenheit in der Replik nachstellen; kein Go, Auswirkung ein Titel ohne Anzeige etwa einmal in drei Tagen.
 **Live seit 2026-11-09 21:22:13; erste Stunde (21:22-22:05):** 15 Queue-Übergaben, 0 ohne Titel bei Icecast (8 Abfolgen, 7 Überblendungen).  Der Wächter speiste 6 der 8 Abfolgen nach, alle mit `crossfade output: no` -> live verlässt das Paket bei `sequence`-Formen den Cross-Operator gar nicht (Verlust IN cross, nicht dahinter); Titel kommt dort ~1 s nach dem hörbaren Start.  Offen: 24-h-Statistik, Webstream-Slots (erster Titel danach, kein Off-Air-Text) ab 2026-11-10 morgens.
 
 Icecast-Zugriffslog (`/admin/metadata` = Titel-Update von Liquidsoap): an den Datei->Datei-Sendungsgrenzen
@@ -8715,7 +8735,7 @@ ab 09:40 prüfen: Lampe leuchtet durchgehend, Kopf und Now-Playing-Widget zeigen
 
 ## Titel endet vor seinem Cue-Out - 41 s Stille (Befund 2026-11-18 00:58)
 
-### 💡 Beschädigte Dateien erkennen und früh endende Titel auffangen - IDEA (Befund 2026-11-18, zweiter Fall 2026-11-21)
+### 💡 Beschädigte Dateien erkennen und früh endende Titel auffangen - Import-Prüfung und Bestands-Scan GEBAUT 2026-11-21 (§23.123, §23.127); offen nur der Playout-Teil (früh endender Titel startet den nächsten sofort) - IDEA, kein Go (Befund 2026-11-18, zweiter Fall 2026-11-21)
 ✅ **Bestands-Scan GEBAUT 2026-11-21 (Go: nur Bericht, §23.127, `rastatime-api scan_damaged_files`).**  Erster Lauf 2026-11-21 (99 min, 25.336 Dateien): 38 abgeschnittene MP3s (4,6 s bis 4,6 min fehlend), keine nicht dekodierbare oder fehlende Datei; der Operator löschte sie am 2026-11-22 (eine lief gerade und folgte danach).  **Evaluierung 2026-11-21:** ein lesendes Werkzeug prüft jede Datei der Bibliothek (25.336 Dateien, 1.962 h; 24.683 MP3, 646 M4A, 7 andere) mit derselben Längenprüfung wie der Import (dekodierte gegen gespeicherte Länge, Toleranz 2 s und 1 %) und schreibt einen Bericht (CSV mit Id, Titel, Pfad, Längen, Fehler) - nichts wird geändert; die Entscheidung je Datei (Disabled, ersetzen, löschen) bleibt beim Operator.  Laufzeit nach der Stichprobe (400 Dateien in 113 s) etwa 2 h, ein Kern, niedrige Priorität, unterbrechbar und fortsetzbar; in einem ruhigen Fenster.  Aufwand ~½ Tag.
 **Zweiter Fall 2026-11-21 00:08:33-00:11:51 (198 s Stille, Dead-Air-Alarm 00:09:03):** eine MP3
 (192 kbit/s, Länge laut Header 293,4 s) ist abgeschnitten - 2,2 MB statt der nötigen ~7 MB,
@@ -8977,7 +8997,8 @@ würde Liquidsoap neu starten und den DJ trennen.  Gilt mit und ohne
 Schalter.  Abhilfe: den Grenz-Neustart aufschieben, solange ein DJ auf
 Sendung ist (eine Bedingung + Test).  Vorbedingung: Go.
 
-### 💡 Live-Zeile endet unter einem DJ - ihre Quelle bleibt offen (Befund 2026-11-19, aus dem Code gelesen)
+### ✅ Live-Zeile endet unter einem DJ - ihre Quelle bleibt offen - GEBAUT 2026-11-21 (Go 2026-11-21, §23.126, `3b1088b9`; in v1.8.0) (Befund 2026-11-19, aus dem Code gelesen)
+**Erledigt 2026-11-21:** eine Webstream- oder Line-In-Zeile, die unter einem DJ endet, gibt ihre Quelle frei wie ohne DJ (Gate zu, Quelle nach dem Nachlauf gestoppt); Datei-Zeilen, direkte Übergaben und zurückgehaltene Live-Zeilen unverändert.  Die Überschrift stand bis 2026-11-23 noch auf 💡.
 **Evaluierung 2026-11-21 (Operator will es angehen, getrennt von Stufe 2/3), Empfehlung Go:** in `_on_stop` gibt eine Webstream- oder Line-In-Zeile unter einem DJ ihre Quelle frei wie ohne DJ (Gate zu, Quelle nach dem Nachlauf stoppen) - unhörbar, der DJ-Arm liegt darüber; eine Bedingung + Tests, nur PLAYOUT (Skript unverändert, kein Liquidsoap-Neustart).  In den Logs seit 2026-11-10 kam der Fall nicht vor (einzige Fundstelle 2026-11-17 09:45 war ein noch wartender früher DJ, korrekt freigegeben).
 Ebenfalls nur gelesen, nicht live beobachtet: endet eine Webstream-
 oder Line-In-Zeile, während ein DJ auf Sendung ist, räumt `_on_stop`
