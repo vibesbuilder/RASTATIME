@@ -47,6 +47,7 @@ class ArchivingController extends Zend_Controller_Action
             'account-deleted' => _('Account deleted.'),
             'bandwidth' => _('Upload limit saved.'),
             'auto-delay' => _('Waiting time saved.'),
+            'link-mail' => _('Link e-mail saved.'),
             'person-renamed' => _('Name saved.'),
             'person-merged' => _('Names merged.'),
             'person-deleted' => _('Name deleted.'),
@@ -88,6 +89,9 @@ class ArchivingController extends Zend_Controller_Action
             $this->view->accounts = Application_Service_ArchivingService::accounts();
             $this->view->mbit = Application_Service_ArchivingService::uploadKbit() / 1000;
             $this->view->autoDelay = Application_Service_ArchivingService::autoDelayMin();
+            // 2026-11-24 the link mail to the producers
+            $this->view->linkMail = Application_Service_ArchivingService::linkMail();
+            $this->view->mailServerReady = Application_Service_ArchivingService::mailServerReady();
         }
         $this->view->csrf = $this->csrfToken();
         $this->_helper->viewRenderer->setScriptAction('settings');
@@ -164,6 +168,17 @@ class ArchivingController extends Zend_Controller_Action
             $mbit = (float) str_replace(',', '.', (string) $request->getPost('mbit', '4'));
             Application_Service_ArchivingService::setUploadKbit((int) round($mbit * 1000));
             $this->_redirect('archiving/settings?done=bandwidth#cba-accounts');
+
+            return;
+        }
+        if ($op === 'link_mail') {
+            Application_Service_ArchivingService::setLinkMail(
+                (bool) $request->getPost('enabled', false),
+                (string) $request->getPost('subject', ''),
+                (string) $request->getPost('body', ''),
+                (string) $request->getPost('private', '')
+            );
+            $this->_redirect('archiving/settings?done=link-mail#cba-accounts');
 
             return;
         }
@@ -448,7 +463,7 @@ class ArchivingController extends Zend_Controller_Action
         $out = fopen('php://temp', 'w+');
         fwrite($out, "\xEF\xBB\xBF");
         fputcsv($out, [_('Queued'), _('Show name'), _('Episode'), _('Started by'), _('Status'), _('Post'),
-            _('Audio'), _('Size (MB)'), _('Duration (s)'), _('Attempts'), _('Note')], ',', '"', '');
+            _('Audio'), _('Size (MB)'), _('Duration (s)'), _('Attempts'), _('Note'), _('Link e-mail')], ',', '"', '');
         foreach ($rows as $r) {
             fputcsv($out, [
                 $r['created_local'],
@@ -462,6 +477,7 @@ class ArchivingController extends Zend_Controller_Action
                 $r['secs'] ?? '',
                 $r['attempts'],
                 $r['error'],
+                $r['mail_note'],
             ], ',', '"', '');
         }
         rewind($out);

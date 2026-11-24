@@ -815,6 +815,24 @@ function setAddShowEvents(form) {
     },
   });
 
+  // RASTATIME 2026-11-24 - choosing a show type fills the show's colours
+  // with the colours of the type (Settings -> Show Types; a colour the type
+  // leaves empty stays).  Only on a change by hand: opening Edit Show or
+  // applying a template never recolours.
+  form.find("#add_show_type").on("change", function () {
+    var colors = $(this).data("rtColors") || {};
+    var c = colors[$(this).val()];
+    if (!c) {
+      return;
+    }
+    if (c.bg) {
+      form.find("#add_show_background_color").val(c.bg);
+    }
+    if (c.text) {
+      form.find("#add_show_color").val(c.text);
+    }
+  });
+
   // when an image is uploaded, we want to show it to the user
   form.find("#add_show_logo").change(function (event) {
     if (this.files && this.files[0]) {
@@ -1385,6 +1403,10 @@ function applyShowTemplate(form, td) {
   setVal("add_show_name", td.add_show_name);
   setVal("add_show_url", td.add_show_url);
   setVal("add_show_genre", td.add_show_genre);
+  // RASTATIME 2026-11-24 - category and show type were captured but never
+  // written back (no change event: the template's own colours follow below)
+  setVal("add_show_category", td.add_show_category);
+  setVal("add_show_type", td.add_show_type);
   setVal("add_show_description", td.add_show_description);
 
   // When (duration + repeat shape; start_date/time deliberately skipped)

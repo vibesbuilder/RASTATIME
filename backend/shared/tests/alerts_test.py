@@ -229,6 +229,37 @@ def test_send_mail_refuses_without_configuration():
         A.send_mail(_settings(alerts_smtp_host=""), "s", "b")
 
 
+def test_send_mail_to_given_recipients(monkeypatch):
+    """2026-11-24 - the CBA link mail: own recipients, no alert recipients needed."""
+    sent = []
+
+    class FakeSMTP:
+        def __init__(self, host, port, timeout=None):
+            pass
+
+        def ehlo(self):
+            pass
+
+        def starttls(self, context=None):
+            pass
+
+        def send_message(self, msg):
+            sent.append(msg["To"])
+
+        def quit(self):
+            pass
+
+    monkeypatch.setattr(A.smtplib, "SMTP", FakeSMTP)
+    s = _settings(alerts_mail_to="")
+    assert not s.mail_ready
+    A.send_mail(s, "Subj", "Body", recipients=["producer@example"])
+    assert sent == ["producer@example"]
+    with pytest.raises(RuntimeError):
+        A.send_mail(s, "Subj", "Body", recipients=[])
+    with pytest.raises(RuntimeError):
+        A.send_mail(_settings(alerts_mail_from=""), "s", "b", recipients=["p@example"])
+
+
 def test_send_telegram_posts_json_per_chat():
     seen = []
 

@@ -912,6 +912,58 @@ class Application_Service_ArchivingService
     }
 
     /**
+     * RASTATIME 2026-11-24 - the link mail (Settings → Archiving → "Link by
+     * e-mail", operator Go 2026-11-24): after a finished upload the
+     * background service e-mails the link of the new post to every active
+     * producer of the show with an address (rastatime_worker/archive_jobs.py
+     * send_link_mail - its defaults are the same texts).  Off by default.
+     */
+    public const LINK_MAIL_DEFAULTS = [
+        'subject' => '{show}: the episode of {date} is online',
+        'body' => "Hello {name},\n\nthe episode \"{title}\" of {show} ({date} {time}) is now online on cba.media:\n\n{link}\n\n{station}",
+        'private' => 'Note: the post is private - the link works only when logged in with the CBA account of the show.',
+    ];
+
+    /** @return array enabled (bool), subject, body, private - the texts with the defaults filled in */
+    public static function linkMail(): array
+    {
+        $v = fn (string $k) => trim((string) self::pref('cba_link_mail_' . $k));
+        $out = ['enabled' => in_array(strtolower($v('enabled')), ['1', 'true', 't', 'on'], true)];
+        foreach (self::LINK_MAIL_DEFAULTS as $k => $default) {
+            $out[$k] = $v($k) !== '' ? $v($k) : $default;
+        }
+
+        return $out;
+    }
+
+    public static function setLinkMail(bool $enabled, string $subject, string $body, string $private): void
+    {
+        self::setPref('cba_link_mail_enabled', $enabled ? 'true' : 'false');
+        $texts = [
+            'subject' => mb_substr(trim(preg_replace('/\s+/u', ' ', $subject)), 0, 200),
+            'body' => mb_substr(trim(str_replace(["\r\n", "\r"], "\n", $body)), 0, 5000),
+            'private' => mb_substr(trim(str_replace(["\r\n", "\r"], "\n", $private)), 0, 1000),
+        ];
+        foreach ($texts as $k => $text) {
+            // the default is stored empty, so a better default later reaches it
+            self::setPref('cba_link_mail_' . $k, $text === self::LINK_MAIL_DEFAULTS[$k] ? '' : $text);
+        }
+    }
+
+    /** True when Settings → Alerts has an SMTP server and a sender - the link mail needs both. */
+    public static function mailServerReady(): bool
+    {
+        return trim((string) self::pref('alerts_smtp_host')) !== '' && trim((string) self::pref('alerts_mail_from')) !== '';
+    }
+
+    private static function setPref(string $key, string $value): void
+    {
+        if (!self::exec('UPDATE cc_pref SET valstr = ? WHERE keystr = ? AND subjid IS NULL', [$value, $key])) {
+            self::exec('INSERT INTO cc_pref (keystr, valstr) VALUES (?, ?)', [$key, $value]);
+        }
+    }
+
+    /**
      * CBA topics (categories) as id => "Parent › Child", from the list the
      * worker fetches once a day (cc_pref cba_categories_json); empty when
      * it has not run yet - the form then offers the number field.
@@ -1094,7 +1146,7 @@ class Application_Service_ArchivingService
     public const JOB_STATUSES = ['open', 'done', 'failed', 'unclear', 'skipped', 'cancelled'];
 
     private const JOB_SELECT = "SELECT j.id, j.instance_id, j.status, j.trigger, j.attempts, j.last_error, j.post_id,
-                    j.bytes_total, j.bytes_sent,
+                    j.bytes_total, j.bytes_sent, (to_jsonb(j) ->> 'link_mail_note') AS link_mail_note,
                     to_char(j.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS created_utc,
                     to_char(j.next_attempt_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS next_attempt_utc,
                     to_char(j.finished_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS finished_utc,
@@ -1118,6 +1170,8 @@ class Application_Service_ArchivingService
             'trigger' => (string) $r['trigger'],
             'attempts' => (int) $r['attempts'],
             'error' => (string) $r['last_error'],
+            // 2026-11-24 the link mail (migration 0090; empty before it ran)
+            'mail_note' => (string) ($r['link_mail_note'] ?? ''),
             'post_id' => $r['post_id'] === null ? null : (int) $r['post_id'],
             'bytes_total' => $total,
             'percent' => $total > 0 ? (int) floor(100 * (int) $r['bytes_sent'] / $total) : null,

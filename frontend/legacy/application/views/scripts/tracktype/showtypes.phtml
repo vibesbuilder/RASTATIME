@@ -2,14 +2,21 @@
 /* RASTATIME 2026-11-16 - Settings -> Show Types: the show types
  * (cc_show_types, ARCHITECTURE 23.120).  Rendered by show-types.phtml and
  * re-rendered by TracktypeController save/remove-showtype (showtype.js
- * swaps #showtype_panel). */
+ * swaps #showtype_panel).  2026-11-24: the colours of a type (migration
+ * 0090) - they fill the show form when the type is chosen. */
 $h = static function ($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); };
 $types = $this->showTypes ?? [];
+$colors = !empty($this->showTypeColorsReady);
+$cols = $colors ? 7 : 6;
 ?>
 <div class="ui-widget prefpanel clearfix padded-strong showtype-management" id="showtype_panel">
     <h2><?php echo _("Manage Show Types") ?>
         <span class="help_icon" data-rt-tip="<?php echo $h(_("The type of a show, chosen under Edit Show next to Genre. Analytics → Programme Minutes counts a show as a repeat when its type is marked \"Counts as repeat\", and adds up the minutes per show type.")); ?>"></span>
+<?php if ($colors) { ?>
+        <span class="help_icon" data-rt-tip="<?php echo $h(_("Colours: choosing a type under New Show / Edit Show fills the background and text colour of the show; they can still be changed there. A show keeps its colours when the colours of its type change - \"Apply colours\" in the row of a type recolours all its shows.")); ?>"></span>
+<?php } ?>
     </h2>
+    <p class="showtype-message" style="display:none"></p>
 <?php if (empty($this->showTypesReady)) { ?>
     <p class="showtype-pending"><?php echo _("The show types are available once database migration 0088 has run.") ?></p>
 <?php } else { ?>
@@ -23,22 +30,31 @@ $types = $this->showTypes ?? [];
                 <th><?php echo _("Label") ?></th>
                 <th><?php echo _("Counts as repeat") ?></th>
                 <th><?php echo _("Order") ?></th>
+<?php if ($colors) { ?>
+                <th><?php echo _("Colours") ?></th>
+<?php } ?>
                 <th><?php echo _("Shows") ?></th>
                 <th>&nbsp;</th>
             </tr>
         </thead>
         <tbody>
 <?php if (!$types) { ?>
-            <tr><td colspan="6" class="showtype-empty"><?php echo _("No show types yet.") ?></td></tr>
+            <tr><td colspan="<?php echo $cols; ?>" class="showtype-empty"><?php echo _("No show types yet.") ?></td></tr>
 <?php } ?>
 <?php foreach ($types as $t) { ?>
-            <tr data-id="<?php echo (int) $t['id']; ?>" data-code="<?php echo $h($t['code']); ?>" data-name="<?php echo $h($t['type_name']); ?>" data-repeat="<?php echo $t['counts_as_repeat'] ? '1' : '0'; ?>" data-order="<?php echo (int) $t['sort_order']; ?>" data-shows="<?php echo (int) $t['shows']; ?>">
+            <tr data-id="<?php echo (int) $t['id']; ?>" data-code="<?php echo $h($t['code']); ?>" data-name="<?php echo $h($t['type_name']); ?>" data-repeat="<?php echo $t['counts_as_repeat'] ? '1' : '0'; ?>" data-order="<?php echo (int) $t['sort_order']; ?>" data-shows="<?php echo (int) $t['shows']; ?>" data-bg="<?php echo $h($t['background_color']); ?>" data-color="<?php echo $h($t['color']); ?>">
                 <td><?php echo $h($t['code']); ?></td>
                 <td><?php echo $h($t['type_name']); ?></td>
                 <td><?php echo $t['counts_as_repeat'] ? $h(_("Yes")) : ''; ?></td>
                 <td><?php echo (int) $t['sort_order']; ?></td>
+<?php if ($colors) { ?>
+                <td><?php if ($t['background_color'] !== '' || $t['color'] !== '') { ?><span class="showtype-swatch" style="<?php echo $t['background_color'] !== '' ? 'background:#' . $t['background_color'] . ';' : ''; ?><?php echo $t['color'] !== '' ? 'color:#' . $t['color'] . ';' : ''; ?>"><?php echo $h($t['type_name']); ?></span><?php } ?></td>
+<?php } ?>
                 <td><?php echo (int) $t['shows']; ?></td>
                 <td class="showtype-actions">
+<?php if ($colors && $t['shows'] > 0 && ($t['background_color'] !== '' || $t['color'] !== '')) { ?>
+                    <a href="#" class="showtype-apply-colors"><?php echo _("Apply colours"); ?></a>
+<?php } ?>
                     <a href="#" class="showtype-edit" title="<?php echo $h(_("Edit")); ?>"><i class="icon-pencil"></i></a>
                     <a href="#" class="showtype-delete" title="<?php echo $h(_("Delete")); ?>"><i class="icon-trash"></i></a>
                 </td>
@@ -59,6 +75,13 @@ $types = $this->showTypes ?? [];
             <dd><input type="checkbox" name="counts_as_repeat" id="showtype_repeat" value="1"></dd>
             <dt><label for="showtype_order"><?php echo _("Order:") ?></label></dt>
             <dd><input type="text" class="input_text" name="sort_order" id="showtype_order" maxlength="6" autocomplete="off"></dd>
+<?php if ($colors) { ?>
+            <dt><label for="showtype_bg"><?php echo _("Background Colour:") ?></label>
+                <span class="help_icon" data-rt-tip="<?php echo $h(_("Fills the background and text colour of a show when this type is chosen under New Show / Edit Show. Empty = the show form leaves that colour as it is.")); ?>"></span></dt>
+            <dd><input type="text" class="input_text showtype-color" name="background_color" id="showtype_bg" maxlength="7" autocomplete="off"></dd>
+            <dt><label for="showtype_color"><?php echo _("Text Colour:") ?></label></dt>
+            <dd><input type="text" class="input_text showtype-color" name="color" id="showtype_color" maxlength="7" autocomplete="off"></dd>
+<?php } ?>
         </dl>
         <div class="showtype-buttons">
             <button type="button" id="showtype_save" class="btn btn-small"><?php echo _("Save") ?></button>

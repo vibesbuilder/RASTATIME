@@ -50,6 +50,7 @@ d'émission** (voir [Calendrier](./CALENDAR.md)).
 | **Compte comme rediffusion** | Les émissions de ce type comptent comme rediffusions dans Analytics → [Programme Minutes](./ANALYTICS.md) §5. |
 | **Ordre** | Position dans la liste et dans le formulaire de l'émission. |
 | **Émissions** | Combien d'émissions utilisent le type. |
+| **Couleur de fond**, **Couleur du texte** | Depuis le 2026-11-24 (migration de base de données 0090) : choisir le type sous Nouvelle émission / Modifier l'émission remplit les couleurs de l'émission ; elles restent modifiables.  Vide = le formulaire laisse cette couleur telle quelle. |
 
 Une nouvelle installation apporte Music, Live, Recording, Repeat (compte
 comme rediffusion), News et Partner show ; renommez-les, ajoutez-en ou
@@ -58,6 +59,16 @@ sans type.  Les stations qui notaient jusqu'ici le type d'émission dans
 le champ genre peuvent le transférer avec
 `manage.py transfer_genre_to_show_type` (d'abord à blanc, voir
 ARCHITECTURE §23.120).
+
+**Couleurs d'un type** (depuis le 2026-11-24).  La colonne **Couleurs**
+les montre sur le nom.  Une émission garde ses propres couleurs : changer
+les couleurs d'un type ne change aucune émission à lui seul, et ouvrir
+Modifier l'émission ou appliquer un modèle ne recolore pas non plus -
+seul le choix du type dans le formulaire le fait.  **Appliquer les couleurs** dans
+la ligne d'un type (visible quand le type a des couleurs et des
+émissions) donne, après une question, les couleurs du type à toutes ses
+émissions ; une couleur que le type laisse vide reste telle que chaque
+émission l'a.
 
 Les sources Line-In se gèrent sous **Tableau de bord → Line Inputs**
 (voir [Line-In](./LINE_IN.md)) ; les langues d'interface sont traitées

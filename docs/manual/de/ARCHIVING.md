@@ -84,6 +84,22 @@ nur Admins sehen ihn.
   Episode die Sendungen mit *Automatisch archivieren* (§3) sie hochladen
   (Standard 30): Zeit, die Episode zu vervollständigen oder *Diese
   Episode nicht automatisch archivieren* anzuhaken.
+* **Link per E-Mail** (seit 2026-11-24) - ist ein
+  Upload fertig, bekommt jeder aktive Produzent der Sendung mit
+  E-Mail-Adresse (§1) den Link zum neuen Beitrag, eine E-Mail je
+  Produzent.  Aus, bis Sie *Link per E-Mail an die Produzenten senden* anhaken.
+  Betreff und Text bestimmen Sie selbst, mit den Platzhaltern `{name}`
+  (der Produzent), `{show}`, `{title}` (des Beitrags), `{date}` und
+  `{time}` (der Episode), `{link}` und `{station}`; ein leeres Feld nimmt
+  den Standardtext.  Bei einem Beitrag mit der Sichtbarkeit *private*
+  folgt der Text *Zusatz bei privatem Beitrag*, weil ein solcher Link nur
+  für das CBA-Konto selbst funktioniert.  Die E-Mail geht nach jedem
+  fertigen Upload hinaus, auch nach **Archive again** - nicht beim
+  Verknüpfen eines Beitrags von Hand (§7).  Versendet wird über
+  SMTP-Server und Absender von Einstellungen → [Alarme](./SETTINGS.md) §6;
+  fehlen sie, sagt der Abschnitt das, und nichts wird gesendet.  Eine
+  gescheiterte E-Mail ändert nie den Upload; Archive Status zeigt das
+  Ergebnis (§7).
 
 ---
 
@@ -380,6 +396,10 @@ verlinkt dorthin.
   Beitrag, Audio, Größe, Dauer und Hinweis.  Filter nach Jahr, Monat,
   Status, Gestartet von und Sendungsname; **CSV herunterladen** nimmt die
   ganze gefilterte Liste (die Seite zeigt die neuesten 500).
+
+Seit 2026-11-24 nennt die Notiz eines fertigen Uploads auch, an wen der
+Link gemailt wurde oder warum nicht (*Link per E-Mail*, §2); die CSV hat
+das in der Spalte *Link-E-Mail*.
 
 Die Seite lädt sich selbst neu, wenn ein Upload beginnt oder endet.
 

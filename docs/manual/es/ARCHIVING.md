@@ -82,6 +82,21 @@ aparecen con su nombre.  La parte inferior de **Ajustes → Archivo**,
   episodio lo suben los programas con *Archivar automáticamente* (§3)
   (por defecto 30): tiempo para completar el episodio o marcar *No
   archivar este episodio automáticamente*.
+* **Enlace por correo** (desde el 2026-11-24): cuando
+  termina una subida, cada productor activo del programa con dirección
+  de correo (§1) recibe el enlace a la nueva publicación, un correo por
+  productor.  Desactivado hasta que marque *Enviar el enlace por correo a
+  los productores*.  El asunto y el texto son suyos, con los marcadores
+  `{name}` (el productor), `{show}`, `{title}` (de la publicación),
+  `{date}` y `{time}` (del episodio), `{link}` y `{station}`; un campo
+  vacío toma el texto predeterminado.  En una publicación con
+  visibilidad *private* sigue el texto *Añadido para una publicación privada*,
+  porque ese enlace solo funciona para la propia cuenta de CBA.  El
+  correo sale tras cada subida terminada, también tras **Archive
+  again**, no cuando una publicación se vincula a mano (§7).  Se envía
+  por el servidor SMTP y el remitente de Ajustes → [Alertas](./SETTINGS.md) §6;
+  sin ellos la sección lo indica y no se envía nada.  Un correo fallido
+  nunca cambia la subida; Archive Status muestra el resultado (§7).
 
 ---
 
@@ -379,6 +394,10 @@ aviso enlaza con ella.
   tamaño, duración y nota.  Filtro por año, mes, estado, iniciado por y
   nombre del programa; **Descargar CSV** toma toda la lista filtrada (la
   página muestra las 500 más recientes).
+
+Desde el 2026-11-24 la nota de una subida terminada también dice a
+quién se envió el enlace por correo, o por qué no (*Enlace por correo*,
+§2); el CSV lo tiene en la columna *Correo del enlace*.
 
 La página se recarga sola cuando una subida empieza o termina.
 

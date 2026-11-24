@@ -233,7 +233,7 @@ $reasons = function (array $list) use ($h) {
                         <td><?php echo $h($j['file']); ?></td>
                         <td class="num"><?php echo $j['bytes_total'] ? $h(sprintf('%.1f MB', $j['bytes_total'] / 1048576)) : ''; ?></td>
                         <td class="num"><?php echo $j['secs'] !== null ? sprintf('%d:%02d', intdiv($j['secs'], 60), $j['secs'] % 60) : ''; ?></td>
-                        <td class="rt-status-detail"><?php echo $h($j['error']); ?></td>
+                        <td class="rt-status-detail"><?php echo $h(implode(' · ', array_filter([$j['error'], $j['mail_note']], 'strlen'))); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

@@ -50,6 +50,7 @@ unter Sendung bearbeiten → What → **Show-Typ** (siehe
 | **Zählt als Wiederholung** | Sendungen dieses Typs zählen in Analytics → [Programme Minutes](./ANALYTICS.md) §5 als Wiederholung. |
 | **Reihenfolge** | Position in der Liste und im Sendungsformular. |
 | **Sendungen** | Wie viele Sendungen den Typ verwenden. |
+| **Hintergrundfarbe**, **Textfarbe** | Seit 2026-11-24 (Datenbank-Migration 0090): Die Wahl des Typs unter Neue Sendung / Sendung ändern füllt die Farben der Sendung; dort lassen sie sich weiter ändern.  Leer = das Sendungsformular lässt diese Farbe, wie sie ist. |
 
 Eine neue Installation bringt Music, Live, Recording, Repeat (zählt als
 Wiederholung), News und Partner show mit; benennen Sie sie um, ergänzen
@@ -57,6 +58,15 @@ oder löschen Sie sie nach Bedarf.  Ein gelöschter Typ lässt seine
 Sendungen ohne Typ zurück.  Wer den Sendungstyp bisher im Genre-Feld
 geführt hat, kann ihn mit `manage.py transfer_genre_to_show_type`
 übertragen (zuerst als Probelauf, siehe ARCHITECTURE §23.120).
+
+**Farben eines Typs** (seit 2026-11-24).  Die Spalte **Farben** zeigt sie
+am Namen.  Eine Sendung behält ihre eigenen Farben: Ändern Sie die Farben
+eines Typs, ändert sich dadurch keine Sendung, und auch das Öffnen von
+Sendung ändern oder das Anwenden einer Vorlage färbt nicht um - nur die
+Wahl des Typs im Sendungsformular.  **Farben anwenden** in der Zeile eines
+Typs (sichtbar, wenn der Typ Farben und Sendungen hat) gibt nach einer
+Rückfrage allen seinen Sendungen die Farben des Typs; eine Farbe, die der
+Typ leer lässt, bleibt bei jeder Sendung, wie sie ist.
 
 Line-In-Quellen werden unter **Dashboard → Line Inputs** verwaltet (siehe
 [Line-In](./LINE_IN.md)); die Oberflächensprachen behandelt

@@ -76,6 +76,20 @@ under that user's name.  The lower part of **Settings → Archiving**,
   the shows with *Archive automatically* (§3) upload it (default 30):
   time to complete the episode or to tick *Do not archive this episode
   automatically*.
+* **Link by e-mail** (since 2026-11-24) - when an upload has finished,
+  every active producer of the show with an e-mail address (§1) gets the
+  link to the new post, one e-mail per producer.  Off until you tick
+  *E-mail the link to the producers*.  Subject and text are yours, with
+  the placeholders `{name}` (the producer), `{show}`, `{title}` (of the
+  post), `{date}` and `{time}` (of the episode), `{link}` and
+  `{station}`; an empty field takes the default text.  For a post with
+  the visibility *private* the text *Added for a private post* follows,
+  because such a link works only for the CBA account itself.  The
+  e-mail goes out after every finished upload, also after **Archive
+  again** - not when a post is linked by hand (§7).  It is sent over the
+  SMTP server and sender of Settings → [Alerts](./SETTINGS.md) §6; without
+  them the section says so and nothing is sent.  A failed e-mail never
+  changes the upload; Archive Status shows the outcome (§7).
 
 ---
 
@@ -353,6 +367,10 @@ it; the warning banner links to it.
   duration and note.  Filter by year, month, state, started by and show
   name; **Download CSV** takes the whole filtered list (the page shows
   the newest 500).
+
+Since 2026-11-24 the note of a finished upload also says to whom the
+link was e-mailed, or why not (*Link by e-mail*, §2); the CSV has it in
+the column *Link e-mail*.
 
 The page reloads by itself when an upload starts or ends.
 

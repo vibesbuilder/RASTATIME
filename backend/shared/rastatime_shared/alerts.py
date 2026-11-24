@@ -182,14 +182,27 @@ def settings_from_entries(entries: dict[str, object], station_name: str = "") ->
 # ---------------------------------------------------------------------------
 
 
-def send_mail(settings: AlertSettings, subject: str, body: str, timeout: float = 15.0) -> None:
-    """One e-mail to every address of ``mail_to`` over SMTP (STARTTLS, SSL or plain)."""
-    if not settings.mail_ready:
+def send_mail(
+    settings: AlertSettings,
+    subject: str,
+    body: str,
+    timeout: float = 15.0,
+    recipients: Optional[list[str]] = None,
+) -> None:
+    """One e-mail over SMTP (STARTTLS, SSL or plain) to every address of
+    ``mail_to`` - or, since 2026-11-24, to ``recipients`` (the CBA link mail
+    to the producers): then only the SMTP server and the sender are needed."""
+    if recipients is not None:
+        if not (settings.smtp_host and settings.mail_from):
+            raise RuntimeError("mail is not configured (SMTP host and sender)")
+        if not recipients:
+            raise RuntimeError("no recipient")
+    elif not settings.mail_ready:
         raise RuntimeError("mail is not configured (SMTP host, sender and recipients)")
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = settings.mail_from
-    msg["To"] = ", ".join(settings.mail_to)
+    msg["To"] = ", ".join(settings.mail_to if recipients is None else recipients)
     msg.set_content(body)
     if settings.smtp_security == "ssl":
         client = smtplib.SMTP_SSL(

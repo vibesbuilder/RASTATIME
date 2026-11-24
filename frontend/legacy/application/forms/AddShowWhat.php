@@ -64,6 +64,9 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
                 'multiOptions' => ['' => _('(none)')] + Application_Model_Showtype::options(),
                 'description' => _('Chosen from the list under Settings → Show Types. Analytics → Programme Minutes adds up the minutes per show type and counts a show as a repeat when its type is marked "Counts as repeat".'),
                 'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-show-type']]],
+                // 2026-11-24 the colours of the types: choosing one fills the
+                // show's colours (add-show.js; migration 0090)
+                'data-rt-colors' => json_encode(Application_Model_Showtype::colorMap(), JSON_FORCE_OBJECT),
             ]);
         }
 

@@ -127,7 +127,11 @@ class TracktypeController extends Zend_Controller_Action
         Zend_Layout::getMvcInstance()->assign('parent_page', 'Settings');
         $this->view->headLink()->appendStylesheet(Assets::url('css/tracktypes.css'));
         $this->view->headScript()->appendFile(Assets::url('js/airtime/tracktype/showtype.js'), 'text/javascript');
+        // 2026-11-24 the colours of a type (the colour picker of the show form)
+        $this->view->headScript()->appendFile(Assets::url('js/colorpicker/js/colorpicker.js'), 'text/javascript');
+        $this->view->headLink()->appendStylesheet(Assets::url('css/colorpicker/css/colorpicker.css'));
         $this->view->showTypesReady = Application_Model_Showtype::ready();
+        $this->view->showTypeColorsReady = Application_Model_Showtype::colorsReady();
         $this->view->showTypes = Application_Model_Showtype::all();
     }
 
@@ -149,7 +153,9 @@ class TracktypeController extends Zend_Controller_Action
             $r->getPost('code', ''),
             $r->getPost('type_name', ''),
             (string) $r->getPost('counts_as_repeat', '0') === '1',
-            $r->getPost('sort_order', '0')
+            $r->getPost('sort_order', '0'),
+            $r->getPost('background_color', ''),
+            $r->getPost('color', '')
         );
         $this->_helper->json->sendJson(['ok' => !$errors, 'errors' => $errors, 'html' => $errors ? '' : $this->renderShowtypes()]);
     }
@@ -167,9 +173,32 @@ class TracktypeController extends Zend_Controller_Action
         $this->_helper->json->sendJson(['ok' => true, 'html' => $this->renderShowtypes()]);
     }
 
+    /**
+     * RASTATIME 2026-11-24 - give every show of a type the colours of the
+     * type (POST id; operator Go, the page asks first).  Answers the number
+     * of shows and the re-rendered panel.
+     */
+    public function applyShowtypeColorsAction()
+    {
+        $r = $this->getRequest();
+        if (!$r->isPost()) {
+            $this->_helper->json->sendJson(['ok' => false]);
+
+            return;
+        }
+        $count = Application_Model_Showtype::applyColors($r->getPost('id'));
+        $this->_helper->json->sendJson([
+            'ok' => true,
+            'count' => $count,
+            'message' => sprintf(_('Colours applied to %d show(s).'), $count),
+            'html' => $this->renderShowtypes(),
+        ]);
+    }
+
     private function renderShowtypes(): string
     {
         $this->view->showTypesReady = Application_Model_Showtype::ready();
+        $this->view->showTypeColorsReady = Application_Model_Showtype::colorsReady();
         $this->view->showTypes = Application_Model_Showtype::all();
 
         return $this->view->render('tracktype/showtypes.phtml');

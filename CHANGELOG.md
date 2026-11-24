@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CBA-Link per E-Mail an die Produzenten (2026-11-24, Operator)** - Ist ein Upload zu
+  cba.media fertig, schickt der Hintergrunddienst den Link zum neuen Beitrag
+  (`https://cba.media/?p=…`) an jeden aktiven Produzenten der Sendung mit E-Mail-Adresse, eine
+  E-Mail je Produzent; auch nach „Archive again“, nicht beim Verknüpfen von Hand.  Settings →
+  Archiving → „Link by e-mail“: Schalter (anfangs aus), Betreff, Text mit Platzhaltern, Zusatz
+  für private Beiträge; Versand über SMTP-Server und Absender von Settings → Alerts.  Archive
+  Status zeigt in der Notiz, an wen der Link ging oder warum nicht.  Migration 0090,
+  ARCHITECTURE §23.134, Manual ARCHIVING ×4.
+- **Farben je Show-Typ (2026-11-24, Operator)** - Settings → Show Types: Hintergrund- und
+  Textfarbe je Typ; die Wahl des Typs unter New/Edit Show füllt die Farben der Sendung
+  (weiter änderbar), „Apply colours“ färbt nach Rückfrage alle Sendungen eines Typs um.
+  Nebenbei: Vorlagen setzen Kategorie und Show-Typ jetzt wieder ein (wurden gespeichert, aber
+  nie zurückgeschrieben).  Migration 0090, ARCHITECTURE §23.135, Manual SETTINGS/CALENDAR ×4.
 - **Programme Minutes nach Namen der Moderierenden (2026-11-24, Operator)** - Analytics →
   Programme Minutes → *Group by* hat zusätzlich **Host name**: die Minuten je Person aus Edit
   Show → What → „Host names“.  Eine Sendung mit mehreren Moderierenden zählt bei jeder Person voll

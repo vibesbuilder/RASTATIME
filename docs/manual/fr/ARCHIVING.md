@@ -84,6 +84,22 @@ seuls les Admins la voient.
   épisode les émissions avec *Archiver automatiquement* (§3) l'envoient
   (par défaut 30) : le temps de compléter l'épisode ou de cocher *Ne pas
   archiver cet épisode automatiquement*.
+* **Lien par e-mail** (depuis le 2026-11-24) - lorsqu'un
+  envoi est terminé, chaque producteur actif de l'émission ayant une
+  adresse e-mail (§1) reçoit le lien vers la nouvelle publication, un
+  e-mail par producteur.  Désactivé tant que vous ne cochez pas *Envoyer le
+  lien par e-mail aux producteurs*.  L'objet et le texte sont les vôtres, avec
+  les variables `{name}` (le producteur), `{show}`, `{title}` (de la
+  publication), `{date}` et `{time}` (de l'épisode), `{link}` et
+  `{station}` ; un champ vide reprend le texte par défaut.  Pour une
+  publication de visibilité *private*, le texte *Ajouté pour une
+  publication privée* suit, car un tel lien ne fonctionne que pour le compte CBA
+  lui-même.  L'e-mail part après chaque envoi terminé, aussi après
+  **Archive again** - pas lorsqu'une publication est liée à la main
+  (§7).  Il passe par le serveur SMTP et l'expéditeur de Paramètres →
+  [Alertes](./SETTINGS.md) §6 ; sans eux, la section le signale et rien n'est
+  envoyé.  Un e-mail échoué ne change jamais l'envoi ; Archive Status
+  affiche le résultat (§7).
 
 ---
 
@@ -388,6 +404,10 @@ le bandeau d'avertissement y renvoie.
   taille, durée et remarque.  Filtre par année, mois, statut, lancé par
   et nom de l'émission ; **Télécharger le CSV** prend toute la liste
   filtrée (la page affiche les 500 plus récents).
+
+Depuis le 2026-11-24, la note d'un envoi terminé indique aussi à qui
+le lien a été envoyé par e-mail, ou pourquoi pas (*Lien par e-mail*,
+§2) ; le CSV l'a dans la colonne *E-mail du lien*.
 
 La page se recharge d'elle-même quand un envoi commence ou se termine.
 

@@ -9170,3 +9170,71 @@ msgstr "Por tipo de programa, género, categoría y nombre del presentador"
 #: RASTATIME 2026-11-24 programme minutes per host name
 msgid "A show with several hosts counts fully for each of them, so the rows add up to more than the total."
 msgstr "Un programa con varios presentadores cuenta por completo para cada uno; por eso las filas suman más que el total."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Link e-mail saved."
+msgstr "Correo del enlace guardado."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Link e-mail"
+msgstr "Correo del enlace"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Link by e-mail"
+msgstr "Enlace por correo"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "When an upload to cba.media has finished, every active producer of the show with an e-mail address (Producers above) gets the link to the new post - also after archiving an episode again, not when a post is linked by hand. Sent over the SMTP server of Settings → Alerts, one e-mail per producer."
+msgstr "Cuando termina una subida a cba.media, cada productor activo del programa con dirección de correo (Productores arriba) recibe el enlace a la nueva publicación - también al archivar de nuevo un episodio, no cuando una publicación se vincula a mano. Se envía por el servidor SMTP de Ajustes → Alertas, un correo por productor."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Settings → Alerts has no SMTP server or sender yet - no e-mail can be sent."
+msgstr "Ajustes → Alertas aún no tiene servidor SMTP o remitente - no se puede enviar ningún correo."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "E-mail the link to the producers"
+msgstr "Enviar el enlace por correo a los productores"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Subject"
+msgstr "Asunto"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Text"
+msgstr "Texto"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Added for a private post"
+msgstr "Añadido para una publicación privada"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Placeholders: {name} the producer, {show} the show name, {title} the title of the post, {date} and {time} of the episode, {link} the address of the post, {station} the station name. An empty field takes the default text."
+msgstr "Marcadores: {name} el productor, {show} el nombre del programa, {title} el título de la publicación, {date} y {time} del episodio, {link} la dirección de la publicación, {station} el nombre de la emisora. Un campo vacío toma el texto predeterminado."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Colours: choosing a type under New Show / Edit Show fills the background and text colour of the show; they can still be changed there. A show keeps its colours when the colours of its type change - \"Apply colours\" in the row of a type recolours all its shows."
+msgstr "Colores: elegir un tipo en Nuevo programa / Editar programa rellena el color de fondo y de texto del programa; allí se pueden seguir cambiando. Un programa conserva sus colores cuando cambian los de su tipo - «Aplicar colores» en la fila de un tipo cambia el color de todos sus programas."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Colours"
+msgstr "Colores"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Apply colours"
+msgstr "Aplicar colores"
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Fills the background and text colour of a show when this type is chosen under New Show / Edit Show. Empty = the show form leaves that colour as it is."
+msgstr "Rellena el color de fondo y de texto de un programa cuando se elige este tipo en Nuevo programa / Editar programa. Vacío = el formulario deja ese color como está."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Colours: six hex digits like 3a7bd5, or empty."
+msgstr "Colores: seis dígitos hexadecimales como 3a7bd5, o vacío."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Colours applied to %d show(s)."
+msgstr "Colores aplicados a %d programa(s)."
+
+#: RASTATIME 2026-11-24 show type colours, CBA link mail
+msgid "Give all %d show(s) of the type \"%s\" its colours? Their own colours are replaced."
+msgstr "¿Dar sus colores a los %d programa(s) del tipo «%s»? Sus propios colores se sustituyen."

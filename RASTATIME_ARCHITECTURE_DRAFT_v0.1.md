@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.165
+Draft version: 0.166
 Date: 2026-11-24
 
 > **Revision history**
+> - **0.166 (2026-11-24)** - CBA link by e-mail to the producers (§23.134);
+>   colours per show type (§23.135); migration 0090.
 > - **0.165 (2026-11-24)** - Programme Minutes per host name (§23.133 addendum).
 > - **0.164 (2026-11-24)** - Host names per show (§23.133): register `cc_person` +
 >   `cc_show_person` (migration 0089); People Involved counts every named person once.
@@ -12172,3 +12174,86 @@ per group like the rows - instead of the sum of the rows; page and CSV
 add a note.  Group `host` in the page select and `groups-csv?group=host`.
 Probe `host_minutes_probe.php` (16 checks, test names in a rolled-back
 transaction).
+
+### 23.134 The Link of a New CBA Post by E-mail to the Producers (2026-11-24)
+
+**Context.**  After an upload to cba.media (§23.80, §23.81) the
+producers of a show had to ask the station for the link of their
+episode, or look it up themselves.  The producers (`cc_editor_profile`,
+§23.79) already carry an e-mail address.
+
+**Decision (operator Go 2026-11-24: all producers of the show, no fixed
+copy address, a new upload of the same episode mails again).**
+- `rastatime_worker/archive_jobs.py` `process()`: after the `done`
+  outcome (job finished, `cc_episode.cba_post_id` written)
+  `send_link_mail()` e-mails `https://cba.media/?p=<post id>` (the address
+  Archive Status uses) to every **active** producer of the show with an
+  address - one e-mail per producer (each sees only their own address and
+  is greeted by name).  Every finished upload sends, also **Archive
+  again**; linking a post by hand (`ArchivingService::linkPost`) does not.
+- Settings -> Archiving -> **Link by e-mail** (admins, in the CBA
+  Accounts part): switch (off by default), subject, text and a sentence
+  added for a post with the visibility *private* (its link works only for
+  the CBA account).  cc_pref `cba_link_mail_enabled|subject|body|private`;
+  a text equal to the default is stored empty, so a better default later
+  reaches it.  Placeholders `{name} {show} {title} {date} {time} {link}
+  {station}`, replaced literally (any other brace stays).  Defaults in
+  English, the same in `ArchivingService::LINK_MAIL_DEFAULTS` and the
+  worker (the probe compares them).
+- Sending: `rastatime_shared.alerts.send_mail(..., recipients=[...])` -
+  the SMTP server and sender of Settings -> Alerts (§23.84); with own
+  recipients the alert recipients are not needed.  The section warns when
+  server or sender are missing.
+- Migration 0090 (shared with §23.135): `cc_cba_upload.link_mail_at`,
+  `link_mail_note` - "link e-mailed to ...", "link e-mail failed: ..."
+  or why not (no producer with an address, no SMTP).  Archive Status
+  shows the note in the column Note, the CSV in *Link e-mail*.  Before the
+  migration the worker only logs it (column check per finished job), the
+  page reads it through `to_jsonb(j)`.
+
+**Risk.**  None for the broadcast (worker only).  `send_link_mail` never
+raises: a failed e-mail leaves the job `done`; one refused address does
+not stop the others.  SMTP timeout 15 s per producer - the worker loop
+waits that long at most once per producer.  First e-mails to external
+addresses over the station's SMTP: a test with the operator as producer
+of a test show first.  Rollback: switch off, or `git revert`; the columns
+can stay.
+
+**Checks.**  `tests/unit/worker/test_link_mail.py` (10, no DB/SMTP),
+`alerts_test.py` (recipients), probe `showtype_colors_linkmail_probe.php`
+(settings round trip, page, Archive Status note).
+
+### 23.135 Colours per Show Type (2026-11-24)
+
+**Context.**  Every show has its own background and text colour (Edit
+Show -> Style), typed in by hand.  The operator wants the colours to
+follow the show type (§23.120), e.g. all live shows in one colour.
+
+**Decision (operator Go 2026-11-24, with "apply to all shows of the
+type").**
+- Migration 0090: `cc_show_types.background_color`, `color` VARCHAR(6)
+  NULL (hex without "#", like `cc_show`).  `Application_Model_Showtype`:
+  `colorsReady()`, `normalizeColor()`, `colorMap()`, `applyColors()`;
+  `save()` takes the two colours (validated, "#" and capitals accepted).
+- Settings -> Show Types: column Colours (the label on its colours), the
+  two fields with the colour picker of the show form, row action **Apply
+  colours** (`Tracktype/apply-showtype-colors`, after a question) - every
+  show of the type gets the colours of the type, a colour the type leaves
+  empty stays.
+- Show form: the type select carries `data-rt-colors` (the colour map);
+  `add-show.js` fills `#add_show_background_color` / `#add_show_color` on
+  a **change by hand** of the type - also under Edit Show (the operator
+  changes the type deliberately).  Opening Edit Show and applying a
+  template never recolour (no change event; the template's own colours
+  follow).  The colours stay per show: the calendar, widgets and exports
+  read `cc_show` as before.
+- Found on the way: show templates captured `add_show_category` and
+  `add_show_type` since 2026-11-10/16 but `applyShowTemplate` never wrote
+  them back - now it does.
+
+**Risk.**  None for the broadcast.  Migration additive; before it ran
+the page and the form show no colours.  Rollback `git revert`.
+
+**Checks.**  Probe `showtype_colors_linkmail_probe.php` (29 checks,
+migration SQL in a rolled-back transaction: save/validate, colour map,
+apply incl. empty colour, page, show form attribute).

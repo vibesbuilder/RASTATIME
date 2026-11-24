@@ -9,10 +9,17 @@
  * the other late columns: the readers check the table first and read
  * cc_show.show_type_id through to_jsonb(), so nothing breaks before the
  * migration ran (no types, no field in the show form).
+ *
+ * 2026-11-24 (migration 0090, ARCHITECTURE 23.135): a type may carry a
+ * background and a text colour (hex without "#", like cc_show).  Choosing
+ * the type in the show form fills the show's colours (add-show.js); the
+ * show keeps its own colours as before, applyColors() recolours every show
+ * of a type on request.
  */
 class Application_Model_Showtype
 {
     private static $ready;
+    private static $colorsReady;
 
     /** True once migration 0088 created cc_show_types (and cc_show.show_type_id). */
     public static function ready(): bool
@@ -33,10 +40,44 @@ class Application_Model_Showtype
         return self::$ready;
     }
 
+    /** True once migration 0090 added the colour columns of cc_show_types. */
+    public static function colorsReady(): bool
+    {
+        if (self::$colorsReady === null) {
+            self::$colorsReady = false;
+            if (self::ready()) {
+                try {
+                    $row = Application_Common_Database::prepareAndExecute(
+                        "SELECT 1 AS ok FROM information_schema.columns WHERE table_name = 'cc_show_types' AND column_name = 'background_color'",
+                        [],
+                        Application_Common_Database::SINGLE
+                    );
+                    self::$colorsReady = !empty($row);
+                } catch (Exception $e) {
+                    self::$colorsReady = false;
+                }
+            }
+        }
+
+        return self::$colorsReady;
+    }
+
+    /** A colour as stored: six lower-case hex digits, '' for none, null when invalid. */
+    public static function normalizeColor($value): ?string
+    {
+        $v = strtolower(ltrim(trim((string) $value), '#'));
+        if ($v === '') {
+            return '';
+        }
+
+        return preg_match('/^[0-9a-f]{6}$/', $v) ? $v : null;
+    }
+
     /**
      * All types in their order, each with the number of shows using it.
      *
-     * @return array[] id, code, type_name, counts_as_repeat (bool), sort_order, shows
+     * @return array[] id, code, type_name, counts_as_repeat (bool), sort_order, shows,
+     *                 background_color, color ('' = none; 2026-11-24)
      */
     public static function all(): array
     {
@@ -45,6 +86,7 @@ class Application_Model_Showtype
         }
         $rows = Application_Common_Database::prepareAndExecute(
             "SELECT t.id, t.code, t.type_name, t.counts_as_repeat, t.sort_order,
+                    (to_jsonb(t) ->> 'background_color') AS background_color, (to_jsonb(t) ->> 'color') AS color,
                     (SELECT count(*) FROM cc_show s WHERE (to_jsonb(s) ->> 'show_type_id')::int = t.id) AS shows
              FROM cc_show_types t
              ORDER BY t.sort_order, lower(t.type_name), t.id"
@@ -58,6 +100,8 @@ class Application_Model_Showtype
                 'counts_as_repeat' => in_array($r['counts_as_repeat'], [true, 't', '1', 1, 'true'], true),
                 'sort_order' => (int) $r['sort_order'],
                 'shows' => (int) $r['shows'],
+                'background_color' => (string) self::normalizeColor($r['background_color']),
+                'color' => (string) self::normalizeColor($r['color']),
             ];
         }, $rows ?: []);
     }
@@ -71,6 +115,43 @@ class Application_Model_Showtype
         }
 
         return $out;
+    }
+
+    /**
+     * The colours of the types that have some, for the show form:
+     * [id => ['bg' => 'rrggbb' or '', 'text' => 'rrggbb' or '']].
+     */
+    public static function colorMap(): array
+    {
+        $out = [];
+        foreach (self::all() as $t) {
+            if ($t['background_color'] !== '' || $t['color'] !== '') {
+                $out[$t['id']] = ['bg' => $t['background_color'], 'text' => $t['color']];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Give every show of the type the colours of the type (a colour the type
+     * leaves empty stays as the show has it).  Returns the number of shows.
+     */
+    public static function applyColors($id): int
+    {
+        $t = self::colorsReady() ? self::get($id) : null;
+        if ($t === null || ($t['background_color'] === '' && $t['color'] === '')) {
+            return 0;
+        }
+        $con = Propel::getConnection();
+        $stmt = $con->prepare(
+            "UPDATE cc_show SET background_color = COALESCE(NULLIF(:bg, ''), background_color),
+                                color = COALESCE(NULLIF(:fg, ''), color)
+              WHERE show_type_id = :id"
+        );
+        $stmt->execute([':bg' => $t['background_color'], ':fg' => $t['color'], ':id' => $t['id']]);
+
+        return $stmt->rowCount();
     }
 
     /** One type or null. */
@@ -89,7 +170,7 @@ class Application_Model_Showtype
      * Create (id empty) or update a type.  Returns a list of error messages
      * (empty = saved).
      */
-    public static function save($id, $code, $name, $countsAsRepeat, $sortOrder): array
+    public static function save($id, $code, $name, $countsAsRepeat, $sortOrder, $bgColor = '', $textColor = ''): array
     {
         if (!self::ready()) {
             return [_('The show types are not available yet (database migration 0088 pending).')];
@@ -107,6 +188,12 @@ class Application_Model_Showtype
         if (!preg_match('/^-?\d{1,6}$/', (string) $order)) {
             $errors[] = _('Order: a whole number.');
         }
+        // 2026-11-24 colours (empty = none)
+        $bg = self::normalizeColor($bgColor);
+        $fg = self::normalizeColor($textColor);
+        if ($bg === null || $fg === null) {
+            $errors[] = _('Colours: six hex digits like 3a7bd5, or empty.');
+        }
         $id = (string) $id === '' ? null : (int) $id;
         $dup = Application_Common_Database::prepareAndExecute(
             'SELECT id FROM cc_show_types WHERE lower(code) = lower(:code) AND (:id::int IS NULL OR id <> :id2::int)',
@@ -121,16 +208,24 @@ class Application_Model_Showtype
         }
         $params = [':code' => $code, ':name' => $name, ':rep' => $countsAsRepeat ? 'true' : 'false', ':ord' => (int) $order];
         if ($id === null) {
-            Application_Common_Database::prepareAndExecute(
-                'INSERT INTO cc_show_types (code, type_name, counts_as_repeat, sort_order) VALUES (:code, :name, :rep::boolean, :ord)',
+            $row = Application_Common_Database::prepareAndExecute(
+                'INSERT INTO cc_show_types (code, type_name, counts_as_repeat, sort_order) VALUES (:code, :name, :rep::boolean, :ord) RETURNING id',
                 $params,
-                Application_Common_Database::EXECUTE
+                Application_Common_Database::SINGLE
             );
+            $id = (int) $row['id'];
         } else {
             $params[':id'] = $id;
             Application_Common_Database::prepareAndExecute(
                 'UPDATE cc_show_types SET code = :code, type_name = :name, counts_as_repeat = :rep::boolean, sort_order = :ord WHERE id = :id',
                 $params,
+                Application_Common_Database::EXECUTE
+            );
+        }
+        if (self::colorsReady()) {
+            Application_Common_Database::prepareAndExecute(
+                "UPDATE cc_show_types SET background_color = NULLIF(:bg, ''), color = NULLIF(:fg, '') WHERE id = :id",
+                [':bg' => $bg, ':fg' => $fg, ':id' => $id],
                 Application_Common_Database::EXECUTE
             );
         }

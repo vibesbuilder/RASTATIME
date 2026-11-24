@@ -48,6 +48,7 @@ under Edit Show → What → **Show Type** (see [Calendar](./CALENDAR.md)).
 | **Counts as repeat** | Shows of this type count as repeats in Analytics → [Programme Minutes](./ANALYTICS.md) §5. |
 | **Order** | Position in the list and in the show form. |
 | **Shows** | How many shows use the type. |
+| **Background Colour**, **Text Colour** | Since 2026-11-24 (database migration 0090): choosing the type under New Show / Edit Show fills the colours of the show; they can still be changed there.  Empty = the show form leaves that colour as it is. |
 
 A new installation brings Music, Live, Recording, Repeat (counts as
 repeat), News and Partner show; rename, add or delete them as you
@@ -55,6 +56,14 @@ need.  A deleted type leaves its shows without a type.  Stations that
 wrote the show type into the genre field so far can move it with
 `manage.py transfer_genre_to_show_type` (dry run first, see
 ARCHITECTURE §23.120).
+
+**Colours of a type** (since 2026-11-24).  The column **Colours** shows
+them on the label.  A show keeps its own colours: changing the colours of
+a type changes no show by itself, and opening Edit Show or applying a
+template does not recolour either - only choosing the type in the show
+form does.  **Apply colours** in the row of a type (shown when the type
+has colours and shows) gives all its shows the colours of the type after
+a question; a colour the type leaves empty stays as each show has it.
 
 Line-In sources are managed under **Dashboard → Line Inputs** (see
 [Line-In](./LINE_IN.md)); the interface languages are covered in

@@ -43,3 +43,14 @@
 .showtype-form .showtype-errors div {
 	margin-bottom: 4px;
 }
+/* 2026-11-24 colours of a type */
+.showtype-swatch {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	border: 1px solid #555;
+}
+.showtype-message {
+	color: #5cb85c;
+	margin-bottom: 8px;
+}

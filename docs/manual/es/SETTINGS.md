@@ -50,6 +50,7 @@ Un programa recibe uno en Editar programa → What → **Tipo de programa**
 | **Cuenta como repetición** | Los programas de este tipo cuentan como repeticiones en Analytics → [Programme Minutes](./ANALYTICS.md) §5. |
 | **Orden** | Posición en la lista y en el formulario del programa. |
 | **Programas** | Cuántos programas usan el tipo. |
+| **Color de fondo**, **Color del texto** | Desde el 2026-11-24 (migración de base de datos 0090): elegir el tipo en Nuevo programa / Editar programa rellena los colores del programa; allí se pueden seguir cambiando.  Vacío = el formulario deja ese color como está. |
 
 Una instalación nueva trae Music, Live, Recording, Repeat (cuenta como
 repetición), News y Partner show; cámbielos de nombre, añada o borre
@@ -57,6 +58,15 @@ según necesite.  Un tipo borrado deja sus programas sin tipo.  Las
 emisoras que hasta ahora anotaban el tipo de programa en el campo
 género pueden pasarlo con `manage.py transfer_genre_to_show_type`
 (primero en simulación, vea ARCHITECTURE §23.120).
+
+**Colores de un tipo** (desde el 2026-11-24).  La columna **Colores** los
+muestra sobre el nombre.  Un programa conserva sus propios colores:
+cambiar los colores de un tipo no cambia ningún programa por sí solo, y
+abrir Editar programa o aplicar una plantilla tampoco cambia el color;
+solo lo hace elegir el tipo en el formulario.  **Aplicar colores** en la
+fila de un tipo (visible cuando el tipo tiene colores y programas) da,
+tras una pregunta, los colores del tipo a todos sus programas; un color
+que el tipo deja vacío se queda como lo tiene cada programa.
 
 Las fuentes Line-In se gestionan en **Panel → Line Inputs** (vea
 [Line-In](./LINE_IN.md)); los idiomas de la interfaz se tratan en

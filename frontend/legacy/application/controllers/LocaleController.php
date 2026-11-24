@@ -577,6 +577,8 @@ final class LocaleController extends Zend_Controller_Action
             // RASTATIME 2026-11-16 - show types (Settings -> Show Types, showtype.js)
             'Delete this show type? The shows using it keep no show type.' => _('Delete this show type? The shows using it keep no show type.'),
             'Delete this show type?' => _('Delete this show type?'),
+            // RASTATIME 2026-11-24 - colours of a show type
+            'Give all %d show(s) of the type "%s" its colours? Their own colours are replaced.' => _('Give all %d show(s) of the type "%s" its colours? Their own colours are replaced.'),
             'Cancel upload' => _('Cancel upload'),
             'Type' => _('Type'),
             "Autoloading playlists' contents are added to shows one hour before the show airs. <a target='_blank' href='https://libretime.org/docs/user-manual/playlists/'>More information</a>" => _("Autoloading playlists' contents are added to shows one hour before the show airs. <a target='_blank' href='https://libretime.org/docs/user-manual/playlists/'>More information</a>"),

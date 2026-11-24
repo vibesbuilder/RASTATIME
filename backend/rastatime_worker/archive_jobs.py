@@ -8,7 +8,11 @@ episode, show and account data with raw SQL (the tables have no Django
 models - the legacy frontend owns them), checks it, writes the body and
 uploads it through :mod:`cba`, then records the outcome:
 
-* ``done``    - post id on the episode (``cc_episode.cba_post_id``);
+* ``done``    - post id on the episode (``cc_episode.cba_post_id``); since
+  2026-11-24 the link of the post is e-mailed to the producers of the show
+  when Settings -> Archiving -> "Link by e-mail" is on (:func:`send_link_mail`,
+  over the SMTP server of Settings -> Alerts; a failed mail never changes
+  the job);
 * ``retry``   - nothing reached the CBA: queued again after 2, 5, 15, 30,
   60, 120, 240 minutes, until ``give_up_at`` (24 h after queuing) - then
   ``failed`` with the last reason;
@@ -38,6 +42,21 @@ from . import cba
 logger = logging.getLogger("rastatime_worker.archive")
 
 BACKOFF_MINUTES = (2, 5, 15, 30, 60, 120, 240)
+
+#: the link mail (Settings -> Archiving -> "Link by e-mail", cc_pref
+#: cba_link_mail_*); the station replaces the texts, these are the defaults
+LINK_MAIL_SUBJECT = "{show}: the episode of {date} is online"
+LINK_MAIL_BODY = (
+    "Hello {name},\n\n"
+    'the episode "{title}" of {show} ({date} {time}) is now online on cba.media:\n\n'
+    "{link}\n\n"
+    "{station}"
+)
+LINK_MAIL_PRIVATE = (
+    "Note: the post is private - the link works only when logged in with the"
+    " CBA account of the show."
+)
+LINK_MAIL_FIELDS = ("name", "show", "title", "date", "time", "link", "station")
 CATEGORIES_MAX_AGE = timedelta(hours=24)
 PROGRESS_EVERY = 5.0
 
@@ -221,6 +240,129 @@ def _retry_or_give_up(job: dict[str, Any], message: str) -> str:
     return "retry"
 
 
+def post_link(post_id: int) -> str:
+    """The address of a CBA post (redirects to its page; the same as in Archive Status)."""
+    return f"https://cba.media/?p={int(post_id)}"
+
+
+def fill_template(template: str, values: dict[str, str]) -> str:
+    """Replace the placeholders {name} ... {station}; any other brace stays as typed."""
+    out = template
+    for key in LINK_MAIL_FIELDS:
+        out = out.replace("{" + key + "}", values.get(key, ""))
+    return out
+
+
+def link_mail_texts() -> Optional[tuple[str, str, str]]:
+    """(subject, body, private note) when the link mail is switched on, else None."""
+    if (_pref("cba_link_mail_enabled") or "").strip().lower() not in ("1", "true", "t", "on"):
+        return None
+    return (
+        (_pref("cba_link_mail_subject") or "").strip() or LINK_MAIL_SUBJECT,
+        (_pref("cba_link_mail_body") or "").strip() or LINK_MAIL_BODY,
+        (_pref("cba_link_mail_private") or "").strip() or LINK_MAIL_PRIVATE,
+    )
+
+
+def producer_addresses(instance_id: int) -> list[tuple[str, str]]:
+    """(name, e-mail) of the active producers of the episode's show that have an address."""
+    return [
+        (str(r["name"]), str(r["email"]).strip())
+        for r in _rows(
+            "SELECT p.name, p.email FROM cc_show_editor_profile se"
+            " JOIN cc_editor_profile p ON p.id = se.profile_id"
+            " JOIN cc_show_instances si ON si.show_id = se.show_id"
+            " WHERE si.id = %s AND p.active AND COALESCE(trim(p.email), '') <> ''"
+            " ORDER BY lower(p.name), p.id",
+            [instance_id],
+        )
+    ]
+
+
+def _mail_settings():
+    from rastatime_shared.alerts import settings_from_entries  # noqa: PLC0415
+
+    entries = {
+        r["keystr"]: r["valstr"]
+        for r in _rows(
+            "SELECT keystr, valstr FROM cc_pref WHERE left(keystr, 7) = 'alerts_' AND subjid IS NULL"
+        )
+    }
+    return settings_from_entries(entries, station_name=_pref("station_name") or "")
+
+
+def _record_link_mail(job_id: int, note: str) -> None:
+    """Keep the outcome on the job once migration 0090 added the columns."""
+    if _rows(
+        "SELECT count(*) AS n FROM information_schema.columns WHERE table_schema = current_schema()"
+        " AND table_name = 'cc_cba_upload' AND column_name = 'link_mail_note'"
+    )[0]["n"]:
+        _execute(
+            "UPDATE cc_cba_upload SET link_mail_at = now(), link_mail_note = %s WHERE id = %s",
+            [note[:2000], job_id],
+        )
+
+
+def send_link_mail(
+    job: dict[str, Any], ep: cba.Episode, meta: dict[str, Any], post_id: int, sender: Any = None
+) -> Optional[str]:
+    """
+    E-mail the link of the new post to the producers of the show (operator
+    Go 2026-11-24): one mail per producer, so each sees only their own
+    address and is greeted by name.  Returns the note kept on the job, or
+    None when the link mail is switched off.  Never raises - the upload is
+    done whatever happens to the mail.
+    """
+    try:
+        texts = link_mail_texts()
+        if texts is None:
+            return None
+        subject_t, body_t, private_t = texts
+        people = producer_addresses(int(job["instance_id"]))
+        if not people:
+            note = "link not e-mailed: no active producer of the show has an e-mail address"
+        else:
+            settings = _mail_settings()
+            if not (settings.smtp_host and settings.mail_from):
+                note = "link not e-mailed: SMTP server or sender missing (Settings -> Alerts)"
+            else:
+                if sender is None:
+                    from rastatime_shared.alerts import send_mail as sender  # noqa: PLC0415
+                values = {
+                    "show": ep.show_name,
+                    "title": str(meta.get("title") or ep.show_name),
+                    "date": ep.starts_local[:10],
+                    "time": ep.starts_local[11:16],
+                    "link": post_link(post_id),
+                    "station": settings.station_name,
+                }
+                sent, failed = [], []
+                for name, address in people:
+                    values["name"] = name
+                    body = fill_template(body_t, values)
+                    if ep.status == "private":
+                        body += "\n\n" + private_t
+                    try:
+                        sender(
+                            settings, fill_template(subject_t, values), body, recipients=[address]
+                        )
+                        sent.append(address)
+                    except Exception as exc:  # noqa: BLE001 - the next producer still gets theirs
+                        failed.append(f"{address} ({exc.__class__.__name__})")
+                parts = []
+                if sent:
+                    parts.append("link e-mailed to " + ", ".join(sent))
+                if failed:
+                    parts.append("link e-mail failed: " + ", ".join(failed))
+                note = "; ".join(parts)
+        logger.info("archive job %s: %s", job["id"], note)
+        _record_link_mail(int(job["id"]), note)
+        return note
+    except Exception:  # noqa: BLE001 - never changes the finished upload
+        logger.exception("archive job %s: link e-mail not sent", job["id"])
+        return "link e-mail failed: unexpected error"
+
+
 def process(job: dict[str, Any], kbit: Optional[int] = None, session: Any = None) -> str:
     """Upload one claimed job; returns the state it ended in."""
     ep = load_episode(int(job["instance_id"]), job["file_id"])
@@ -285,6 +427,7 @@ def process(job: dict[str, Any], kbit: Optional[int] = None, session: Any = None
             " cba_archived_at = now(), updated_at = now()",
             [job["instance_id"], outcome.post_id],
         )
+        send_link_mail(job, ep, meta, outcome.post_id)
         return "done"
     if outcome.kind == "retry":
         return _retry_or_give_up(job, outcome.message)
