@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.163
+Draft version: 0.164
 Date: 2026-11-24
 
 > **Revision history**
+> - **0.164 (2026-11-24)** - Host names per show (§23.133): register `cc_person` +
+>   `cc_show_person` (migration 0089); People Involved counts every named person once.
 > - **0.163 (2026-11-24)** - The import asks Liquidsoap whether it can decode a file (§23.132):
 >   analyzer step `check_liquidsoap_decode`, lossless remux (then without the embedded picture),
 >   library scan `scan_liquidsoap_decode`.
@@ -12087,3 +12089,71 @@ Artwork* finds no picture in such a file.  `remux_until_decodable` is
 shared by the import and `--repair`; `--repair` replaces a library file
 only on a clear "decodes" (no fail-open).  Refusal reason "... not even
 after a lossless remux (also tried without the embedded picture)".
+
+### 23.133 Host Names per Show (2026-11-24)
+
+**Context.**  "Hosts involved" (§23.83, Edit Show → What) was a number per
+show, counted once per show and year in Analytics → People Involved.  A
+person who hosts two own productions therefore counted twice; the manual
+said so ("the figures are numbers, not names").  The operator wants the
+yearly figure to count each person once.
+
+**Decision (operator Go 2026-11-24, option B of three; templates and the
+show import/export carry the names; guests with names deferred).**
+- Migration 0089: `cc_person` (id, name 128, unique on `lower(name)`) - one
+  register of persons; `cc_show_person` (show_id, person_id, sort_order;
+  both ON DELETE CASCADE).  One name = one person; two people with the
+  same name are told apart in the name.  Option A (free text per show)
+  was rejected because a typo would count twice again; option C (user
+  accounts, the *Who* section) because most hosts have no account.
+- Edit Show → What → **Host names** (below *Own production*, shown with
+  it): a hidden JSON list, drawn as chips by `add-show.js setupHostNames`;
+  the input suggests the register (jQuery UI autocomplete, list embedded
+  in the form), a known name is taken in its stored spelling, a typed
+  name is added on Enter, ";", blur and before save / Save as Template.
+  With names, *Hosts involved* shows their count read-only and the server
+  stores the same count in `cc_show_archiving.participants` - every other
+  reader of that number (episode dialog, archive status) stays unchanged.
+  Without names the number works as before.  Edit Episode shows the names
+  read-only (`makeReadonly`), an unchanged list writes nothing.
+  `ScheduleController::saveArchiving` stores the names after the show and
+  after the number; a failure is logged and does not undo the show.
+- `ArchivingService`: `parseNames` (JSON list, ";" list or array;
+  whitespace collapsed, case-insensitive duplicates dropped, ";" always
+  separates, at most 50 names of 128 characters), `saveShowPeople`,
+  `showPeople`, `allPeopleNames`, `peopleList`, `renamePerson` (refused
+  when another person has the name), `mergePerson`, `deletePerson` (a show
+  left without names gets no value and appears under *Shows without a
+  value*).  `peopleReady()` checks the tables, so code and migration may
+  come in any order; without the migration nothing is shown.
+- `participantsReport`: per show `names`; a show with names counts them,
+  the total counts the distinct persons of all counted shows plus the
+  numbers of shows without names (`hosts`), keeps the old sum
+  (`hosts_per_show`), the difference (`hosts_once`), the shows counting
+  with a number only (`unnamed`) and the persons in several shows
+  (`several`).  People involved = hosts + guests on the total; a row still
+  shows its own hosts + guests.  Page: column *Host names*, card *Shows
+  without host names*, list *Hosts in several shows*; CSV: column *Host
+  names*, rows for the added-up sum and the persons in several shows.
+- Analytics → People Involved → **Host Names** (`archiving/people`,
+  `archiving/people-op`, ACL like People Involved): every name with its
+  shows; rename, merge into another name, delete.
+- Templates: `add_show_participants` and `add_show_people` in
+  `FIELDS_TO_CAPTURE` (the number was not captured before); applying a
+  template sets both.  Import / Export (shows): columns `hosts_involved`
+  and `host_names` (";"-separated); the import stores them after the show.
+- Episode dialog (Extras → People Involved): the hint "Hosts of the show"
+  lists the names.
+
+**Not done (BACKLOG).**  Guests with names per episode (would let a host
+of one show who is a guest in another count once, too).
+
+**Tests.**  CLI probe `host_names_probe.php` (49 checks, migration SQL in a
+rolled-back transaction: parsing, save / spelling / refusal, report
+totals and the several list, form row / order / read-only, templates,
+import parse and export, both pages, rename / merge / delete); migration
+baseline test (legacy 0089).
+
+**Risk.**  Low for the broadcast (no playout part).  The show save path is
+touched only after the show is stored, inside the existing try/catch.
+Migration additive; rollback `git revert`, the tables can stay.

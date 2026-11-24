@@ -122,6 +122,8 @@ Sie eine Datei mit Passwörtern nach dem Import.
 | `content`, `content_repeat` | Name einer Playlist als **Autoloading-Playlist** der Sendung, und ob sie bis zur vollen Sendung wiederholt wird — siehe [Autoloading-Playlisten](./AUTOLOADING_PLAYLISTS.md). Eine Playlist kann Titel, Smart Blocks, Webstreams und Line-In-Eingänge enthalten, damit wird jede Episode der Sendung automatisch befüllt. |
 | `repeat_of` | Name einer vorhandenen Sendung, deren zuletzt gesendeter Inhalt diese Sendung kurz vor dem Start befüllt (**Wiederholung von Sendung**, seit 2026-10-18); leer = keine. Ein unbekannter Name wird als Hinweis gemeldet, die Sendung ohne ihn importiert. |
 | `own_production` | yes/no - Eigenproduktion des Senders; die gesendeten Minuten zählen in Analytics → Sendeminuten, ihre Teilnehmenden in Analytics → Teilnehmende (seit 2026-11-03). |
+| `hosts_involved` | Anzahl der Moderierenden in jeder Episode, 0-999; leer = kein Wert (seit 2026-11-24). |
+| `host_names` | Namen der Moderierenden, getrennt mit `;` (seit 2026-11-24); ein Name, der schon unter Analytics → Teilnehmende → Host Names steht, ist dieselbe Person.  Mit Namen zählt deren Anzahl. |
 | `show_type` | Bezeichnung oder Code eines Show-Typs (Settings → Show-Typen, seit 2026-11-16); leer = keiner; ein unbekannter Wert wird als Fehler der Zeile gemeldet. |
 | `intro_playlist`, `outro_playlist` | Playlist-Namen; leer = Stationsvorgaben |
 | `rastatime_auth`, `custom_auth`, `custom_username` | Live-DJ-Authentifizierung wie im Dialog |

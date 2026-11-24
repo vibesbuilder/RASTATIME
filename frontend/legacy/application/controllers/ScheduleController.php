@@ -1130,6 +1130,10 @@ class ScheduleController extends Zend_Controller_Action
             if (array_key_exists('add_show_participants', $data)) {
                 Application_Service_ArchivingService::saveParticipants((int) $showId, $data['add_show_participants']);
             }
+            // RASTATIME 2026-11-24 - host names; with names, "Hosts involved" becomes their count
+            if (array_key_exists('add_show_people', $data)) {
+                Application_Service_ArchivingService::saveShowPeople((int) $showId, $data['add_show_people']);
+            }
             if (Application_Service_ArchivingService::sectionPosted($data)) {
                 Application_Service_ArchivingService::saveShow((int) $showId, $data);
             }

@@ -224,7 +224,7 @@ queda fuera hasta que se vuelva a marcar; los programas cuyo tipo cuenta
 como repetición (desde el 2026-11-16; antes *Repeat of*) aparecen en la
 lista, pero no cuentan nada.
 **Only shows without a value** (solo programas sin valor) y **Download
-CSV** (descargar CSV) ayudan con el informe anual.  Los detalles están
+CSV** (descargar CSV) ayudan con el informe anual.  Desde el 2026-11-24 los programas pueden llevar los **Host names** (nombres de los presentadores; Edit Show → What): una persona con nombre cuenta una vez, sin importar cuántos programas presente; **Host Names** en la página los muestra, les cambia el nombre y los combina.  Los detalles están
 en [Archivo](./ARCHIVING.md) § 6.
 
 Program Managers y Admins abren esta página.

@@ -276,6 +276,7 @@ Since 2026-11-07 the count follows the people, not the episodes:
 * **Hosts involved** (Edit Show → What, right below **Own production**)
   are the people who are the same in every episode.  They count **once
   per show and year**, however many episodes aired.
+* **Host names** (since 2026-11-24, right below **Own production**) name these hosts.  A person whose name is entered counts **once per year**, even if they host several shows; a show with names counts their number, a show without names its *Hosts involved*.
 * **Guests involved** (Extras → People Involved in the calendar) are the guests of
   one episode.  They count **in every episode** and add up.
 * **People involved** = hosts + guests.
@@ -300,14 +301,16 @@ with the original.  They never appear under *Shows without a value*.
 |---|---|
 | **Own productions aired** (total) | Own productions with at least one aired episode in the year, repeats included. |
 | **Episodes aired** | Episodes of the show in the year. |
-| **Hosts involved** | The show's hosts, once per year; the total adds the hosts of all shows. |
+| **Hosts involved** | The show's hosts, once per year: the number of its names, or its number when it has no names.  The total counts every named person once, plus the numbers of the shows without names. |
+| **Host names** | The names of the show's hosts (since 2026-11-24). |
 | **Guests involved** | The guests of all aired episodes of the show added up. |
 | **People involved** | Hosts + guests; the total is the figure for the statistics. |
 | **Shows without a value** (total) | Own productions (no repeats) without *Hosts involved*; shown in orange while there are any. |
+| **Shows without host names** (total) | Own productions that still count with a number only - a host of such a show who also hosts another show is counted twice. |
 
-A person in several shows counts once per show; a guest who comes back
-counts in every episode.  The figures are numbers, not names - RASTATIME
-cannot tell that two shows share a host.  The producers are not counted.
+A person whose name is entered counts once, however many shows they host; the page lists them under **Hosts in several shows (counted once)** and says what the hosts added up per show would be.  Shows without names still count once per show - RASTATIME cannot tell that two of them share a host.  A guest who comes back counts in every episode.  The producers are not counted.  The CSV has the names and the persons in several shows.
+
+**Host Names** (button on the page, since 2026-11-24) lists every name with its shows.  **Edit** opens a form: rename the name in every show; **Same person as** + **Merge** joins two spellings of one person (the shows of the first get the second); **Delete** removes the name from every show - a show left without names has no *Hosts involved* value then and appears under *Only shows without a value*.  Two different people with the same name are told apart in the name, e.g. "Alex Example (B)".
 
 Program Managers and Admins open this page.
 

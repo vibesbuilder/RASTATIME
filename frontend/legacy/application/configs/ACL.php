@@ -93,7 +93,8 @@ $ccAcl->allow('G', 'index')
     ->allow('P', 'rest:podcast-episodes')
     ->allow('P', 'podcast')
     ->allow('P', 'archiving', ['settings', 'editors', 'participants', 'participants-csv',
-        'status', 'status-data', 'status-op', 'status-csv'])  // RASTATIME 2026-11-03 — archiving; 2026-11-04 archive status
+        'status', 'status-data', 'status-op', 'status-csv',
+        'people', 'people-op'])  // RASTATIME 2026-11-03 — archiving; 2026-11-04 archive status; 2026-11-24 host names
     ->allow('A', 'archiving')  // RASTATIME 2026-11-03 — CBA accounts: admins only
     ->allow('P', 'yearlyreport')  // RASTATIME 2026-11-03 — programme minutes: Program Managers and Admins
     ->allow('A', 'alerts')  // RASTATIME 2026-11-03 — alerts: admins only

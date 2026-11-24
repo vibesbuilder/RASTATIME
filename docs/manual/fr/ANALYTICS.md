@@ -228,7 +228,7 @@ case garde son nombre mais est laissée de côté jusqu'à ce qu'elle soit
 de nouveau cochée ; les émissions dont le type compte comme
 rediffusion (depuis le 2026-11-16 ; avant *Repeat of*) apparaissent dans
 la liste mais ne comptent rien.  **Only shows without a value** et **Download CSV** aident pour
-la déclaration annuelle.  Les détails se trouvent dans
+la déclaration annuelle.  Depuis le 2026-11-24, les émissions peuvent porter les **Host names** (noms des animateurs ; Edit Show → What) : une personne avec un nom compte une fois, quel que soit le nombre d'émissions qu'elle anime ; **Host Names** sur la page les liste, les renomme et les fusionne.  Les détails se trouvent dans
 [Archivage](./ARCHIVING.md) § 6.
 
 Les Program Managers et les Admins ouvrent cette page.

@@ -303,6 +303,7 @@ Depuis le 2026-11-07, le décompte suit les personnes, pas les épisodes :
   sous **Production propre**) sont les personnes présentes dans chaque
   épisode.  Ils comptent **une fois par émission et par an**, quel que
   soit le nombre d'épisodes diffusés.
+* Les **Noms des animateurs** (Host names ; depuis le 2026-11-24, juste sous **Production propre**) nomment ces animateurs.  Une personne dont le nom est saisi compte **une fois par an**, même si elle anime plusieurs émissions ; une émission avec des noms compte leur nombre, une émission sans noms ses *Animateurs*.
 * Les **Invités** (Guests involved ; Compléments → Participants dans
   le calendrier) sont les invités d'un épisode.  Ils comptent **dans
   chaque épisode** et s'additionnent.
@@ -331,16 +332,16 @@ Elles n'apparaissent jamais sous *Émissions sans valeur*.
 |---|---|
 | **Productions propres diffusées** (total) | Productions propres avec au moins un épisode diffusé dans l'année, rediffusions comprises. |
 | **Épisodes diffusés** | Épisodes de l'émission dans l'année. |
-| **Animateurs** | Les animateurs de l'émission, une fois par an ; le total additionne les animateurs de toutes les émissions. |
+| **Animateurs** | Les animateurs de l'émission, une fois par an : le nombre de ses noms, ou son nombre si elle n'a pas de noms.  Le total compte chaque personne nommée une fois, plus les nombres des émissions sans noms. |
+| **Noms des animateurs** | Les noms des animateurs de l'émission (depuis le 2026-11-24). |
 | **Invités** | Les invités de tous les épisodes diffusés de l'émission additionnés. |
 | **Participants** | Animateurs + invités ; le total est le chiffre pour les statistiques. |
 | **Émissions sans valeur** (total) | Productions propres (sans rediffusions) sans *Animateurs* ; en orange tant qu'il y en a. |
+| **Émissions sans noms** (total) | Productions propres qui comptent encore avec un nombre seulement - l'animateur d'une telle émission qui anime aussi une autre émission est compté deux fois. |
 
-Une personne présente dans plusieurs émissions compte une fois par
-émission ; un invité qui revient compte dans chaque épisode.  Les
-chiffres sont des nombres, pas des noms - RASTATIME ne peut pas savoir
-que deux émissions partagent un animateur.  Les producteurs ne sont pas
-comptés.
+Une personne dont le nom est saisi compte une fois, quel que soit le nombre d'émissions qu'elle anime ; la page la liste sous **Animateurs dans plusieurs émissions (comptés une fois)** et indique ce que donnerait l'addition par émission.  Les émissions sans noms comptent toujours une fois par émission - RASTATIME ne peut pas savoir que deux d'entre elles partagent un animateur.  Un invité qui revient compte dans chaque épisode.  Les producteurs ne sont pas comptés.  Le CSV contient les noms et les personnes présentes dans plusieurs émissions.
+
+**Noms des animateurs** (bouton sur la page, en anglais *Host Names*, depuis le 2026-11-24) liste chaque nom avec ses émissions.  **Edition** ouvre un formulaire : renommer le nom dans toutes les émissions ; **Même personne que** + **Fusionner** réunit deux orthographes d'une même personne (les émissions de la première reçoivent la seconde) ; **Supprimer** retire le nom de toutes les émissions - une émission qui n'a plus de noms n'a alors plus de valeur *Animateurs* et apparaît sous *Seulement les émissions sans valeur*.  Deux personnes différentes portant le même nom se distinguent dans le nom, par exemple "Alex Example (B)".
 
 Les Program Managers et les Admins ouvrent cette page.
 

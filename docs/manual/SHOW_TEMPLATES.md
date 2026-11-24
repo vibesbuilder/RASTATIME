@@ -137,6 +137,7 @@ These fields are saved in the template's JSONB snapshot:
 | **Recording** | Record enabled (yes/no) |
 | **Autoloading playlist** | Playlist ID, intro playlist ID, outro playlist ID, "repeat until full" flag |
 | **Auth** | Host usernames (NOT the per-show live-stream password — see below) |
+| **People Involved** | Own production, Hosts involved and Host names (the last two since 2026-11-24) |
 | **Show DJ source** | Per-show live-stream allowed (yes/no) |
 
 ### What a template does NOT capture

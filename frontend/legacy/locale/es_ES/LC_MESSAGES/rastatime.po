@@ -9014,3 +9014,143 @@ msgstr "Comentario guardado para %s."
 #: RASTATIME 2026-11-23 allowed address comment
 msgid "Saving the comment failed."
 msgstr "No se pudo guardar el comentario."
+
+#: RASTATIME 2026-11-24 host names
+msgid "The host names could not be read."
+msgstr "No se pudieron leer los nombres de los presentadores."
+
+#: RASTATIME 2026-11-24 host names
+msgid "A host name may have at most %d characters."
+msgstr "Un nombre puede tener como máximo %d caracteres."
+
+#: RASTATIME 2026-11-24 host names
+msgid "A show can have at most %d host names."
+msgstr "Un programa puede tener como máximo %d nombres."
+
+#: RASTATIME 2026-11-24 host names
+msgid "A name cannot contain \";\"."
+msgstr "Un nombre no puede contener \";\"."
+
+#: RASTATIME 2026-11-24 host names
+msgid "This person does not exist any more."
+msgstr "Esta persona ya no existe."
+
+#: RASTATIME 2026-11-24 host names
+msgid "\"%s\" is already in the list - merge the two instead."
+msgstr "\"%s\" ya está en la lista; combine los dos en su lugar."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Please choose another person."
+msgstr "Elija otra persona."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Host names:"
+msgstr "Nombres de los presentadores:"
+
+#: RASTATIME 2026-11-24 host names
+msgid "The names of the hosts who take part in every episode. Pick a name from the suggestions or type a new one and press Enter. A person who hosts several shows then counts only once in Analytics → People Involved. With names, \"Hosts involved\" is their number. The list of all names: Analytics → People Involved → Host Names."
+msgstr "Los nombres de los presentadores que participan en cada episodio. Elija un nombre de las sugerencias o escriba uno nuevo y pulse Intro. Una persona que presenta varios programas cuenta entonces una sola vez en Estadísticas → Participantes. Con nombres, \"Presentadores\" es su número. La lista de todos los nombres: Estadísticas → Participantes → Nombres de los presentadores."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Please check the host names: at most %d names of up to %d characters."
+msgstr "Compruebe los nombres: como máximo %d nombres de hasta %d caracteres."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Add a name"
+msgstr "Añadir un nombre"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Name saved."
+msgstr "Nombre guardado."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Names merged."
+msgstr "Nombres combinados."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Name deleted."
+msgstr "Nombre eliminado."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Host names"
+msgstr "Nombres de los presentadores"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Hosts added up per show"
+msgstr "Presentadores sumados por programa"
+
+#: RASTATIME 2026-11-24 host names
+msgid "In several shows, counted once"
+msgstr "En varios programas, contado una vez"
+
+#: RASTATIME 2026-11-24 host names
+msgid "hosts_involved must be a whole number between 0 and 999"
+msgstr "hosts_involved debe ser un número entero entre 0 y 999"
+
+#: RASTATIME 2026-11-24 host names
+msgid "hosts not saved"
+msgstr "presentadores no guardados"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Host Names"
+msgstr "Nombres de los presentadores"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Every host name used in a show (Edit Show → What → \"Host names\"). One name stands for one person: a person who hosts several shows counts once in People Involved. Two spellings of the same person are merged here; two different people with the same name are told apart in the name, e.g. with a letter in brackets."
+msgstr "Todos los nombres de presentadores introducidos en un programa (Editar Show → What → \"Nombres de los presentadores\"). Un nombre corresponde a una persona: quien presenta varios programas cuenta una vez en Participantes. Dos grafías de la misma persona se combinan aquí; dos personas distintas con el mismo nombre se distinguen en el nombre, por ejemplo con una letra entre paréntesis."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Back to People Involved"
+msgstr "Volver a Participantes"
+
+#: RASTATIME 2026-11-24 host names
+msgid "The table of host names is missing - run the database migration 0089 first."
+msgstr "Falta la tabla de nombres; ejecute primero la migración de base de datos 0089."
+
+#: RASTATIME 2026-11-24 host names
+msgid "No host names yet. They are added in Edit Show → What → \"Host names\"."
+msgstr "Todavía no hay nombres. Se introducen en Editar Show → What → \"Nombres de los presentadores\"."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Edit name"
+msgstr "Editar nombre"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Same person as"
+msgstr "Misma persona que"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Merge"
+msgstr "Combinar"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Merge \"%1$s\" into \"%2$s\"? Its shows get \"%2$s\" instead."
+msgstr "¿Combinar \"%1$s\" con \"%2$s\"? Sus programas reciben \"%2$s\" en su lugar."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Delete \"%s\"? The name is removed from every show."
+msgstr "¿Eliminar \"%s\"? El nombre se quita de todos los programas."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Please choose the person to merge into."
+msgstr "Elija la persona con la que combinar."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Hosts involved (each person once)"
+msgstr "Presentadores (cada persona una vez)"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Shows without host names"
+msgstr "Programas sin nombres"
+
+#: RASTATIME 2026-11-24 host names
+msgid "People involved = hosts + guests. A host counts once per year, however many episodes aired; a guest counts in every episode with guests. A host whose name is entered (Edit Show → What → \"Host names\") counts once even in several shows; a show without names counts with its number, once per show."
+msgstr "Participantes = presentadores + invitados. Un presentador cuenta una vez al año, sin importar cuántos episodios se emitieron; un invitado cuenta en cada episodio con invitados. Un presentador cuyo nombre está introducido (Editar Show → What → \"Nombres de los presentadores\") cuenta una sola vez aunque esté en varios programas; un programa sin nombres cuenta con su número, una vez por programa."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Added up per show there would be %d hosts."
+msgstr "Sumados por programa serían %d presentadores."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Hosts in several shows (counted once)"
+msgstr "Presentadores en varios programas (contados una vez)"

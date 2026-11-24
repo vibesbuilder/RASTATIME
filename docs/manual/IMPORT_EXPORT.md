@@ -115,6 +115,8 @@ import.
 | `content`, `content_repeat` | the name of a playlist used as the show's **autoloading playlist**, and whether it repeats until the show is full — see [Autoloading Playlists](./AUTOLOADING_PLAYLISTS.md). A playlist can hold tracks, smart blocks, webstreams and line-in inputs, so this fills every episode of the show automatically. |
 | `repeat_of` | name of an existing show whose last aired content fills this show shortly before it starts (**Repeat of show**, since 2026-10-18); empty = none. An unknown name is reported as a note and the show is imported without it. |
 | `own_production` | yes/no - the station's own production; the show's aired minutes count in Analytics → Programme Minutes, its people in Analytics → People Involved (since 2026-11-03). |
+| `hosts_involved` | number of hosts in every episode, 0-999; empty = no value (since 2026-11-24). |
+| `host_names` | names of the hosts, separated by `;` (since 2026-11-24); a name that is already in Analytics → People Involved → Host Names is the same person.  With names, their number counts. |
 | `show_type` | label or code of a show type (Settings → Show Types, since 2026-11-16); empty = none; an unknown value is reported as an error of the row. |
 | `intro_playlist`, `outro_playlist` | playlist names; empty = the station defaults |
 | `rastatime_auth`, `custom_auth`, `custom_username` | live DJ authentication as in the dialog |

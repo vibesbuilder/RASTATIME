@@ -389,6 +389,9 @@ function setAddShowEvents(form) {
     });
   syncArchiveDescriptionHint(form);
 
+  // RASTATIME 2026-11-24 - host names with suggestions (before the toggle below)
+  setupHostNames(form);
+
   // RASTATIME 2026-11-04 - "Number of involved people" only for own productions
   form.find("#add_show_own_production").on("change", function () {
     syncOwnProduction(form);
@@ -891,6 +894,10 @@ function setAddShowEvents(form) {
       startTimeDisabled = true;
     }
 
+    // RASTATIME 2026-11-24 - a host name still in the input counts too
+    if (form.data("rtPeopleFlush")) {
+      form.data("rtPeopleFlush")();
+    }
     var data = $("form").serializeArray();
     // We need to notify the application if date and time were disabled
     data.push({ name: "start_date_disabled", value: startDateDisabled });
@@ -1287,6 +1294,9 @@ function setupShowTemplateControls(form) {
         event.stopPropagation();
       }
       setStatus("");
+      if (form.data("rtPeopleFlush")) {
+        form.data("rtPeopleFlush")(); // RASTATIME 2026-11-24
+      }
       var data = $("#add-show-form").serializeArray();
       var hosts = $("#add_show_hosts-element input")
         .map(function () {
@@ -1408,6 +1418,11 @@ function applyShowTemplate(form, td) {
   // record=false template).
   setCheck("add_show_record", td.add_show_record);
   setCheck("add_show_own_production", td.add_show_own_production); // RASTATIME 2026-11-03
+  // RASTATIME 2026-11-24 - hosts involved and host names (older templates have neither)
+  setVal("add_show_participants", td.add_show_participants);
+  if (td.add_show_people !== undefined && form.data("rtPeopleSet")) {
+    form.data("rtPeopleSet")(td.add_show_people);
+  }
 
   // Autoloading Playlist
   setCheck("add_show_has_autoplaylist", td.add_show_has_autoplaylist);
@@ -1570,6 +1585,159 @@ function syncOwnProduction(form) {
   form
     .find("#add_show_participants-label, #add_show_participants-element")
     .toggle(own || refused);
+  // RASTATIME 2026-11-24 - the host names go with them
+  var refusedNames = form.find("#add_show_people-element .errors").length > 0;
+  form
+    .find("#add_show_people-label, #add_show_people-element")
+    .toggle(own || refusedNames);
+}
+
+/**
+ * RASTATIME 2026-11-24 - "Host names" (Edit Show -> What, §23.133).  The
+ * hidden field #add_show_people holds the names as a JSON list; they are
+ * drawn as chips with a remove button.  The input suggests the names of
+ * the register (data-rt-people) and adds the picked or typed name on
+ * Enter, ";" or when it loses the focus; a name already in the register is
+ * taken in its stored spelling.  With names, "Hosts involved" shows their
+ * number and is read-only (the server stores the same count).  Templates
+ * set the list through form.data("rtPeopleSet").
+ */
+function setupHostNames(form) {
+  var $val = form.find("#add_show_people");
+  if ($val.length === 0) {
+    return;
+  }
+  var $list = form.find("#add_show_people-element .rt-people-list");
+  var $in = form.find("#add_show_people_input");
+  var $count = form.find("#add_show_participants");
+  var readonly = $val.is("[data-readonly]");
+  var countLocked = !!$count.prop("readonly"); // Edit Episode: read-only anyway
+  var all = [];
+  try {
+    all = JSON.parse($val.attr("data-rt-people") || "[]");
+  } catch (e) {
+    all = [];
+  }
+
+  function clean(name) {
+    return $.trim(String(name).replace(/\s+/g, " "));
+  }
+  function names() {
+    try {
+      var v = JSON.parse($val.val() || "[]");
+      return $.isArray(v) ? v : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function indexOf(list, name) {
+    var key = name.toLowerCase();
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i]).toLowerCase() === key) {
+        return i;
+      }
+    }
+    return -1;
+  }
+  function store(list) {
+    $val.val(JSON.stringify(list));
+    render();
+  }
+  function render() {
+    var list = names();
+    $list.empty();
+    $.each(list, function (i, name) {
+      var $chip = $("<span>").addClass("rt-people-chip").text(name);
+      if (!readonly) {
+        $("<button>")
+          .attr({ type: "button", title: $.i18n._("Remove") })
+          .addClass("rt-people-remove")
+          .text("\u00d7")
+          .on("click", function (ev) {
+            ev.preventDefault();
+            var now = names();
+            now.splice(i, 1);
+            store(now);
+          })
+          .appendTo($chip);
+      }
+      $list.append($chip);
+    });
+    if (!countLocked) {
+      if (list.length > 0) {
+        $count.val(list.length).prop("readonly", true).addClass("rt-people-counted");
+      } else {
+        $count.prop("readonly", false).removeClass("rt-people-counted");
+      }
+    }
+  }
+  function add(raw) {
+    var name = clean(raw);
+    if (name === "") {
+      return;
+    }
+    var known = indexOf(all, name);
+    if (known !== -1) {
+      name = all[known];
+    }
+    var list = names();
+    if (indexOf(list, name) === -1) {
+      list.push(name);
+      store(list);
+    }
+  }
+
+  form.data("rtPeopleSet", function (value) {
+    var list = value;
+    if (typeof value === "string") {
+      try {
+        list = JSON.parse(value || "[]");
+      } catch (e) {
+        list = [];
+      }
+    }
+    store($.isArray(list) ? list : []);
+  });
+
+  if (!readonly && $in.length) {
+    $in.autocomplete({
+      minLength: 1,
+      delay: 0,
+      source: function (req, resp) {
+        var term = req.term.toLowerCase(), chosen = names(), out = [];
+        $.each(all, function (i, name) {
+          if (out.length < 15 && name.toLowerCase().indexOf(term) !== -1 && indexOf(chosen, name) === -1) {
+            out.push(name);
+          }
+        });
+        resp(out);
+      },
+      select: function (ev, ui) {
+        add(ui.item.value);
+        $in.val("");
+        return false;
+      },
+    });
+    $in.on("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === ";") {
+        ev.preventDefault();
+        add($in.val());
+        $in.val("");
+        $in.autocomplete("close");
+      }
+    });
+    // a typed name that was not confirmed still counts when the field is
+    // left (a click into the suggestions keeps the focus) or the show saved
+    var flush = function () {
+      if ($.trim($in.val()) !== "") {
+        add($in.val());
+        $in.val("");
+      }
+    };
+    form.data("rtPeopleFlush", flush);
+    $in.on("blur", flush);
+  }
+  render();
 }
 
 /**

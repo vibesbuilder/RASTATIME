@@ -151,6 +151,7 @@ modèle :
 | **Enregistrement** | Enregistrement activé (oui/non) |
 | **Autoloading playlist** | ID de playlist, ID de playlist intro, ID de playlist outro, drapeau "répéter jusqu'à plein" |
 | **Auth** | Noms d'utilisateur d'animateur (PAS le mot de passe live-stream par émission — voir ci-dessous) |
+| **Participants** | Production propre, animateurs et noms des animateurs (les deux derniers depuis le 2026-11-24) |
 | **Source Show DJ** | Live-stream par émission autorisé (oui/non) |
 
 ### Ce qu'un modèle ne capture PAS

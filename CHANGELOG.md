@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Namen der Moderierenden je Sendung (2026-11-24, Go des Operators: Option B, Templates und
+  Export ja, Gäste ins Backlog)** - „Hosts involved“ war eine Zahl je Sendung, darum zählte eine
+  Person, die zwei Eigenproduktionen moderiert, unter Analytics → People Involved doppelt.  Edit
+  Show → What hat jetzt unter „Own production“ das Feld **Host names**: Namen als Chips, Vorschläge
+  aus einem gemeinsamen Personen-Verzeichnis (Migration 0089, `cc_person` + `cc_show_person`).  Mit
+  Namen ist „Hosts involved“ deren Anzahl (nur lesbar), ohne Namen gilt die Zahl wie bisher.  People
+  Involved zählt jede Person mit Namen einmal im Jahr, egal in wie vielen Sendungen; Spalte „Host
+  names“, Kachel „Shows without host names“, Liste „Hosts in several shows“, CSV mit Namen.  Neue
+  Seite **People Involved → Host Names** zum Umbenennen, Zusammenführen und Löschen.  Templates
+  speichern Namen und Zahl (die Zahl fehlte bisher), Import/Export (Shows) hat die Spalten
+  `hosts_involved` und `host_names`.  Manual CALENDAR, ARCHIVING, ANALYTICS, IMPORT_EXPORT ×4,
+  ARCHITECTURE 0.164 (§23.133).  Wirksam nach Migration 0089 und Apache-Neustart (Übersetzungen).
+
 ## [1.10.0] - 2026-11-24
 
 ### Added

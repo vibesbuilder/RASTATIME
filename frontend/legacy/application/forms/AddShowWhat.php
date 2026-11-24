@@ -96,6 +96,29 @@ class Application_Form_AddShowWhat extends Zend_Form_SubForm
             'required' => false,
             'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-tip-row.phtml', 'class' => 'rt-own-production']]],
         ]);
+        // RASTATIME 2026-11-24 (operator Go option B, §23.133) - the names of
+        // the hosts out of one register (cc_person, migration 0089), with
+        // suggestions; a person in several shows counts once per year.  Posted
+        // as a JSON list (add-show.js setupHostNames builds the name chips);
+        // with names, "Hosts involved" below is their count.  Shows once the
+        // tables exist.
+        if (Application_Service_ArchivingService::peopleReady()) {
+            $this->addElement('text', 'add_show_people', [
+                'label' => _('Host names:'),
+                'description' => _('The names of the hosts who take part in every episode. Pick a name from the suggestions or type a new one and press Enter. A person who hosts several shows then counts only once in Analytics → People Involved. With names, "Hosts involved" is their number. The list of all names: Analytics → People Involved → Host Names.'),
+                'required' => false,
+                'validators' => [['Callback', false, [
+                    'callback' => static fn ($v) => Application_Service_ArchivingService::parseNames($v)[1] === null,
+                    'messages' => [Zend_Validate_Callback::INVALID_VALUE => sprintf(
+                        _('Please check the host names: at most %d names of up to %d characters.'),
+                        Application_Service_ArchivingService::SHOW_PEOPLE_MAX,
+                        Application_Service_ArchivingService::PERSON_NAME_MAX
+                    )],
+                ]]],
+                'data-rt-people' => json_encode(Application_Service_ArchivingService::allPeopleNames(), JSON_UNESCAPED_UNICODE),
+                'decorators' => [['ViewScript', ['viewScript' => 'form/add-show-people-row.phtml', 'class' => 'rt-people-row']]],
+            ]);
+        }
         // 2026-11-07 (operator): "Hosts involved" - the hosts who are the
         // same in every episode, counted once per show and year; the guests
         // of a single episode are added on top (Archive Online).

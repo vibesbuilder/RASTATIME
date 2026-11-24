@@ -295,6 +295,7 @@ Desde el 2026-11-07 el recuento sigue a las personas, no a los episodios:
   debajo de **Producción propia**) son las personas que están en cada
   episodio.  Cuentan **una vez por programa y año**, sin importar
   cuántos episodios se emitieron.
+* Los **Nombres de los presentadores** (Host names; desde el 2026-11-24, justo debajo de **Producción propia**) nombran a estos presentadores.  Una persona cuyo nombre está introducido cuenta **una vez al año**, aunque presente varios programas; un programa con nombres cuenta su número, uno sin nombres sus *Presentadores*.
 * Los **Invitados** (Guests involved; Extras → Participantes en el
   calendario) son los invitados de un episodio.  Cuentan **en cada
   episodio** y se suman.
@@ -322,15 +323,16 @@ aparecen en *Programas sin valor*.
 |---|---|
 | **Producciones propias emitidas** (total) | Producciones propias con al menos un episodio emitido en el año, repeticiones incluidas. |
 | **Episodios emitidos** | Episodios del programa en el año. |
-| **Presentadores** | Los presentadores del programa, una vez al año; el total suma los presentadores de todos los programas. |
+| **Presentadores** | Los presentadores del programa, una vez al año: el número de sus nombres, o su número si no tiene nombres.  El total cuenta cada persona con nombre una vez, más los números de los programas sin nombres. |
+| **Nombres de los presentadores** | Los nombres de los presentadores del programa (desde el 2026-11-24). |
 | **Invitados** | Los invitados de todos los episodios emitidos del programa sumados. |
 | **Participantes** | Presentadores + invitados; el total es la cifra para la estadística. |
 | **Programas sin valor** (total) | Producciones propias (sin repeticiones) sin *Presentadores*; en naranja mientras haya alguno. |
+| **Programas sin nombres** (total) | Producciones propias que aún cuentan solo con un número: quien presenta un programa así y otro más cuenta dos veces. |
 
-Una persona en varios programas cuenta una vez por programa; un
-invitado que vuelve cuenta en cada episodio.  Las cifras son números, no
-nombres: RASTATIME no puede saber que dos programas comparten un
-presentador.  Los productores no se cuentan.
+Una persona cuyo nombre está introducido cuenta una vez, sin importar cuántos programas presente; la página la muestra en **Presentadores en varios programas (contados una vez)** e indica cuántos serían sumados por programa.  Los programas sin nombres siguen contando una vez por programa: RASTATIME no puede saber que dos de ellos comparten un presentador.  Un invitado que vuelve cuenta en cada episodio.  Los productores no se cuentan.  El CSV contiene los nombres y las personas en varios programas.
+
+**Nombres de los presentadores** (botón en la página, en inglés *Host Names*, desde el 2026-11-24) muestra cada nombre con sus programas.  **Editar** abre un formulario: cambiar el nombre en todos los programas; **Misma persona que** + **Combinar** une dos grafías de una persona (los programas de la primera reciben la segunda); **Eliminar** quita el nombre de todos los programas: un programa que se queda sin nombres no tiene entonces valor en *Presentadores* y aparece en *Solo programas sin valor*.  Dos personas distintas con el mismo nombre se distinguen en el nombre, por ejemplo "Alex Example (B)".
 
 Los Program Managers y los Admins abren esta página.
 

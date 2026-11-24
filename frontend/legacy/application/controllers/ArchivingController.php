@@ -10,7 +10,9 @@
  *                                 and admins) and archiving/accounts (admins)
  *   Analytics → People Involved (archiving/participants, .../participants-csv):
  *                                 people involved per own production and year
- *                                 (own menu entry since 2026-11-04)
+ *                                 (own menu entry since 2026-11-04); its page
+ *                                 Host Names (archiving/people, .../people-op,
+ *                                 since 2026-11-24): rename, merge, delete
  *   Analytics → Archive Status  (archiving/status, .../status-data, .../status-csv,
  *                                 .../status-op): uploads running and waiting,
  *                                 what the automatic archiving has ahead, open
@@ -45,6 +47,9 @@ class ArchivingController extends Zend_Controller_Action
             'account-deleted' => _('Account deleted.'),
             'bandwidth' => _('Upload limit saved.'),
             'auto-delay' => _('Waiting time saved.'),
+            'person-renamed' => _('Name saved.'),
+            'person-merged' => _('Names merged.'),
+            'person-deleted' => _('Name deleted.'),
         ];
 
         return $messages[(string) $this->getRequest()->getParam('done', '')] ?? null;
@@ -226,15 +231,22 @@ class ArchivingController extends Zend_Controller_Action
         fwrite($out, "\xEF\xBB\xBF");
         // since 2026-11-07: hosts once per show and year + guests per episode = people involved;
         // a repeat show counts nothing (its hosts and guests stay empty)
-        fputcsv($out, [_('Show name'), _('Episodes aired'), _('Hosts involved'), _('Guests involved'),
+        // since 2026-11-24: the host names; the total counts every named person once
+        fputcsv($out, [_('Show name'), _('Episodes aired'), _('Hosts involved'), _('Host names'), _('Guests involved'),
             _('People involved'), _('Repeat'), _('Producer')], ',', '"', '');
         foreach ($report['rows'] as $r) {
-            fputcsv($out, [$r['name'], $r['episodes'], $r['is_repeat'] ? '' : ($r['hosts'] ?? ''),
+            fputcsv($out, [$r['name'], $r['episodes'], $r['is_repeat'] ? '' : ($r['hosts'] ?? ''), implode('; ', $r['names']),
                 $r['is_repeat'] ? '' : $r['guests'], $r['people'], $r['is_repeat'] ? _('yes') : '', $r['team']], ',', '"', '');
         }
         $t = $report['totals'];
         // the teams are not counted (operator 2026-11-03: only the people involved)
-        fputcsv($out, [_('Total'), $t['episodes'], $t['hosts'], $t['guests'], $t['people'], '', ''], ',', '"', '');
+        fputcsv($out, [_('Total'), $t['episodes'], $t['hosts'], '', $t['guests'], $t['people'], '', ''], ',', '"', '');
+        if ($t['hosts_once'] > 0) {
+            fputcsv($out, [_('Hosts added up per show'), '', $t['hosts_per_show'], '', '', '', '', ''], ',', '"', '');
+        }
+        foreach ($report['several'] as $p) {
+            fputcsv($out, [_('In several shows, counted once'), '', '', $p['name'] . ': ' . implode(', ', $p['shows']), '', '', '', ''], ',', '"', '');
+        }
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
@@ -242,6 +254,60 @@ class ArchivingController extends Zend_Controller_Action
             ->setHeader('Content-Type', 'text/csv; charset=utf-8', true)
             ->setHeader('Content-Disposition', 'attachment; filename="participants-' . $year . '.csv"', true)
             ->setBody($csv);
+    }
+
+    // ------------------------------------------------------------------
+    // Analytics → People Involved → Host Names (operator Go 2026-11-24)
+    // ------------------------------------------------------------------
+
+    /** The register of host names (migration 0089): every name with its shows. */
+    public function peopleAction()
+    {
+        $this->renderPeople();
+    }
+
+    /** $form carries a failed rename / merge / delete back from peopleOpAction. */
+    private function renderPeople(array $form = []): void
+    {
+        Zend_Layout::getMvcInstance()->assign('parent_page', 'Analytics');
+        $this->view->ready = Application_Service_ArchivingService::peopleReady();
+        $this->view->people = Application_Service_ArchivingService::peopleList();
+        $this->view->csrf = $this->csrfToken();
+        $this->view->message = $this->doneMessage();
+        $this->view->error = $form['error'] ?? null;
+        $this->view->edit = $form['edit'] ?? ['id' => 0, 'name' => ''];
+        $this->_helper->viewRenderer->setScriptAction('people');
+    }
+
+    /** Rename, merge or delete a name; a GET goes to the page. */
+    public function peopleOpAction()
+    {
+        $request = $this->getRequest();
+        if (!$request->isPost() || !Application_Service_ArchivingService::peopleReady()) {
+            $this->_redirect('archiving/people');
+
+            return;
+        }
+        // the Acl plugin has checked the CSRF token of every legacy POST
+        $op = (string) $request->getPost('op', 'rename');
+        $id = (int) $request->getPost('id', 0);
+        $name = (string) $request->getPost('name', '');
+        if ($op === 'delete') {
+            $error = Application_Service_ArchivingService::deletePerson($id);
+            $done = 'person-deleted';
+        } elseif ($op === 'merge') {
+            $error = Application_Service_ArchivingService::mergePerson($id, (int) $request->getPost('into', 0));
+            $done = 'person-merged';
+        } else {
+            $error = Application_Service_ArchivingService::renamePerson($id, $name);
+            $done = 'person-renamed';
+        }
+        if ($error === null) {
+            $this->_redirect('archiving/people?done=' . $done);
+
+            return;
+        }
+        $this->renderPeople(['error' => $error, 'edit' => ['id' => $id, 'name' => $name]]);
     }
 
     // ------------------------------------------------------------------

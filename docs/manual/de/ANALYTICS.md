@@ -221,7 +221,7 @@ wieder angekreuzt ist; Sendungen, deren Show-Typ als Wiederholung zählt
 (seit 2026-11-16; vorher *Repeat of*), stehen in der Liste, zählen aber
 nichts.  **Only shows without a
 value** (Nur Sendungen ohne Wert) und **Download CSV** (CSV
-herunterladen) helfen bei der Jahresmeldung.  Die Einzelheiten stehen in
+herunterladen) helfen bei der Jahresmeldung.  Seit 2026-11-24 können die Sendungen die **Host names** (Namen der Moderierenden; Edit Show → What) tragen: Eine Person mit Namen zählt einmal, egal wie viele Sendungen sie moderiert; **Host Names** auf der Seite listet sie, benennt um und führt zusammen.  Die Einzelheiten stehen in
 [Archivierung](./ARCHIVING.md) § 6.
 
 Program Managers und Admins öffnen diese Seite.

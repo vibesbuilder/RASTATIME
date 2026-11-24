@@ -109,6 +109,7 @@ No puede. RASTATIME 2026-05-19 suprime la sección
 | **Grabación** | Grabación habilitada (sí/no) |
 | **Autoloading playlist** | ID de playlist, ID de intro, ID de outro, flag "repetir hasta lleno" |
 | **Auth** | Nombres de usuario de presentador (NO la contraseña live-stream) |
+| **Participantes** | Producción propia, presentadores y nombres de los presentadores (los dos últimos desde 2026-11-24) |
 | **Fuente Show DJ** | Live-stream por-programa permitido |
 
 ### Lo que una plantilla NO captura

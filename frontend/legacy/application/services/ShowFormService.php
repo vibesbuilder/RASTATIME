@@ -176,6 +176,8 @@ class Application_Service_ShowFormService
                 'add_show_own_production' => Application_Service_YearlyReportService::ownProduction($this->ccShow->getDbId()) ? 1 : 0,
                 // RASTATIME 2026-11-04 - moved here from Archiving (operator)
                 'add_show_participants' => Application_Service_ArchivingService::showSettings((int) $this->ccShow->getDbId())['participants'],
+                // RASTATIME 2026-11-24 - host names (migration 0089), a JSON list
+                'add_show_people' => json_encode(Application_Service_ArchivingService::showPeople((int) $this->ccShow->getDbId()), JSON_UNESCAPED_UNICODE),
             ]
         );
     }

@@ -8821,3 +8821,143 @@ msgstr "Kommentar für %s gespeichert."
 #: RASTATIME 2026-11-23 allowed address comment
 msgid "Saving the comment failed."
 msgstr "Der Kommentar konnte nicht gespeichert werden."
+
+#: RASTATIME 2026-11-24 host names
+msgid "The host names could not be read."
+msgstr "Die Namen der Moderierenden konnten nicht gelesen werden."
+
+#: RASTATIME 2026-11-24 host names
+msgid "A host name may have at most %d characters."
+msgstr "Ein Name darf höchstens %d Zeichen haben."
+
+#: RASTATIME 2026-11-24 host names
+msgid "A show can have at most %d host names."
+msgstr "Eine Sendung kann höchstens %d Namen haben."
+
+#: RASTATIME 2026-11-24 host names
+msgid "A name cannot contain \";\"."
+msgstr "Ein Name darf kein \";\" enthalten."
+
+#: RASTATIME 2026-11-24 host names
+msgid "This person does not exist any more."
+msgstr "Diese Person gibt es nicht mehr."
+
+#: RASTATIME 2026-11-24 host names
+msgid "\"%s\" is already in the list - merge the two instead."
+msgstr "\"%s\" steht schon in der Liste - führen Sie die beiden stattdessen zusammen."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Please choose another person."
+msgstr "Bitte eine andere Person wählen."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Host names:"
+msgstr "Namen der Moderierenden:"
+
+#: RASTATIME 2026-11-24 host names
+msgid "The names of the hosts who take part in every episode. Pick a name from the suggestions or type a new one and press Enter. A person who hosts several shows then counts only once in Analytics → People Involved. With names, \"Hosts involved\" is their number. The list of all names: Analytics → People Involved → Host Names."
+msgstr "Die Namen der Moderierenden, die in jeder Episode dabei sind. Einen Namen aus den Vorschlägen wählen oder einen neuen eingeben und Enter drücken. Wer mehrere Sendungen moderiert, zählt dann unter Statistiken → Teilnehmende nur einmal. Mit Namen ist \"Moderierende\" deren Anzahl. Die Liste aller Namen: Statistiken → Teilnehmende → Namen der Moderierenden."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Please check the host names: at most %d names of up to %d characters."
+msgstr "Bitte die Namen prüfen: höchstens %d Namen mit je bis zu %d Zeichen."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Add a name"
+msgstr "Namen hinzufügen"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Name saved."
+msgstr "Name gespeichert."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Names merged."
+msgstr "Namen zusammengeführt."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Name deleted."
+msgstr "Name gelöscht."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Host names"
+msgstr "Namen der Moderierenden"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Hosts added up per show"
+msgstr "Moderierende je Sendung zusammengezählt"
+
+#: RASTATIME 2026-11-24 host names
+msgid "In several shows, counted once"
+msgstr "In mehreren Sendungen, einmal gezählt"
+
+#: RASTATIME 2026-11-24 host names
+msgid "hosts_involved must be a whole number between 0 and 999"
+msgstr "hosts_involved muss eine ganze Zahl zwischen 0 und 999 sein"
+
+#: RASTATIME 2026-11-24 host names
+msgid "hosts not saved"
+msgstr "Moderierende nicht gespeichert"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Host Names"
+msgstr "Namen der Moderierenden"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Every host name used in a show (Edit Show → What → \"Host names\"). One name stands for one person: a person who hosts several shows counts once in People Involved. Two spellings of the same person are merged here; two different people with the same name are told apart in the name, e.g. with a letter in brackets."
+msgstr "Alle Namen von Moderierenden, die in einer Sendung eingetragen sind (Sendung ändern → What → \"Namen der Moderierenden\"). Ein Name steht für eine Person: Wer mehrere Sendungen moderiert, zählt unter Teilnehmende einmal. Zwei Schreibweisen derselben Person werden hier zusammengeführt; zwei verschiedene Personen mit gleichem Namen werden im Namen unterschieden, etwa mit einem Buchstaben in Klammern."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Back to People Involved"
+msgstr "Zurück zu Teilnehmende"
+
+#: RASTATIME 2026-11-24 host names
+msgid "The table of host names is missing - run the database migration 0089 first."
+msgstr "Die Tabelle der Namen fehlt - zuerst die Datenbank-Migration 0089 ausführen."
+
+#: RASTATIME 2026-11-24 host names
+msgid "No host names yet. They are added in Edit Show → What → \"Host names\"."
+msgstr "Noch keine Namen. Sie werden unter Sendung ändern → What → \"Namen der Moderierenden\" eingetragen."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Edit name"
+msgstr "Name ändern"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Same person as"
+msgstr "Dieselbe Person wie"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Merge"
+msgstr "Zusammenführen"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Merge \"%1$s\" into \"%2$s\"? Its shows get \"%2$s\" instead."
+msgstr "\"%1$s\" mit \"%2$s\" zusammenführen? Seine Sendungen bekommen stattdessen \"%2$s\"."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Delete \"%s\"? The name is removed from every show."
+msgstr "\"%s\" löschen? Der Name wird aus allen Sendungen entfernt."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Please choose the person to merge into."
+msgstr "Bitte die Person wählen, mit der zusammengeführt wird."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Hosts involved (each person once)"
+msgstr "Moderierende (jede Person einmal)"
+
+#: RASTATIME 2026-11-24 host names
+msgid "Shows without host names"
+msgstr "Sendungen ohne Namen"
+
+#: RASTATIME 2026-11-24 host names
+msgid "People involved = hosts + guests. A host counts once per year, however many episodes aired; a guest counts in every episode with guests. A host whose name is entered (Edit Show → What → \"Host names\") counts once even in several shows; a show without names counts with its number, once per show."
+msgstr "Teilnehmende = Moderierende + Gäste. Moderierende zählen einmal pro Jahr, egal wie viele Episoden gesendet wurden; Gäste zählen in jeder Episode mit Gästen. Moderierende mit eingetragenem Namen (Sendung ändern → What → \"Namen der Moderierenden\") zählen auch in mehreren Sendungen nur einmal; eine Sendung ohne Namen zählt mit ihrer Zahl, einmal je Sendung."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Added up per show there would be %d hosts."
+msgstr "Je Sendung zusammengezählt wären es %d Moderierende."
+
+#: RASTATIME 2026-11-24 host names
+msgid "Hosts in several shows (counted once)"
+msgstr "Moderierende in mehreren Sendungen (einmal gezählt)"

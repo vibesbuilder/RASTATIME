@@ -161,6 +161,7 @@ gespeichert:
 | **Aufnahme** | Aufnahme aktiviert (ja/nein) |
 | **Autoloading Playlist** | Playlist-ID, Intro-Playlist-ID, Outro-Playlist-ID, "Wiederholen bis voll"-Flag |
 | **Auth** | Host-Benutzernamen (NICHT das Pro-Sendung-Live-Stream-Passwort — siehe unten) |
+| **Teilnehmende** | Eigenproduktion, Moderierende und Namen der Moderierenden (die letzten beiden seit 2026-11-24) |
 | **Show-DJ-Quelle** | Pro-Sendung-Live-Stream erlaubt (ja/nein) |
 
 ### Was eine Vorlage NICHT erfasst

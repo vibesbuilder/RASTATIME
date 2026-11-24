@@ -457,6 +457,7 @@ class Application_Service_ArchivingService
             'image_caption' => (string) ($ep['image_caption'] ?? ''),
             'participants' => isset($ep['participants']) ? (int) $ep['participants'] : null,
             'show_participants' => $show['participants'],
+            'show_people' => self::showPeople((int) $i['show_id']),  // RASTATIME 2026-11-24
             'show_settings' => $show,
             'profiles' => self::showProfiles((int) $i['show_id']),
             // archiving stage 2
@@ -1330,6 +1331,307 @@ class Application_Service_ArchivingService
     }
 
     // ------------------------------------------------------------------
+    // Host names per show (Edit Show → What, migration 0089)
+    // ------------------------------------------------------------------
+    //
+    // RASTATIME 2026-11-24 (operator Go option B, §23.133): a show gets the
+    // names of its hosts out of one register (cc_person); a person hosting
+    // several shows counts once per year in Analytics → People Involved.
+    // One name = one person (unique on lower(name)).  A show with names
+    // stores their count in cc_show_archiving.participants as well, so every
+    // reader of "Hosts involved" sees the same number; a show without names
+    // keeps counting with its number.
+
+    /** Longest host name (characters). */
+    public const PERSON_NAME_MAX = 128;
+
+    /** Most host names per show. */
+    public const SHOW_PEOPLE_MAX = 50;
+
+    private static $peopleReady;
+
+    /** cc_person and cc_show_person exist (migration 0089). */
+    public static function peopleReady(): bool
+    {
+        if (self::$peopleReady === null) {
+            $n = Propel::getConnection()->query(
+                "SELECT count(*) FROM information_schema.tables
+                  WHERE table_schema = current_schema() AND table_name IN ('cc_person', 'cc_show_person')"
+            )->fetchColumn();
+            self::$peopleReady = ((int) $n === 2) && self::tablesReady();
+        }
+
+        return self::$peopleReady;
+    }
+
+    /** Trimmed, inner whitespace collapsed to one space. */
+    public static function normalizeName(string $name): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $name));
+    }
+
+    /**
+     * The posted host names: a JSON list (the show form, templates) or a
+     * list separated by ";" (import).  Returns [names, error]; empty names
+     * are dropped, a name given twice (any case) is kept once, a ";" inside
+     * a name splits it.
+     *
+     * @param mixed $value
+     *
+     * @return array{0: string[], 1: ?string}
+     */
+    public static function parseNames($value): array
+    {
+        if (is_array($value)) {
+            $list = $value;
+        } else {
+            $value = trim((string) $value);
+            if ($value === '') {
+                return [[], null];
+            }
+            if ($value[0] === '[') {
+                $list = json_decode($value, true);
+                if (!is_array($list)) {
+                    return [[], _('The host names could not be read.')];
+                }
+            } else {
+                $list = explode(';', $value);
+            }
+        }
+        // ";" separates names everywhere (the import file), so it never stays inside one
+        $parts = [];
+        foreach ($list as $name) {
+            if (is_scalar($name)) {
+                array_push($parts, ...explode(';', (string) $name));
+            }
+        }
+        $names = [];
+        $seen = [];
+        foreach ($parts as $name) {
+            $name = self::normalizeName($name);
+            if ($name === '') {
+                continue;
+            }
+            if (mb_strlen($name) > self::PERSON_NAME_MAX) {
+                return [[], sprintf(_('A host name may have at most %d characters.'), self::PERSON_NAME_MAX)];
+            }
+            $key = mb_strtolower($name);
+            if (!isset($seen[$key])) {
+                $seen[$key] = true;
+                $names[] = $name;
+            }
+        }
+        if (count($names) > self::SHOW_PEOPLE_MAX) {
+            return [[], sprintf(_('A show can have at most %d host names.'), self::SHOW_PEOPLE_MAX)];
+        }
+
+        return [$names, null];
+    }
+
+    /** The host names of a show in their order. */
+    public static function showPeople(int $showId): array
+    {
+        if (!self::peopleReady() || $showId <= 0) {
+            return [];
+        }
+
+        return array_column(self::query(
+            'SELECT pe.name FROM cc_show_person sp JOIN cc_person pe ON pe.id = sp.person_id
+              WHERE sp.show_id = ? ORDER BY sp.sort_order, lower(pe.name)',
+            [$showId]
+        ), 'name');
+    }
+
+    /** Every name of the register, for the suggestions of the show form. */
+    public static function allPeopleNames(): array
+    {
+        if (!self::peopleReady()) {
+            return [];
+        }
+
+        return array_column(self::query('SELECT name FROM cc_person ORDER BY lower(name), id'), 'name');
+    }
+
+    /** The register id of a name; a new name becomes a person. */
+    private static function personId(string $name): int
+    {
+        self::exec('INSERT INTO cc_person (name) VALUES (?) ON CONFLICT ((lower(name))) DO NOTHING', [$name]);
+
+        return (int) self::query('SELECT id FROM cc_person WHERE lower(name) = lower(?)', [$name])[0]['id'];
+    }
+
+    /**
+     * Store the host names of a show (after the show itself).  With names,
+     * "Hosts involved" becomes their count; without, the number stays as
+     * posted.  An unchanged list writes nothing (Edit Episode posts the
+     * read-only list as it is).
+     *
+     * @param mixed $value JSON list, ";" list or array
+     */
+    public static function saveShowPeople(int $showId, $value): ?string
+    {
+        if (!self::peopleReady() || $showId <= 0) {
+            return null;
+        }
+        [$names, $error] = self::parseNames($value);
+        if ($error !== null) {
+            return $error;
+        }
+        if ($names === self::showPeople($showId)) {
+            if ($names) {
+                self::saveParticipants($showId, count($names));
+            }
+
+            return null;
+        }
+        $con = Propel::getConnection();
+        $con->beginTransaction();
+
+        try {
+            self::exec('DELETE FROM cc_show_person WHERE show_id = ?', [$showId]);
+            foreach ($names as $i => $name) {
+                self::exec(
+                    'INSERT INTO cc_show_person (show_id, person_id, sort_order) VALUES (?, ?, ?)
+                     ON CONFLICT (show_id, person_id) DO NOTHING',
+                    [$showId, self::personId($name), $i]
+                );
+            }
+            if ($names) {
+                self::saveParticipants($showId, count($names));
+            }
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollBack();
+
+            throw $e;
+        }
+
+        return null;
+    }
+
+    /** After a rename, merge or delete: "Hosts involved" = the names left (none: no value). */
+    private static function recountShows(array $showIds): void
+    {
+        foreach (array_unique(array_map('intval', $showIds)) as $showId) {
+            $n = (int) self::query('SELECT count(*) AS n FROM cc_show_person WHERE show_id = ?', [$showId])[0]['n'];
+            self::saveParticipants($showId, $n > 0 ? $n : '');
+        }
+    }
+
+    /** The register: every person with the shows they host. */
+    public static function peopleList(): array
+    {
+        if (!self::peopleReady()) {
+            return [];
+        }
+        $rows = self::query(
+            "SELECT pe.id, pe.name, count(sp.show_id) AS shows,
+                    COALESCE(string_agg(s.name, ', ' ORDER BY lower(s.name)), '') AS show_names
+               FROM cc_person pe
+               LEFT JOIN cc_show_person sp ON sp.person_id = pe.id
+               LEFT JOIN cc_show s ON s.id = sp.show_id
+              GROUP BY pe.id, pe.name
+              ORDER BY lower(pe.name), pe.id"
+        );
+        foreach ($rows as &$r) {
+            $r['id'] = (int) $r['id'];
+            $r['shows'] = (int) $r['shows'];
+        }
+        unset($r);
+
+        return $rows;
+    }
+
+    private static function personShows(int $personId): array
+    {
+        return array_column(self::query('SELECT show_id FROM cc_show_person WHERE person_id = ?', [$personId]), 'show_id');
+    }
+
+    private static function personExists(int $personId): bool
+    {
+        return (bool) self::query('SELECT 1 FROM cc_person WHERE id = ?', [$personId]);
+    }
+
+    /** Rename a person in every show; a name another person has already is refused (merge instead). */
+    public static function renamePerson(int $personId, string $name): ?string
+    {
+        $name = self::normalizeName($name);
+        if ($name === '') {
+            return _('Please enter a name.');
+        }
+        if (strpos($name, ';') !== false) {
+            return _('A name cannot contain ";".');
+        }
+        if (mb_strlen($name) > self::PERSON_NAME_MAX) {
+            return sprintf(_('A host name may have at most %d characters.'), self::PERSON_NAME_MAX);
+        }
+        if (!self::peopleReady() || !self::personExists($personId)) {
+            return _('This person does not exist any more.');
+        }
+        if (self::query('SELECT 1 FROM cc_person WHERE lower(name) = lower(?) AND id <> ?', [$name, $personId])) {
+            return sprintf(_('"%s" is already in the list - merge the two instead.'), $name);
+        }
+        self::exec('UPDATE cc_person SET name = ?, updated_at = now() WHERE id = ?', [$name, $personId]);
+
+        return null;
+    }
+
+    /** Merge a person into another: their shows go to the other, the first one is removed. */
+    public static function mergePerson(int $fromId, int $intoId): ?string
+    {
+        if ($fromId === $intoId) {
+            return _('Please choose another person.');
+        }
+        if (!self::peopleReady() || !self::personExists($fromId) || !self::personExists($intoId)) {
+            return _('This person does not exist any more.');
+        }
+        $con = Propel::getConnection();
+        $con->beginTransaction();
+
+        try {
+            $shows = self::personShows($fromId);
+            self::exec(
+                'INSERT INTO cc_show_person (show_id, person_id, sort_order)
+                 SELECT show_id, ?, sort_order FROM cc_show_person WHERE person_id = ?
+                 ON CONFLICT (show_id, person_id) DO NOTHING',
+                [$intoId, $fromId]
+            );
+            self::exec('DELETE FROM cc_person WHERE id = ?', [$fromId]);
+            self::recountShows($shows);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollBack();
+
+            throw $e;
+        }
+
+        return null;
+    }
+
+    /** Remove a person from the register and from every show. */
+    public static function deletePerson(int $personId): ?string
+    {
+        if (!self::peopleReady() || !self::personExists($personId)) {
+            return _('This person does not exist any more.');
+        }
+        $con = Propel::getConnection();
+        $con->beginTransaction();
+
+        try {
+            $shows = self::personShows($personId);
+            self::exec('DELETE FROM cc_person WHERE id = ?', [$personId]);
+            self::recountShows($shows);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollBack();
+
+            throw $e;
+        }
+
+        return null;
+    }
+
+    // ------------------------------------------------------------------
     // Participants overview (Analytics → People Involved)
     // ------------------------------------------------------------------
 
@@ -1360,6 +1662,14 @@ class Application_Service_ArchivingService
      * listed with their tag, counted with nothing and never "without a
      * value".  Since 2026-11-16 (operator) a repeat is a show whose show
      * type counts as a repeat, no longer a "Repeat of" show (§23.65).
+     *
+     * Since 2026-11-24 (operator, §23.133) a show with host names counts
+     * their number, and the total counts every named person once, however
+     * many shows they host; shows without names still add their number.
+     * totals: hosts = unique named persons + the numbers of shows without
+     * names, hosts_per_show = the old sum (once per show), hosts_once = the
+     * difference, unnamed = shows that count with a number only.
+     * "several" lists the persons in more than one counted show.
      */
     public static function participantsReport(int $year): array
     {
@@ -1377,6 +1687,11 @@ class Application_Service_ArchivingService
             ? "(SELECT string_agg(ep.name, ', ' ORDER BY lower(ep.name)) FROM cc_show_editor_profile se
                  JOIN cc_editor_profile ep ON ep.id = se.profile_id WHERE se.show_id = s.id)"
             : "''";
+        // RASTATIME 2026-11-24 - the host names of the show (migration 0089)
+        $people = self::peopleReady()
+            ? "(SELECT json_agg(json_build_object('id', pe.id, 'name', pe.name) ORDER BY sp.sort_order, lower(pe.name))
+                  FROM cc_show_person sp JOIN cc_person pe ON pe.id = sp.person_id WHERE sp.show_id = s.id)"
+            : 'NULL';
         $rows = self::query(
             "WITH inst AS (
                 SELECT si.id, si.show_id, p.participants AS hosts, e.participants AS guests
@@ -1389,7 +1704,7 @@ class Application_Service_ArchivingService
              SELECT s.id, s.name, count(i.id) AS episodes, max(i.hosts) AS hosts,
                     COALESCE(sum(i.guests), 0) AS guests, count(i.guests) AS episodes_with_guests,
                     " . Application_Model_Showtype::repeatSql('s') . " AS is_repeat,
-                    {$team} AS team
+                    {$team} AS team, {$people} AS people_json
                FROM inst i JOIN cc_show s ON s.id = i.show_id
               {$ownOnly}
               GROUP BY s.id, s.name, s.repeat_of_show_id
@@ -1397,11 +1712,18 @@ class Application_Service_ArchivingService
             [$from, $to]
         );
         // the producers are not counted (operator 2026-11-03: only the people involved)
-        $totals = ['shows' => 0, 'episodes' => 0, 'hosts' => 0, 'guests' => 0, 'people' => 0, 'missing' => 0];
+        $totals = ['shows' => 0, 'episodes' => 0, 'hosts' => 0, 'guests' => 0, 'people' => 0, 'missing' => 0,
+            'hosts_per_show' => 0, 'hosts_once' => 0, 'unnamed' => 0, ];
+        $persons = [];      // person id => [name, show names] over the counted shows
+        $unnamedHosts = 0;
         foreach ($rows as &$r) {
             $r['id'] = (int) $r['id'];
             $r['episodes'] = (int) $r['episodes'];
-            $r['hosts'] = $r['hosts'] === null ? null : (int) $r['hosts'];
+            $named = json_decode((string) ($r['people_json'] ?? ''), true);
+            $r['names'] = is_array($named) ? array_column($named, 'name') : [];
+            unset($r['people_json']);
+            // a show with names counts them, one without its number
+            $r['hosts'] = $r['names'] ? count($r['names']) : ($r['hosts'] === null ? null : (int) $r['hosts']);
             $r['guests'] = (int) $r['guests'];
             $r['episodes_with_guests'] = (int) $r['episodes_with_guests'];
             $r['is_repeat'] = (bool) $r['is_repeat'];
@@ -1412,14 +1734,28 @@ class Application_Service_ArchivingService
             ++$totals['shows'];
             $totals['episodes'] += $r['episodes'];
             if (!$r['is_repeat']) {
-                $totals['hosts'] += (int) $r['hosts'];
+                $totals['hosts_per_show'] += (int) $r['hosts'];
                 $totals['guests'] += $r['guests'];
+                if ($r['names']) {
+                    foreach ($named as $person) {
+                        $persons[(int) $person['id']]['name'] = (string) $person['name'];
+                        $persons[(int) $person['id']]['shows'][] = (string) $r['name'];
+                    }
+                } elseif ((int) $r['hosts'] > 0) {
+                    $unnamedHosts += (int) $r['hosts'];
+                    ++$totals['unnamed'];
+                }
             }
-            $totals['people'] += $r['people'];
             $totals['missing'] += $r['missing'] ? 1 : 0;
         }
         unset($r);
+        // every named person once, however many shows they host
+        $totals['hosts'] = count($persons) + $unnamedHosts;
+        $totals['hosts_once'] = $totals['hosts_per_show'] - $totals['hosts'];
+        $totals['people'] = $totals['hosts'] + $totals['guests'];
+        $several = array_values(array_filter($persons, static fn ($p) => count($p['shows']) > 1));
+        usort($several, static fn ($a, $b) => strcasecmp($a['name'], $b['name']));
 
-        return ['year' => $year, 'rows' => $rows, 'totals' => $totals];
+        return ['year' => $year, 'rows' => $rows, 'totals' => $totals, 'several' => $several];
     }
 }

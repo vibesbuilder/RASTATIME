@@ -296,6 +296,7 @@ Seit 2026-11-07 folgt die Zählung den Menschen, nicht den Episoden:
   **Eigenproduktion**) sind die Menschen, die in jeder Episode dieselben
   sind.  Sie zählen **einmal je Sendung und Jahr**, egal wie viele
   Episoden gesendet wurden.
+* **Namen der Moderierenden** (Host names; seit 2026-11-24, direkt unter **Eigenproduktion**) benennen diese Moderierenden.  Wer mit Namen eingetragen ist, zählt **einmal pro Jahr**, auch wenn die Person mehrere Sendungen moderiert; eine Sendung mit Namen zählt deren Anzahl, eine ohne Namen ihre *Moderierenden*.
 * **Gäste** (Guests involved; Extras → Teilnehmende im Kalender) sind
   die Gäste einer Episode.  Sie zählen **in jeder Episode** und werden
   zusammengezählt.
@@ -323,15 +324,16 @@ erscheinen nie unter *Sendungen ohne Wert*.
 |---|---|
 | **Gesendete Eigenproduktionen** (Summe) | Eigenproduktionen mit mindestens einer gesendeten Episode im Jahr, Wiederholungen eingeschlossen. |
 | **Gesendete Episoden** | Episoden der Sendung im Jahr. |
-| **Moderierende** | Die Moderierenden der Sendung, einmal pro Jahr; die Summe addiert die Moderierenden aller Sendungen. |
+| **Moderierende** | Die Moderierenden der Sendung, einmal pro Jahr: die Anzahl ihrer Namen, oder ihre Zahl, wenn sie keine Namen hat.  Die Summe zählt jede Person mit Namen einmal, dazu die Zahlen der Sendungen ohne Namen. |
+| **Namen der Moderierenden** | Die Namen der Moderierenden der Sendung (seit 2026-11-24). |
 | **Gäste** | Die Gäste aller gesendeten Episoden der Sendung zusammengezählt. |
 | **Teilnehmende** | Moderierende + Gäste; die Summe ist die Zahl für die Statistik. |
 | **Sendungen ohne Wert** (Summe) | Eigenproduktionen (ohne Wiederholungen) ohne *Moderierende*; orange, solange es welche gibt. |
+| **Sendungen ohne Namen** (Summe) | Eigenproduktionen, die noch nur mit einer Zahl zählen - wer eine solche Sendung und noch eine andere moderiert, zählt doppelt. |
 
-Wer in mehreren Sendungen mitwirkt, zählt einmal je Sendung; ein Gast,
-der wiederkommt, zählt in jeder Episode.  Die Zahlen sind Anzahlen,
-keine Namen - RASTATIME kann nicht erkennen, dass zwei Sendungen
-dieselbe Moderation haben.  Die Produzenten werden nicht gezählt.
+Eine Person mit eingetragenem Namen zählt einmal, egal wie viele Sendungen sie moderiert; die Seite listet sie unter **Moderierende in mehreren Sendungen (einmal gezählt)** und nennt, wie viele es je Sendung zusammengezählt wären.  Sendungen ohne Namen zählen weiter einmal je Sendung - RASTATIME kann nicht erkennen, dass zwei davon dieselbe Moderation haben.  Ein Gast, der wiederkommt, zählt in jeder Episode.  Die Produzenten werden nicht gezählt.  Die CSV enthält die Namen und die Personen in mehreren Sendungen.
+
+**Namen der Moderierenden** (Knopf auf der Seite, englisch *Host Names*, seit 2026-11-24) listet jeden Namen mit seinen Sendungen.  **Ändern** öffnet ein Formular: den Namen in allen Sendungen umbenennen; **Dieselbe Person wie** + **Zusammenführen** vereint zwei Schreibweisen einer Person (die Sendungen der ersten bekommen die zweite); **Löschen** entfernt den Namen aus allen Sendungen - eine Sendung ohne verbleibende Namen hat dann keinen Wert bei *Moderierende* und erscheint unter *Nur Sendungen ohne Wert*.  Zwei verschiedene Personen mit gleichem Namen unterscheiden Sie im Namen, etwa "Alex Example (B)".
 
 Programm-Manager und Admins öffnen diese Seite.
 

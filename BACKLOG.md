@@ -94,6 +94,24 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Gäste mit Namen je Episode (People Involved) - Defer (Operator 2026-11-24)
+
+Stufe 1 (Namen der Moderierenden je Sendung, §23.133) ist gebaut: jede Person mit Namen zählt
+einmal im Jahr.  Gäste bleiben eine Zahl je Episode (Extras → People Involved) und zählen in jeder
+Episode.
+
+**Idee:** Im Episoden-Dialog statt (oder neben) der Zahl Namen aus demselben Verzeichnis
+(`cc_person`), Zuordnung `cc_episode_person`.  Dann zählt auch ein Host der einen Sendung, der in
+einer anderen zu Gast ist, nur einmal.
+
+**Offen beim Go:**
+- Soll ein wiederkehrender Gast einmal im Jahr zählen (Personen) oder weiter je Auftritt (heutige
+  Regel)?  Die Jahresstatistik fragt vermutlich nach Personen.
+- Gäste ohne Namen (nur Zahl) weiter erlauben - wie bei den Hosts als Übergang?
+- Datenschutz: Gäste sind seltener öffentlich bekannt als Moderierende; nur PM/Admin sehen die Namen.
+
+**Vorbedingungen:** Stufe 1 einige Wochen im Betrieb, Namen der Moderierenden weitgehend erfasst.
+
 ### 🟡 Liquidsoap-Dekodierprüfung auch im Preflight (nächste 48 h) - Defer (Operator 2026-11-24)
 
 Anlass: Dead Air 2026-11-23 19:07-20:00 (eine Sendung lang) - Liquidsoaps eingebautes FFmpeg lehnte

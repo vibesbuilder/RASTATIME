@@ -377,3 +377,55 @@ label.wrapp-label input[type="checkbox"] {
 #schedule-add-show dd.rt-participants-row input.input_text {
     width: 2.5em;  /* 0-999 */
 }
+
+/* RASTATIME 2026-11-24 - What: "Host names" (form/add-show-people-row.phtml,
+   add-show.js setupHostNames): the names as chips, the input for the next
+   one after them; "Hosts involved" greyed while it counts the names. */
+#schedule-add-show dt.rt-people-row .help_icon {
+    margin-left: 6px;
+    vertical-align: middle;
+    top: 0;
+}
+
+#schedule-add-show dd.rt-people-row {
+    margin-left: 0;
+}
+
+#schedule-add-show dd.rt-people-row .rt-people-list {
+    display: inline;
+}
+
+#schedule-add-show .rt-people-chip {
+    display: inline-block;
+    margin: 0 4px 4px 0;
+    padding: 1px 4px 1px 8px;
+    border: 1px solid #5b5b5b;
+    border-radius: 10px;
+    background: #3b3b3b;
+    color: #efefef;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+#schedule-add-show .rt-people-remove {
+    margin: 0 0 0 4px;
+    padding: 0 3px;
+    border: 0;
+    background: transparent;
+    color: #bbb;
+    font-size: 14px;
+    line-height: 14px;
+    cursor: pointer;
+}
+
+#schedule-add-show .rt-people-remove:hover {
+    color: #ff5d1a;
+}
+
+#schedule-add-show dd.rt-people-row input.rt-people-input {
+    width: 14em;
+}
+
+#schedule-add-show dd.rt-participants-row input.rt-people-counted {
+    opacity: 0.6;
+}

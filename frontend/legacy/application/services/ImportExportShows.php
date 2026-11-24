@@ -46,7 +46,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
     public function columns(): array
     {
         return ['name', 'url', 'genre', 'category', 'show_type', 'description', 'start_date', 'start_time', 'end_date', 'end_time', 'timezone',
-            'allow_delayed_start', 'own_production', 'repeats', 'repeat_type', 'days', 'months', 'repeat_end_date', 'no_end', 'linked', 'record',
+            'allow_delayed_start', 'own_production', 'hosts_involved', 'host_names', 'repeats', 'repeat_type', 'days', 'months', 'repeat_end_date', 'no_end', 'linked', 'record',
             'content', 'content_repeat', 'intro_playlist', 'outro_playlist', 'repeat_of', 'rastatime_auth', 'custom_auth', 'custom_username',
             'djs', 'background_color', 'text_color', 'logo', ];
     }
@@ -62,6 +62,8 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
             'timezone' => 'IANA name, e.g. Europe/Berlin; empty = station default',
             'allow_delayed_start' => 'yes/no',
             'own_production' => "yes/no - the station's own production, counted in Analytics -> Programme Minutes and People Involved",
+            'hosts_involved' => 'number of hosts in every episode, 0-999, empty = no value (since 2026-11-24); with host_names their number counts',
+            'host_names' => 'names of the hosts, separated by ";" (since 2026-11-24); a name already in Analytics -> People Involved -> Host Names is the same person',
             'repeats' => 'yes/no; repeat_type: none | weekly | biweekly | every_3_weeks | every_4_weeks | monthly_date | monthly_weekday',
             'days' => 'for weekly types: Mon,Tue,Wed,Thu,Fri,Sat,Sun (also Mo,Di,Mi,Do,Fr,Sa,So); empty = weekday of start_date',
             'months' => 'for monthly types: Jan,Feb,...,Dec or 1..12 (German short names work too); empty = every month',
@@ -93,7 +95,7 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
         return [[
             'name' => 'Morning Show', 'url' => 'https://example.org/morning', 'genre' => 'Talk', 'category' => 'Information', 'show_type' => 'Live', 'description' => 'Wake-up programme',
             'start_date' => $monday, 'start_time' => '07:00', 'end_date' => '', 'end_time' => '09:00', 'timezone' => '',
-            'allow_delayed_start' => 'no', 'own_production' => 'yes', 'repeats' => 'yes', 'repeat_type' => 'weekly', 'days' => 'Mon,Tue,Wed,Thu,Fri',
+            'allow_delayed_start' => 'no', 'own_production' => 'yes', 'hosts_involved' => '2', 'host_names' => 'Alex Example; Sam Sample', 'repeats' => 'yes', 'repeat_type' => 'weekly', 'days' => 'Mon,Tue,Wed,Thu,Fri',
             'repeat_end_date' => '', 'no_end' => 'yes', 'linked' => 'no', 'record' => 'no',
             'content' => 'Morning Show', 'content_repeat' => 'yes', 'intro_playlist' => '', 'outro_playlist' => '', 'repeat_of' => '',
             'rastatime_auth' => 'yes', 'custom_auth' => 'no', 'custom_username' => '', 'djs' => 'dj1',
@@ -267,6 +269,15 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
                 $rec['rastatime_auth'] = true;          // the dialog's default
             }
             $rec['djs'] = self::splitList($g('djs'));
+            // RASTATIME 2026-11-24 - hosts involved and host names (People Involved)
+            $rec['hosts_involved'] = $g('hosts_involved');
+            if ($rec['hosts_involved'] !== '' && !preg_match('/^\d{1,3}$/', $rec['hosts_involved'])) {
+                $rec['_errors'][] = _('hosts_involved must be a whole number between 0 and 999');
+            }
+            [$rec['host_names'], $namesError] = Application_Service_ArchivingService::parseNames($g('host_names'));
+            if ($namesError !== null) {
+                $rec['_errors'][] = $namesError;
+            }
             $rec['repeat_of'] = trim((string) $g('repeat_of')); // RASTATIME 2026-10-18
             $rec['background_color'] = self::parseColor($g('background_color'));
             $rec['text_color'] = self::parseColor($g('text_color'));
@@ -524,6 +535,18 @@ class Application_Service_ImportExportShows extends Application_Service_ImportEx
         $service = new Application_Service_ShowService(null, $data);
         $showId = (int) $service->addUpdateShow($data);
         $done = [_('created')];
+        // RASTATIME 2026-11-24 - hosts involved and host names (with names, their number counts)
+        try {
+            if (($record['hosts_involved'] ?? '') !== '') {
+                Application_Service_ArchivingService::saveParticipants($showId, $record['hosts_involved']);
+            }
+            if (!empty($record['host_names'])) {
+                Application_Service_ArchivingService::saveShowPeople($showId, $record['host_names']);
+            }
+        } catch (Exception $e) {
+            Logging::warn('import: hosts of show ' . $showId . ' not saved: ' . $e->getMessage());
+            $done[] = _('hosts not saved');
+        }
         if ($record['logo'] !== '' && isset($ctx['logos'][$record['logo']])) {
             if (self::storeLogo($showId, $ctx['logos'][$record['logo']]) === null) {
                 $done[] = _('logo could not be stored');
@@ -636,6 +659,9 @@ SQL;
                 'timezone' => $tz,
                 'allow_delayed_start' => self::boolOut($pg($s['allow_delayed_start'])),
                 'own_production' => self::boolOut(in_array($s['own_production'], ['true', 't', '1'], true)),
+                // RASTATIME 2026-11-24 - hosts involved and host names
+                'hosts_involved' => (string) (Application_Service_ArchivingService::showSettings((int) $s['id'])['participants'] ?? ''),
+                'host_names' => implode('; ', Application_Service_ArchivingService::showPeople((int) $s['id'])),
                 'repeats' => self::boolOut($repeat !== -1),
                 'repeat_type' => self::REPEAT_OUT[$repeat] ?? 'none',
                 'days' => implode(',', array_unique($dayNames)),

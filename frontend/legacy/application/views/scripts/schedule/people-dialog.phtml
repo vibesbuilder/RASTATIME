@@ -24,7 +24,8 @@ $tip = function ($text) use ($h) {
                placeholder="0"<?php echo $dis; ?> />
         <span class="rt-episode-hint"><?php echo $e['show_participants'] === null
             ? _("The show has no hosts value yet.")
-            : sprintf(_("Hosts of the show: %s"), (int) $e['show_participants']); ?></span>
+            : sprintf(_("Hosts of the show: %s"), (int) $e['show_participants'])
+                . (empty($e['show_people']) ? '' : ' (' . $h(implode(', ', $e['show_people'])) . ')'); ?></span>
         <p id="people_msg" class="rt-episode-msg"></p>
     </div>
 <?php endif; ?>

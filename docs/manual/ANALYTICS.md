@@ -197,7 +197,7 @@ Only shows with **Own production** count - a show without the tick
 keeps its number but is left out until it is ticked again; shows whose
 show type counts as a repeat (since 2026-11-16; before *Repeat of*) are
 listed but count nothing.  **Only shows without a
-value** and **Download CSV** help with the yearly reporting.  The
+value** and **Download CSV** help with the yearly reporting.  Since 2026-11-24 the shows can carry the **Host names** (Edit Show → What): a person with a name counts once, however many shows they host; **Host Names** on the page lists, renames and merges them.  The
 details are in [Archiving](./ARCHIVING.md) § 6.
 
 Program Managers and Admins open this page.

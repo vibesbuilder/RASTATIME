@@ -50,6 +50,8 @@ class Application_Service_ShowTemplateService
         'add_show_type',              // RASTATIME 2026-11-16 - show type
         'add_show_description',
         'add_show_own_production',    // RASTATIME 2026-11-03 - yearly report
+        'add_show_participants',      // RASTATIME 2026-11-24 - hosts involved
+        'add_show_people',            // RASTATIME 2026-11-24 - host names (JSON list)
         // "When" form (duration + repeat shape only — no start_date/time)
         'add_show_duration',
         'add_show_repeats',
