@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Seite **People Involved → Host Names** zum Umbenennen, Zusammenführen und Löschen.  Templates
   speichern Namen und Zahl (die Zahl fehlte bisher), Import/Export (Shows) hat die Spalten
   `hosts_involved` und `host_names`.  Manual CALENDAR, ARCHIVING, ANALYTICS, IMPORT_EXPORT ×4,
-  ARCHITECTURE 0.164 (§23.133).  Wirksam nach Migration 0089 und Apache-Neustart (Übersetzungen).
+  ARCHITECTURE 0.164 (§23.133).  Wirksam nach Migration 0089 und Apache-Neustart (Übersetzungen).  `2dac917b`.
 
 ## [1.10.0] - 2026-11-24
 
