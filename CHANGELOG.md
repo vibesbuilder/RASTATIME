@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   es am eingebetteten Cover-Bild, das volle Neuverpacken half nicht.  Darum folgt als zweite Stufe
   ein Neuverpacken nur mit dem Ton (Tags bleiben, das Bild verlässt die Datei; das Cover in der
   Bibliothek bleibt, es wird beim Upload separat abgelegt).  `--repair` ersetzt eine
-  Bibliotheksdatei nur bei einem klaren „dekodierbar“.
+  Bibliotheksdatei nur bei einem klaren „dekodierbar“.  Ergebnis: beide Dateien (25592, 8668) am 2026-11-24 per `--repair` neu verpackt und geprüft, Originale in `_replaced/remux-2026-11-24/`.  `33998965`.
 
 ## [1.9.0] - 2026-11-23
 
