@@ -90,12 +90,25 @@ def test_repair_skips_a_file_on_air_soon(tmp_path: Path, monkeypatch):
 def test_repair_keeps_the_original_when_the_remux_does_not_help(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(sld, "scheduled_soon", lambda *_a: False)
     monkeypatch.setattr(
-        sld.cl, "remux_copy", lambda src, dest, _ff=None: dest.write_bytes(b"remux")
+        sld.cl, "remux_copy", lambda src, dest, _ff=None, _maps=None: dest.write_bytes(b"remux")
     )
     monkeypatch.setattr(sld.cl, "liquidsoap_decodes", lambda paths, binary=None: [False])
     path = tmp_path / "b.mp3"
     path.write_bytes(b"orig")
     status, detail = sld.repair_file(2, path, tmp_path, "ls", "ffmpeg")
     assert status == "repair_failed" and "original kept" in detail
+    assert "without the embedded picture: not decodable" in detail
     assert path.read_bytes() == b"orig"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["b.mp3"]
+
+
+def test_repair_needs_a_clear_yes(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(sld, "scheduled_soon", lambda *_a: False)
+    monkeypatch.setattr(
+        sld.cl, "remux_copy", lambda src, dest, _ff=None, _maps=None: dest.write_bytes(b"remux")
+    )
+    monkeypatch.setattr(sld.cl, "liquidsoap_decodes", lambda paths, binary=None: [None])
+    path = tmp_path / "b.mp3"
+    path.write_bytes(b"orig")
+    assert sld.repair_file(2, path, tmp_path, "ls", "ffmpeg")[0] == "repair_failed"
     assert sorted(p.name for p in tmp_path.iterdir()) == ["b.mp3"]

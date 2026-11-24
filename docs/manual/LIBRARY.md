@@ -777,10 +777,14 @@ Check the upload status badge:
 > silent.  The analyzer therefore asks Liquidsoap itself whether it can play
 > each new file.  When it cannot, the file is repacked without any loss
 > (same audio, same tags, a fresh container) and checked again; the repacked
-> copy is what goes into the library.  Only when that does not help either
-> does the import fail with the reason *"The file could not be played: the
-> playout engine (Liquidsoap) cannot decode it, not even after a lossless
-> remux"*.  The check adds about half a second per file.
+> copy is what goes into the library.  If Liquidsoap still refuses it, the
+> file is repacked once more without its embedded cover picture (in one
+> library file the picture was the trouble); the cover shown in the library
+> is kept, because it is stored separately at upload.  Only when that does not
+> help either does the import fail with the reason *"The file could not be
+> played: the playout engine (Liquidsoap) cannot decode it, not even after a
+> lossless remux (also tried without the embedded picture)"*.  The check adds
+> about half a second per file.
 
 > **Checking the library with the playout engine (since 2026-11-24).**  On the
 > studio machine, `rastatime-api scan_liquidsoap_decode` (PowerShell in

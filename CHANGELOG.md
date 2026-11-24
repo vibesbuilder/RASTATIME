@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--repair` verpackt betroffene Dateien neu, Original nach `_replaced\remux-DATUM\`, nicht für
   Dateien, die in den nächsten 6 h laufen).  Preflight-Variante als 🟡 im BACKLOG.  Manual LIBRARY
   ×4, ARCHITECTURE 0.163 (§23.132).  Wirksam nach einem ANALYZER-Neustart.  `c88c6718`.
+  Nachtrag nach dem ersten Bestands-Scan (25.311 Dateien, 2 nicht dekodierbar): Bei einer MP3 lag
+  es am eingebetteten Cover-Bild, das volle Neuverpacken half nicht.  Darum folgt als zweite Stufe
+  ein Neuverpacken nur mit dem Ton (Tags bleiben, das Bild verlässt die Datei; das Cover in der
+  Bibliothek bleibt, es wird beim Upload separat abgelegt).  `--repair` ersetzt eine
+  Bibliotheksdatei nur bei einem klaren „dekodierbar“.
 
 ## [1.9.0] - 2026-11-23
 

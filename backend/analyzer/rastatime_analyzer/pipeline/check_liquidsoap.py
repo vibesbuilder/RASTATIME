@@ -16,8 +16,9 @@ prints one ``RESULT <n> true|false`` line per file.  Start ~0.5 s, then
 ~12 ms per file (300 library files in 3.5 s, 2026-11-24).
 
 Operator decisions 2026-11-24: a file Liquidsoap cannot decode is remuxed
-losslessly and checked again; only when the remux does not help either is
-the import refused.  The library scan (API ``scan_liquidsoap_decode``)
+losslessly and checked again, then remuxed without its embedded picture
+(a cover made Liquidsoap misdetect a second library file); only when
+neither helps is the import refused.  The library scan (API ``scan_liquidsoap_decode``)
 uses the same functions.
 
 Fail-open: no Liquidsoap binary, a timeout or an unreadable answer lets
@@ -171,11 +172,29 @@ def liquidsoap_decodes(paths: Sequence[str], binary: Optional[str] = None) -> li
     return results
 
 
-def remux_copy(src: Path, dest: Path, ffmpeg: Optional[str] = None) -> None:
-    """Lossless remux: every stream and every tag copied into a fresh container."""
+#: the remux variants, tried in this order (operator decisions 2026-11-24):
+#: every stream copied; then the audio only - an embedded cover picture made
+#: Liquidsoap's FFmpeg take one library MP3 for an MPEG program stream.  The
+#: library cover is not lost: the legacy app stores it from the upload
+#: (imported/artwork/) before the analyzer runs.
+REMUX_VARIANTS = (
+    ("lossless remux", ("-map", "0")),
+    ("remux without the embedded picture", ("-map", "0:a")),
+)
+
+UNDECODABLE = (
+    "the playout engine (Liquidsoap) cannot decode it, not even after a lossless remux "
+    "(also tried without the embedded picture)"
+)
+
+
+def remux_copy(
+    src: Path, dest: Path, ffmpeg: Optional[str] = None, maps: Sequence[str] = ("-map", "0")
+) -> None:
+    """Remux without re-encoding: the mapped streams and every tag copied into a fresh container."""
     cmd = [
         ffmpeg or FFMPEG, "-hide_banner", "-nostdin", "-nostats", "-loglevel", "error", "-y",
-        "-i", str(src), "-map", "0", "-map_metadata", "0", "-c", "copy", str(dest),
+        "-i", str(src), *maps, "-map_metadata", "0", "-c", "copy", str(dest),
     ]  # fmt: skip
     done = subprocess.run(
         cmd,
@@ -203,6 +222,30 @@ def remux_target(src: Path) -> Path:
     return dest
 
 
+def remux_until_decodable(
+    src: Path, binary: str, ffmpeg: Optional[str] = None
+) -> tuple[Optional[Path], str]:
+    """
+    Try the REMUX_VARIANTS in order; (remuxed file, variant) for the first
+    one Liquidsoap decodes - or does not answer about (fail-open) - else
+    (None, why).  Rejected remuxes are removed.
+    """
+    problems = []
+    for variant, maps in REMUX_VARIANTS:
+        dest = remux_target(src)
+        try:
+            remux_copy(src, dest, ffmpeg, maps)
+        except (OSError, subprocess.SubprocessError) as exception:
+            problems.append(f"{variant}: {exception}")
+            continue
+        (ok,) = liquidsoap_decodes([str(dest)], binary)
+        if ok is not False:
+            return dest, variant + ("" if ok else " (second check had no answer)")
+        dest.unlink(missing_ok=True)
+        problems.append(f"{variant}: not decodable")
+    return None, "; ".join(problems)
+
+
 def check_liquidsoap_decode(
     audio_file_path: str, metadata: dict[str, Any], binary: Optional[str] = None
 ) -> tuple[str, dict[str, Any]]:
@@ -211,8 +254,8 @@ def check_liquidsoap_decode(
 
     Returns (audio_file_path, metadata): unchanged when Liquidsoap decodes the
     file or cannot be asked; the remuxed sibling (md5 / filesize of the new
-    file, ``source_md5`` = the md5 the upload had) when only the remux is
-    decodable.  Raises :class:`LiquidsoapUndecodableError` when neither is.
+    file, ``source_md5`` = the md5 the upload had) when a remux variant is
+    decodable.  Raises :class:`LiquidsoapUndecodableError` when none is.
     The file handed in is left in place - the pipeline removes it once the
     remux is filed, like a converted file's original.
     """
@@ -228,31 +271,15 @@ def check_liquidsoap_decode(
         return audio_file_path, metadata
 
     src = Path(audio_file_path)
-    dest = remux_target(src)
-    logger.warning(
-        "check_liquidsoap: Liquidsoap cannot decode %s - trying a lossless remux", src.name
-    )
-    try:
-        remux_copy(src, dest)
-    except (OSError, subprocess.SubprocessError) as exception:
-        raise LiquidsoapUndecodableError(
-            f"the playout engine (Liquidsoap) cannot decode it and a remux failed: {exception}"
-        ) from exception
-    (ok,) = liquidsoap_decodes([str(dest)], binary)
-    if ok is False:
-        dest.unlink(missing_ok=True)
-        raise LiquidsoapUndecodableError(
-            "the playout engine (Liquidsoap) cannot decode it, not even after a lossless remux"
-        )
+    logger.warning("check_liquidsoap: Liquidsoap cannot decode %s - trying a remux", src.name)
+    dest, how = remux_until_decodable(src, binary)
+    if dest is None:
+        logger.warning("check_liquidsoap: %s refused - %s", src.name, how)
+        raise LiquidsoapUndecodableError(UNDECODABLE)
     result = dict(metadata)
     if metadata.get("md5"):
         result.setdefault("source_md5", metadata["md5"])
     result["md5"] = compute_md5(dest)
     result["filesize"] = dest.stat().st_size
-    logger.info(
-        "check_liquidsoap: %s remuxed losslessly to %s - Liquidsoap decodes it%s",
-        src.name,
-        dest.name,
-        "" if ok else " (second check had no answer)",
-    )
+    logger.info("check_liquidsoap: %s -> %s (%s) - Liquidsoap decodes it", src.name, dest.name, how)
     return str(dest), result

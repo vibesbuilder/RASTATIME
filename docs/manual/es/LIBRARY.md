@@ -730,11 +730,15 @@ Verifique la insignia de estado de subida:
 > silencio.  Por eso el analizador pregunta al propio Liquidsoap si puede
 > reproducir cada archivo nuevo.  Si no puede, el archivo se reempaqueta sin
 > pérdida (mismo audio, mismas etiquetas, contenedor nuevo) y se comprueba
-> de nuevo; a la biblioteca entra la copia reempaquetada.  Solo si eso
-> tampoco ayuda, la importación falla con el motivo *"The file could not be
-> played: the playout engine (Liquidsoap) cannot decode it, not even after a
-> lossless remux"*.  La comprobación añade aproximadamente medio segundo por
-> archivo.
+> de nuevo; a la biblioteca entra la copia reempaquetada.  Si Liquidsoap
+> todavía la rechaza, el archivo se reempaqueta otra vez sin su imagen de
+> portada integrada (en un archivo de la biblioteca la imagen era la causa);
+> la portada que muestra la biblioteca se conserva, porque se guarda aparte
+> al subir el archivo.  Solo si eso tampoco ayuda, la importación falla con
+> el motivo *"The file could not be played: the playout engine (Liquidsoap)
+> cannot decode it, not even after a lossless remux (also tried without the
+> embedded picture)"*.  La comprobación añade aproximadamente medio segundo
+> por archivo.
 
 > **Comprobar la biblioteca con el motor de emisión (desde el
 > 24/11/2026).**  En el equipo del estudio, `rastatime-api

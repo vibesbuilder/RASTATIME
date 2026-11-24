@@ -90,25 +90,45 @@ def test_a_converted_file_keeps_the_source_md5_of_the_upload(tmp_path: Path, mon
 
 
 @requires_ffmpeg
-def test_refused_when_the_remux_does_not_help(tmp_path: Path, monkeypatch):
-    _answers(monkeypatch, False, False)
+def test_refused_when_no_remux_helps(tmp_path: Path, monkeypatch):
+    calls = _answers(monkeypatch, False, False, False)
     src = tmp_path / "a.mp3"
     shutil.copy(AUDIO_FILE, src)
-    with pytest.raises(cl.LiquidsoapUndecodableError, match="not even after a lossless remux"):
+    with pytest.raises(cl.LiquidsoapUndecodableError, match="without the embedded picture"):
         cl.check_liquidsoap_decode(str(src), {}, binary="ls")
     assert [p.name for p in tmp_path.iterdir()] == ["a.mp3"]
+    assert len(calls) == 3  # the file, the full remux, the audio-only remux
+
+
+@requires_ffmpeg
+def test_second_variant_drops_the_picture(tmp_path: Path, monkeypatch):
+    maps_used = []
+    real = cl.remux_copy
+
+    def spy(src, dest, ffmpeg=None, maps=("-map", "0")):
+        maps_used.append(tuple(maps))
+        real(src, dest, ffmpeg, maps)
+
+    monkeypatch.setattr(cl, "remux_copy", spy)
+    _answers(monkeypatch, False, False, True)
+    src = tmp_path / "a.mp3"
+    shutil.copy(AUDIO_FILE, src)
+    path, _metadata = cl.check_liquidsoap_decode(str(src), {"md5": "old"}, binary="ls")
+    assert maps_used == [("-map", "0"), ("-map", "0:a")]
+    assert Path(path).is_file() and Path(path).name == "a.remux.mp3"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["a.mp3", "a.remux.mp3"]
 
 
 def test_refused_when_the_remux_fails(tmp_path: Path, monkeypatch):
     _answers(monkeypatch, False)
 
-    def broken(_src, _dest):
+    def broken(_src, _dest, _ffmpeg=None, _maps=None):
         raise OSError("ffmpeg remux failed (exit 1)")
 
     monkeypatch.setattr(cl, "remux_copy", broken)
     src = tmp_path / "a.mp3"
     shutil.copy(AUDIO_FILE, src)
-    with pytest.raises(cl.LiquidsoapUndecodableError, match="remux failed"):
+    with pytest.raises(cl.LiquidsoapUndecodableError, match="cannot decode it"):
         cl.check_liquidsoap_decode(str(src), {}, binary="ls")
 
 
@@ -142,7 +162,7 @@ def test_pipeline_files_the_remux_and_removes_the_upload(
 @requires_ffmpeg
 def test_pipeline_refusal_keeps_the_upload(src_dir: Path, dest_dir: Path, monkeypatch):
     monkeypatch.setattr(cl, "liquidsoap_binary", lambda: "ls")
-    _answers(monkeypatch, False, False)
+    _answers(monkeypatch, False, False, False)
     upload = src_dir / AUDIO_FILENAME
     queue = Queue()
 

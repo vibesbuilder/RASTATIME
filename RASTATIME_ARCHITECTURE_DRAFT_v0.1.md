@@ -6,7 +6,8 @@ Date: 2026-11-24
 
 > **Revision history**
 > - **0.163 (2026-11-24)** - The import asks Liquidsoap whether it can decode a file (§23.132):
->   analyzer step `check_liquidsoap_decode`, lossless remux, library scan `scan_liquidsoap_decode`.
+>   analyzer step `check_liquidsoap_decode`, lossless remux (then without the embedded picture),
+>   library scan `scan_liquidsoap_decode`.
 > - **0.162 (2026-11-23)** - Comment and date per allowed address (§23.131): second cc_pref
 >   key `allowed_address_notes`; list, mirror file and its readers unchanged.
 > - **0.161 (2026-11-22)** - Analyzer ready for ffmpeg 9.1; raw ADTS measured from its packets
@@ -12072,3 +12073,17 @@ with a non-ASCII path when present); API `test_scan_liquidsoap_decode.py`
 **Risk.**  Low.  Imports take ~0.5 s longer; the playout and the running
 Liquidsoap are untouched.  Active after a RASTATIME-ANALYZER restart.
 Rollback `git revert`.
+
+**Addendum 2026-11-24 - second remux variant without the picture.**  The
+first full library scan (25,311 files, 564 s) found 2 undecodable files:
+the MP3 of 2026-11-23 and one MP3 that stays undecodable after the full
+remux - its embedded cover picture (mjpeg) made Liquidsoap's FFmpeg take
+it for an MPEG program stream; remuxed without the picture it decodes.
+`REMUX_VARIANTS` now tries `-map 0` and then `-map 0:a` (operator Go):
+the audio and the tags stay, only the embedded picture leaves the file.
+The library cover is not lost - `FileDataHelper::saveArtworkData` stores
+it from the upload before the analyzer runs; only a later *Reset
+Artwork* finds no picture in such a file.  `remux_until_decodable` is
+shared by the import and `--repair`; `--repair` replaces a library file
+only on a clear "decodes" (no fail-open).  Refusal reason "... not even
+after a lossless remux (also tried without the embedded picture)".

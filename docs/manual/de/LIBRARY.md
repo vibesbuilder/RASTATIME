@@ -842,10 +842,14 @@ Prüfen Sie den Upload-Status-Badge:
 > Analyzer Liquidsoap selbst, ob es jede neue Datei abspielen kann.  Kann es
 > das nicht, wird die Datei verlustfrei neu verpackt (gleicher Ton, gleiche
 > Tags, neuer Container) und erneut geprüft; in die Bibliothek kommt die neu
-> verpackte Kopie.  Erst wenn auch das nicht hilft, schlägt der Import mit
-> dem Grund *"The file could not be played: the playout engine (Liquidsoap)
-> cannot decode it, not even after a lossless remux"* fehl.  Die Prüfung
-> kostet etwa eine halbe Sekunde je Datei.
+> verpackte Kopie.  Lehnt Liquidsoap sie immer noch ab, wird die Datei ein
+> weiteres Mal ohne ihr eingebettetes Cover-Bild verpackt (bei einer Datei der
+> Bibliothek war das Bild die Ursache); das Cover in der Bibliothek bleibt
+> erhalten, weil es beim Upload separat abgelegt wird.  Erst wenn auch das
+> nicht hilft, schlägt der Import mit dem Grund *"The file could not be
+> played: the playout engine (Liquidsoap) cannot decode it, not even after a
+> lossless remux (also tried without the embedded picture)"* fehl.  Die
+> Prüfung kostet etwa eine halbe Sekunde je Datei.
 
 > **Die Bibliothek mit der Sende-Engine prüfen (seit 24.11.2026).**  Auf dem
 > Studiorechner fragt `rastatime-api scan_liquidsoap_decode` (PowerShell in

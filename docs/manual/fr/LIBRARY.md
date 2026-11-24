@@ -857,11 +857,15 @@ Vérifiez le badge de statut de téléversement :
 > L'analyseur demande donc à Liquidsoap lui-même s'il peut lire chaque
 > nouveau fichier.  Si ce n'est pas le cas, le fichier est réempaqueté sans
 > perte (même son, mêmes tags, nouveau conteneur) puis vérifié à nouveau ;
-> c'est la copie réempaquetée qui entre dans la bibliothèque.  Ce n'est que
-> si cela n'aide pas non plus que l'import échoue avec le motif *"The file
+> c'est la copie réempaquetée qui entre dans la bibliothèque.  Si Liquidsoap
+> la refuse encore, le fichier est réempaqueté une fois de plus sans son
+> image de pochette intégrée (pour un fichier de la bibliothèque, l'image
+> était en cause) ; la pochette affichée dans la bibliothèque est conservée,
+> car elle est enregistrée à part lors du téléversement.  Ce n'est que si
+> cela n'aide pas non plus que l'import échoue avec le motif *"The file
 > could not be played: the playout engine (Liquidsoap) cannot decode it,
-> not even after a lossless remux"*.  Le contrôle ajoute environ une
-> demi-seconde par fichier.
+> not even after a lossless remux (also tried without the embedded
+> picture)"*.  Le contrôle ajoute environ une demi-seconde par fichier.
 
 > **Vérifier la bibliothèque avec le moteur de diffusion (depuis le
 > 24/11/2026).**  Sur la machine du studio, `rastatime-api

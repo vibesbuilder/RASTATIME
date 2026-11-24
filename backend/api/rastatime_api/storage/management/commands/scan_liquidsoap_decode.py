@@ -90,16 +90,13 @@ def repair_file(
     """Remux one file in place; (status, detail).  The original is kept in _replaced/."""
     if scheduled_soon(file_id, now_fn()):
         return "skipped", "scheduled now or within the next 6 hours"
-    remux = cl.remux_target(path)
-    try:
-        cl.remux_copy(path, remux, ffmpeg)
-    except Exception as exc:  # pylint: disable=broad-exception-caught
-        return "repair_failed", f"remux failed: {exc}"
-    (ok,) = cl.liquidsoap_decodes([str(remux)], binary)
-    if not ok:
+    # the import's variants: lossless remux, then without the embedded picture
+    remux, how = cl.remux_until_decodable(path, binary, ffmpeg)
+    if remux is None:
+        return "repair_failed", f"{how} - original kept"
+    if "no answer" in how:  # the library file is only replaced on a clear yes
         remux.unlink(missing_ok=True)
-        what = "no answer from Liquidsoap" if ok is None else "Liquidsoap cannot decode the remux"
-        return "repair_failed", f"{what} - original kept"
+        return "repair_failed", "no answer from Liquidsoap about the remux - original kept"
     backup = backup_path(root, file_id, path)
     old_md5 = compute_md5(path)
     try:
@@ -121,7 +118,7 @@ def repair_file(
         if backup.is_file() and compute_md5(path) != old_md5:
             os.replace(backup, path)  # the file was swapped before the failure: undo
         return "repair_failed", f"original kept: {exc}"
-    return "repaired", f"original kept as {backup}"
+    return "repaired", f"{how}; original kept as {backup}"
 
 
 class Command(BaseCommand):
