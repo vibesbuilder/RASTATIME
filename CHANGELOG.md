@@ -16,12 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Archiving → „Link by e-mail“: Schalter (anfangs aus), Betreff, Text mit Platzhaltern, Zusatz
   für private Beiträge; Versand über SMTP-Server und Absender von Settings → Alerts.  Archive
   Status zeigt in der Notiz, an wen der Link ging oder warum nicht.  Migration 0090,
-  ARCHITECTURE §23.134, Manual ARCHIVING ×4.
+  ARCHITECTURE §23.134, Manual ARCHIVING ×4 (e9904db1).
 - **Farben je Show-Typ (2026-11-24, Operator)** - Settings → Show Types: Hintergrund- und
   Textfarbe je Typ; die Wahl des Typs unter New/Edit Show füllt die Farben der Sendung
   (weiter änderbar), „Apply colours“ färbt nach Rückfrage alle Sendungen eines Typs um.
   Nebenbei: Vorlagen setzen Kategorie und Show-Typ jetzt wieder ein (wurden gespeichert, aber
-  nie zurückgeschrieben).  Migration 0090, ARCHITECTURE §23.135, Manual SETTINGS/CALENDAR ×4.
+  nie zurückgeschrieben).  Migration 0090, ARCHITECTURE §23.135, Manual SETTINGS/CALENDAR ×4 (e9904db1).
 - **Programme Minutes nach Namen der Moderierenden (2026-11-24, Operator)** - Analytics →
   Programme Minutes → *Group by* hat zusätzlich **Host name**: die Minuten je Person aus Edit
   Show → What → „Host names“.  Eine Sendung mit mehreren Moderierenden zählt bei jeder Person voll
