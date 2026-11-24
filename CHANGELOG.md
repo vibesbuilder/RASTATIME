@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Show → What → „Host names“.  Eine Sendung mit mehreren Moderierenden zählt bei jeder Person voll
   (Operator-Entscheidung), die Summenzeile zählt jede Sendung einmal; Hinweis auf Seite und in
   der CSV.  Eine Sendung zählt nur mit ihren eigenen Namen, eine Wiederholungssendung ohne Namen
-  steht unter „No host names“.  Manual ANALYTICS ×4, ARCHITECTURE 0.165.
+  steht unter „No host names“.  Manual ANALYTICS ×4, ARCHITECTURE 0.165 (f2df01be).
 - **Namen der Moderierenden je Sendung (2026-11-24, Go des Operators: Option B, Templates und
   Export ja, Gäste ins Backlog)** - „Hosts involved“ war eine Zahl je Sendung, darum zählte eine
   Person, die zwei Eigenproduktionen moderiert, unter Analytics → People Involved doppelt.  Edit
