@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-24
+
 ### Added
 
 - **Import fragt Liquidsoap, ob es eine Datei dekodieren kann (2026-11-24, Go des Operators:
@@ -11619,7 +11621,8 @@ Each entry should follow the Keep-a-Changelog grouping:
   ### Security    — vulnerability fixes (highlight in release notes!)
 -->
 
-[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/vibesbuilder/RASTATIME/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/vibesbuilder/RASTATIME/compare/v1.7.0...v1.7.1
