@@ -1672,17 +1672,23 @@ function setupHostNames(form) {
     }
   }
   function add(raw) {
-    var name = clean(raw);
-    if (name === "") {
-      return;
-    }
-    var known = indexOf(all, name);
-    if (known !== -1) {
-      name = all[known];
-    }
-    var list = names();
-    if (indexOf(list, name) === -1) {
-      list.push(name);
+    // ";" always separates names, also in pasted text
+    var list = names(), changed = false;
+    $.each(String(raw).split(";"), function (i, part) {
+      var name = clean(part);
+      if (name === "") {
+        return;
+      }
+      var known = indexOf(all, name);
+      if (known !== -1) {
+        name = all[known];
+      }
+      if (indexOf(list, name) === -1) {
+        list.push(name);
+        changed = true;
+      }
+    });
+    if (changed) {
       store(list);
     }
   }
@@ -1724,6 +1730,15 @@ function setupHostNames(form) {
         add($in.val());
         $in.val("");
         $in.autocomplete("close");
+      }
+    });
+    // pasted or IME text: everything before the last ";" becomes names
+    $in.on("input", function () {
+      var v = $in.val();
+      var cut = v.lastIndexOf(";");
+      if (cut !== -1) {
+        add(v.slice(0, cut));
+        $in.val(v.slice(cut + 1));
       }
     });
     // a typed name that was not confirmed still counts when the field is
