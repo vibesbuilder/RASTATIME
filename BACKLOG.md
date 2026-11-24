@@ -107,8 +107,22 @@ Prüfung beim Import (Variante a, verlustfreies Neuverpacken, sonst Ablehnung) u
   springt zur nächsten Zeile oder spielt eine Notfall-Playlist; **(c)** allgemeine Notfall-Playlist
   nach N s Stille.  Beide Architekturfragen, nicht bewertet.
 
-**Vorbedingungen:** Ergebnis des ersten vollen Bestands-Scans (2026-11-24) und einige Wochen
-Import-Betrieb; nach einem Liquidsoap-Update den Bestands-Scan einmal wiederholen.
+**Erläuterung 2026-11-24 (Operator: bleibt im Backlog):**
+- Deckt drei Lücken der Import-Prüfung ab: Liquidsoap-Update (anderes eingebautes FFmpeg), Dateien,
+  die am Import vorbei geändert werden (direkt im Speicherordner ersetzt, Tag-Editor schreibt ein
+  neues Cover - bei 8668 war das Bild die Ursache), Altbestand (heute per Scan erledigt).
+- Zwischenspeicher (Pfad + Größe + Änderungszeit + Liquidsoap-Version): nur neue oder geänderte
+  Dateien prüfen; nach einem Liquidsoap-Update automatisch alles.  Fail-open wie beim Import.
+- **Grenze:** Autoloading und Auto DJ befüllen erst ~1 h vor Sendungsbeginn (23.11.: Episode 18:07
+  geplant, Sendung 19:07) - für solche Sendungen nur ~45-60 min Vorlauf statt 48 h.
+- Der Preflight warnt nur; gegen Stille auf Sendung helfen nur (b) oder (c).
+- **Offen beim Go:** nur warnen oder auch automatisch neu verpacken (nicht für Dateien, die in den
+  nächsten Minuten laufen); Alarm oder nur Dashboard-Warnung; auch Playlists / Smart Blocks ohne
+  Einplanung prüfen (eher ein regelmäßiger, z. B. nächtlicher Bestands-Scan).
+
+**Vorbedingungen:** Ergebnis des ersten vollen Bestands-Scans (2026-11-24: 25.311 Dateien, 2 Funde,
+beide repariert) und einige Wochen Import-Betrieb; nach einem Liquidsoap-Update den Bestands-Scan
+einmal wiederholen.
 
 ### ✅ ffmpeg 9.1: Analyzer anpassen, bevor ffmpeg im Studio aktualisiert wird - GEBAUT 2026-11-22 (Go B, §23.130)
 
