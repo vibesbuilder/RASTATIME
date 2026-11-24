@@ -94,6 +94,22 @@ Expiry in M4A · bulk_import-Erweiterungsliste · die unbewerteten Ideen unter
 
 ## 🎯 Aktive Backlog-Items (warten auf Operator-Go)
 
+### 🟡 Liquidsoap-Dekodierprüfung auch im Preflight (nächste 48 h) - Defer (Operator 2026-11-24)
+
+Anlass: Dead Air 2026-11-23 19:07-20:00 (eine Sendung lang) - Liquidsoaps eingebautes FFmpeg lehnte
+eine MP3 ab, die das eigenständige ffmpeg ohne Meldung dekodiert.  Gebaut am 2026-11-24 (§23.132):
+Prüfung beim Import (Variante a, verlustfreies Neuverpacken, sonst Ablehnung) und der Bestands-Scan
+`scan_liquidsoap_decode`.  Offen als Sicherheitsnetz:
+- **Preflight:** dieselbe Probe (`check_liquidsoap.liquidsoap_decodes`) für alle Dateien der nächsten
+  48 h, alle 15 min (~300 Dateien ≈ 4 s, eigener kurzlebiger Prozess); Warnung im Dashboard + Alarm.
+  Fängt auch Dateien, die erst ein künftiges Liquidsoap-Update unlesbar macht.
+- **(b) Erkennung im Betrieb:** PLAYOUT bemerkt eine abgelehnte Anfrage (Queue leer statt Titel) und
+  springt zur nächsten Zeile oder spielt eine Notfall-Playlist; **(c)** allgemeine Notfall-Playlist
+  nach N s Stille.  Beide Architekturfragen, nicht bewertet.
+
+**Vorbedingungen:** Ergebnis des ersten vollen Bestands-Scans (2026-11-24) und einige Wochen
+Import-Betrieb; nach einem Liquidsoap-Update den Bestands-Scan einmal wiederholen.
+
 ### ✅ ffmpeg 9.1: Analyzer anpassen, bevor ffmpeg im Studio aktualisiert wird - GEBAUT 2026-11-22 (Go B, §23.130)
 
 **Erledigt 2026-11-22:** Ursache (1) ffprobe 9.1 schreibt den Kommentar als `comment-<Sprache>`

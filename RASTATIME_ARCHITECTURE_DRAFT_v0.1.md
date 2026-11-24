@@ -1,10 +1,12 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.162
-Date: 2026-11-23
+Draft version: 0.163
+Date: 2026-11-24
 
 > **Revision history**
+> - **0.163 (2026-11-24)** - The import asks Liquidsoap whether it can decode a file (§23.132):
+>   analyzer step `check_liquidsoap_decode`, lossless remux, library scan `scan_liquidsoap_decode`.
 > - **0.162 (2026-11-23)** - Comment and date per allowed address (§23.131): second cc_pref
 >   key `allowed_address_notes`; list, mirror file and its readers unchanged.
 > - **0.161 (2026-11-22)** - Analyzer ready for ffmpeg 9.1; raw ADTS measured from its packets
@@ -12016,3 +12018,57 @@ HTML escaping); view rendered from the CLI.  TEST_PLAN A5.6.
 **Risk.**  Low.  No migration; PHP and JS are live on the next request,
 the translations after an Apache restart.  Rollback `git revert`, tag
 `live-2026-11-23b`; the extra cc_pref key is ignored by the old code.
+
+### 23.132 The Import Asks Liquidsoap Whether It Can Decode a File (2026-11-24)
+
+**Context.**  Dead air 2026-11-23 19:07-20:00, a whole show: the
+autoloaded MP3 was refused by Liquidsoap when it was queued
+(`Audio_converter.Channel_layout.Unsupported`, "Available decoders cannot
+decode"), the bus fell to `silence_fallback` until the next show.  The
+import check (§23.123) had passed it: the standalone ffmpeg 9 decodes it
+without a message.  Liquidsoap 2.4.6 links its own FFmpeg, which took that
+one file for an MPEG program stream; a lossless remux (`-map 0 -c copy`)
+made it decodable.  Only Liquidsoap can answer for Liquidsoap.
+
+**Decision (operator Go 2026-11-24, variant a; remux, then refuse).**
+New analyzer step `check_liquidsoap_decode` (`pipeline/check_liquidsoap.py`)
+after `analyze_playability`, before `organise_file`:
+- A short-lived `liquidsoap.exe` (not the playout instance: no Stereo Tool,
+  no output, no telnet) runs a generated probe script that resolves each
+  file of a UTF-8 list file with `request.resolve(content_type=<PCM stereo
+  source>)` - the check that failed on air - and prints `RESULT <n>
+  true|false`.  Start ~0.5 s, then ~12 ms per file; below normal priority.
+- Binary: `RASTATIME_LIQUIDSOAP_EXE`, else the `Application` of the
+  RASTATIME-LIQUIDSOAP NSSM service (registry), else `liquidsoap` on PATH -
+  a Liquidsoap upgrade is checked with the new decoder at once.
+- `false` -> `<stem>.remux<ext>` next to the file, checked again; decodable
+  -> it is filed instead (md5 / filesize of the remux, `source_md5` keeps
+  the upload's md5 for the duplicate check, an existing `source_md5` of a
+  conversion wins); the file it was made from is removed after filing like
+  a converted file's original.  Still `false` ->
+  `LiquidsoapUndecodableError` (an `UnplayableFileError`): Failed upload,
+  reason "the playout engine (Liquidsoap) cannot decode it, not even after
+  a lossless remux", the upload stays in `organize/`.
+- Fail-open: no binary, a timeout or a missing answer let the file through
+  (logged); a remux whose second check has no answer is taken.
+
+**Library scan.**  `rastatime-api scan_liquidsoap_decode` (storage app)
+asks the same probe about every imported, existing, visible file in
+batches of 200 per process; report `logs/liquidsoap-decode-DATE.csv`
+(undecodable / missing / unknown).  `--repair` remuxes the undecodable
+ones in place when the remux decodes and the file is not scheduled within
+6 h: original -> `<storage>/_replaced/remux-DATE/<id>-<name>`, md5 /
+filesize / source_md5 / mtime updated in one transaction.  Advisory lock.
+
+**Not done (BACKLOG 🟡).**  The same probe in the preflight for the files of
+the next 48 h (would also catch files a future Liquidsoap makes
+unreadable); PLAYOUT noticing a refused request at playout time.
+
+**Tests.**  Analyzer `check_liquidsoap_test.py` (12: parsing, fail-open,
+remux / refusal / source_md5, pipeline filing and refusal, real Liquidsoap
+with a non-ASCII path when present); API `test_scan_liquidsoap_decode.py`
+(6, no database).  Real file: the 2026-11-23 MP3 is remuxed and accepted.
+
+**Risk.**  Low.  Imports take ~0.5 s longer; the playout and the running
+Liquidsoap are untouched.  Active after a RASTATIME-ANALYZER restart.
+Rollback `git revert`.

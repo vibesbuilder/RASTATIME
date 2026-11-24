@@ -12,6 +12,7 @@ from .analyze_loudness import analyze_loudness
 from .analyze_metadata import analyze_metadata
 from .analyze_playability import UnplayableFileError, analyze_playability
 from .analyze_replaygain import analyze_replaygain
+from .check_liquidsoap import check_liquidsoap_decode
 from .convert_format import convert_format, discard_converted, remove_original
 from .organise_file import organise_file
 from .repair_container import repair_container
@@ -164,6 +165,8 @@ class Pipeline:
                 convert_lossless=options.convert_lossless,
             )
             converted = audio_file_path != source_path
+            converted_path = audio_file_path
+            remuxed_path: Optional[str] = None
             # RASTATIME 2026-11-09 - a Media Type tag naming a visible track
             # type sets the type (the legacy callback checks the code again)
             # and decides the cue point analysis.
@@ -190,6 +193,12 @@ class Pipeline:
                         audio_file_path,
                     )
                 metadata = analyze_playability(audio_file_path, metadata)
+                # RASTATIME 2026-11-24 - the playout engine must decode it too
+                # (its own FFmpeg refused a file the check above passed: dead
+                # air 2026-11-23); a remux that helps replaces the file.
+                audio_file_path, metadata = check_liquidsoap_decode(audio_file_path, metadata)
+                if audio_file_path != converted_path:
+                    remuxed_path = audio_file_path
 
                 metadata = organise_file(
                     audio_file_path,
@@ -201,19 +210,28 @@ class Pipeline:
                 # RASTATIME 2026-10-14 - the import failed (or the analyzer
                 # is stopping): drop the conversion, keep the original in
                 # organize/ exactly as without it.
+                if remuxed_path:
+                    discard_converted(remuxed_path)
                 if converted:
-                    discard_converted(audio_file_path)
-                if repaired_path and repaired_path != audio_file_path:
+                    discard_converted(converted_path)
+                if repaired_path and repaired_path != converted_path:
                     discard_converted(repaired_path)
                 raise
             if converted:
                 # Operator decision 2026-10-14: the lossless original is not
                 # kept - deleted only now that its conversion is filed.
                 remove_original(source_path)
-                if repaired_path and repaired_path != audio_file_path:
+                if repaired_path and repaired_path != converted_path:
                     discard_converted(
                         repaired_path
                     )  # the intermediate of a repaired + converted file
+            if remuxed_path:
+                # RASTATIME 2026-11-24 - the remux is filed: drop what it was
+                # made from (a conversion, or the upload itself)
+                if converted:
+                    discard_converted(converted_path)
+                else:
+                    remove_original(source_path)
 
             metadata["import_status"] = PipelineStatus.SUCCEED
 

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Import fragt Liquidsoap, ob es eine Datei dekodieren kann (2026-11-24, Go des Operators:
+  Variante a, Neuverpacken statt Ablehnen)** - Am 23.11. blieb die Sendung von 19:07 bis 20:00
+  stumm: Liquidsoap lehnte die geladene MP3 beim Einreihen ab („Channel_layout.Unsupported“,
+  „cannot decode“), die Importprüfung hatte sie durchgelassen, weil das eigenständige ffmpeg sie
+  ohne Meldung dekodiert - Liquidsoap bringt ein eigenes, eingebautes FFmpeg mit, das genau diese
+  Datei für einen MPEG-Programmstrom hielt.  Jetzt fragt der Analyzer nach der bisherigen Prüfung
+  einen kurzlebigen Liquidsoap-Prozess (nicht die Sende-Instanz), ob die Datei als PCM-Stereo
+  dekodierbar ist (gleiche Prüfung wie auf Sendung, ~0,5 s je Import).  Wenn nicht, wird sie
+  verlustfrei neu verpackt (`ffmpeg -map 0 -c copy`, Ton und Tags unverändert) und erneut geprüft;
+  die neu verpackte Kopie kommt in die Bibliothek (`source_md5` behält die Prüfsumme des Uploads für
+  die Dublettenprüfung).  Hilft auch das nicht, schlägt der Import mit Grund fehl (Failed Uploads).
+  Fehlt Liquidsoap oder antwortet es nicht, geht die Datei ungeprüft durch (Log).  Der Pfad kommt aus
+  dem Dienst RASTATIME-LIQUIDSOAP, ein Liquidsoap-Update prüft also sofort mit dem neuen Decoder.
+  Bestand: `rastatime-api scan_liquidsoap_decode` (Bericht `logs\liquidsoap-decode-DATUM.csv`,
+  `--repair` verpackt betroffene Dateien neu, Original nach `_replaced\remux-DATUM\`, nicht für
+  Dateien, die in den nächsten 6 h laufen).  Preflight-Variante als 🟡 im BACKLOG.  Manual LIBRARY
+  ×4, ARCHITECTURE 0.163 (§23.132).  Wirksam nach einem ANALYZER-Neustart.
+
 ## [1.9.0] - 2026-11-23
 
 ### Added

@@ -850,6 +850,30 @@ Vérifiez le badge de statut de téléversement :
 > pour 25 000 fichiers et occupe un cœur de processeur en basse priorité ;
 > `--resume` reprend un passage interrompu.
 
+> **Le moteur de diffusion vérifie aussi chaque fichier (depuis le
+> 24/11/2026).**  Liquidsoap, qui diffuse les fichiers à l'antenne, possède
+> son propre décodeur intégré.  Dans de rares cas, il refuse un fichier que
+> tous les autres contrôles acceptent, et tout l'élément reste muet.
+> L'analyseur demande donc à Liquidsoap lui-même s'il peut lire chaque
+> nouveau fichier.  Si ce n'est pas le cas, le fichier est réempaqueté sans
+> perte (même son, mêmes tags, nouveau conteneur) puis vérifié à nouveau ;
+> c'est la copie réempaquetée qui entre dans la bibliothèque.  Ce n'est que
+> si cela n'aide pas non plus que l'import échoue avec le motif *"The file
+> could not be played: the playout engine (Liquidsoap) cannot decode it,
+> not even after a lossless remux"*.  Le contrôle ajoute environ une
+> demi-seconde par fichier.
+
+> **Vérifier la bibliothèque avec le moteur de diffusion (depuis le
+> 24/11/2026).**  Sur la machine du studio, `rastatime-api
+> scan_liquidsoap_decode` (PowerShell dans `C:\RASTATIME`) interroge
+> Liquidsoap sur chaque fichier de la bibliothèque et inscrit ceux qu'il ne
+> peut pas lire dans `logs\liquidsoap-decode-<date>.csv`.  Cela prend
+> quelques minutes pour 25 000 fichiers et ne modifie rien.  Avec
+> `--repair` (éventuellement `--ids 123 456`), il réempaquette ces fichiers
+> sans perte : l'original est conservé dans `_replaced\remux-<date>\` dans
+> le dossier de stockage, le fichier réempaqueté prend sa place.  Les
+> fichiers diffusés dans les 6 prochaines heures sont ignorés.
+
 ### "J'ai téléversé un fichier WAV et la bibliothèque affiche un MP3."
 
 C'est voulu : les fichiers sans perte sont convertis en MP3 320 kbit/s

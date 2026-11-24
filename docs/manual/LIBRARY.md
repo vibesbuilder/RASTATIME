@@ -771,6 +771,26 @@ Check the upload status badge:
 > track.  A full run takes about an hour for 25,000 files and uses one
 > processor core at low priority; `--resume` continues an interrupted run.
 
+> **The playout engine checks every file too (since 2026-11-24).**  Liquidsoap,
+> which plays the files on air, has its own built-in decoder.  In rare cases
+> it refuses a file that every other check accepts, and the whole item stays
+> silent.  The analyzer therefore asks Liquidsoap itself whether it can play
+> each new file.  When it cannot, the file is repacked without any loss
+> (same audio, same tags, a fresh container) and checked again; the repacked
+> copy is what goes into the library.  Only when that does not help either
+> does the import fail with the reason *"The file could not be played: the
+> playout engine (Liquidsoap) cannot decode it, not even after a lossless
+> remux"*.  The check adds about half a second per file.
+
+> **Checking the library with the playout engine (since 2026-11-24).**  On the
+> studio machine, `rastatime-api scan_liquidsoap_decode` (PowerShell in
+> `C:\RASTATIME`) asks Liquidsoap about every library file and writes the files
+> it cannot play to `logs\liquidsoap-decode-<date>.csv`.  It takes a few
+> minutes for 25,000 files and changes nothing.  With `--repair` (optionally
+> `--ids 123 456`) it repacks those files without loss: the original is kept
+> in `_replaced\remux-<date>\` inside the storage folder, the repacked file
+> takes its place.  Files on air within the next 6 hours are skipped.
+
 ### "I uploaded a WAV file and the library shows an MP3."
 
 That is intended: lossless files are converted to MP3 320 kbps on

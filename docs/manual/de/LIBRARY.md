@@ -835,6 +835,29 @@ Prüfen Sie den Upload-Status-Badge:
 > Prozessorkern mit niedriger Priorität; `--resume` setzt einen
 > unterbrochenen Lauf fort.
 
+> **Auch die Sende-Engine prüft jede Datei (seit 24.11.2026).**  Liquidsoap,
+> das die Dateien auf Sendung spielt, hat einen eigenen eingebauten
+> Decoder.  In seltenen Fällen lehnt er eine Datei ab, die alle anderen
+> Prüfungen annehmen, und das ganze Element bleibt stumm.  Darum fragt der
+> Analyzer Liquidsoap selbst, ob es jede neue Datei abspielen kann.  Kann es
+> das nicht, wird die Datei verlustfrei neu verpackt (gleicher Ton, gleiche
+> Tags, neuer Container) und erneut geprüft; in die Bibliothek kommt die neu
+> verpackte Kopie.  Erst wenn auch das nicht hilft, schlägt der Import mit
+> dem Grund *"The file could not be played: the playout engine (Liquidsoap)
+> cannot decode it, not even after a lossless remux"* fehl.  Die Prüfung
+> kostet etwa eine halbe Sekunde je Datei.
+
+> **Die Bibliothek mit der Sende-Engine prüfen (seit 24.11.2026).**  Auf dem
+> Studiorechner fragt `rastatime-api scan_liquidsoap_decode` (PowerShell in
+> `C:\RASTATIME`) Liquidsoap nach jeder Datei der Bibliothek und schreibt die
+> Dateien, die es nicht abspielen kann, nach
+> `logs\liquidsoap-decode-<Datum>.csv`.  Das dauert für 25.000 Dateien
+> einige Minuten und ändert nichts.  Mit `--repair` (optional
+> `--ids 123 456`) verpackt er diese Dateien verlustfrei neu: Das Original
+> bleibt in `_replaced\remux-<Datum>\` im Speicherordner, die neu verpackte
+> Datei tritt an seine Stelle.  Dateien, die in den nächsten 6 Stunden
+> laufen, werden übersprungen.
+
 ### "Ich habe eine WAV-Datei hochgeladen, und die Bibliothek zeigt eine MP3."
 
 Das ist gewollt: Verlustfreie Dateien werden beim Import in MP3 mit

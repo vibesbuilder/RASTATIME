@@ -723,6 +723,30 @@ Verifique la insignia de estado de subida:
 > 25.000 archivos y ocupa un núcleo del procesador con baja prioridad;
 > `--resume` continúa una pasada interrumpida.
 
+> **El motor de emisión también comprueba cada archivo (desde el
+> 24/11/2026).**  Liquidsoap, que emite los archivos al aire, tiene su
+> propio decodificador integrado.  En casos raros rechaza un archivo que
+> todas las demás comprobaciones aceptan, y todo el elemento queda en
+> silencio.  Por eso el analizador pregunta al propio Liquidsoap si puede
+> reproducir cada archivo nuevo.  Si no puede, el archivo se reempaqueta sin
+> pérdida (mismo audio, mismas etiquetas, contenedor nuevo) y se comprueba
+> de nuevo; a la biblioteca entra la copia reempaquetada.  Solo si eso
+> tampoco ayuda, la importación falla con el motivo *"The file could not be
+> played: the playout engine (Liquidsoap) cannot decode it, not even after a
+> lossless remux"*.  La comprobación añade aproximadamente medio segundo por
+> archivo.
+
+> **Comprobar la biblioteca con el motor de emisión (desde el
+> 24/11/2026).**  En el equipo del estudio, `rastatime-api
+> scan_liquidsoap_decode` (PowerShell en `C:\RASTATIME`) pregunta a
+> Liquidsoap por cada archivo de la biblioteca y escribe los que no puede
+> reproducir en `logs\liquidsoap-decode-<fecha>.csv`.  Tarda unos minutos
+> para 25 000 archivos y no cambia nada.  Con `--repair` (opcionalmente
+> `--ids 123 456`) reempaqueta esos archivos sin pérdida: el original se
+> conserva en `_replaced\remux-<fecha>\` dentro de la carpeta de
+> almacenamiento y el archivo reempaquetado ocupa su lugar.  Los archivos
+> que se emiten en las próximas 6 horas se omiten.
+
 ### "Subí un archivo WAV y la biblioteca muestra un MP3."
 
 Es lo previsto: los archivos sin pérdida se convierten a MP3 de
