@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Bestand: `rastatime-api scan_liquidsoap_decode` (Bericht `logs\liquidsoap-decode-DATUM.csv`,
   `--repair` verpackt betroffene Dateien neu, Original nach `_replaced\remux-DATUM\`, nicht für
   Dateien, die in den nächsten 6 h laufen).  Preflight-Variante als 🟡 im BACKLOG.  Manual LIBRARY
-  ×4, ARCHITECTURE 0.163 (§23.132).  Wirksam nach einem ANALYZER-Neustart.
+  ×4, ARCHITECTURE 0.163 (§23.132).  Wirksam nach einem ANALYZER-Neustart.  `c88c6718`.
 
 ## [1.9.0] - 2026-11-23
 
