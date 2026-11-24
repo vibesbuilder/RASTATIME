@@ -22,7 +22,7 @@ bekommt vor dem Bau die Evaluierung (sechs Punkte + Risiko) und ein Go.
 | 1 | Geplanter Liquidsoap-Neustart an der Titelgrenze kennt keinen DJ | 💡 Befund 2026-11-19 (Eintrag unten); nächster Schritt Evaluierung |
 | 2 | Firewall-Wächter (d): Retry-Serie desselben Encoders zählt als ein Versuch, dazu (c): DJ-Fehlpasswörter der PLAYOUT-Bremse überlassen oder milder behandeln | offen seit 2026-11-21 (Eintrag „Firewall-Wächter sperrt nach Unblock …“); Evaluierung |
 | 3 | Off-Air-Text darf in Webstream-Slots gar nicht erscheinen - auch nicht 0-2 s | 💡 neu 2026-11-23 (Eintrag nach der ICY-Abnahme); Evaluierung |
-| 4 | Laufendes abschließen: Abnahme DJ-Eingangspegel (§23.129) Di 2026-11-24 09:45; Probezeit „Sendeplan läuft unter dem DJ“ (§23.122) auswerten Do 2026-11-26, danach Schalter fest | Termine stehen |
+| 4 | Laufendes abschließen: ~~Abnahme DJ-Eingangspegel (§23.129) Di 2026-11-24 09:45~~ ✅ bestanden 2026-11-24 (-16,8 LUFS statt -9,0); Probezeit „Sendeplan läuft unter dem DJ“ (§23.122) auswerten Do 2026-11-26, danach Schalter fest | Termin 26.11. steht |
 
 ---
 
@@ -167,6 +167,10 @@ oder milder (höhere Schwelle, kürzere Sperre); (d) PLAYOUT zählt einen Retry-
 Encoders als einen Fehlversuch.
 **Evaluierung (a) + (b) 2026-11-21 - Empfehlung Go für beide, wartet auf Entscheidung:** (a) „Unblock" (Oberfläche und `rt-blocks.ps1`) schreibt je Adresse den Zeitpunkt in `<config dir>/unblocked.txt`, der Wächter ignoriert in allen drei Zählern (4xx, Scanner, DJ-Passwort) die Zeilen bis dahin - eine Datei statt der legacy.log-Zeile, damit das Skript nicht am Log-Wortlaut hängt; (b) der Wächter liest auch die „accepted"-Zeilen der DJ-Logins und zählt Fehlpasswörter einer Adresse nur nach ihrem letzten Erfolg (wie die PLAYOUT-Bremse, die beim Erfolg schon zurücksetzt).  Etwa 8-10 Dateien, ~150-200 Zeilen, keine Migration, kein Neustart (Wächter greift beim nächsten 5-min-Lauf, PHP sofort); Probe: Replay des 2026-11-21 mit -DryRun und injizierbarer Uhr.  Mit (a) oder (b) wären 12:52/12:57/13:02 nicht gesperrt worden; die erste Sperre um 12:12 bleibt (dafür wäre (d) nötig).
 Vorbedingung: Evaluierung und Go des Operators.
+**Datenpunkt 2026-11-24 für (c)/(d):** der Encoder einer DJ-Sendung wählte von 09:37 bis 09:40 (vor dem
+5-Minuten-Fenster) und von 10:00 bis 10:26 (nach dem Sendungsende) alle 2 s erneut - 756 Abweisungen,
+alle `not-host, not counted`; der Wächter zählt nur `rejected (bad password)`, keine Sperre.  Retry-Serien
+ohne Passwortfehler sind also schon unschädlich; (d) betrifft nur echte Fehlpasswörter.
 
 ### ✅ Kalender als PDF exportieren (Monat / Woche / Tag) - GEBAUT 2026-11-21 (Go B in zwei Stufen, Zeit + Sendung, A4 quer, kein Monatsraster; §23.124)
 
@@ -186,7 +190,21 @@ neuer Prozess oder neue Abhängigkeit auf der Sendemaschine - nein.
 Stufe 2 Raster für Woche und Tag wie Multi-View (+1,5-2 Tage), Monatsraster nur gekürzt.
 Vorbedingungen: Go je Stufe; offen: Spalten der Liste, Papierformat (A4 quer?).
 
-### ✅ Pegel der DJ-Eingänge (Master Source / Show Source) - Variante 3 GEBAUT 2026-11-21/22 (Go: Schalter an, -23 LUFS fest; §23.129; Abnahme nach PLAYOUT-Neustart offen); Variante 2 bleibt Defer
+### ✅ Pegel der DJ-Eingänge (Master Source / Show Source) - Variante 3 GEBAUT 2026-11-21/22 (Go: Schalter an, -23 LUFS fest; §23.129; ABGENOMMEN 2026-11-24); Variante 2 bleibt Defer
+
+**Abnahme 2026-11-24 (24/7-Aufnahme, nach Stereo Tool, ffmpeg ebur128):** dieselbe DJ-Sendung wie am
+2026-11-17, DJ vorab verbunden 09:40:01, on air 09:45:00 bis zum Sendungsende 10:00:00.
+- DJ 09:45-10:00 **-16,8 LUFS** (2026-11-17 ohne Regelung: -9,0); Line-In-Sendung davor -16,6,
+  Sendeplan danach -16,4, Dateien 08:00-08:15 -16,4 LUFS - der DJ liegt jetzt auf Programmhöhe statt
+  ~7 dB darüber.
+- Jede Minute -16,1 bis -18,2 LUFS (2026-11-17: -6,5 bis -12,1); LRA 5,6 LU (vorher 10,9).
+- True Peak gesamt +0,4 dBTP (vorher +1,6); nur 2 von 15 Minuten über 0 dBTP (+0,1 / +0,4, vorher 12
+  von 15) - dekodierte 128-kbit/s-MP3, Überschwinger der Kodierung inbegriffen.
+- Einstieg: 3 s fast still (Rauschboden des DJ-Eingangs, Spitze -51 dBFS, wie am 17.11.), dann die
+  bekannten ~2 s laut (Momentary -3,6 / -11,7 LUFS, Spitze -0,1 dBFS), ab der dritten Sekunde nach dem
+  Einsatz -15 bis -20 LUFS.  Die stillen 3 s wurden nicht angehoben (Schwelle -45 LUFS greift); nach
+  Gehör nicht geprüft.
+- Variante 2 (fester Gain je DJ) nicht nötig.
 
 Befund 2026-11-18 (Operator: eingewählte DJs etwa -10 dB, Sendeplan etwa -20 dB): Die R128-Anpassung
 ist ein Gain pro Datei (Messung beim Import). Line-In und Webstreams haben ein eigenes Gain-Feld,
