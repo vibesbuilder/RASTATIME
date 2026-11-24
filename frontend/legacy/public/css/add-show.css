@@ -381,6 +381,11 @@ label.wrapp-label input[type="checkbox"] {
 /* RASTATIME 2026-11-24 - What: "Host names" (form/add-show-people-row.phtml,
    add-show.js setupHostNames): the names as chips, the input for the next
    one after them; "Hosts involved" greyed while it counts the names. */
+/* room between the tooltip icon and the chips / the input (2026-11-24) */
+#schedule-add-show dt.rt-people-row {
+    margin-right: 8px;
+}
+
 #schedule-add-show dt.rt-people-row .help_icon {
     margin-left: 6px;
     vertical-align: middle;
@@ -423,7 +428,7 @@ label.wrapp-label input[type="checkbox"] {
 }
 
 #schedule-add-show dd.rt-people-row input.rt-people-input {
-    width: 14em;
+    width: 12em;
 }
 
 #schedule-add-show dd.rt-participants-row input.rt-people-counted {
