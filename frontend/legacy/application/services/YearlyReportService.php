@@ -267,6 +267,57 @@ class Application_Service_YearlyReportService
         foreach (['show_type' => ['show_type'], 'genre' => ['genre'], 'category' => ['category'], 'both' => ['genre', 'category']] as $key => $dims) {
             $out['groups'][$key] = self::groupRows($inst, $params, $dims);
         }
+        // RASTATIME 2026-11-24 - per host name (§23.133 register)
+        if (Application_Service_ArchivingService::peopleReady()) {
+            $out['groups']['host'] = self::hostRows($inst, $params);
+            // every show once, rounded like the rows (the footer of this grouping)
+            $out['host_total'] = self::hostRows($inst, $params, true)[0];
+        }
+
+        return $out;
+    }
+
+    /**
+     * RASTATIME 2026-11-24 - the minutes of the year per host name (Edit Show
+     * -> What -> "Host names", cc_show_person).  Operator 2026-11-24: a show
+     * with several hosts counts fully for each of them (the rows add up to
+     * more than the total); a show counts only with its own names - a repeat
+     * show without names lands under "no host names" like every other show
+     * without names (group label '').  $total: one row with every show
+     * once, rounded like the rows - the total, as the rows add up to more.
+     */
+    private static function hostRows(string $inst, array $params, bool $total = false): array
+    {
+        $tail = $total ? '' : " LEFT JOIN cc_show_person sp ON sp.show_id = sh.id
+                        LEFT JOIN cc_person p ON p.id = sp.person_id
+                       GROUP BY p.id
+                       ORDER BY (p.id IS NULL), lower(min(p.name))";
+        $rows = Application_Common_Database::prepareAndExecute(
+            $inst . ' SELECT ' . ($total ? "''" : "COALESCE(min(p.name), '')") . " AS host,
+                             count(i.id) FILTER (WHERE sh.own_production) AS episodes_own,
+                             count(i.id) FILTER (WHERE NOT sh.own_production) AS episodes_other,
+                             ROUND(COALESCE(SUM(i.secs) FILTER (WHERE sh.own_production AND NOT sh.is_repeat), 0) / 60.0) AS minutes_first,
+                             ROUND(COALESCE(SUM(i.secs) FILTER (WHERE sh.own_production AND sh.is_repeat), 0) / 60.0) AS minutes_repeat,
+                             ROUND(COALESCE(SUM(i.secs) FILTER (WHERE NOT sh.own_production), 0) / 60.0) AS minutes_other
+                        FROM inst i JOIN shows sh ON sh.id = i.show_id" . $tail,
+            $params,
+            'all'
+        );
+        $out = [];
+        foreach ($rows ?: [] as $r) {
+            $row = [
+                'genre' => null, 'category' => null, 'show_type' => null,
+                'host' => (string) $r['host'],
+                'episodes_own' => (int) $r['episodes_own'],
+                'episodes_other' => (int) $r['episodes_other'],
+                'minutes_first' => (int) $r['minutes_first'],
+                'minutes_repeat' => (int) $r['minutes_repeat'],
+                'minutes_other' => (int) $r['minutes_other'],
+            ];
+            $row['minutes_own'] = $row['minutes_first'] + $row['minutes_repeat'];
+            $row['minutes_total'] = $row['minutes_own'] + $row['minutes_other'];
+            $out[] = $row;
+        }
 
         return $out;
     }
@@ -308,6 +359,7 @@ class Application_Service_YearlyReportService
                 'genre' => in_array('genre', $dims, true) ? (string) $r['genre'] : null,
                 'category' => in_array('category', $dims, true) ? (string) $r['category'] : null,
                 'show_type' => in_array('show_type', $dims, true) ? (string) $r['show_type'] : null,
+                'host' => null,
                 'episodes_own' => (int) $r['episodes_own'],
                 'episodes_other' => (int) $r['episodes_other'],
                 'minutes_first' => (int) $r['minutes_first'],

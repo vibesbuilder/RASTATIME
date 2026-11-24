@@ -183,6 +183,15 @@ are rounded per group, so a sum can differ from the per-show totals by
 a minute or two.  The category is set in the show (Edit Show → What,
 free text with suggestions; database migration 0082).
 
+**Per host name** (since 2026-11-24): *Group by* → **Host name** shows the
+same minutes per person entered under Edit Show → What → *Host names*
+(see the Calendar chapter).  A show with several hosts counts fully for
+each of them - the row of a person answers "how many minutes did this
+person host" - so the rows add up to more than the total; the *Total*
+row counts every show once.  A show counts only with its own names: a
+repeat show without names of its own lands in the row *No host names*,
+like every other show without names.
+
 Program Managers and Admins open this page.
 
 ## 6. People Involved (since 2026-11-03)

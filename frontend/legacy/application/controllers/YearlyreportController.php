@@ -31,13 +31,26 @@ class YearlyreportController extends Zend_Controller_Action
         $this->view->showTypesReady = Application_Model_Showtype::ready();
         $default = $this->view->showTypesReady ? 'show_type' : 'genre';
         $group = (string) $this->_getParam('group', $default);
-        $this->view->group = in_array($group, ['show_type', 'genre', 'category', 'both'], true) ? $group : $default;
+        // RASTATIME 2026-11-24 - per host name once the register exists (§23.133)
+        $this->view->hostsReady = Application_Service_ArchivingService::peopleReady();
+        $this->view->group = in_array($group, $this->groups(), true) ? $group : $default;
         $this->view->isCurrentYear = $year === (int) (new DateTime('now', $tz))->format('Y');
         $this->view->today = (new DateTime('now', $tz))->format('Y-m-d');
         $this->view->monthNames = [];
         for ($m = 1; $m <= 12; ++$m) {
             $this->view->monthNames[$m] = (new DateTime(sprintf('%04d-%02d-01', $year, $m), $tz))->format('F');
         }
+    }
+
+    /** @return string[] the groupings of Programme Minutes (per host name once migration 0089 ran) */
+    private function groups(): array
+    {
+        $groups = ['show_type', 'genre', 'category', 'both'];
+        if (Application_Service_ArchivingService::peopleReady()) {
+            $groups[] = 'host';
+        }
+
+        return $groups;
     }
 
     /** RASTATIME 2026-11-08 - the year of Music by Country (years with playout history). */
@@ -118,7 +131,9 @@ class YearlyreportController extends Zend_Controller_Action
     /**
      * RASTATIME 2026-11-10 - programme minutes of one year per genre, per
      * category or per genre x category (?group=genre|category|both) as CSV;
-     * 2026-11-16 per show type (?group=show_type).
+     * 2026-11-16 per show type (?group=show_type); 2026-11-24 per host name
+     * (?group=host - a show with several hosts counts for each of them, the
+     * total line is the real total of all shows).
      */
     public function groupsCsvAction()
     {
@@ -126,12 +141,15 @@ class YearlyreportController extends Zend_Controller_Action
         $this->_helper->viewRenderer->setNoRender(true);
         $year = $this->year();
         $group = (string) $this->_getParam('group', 'genre');
-        $group = in_array($group, ['show_type', 'genre', 'category', 'both'], true) ? $group : 'genre';
+        $group = in_array($group, $this->groups(), true) ? $group : 'genre';
         $report = Application_Service_YearlyReportService::minutesReport($year);
-        $none = ['show_type' => _('No show type'), 'genre' => _('No genre'), 'category' => _('No category')];
+        $none = ['show_type' => _('No show type'), 'genre' => _('No genre'), 'category' => _('No category'), 'host' => _('No host names')];
         $head = [];
         if ($group === 'show_type') {
             $head[] = _('Show type');
+        }
+        if ($group === 'host') {
+            $head[] = _('Host name');
         }
         if ($group === 'genre' || $group === 'both') {
             $head[] = _('Genre');
@@ -147,7 +165,7 @@ class YearlyreportController extends Zend_Controller_Action
         $sum = array_fill_keys(['episodes_own', 'minutes_first', 'minutes_repeat', 'minutes_own', 'episodes_other', 'minutes_other', 'minutes_total'], 0);
         foreach ($report['groups'][$group] as $r) {
             $lead = [];
-            foreach (['show_type', 'genre', 'category'] as $d) {
+            foreach (['show_type', 'genre', 'category', 'host'] as $d) {
                 if ($r[$d] !== null) {
                     $lead[] = $r[$d] === '' ? $none[$d] : $r[$d];
                 }
@@ -158,11 +176,20 @@ class YearlyreportController extends Zend_Controller_Action
                 $sum[$k] = $v + $r[$k];
             }
         }
+        if ($group === 'host') {
+            // the rows count a show for each of its hosts - the total is the real one
+            foreach ($sum as $k => $v) {
+                $sum[$k] = $report['host_total'][$k];
+            }
+        }
         fputcsv($out, array_merge(array_pad([_('Total')], count($head), ''), array_values($sum)), ',', '"', '');
+        if ($group === 'host') {
+            fputcsv($out, [_('A show with several hosts counts fully for each of them, so the rows add up to more than the total.')], ',', '"', '');
+        }
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
-        $names = ['show_type' => 'show-type', 'genre' => 'genre', 'category' => 'category', 'both' => 'genre-category'];
+        $names = ['show_type' => 'show-type', 'genre' => 'genre', 'category' => 'category', 'both' => 'genre-category', 'host' => 'host-name'];
         $this->getResponse()
             ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
             ->setHeader('Content-Disposition', 'attachment; filename="programme-minutes-by-' . $names[$group] . '-' . $year . '.csv"')

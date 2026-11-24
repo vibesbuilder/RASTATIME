@@ -64,13 +64,14 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
 
     <?php
     // RASTATIME 2026-11-10 - minutes per genre / category / genre x category;
-    // 2026-11-16 per show type
+    // 2026-11-16 per show type; 2026-11-24 per host name (a show counts for
+    // each of its hosts - the footer is the real total then)
     $group = $this->group;
     $grows = $m['groups'][$group] ?? [];
-    $noneLabel = ['show_type' => _("No show type"), 'genre' => _("No genre"), 'category' => _("No category")];
+    $noneLabel = ['show_type' => _("No show type"), 'genre' => _("No genre"), 'category' => _("No category"), 'host' => _("No host names")];
     $gsum = array_fill_keys(['episodes_own', 'minutes_first', 'minutes_repeat', 'minutes_other', 'minutes_total'], 0);
     ?>
-    <h3 id="rt_yearly_groups" class="rt-yearly-groups-head"><?php echo _("By show type, genre and category"); ?></h3>
+    <h3 id="rt_yearly_groups" class="rt-yearly-groups-head"><?php echo $this->hostsReady ? _("By show type, genre, category and host name") : _("By show type, genre and category"); ?></h3>
     <?php if (!$this->showTypesReady): ?>
         <p class="rt-participants-warn"><?php echo _("The show types are missing - run the database migration 0088 first. Until then no show counts as a repeat."); ?></p>
     <?php endif; ?>
@@ -85,6 +86,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
             <option value="genre"<?php echo $group === 'genre' ? ' selected' : ''; ?>><?php echo _("Genre"); ?></option>
             <option value="category"<?php echo $group === 'category' ? ' selected' : ''; ?>><?php echo _("Category"); ?></option>
             <option value="both"<?php echo $group === 'both' ? ' selected' : ''; ?>><?php echo _("Genre and category"); ?></option>
+            <?php if ($this->hostsReady): ?><option value="host"<?php echo $group === 'host' ? ' selected' : ''; ?>><?php echo _("Host name"); ?></option><?php endif; ?>
         </select>
         <a class="btn" href="<?php echo $h($base . 'yearlyreport/groups-csv?year=' . (int) $this->year . '&group=' . $group); ?>"><?php echo _("Download CSV"); ?></a>
     </form>
@@ -93,6 +95,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
             <thead>
                 <tr>
                     <?php if ($group === 'show_type'): ?><th><?php echo _("Show type"); ?></th><?php endif; ?>
+                    <?php if ($group === 'host'): ?><th><?php echo _("Host name"); ?></th><?php endif; ?>
                     <?php if ($group === 'genre' || $group === 'both'): ?><th><?php echo _("Genre"); ?></th><?php endif; ?>
                     <?php if ($group === 'category' || $group === 'both'): ?><th><?php echo _("Category"); ?></th><?php endif; ?>
                     <th class="num"><?php echo _("Episodes, own productions"); ?></th>
@@ -105,7 +108,7 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
             <tbody>
                 <?php $i = 0; foreach ($grows as $g): foreach ($gsum as $k => $v) { $gsum[$k] = $v + $g[$k]; } ?>
                     <tr class="<?php echo $i++ & 1 ? 'even' : 'odd'; ?>">
-                        <?php foreach (['show_type', 'genre', 'category'] as $d): if ($g[$d] === null) { continue; } ?>
+                        <?php foreach (['show_type', 'genre', 'category', 'host'] as $d): if ($g[$d] === null) { continue; } ?>
                             <td><?php echo $g[$d] === '' ? '<em>' . $h($noneLabel[$d]) . '</em>' : $h($g[$d]); ?></td>
                         <?php endforeach; ?>
                         <td class="num"><?php echo $g['episodes_own'] ?: ''; ?></td>
@@ -116,6 +119,12 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
                     </tr>
                 <?php endforeach; ?>
             </tbody>
+            <?php if ($group === 'host') {
+                // the rows count a show for each of its hosts - the footer is the real total
+                foreach ($gsum as $k => $v) {
+                    $gsum[$k] = $m['host_total'][$k];
+                }
+            } ?>
             <tfoot>
                 <tr>
                     <th<?php echo $group === 'both' ? ' colspan="2"' : ''; ?>><?php echo _("Total"); ?></th>
@@ -127,6 +136,9 @@ $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
                 </tr>
             </tfoot>
         </table>
+        <?php if ($group === 'host'): ?>
+            <p class="rt-participants-note"><?php echo _("A show with several hosts counts fully for each of them, so the rows add up to more than the total."); ?></p>
+        <?php endif; ?>
     <?php endif; ?>
 
     <?php if (empty($m['rows'])): ?>

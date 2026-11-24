@@ -204,6 +204,16 @@ zwei Minuten von den Summen je Sendung abweichen.  Die Kategorie wird in
 der Sendung gesetzt (Edit Show → What, Freitext mit Vorschlägen;
 Datenbank-Migration 0082).
 
+**Nach Namen der Moderierenden** (seit 2026-11-24): *Gruppieren nach* →
+**Moderierende** (*Host name*) zeigt dieselben Minuten je Person, die unter
+Edit Show → What → *Host names* eingetragen ist (siehe Kapitel Kalender).
+Eine Sendung mit mehreren Moderierenden zählt bei jeder Person voll - die
+Zeile einer Person beantwortet „wie viele Minuten hat diese Person
+moderiert“ -, darum ergeben die Zeilen zusammen mehr als die Summe; die
+Zeile *Summe* zählt jede Sendung einmal.  Eine Sendung zählt nur mit ihren
+eigenen Namen: Eine Wiederholungssendung ohne eigene Namen steht in der
+Zeile *Ohne Namen*, wie jede andere Sendung ohne Namen.
+
 Program Managers und Admins öffnen diese Seite.
 
 ## 6. Teilnehmende (seit 2026-11-03)

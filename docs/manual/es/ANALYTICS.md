@@ -207,6 +207,16 @@ de los totales por programa.  La categoría se fija en el programa (Edit
 Show → What, texto libre con sugerencias; migración de base de datos
 0082).
 
+**Por nombre del presentador** (desde el 2026-11-24): *Agrupar por* →
+**Nombre del presentador** (*Host name*) muestra los mismos minutos por
+persona introducida en Edit Show → What → *Host names* (véase el capítulo
+Calendario).  Un programa con varios presentadores cuenta por completo
+para cada uno - la fila de una persona responde a «cuántos minutos
+presentó esta persona» -, por eso las filas suman más que el total; la
+fila *Total* cuenta cada programa una vez.  Un programa cuenta solo con
+sus propios nombres: un programa de repetición sin nombres propios aparece
+en la fila *Sin nombres*, como cualquier otro programa sin nombres.
+
 Program Managers y Admins abren esta página.
 
 ## 6. Participantes (desde 2026-11-03)

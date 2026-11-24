@@ -1,10 +1,11 @@
 
 # RASTATIME — Architecture Draft
 **Windows 11 LibreTime Fork with VLC/libVLC Main Playout Engine**  
-Draft version: 0.164
+Draft version: 0.165
 Date: 2026-11-24
 
 > **Revision history**
+> - **0.165 (2026-11-24)** - Programme Minutes per host name (§23.133 addendum).
 > - **0.164 (2026-11-24)** - Host names per show (§23.133): register `cc_person` +
 >   `cc_show_person` (migration 0089); People Involved counts every named person once.
 > - **0.163 (2026-11-24)** - The import asks Liquidsoap whether it can decode a file (§23.132):
@@ -12157,3 +12158,17 @@ baseline test (legacy 0089).
 **Risk.**  Low for the broadcast (no playout part).  The show save path is
 touched only after the show is stored, inside the existing try/catch.
 Migration additive; rollback `git revert`, the tables can stay.
+
+**Addendum (2026-11-24, 0.165): Programme Minutes per host name.**
+`YearlyReportService::minutesReport` adds `groups['host']` (only when
+`peopleReady()`): the instances joined to `cc_show_person` / `cc_person`,
+grouped by person, shows without names in the row with the empty label
+(last).  Operator decisions: a show with several hosts counts fully for
+each of them (the rows add up to more than the total), and a show counts
+only with its own names (a repeat show is not mapped to the names of the
+show it repeats via `repeat_of_show_id`).  The footer of this grouping is
+`host_total` - the same query without the join, every show once, rounded
+per group like the rows - instead of the sum of the rows; page and CSV
+add a note.  Group `host` in the page select and `groups-csv?group=host`.
+Probe `host_minutes_probe.php` (16 checks, test names in a rolled-back
+transaction).

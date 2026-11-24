@@ -211,6 +211,16 @@ somme peut donc différer d'une minute ou deux des totaux par émission.
 La catégorie se définit dans l'émission (Edit Show → What, texte libre
 avec suggestions ; migration de base de données 0082).
 
+**Par nom d'animateur** (depuis le 2026-11-24) : *Grouper par* → **Nom de
+l'animateur** (*Host name*) affiche les mêmes minutes par personne saisie
+sous Edit Show → What → *Host names* (voir le chapitre Calendrier).  Une
+émission avec plusieurs animateurs compte entièrement pour chacun d'eux -
+la ligne d'une personne répond à « combien de minutes cette personne
+a-t-elle animé » -, les lignes additionnées dépassent donc le total ; la
+ligne *Total* compte chaque émission une fois.  Une émission ne compte
+qu'avec ses propres noms : une émission de rediffusion sans noms propres
+figure dans la ligne *Sans noms*, comme toute autre émission sans noms.
+
 Les Program Managers et les Admins ouvrent cette page.
 
 ## 6. Participants (depuis le 2026-11-03)

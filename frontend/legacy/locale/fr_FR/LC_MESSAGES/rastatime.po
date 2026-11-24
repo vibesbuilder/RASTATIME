@@ -9318,3 +9318,19 @@ msgstr "Additionnés par émission, il y aurait %d animateurs."
 #: RASTATIME 2026-11-24 host names
 msgid "Hosts in several shows (counted once)"
 msgstr "Animateurs dans plusieurs émissions (comptés une fois)"
+
+#: RASTATIME 2026-11-24 programme minutes per host name
+msgid "Host name"
+msgstr "Nom de l'animateur"
+
+#: RASTATIME 2026-11-24 programme minutes per host name
+msgid "No host names"
+msgstr "Sans noms"
+
+#: RASTATIME 2026-11-24 programme minutes per host name
+msgid "By show type, genre, category and host name"
+msgstr "Par type d'émission, genre, catégorie et nom de l'animateur"
+
+#: RASTATIME 2026-11-24 programme minutes per host name
+msgid "A show with several hosts counts fully for each of them, so the rows add up to more than the total."
+msgstr "Une émission avec plusieurs animateurs compte entièrement pour chacun d'eux ; les lignes additionnées dépassent donc le total."
